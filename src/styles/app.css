@@ -1,0 +1,316 @@
+/* M1 styling: clear and functional. The full design pass with the timbermods design system comes in
+   roadmap M13 (PLAN §14, Impeccable site flow). Colours borrow the org palette's pine and walnut. */
+
+:root {
+  --bg: #f5ecd9;
+  --panel: #fffaf0;
+  --ink: #2a2118;
+  --muted: #6b5a45;
+  --rule: #dccdab;
+  --accent: #2f5d3a;
+  --accent-ink: #ffffff;
+  --bad: #9a2b1b;
+  --ok: #2c6536;
+  --code: rgba(42, 33, 24, 0.08);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a211a;
+    --panel: #243126;
+    --ink: #ece3cf;
+    --muted: #b8b19b;
+    --rule: #38493b;
+    --accent: #9fd49a;
+    --accent-ink: #13200f;
+    --bad: #f0a08a;
+    --ok: #9fd49a;
+    --code: rgba(236, 227, 207, 0.09);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.top h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.tag {
+  margin: 2px 0 16px;
+  color: var(--muted);
+}
+
+.panes {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 780px) {
+  .panes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings,
+.card,
+.install {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.settings h2,
+.card h2,
+.install h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.settings label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.settings input,
+.settings select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 400;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.row input {
+  flex: 1;
+}
+
+button {
+  font: inherit;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink);
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.settings .primary {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.row .ghost {
+  margin-top: 4px;
+}
+
+.note,
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.more summary {
+  cursor: pointer;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+.view {
+  min-width: 0;
+}
+
+.layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.preview {
+  width: 100%;
+}
+
+.canvas-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(20, 24, 18, 0.92);
+  color: #f5ecd9;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font: 12px/1.45 system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.placeholder {
+  height: 320px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.card {
+  margin-top: 12px;
+}
+
+.card header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.premise {
+  margin: 6px 0 10px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 14px;
+  margin: 0 0 10px;
+}
+
+.facts dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.report summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.report ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.report li {
+  padding: 2px 0;
+}
+
+.report li.ok::before {
+  content: "✓ ";
+  color: var(--ok);
+}
+
+.report li.bad::before {
+  content: "✗ ";
+  color: var(--bad);
+}
+
+code {
+  background: var(--code);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.install {
+  margin-top: 12px;
+}
+
+.install ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.foot {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.foot a {
+  color: inherit;
+}
