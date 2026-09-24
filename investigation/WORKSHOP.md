@@ -135,6 +135,10 @@ The generator's spread is narrow: berry bushes per 10k run 93–115 across its s
 74–434 in the workshop. The bands to widen, as data for the calibration table, are in
 [workshop/settings-bands.json](workshop/settings-bands.json).
 
+The first investigation's `analyze_maps.py`, run on the same water, agrees: one-level steps 0.62 and
+0.81, flat share 0.52 and 0.44, water share 0.15 and 0.27. Its full results, split by era, are in
+`workshop.json` (`analyzeMaps`).
+
 ## The start
 
 Measured where a start can be (11 official, 67 workshop, 180 generated maps), by walking distance:
@@ -159,8 +163,8 @@ ridges +0.47), more relief (+0.33) and more water (+0.34).
 
 ## Proof: recipes
 
-Each recipe starts from a generated River Valley map and applies only the engine's existing operations through a
-`MapSession`, then passes the real validators in the `generate` profile.
+Each recipe starts from a generated River Valley map, applies only the engine's existing operations
+through a `MapSession`, then passes the real validators in the `generate` profile.
 
 | Recipe | Passed (of 23) | Gain to River Valley's variety | Tallest fall (median) | Short dam holds near the start |
 |---|---|---|---|---|
@@ -173,7 +177,7 @@ Each recipe starts from a generated River Valley map and applies only the engine
 | Mesa field with ruins on top | 23 | +0.002 | 1.9 | 70% |
 | Twin waterfalls | 23 | 0 | 1.8 | 70% |
 | Oxbow lake | 23 | −0.004 | 1.9 | 74% |
-| Valley running north to south | 23 | +0.075 | 2.9 | 70% |
+| North–south valley | 23 | +0.075 | 2.9 | 70% |
 | Dam narrows between two spurs | 22 | −0.001 | 1.9 | 35% |
 | *River Valley as it is* | | | 1.9 | 77% |
 
