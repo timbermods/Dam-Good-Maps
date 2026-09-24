@@ -274,8 +274,8 @@ function thornBelt(
   return tiles.slice(0, 40).sort((a, b) => a - b);
 }
 
-/** Candidate sites for a second district (PLAN §9.8), best first: tiles 60–120 tiles from the start
- *  (chamfer), dry and free, on level ground of 600+ tiles, with pumpable clean water within 16
+/** Candidate sites for a second district (PLAN §9.8), best first: tiles 60–120 tiles from the start's
+ *  middle, dry and free, on level ground of 600+ tiles, with pumpable clean water within 16
  *  tiles; the best have the most moist free land round them (for its grove and berries) and stand
  *  nearest 85 tiles out. At most `n`, 24+ tiles apart. */
 export function districtCandidates(b: BuildResult, features: readonly Feature[], avoid: Uint8Array | null, n: number): [number, number][] {

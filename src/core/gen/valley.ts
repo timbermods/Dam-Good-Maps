@@ -705,6 +705,11 @@ export function objectsAndResources(
   // the derived slopes join to the start's
   const avoidAll = avoid ? avoid.slice() : new Uint8Array(W * H);
   if (context?.protect) for (let i = 0; i < avoidAll.length; i++) if (context.protect[i]) avoidAll[i] = 1;
+  // the dam site's reservoir: what a dam of its crest would flood, and two tiles round it (a
+  // plateau or an object there takes the water the colony stores; water.reservoir, D58)
+  const damSite = layout.find((f): f is SetPieceFeature => f.kind === "setPiece" && f.params.kind === "damSite");
+  const damRiver = damSite ? layout.find((f): f is RiverFeature => f.kind === "river" && f.id === damSite.params.plan.river) : undefined;
+  if (damSite && damRiver) for (const i of reservoirReach(base, damRiver, damSite, 2)) avoidAll[i] = 1;
   const sites: { x: number; y: number }[] = [];
   if (W * H >= 128 * 128) {
     for (const [x, y] of districtCandidates(base, [...layout, ...others], avoidAll, 4)) {
@@ -813,6 +818,50 @@ function walkableFromStart(b: BuildResult, x: number, y: number): boolean {
  *  leaves no side-to-side gap, so the water stands 0.65 above the bed upstream before it spills. */
 export function weirAt(g: PlanGround, river: RiverFeature, damSite: SetPieceFeature, flows: number, id: (kind: Feature["kind"], role: string) => string): MapObjectFeature | null {
   return weirOn(g, river, Number(damSite.params.plan.at), river.params.flow * (1 + 0.25 * Math.max(0, flows - 1)), id, "mapObject/weir/primary");
+}
+
+/** The tiles a dam of the dam site's crest would flood, upstream of it, and `margin` round them. */
+function reservoirReach(b: BuildResult, river: RiverFeature, dam: SetPieceFeature, margin: number): number[] {
+  const { W, H } = b;
+  const N = W * H;
+  const at = Number(dam.params.plan.at);
+  const crest = Math.max(1, Number(dam.params.plan.crest ?? 1));
+  const top = bedAt(river.params.bedProfile, at) + crest;
+  const field = pathField(river.params.path, W, H);
+  const half = river.params.width / 2;
+  const seen = new Uint8Array(N);
+  const queue: number[] = [];
+  for (let i = 0; i < N; i++) {
+    if (field.d[i] < half && field.s[i] >= at - 4 && field.s[i] < at && b.heights[i] < top) {
+      seen[i] = 1;
+      queue.push(i);
+    }
+  }
+  for (let q = 0; q < queue.length; q++) {
+    const i = queue[q];
+    const x = i % W;
+    const y = (i - x) / W;
+    const next = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1];
+    for (const j of next) {
+      if (j < 0 || seen[j] || b.heights[j] >= top || field.s[j] > at) continue;
+      seen[j] = 1;
+      queue.push(j);
+    }
+  }
+  const out: number[] = [];
+  for (let i = 0; i < N; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    let near = false;
+    for (let dy = -margin; dy <= margin && !near; dy++)
+      for (let dx = -margin; dx <= margin && !near; dx++) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < W && yy < H && seen[yy * W + xx]) near = true;
+      }
+    if (near) out.push(i);
+  }
+  return out;
 }
 
 /** A weir on a smaller river: a tributary or Highlands' stream, 8 tiles above its mouth (then 14),

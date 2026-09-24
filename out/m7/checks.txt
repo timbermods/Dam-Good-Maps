@@ -3,7 +3,7 @@ Generator 0.5.0; 128×128, seed 4242, Lake Basin, designed for Normal, every set
 Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
 PNG: north up, 5 px per tile, dotted grid every 16 tiles; water blue (badwater brown); start white (door red); Blockage (the plug) magenta; NaturalDam (the weir) cyan; Thorns dark red; relics yellow; geothermal fields orange; mine sites (UndergroundRuins) purple; the spillway's channel dark blue dots.
 
-sha256 7e50e113e21091b58d74985f0d5c5baf35669833704fe2542756b4026e4f37c8  Lake Basin (4242) D objects.timber
+sha256 6295b1b87148508beb10ddd29e4bfe5d9dd0ffc490396f24d0536521791ee2f5  Lake Basin (4242) D objects.timber
 StartingLocation at (68, 97), z 10, Cw0; door tile (69, 96).
 Validation (export profile): entities.placement passes (the loader's rules for every object); extras.placement passes; warnings: none.
 
@@ -11,10 +11,10 @@ Objects (46 entities):
   Blockage (the spillway's plug), 3 tiles: (54, 33) (55, 33) (56, 34).
   NaturalDam (the weir), 5 tiles across a river: (10, 87) (11, 88) (12, 89) (12, 90) (13, 90). a weir of 5 natural dam tiles holds the water 0.65 above the river's bed upstream.
   Thorns, 32 in a belt within (92, 96)–(102, 100).
-  Small relic: (96, 107)–(96, 108), 28 tiles from the start.
-  Medium relic: (121, 110)–(123, 111), 53 tiles from the start.
-  Geothermal fields: (34, 5)–(36, 7), 99 tiles from the start; (8, 16)–(10, 18), 102 tiles from the start.
-  Mine sites (UndergroundRuins): (21, 9)–(25, 13), 101 tiles from the start; (114, 3)–(118, 7), 105 tiles from the start.
+  Small relic: (17, 107)–(17, 108), 53 tiles from the start.
+  Medium relic: (118, 110)–(120, 111), 50 tiles from the start.
+  Geothermal fields: (33, 5)–(35, 7), 100 tiles from the start; (110, 16)–(112, 18), 92 tiles from the start.
+  Mine sites (UndergroundRuins): (18, 9)–(22, 13), 103 tiles from the start; (112, 3)–(116, 7), 104 tiles from the start.
 
 The plugged spillway: the lake (sill at level 9) has a side channel 3 wide, its bed one level below the sill (level 8), running 35 tiles to the map edge. The plug's top stands at the sill, so the lake keeps its level and spills over it as over its own outlet.
   Its report: a spillway 3 tiles wide and 35 long runs from the lake to the map edge, closed by a plug of 3 Blockage tiles; demolishing the plug lowers the lake by about one level: about 3290 water flows down the spillway.

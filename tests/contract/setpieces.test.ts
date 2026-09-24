@@ -176,7 +176,8 @@ describe("the other builders reduce to their ranges and report it", () => {
     }
   });
   it("gorge: width, length and wall height to 3–9, 6–40 and 2+", () => {
-    const r = planPiece(s, "gorge", { river: river.id, from: 90, length: 60, width: 12, wallHeight: 1, access: "stairs" }, "11111111-2222-4333-8444-000000000002");
+    // (below the start's reach on this map: a gorge's walls may not cover the start's area)
+    const r = planPiece(s, "gorge", { river: river.id, from: 110, length: 60, width: 12, wallHeight: 1, access: "stairs" }, "11111111-2222-4333-8444-000000000002");
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const p = r.feature.params.plan;
