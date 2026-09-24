@@ -9,9 +9,20 @@ settled, checked for a colony's survival, shown in a 2D preview with water, mois
 layers, and downloaded as a `.timber` and a project file. Once Pages is on, it is served at
 <https://timbermods.github.io/dam-good-maps/>.
 
-M4 adds the editor:
-- **Refine this map** opens the map in 3D. Draw plateaus, forests, berry patches and ruin fields.
-  Move or delete what the generator made.
+The editor:
+- **Refine this map** opens the map in 3D.
+- **Land**: draw a **Hill**, **Plateau**, **Ridge**, **Canyon**, **Valley** or **Island**, and pick
+  its height and edges. Add **Terraced cliffs**. Click a step to add a **Slope**, or a slope to
+  remove it.
+- **Water**: click a **River** from its source to where it ends. Draw a **Lake** by its shore. Add
+  a **Waterfall**, a **Dam site**, a **Gorge** or a **Badwater spring**. **Show dam sites** marks
+  the best places for a dam.
+- **Resources**: draw a **Forest**, **Berry patch** or **Ruin field**.
+- **Start**: drag the start. Green means the district center fits.
+- Each tool shows what it will do first. **Place** adds it.
+- Select a feature to move it, change it or delete it. This works on most of what the generator
+  made too.
+- A problem shows as soon as you make it, with a button that fixes it.
 - **Back to settings** keeps your edits. Generate again and they stay.
 - **Open a map** opens any `.timber`, from 0.6 to 1.1.
 - The preview's **3D** switch shows the map in 3D.
@@ -65,7 +76,7 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 - `npm run gen` writes maps from the command line.
 - `npm run batch` reports first-attempt and final pass rates (default 100 seeds at 128²).
 - `npm run test:e2e` builds the site and runs the browser tests: Chrome and Node produce the same
-  bytes, the editor's generate-refine-regenerate journey, the 3D view, and every local
+  bytes, the editor's tools and its generate-refine-regenerate journey, the 3D view, and every local
   investigation map through import, 3D and export.
 - `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
 - `npm run bench:3d` measures the 3D view's build time and frame rate at 256² in Chrome. It opens

@@ -109,17 +109,51 @@ What the files should show (from `checks.txt`):
 
 ## M5: set pieces, land and water tools, slopes, fixes
 
-Checks C1–C3 and F1 of PLAN §18. Play three exported, edited maps:
-- a 20-wide standalone waterfall at S = 2 and at S = 8;
-- a dam site;
-- a gorge with a stair notch.
+Checks C1–C3 and F1 of PLAN §18, on maps edited with the M5 tools. The files are in
+[out/m5/](../out/m5/), made with generator 0.3.0 from River Valley seed 4242 at 128 × 128. Remake
+them with `npx tsx tools/ingame-files.ts --milestone m5`: every edit is planned by the editor's own
+code with fixed ids, so the bytes reproduce. [out/m5/checks.txt](../out/m5/checks.txt) lists their
+sha256 and every coordinate below.
+
+- **`River Valley (4242) F1 waterfall S2.timber`:** a standalone waterfall 20 tiles wide, falling
+  north, fed by 2 water/s (4 springs of 0.5 in its header pool).
+- **`River Valley (4242) F1 waterfall S8.timber`:** the same fall fed by 8 water/s (16 springs),
+  the exact flow set by hand: more than the map's whole Normal flow of 3.6.
+- **`River Valley (4242) C1 dam site.timber`:** a dam site added on the river's lower reach.
+- **`River Valley (4242) gorge stairs.timber`:** a tributary drawn from the south edge into the
+  main river, with a gorge where it cuts through high ground and a stair notch down to the water.
+- **One PNG per map** (north up, 5 pixels per tile, grid every 16 tiles): water blue, start white
+  with its door red; the waterfall's lip magenta, its springs blue and its outflow cyan; the dam
+  line orange; the notch's slopes orange with their high side brown.
+
+What the files should show (from `checks.txt`):
+- The start: StartingLocation at (47, 30), door (46, 31), on every map.
+- The waterfall's lip runs from (55, 118) to (74, 118) at level 15, over a plunge pool at level 9
+  (rows y 119–122). The port wets all 20 lip tiles: 0.030 deep at 2 water/s and 0.120 deep at 8.
+  Its outflow runs 5 tiles north to the map edge; a water wheel fits on it at (75, 123).
+- The dam site's gap is the 10 tiles (83, 63)–(83, 72), on a river bed at level 8. A dam 2 high
+  there should hold about 2,900 water over about 2,270 tiles; the colony needs about 380 through
+  the first Normal drought.
+- The generated river's own falls are at (40, 39) and (88, 76), each a drop of 2.
+- The gorge runs from about (66, 14) to (66, 26). Its notch climbs west from a landing beside the
+  water at (65, 20)–(64, 20), with slopes at (64, 20), (63, 20) and (62, 20), to the ground at
+  (61, 20), level 13.
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| C1 | Build a dam or levees across the gorge at the dam-site marker. | The basin fills to about the crest without leaking round the ridge ends. | set by M5 | pending |
-| C2 | Place a water wheel at a generated waterfall. | It turns. | set by M5 | pending |
-| C3 | Play to the first drought on Normal, using the stored water. | The colony survives. | set by M5 | pending |
-| F1 | Look at the two 20-wide standalone falls, S = 2 and S = 8, and put a water wheel below each. | Record whether the thin one reads as a waterfall and whether each wheel turns. The answer sets the waterfall flow policy (PLAN §9.2). | set by M5 | pending |
+| C1 | Build a dam 2 high (or levees) on the 10 gap tiles (83, 63)–(83, 72) of the dam site's ridge. Watch the basin fill over a few days. | The basin upstream fills to about level 10 and stays there. No water leaks round the ridge's ends. | `River Valley (4242) C1 dam site.timber`, `.png` | pending |
+| C2 | Place a water wheel just below one of the generated river's falls, at (40, 39) or (88, 76). | It turns. | any of the four files | pending |
+| C3 | Play the dam-site map on Normal to the first drought, drinking from the dammed basin. | The colony survives the drought on the stored water. | `River Valley (4242) C1 dam site.timber` | pending |
+| F1 | Look at the waterfall in both files. Put a water wheel on its outflow, at (75, 123). | Record whether the 2 water/s sheet reads as a waterfall, and whether each wheel turns. The answer sets the waterfall flow policy (PLAN §9.2, D6). | `River Valley (4242) F1 waterfall S2.timber` and `S8.timber` | pending |
+| C-gorge | Send a beaver down the gorge's stair notch, from the ground west of the gorge at (61, 20) to the landing by the water at (65, 20), and back. Build a water pump on the landing. | The beaver walks down and up the slopes. The pump reaches the water. | `River Valley (4242) gorge stairs.timber`, `.png` | pending |
+
+**Automated stand-ins used meanwhile (all green at M5):**
+- the set-piece range tests (`tests/contract/setpieces.test.ts`): a 20-wide fall keeps all 20 lip
+  tiles wet at 96², 128² and 256², is reduced to 19 on 48², and drops above 15 are reduced;
+- the drawn-river property test (`tests/contract/rivers.test.ts`): rivers drawn in random
+  directions drain, carry water along their whole course, and keep their mouths sealed;
+- the `export` profile on every file above: no load problem, no warning;
+- the Python oracle: both validators agree on 50 generated maps and the 19 official maps.
 
 ## M6: full settings, sharing, themes I
 
