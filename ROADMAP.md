@@ -141,6 +141,16 @@ The deviations are PLAN §20 D15–D23. In-game checks A1–A5 and F2 are pendin
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.2.0). Every acceptance criterion passes:
+- golden vectors: the port matches the Python reference bit for bit on 12 fixtures, and 975 ticks
+  from empty reproduce the game's own save within 0.001 (0.00096, the same 470 wet tiles);
+- validator parity: 0 disagreements on 50 generated maps and on all 19 official maps;
+- batch at 128² Normal: 96% on the first attempt, 100% final (100 seeds);
+- the canonical settle: a median of 0.39 s at 256² and 0.07 s at 128²; the budget (≤ 3 s at 256²,
+  ≤ 0.6 s at 128²) is in PLAN §10 and D33.
+
+The deviations are PLAN §20 D24–D34. In-game checks B1–B4 are pending.
+
 ---
 
 ## M3. Map document and operations engine (headless), delivery spike

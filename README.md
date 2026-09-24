@@ -3,9 +3,11 @@
 A map generator for [Timberborn](https://mechanistry.com/). Pick settings, generate a map, see it
 in the browser and download a `.timber` file that loads and plays in Timberborn 1.1.
 
-The website is in progress, following [ROADMAP.md](ROADMAP.md). Milestone M1 works end to end:
-River Valley maps from a seed, a 2D preview, and downloads of the `.timber` and of the project
-file. Once Pages is on, it is served at <https://timbermods.github.io/dam-good-maps/>.
+The website is in progress, following [ROADMAP.md](ROADMAP.md). Milestones M1 and M2 work end to
+end: River Valley maps from a seed, with their water simulated by the game's own rules and shipped
+settled, checked for a colony's survival, shown in a 2D preview with water, moisture and reach
+layers, and downloaded as a `.timber` and a project file. Once Pages is on, it is served at
+<https://timbermods.github.io/dam-good-maps/>.
 
 | Path | What it is |
 |---|---|
@@ -48,11 +50,14 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 
 - `npm run dev` serves the site at <http://localhost:5173/dam-good-maps/>.
 - `npm test` runs the unit and contract tests.
-- `npm run oracle` generates 50 seeds × 3 sizes and checks each map with the Python validator and
-  round-trip test.
+- `npm run oracle` generates 50 seeds × 3 sizes, checks each map with the Python validator and
+  round-trip test, and compares the two validators check by check on 50 of them and on the
+  official maps (when `investigation/raw/builtin` is present).
 - `npm run gen` writes maps from the command line.
+- `npm run batch` reports first-attempt and final pass rates (default 100 seeds at 128²).
 - `npm run test:e2e` builds the site and checks that Chrome and Node produce the same bytes.
-- `npm run bench` times generation at 128².
+- `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
+- `npm run fixtures` rewrites the water golden vectors from the Python reference.
 
 ## Prototype quick start
 

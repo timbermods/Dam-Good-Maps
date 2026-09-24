@@ -19,7 +19,7 @@ from ruins import place_fields
 from tbmap import new_map, slope, starting_location, water_source
 from terrain import flatten_pad, plan_valley, shape_terrain
 from vegetation import place_bushes, place_forests
-from watersim import WaterSim, contamination, moisture
+from watersim import canonical_settle, contamination, moisture
 
 SLOPE_ORIENTATION = {(0, -1): "Cw0", (-1, 0): "Cw90", (0, 1): "Cw180", (1, 0): "Cw270"}  # high side (dx, dy)
 
@@ -82,8 +82,7 @@ def build(seed: int, W: int, H: int, difficulty="normal"):
                         "strength": round(bad_total, 2), "contamination": 1.0})
 
     # ---- water with the game's rules, then moisture and soil contamination
-    sim = WaterSim(h, sources)
-    settled = sim.settle(max_days=4)
+    sim, settled = canonical_settle(h, sources)      # the settle the validator uses (PLAN §19.7)
     D, C = sim.D, sim.C
     M = moisture(h, D, C, sim.sat())
     SC = contamination(h, D, C)

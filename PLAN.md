@@ -178,9 +178,10 @@ dam-good-maps/
 │  │  │               entities.ts (templates, component builders)  footprints.ts (generated from notes/footprints.json)
 │  │  │               vendor/jpeg-encoder.js (jpeg-js encoder)
 │  │  ├─ render/      shade.ts (top-down colours, the thumbnail)
-│  │  ├─ sim/         water.ts (exact single-layer port)  moisture.ts  contamination.ts  drought.ts
-│  │  ├─ analysis/    distance.ts  regions.ts (level regions, walk regions with slopes)  basins.ts (priority flood)
-│  │  │               damsites.ts  features.ts (rivers, falls, islands, plateaus)
+│  │  ├─ sim/         water.ts (exact single-layer port, active list, settle test)  prefill.ts (pre-fill, canonical settle)
+│  │  │               model.ts (emitters and obstacles by footprint)  moisture.ts  contamination.ts  drought.ts
+│  │  ├─ analysis/    regions.ts (walk regions with slopes, components)  damsites.ts
+│  │  │               later: features.ts (rivers, falls, islands, plateaus)
 │  │  ├─ spec/        mapspec.schema.json  mapspec.ts (MapSpec, defaults, presets, URL codec, merge patch)  §19.1
 │  │  │               schema.ts (the eval-free schema checker, D16)
 │  │  ├─ features/    schema.ts (every feature kind and its params, §19.2)  features.schema.json  ids.ts (§19.4)
@@ -190,8 +191,8 @@ dam-good-maps/
 │  │  ├─ doc/         document.ts (MapDocument)  ops.ts (edit operations, used by the editor)
 │  │  ├─ gen/         generate.ts (spec → features, then build, retries)  riverValley.ts (one planner per archetype)
 │  │  │               calibrated.ts (size-aware densities)  blobs.ts (ruin and grove shapes)  pack.ts (file, name, thumbnail)
-│  │  ├─ validate/    checks.ts (every check: id, class, rule, threshold)  placement.ts (load-time emulation)
-│  │  │               profiles.ts (generate / export / import, §19.5)  report.ts
+│  │  ├─ validate/    checks.ts (load and design classes, placement emulation, validateMap)  playability.ts
+│  │  │               report.ts (result shape, severity per profile, blocking, groups; §19.5)
 │  │  ├─ score/       score.ts  naming.ts
 │  │  └─ data/        footprints.json (the calibration subset lives in gen/calibrated.ts, tested against calibrated.py)
 │  ├─ platform/       adapters: files (save/open), storage, workers, claude (§19.9)
@@ -202,8 +203,8 @@ dam-good-maps/
 │  ├─ editor/         the editor UI (EDITOR_PLAN.md §8)
 │  └─ styles/
 ├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  ingame-files.ts  export-footprints.ts
-│                    batch.ts (Node: N seeds × themes → pass rates, score distribution)  golden.ts
-│                    ratings.ts (issue export)  export-fixtures.py (Python → golden vectors)
+│                    batch.ts (Node: N seeds → first-attempt and final pass rates)  golden.ts
+│                    ratings.ts (issue export)  export-fixtures.py (Python → tests/golden/water.json.gz)
 ├─ tests/            unit/  contract/ (§15)  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
 ├─ prototype/        Python reference implementation and test oracle (kept, see §4)
 ├─ investigation/    report, calibration, notes, scripts (raw/ and decompiled/ stay local)
@@ -222,7 +223,7 @@ oracle** the TypeScript port is tested against.
 | Python (prototype/) | TypeScript (src/core/) | How it is kept in step |
 |---|---|---|
 | `tbmap.py` writer and reader | `format/*` | CI generates maps with the Node CLI, and the Python `roundtrip_test.py` and `validate.py` must pass on them. |
-| `watersim.py` (water, moisture, contamination) | `sim/*` | `tools/export-fixtures.py` writes golden vectors: terrain, sources and the state after 50/200/975 ticks, plus steady-state moisture, on a dozen small terrains and the game's own save. TS must match within 1e-6 (depth) and exactly on the moist/dry mask. |
+| `watersim.py` (water, moisture, contamination) | `sim/*` | `tools/export-fixtures.py` writes golden vectors: terrain, sources and the state after 50/200/975 ticks, plus steady-state moisture, soil contamination, the pre-fill, the canonical settle and the drought storage, on a dozen small terrains. TS must match within 1e-6 (depth) and exactly on the moist/dry mask; it matches bit for bit. The game's own save is a local-only test (it is not ours to commit): 975 ticks from empty reproduce it within 0.001. |
 | `analysis.py` (distances, regions, basins, dam sites) | `analysis/*` | The same fixtures carry expected region sizes and dam-site volumes. |
 | `validate.py`, `playability.py` | `validate/*` | Check ids are identical. The oracle job runs both validators on the same 50 maps; their verdicts must agree check by check. |
 | `generate.py`, `terrain.py`, `ruins.py`, `vegetation.py` | `gen/*` | Ported as the River Valley archetype for roadmap milestone M1, as feature planners (§7, §19). Not byte-compatible (numpy RNG differs from sfc32); compared through their calibration metrics instead. |
@@ -493,7 +494,8 @@ or ramps anyway.
    - Springs are inland sources on highland plateaus feeding cascades.
    - Badwater sources are 3×3 at 1.0–3.0 strength, placed per §9.5.
    - Total strength follows the flow setting.
-2. Run the exact simulation (§10) to steady state from a priority-flood initial guess.
+2. Run the canonical settle (§10, §19.7): the exact simulation to steady state from the
+   deterministic pre-fill.
 3. Compute moisture and soil contamination at steady state.
 4. If the water share exceeds the theme target by 50%, or the settled rivers are not where the
    layout put them (overlap with the planned channel mask below 0.8), adjust strength once and
@@ -533,8 +535,9 @@ the first attempt and 100% within 6.
 ### 7.9 Candidates and score
 
 Build K = 3 valid candidates (candidate index 0, 1, 2 in the seed streams) and keep the highest
-score (§12). K is 1 on 256² when the first build took over 6 s, and by default at 256² if the M2 benchmark
-leaves the settle above 3 s (§10); the card then says "single candidate".
+score (§12). K is 1 on 256² when the first build took over 6 s; the card then says "single
+candidate". The M2 benchmark left the 256² settle well under 3 s (§10, D33), so K = 3 stays the
+default at every size.
 
 ### 7.10 Output
 
@@ -807,13 +810,35 @@ so in its report.
 - Flow: `f = 0.999·f_prev + 0.675·(H_c − H_n)`, minus 0.1 when spilling onto dry ground at the same
   floor. Flows are kept positive, then scaled so a tile never gives more than it has. The stored
   outflow is `max(0, f − 0.8·f_back)`.
+- The port mirrors `prototype/watersim.py` operation for operation and agrees with it bit for bit
+  on the golden fixtures; only `+ − × ÷`, `min`, `max` and `ceil` are used (§2.1).
 - Evaporation: `1e-4` per second (`1e-3` under 0.02 deep), times the cluster-saturation modifier.
 - Sources add `dt·S/N` per cell. **Map edges drain; the edge beside a source cell is a wall.**
-- Partial obstacles (NaturalDam 0.65) follow the dam rules in the spec.
+- Partial obstacles (NaturalDam 0.65) follow the dam rules in the spec. Blockage and a badtide
+  drain's back wall are full obstacles: the column floor rises by one (D28).
+- Emitters come from the map's objects through their footprints (`sim/model.ts`): WaterSource,
+  BadwaterSource (S/9 on its rotated 3×3), seeps (off above 0.8 deep at their anchor, back on below
+  0.72), and aquifers and badtide drains, which are off at map start. Delayed sources are off.
 - Contamination moves with flow as a volume-weighted mix.
 - Moisture and soil contamination are computed at steady state with a max-heap propagation:
   - moisture: 2·sat on water, then −1 orthogonal / −1.414 diagonal, −6 per level climbed;
-  - soil contamination: from water with contamination ≥ 0.5, reaching 7 tiles.
+  - soil contamination: from water with contamination ≥ 0.5, reaching 7 tiles;
+  - Thorns block both (a 4-connected barrier).
+
+**The canonical settle** (`sim/prefill.ts`, D27). It is what files store and what validation
+checks:
+1. **Pre-fill.** A priority flood from the draining map edge (edge tiles that emit water are
+   walled, so they are not outlets; a weir raises its tile by 0.65) gives every tile its spill
+   level. Water from each running emitter walks downhill or level on that filled surface. Every
+   depression on the path starts full at its spill level. Every other tile of the path starts at
+   `min(1, 0.3·Q/w)`: Q is the flow through it, and w the shorter of the row and column runs of
+   such tiles through it. The contamination starts at the badwater share of Q.
+2. **Settle.** The exact simulation, checked every 128 ticks, until the total volume changes by
+   under 0.2% and at least 99.5% of tiles move by at most 0.005 (the §11.3 rule, counted exactly,
+   with sums in index order so the Python oracle stops on the same tick); at most 4 game days.
+3. **The file** stores the settled depth and contamination (`depth:cont:0:floor:depth`, 7
+   significant digits, depths under 1e-6 dry), outflows 0, soil moisture and contamination at
+   steady state, and the evaporation modifiers of the settled water.
 
 **Fidelity.**
 - On heightfield maps the port matches the game:
@@ -832,13 +857,18 @@ so in its report.
   BeaverBuddies, HungryPathing, MixedStorage). None of them is known to touch water, but in-game
   check B confirms the result on vanilla.
 
-**Drought.** Sources ramp to 0 for the whole drought. The drought check is analytic:
-- water below each basin's spill level stays, and water above it drains through the edges;
-- evaporation is 0.0535 per day on wide water;
+**Drought.** Sources ramp to 0 for the whole drought. The drought check is analytic
+(`sim/drought.ts`, D29):
+- water below each basin's spill level stays, and water above it drains through the edges (a
+  weir's own tile drains over its lowest neighbour);
+- each pool (4-connected water at one spill level) loses what its surface evaporates: 1e-4 per
+  second times each tile's saturation modifier, shared over the flat pool. That is 0.0535 a day on
+  wide water, more at a small pool's corners;
 - colony drinking is 0.424 per beaver per day.
 
-A test compares this against running the sim with sources off for the drought length on
-fixtures. Agreement must be within 5% of stored volume.
+A test compares this against running the sim with sources off for 9 days on the fixtures with
+basins (a lake, a valley basin and a weir pool): they agree within 5% of the stored volume
+(measured 0.7%, 0.4% and 2.7%).
 
 **Performance.**
 - A 256² map needs about 1,500–3,000 ticks to settle, starting from empty.
@@ -859,12 +889,22 @@ fixtures. Agreement must be within 5% of stored volume.
   active set must be exact**: wet cells plus their 4-neighbours, recomputed every substep and kept
   as an index list rather than a full-grid scan.
 - **Budget** (revised from 1.5 s / 0.4 s, which the measurement does not support for a cold
-  start):
-  - Target a canonical settle of ≤ 3 s at 256² and ≤ 0.6 s at 128². It uses the exact active
-    list and starts from the deterministic priority-flood pre-fill for basins plus an analytic
-    river pre-fill, both computed from the document alone (§19.7).
-  - M2 benchmarks this before the budget is final. If 256² stays above 3 s, K = 1 becomes the
-    default at 256² (extending the §7.9 rule) and generation shows staged progress.
+  start), **fixed by the M2 benchmark (D33):**
+  - A canonical settle of **≤ 3 s at 256² and ≤ 0.6 s at 128²**, with the exact active list and
+    the deterministic pre-fill (above), both computed from the document alone (§19.7).
+  - **M2 measurement** (`npm run bench:water`, Node 24 on Kyler's machine, River Valley at
+    Normal, seeds 1–10, the settle alone, from the pre-fill):
+
+    | Map | Ticks | Median | Max |
+    |---|---|---|---|
+    | 128² | 640–768 | 0.07 s | 0.07 s |
+    | 256² | 1,152–1,408 | 0.39 s | 0.51 s |
+
+    With other work running on the machine the same benchmark measured 0.15 s and 0.77 s. A whole
+    256² generation (plan, build, settle, validate, pack) takes a median 0.95 s in Chrome's worker
+    (seeds 1–5) and 0.86 s in Node; 128² takes about 0.2 s.
+  - The budget holds with room to spare, so K = 3 candidates stay the default at 256² (§7.9).
+    CI gates the 256² settle median at 3 s on every push.
   - The editor's interactive preview re-settles from the previous state (EDITOR_PLAN.md §6). The
     file always gets the canonical settle (§2.1, §19.7).
 
@@ -893,7 +933,9 @@ does (§19.5):
 Imported maps have no spec, so thresholds come from the document's "designed for" difficulty
 (default Normal) and default settings. Checks that need a planned feature, such as
 `water.badwater_contained` (a badwater basin's outlet) or `water.outflow` (a planned lake), report
-"not applicable" when no such feature exists.
+"not applicable" when no such feature exists: the result passes, carries `applicable: false` and
+says why (D31). The playability class runs on every map. On maps with caves or overhangs it uses
+the top surface, which is an approximation that `terrain.single_floor` reports (D28).
 
 ### 11.1 File
 
@@ -928,17 +970,18 @@ Imported maps have no spec, so thresholds come from the document's "designed for
 
 ### 11.3 Water
 
-The exact simulation of the map's own sources, run to steady state.
+The canonical settle (§10) of the map's own sources. A water tile is one deeper than 0.05;
+clean water has contamination under 0.05.
 
 | Id | Rule |
 |---|---|
 | `water.settles` | Steady within 4 game days: volume change under 0.2% and 99.5% of tiles within 0.005 between 128-tick checks. |
 | `water.no_flood` | Wet share ≤ 0.35 (≤ 0.55 for Islands and Lake Basin); official p90 0.40. |
 | `water.clean_exists` | Clean wet tiles ≥ 2% of the map. |
-| `water.outflow` | Every source's water reaches an edge or a planned basin: its connected wet region touches the map edge or a basin feature. |
-| `water.clean_reach` | At least one connected clean water body of 40+ tiles that badwater never reaches. |
-| `water.badwater_contained` | With the planned outlet tiles blocked (§9.5), the badwater region stays within its basin. |
-| `water.reservoir` | The better of these two ≥ need × drought reserve: (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). |
+| `water.outflow` | Every running source's water reaches an edge or a planned basin: its connected wet region (depth > 0) touches a map-edge tile that drains (not a walled source tile) or a lake feature. Not applicable without features (imports). |
+| `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. |
+| `water.badwater_contained` | With the planned outlet tiles blocked (§9.5), the badwater region stays within its basin. Not applicable until the badwater basin builder plans an outlet (roadmap M5; D24). |
+| `water.reservoir` | The better of these two ≥ need × drought reserve (Scarce 1×, Normal 1.5×, Plenty 3×; §5.3): (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). Dam sites are sampled on every second clean water tile within 60 tiles of the start, with crests 1–3, and flood at most max(6,000, 15% of the map) tiles (D30). |
 
 ### 11.4 Start and playability
 
@@ -969,36 +1012,44 @@ need     = drink + (drink / 2) × 0.0535 × (drought_days + 0.5)     (reservoir 
 
 That gives Easy 4 days × 40 beavers → 86; Normal 9 days × 50 → 253; Hard 30 days × 50 → 1,174.
 Hard also requires the reservoir's mean depth to be at least 3, because evaporation takes 1.6 over
-30 days.
+30 days. That rule needs dam sites with a crest of 4 and comes with the Hard feasibility guards in
+M6 (D30, pending Kyler); until then `water.reservoir` checks the volume only.
 
 ### 11.5 What the prototype already checks
 
-`prototype/validate.py` and `playability.py` implement every check above except `water.outflow`,
-`water.clean_reach`, `water.badwater_contained` and `extras.placement`. Those belong to set pieces
-the prototype does not build yet. `terrain.single_floor` is the prototype's `water.model` check.
+Since M2, `prototype/validate.py` and `playability.py` implement every check above, with the same
+ids, rules and "not applicable" cases as the TypeScript validator. A map with a project file beside
+it (`<stem>.damgoodmaps.json`) is checked with its spec and features; any other map as an import.
+`terrain.single_floor` replaced the prototype's `water.model` check.
 
-The prototype's playability module was written for generated maps. The TypeScript port must not
-copy three of its shortcuts, because imported maps break them:
-- It treats a BadwaterSource's tiles as Coordinates + (0..2, 0..2) whatever its orientation. The
-  port uses the footprint transform.
-- It ignores WaterSeep, BadwaterSeep, BadtideDrain and Aquifer as emitters. The port includes them
-  with their rules (§10).
-- It blocks walking only on the origin tile of multi-tile objects (mine sites, geothermal fields,
-  relics, cores). The port blocks their whole footprint.
+The prototype's first playability module was written for generated maps and took three shortcuts
+that imported maps break. The TypeScript port does not copy them, and the prototype was fixed to
+match (D28):
+- A BadwaterSource's tiles come from the footprint transform, whatever its orientation.
+- WaterSeep, BadwaterSeep, BadtideDrain and Aquifer are emitters with their rules (§10).
+- Multi-tile objects (mine sites, geothermal fields, relics, cores) block walking on their whole
+  footprint.
 
-A parity test runs both validators on all 19 official maps.
+The parity test (`npm run oracle`) runs both validators on 50 generated maps and on all 19
+official maps (import profile), and fails on any disagreement.
 
 A further check, `plants.drought`, is added. It is **advisory**: the one check that never blocks,
 in any profile, including `generate`. It
 flags living berry bushes within 20 tiles of the start whose moisture comes only from water that
 drains during a drought longer than 0.9 × their DaysToDieDry (blueberry: 9 days, and Normal
-droughts reach 9 days).
+droughts reach 9 days): their soil is dry in the moisture of the analytic drought water (§10).
+Every River Valley map at Normal carries this warning today, because its bushes live on the river,
+which drains in a drought (see docs/decisions-pending.md).
 
 ### 11.6 Report
 
-Each check yields `{id, class, severity, ok, value, limit, message, where?, fix?}` (§19.5): `where`
-is the tiles, region, feature or entity involved, and `fix` an optional list of edit operations
-the editor offers as a one-click fix. The map card groups them into File, Terrain and objects,
+Each check yields `{id, class, severity, ok, value, limit, message, where?, fix?, advisory?,
+applicable?}` (§19.5, `validate/report.ts`): `where` is the tiles, feature or entities involved,
+and `fix` an optional list of edit operations the editor offers as a one-click fix (M2 proposes
+`deleteEntities` for plants that would die and ruins next to the start; the M3 operations engine
+applies them). Severity follows the profile: load failures are errors everywhere; playability and
+design failures are errors in `generate`, warnings in `export`, and warnings and information in
+`import`; advisory checks warn. The map card groups them into File, Terrain and objects,
 Water, and Start and resources. Failures are explained in player terms, for example
 "The start is 23 tiles from pumpable clean water; Normal allows 16 (beavers go thirsty on day 6)."
 
@@ -1161,9 +1212,9 @@ downloaded maps are remembered in localStorage.
 |---|---|---|
 | **Unit** (Vitest) | RNG streams; sine polynomial error < 1e-9; noise; C#-style float formatting; world.json encoding; footprint transform (all templates × 4 orientations vs `footprints.json`); slope orientation; region labelling; dam-site finder; score normalisation. | every push |
 | **Round trip** | Read → write → read on every fixture map (official maps are not redistributable, so CI uses generated fixtures plus a local job for `investigation/raw`); byte-identical `world.json`. | every push (generated); local (official) |
-| **Water golden vectors** | TS sim vs Python fixtures after 50/200/975 ticks within 1e-6; moisture mask exact; the game's own save reproduced within 0.001. | every push |
+| **Water golden vectors** | TS sim vs Python fixtures (`tests/golden/water.json.gz`) after 50/200/975 ticks within 1e-6; moisture mask exact; pre-fill, canonical settle and drought storage; the analytic drought within 5% of the simulated one; the game's own save reproduced within 0.001 (local only). | every push |
 | **Determinism** | The same 20 seeds × 6 themes give identical sha256 in Node, Chromium, Firefox and WebKit (Playwright), and across two runs. | every push (Node), nightly (browsers) |
-| **Oracle** | The Node CLI writes 50 maps across themes and sizes; Python `validate.py` and `roundtrip_test.py` must pass; each TS check verdict must equal the Python verdict. | every push |
+| **Oracle** | The Node CLI writes 50 seeds × 3 sizes; Python `validate.py --load-only` and `roundtrip_test.py` must pass; on 50 of them, and on the 19 official maps when present, each TS check verdict must equal the Python verdict. | every push (5 seeds); full at each milestone |
 | **Contract** (§19) | The `MapSpec` schema accepts every preset and rejects out-of-bound values. Features survive a JSON round trip. `build(features)` equals the generated map byte for byte. An incremental rebuild after a feature edit equals a full rebuild. Feature and entity ids stay the same when an unrelated feature is added or removed. Import normalization (migrator halving, 4-field water, legacy `Heights`) is checked on the investigation maps. | every push |
 | **Golden maps** | 12 pinned seeds (2 per theme; 96² and 256²): sha256 of the `.timber` plus key metrics (score, check values). Any change must be intentional: `npm run golden:update`, and the diff shows the metric changes. | every push |
 | **Batch pass rates** | `tools/batch.ts`: 100 seeds per theme per size at Normal, plus 30 at Easy and Hard. Report first-attempt and final pass rates, failing checks, score distribution and timings, with generated metrics beside the official ranges. Gates: final pass rate ≥ 98% within 12 attempts, first attempt ≥ 60%, median 256² time ≤ 8 s. | nightly and before release |
@@ -1546,9 +1597,20 @@ list, and implementation adds to it.
 | D18 | In M1 the project file's base holds heights only, and a project file is rebuilt from its features. Voxel overrides, and opening from the stored base across generator versions, come with import in M3. | Generated maps are heightfields. Rebuilding from features is the M1 acceptance: it reproduces the `.timber` byte for byte. | M1 |
 | D19 | The River Valley planner in M1 follows the prototype: the river enters on the west edge and leaves on the east edge, and "highlands" are the upper bands of the two `terraces` landforms, not a separate feature. The planned lake basin runs from the basin start to 6 tiles above the gorge. There is no badwater (M2) and there are no map objects (M7). Every ruin column is in a field, within §9.7's "at most 5% outside fields". | Port the proven layout first and change one thing at a time. Other river directions come with the themes in M6. | M1 |
 | D20 | The JPEG encoder is jpeg-js 0.4.4, vendored as an ES module (`core/format/vendor/`, BSD notice kept) that returns a `Uint8Array`. | The npm build is CommonJS and returns a Node `Buffer` when a `module` object exists, so Node and the worker would run different code paths. | M1 |
-| D21 | In M1, slopes use the prototype's reach rule: every level region within ⌊0.6·max(W, H)⌋ tiles of the start is joined along the region tree (one slope per edge, a second on boundaries of 60+ pairs, at least 12 tiles apart). The §7.5 rules for the 40-tile core, the targeted regions and the 400-tile regions beyond come with `start.reach` and the playability class in M2. | The prototype's playability results were tuned with this rule. Measured over 10 seeds, it gives 14–21 slopes per 10k tiles at 96², 9–16 at 128² and 3–8 at 256². That is close to §7.5's target of up to 20 on small maps and 2–6 on large ones, slightly over at both ends. | M1; M2 revisits |
+| D21 | In M1, slopes use the prototype's reach rule: every level region within ⌊0.6·max(W, H)⌋ tiles of the start is joined along the region tree (one slope per edge, a second on boundaries of 60+ pairs, at least 12 tiles apart). The §7.5 rules for the 40-tile core, the targeted regions and the 400-tile regions beyond come with `start.reach` and the playability class in M2. | The prototype's playability results were tuned with this rule. Measured over 10 seeds, it gives 14–21 slopes per 10k tiles at 96², 9–16 at 128² and 3–8 at 256². That is close to §7.5's target of up to 20 on small maps and 2–6 on large ones, slightly over at both ends. | M1; M2 kept it (below) |
 | D22 | The browser test runs on the installed Chrome locally (`channel: "chrome"`) and on Playwright's Chromium in CI. CI runs the Python oracle on 5 seeds × 3 sizes on every push. The full 50 × 3 run is `npm run oracle`, run at each milestone. | Installing Playwright's browsers on Kyler's machine needs his go-ahead. The full oracle takes about a minute and CI keeps a fast subset. | M1 |
 | D23 | The site deploys to Pages from `main` only (`deploy.yml`). CI runs on every branch. | Kyler reviews `dev` and merges. Pages shows what was merged. | M1 |
+| D24 | River Valley gets the prototype's badwater, as a `badwaterBasin` set piece in a `marsh` mode: a BadwaterSource 3×3 below the falls, as far from the start as the valley allows, at the badwater ratio × the river's flow (0.65 at Normal, §5.4), clamped to 1–3. It sits in a pit one level below the floodplain, with a one-tile ditch to the river. `water.badwater_contained` is not applicable until the §9.5 side basin with its planned outlet arrives with the shared builder (M5). | M2 needs badwater for `start.badwater`, `water.clean_reach` and in-game check B4. The prototype's marsh on flat floodplain spread a thin badwater sheet over the whole lower valley: contaminated soil reached within 30 tiles of the start on 7% of maps, and sheets were the slowest water to settle. The pit and ditch send the badwater straight into the river. | M2 |
+| D25 | The dam-site ridge is a straight band square to the valley's axis (the river's source-to-outlet line), as in the prototype. Each end runs on until it is 4 tiles into ground at least as high as the useful crest (the terrain of build step 2). The gorge goes on the gentlest stretch of the river within 8% of the map of its drawn place. M1's ridge, which followed the river's arc position, is replaced. | With the reservoir checked (`water.reservoir`), the M1 ridge leaked: on a bend its band broke up, and a fixed 40-tile span let the valley floor of a downstream loop wrap round its end. A river that runs along the axis crosses an axis-square band once, and sealing by terrain holds whatever the loop. A steep crossing left a gap no straight dam closes. | M2 |
+| D26 | River Valley layout fixes that settled water exposed. (1) Floodplains step down 4 tiles below each bed step (`PLUNGE`), a short plunge gorge. (2) The channel widens with flow so its water stays about 0.55 deep: width = flow / (0.55 / (0.3 + 0.0015 · 0.8 · W)), from 4.4 to 8.4 (only 256² maps change today, to 7.95). (3) The start bench never fills channel tiles. (4) The start is 6–10 tiles from the channel's edge by true distance to the river path (§7.2), and within 34 tiles of the gorge. (5) The river's centre stays 0.2·H + 12 tiles off the north and south edges, and the planned basin 4 tiles. | (1) The upper channel's lip sat beside the lower floodplain, one level below its bed, and poured over the whole basin floor. (2) A 5-wide channel's surface rose 0.3 over a long 256² reach and overtopped its banks. (3) The bench dammed the river where the start was close. (4) The prototype's vertical offset put starts in the water where the river is steep, and a gorge more than 40 tiles away failed `water.reservoir`. (5) A basin touching the edge drains any dam. With D25, these take the 128² batch to 96% on the first attempt (100 seeds). | M2 |
+| D27 | The canonical settle is defined in §10: a priority-flood basin pre-fill plus an open-channel pre-fill of `min(1, 0.3·Q/w)`, then the simulation until the §11.3 test passes, checked every 128 ticks for at most 4 days. The test counts "at least 99.5% of tiles within 0.005" exactly (not a percentile) and sums volumes in index order. Both validators run this settle on the file (the `generate` profile reuses the build's). Files store 7-significant-digit water tokens and the settled evaporation modifiers. | One definition, computed from the document alone (§19.7), which the Python oracle reproduces bit for bit, so the two validators stop on the same tick and agree on every verdict. From empty, River Valley settled in about 900 ticks at 128² and never within 4 days at 256² with the sheets of D26; from the pre-fill it takes 640–768 and 1,152–1,408. | M2 |
+| D28 | The water model of map objects (`sim/model.ts`, and `prototype/playability.py` alike): emitters and walking blockers by footprint; Blockage and a badtide drain's back wall are full obstacles; NaturalDam follows the spec's partial-obstacle rules; seeps switch off above 0.8 deep and on below 0.72 without the game's real-time fade; aquifers, badtide drains and delayed sources are off; every emitter walls its map-edge padding, also when off. Roofs are not modelled: maps with caves or overhangs are simulated on their top surface, which `terrain.single_floor` reports (information on import). The prototype's three §11.5 shortcuts are fixed in the prototype too. | Parity needs one rule set in both validators. NaturalDam's rules and the seep hysteresis come from the code notes and are untested in game (the golden fixtures cover the port, not the game). Every official map has some multi-floor columns (3–4,790), so refusing the playability class on them would leave nothing to compare; the top-surface approximation is what the editor's preview will also show (EDITOR_PLAN §6). | M2 |
+| D29 | The analytic drought (§10) evaporates each pool by its tiles' own saturation modifiers, shared over the flat pool, instead of a flat 0.0535 a day, and a weir tile's own water drains over its lowest neighbour. | With the flat rate, a small weir pool kept 27% more than the simulation after 9 days (its corners evaporate 2.3× faster), outside the 5% the §10 test allows. Now the three fixtures agree within 0.4–2.7%. | M2 |
+| D30 | `water.reservoir` needs the colony's drought need × the drought reserve (Normal 1.5×: 380 at Normal). Dam sites are sampled within 60 tiles of the start (the same sampling in both validators) and may flood max(6,000, 15% of the map) tiles. Hard's "mean depth ≥ 3" rule (§11.4) waits for M6. | §5.3 defines the reserve multiplier; the prototype used 1×. Sampling only near the start keeps the Python oracle fast without changing any site within 40 tiles. On 256² maps the gorge basin is larger than 6,000 tiles (the prototype's limit), and §9.1 caps basins at 15% of the map. A mean depth of 3 needs crest-4 dam sites and the Hard feasibility guards of §5.3, which M6 builds. | M2; Hard rule pending Kyler |
+| D31 | Validation reports (`validate/report.ts`): a check that does not apply to a map is reported as passing with `applicable: false` and the reason (both validators). Severity follows the profile (§11.6). `fix` holds edit operations in the shape the M3 engine takes (today `deleteEntities` for plants that would die and ruins next to the start). The map card groups results as §11.6 says and shows advisory and export-profile failures as warnings. | Parity compares pass, fail and not applicable, so "not applicable" had to be a first-class result, not a missing check. | M2 |
+| D32 | The generator version is 0.2.0. M1's 0.1.0 files (out/m1) stay as they were logged. | Every map changes in M2: settled water in the file, the layout fixes of D25 and D26, the badwater of D24. | M2 |
+| D33 | **Water budget (the M2 benchmark, §10):** the canonical settle takes ≤ 3 s at 256² and ≤ 0.6 s at 128². Measured medians in Node: 0.39 s at 256² (max 0.51 s) and 0.07 s at 128² (max 0.07 s); a whole 256² generation takes a median 0.95 s in Chrome. K = 3 candidates stay the default at 256² (§7.9). CI checks the 256² median on every push. | The M2 acceptance asks for the budget to be measured and recorded here. The exact active list plus the pre-fill cut the audit's 6.5–11.3 s cold start at 256² to under 0.6 s. | M2 |
+| D34 | The M1 slope rule (the prototype's reach rule, D21) stays through M2. §7.5's 40-tile core, targeted regions and the 400-tile rule arrive with the slope tools in M5, which lists §7.5. | With it, `start.reach` passed on every one of 100 maps at 128² (12,000+ walkable tiles against 1,300 needed), so M2 had no reason to change a rule M5 rebuilds. | M2 |
 
 ---
 
