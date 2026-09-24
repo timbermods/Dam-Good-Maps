@@ -10,7 +10,8 @@ import { planContextOf, planLake, planLandform, planPiece, planRiver, type LakeR
 import type { EditOp } from "../../../src/core/doc/ops";
 import type { Feature, Point, SetPieceKind } from "../../../src/core/features/schema";
 import { polygonMask } from "../../../src/core/features/geometry";
-import { tilesToRuns, runsToTiles, type Runs } from "../../../src/core/math/grid";
+import { distanceFrom, tilesToRuns, runsToTiles, type Runs } from "../../../src/core/math/grid";
+import { density } from "../../../src/core/gen/calibrated";
 import { decodeSpecFragment, type MapSpec, type ThemeId } from "../../../src/core/spec/mapspec";
 import { BUILDERS, type PlanRecord } from "../../../src/core/features/setpieces";
 
@@ -367,4 +368,26 @@ export function spotScaled(ctx: RecipeContext, r: number, blocked: Uint8Array, s
     if (at) return { at, k };
   }
   return null;
+}
+
+/** Put back berry bushes a premise cleared: when the map's bushes fall below 1.2× the minimum the
+ *  validator asks for (half the size-aware official median, resources.bushes), add a patch on moist
+ *  ground a few tiles from a river, as a planner that laid the premise out first would have. */
+export function topUpBushes(ctx: RecipeContext): void {
+  const { W, H } = ctx;
+  const N = W * H;
+  const want = 1.2 * 0.5 * (density("bushes_per_10k", N) / 1e4) * N * (ctx.spec.settings.resources.berryBushes / 100);
+  const have = ctx.session.built.entities.filter((e) => e.template === "BlueberryBush").length;
+  if (have >= want) return;
+  const b = ctx.session.built;
+  const pc = planContextOf(ctx.session);
+  const near = distanceFrom(b.channel, W, H);
+  const taken = forbidden(ctx, 6);
+  const tiles: number[] = [];
+  for (let i = 0; i < N; i++) if (near[i] >= 3 && near[i] <= 9 && !taken[i] && !pc.occupied?.[i] && b.water[i] < 0.05 && b.moisture[i] > 0) tiles.push(i);
+  if (tiles.length < 20) return;
+  const need = Math.ceil((want - have) * 1.3);
+  const pick = tiles.filter((_, k) => k % Math.max(1, Math.floor(tiles.length / (need * 2))) === 0).slice(0, need * 2);
+  const feature = { id: newId(ctx), kind: "berryPatch", origin: "user", locked: false, params: { area: tilesToRuns(pick, W), density: 0.6, ripeShare: 0.55 } } as Feature;
+  apply(ctx, [{ op: "addFeature", params: { feature } }], "berries to make up for the cleared ones");
 }

@@ -15,7 +15,7 @@ import { blocks } from "../../src/core/validate/report";
 import { writeTimber } from "../../src/core/format/timber";
 import { lowPriority, ROOT } from "./lib/paths";
 import { measureFile } from "./lib/measures";
-import { openBase, rng, RecipeFailure, type Recipe, type RecipeContext } from "./recipes/lib";
+import { openBase, rng, RecipeFailure, topUpBushes, type Recipe, type RecipeContext } from "./recipes/lib";
 import { RECIPES } from "./recipes/index";
 
 lowPriority();
@@ -52,6 +52,7 @@ function runOnce(recipe: Recipe, size: number, seed: number): RunResult {
     const ctx: RecipeContext = { session, base, spec: base.spec, W: size, H: size, rand: rng(seed * 7919 + size * 31 + attempt * 104729), attempt, notes: [] };
     try {
       recipe.apply(ctx);
+      topUpBushes(ctx);
     } catch (e) {
       if (!(e instanceof RecipeFailure)) throw e;
       failed.push(`attempt ${attempt + 1}: ${e.message}`);

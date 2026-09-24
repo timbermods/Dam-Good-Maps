@@ -206,12 +206,17 @@ function popularity(): Record<string, unknown> {
     const k = String((r.meta as any).creator_steamid ?? r.key); // eslint-disable-line @typescript-eslint/no-explicit-any
     (byAuthor.get(k) ?? byAuthor.set(k, []).get(k)!).push(i);
   });
-  const within = resid.slice();
-  for (const idx of byAuthor.values()) {
-    if (idx.length < 3) continue;
-    const m = idx.reduce((s, i) => s + resid[i], 0) / idx.length;
-    for (const i of idx) within[i] = resid[i] - m;
-  }
+  const withinOf = (y: number[]) => {
+    const out = y.slice();
+    for (const idx of byAuthor.values()) {
+      if (idx.length < 3) continue;
+      const m = idx.reduce((s, i) => s + y[i], 0) / idx.length;
+      for (const i of idx) out[i] = y[i] - m;
+    }
+    return out;
+  };
+  const within = withinOf(resid);
+  const favWithin = withinOf(fav);
   const rnd = lcg(20260924);
   const hint = (vals: (number | null)[], y: number[]) => {
     const ok = vals.map((v, i) => [v, y[i]] as const).filter(([v]) => typeof v === "number" && Number.isFinite(v)) as [number, number][];
@@ -228,7 +233,7 @@ function popularity(): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [name, f] of HINT_FEATURES) {
     const vals = withMeta.map(f);
-    out[name] = { subscribersForAge: hint(vals, resid), withinAuthor: hint(vals, within), favouriteRate: hint(vals, fav) };
+    out[name] = { subscribersForAge: hint(vals, resid), withinAuthor: hint(vals, within), favouriteRate: hint(vals, fav), favouriteRateWithinAuthor: hint(vals, favWithin) };
   }
   // catalogue tags as features
   const tagNames = [...new Set(workshop.flatMap((r) => r.tags))].sort();
@@ -237,11 +242,11 @@ function popularity(): Record<string, unknown> {
     const vals = withMeta.map((r) => (r.tags.includes(t) ? 1 : 0));
     const n = vals.reduce((s: number, v) => s + v, 0);
     if (n < 5) continue;
-    tags[t] = { maps: n, subscribersForAge: hint(vals, resid), favouriteRate: hint(vals, fav) };
+    tags[t] = { maps: n, subscribersForAge: hint(vals, resid), withinAuthor: hint(vals, within), favouriteRate: hint(vals, fav), favouriteRateWithinAuthor: hint(vals, favWithin) };
   }
   const authors = [...byAuthor.values()].map((v) => v.length).sort((p, q) => q - p);
   return {
-    note: "Hints, never proof: Spearman rank correlations over workshop maps. 'subscribersForAge' is log lifetime subscribers after a fit on log age; 'withinAuthor' takes each prolific author's (3+ maps) own mean out; 'favouriteRate' is log favourites per lifetime subscriber. ci90 is a bootstrap interval; one that spans 0 is noise.",
+    note: "Hints, never proof: Spearman rank correlations over workshop maps. 'subscribersForAge' is log lifetime subscribers after a fit on log age; 'withinAuthor' takes each prolific author's (3+ maps) own mean out; 'favouriteRate' is log favourites per lifetime subscriber, and 'favouriteRateWithinAuthor' the same with each prolific author's mean taken out. ci90 is a bootstrap interval; one that spans 0 is noise.",
     maps: withMeta.length,
     ageFit: { intercept: Math.round(a * 100) / 100, slopePerLogDay: Math.round(b * 100) / 100 },
     authors: { distinct: byAuthor.size, largestShares: authors.slice(0, 3) },
@@ -321,7 +326,8 @@ function verticality(): Record<string, unknown> {
     heightRange: stat(set.map((r) => r.v.heightRange)),
     cliffShare: stat(set.map((r) => r.v.cliffShare)),
     maxFallDrop: stat(set.map((r) => r.v.maxFallDrop)),
-    withTallFall: set.filter((r) => (r.v.tallFalls ?? 0) > 0).length,
+    // falls read the settled water: counted over the maps whose water our settle can show
+    withTallFall: { maps: set.filter((r) => (r.v.tallFalls ?? 0) > 0).length, of: set.filter((r) => r.waterReliable).length },
     caveShareOver5pct: set.filter((r) => (r.v.caveShare ?? 0) >= 0.05).length,
   });
   return { official: f(official), workshop: f(workshop), workshop10: f(w10), generated128: f(gen) };
