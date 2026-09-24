@@ -49,6 +49,9 @@ export interface RiverParams {
   entry: { edge: Edge } | { spring: Point } | { lake: string };
   exit: { edge: Edge } | { lake: string } | { river: string };
   badwater: boolean;
+  /** Raise the ground beside the channel to its banks (bed + bedDepth) where it is lower: rivers
+   *  drawn in the editor keep their water on any terrain. Generated rivers run in their valley. */
+  banks?: boolean;
 }
 
 // ------------------------------------------------------------------------------------------- lake
@@ -58,7 +61,17 @@ export interface LakeParams {
   outline: Point[];
   /** The basin floor, as levels above the river bed it sits on (1 = the floodplain). */
   floorDepth: number;
-  outlet: { at: Point; sill: number; to: "edge" | "river" | "lake" | "none"; target?: string };
+  outlet: {
+    at: Point;
+    sill: number;
+    to: "edge" | "river" | "lake" | "none";
+    target?: string;
+    /** The outlet channel, planned once on the map (route.ts): tiles x0, y0, …, their bed levels,
+     *  and its width. Lakes drawn in the editor have one; a planned basin drains by its river. */
+    path?: number[];
+    levels?: number[];
+    width?: number;
+  };
   inflow: { rivers: string[] } | { spring: number };
   /** A planned basin is a reservoir site: dry until the player dams its outlet. */
   planned: boolean;
@@ -81,6 +94,11 @@ export interface LandformParams {
   /** Free-standing landforms (editor): outline and height. */
   outline?: Point[];
   height?: number;
+  /** The ground level the edge starts from (the lowest ground round the outline when it was drawn).
+   *  Gentle and terraced edges step from it toward `height`: gentle 1 level every 3 tiles,
+   *  terraced every `bandDepth` tiles (6–12). Without it, every edge is a cliff. */
+  base?: number;
+  bandDepth?: number;
   /** Landforms of a generated layout follow a river: the valley floor and the terrace bands on
    *  each side of it. */
   along?: {
@@ -116,7 +134,7 @@ export type SetPieceKind =
 export interface SetPieceParams {
   kind: SetPieceKind;
   /** What was asked for. */
-  request: Record<string, number | string | boolean>;
+  request: Record<string, number | string | boolean | number[]>;
   /** The resolved plan the rasterizer uses (PLAN §19.3). Rebuilds never plan again. */
   plan: Record<string, number | string | boolean | number[]>;
   /** Every value the builder reduced, and what it cleared or added. */

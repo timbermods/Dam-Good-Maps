@@ -87,7 +87,7 @@ async function orbit(page: Page) {
 
 async function measureGenerated(page: Page, seed: number): Promise<MapResult> {
   await page.goto("about:blank"); // a new page load, not a hash change
-  await page.goto(`http://localhost:${PORT}/#s=${seed}&z=256&d=n&t=riverValley&v=0.2.0`);
+  await page.goto(`http://localhost:${PORT}/#s=${seed}&z=256&d=n&t=riverValley&v=0.3.0`);
   await page.getByText(/checks passed/).first().waitFor({ timeout: 120_000 });
   await page.evaluate(() => delete window.dgm3d);
   const t0 = Date.now();
@@ -112,7 +112,7 @@ const round = (v: number) => Math.round(v * 10) / 10;
 
 async function measureFile(page: Page, path: string): Promise<MapResult | null> {
   await page.goto("about:blank");
-  await page.goto(`http://localhost:${PORT}/#s=1&z=96&d=n&t=riverValley&v=0.2.0`);
+  await page.goto(`http://localhost:${PORT}/#s=1&z=96&d=n&t=riverValley&v=0.3.0`);
   await page.getByText(/checks passed|checks failed/).first().waitFor({ timeout: 120_000 });
   await page.evaluate(() => delete window.dgm3d);
   const t0 = Date.now();
@@ -147,7 +147,7 @@ async function runConfig(label: string, args: string[], cpuSlowdown: number, scr
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuSlowdown });
   }
-  await page.goto(`http://localhost:${PORT}/#s=1&z=96&d=n&t=riverValley&v=0.2.0`);
+  await page.goto(`http://localhost:${PORT}/#s=1&z=96&d=n&t=riverValley&v=0.3.0`);
   await page.getByText(/checks passed/).first().waitFor({ timeout: 120_000 });
   // (a string, so the bundler's helpers stay out of the page)
   const env = (await page.evaluate(`new Promise((resolve) => {

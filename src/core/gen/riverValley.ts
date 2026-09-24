@@ -12,6 +12,7 @@ import type { Orientation } from "../format/footprints";
 import { arcAtX, bedAt, floorAt, pathField, pointAtArc, polygonMask, round } from "../features/geometry";
 import { buildMap, START_CLEAR_RADIUS, type LockedLayer, type SettleCache } from "../features/build";
 import { featureId } from "../features/ids";
+import { planSetPiece, type PlanContext as PieceContext, type PlanRecord } from "../features/setpieces";
 import type {
   BerryPatchFeature,
   Feature,
@@ -151,14 +152,15 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
       },
     };
 
-    const waterfall = (fid: string, role: string, at: number): SetPieceFeature => ({
-      id: fid,
-      kind: "setPiece",
-      origin: "generated",
-      role,
-      locked: false,
-      params: { kind: "waterfall", request: { mode: "on-river", drop: 2 }, plan: { mode: "on-river", river: riverId, at, drop: 2 }, report: [] },
-    });
+    // the set pieces come from the shared builders (PLAN §7.3, §19.3), planned on the macro layout
+    const layoutCtx = (features: Feature[]): PieceContext => ({ W, H, seed, features, heights: new Uint8Array(0) });
+    const piece = (kind: SetPieceFeature["params"]["kind"], request: PlanRecord, ctx: PieceContext, fid: string, role: string): SetPieceFeature => {
+      const r = planSetPiece(kind, request, ctx, { id: fid, origin: "generated", role }, true);
+      if (!r.ok) throw new Error(`River Valley's ${role}: ${r.errors.join("; ")}`);
+      return r.feature;
+    };
+    const waterfall = (fid: string, role: string, at: number): SetPieceFeature =>
+      piece("waterfall", { mode: "on-river", river: riverId, at, drop: 2 }, layoutCtx([river]), fid, role);
 
     const valley: LandformFeature = {
       id: id("landform", "landform/valley"),
@@ -231,19 +233,8 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
       },
     };
 
-    const damSite: SetPieceFeature = {
-      id: id("setPiece", "setpiece/damSite/primary"),
-      kind: "setPiece",
-      origin: "generated",
-      role: "setpiece/damSite/primary",
-      locked: false,
-      params: {
-        kind: "damSite",
-        request: { crest: 2 },
-        plan: { river: riverId, at: sGorge, thickness: 5, halfSpan: Math.max(W, H), topLevel: floorTop + 4, crest: 2, wobble: 1.25 },
-        report: [],
-      },
-    };
+    // the ridge's top stands 3 above the crest: the floodplain + 4 (PLAN §9.1, D25)
+    const damSite = piece("damSite", { river: riverId, at: sGorge, crest: 2 }, layoutCtx([river]), id("setPiece", "setpiece/damSite/primary"), "setpiece/damSite/primary");
 
     // the start bench: above the basin, 6–10 tiles from the channel's edge, door facing the river
     // (the dam site must lie within 40 tiles of the start, PLAN §9.1: move the start downstream,
@@ -313,48 +304,15 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
     if (ratio > 0) {
       const ground = buildMap({ W, H, seed, features: [...layout, ...(context?.features ?? [])], locked: context?.locked }, { stopBeforeWater: true });
       const strength = Math.min(3, Math.max(1, round(flow * ratio, 2)));
-      let best = -1;
-      let site: { x: number; y: number; level: number; sgn: number } | null = null;
-      // the nearest offset from the channel that has a site (the prototype's 4 tiles on a 5-wide river)
-      for (let off = Math.ceil(riverW / 2) + 1; off <= Math.ceil(riverW / 2) + 4 && !site; off++)
-      for (let x = fallsX + 3; x < W - 4; x++) {
-        const level = floorAt(river.params, arcAtX(path, x), 1);
-        for (const sgn of [1, -1]) {
-          const y = Math.round(centre(x) + sgn * off - (sgn < 0 ? 2 : 0));
-          if (y < 1 || y >= H - 3) continue;
-          let flat = true;
-          for (let yy = y; yy < y + 3 && flat; yy++)
-            for (let xx = x; xx < x + 3 && flat; xx++) {
-              const i = yy * W + xx;
-              if (ground.heights[i] !== level || ground.occupied[i] || context?.protect?.[i]) flat = false;
-            }
-          if (!flat) continue;
-          const d2 = (x + 1 - sx) * (x + 1 - sx) + (y + 1 - sy) * (y + 1 - sy);
-          if (d2 > best) {
-            best = d2;
-            site = { x, y, level, sgn };
-          }
-        }
-      }
-      if (site) {
-        // the ditch: from the pit's middle column toward the river until it meets the channel
-        const ditch: number[] = [];
-        const dx = site.x + 1;
-        for (let y = site.sgn > 0 ? site.y - 1 : site.y + 3; y >= 0 && y < H && distToPath(path, dx, y) >= riverW / 2; y -= site.sgn) ditch.push(dx, y);
-        layout.splice(layout.length - 1, 0, {
-          id: id("setPiece", "setpiece/badwaterBasin/marsh"),
-          kind: "setPiece",
-          origin: "generated",
-          role: "setpiece/badwaterBasin/marsh",
-          locked: false,
-          params: {
-            kind: "badwaterBasin",
-            request: { mode: "marsh", badwater: spec.settings.hazards.badwater },
-            plan: { mode: "marsh", x: site.x, y: site.y, level: site.level - 1, strength, ditch },
-            report: [],
-          },
-        });
-      }
+      const role = "setpiece/badwaterBasin/marsh";
+      const marsh = planSetPiece(
+        "badwaterBasin",
+        { mode: "marsh", badwater: spec.settings.hazards.badwater, river: riverId, fromX: fallsX + 3, far: [sx, sy], strength },
+        { W, H, seed, features: layout, heights: ground.heights, occupied: ground.occupied, locked: context?.protect ?? null },
+        { id: id("setPiece", role), origin: "generated", role },
+      );
+      // no flat floodplain below the falls: this layout has no marsh
+      if (marsh.ok) layout.splice(layout.length - 1, 0, marsh.feature);
     }
 
     // ------------------------------------------------------------------ resources on the settled water

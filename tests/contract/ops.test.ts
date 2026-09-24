@@ -79,7 +79,26 @@ describe("invalid operations are rejected with a reason and change nothing", () 
     ["deleting a river others build on", { op: "deleteFeature", params: { id: river.id } }, /build on it/],
     ["a second start", { op: "addFeature", params: { feature: { ...start, id: USER, origin: "user" } } }, /already has its start/],
     ["a feature claiming to be generated", { op: "addFeature", params: { feature: { ...forest, id: USER } } }, /only the generator/],
-    ["a set piece before its builder", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "waterfall", request: {}, plan: {}, report: [] } } } }, /roadmap M5/],
+    // set pieces are built by their builders (M5): a request outside the hard bounds, a plan
+    // outside them, and a kind this version does not build are all rejected
+    ["a set piece with an empty request", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "waterfall", request: {}, plan: {}, report: [] } } } }, /missing "mode"/],
+    [
+      "a waterfall whose plan drops 20 levels",
+      {
+        op: "addFeature",
+        params: {
+          feature: {
+            id: USER,
+            kind: "setPiece",
+            origin: "claude",
+            locked: false,
+            params: { kind: "waterfall", request: { mode: "on-river", river: river.id, at: 30, drop: 20 }, plan: { mode: "on-river", river: river.id, at: 30, drop: 20 }, report: [] },
+          },
+        },
+      },
+      /drop of 1–15/,
+    ],
+    ["a set piece kind not built yet", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "plugSpillway", request: {}, plan: {}, report: [] } } } }, /not built by this version/],
     ["the naturalize brush", { op: "sculpt", params: { mode: "naturalize", cells: [[1, 1, 3]] } }, /roadmap M10/],
     ["regenerating an area", { op: "regenerateRegion", params: { area: { runs: [[1, 1, 3]] }, seedVariant: 1, layers: ["terrain"] } }, /roadmap M11/],
     ["a faction-only plant", { op: "placeEntity", params: { id: "11111111-2222-4333-8444-555555555555", template: "Maple", x: 3, y: 3, orientation: "Cw0" } }, /cannot be placed/],

@@ -6,6 +6,7 @@ import { fbm } from "../../math/noise";
 import { hash32 } from "../../math/hash";
 import type { Runs } from "../../math/grid";
 import { bedAt, floorAt, polygonMask } from "../geometry";
+import { carveChannel, channelBounds, type ChannelPlan } from "../route";
 import type { Edge, Feature, LakeFeature, LandformFeature, RiverFeature, StartFeature } from "../schema";
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 
@@ -52,53 +53,135 @@ export function rasterizeLandform(f: LandformFeature, t: BuildTarget): void {
     }
   }
   if (p.outline && p.height !== undefined) {
-    const mask = polygonMask(p.outline, t.W, t.H);
     const level = Math.min(MAX_TERRAIN, p.height);
+    const step = edgeStep(p);
+    if (!step) {
+      const mask = polygonMask(p.outline, t.W, t.H);
+      t.forEach((i) => {
+        if (mask[i] && t.writable(i, f)) heights[i] = level;
+      });
+      return;
+    }
+    // gentle and terraced edges: 1-level steps from the base toward the height, one every `step`
+    // tiles in from the outline (PLAN §19.2)
+    const inward = t.inward(p.outline);
+    const base = Math.min(MAX_TERRAIN, p.base!);
     t.forEach((i) => {
-      if (mask[i] && t.writable(i, f)) heights[i] = level;
+      const d = inward[i];
+      if (d <= 0 || !t.writable(i, f)) return;
+      const k = Math.floor((d - 1) / step);
+      heights[i] = level >= base ? Math.min(level, base + 1 + k) : Math.max(level, base - 1 - k);
     });
     return;
   }
   t.note(`landform ${f.id} (${p.kind}) has no shape this version can build`);
 }
 
+/** Tiles between 1-level steps of a landform's edge: gentle 3, terraced its band depth (6–12);
+ *  0 for a cliff (or a landform with no base). */
+export function edgeStep(p: LandformFeature["params"]): number {
+  if (p.base === undefined || p.edgeStyle === "cliff") return 0;
+  return p.edgeStyle === "gentle" ? 3 : (p.bandDepth ?? 8);
+}
+
 // ---------------------------------------------------------------------------------- lakes, rivers
 
+/** A lake's outlet channel, when it has one. */
+export function lakeOutlet(f: LakeFeature): ChannelPlan | null {
+  const o = f.params.outlet;
+  if (!o.path || !o.levels || !o.width) return null;
+  return { tiles: o.path, levels: o.levels, width: o.width, to: o.target ?? o.to };
+}
+
+/** Lakes (step 4). A planned basin follows its river: its floor is the floodplain (PLAN §9.1). A
+ *  lake of its own fills to its outlet sill (settled water is flat): its floor lies `floorDepth`
+ *  below the sill, a rim two tiles wide round it stands at least one level above the sill, and its
+ *  outlet channel cuts the rim at the sill and carries the water away. */
 export function rasterizeLake(f: LakeFeature, t: BuildTarget): void {
-  const { heights } = t;
-  const mask = polygonMask(f.params.outline, t.W, t.H);
+  const { heights, W, H } = t;
+  const mask = polygonMask(f.params.outline, W, H);
   const river = f.params.river ? t.river(f.params.river) : undefined;
   const field = river ? t.pathField(river.id) : undefined;
+  if (river && field) {
+    t.forEach((i) => {
+      if (!mask[i] || t.protectedMask[i] || !t.writable(i, f)) return;
+      heights[i] = floorAt(river.params, field.s[i], f.params.floorDepth);
+    });
+    return;
+  }
+  const sill = f.params.outlet.sill;
+  const floor = Math.max(0, sill - f.params.floorDepth);
+  t.forEach((i, x, y) => {
+    if (mask[i] || t.protectedMask[i] || !t.writable(i, f) || heights[i] > sill) return;
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H && mask[ny * W + nx]) {
+          heights[i] = Math.min(MAX_TERRAIN, sill + 1);
+          return;
+        }
+      }
+  });
+  const out = lakeOutlet(f);
+  if (out) carveChannel(out, t, f, (i) => mask[i] === 1);
   t.forEach((i) => {
-    if (!mask[i] || t.protectedMask[i] || !t.writable(i, f)) return;
-    if (river && field) heights[i] = floorAt(river.params, field.s[i], f.params.floorDepth);
-    else heights[i] = Math.max(0, f.params.outlet.sill - f.params.floorDepth);
+    if (mask[i] && !t.protectedMask[i] && t.writable(i, f)) heights[i] = floor;
   });
 }
 
+/** The channel's half-width at arc position s: the river's own, or a gorge's narrows. */
+export function halfAt(f: RiverFeature, narrows: readonly { from: number; to: number; half: number }[], s: number): number {
+  let half = f.params.width / 2;
+  for (const n of narrows) if (s >= n.from && s <= n.to && n.half < half) half = n.half;
+  return half;
+}
+
+/** Rivers (step 4): the channel carved at the bed profile's level. A river drawn in the editor
+ *  (`banks`) also raises the ground beside its channel to its banks, bed + bedDepth, where the
+ *  terrain is lower, so its water stays in the channel whatever it crosses. */
 export function rasterizeRiver(f: RiverFeature, t: BuildTarget): void {
-  const { heights, channel } = t;
+  const { heights, channel, W, H } = t;
   const field = t.pathField(f.id);
-  const half = f.params.width / 2;
+  const narrows = t.narrows(f.id);
+  const banks = f.params.banks === true;
+  // the lakes it flows from or into keep their own floor
+  let lakes: Uint8Array | null = null;
+  if (banks) {
+    for (const end of [f.params.entry, f.params.exit]) {
+      if (!("lake" in end)) continue;
+      const lake = t.feature(end.lake);
+      if (lake?.kind !== "lake") continue;
+      const m = polygonMask(lake.params.outline, W, H);
+      if (!lakes) lakes = m;
+      else for (let i = 0; i < m.length; i++) if (m[i]) lakes[i] = 1;
+    }
+  }
   t.forEach((i) => {
-    if (field.d[i] < half && t.writable(i, f)) {
+    const d = field.d[i];
+    const half = narrows.length ? halfAt(f, narrows, field.s[i]) : f.params.width / 2;
+    if (d < half) {
+      if (!t.writable(i, f)) return;
       heights[i] = bedAt(f.params.bedProfile, field.s[i]);
       channel[i] = 1;
+    } else if (banks && d < half + 1 && !channel[i] && !t.protectedMask[i] && !lakes?.[i] && t.writable(i, f)) {
+      const bank = Math.min(MAX_TERRAIN, bedAt(f.params.bedProfile, field.s[i]) + f.params.bedDepth);
+      if (heights[i] < bank) heights[i] = bank;
     }
   });
 }
 
 /** Channel tiles on the map border where the river enters (its sealed mouth, PLAN §7.6). */
-export function mouthTiles(f: RiverFeature, t: Pick<BuildTarget, "W" | "H" | "pathField">): number[] {
+export function mouthTiles(f: RiverFeature, t: Pick<BuildTarget, "W" | "H" | "pathField" | "narrows">): number[] {
   const entry = f.params.entry;
   if (!("edge" in entry)) return [];
   const { W, H } = t;
   const field = t.pathField(f.id);
-  const half = f.params.width / 2;
+  const narrows = t.narrows(f.id);
   const out: number[] = [];
   const border = (x: number, y: number) => {
     const i = y * W + x;
-    if (field.d[i] < half) out.push(i);
+    if (field.d[i] < (narrows.length ? halfAt(f, narrows, field.s[i]) : f.params.width / 2)) out.push(i);
   };
   const edge: Edge = entry.edge;
   if (edge === "west") for (let y = 0; y < H; y++) border(0, y);
@@ -106,6 +189,55 @@ export function mouthTiles(f: RiverFeature, t: Pick<BuildTarget, "W" | "H" | "pa
   else if (edge === "south") for (let x = 0; x < W; x++) border(x, 0);
   else for (let x = 0; x < W; x++) border(x, H - 1);
   return out;
+}
+
+/** The channel tiles a spring-fed river's sources stand on: the ones nearest its spring, enough
+ *  that none carries more than 8 blocks per second (the game's cap per tile). */
+export function springTiles(f: RiverFeature, t: Pick<BuildTarget, "W" | "H" | "pathField">): number[] {
+  const entry = f.params.entry;
+  if (!("spring" in entry)) return [];
+  const { W, H } = t;
+  const field = t.pathField(f.id);
+  const half = f.params.width / 2;
+  const [sx, sy] = entry.spring;
+  const n = Math.max(1, Math.ceil(f.params.flow / 8));
+  const near: [number, number][] = [];
+  const r = Math.ceil(half) + 3;
+  for (let y = Math.max(0, Math.floor(sy) - r); y <= Math.min(H - 1, Math.ceil(sy) + r); y++)
+    for (let x = Math.max(0, Math.floor(sx) - r); x <= Math.min(W - 1, Math.ceil(sx) + r); x++) {
+      const i = y * W + x;
+      if (field.d[i] < half) near.push([(x - sx) * (x - sx) + (y - sy) * (y - sy), i]);
+    }
+  near.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return near.slice(0, n).map(([, i]) => i);
+}
+
+/** The basin tile a lake's spring stands on: the one nearest the outline's middle. */
+export function lakeSpringTile(f: LakeFeature, W: number, H: number): number | null {
+  const inflow = f.params.inflow;
+  if (!("spring" in inflow) || !(inflow.spring > 0) || f.params.planned) return null;
+  const mask = polygonMask(f.params.outline, W, H);
+  let sx = 0;
+  let sy = 0;
+  for (const [x, y] of f.params.outline) {
+    sx += x;
+    sy += y;
+  }
+  sx /= f.params.outline.length;
+  sy /= f.params.outline.length;
+  let best = -1;
+  let bd = Infinity;
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i]) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    const d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
+    if (d < bd) {
+      bd = d;
+      best = i;
+    }
+  }
+  return best >= 0 ? best : null;
 }
 
 // ----------------------------------------------------------------------------------------- start
@@ -257,12 +389,16 @@ export function terrainFootprint(f: Feature, t: Pick<BuildTarget, "W" | "H" | "r
       return b && clipRect(b, W, H, 1);
     }
     case "lake": {
-      const b = boundsOf(f.params.outline);
-      return b && clipRect(b, W, H, 1);
+      const pts: [number, number][] = f.params.outline.map(([x, y]) => [x, y]);
+      const out = lakeOutlet(f);
+      const c = out ? channelBounds(out) : null;
+      if (c) pts.push([c.x0, c.y0], [c.x1, c.y1]);
+      const b = boundsOf(pts);
+      return b && clipRect(b, W, H, f.params.river ? 1 : 3);
     }
     case "river": {
       const b = boundsOf(f.params.path);
-      return b && clipRect(b, W, H, Math.ceil(f.params.width / 2) + 1);
+      return b && clipRect(b, W, H, Math.ceil(f.params.width / 2) + (f.params.banks ? 2 : 1));
     }
     case "start": {
       const [x, y] = f.params.position;

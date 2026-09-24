@@ -4,8 +4,9 @@
 // inside the region come out exactly as in a full build. The few that read other tiles (the dam
 // site's ridge ends, the smooth brush) make the pipeline widen the region to cover what they read.
 
-import { pathField, type PathField } from "./geometry";
-import type { Feature, RiverFeature } from "./schema";
+import { distanceFrom } from "../math/grid";
+import { pathField, polygonMask, type PathField } from "./geometry";
+import type { Feature, Point, RiverFeature } from "./schema";
 
 /** A set of tiles: an inclusive bounding rectangle and, optionally, a mask inside it. */
 export interface TileRegion {
@@ -52,8 +53,9 @@ export function boundsOf(points: readonly (readonly number[])[]): Rect | null {
   return { x0, y0, x1, y1 };
 }
 
-/** Path fields by river path, shared between the builds of one document. */
-export type FieldCache = Map<string, PathField>;
+/** Path fields by river path, and inward distance fields by outline, shared between the builds of
+ *  one document. */
+export type FieldCache = Map<string, PathField | Float64Array>;
 
 export interface TargetInit {
   W: number;
@@ -105,11 +107,43 @@ export class BuildTarget {
     if (!r) throw new Error(`unknown river ${riverId}`);
     const key = `${this.W}x${this.H}:${JSON.stringify(r.params.path)}`;
     let f = this.fields.get(key);
-    if (!f) {
+    if (!f || f instanceof Float64Array) {
       f = pathField(r.params.path, this.W, this.H);
       this.fields.set(key, f);
     }
     return f;
+  }
+
+  /** Chamfer distance from each tile inside an outline to the nearest tile outside it (1 on the
+   *  outline's edge tiles, 0 outside). */
+  inward(outline: Point[]): Float64Array {
+    const key = `in:${this.W}x${this.H}:${JSON.stringify(outline)}`;
+    let f = this.fields.get(key);
+    if (!(f instanceof Float64Array)) {
+      const inside = polygonMask(outline, this.W, this.H);
+      const outside = new Uint8Array(inside.length);
+      for (let i = 0; i < inside.length; i++) outside[i] = inside[i] ? 0 : 1;
+      f = distanceFrom(outside, this.W, this.H);
+      this.fields.set(key, f);
+    }
+    return f;
+  }
+
+  /** The narrows set pieces put on a river (a gorge's channel width): arc stretches and the
+   *  channel's half-width there. */
+  narrows(riverId: string): { from: number; to: number; half: number }[] {
+    const out: { from: number; to: number; half: number }[] = [];
+    for (const f of this.features.values()) {
+      if (f.kind !== "setPiece" || f.params.kind !== "gorge" || f.params.plan.river !== riverId) continue;
+      const p = f.params.plan as { from: number; to: number; width: number };
+      out.push({ from: p.from, to: p.to, half: p.width / 2 });
+    }
+    return out;
+  }
+
+  /** Every feature by id (set pieces read the features they build on). */
+  feature(id: string): Feature | undefined {
+    return this.features.get(id);
   }
 
   inRegion(i: number): boolean {

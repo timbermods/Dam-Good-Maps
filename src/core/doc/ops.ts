@@ -15,6 +15,8 @@
 
 import { FOOTPRINTS, ORIENTATIONS, type Orientation } from "../format/footprints";
 import { hasDefaults, type PlaceEntityParams } from "../features/edits";
+import { checkChannel } from "../features/route";
+import { checkSetPiece } from "../features/setpieces";
 import { REQUIRED } from "../validate/checks";
 import type { Feature, FeatureKind } from "../features/schema";
 import type { Runs } from "../math/grid";
@@ -124,6 +126,11 @@ export function dependenciesOf(f: Feature): string[] {
     case "setPiece": {
       const r = f.params.plan.river;
       if (typeof r === "string") out.push(r);
+      // the river or lake a standalone piece's channel drains into
+      for (const k of ["outflowTo", "outletTo"]) {
+        const to = f.params.plan[k];
+        if (typeof to === "string" && to !== "edge" && to !== r) out.push(to);
+      }
       break;
     }
     case "river": {
@@ -367,11 +374,12 @@ export interface OpContext {
   lockedColumns: ReadonlySet<number> | null;
   /** Feature kinds this version builds when a player adds them. */
   buildableKinds?: readonly FeatureKind[];
+  /** Starts on the map that are not a start feature (an imported map's own StartingLocation). */
+  otherStarts?: number;
 }
 
-/** Kinds a player can add in this version. Set pieces arrive with their builders (M5), map objects
- *  with M7 (ROADMAP). */
-export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "forest", "berryPatch", "ruinField", "start"];
+/** Kinds a player can add in this version. Map objects arrive with roadmap M7. */
+export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "start"];
 
 /** Templates a player may place by hand: the common set, minus the start (it is a feature). */
 export const PLACEABLE = new Set([
@@ -412,10 +420,33 @@ function featureGeometryProblems(f: Feature, W: number, H: number): string[] {
       if (f.params.outline && !f.params.outline.every(inMap)) return ["the landform's outline leaves the map"];
       if (!f.params.along && (!f.params.outline || f.params.height === undefined)) return ["a landform needs an outline and a height"];
       return [];
-    case "lake":
-      return f.params.outline.every(inMap) ? [] : ["the lake's outline leaves the map"];
-    case "river":
-      return f.params.path.every((q) => q[0] >= -1 && q[0] <= W && q[1] >= -1 && q[1] <= H) ? [] : ["the river's path leaves the map"];
+    case "lake": {
+      if (!f.params.outline.every(inMap)) return ["the lake's outline leaves the map"];
+      if (!inMap(f.params.outlet.at)) return ["the lake's outlet is off the map"];
+      const o = f.params.outlet;
+      if (o.path || o.levels || o.width) {
+        if (!o.path || !o.levels || !o.width) return ["the lake's outlet channel needs its tiles, levels and width"];
+        const errors = checkChannel({ tiles: o.path, levels: o.levels, width: o.width, to: o.to }, W, H);
+        if (errors.length) return errors;
+        if (o.levels[0] > o.sill) return ["the lake's outlet channel starts above its sill"];
+      }
+      return [];
+    }
+    case "river": {
+      const rp = f.params;
+      if (!rp.path.every((q) => q[0] >= -1 && q[0] <= W && q[1] >= -1 && q[1] <= H)) return ["the river's path leaves the map"];
+      let bed = rp.bedProfile.start;
+      for (const s of rp.bedProfile.steps) bed -= s.drop;
+      if (bed < 0) return ["the river's bed would drop below level 0"];
+      for (let k = 1; k < rp.bedProfile.steps.length; k++) if (rp.bedProfile.steps[k].at < rp.bedProfile.steps[k - 1].at) return ["the river's bed steps must run from source to outlet"];
+      const onEdge = (q: readonly number[], e: string) => (e === "west" ? q[0] <= 0.5 : e === "east" ? q[0] >= W - 1.5 : e === "south" ? q[1] <= 0.5 : q[1] >= H - 1.5);
+      if ("edge" in rp.entry && !onEdge(rp.path[0], rp.entry.edge)) return [`the river enters from the ${rp.entry.edge} edge, so its path must start there`];
+      if ("edge" in rp.exit && !onEdge(rp.path[rp.path.length - 1], rp.exit.edge)) return [`the river leaves by the ${rp.exit.edge} edge, so its path must end there`];
+      if (rp.flow > 8 * 256) return ["the river's flow is more than its sources can carry"];
+      return [];
+    }
+    case "setPiece":
+      return checkSetPiece(f, W, H);
     default:
       return p ? [] : ["no params"];
   }
@@ -435,10 +466,8 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (errors.length) return errors;
       if (f.origin === "generated") return ["only the generator makes generated features"];
       if (featureById(f.id)) return [`a feature with the id ${f.id} already exists`];
-      if (!(ctx.buildableKinds ?? ADDABLE_KINDS).includes(f.kind)) {
-        return [f.kind === "setPiece" ? "set pieces arrive with their builders (roadmap M5)" : `${f.kind} features arrive in a later version (roadmap M7)`];
-      }
-      if (f.kind === "start" && state.features.some((g) => g.kind === "start")) return ["the map already has its start: move it instead (vanilla maps have exactly one)"];
+      if (!(ctx.buildableKinds ?? ADDABLE_KINDS).includes(f.kind)) return [`${f.kind} features arrive in a later version (roadmap M7)`];
+      if (f.kind === "start" && (state.features.some((g) => g.kind === "start") || (ctx.otherStarts ?? 0) > 0)) return ["the map already has its start: move it instead (vanilla maps have exactly one)"];
       const missing = dependenciesOf(f).filter((d) => !featureById(d));
       if (missing.length) return [`it builds on ${missing.join(", ")}, which does not exist`];
       if (op.params.index !== undefined && op.params.index > state.features.length) return [`index ${op.params.index} is past the end of the feature list`];
@@ -452,7 +481,8 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (errors.length) return errors;
       const missing = dependenciesOf(after).filter((d) => !featureById(d));
       if (missing.length) return [`it would build on ${missing.join(", ")}, which does not exist`];
-      if (f.kind === "setPiece" || f.kind === "mapObject") return [`${f.kind} features are edited through their builders (roadmap M5, M7)`];
+      if (f.kind === "mapObject") return ["map objects are edited with their tools (roadmap M7)"];
+      if (after.kind === "setPiece" && f.kind === "setPiece" && after.params.kind !== f.params.kind) return ["a set piece keeps its kind: delete it and add another"];
       return featureGeometryProblems(after, W, H);
     }
     case "deleteFeature": {

@@ -301,9 +301,12 @@ export class MapSession {
     const { x: W, y: H } = this.size;
     const entityIds = new Set<string>();
     const slopeTiles = new Set<number>();
+    const starts = new Set(this.st.features.filter((f) => f.kind === "start").map((f) => f.id));
+    let otherStarts = 0;
     for (const e of this.cur.entities) {
       entityIds.add(e.id);
       if (e.template === "Slope") slopeTiles.add(e.y * W + e.x);
+      else if (e.template === "StartingLocation" && !starts.has(e.owner)) otherStarts++;
     }
     const errors = validateOp(op, {
       state: this.st,
@@ -313,6 +316,7 @@ export class MapSession {
       entityIds,
       slopeTiles,
       lockedColumns: this.mode === "live" ? null : new Set(this.baseStuff().terrain.columns.keys()),
+      otherStarts,
     });
     if (errors.length || this.mode !== "frozen") return errors;
     const frozen = new Set(this.gen.baseFeatures.map((f) => f.id));
@@ -611,6 +615,12 @@ export class MapSession {
   /** A full build of the document, from scratch (the reference for the incremental one). */
   fullBuild(): BuildResult {
     return buildMap(this.input());
+  }
+
+  /** The document's terrain, slopes and objects with other features (no water): the map a tool
+   *  plans an edit on, without the feature it is editing. */
+  terrainWith(features: readonly Feature[]): BuildResult {
+    return buildMap({ ...this.input(), features }, { stopBeforeWater: true });
   }
 
   // ------------------------------------------------------------------------------- exporting

@@ -15,7 +15,7 @@
 // moisture and each resource feature are reused when their inputs are unchanged. The property
 // tests check that it equals a full build.
 
-import { coordinatesForMinCorner, rotate } from "../format/footprints";
+import { coordinatesForMinCorner, footprintTiles, rotate, slopeHighSide } from "../format/footprints";
 import { startingLocation, waterSource, slope, type EntitySpec } from "../format/entities";
 import type { MapSpec } from "../spec/mapspec";
 import { soilContamination } from "../sim/contamination";
@@ -24,12 +24,14 @@ import { moisture } from "../sim/moisture";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
-import { placeSlopes, type PlacedSlope } from "./slopes";
-import { BUILDERS, type SetPieceSource } from "./setpieces";
+import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
+import { BUILDERS, orientationForHigh, type SetPieceSource } from "./setpieces";
 import { applyEntityEdits, applySlopeEdits, entityTiles, orphansOf, type EntityEdit, type Orphan, type SlopeEdit } from "./edits";
 import {
   applySculpt,
+  edgeStep,
   integrityAt,
+  lakeSpringTile,
   mouthTiles,
   rasterizeBench,
   rasterizeLake,
@@ -37,6 +39,7 @@ import {
   rasterizeRiver,
   sculptBounds,
   sculptReadsNeighbours,
+  springTiles,
   terrainFootprint,
   type SculptEdit,
 } from "./raster/terrain";
@@ -462,6 +465,20 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     mouths.set(f.id, tiles);
     for (const i of tiles) reserved[i] = 1;
   }
+  //    springs: a river that starts inland, a lake fed by a spring
+  const springs = new Map<string, number[]>();
+  for (const f of features) {
+    if (!live(f)) continue;
+    let tiles: number[] = [];
+    if (f.kind === "river") tiles = springTiles(f, target);
+    else if (f.kind === "lake") {
+      const i = lakeSpringTile(f, W, H);
+      if (i !== null) tiles = [i];
+    }
+    if (!tiles.length) continue;
+    springs.set(f.id, tiles);
+    for (const i of tiles) reserved[i] = 1;
+  }
   const pieceSources: { feature: SetPieceFeature; src: SetPieceSource }[] = [];
   for (const f of features) {
     if (f.kind !== "setPiece" || !live(f)) continue;
@@ -475,16 +492,50 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     }
   }
 
-  // 8. slopes: derived on generated maps (an imported map keeps its own), then the overrides
+  // 8. slopes: the set pieces' own (stair notches, chains), then the derived ones (PLAN §7.5), then
+  //    the player's pinned and removed slopes. An imported map keeps its own slopes; only the
+  //    ground its edits changed gets new ones.
   const orphans: Orphan[] = [];
-  const radius = Math.floor(Math.max(W, H) * 0.6);
-  const slopesKey = startInfo && !base ? `${startInfo.x},${startInfo.y}` : "";
-  let slopes: PlacedSlope[] = [];
-  if (slopesKey) {
-    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.reserved, reserved);
-    slopes = reuse ? prev.slopes : placeSlopes(heights, W, H, startInfo!, reserved, radius);
-  }
   let entities: EntitySpec[] = [];
+  const links: [number, number][] = [];
+  for (const f of features) {
+    if (f.kind !== "setPiece" || !live(f)) continue;
+    for (const s of BUILDERS[f.params.kind]?.slopes?.(f, heights, W, H, features) ?? []) {
+      const i = s.y * W + s.x;
+      const hi = (s.y + s.high[1]) * W + (s.x + s.high[0]);
+      if (reserved[i]) continue;
+      reserved[i] = 1;
+      links.push([i, hi]);
+      entities.push(slope({ id: entityId(f.id, "Slope", i), owner: f.id, x: s.x, y: s.y, z: heights[i], orientation: orientationForHigh(s.high[0], s.high[1]) }));
+    }
+  }
+  // an imported map's objects keep their tiles (derived slopes go round them)
+  if (base) for (const e of base.entities) for (const [x, y] of entityTiles(e)) if (x >= 0 && x < W && y >= 0 && y < H) reserved[y * W + x] = 1;
+  const slopeStart = startInfo ?? (base ? importedStart(base, W, H) : undefined);
+  let rules: SlopeRules | null = null;
+  let slopesKey = "";
+  if (slopeStart && !base) {
+    const targets = landformTargets(features.filter(live), target);
+    rules = { ...SLOPE_RULES, targets: targets.mask, links };
+    slopesKey = `${slopeStart.x},${slopeStart.y}|${targets.key}|${JSON.stringify(links)}`;
+  } else if (slopeStart && base) {
+    // an edited import: join the changed ground to the start's network (the file's own slopes and
+    // the set pieces' stairs), nothing else
+    let changed: Uint8Array | null = null;
+    for (let i = 0; i < N; i++) {
+      if (heights[i] !== base.heights[i] && !base.columns.has(i)) (changed ??= new Uint8Array(N))[i] = 1;
+    }
+    if (changed) {
+      const own = fileSlopeLinks(base, heights, W, H);
+      rules = { core: 0, bigRegion: 0, targets: changed, links: [...own, ...links] };
+      slopesKey = `import:${slopeStart.x},${slopeStart.y}|${JSON.stringify(links)}`;
+    }
+  }
+  let slopes: PlacedSlope[] = [];
+  if (rules) {
+    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.reserved, reserved);
+    slopes = reuse ? prev.slopes : placeSlopes(heights, W, H, slopeStart!, reserved, rules);
+  }
   for (const s of slopes) {
     const i = s.y * W + s.x;
     entities.push(slope({ id: entityId(DERIVED_SLOPES, "Slope", i), owner: DERIVED_SLOPES, x: s.x, y: s.y, z: s.z, orientation: s.orientation }));
@@ -505,7 +556,20 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
       entities.push(waterSource({ id: entityId(f.id, "WaterSource", i), owner: f.id, x, y, z: heights[i], strength: each }));
     }
   }
-  //    set pieces add theirs (the badwater marsh)
+  //    springs: a river's first channel tiles, a lake's middle
+  for (const f of features) {
+    const tiles = springs.get(f.id);
+    if (!tiles || (f.kind !== "river" && f.kind !== "lake")) continue;
+    const flow = f.kind === "river" ? f.params.flow : "spring" in f.params.inflow ? f.params.inflow.spring : 0;
+    const each = Math.min(8, Math.round((flow / tiles.length) * 1000) / 1000);
+    for (const i of tiles) {
+      const x = i % W;
+      const y = (i - x) / W;
+      sources.push({ x, y, z: heights[i], strength: each, owner: f.id, template: "WaterSource" });
+      entities.push(waterSource({ id: entityId(f.id, "WaterSource", i), owner: f.id, x, y, z: heights[i], strength: each }));
+    }
+  }
+  //    set pieces add theirs (a waterfall's springs, badwater)
   for (const { feature, src } of pieceSources) {
     if (src.x < 0 || src.x >= W || src.y < 0 || src.y >= H) continue;
     const i = src.y * W + src.x;
@@ -523,9 +587,13 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   const passA = applyEntityEdits(entities, input.entityEdits ?? [], ground, true);
   entities = passA.entities;
 
-  //    everything placed so far takes its tiles
+  //    everything placed so far takes its tiles, and set pieces keep their bodies clear of resources
   const occupied = reserved.slice();
   for (const e of entities) for (const [x, y] of entityTiles(e)) if (x >= 0 && x < W && y >= 0 && y < H) occupied[y * W + x] = 1;
+  for (const f of features) {
+    if (f.kind !== "setPiece" || !live(f)) continue;
+    for (const i of BUILDERS[f.params.kind]?.clears?.(f, W, H, features) ?? []) occupied[i] = 1;
+  }
   const partial = { W, H, seed, heights, occupied, channel: terrain.channel, entities, slopes, sources, start: startInfo, notes, orphans };
   const makeCache = (over: Partial<BuildCache>): BuildCache => ({
     keys: new Map(features.map((f) => [f.id, featureKey(f)])),
@@ -688,6 +756,54 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
 }
 
 // -------------------------------------------------------------------------------------- helpers
+
+/** Tiles of the landforms whose gentle or terraced edges are "joined by slopes" (PLAN §19.2): the
+ *  derived slopes join their steps wherever they are. The key names them for slope reuse. */
+function landformTargets(features: readonly Feature[], t: BuildTarget): { mask: Uint8Array | null; key: string } {
+  let mask: Uint8Array | null = null;
+  const keys: string[] = [];
+  for (const f of features) {
+    if (f.kind !== "landform" || !f.params.outline || f.params.height === undefined || !edgeStep(f.params)) continue;
+    const inward = t.inward(f.params.outline);
+    mask ??= new Uint8Array(t.W * t.H);
+    for (let i = 0; i < inward.length; i++) if (inward[i] > 0) mask[i] = 1;
+    keys.push(f.id);
+  }
+  return { mask, key: keys.join(",") };
+}
+
+/** The centre of an imported map's start, when it has exactly one. */
+function importedStart(base: BaseLayer, W: number, H: number): { x: number; y: number } | undefined {
+  const starts = base.entities.filter((e) => e.template === "StartingLocation");
+  if (starts.length !== 1) return undefined;
+  const s = starts[0];
+  const tiles = footprintTiles("StartingLocation", { template: s.template, x: s.x, y: s.y, z: s.z, orientation: s.orientation, flipped: s.flipped });
+  let sx = 0;
+  let sy = 0;
+  for (const [x, y] of tiles) {
+    sx += x;
+    sy += y;
+  }
+  const x = Math.round(sx / tiles.length);
+  const y = Math.round(sy / tiles.length);
+  return x >= 0 && y >= 0 && x < W && y < H ? { x, y } : undefined;
+}
+
+/** An imported map's own slopes that still join a 1-level step on the current terrain, as (low
+ *  tile, high tile) pairs. */
+function fileSlopeLinks(base: BaseLayer, heights: Uint8Array, W: number, H: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (const e of base.entities) {
+    if (e.template !== "Slope" || e.x < 0 || e.y < 0 || e.x >= W || e.y >= H) continue;
+    const [dx, dy] = slopeHighSide(e.orientation);
+    const hx = e.x + dx;
+    const hy = e.y + dy;
+    if (hx < 0 || hy < 0 || hx >= W || hy >= H) continue;
+    const i = e.y * W + e.x;
+    if (heights[i] === e.z && heights[hy * W + hx] === e.z + 1) out.push([i, hy * W + hx]);
+  }
+  return out;
+}
 
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;

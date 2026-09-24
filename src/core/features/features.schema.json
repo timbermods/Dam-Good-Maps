@@ -70,7 +70,8 @@
         "meander": { "type": "number", "minimum": 0, "maximum": 1 },
         "entry": { "type": "object" },
         "exit": { "type": "object" },
-        "badwater": { "type": "boolean" }
+        "badwater": { "type": "boolean" },
+        "banks": { "type": "boolean" }
       }
     },
     "lake": {
@@ -88,7 +89,10 @@
             "at": { "$ref": "#/$defs/point" },
             "sill": { "type": "integer", "minimum": 0, "maximum": 16 },
             "to": { "enum": ["edge", "river", "lake", "none"] },
-            "target": { "type": "string" }
+            "target": { "type": "string" },
+            "path": { "type": "array", "maxItems": 131072, "items": { "type": "integer", "minimum": 0, "maximum": 255 } },
+            "levels": { "type": "array", "maxItems": 65536, "items": { "type": "integer", "minimum": 0, "maximum": 16 } },
+            "width": { "enum": [1, 3, 5] }
           }
         },
         "inflow": { "type": "object" },
@@ -105,6 +109,8 @@
         "edgeStyle": { "enum": ["gentle", "terraced", "cliff"] },
         "outline": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/point" } },
         "height": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "base": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "bandDepth": { "type": "integer", "minimum": 2, "maximum": 32 },
         "along": {
           "type": "object",
           "additionalProperties": false,

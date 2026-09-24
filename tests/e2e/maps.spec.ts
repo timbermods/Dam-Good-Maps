@@ -38,7 +38,7 @@ test.describe("every investigation map imports, renders and exports unchanged (l
       page.on("pageerror", (e) => errors.push(String(e)));
       page.on("console", (m) => m.type() === "error" && !/favicon/.test(m.text()) && errors.push(m.text()));
       await page.setViewportSize({ width: 1280, height: 800 });
-      await page.goto("./#s=1&z=96&d=n&t=riverValley&v=0.2.0");
+      await page.goto("./#s=1&z=96&d=n&t=riverValley&v=0.3.0");
       await expect(page.getByText(/checks passed|checks failed/)).toBeVisible({ timeout: 60_000 });
 
       // import
