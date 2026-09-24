@@ -37,8 +37,9 @@ differently, this file wins.
 | M9 | Interestingness, names, candidates | PLAN §7.9, §12, §13 | no | high |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
+| Design | Design pass, after M11 and the refinement phase | the impeccable-app-flow skill (timbermods/.github, `claude-skills/`) · old milestone 6 | no | high |
 | M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 | yes (the waterfall request) | xhigh |
-| M13 | Usability, design pass, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
+| M13 | Usability, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
 | Later | See the end of this file | PLAN §5.7, old milestone 7 · EDITOR §10 Later | per item | — |
 
 **Release points** (suggested):
@@ -460,9 +461,20 @@ differences in "Editor decisions".
 
 ---
 
+## Design pass
+
+After M11 and the refinement phase, and before M12. It is the Impeccable design pass with the
+timbermods design system, moved here from M13. It follows the impeccable-app-flow skill
+(timbermods/.github, `claude-skills/impeccable-app-flow/`) and leaves a DESIGN.md and a
+MEANING.md behind.
+
+---
+
 ## M12. Claude integration
 
 **Delivers:** E8, with the delivery choices from the M3 spike.
+- Its Claude panels are built in the design flow's update mode, from the DESIGN.md and
+  MEANING.md the design pass leaves behind.
 - The operation schema and a feature-level map summary (at most about 16 KB).
 - The tools: `resolve_region`, `find_sites`, `measure`, `list_features`, `limits`, `dry_run`,
   `propose`.
@@ -488,13 +500,12 @@ that is roughly 20 blocks wide".
 
 ---
 
-## M13. Usability, design pass, ratings, versioned deploys
+## M13. Usability, ratings, versioned deploys
 
 **Delivers**
 - E9: the usability tasks, onboarding hints, shortcuts reference, help page, accessibility pass
   and final performance pass.
-- The rest of old PLAN milestone 6:
-  - the Impeccable design pass with the timbermods design system;
+- The rest of old PLAN milestone 6 (its design pass is now the Design pass step, before M12):
   - the ratings flow and `tools/ratings.ts`;
   - install help, including the extract step of the artifact edition;
   - mobile layout;
