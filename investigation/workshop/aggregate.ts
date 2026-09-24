@@ -14,7 +14,7 @@
 // - flow: river directions;
 // - popularity: hints (rank correlations with subscribers allowing for age, and with the favourite
 //   rate), never proof;
-// - catalogue counts and example links, variety, score and recipes from their own tools.
+// - catalogue counts and example links, variety, score, recipes and the dam narrows from their own tools.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -364,6 +364,7 @@ const out = {
   variety: optional("variety.json"),
   score: optional("score.json"),
   recipes: optional("recipes-aggregate.json"),
+  narrows: optional("narrows.json"),
 };
 writeFileSync(OUT, JSON.stringify(out, null, 1) + "\n");
 console.log(`wrote ${OUT}: ${workshop.length} workshop, ${official.length} official, ${gen.length} generated`);

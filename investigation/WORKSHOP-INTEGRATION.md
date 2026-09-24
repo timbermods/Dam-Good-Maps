@@ -322,7 +322,28 @@ Targets, from the official and workshop maps (`workshop.json` `overall`):
 | Shoreline in straight runs of 8+ | 0.12 | 0.06 | 0.22 | ≤ 0.12 |
 | Water in 1–2-tile ditches (share of water) | 0.021 | 0.053 | 0.009 | report only |
 
-<!-- NARROWS -->
+The spur-narrows prototype (`recipes/narrows.ts`) tries the `damSite` spurs mode with today's
+landforms. It replaces the base's dam site with two tapered, bent spurs, each with a gentle apron, a
+cliff core and a cliff crown, of different heights. Results over 23 maps:
+
+- The reservoir still holds (`water.reservoir`) on 22 of 23. The miss is a 96² base whose valley is
+  too shallow for the spurs' size.
+- The easy dam goes: a dam of 5 tiles or fewer holds a Normal drought's water on 35% of maps
+  (the base: 77%).
+- The narrows itself, measured at the validator's dam site (`narrows.ts`; 128², River Valley seeds
+  1–30, spurs seeds 1–10):
+
+| At the dam site near the start (medians) | Official | Workshop | River Valley today | Spurs |
+|---|---|---|---|---|
+| Dam line, tiles | 4 | 4 | 5 | 9.5 |
+| Shoulder thickness variation (CV) | 0.45 | 0.47 | 0.32 | 0.37 |
+| Shoulder height variation (std, levels) | 0.47 | 0.32 | 0 | 0 |
+| Crest heights within 12 tiles (std, levels) | 1.75 | 1.61 | 1.56 | 0.45 |
+
+The spurs make the shoulders vary in thickness, but each crown is flat, so the height near the dam
+varies less than before. The spurs mode's acceptance adds: *shoulder height std ≥ 0.25 and crest
+height std within 12 tiles ≥ 1* (official medians 0.47 and 1.75). Stepped crowns would do it: each
+spur falls 1–3 levels from root to tip, in gentle or terraced steps, and the two spurs differ.
 
 ### Design pass
 
