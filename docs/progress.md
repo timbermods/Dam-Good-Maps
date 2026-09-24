@@ -221,7 +221,8 @@ Also green:
   - Operations apply with undo data and replay on a new generation.
   - Operations whose target is gone are orphaned: kept and reported.
 - **The session** (`src/core/doc/session.ts`), the API the editor will run in its worker:
-  - `apply` and `applyAll`, `undo` and `redo` with built-map snapshots, `history`, `orphans`;
+  - `apply`, and `applyAll` for a fix or a proposal as one undo step;
+  - `undo` and `redo` with built-map snapshots, `history`, `orphans`;
   - `regenerate` around the player's features, locks and keep-out regions (D39);
   - `rebuildWithCurrentGenerator`;
   - `exportTimber`, `validate` and `project`.

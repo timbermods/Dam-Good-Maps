@@ -203,6 +203,12 @@ export class MapSession {
     return { x: this.gen.base.sizeX, y: this.gen.base.sizeY };
   }
 
+  /** An imported map's columns with caves or overhangs (tile index → its 23 voxels), for the voxel
+   *  mesher; they are left as they are by every tool. Empty for generated maps (heightfields). */
+  get columns(): ReadonlyMap<number, Uint8Array> {
+    return this.mode === "live" ? new Map() : this.baseStuff().terrain.columns;
+  }
+
   /** The document as it stands, for the project file and autosave. */
   get document(): MapDocument {
     return {

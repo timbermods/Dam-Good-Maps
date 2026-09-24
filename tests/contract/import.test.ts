@@ -124,6 +124,7 @@ describe("import of the investigation maps (local only)", () => {
       for (let z = 0; z < top; z++) if (!before.voxels[z * plane + i]) caves.add(i);
     }
     expect(caves.size).toBeGreaterThan(1000);
+    expect([...s.columns.keys()].sort((x, y) => x - y)).toEqual([...caves].sort((x, y) => x - y));
     // sculpting a cave column is refused; a plain column is raised
     const cave = [...caves][0];
     const cy = Math.floor(cave / before.sizeX);
