@@ -566,6 +566,8 @@ function plain(text: string): string {
 
 /** Dropping a .timber or project file on the editor opens it. */
 function DropTarget({ onFile }: { onFile(file: File): void }) {
+  const latest = useRef(onFile);
+  latest.current = onFile;
   useEffect(() => {
     const over = (e: DragEvent) => {
       if (e.dataTransfer?.types.includes("Files")) e.preventDefault();
@@ -574,7 +576,7 @@ function DropTarget({ onFile }: { onFile(file: File): void }) {
       const file = e.dataTransfer?.files?.[0];
       if (!file) return;
       e.preventDefault();
-      onFile(file);
+      latest.current(file);
     };
     window.addEventListener("dragover", over);
     window.addEventListener("drop", drop);
@@ -582,6 +584,6 @@ function DropTarget({ onFile }: { onFile(file: File): void }) {
       window.removeEventListener("dragover", over);
       window.removeEventListener("drop", drop);
     };
-  }, [onFile]);
+  }, []);
   return null;
 }
