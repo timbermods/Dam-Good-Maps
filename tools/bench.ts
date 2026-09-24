@@ -1,10 +1,10 @@
 // Benchmarks.
 //
-//   npx tsx tools/bench.ts [--size 128] [--seeds 1-10] [--budget 3000]
+//   npx tsx tools/bench.ts [--size 128] [--seeds 1-10] [--budget 3000] [--theme riverValley]
 //     Generation time (ROADMAP M1 acceptance: 128² in under 3 s): every map's max must be under
 //     the budget.
 //
-//   npx tsx tools/bench.ts --water [--size 256] [--seeds 1-10] [--budget 3000]
+//   npx tsx tools/bench.ts --water [--size 256] [--seeds 1-10] [--budget 3000] [--theme riverValley]
 //     The canonical water settle alone (ROADMAP M2: the budget of PLAN §10, ≤ 3 s at 256² and
 //     ≤ 0.6 s at 128²): the water model of each generated map, pre-filled and settled from scratch.
 //     The median must be under the budget; the max is reported.
@@ -12,7 +12,7 @@
 import { build, SettleCache } from "../src/core/features/build";
 import { generate, planFeatures } from "../src/core/gen/generate";
 import { canonicalSettle } from "../src/core/sim/prefill";
-import { makeSpec } from "../src/core/spec/mapspec";
+import { makeSpec, type ThemeId } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -23,7 +23,8 @@ const water = process.argv.includes("--water");
 const size = Number(arg("size", water ? "256" : "128"));
 const [a, b] = arg("seeds", "1-10").split("-").map(Number);
 const budget = Number(arg("budget", water ? (size >= 256 ? "3000" : "600") : "3000"));
-const spec = (seed: number) => makeSpec({ seed, size: { x: size, y: size } });
+const theme = arg("theme", "riverValley") as ThemeId;
+const spec = (seed: number) => makeSpec({ seed, size: { x: size, y: size }, theme });
 
 const times: number[] = [];
 const ticks: number[] = [];
@@ -56,5 +57,5 @@ const median = order[order.length >> 1][0];
 const max = order[order.length - 1][0];
 const what = water ? "canonical water settle" : "generation";
 const tickText = water ? `, ${Math.min(...ticks)}–${Math.max(...ticks)} ticks (median ${ticks.slice().sort((x, y) => x - y)[ticks.length >> 1]})` : "";
-console.log(`${what}, ${size}×${size}, ${times.length} seeds: median ${Math.round(median)} ms, max ${Math.round(max)} ms${tickText} (budget ${budget} ms)`);
+console.log(`${what}, ${theme}, ${size}×${size}, ${times.length} seeds: median ${Math.round(median)} ms, max ${Math.round(max)} ms${tickText} (budget ${budget} ms)`);
 process.exit((water ? median : max) < budget ? 0 : 1);

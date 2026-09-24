@@ -26,14 +26,18 @@ jobs:
         run: npm run typecheck
       - name: Unit and contract tests
         run: npm test
-      - name: Python oracle (load checks, round trip, validator parity)
-        run: npm run oracle -- --seeds 1-5 --sizes 96,128,256
+      - name: Python oracle (load checks, round trip, validator parity; every theme)
+        run: npm run oracle -- --seeds 1-9 --sizes 96,128,256
       - name: Generation time (128² under 3 s)
         run: npm run bench
       - name: Water settle time (256² under 3 s, PLAN §10)
         run: npm run bench:water
       - name: Pass rates (100 seeds at 128² Normal, final ≥ 98%, first attempt ≥ 60%)
         run: npm run batch -- --seeds 1-100 --size 128
+      - name: Pass rates, Canyon (100 seeds at 128² Normal)
+        run: npm run batch -- --seeds 1-100 --size 128 --theme canyon
+      - name: Pass rates, Lake Basin (100 seeds at 128² Normal)
+        run: npm run batch -- --seeds 1-100 --size 128 --theme lakeBasin
       - name: Build
         run: npm run build
       - name: Install Chromium for Playwright

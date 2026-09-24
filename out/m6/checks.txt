@@ -1,0 +1,18 @@
+Generator 0.4.0; 128×128, seed 4242, designed for Normal, every setting at its theme's preset.
+
+Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
+PNGs: north up, 5 px per tile, dotted grid every 16 tiles; water blue (badwater brown); start white (door red); the dam line orange; the stair's slopes orange with their high side brown; badwater sources magenta.
+
+sha256 e483708e0a43e62d91581b6a56b45064a8fa2730d3d35ee392d4acef49206a8a  Canyon (4242).timber
+Canyon (4242): StartingLocation at (42, 54), z 8, Cw180; door tile (41, 55). Generated in 1 attempt; 44 of 44 checks pass (the advisory plants.drought may warn).
+  The dam site is a rock ridge (top level 11) across the canyon's narrows. Build levees 2 high (2 levees stacked) on its 4 gap tiles (orange): (66, 61) (66, 62) (66, 63) (66, 64). The river bed there is at level 6, so the crest is at level 8.
+  The canyon floor behind it should fill to about level 8: 685 tiles, about 844 blocks of water, held between the canyon walls; none of it should leak round the ridge.
+  The stair: 6 slopes climb the canyon wall beside the start, one level each: (48, 47) z7; (49, 47) z8; (50, 47) z9; (51, 47) z10; (52, 47) z11; (53, 47) z12. Beavers should walk up it to the rim and back.
+  Badwater: a source at (82, 43)–(84, 45) in a basin with one outlet. The colony needs about 380 water stored through the first Normal drought.
+
+sha256 58f763b011f1c122f1cb27cb20ec7f7e33fd292cf225abe8fc28d2c9f40c58cf  Lake Basin (4242).timber
+Lake Basin (4242): StartingLocation at (68, 97), z 10, Cw0; door tile (69, 96). Generated in 1 attempt; 44 of 44 checks pass (the advisory plants.drought may warn).
+  The lake's water stands at about level 9 (its outlet's sill), a little higher while the rivers run. The dam site is a rock ridge (top level 13) across the outlet's narrow gap. Build levees 1 high (one levee) on its 5 gap tiles (orange): (113, 59) (113, 60) (113, 61) (113, 62) (113, 63).
+  The whole lake should rise to about level 10: 3622 tiles, about 13529 blocks of water behind the dam; none of it should leak round the ridge, and the start's bench (level 10) should stay dry.
+  Badwater: a source at (26, 104)–(28, 106) in a basin with one outlet. The colony needs about 759 water stored through the first Normal drought.
+
