@@ -198,13 +198,15 @@ dam-good-maps/
 │  │  ├─ score/       score.ts  naming.ts
 │  │  └─ data/        footprints.json (the calibration subset lives in gen/calibrated.ts, tested against calibrated.py)
 │  ├─ platform/       adapters: files (save/open), storage, workers, claude (§19.9)
-│  ├─ render3d/       the one 3D renderer, used by the generator preview and the editor
-│  ├─ worker/         generator.worker.ts (Comlink API: generate, build, pack, cancel)
-│  ├─ ui/             App.tsx  SettingsPanel.tsx  Preview2D.tsx  Preview3D.tsx (lazy)  MapCard.tsx  Layers.tsx
+│  ├─ render3d/       the one 3D renderer, used by the generator preview and the editor: model.ts (the map view)
+│  │                  mesh.ts (32×32 chunks, voxel columns)  waterMesh.ts  entities3d.ts (instancing)  pick.ts
+│  │                  materials.ts  renderer.ts (camera, overlays, the orbit benchmark)
+│  ├─ worker/         generator.worker.ts (Comlink API: generate, and the editor's document)  api.ts  session.ts
+│  ├─ ui/             App.tsx  SettingsPanel.tsx  Preview2D.tsx  Preview3D.tsx (lazy)  View3D.tsx  MapCard.tsx  Layers.tsx
 │  │                  Download.tsx  Share.tsx  Rate.tsx  InstallHelp.tsx  state.ts (signals)
-│  ├─ editor/         the editor UI (EDITOR_PLAN.md §8)
+│  ├─ editor/         the editor UI (EDITOR_PLAN.md §8): Editor.tsx (lazy)  panels.tsx  features.ts  tools.ts
 │  └─ styles/
-├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  ingame-files.ts  export-footprints.ts
+├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  bench3d.ts  ingame-files.ts  export-footprints.ts
 │                    batch.ts (Node: N seeds → first-attempt and final pass rates)  golden.ts
 │                    ratings.ts (issue export)  export-fixtures.py (Python → tests/golden/water.json.gz)
 ├─ tests/            unit/  contract/ (§15)  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
@@ -1121,9 +1123,10 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
   - The preview canvas, with layer toggles and a 2D/3D switch.
   - The map card beneath: name, premise, score and the validation report.
   - Download, and **Refine this map**, which opens the same map in the editor with its features
-    ready to edit (EDITOR_PLAN.md). Before the editor ships, the button is replaced by "Download
-    project file" (`.damgoodmaps.json`, §19.6), so maps made early can be opened in the editor
-    later.
+    ready to edit (EDITOR_PLAN.md). "Download project file" (`.damgoodmaps.json`, §19.6) stays
+    beside it. After the editor, the page shows the edited map; downloading it goes through the
+    editor's export check, and generating again keeps the edits (D44).
+  - **Open a map**: any `.timber` or project file opens in the editor.
 - **Generate** is always visible. Seed has a dice button. Changing a setting marks the preview stale
   and offers "Generate"; auto-regenerate is optional (default off at 256²).
 
@@ -1152,8 +1155,10 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 - **Hover:** tile tooltip with level, water depth, moisture and what stands there.
 - **Zoom and pan:** wheel and drag, at 1–8× integer scaling.
 - **3D (lazy):** three.js orbit view of the terrain columns, water surfaces as translucent quads at
-  depth, and instanced trees and ruins. Budget: under 1.5 s to build, 60 fps on a mid-range laptop
-  at 256². Off by default on mobile.
+  depth, and instanced trees and ruins. It is the editor's renderer (`render3d`, D45), with the
+  editor's orbit and top-down views, compass and hover readout. Budget: under 1.5 s to build,
+  60 fps on a mid-range laptop at 256² (measured in M4, D46). The preview opens in 2D; 3D is a
+  switch, loaded on demand.
 
 ### 14.3 Map card
 
@@ -1489,6 +1494,10 @@ the editor's live checks and export gating.
 - **Thresholds** come from `spec.designedFor` and `spec.settings`. For imported maps they come from
   `meta.designedFor` (default Normal) and the default settings.
 - **Check ids** match the prototype, which stays the oracle (§4).
+- **Imported maps' own problems** (D43): a check that already failed, over the same entities or
+  tiles, on the map as it was opened is listed at export but never blocks it and is not noted in
+  the description. The editor never makes a map worse, and an unedited import exports unchanged,
+  multi-colony starts included (D5).
 
 ### 19.6 Format I/O
 
@@ -1566,8 +1575,9 @@ leave locked regions untouched.
 The core never touches the DOM or a platform API. Five adapters let one codebase build both the
 website and the Claude artifact edition (EDITOR_PLAN.md §7):
 
-- **files:** save and open;
-- **storage:** autosave;
+- **files:** save and open (a file input or a drop, read as bytes);
+- **storage:** autosave (IndexedDB on the website; every call fails quietly when browser storage is
+  unavailable, D44);
 - **workers:** a module URL on the website, an inlined blob in the artifact;
 - **claude:** the Messages API, or the artifact's `sample` capability;
 - **download naming:** `.timber` on the website; a `.zip` holding the `.timber` in the artifact,
@@ -1623,6 +1633,11 @@ list, and implementation adds to it.
 | D39 | Regeneration (a `specPatch`) plans around the player's features, locked regions and keep-out regions (§7.0). They form one protect mask. River Valley draws its layout again, up to 24 times per attempt, until the river with its bank, the basin, the dam ridge and the start keep off it; its marsh and resources keep off it too. The log is replayed on the new plan, and the retry loop validates the whole document in the `generate` profile. If no attempt passes, the last one is kept with its report. If no layout fits, the regeneration is refused and the document is unchanged. Locks keep the previous generation's generated content in their area: its surface and generated objects, but not its slopes or start. Generated features skip locked tiles, the player's edits replay on top, and water is derived again. Changing the map size while areas are locked is refused. | Nothing the player made is dropped, and nothing is silently lost: operations that no longer apply are flagged with reasons. Keeping the generation's content under a lock, not the final map, stops the player's own edits from being applied twice. | M3; locks are revisited with the lock tools in M11 |
 | D40 | Editing imported maps: the file's own slopes are kept (no derived slopes), and the slope pin and remove operations still work. The sculpt tools refuse columns with caves or overhangs, and features leave them unchanged. The integrity pass and the terrain clip touch only tiles an edit changed. Imported objects move to the new ground when an edit changes the surface under them. The water is re-settled only on heightfield maps; maps with caves keep the file's water until M8 brings the roofed-water rule, with a notice. The thumbnail is redrawn only when terrain or water changed. | An unedited import must export byte for byte, and terrain up to 22 must survive (D4). A top-surface settle is an approximation under roofs (D28). The thumbnail shows only terrain and water. | M3 |
 | D41 | The artifact edition's build (the M3 spike): two Vite builds, with the worker bundled on its own and inlined as a string the page turns into a `blob:` URL, then the page script inlined into one HTML file. Fonts are the only thing fetched at run time. The page declares only `sample` and `downloads`, reaches the runtime through `window.claude.use()`, and renders without it. | The spike page proves the shape: 209 KB, of which the core is 189 KB, with no `eval`, under the artifact's rules. Vite's own inline worker falls back to a `data:` URL, which would hide whether blob workers work. | M3 spike |
+| D42 | The editor's tools in M4 (the shell, EDITOR_PLAN §4). Rectangle tools make a plateau (Land: flat, cliff edges, 2 levels above the highest ground under it unless a height is picked) and a forest, berry patch or ruin field (Resources). Water has no drawing tool yet. A selected feature gets a move handle (drag it, or focus it and use the arrow keys, placed 0.7 s after the last key) and a delete handle. The start, resource areas, landforms with an outline, lakes of their own and rivers move; a river keeps the ends on the map edge on that edge, so its sealed mouth stays a mouth; the start's bench takes the ground level at its new place. Set pieces, the valley landforms that follow a river and a river's reservoir site do not move, and say why. Deleting a feature others build on is refused with their names. The inspector changes a forest's or berry patch's density, a plateau's height and the start's facing. | The roadmap puts the land and water tools in M5 and the resource tools in M7. The M4 acceptance needs the player's own edits made on the page, and these features were already built by the engine (D35), so the tools are the same operations those milestones extend. Features that follow a river are rebuilt from it; moving them alone would break what builds on them. | M4 |
+| D43 | The export check (§19.5, `export` profile) in the editor. Load problems block; playability and design problems warn, and when the player exports anyway they are noted at the end of the map's description; advisory checks are listed and never noted. An imported map's own problems (a check that already failed, over the same entities or tiles, on the map as it was opened) are listed apart and never block or get noted. Imported maps get the load and design checks at export; their water and colony checks wait for the background validation of M8. The map's health pill runs the same check 0.7 s after each change. | 12 of the 32 investigation maps fail a load check as they are (`slopes.connect`, `start.flat`, `start.entrance`, `entities.placement`, and `start.count` on the multi-colony map): blocking them would stop them exporting unchanged, and a multi-colony map must survive export (D5). A settle for the water checks takes 5–13 s on a 256² import. Advisory notes on every generated map would change the bytes of an unedited export. | M4 |
+| D44 | The page keeps one open map (the document in the worker). "Refine this map" opens the generated map; "Back to settings" shows the edited map, its card validated in the `export` profile; while it has edits, Generate becomes "Generate, keeping my edits" (a `specPatch`, D39) and "Discard edits" starts over. Opening another map or refining a new one asks first when the open map has edits, and offers its project file. The open map is autosaved to IndexedDB through the storage adapter (the project file, gzip level 6) 1.2 s after each change; a reload in the editor opens it again, and the settings page offers to continue it. The editor and the 3D view are separate chunks, loaded on demand. | EDITOR_PLAN §1 and §3: moving between the screens never loses work, and autosave recovers the last session. One map at a time keeps "which map am I editing" obvious. IndexedDB takes bytes and has room for 256² imports (up to 2 MB), where localStorage has about 5 MB of text. | M4 |
+| D45 | `render3d` (EDITOR_PLAN §8): world X = x, Y = height, Z = −y, so the top-down view has north up. Terrain is shaded by height, with a tile grid on tops and level lines on walls that fade out when zoomed out, and no textures; colours are display values (no colour management). A per-tile overlay texture shows selections and previews without remeshing. Water is a flat quad per wet tile at its surface, with curtains where a neighbour's water or ground is lower. An unedited import, or one with caves, shows the file's own water (`WaterMapNew`, every level), which is what its export keeps (D40). Objects are our own low-poly models (trees, bushes, ruin columns, slopes, sources, the start), and every other template is boxes on the blocks of its footprint. Columns with caves or overhangs are picked by their surface. | One light look for every map the game can load, cheap enough for 583,000 triangles (Beavertopia) to orbit at the display's rate on an integrated GPU. The overlay keeps tool feedback within a frame (EDITOR_PLAN §9). The game's assets are not ours to use (EDITOR_PLAN §2). | M4 |
+| D46 | The 3D budget (PLAN §14.2) is measured by `npm run bench:3d` in the installed Chrome, headed, on 256² maps (generated and the local 256² investigation maps). This machine is not a mid-range laptop (Ryzen 7 9800X3D, RTX 4080 SUPER), so the fps budget is judged on its integrated GPU (AMD Radeon Graphics, 2 compute units, weaker than a mid-range laptop's), picked with `--use-adapter-luid`, with the page's CPU also slowed 4× by Chrome's throttling. CI renders in software, so it checks the build with a 10 s bound, and correctness (`tests/e2e/render3d.spec.ts`). | The budget names a mid-range laptop. The integrated GPU and the throttled CPU are a lower bound for one; the dedicated GPU is reported too. | M4 |
 
 ---
 

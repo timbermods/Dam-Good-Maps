@@ -707,6 +707,8 @@ export class MapRenderer {
     this.waterMat.dispose();
     this.objectMat.dispose();
     this.gl.dispose();
+    // free the context now: browsers keep only a few, and the editor opens a view per map
+    this.gl.forceContextLoss();
   }
 }
 

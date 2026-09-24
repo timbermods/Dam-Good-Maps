@@ -9,9 +9,14 @@ settled, checked for a colony's survival, shown in a 2D preview with water, mois
 layers, and downloaded as a `.timber` and a project file. Once Pages is on, it is served at
 <https://timbermods.github.io/dam-good-maps/>.
 
-M3 adds the engine the editor will run on. It opens any `.timber`, from 0.6 to 1.1. It edits
-features and objects with undo, and regenerates a map without losing your own work. The editor's
-screens come next.
+M4 adds the editor:
+- **Refine this map** opens the map in 3D. Draw plateaus, forests, berry patches and ruin fields.
+  Move or delete what the generator made.
+- **Back to settings** keeps your edits. Generate again and they stay.
+- **Open a map** opens any `.timber`, from 0.6 to 1.1.
+- The preview's **3D** switch shows the map in 3D.
+
+Your map is saved in the browser as you work.
 
 | Path | What it is |
 |---|---|
@@ -59,8 +64,12 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
   official maps (when `investigation/raw/builtin` is present).
 - `npm run gen` writes maps from the command line.
 - `npm run batch` reports first-attempt and final pass rates (default 100 seeds at 128²).
-- `npm run test:e2e` builds the site and checks that Chrome and Node produce the same bytes.
+- `npm run test:e2e` builds the site and runs the browser tests: Chrome and Node produce the same
+  bytes, the editor's generate-refine-regenerate journey, the 3D view, and every local
+  investigation map through import, 3D and export.
 - `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
+- `npm run bench:3d` measures the 3D view's build time and frame rate at 256² in Chrome. It opens
+  browser windows, so it runs locally only. It writes `out/m4/bench3d.json`.
 - `npm run fixtures` rewrites the water golden vectors from the Python reference.
 - `npm run build:spike` builds the Claude artifact test page into `dist-spike/`.
 - `npm run spike:check` runs that page and the Messages API CORS page in Chrome. It writes

@@ -161,7 +161,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 **Persistence**
 - Project file download and upload (`.damgoodmaps.json`, compressed). It holds the spec, features, edits, locks, meta, generator version and the built base (`PLAN.md` §19.6), so a project opens exactly even after the generator changes. For imported maps it holds the original file's data.
-- Autosave in the browser through the storage adapter (`PLAN.md` §19.9), guarded against storage failures; recover the last session on reload.
+- Autosave in the browser through the storage adapter (`PLAN.md` §19.9; IndexedDB on the website), guarded against storage failures; recover the last session on reload (`PLAN.md` §20, D44).
 - `.timber` export through the `export` validation profile. Re-importing a `.timber` file bakes everything into a new imported map.
 
 **Undo and redo** run over the operation list, with periodic snapshots so undo stays fast on 256×256 maps. The history is visible as a list the user can step back through.
@@ -188,6 +188,8 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 **Overlays** can be toggled in both modes, with the most useful ones (water preview, start reach) in simple mode.
 
+**Built in roadmap M4** (`PLAN.md` §20, D42–D45): the shell. The 3D view with orbit and top-down views, the compass and the hover readout; the four tabs, each listing its features; selection by click or list, with move and delete handles and a small inspector; undo, redo and the history; the health pill and export in the `export` profile; import of any `.timber`; project files and autosave. Its only drawing tools are rectangles: a plateau (Land), and a forest, berry patch or ruin field (Resources). The tools above replace them with their milestones (land and water in M5, resources in M7) and make the same features.
+
 ## 5. Creative features
 
 - **Parametric features** (section 3): everything the user draws stays editable.
@@ -203,7 +205,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 ## 6. Live validation, fixes and water preview
 
-- Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5).
+- Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5). An imported map's own problems, the ones it had when it was opened, are listed but never blamed on the player's edits: they do not block its export (`PLAN.md` §20, D43).
 - **Instant checks** after every edit, on the dirty region: footprints, ground support, overlaps, start area, limits, slopes, terrain support.
 - **Background checks** in a web worker, debounced and cancelled when a newer edit arrives: water simulation, reachability, resource totals, moisture reach, drought survival, interestingness scores.
 - Issues have a severity, a location and a plain-language explanation; clicking one flies the camera to it.
@@ -327,7 +329,7 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - `platform` adapters.
 - The operations engine and feature rasterization are headless and fully testable without the UI.
 - Determinism: the same document always produces a byte-identical `.timber` file (`PLAN.md` §19.7).
-- 3D rendering:
+- 3D rendering (`src/render3d`, `PLAN.md` §20, D45):
   - chunked meshing (32×32 chunks) with remeshing of dirty chunks only;
   - a voxel mesher only for columns with more than one solid run (1% of official map columns, up to 58% on one workshop map);
   - instanced trees, bushes and ruins;
