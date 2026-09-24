@@ -3,8 +3,8 @@
 // #/$defs, if/then). It never evaluates code, so it also runs inside a Claude artifact. The tests
 // cross-check it against Ajv on the same schema.
 
-import featuresSchema from "../features/features.schema.json";
-import mapSpecSchema from "./mapspec.schema.json";
+import featuresSchema from "../features/features.schema.json" with { type: "json" };
+import mapSpecSchema from "./mapspec.schema.json" with { type: "json" };
 import type { MapSpec } from "./mapspec";
 
 type Schema = Record<string, unknown>;

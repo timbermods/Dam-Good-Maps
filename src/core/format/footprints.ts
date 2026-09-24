@@ -1,7 +1,7 @@
 // Block footprints of every map template (investigation/notes/footprints.json, exported by
 // tools/export-footprints.ts). A block's world cell is Coordinates + R(F(local)) (FORMAT.md §4.4).
 
-import data from "../data/footprints.json";
+import data from "../data/footprints.json" with { type: "json" };
 
 export type Orientation = "Cw0" | "Cw90" | "Cw180" | "Cw270";
 export const ORIENTATIONS: readonly Orientation[] = ["Cw0", "Cw90", "Cw180", "Cw270"];

@@ -438,10 +438,10 @@ export function assignRuinHeights(tiles: number[], W: number, rng: Rng, mix: num
   for (const v of r) if (v > rmax) rmax = v;
   if (rmax === 0) rmax = 1;
   const clump = 2.5;
-  const x0 = Math.min(...xs);
-  const y0 = Math.min(...ys);
-  const gx = Math.floor((Math.max(...xs) - x0) / clump) + 2;
-  const gy = Math.floor((Math.max(...ys) - y0) / clump) + 2;
+  const x0 = xs.reduce((a, v) => Math.min(a, v), Infinity);
+  const y0 = ys.reduce((a, v) => Math.min(a, v), Infinity);
+  const gx = Math.floor((xs.reduce((a, v) => Math.max(a, v), -Infinity) - x0) / clump) + 2;
+  const gy = Math.floor((ys.reduce((a, v) => Math.max(a, v), -Infinity) - y0) / clump) + 2;
   const lat: number[] = [];
   for (let k = 0; k < gx * gy; k++) lat.push(rng.float());
   const keys = tiles.map((_, k) => {

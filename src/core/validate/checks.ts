@@ -115,7 +115,7 @@ function checkFile(file: TimberFile, c: Collector, external: boolean): void {
       EvaporationModifiers: len(s.WaterEvaporationMap, "EvaporationModifiers"),
     };
     const bad = Object.entries(lens).filter(([, v]) => v !== n);
-    const need2 = Math.max(1, Math.max(...floorsOf(w)));
+    const need2 = floorsOf(w).reduce((a, v) => Math.max(a, v), 1); // no spread: 65k args overflow a worker stack
     c.add({
       id: "file.arrays",
       class: "load",
