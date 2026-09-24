@@ -146,6 +146,9 @@ function TabNote({ tab, info }: { tab: Tab; info: SessionInfo }) {
 }
 
 function Num(p: { label: string; value: number; min: number; max: number; step?: number; onChange(v: number): void }) {
+  // what the player is typing, until it commits: a re-render meanwhile (the worker finishing an
+  // edit) must not put the old value back
+  const [draft, setDraft] = useState<string | null>(null);
   return (
     <label>
       {p.label}
@@ -154,9 +157,11 @@ function Num(p: { label: string; value: number; min: number; max: number; step?:
         min={p.min}
         max={p.max}
         step={p.step ?? 1}
-        value={p.value}
+        value={draft ?? p.value}
+        onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
         onChange={(e) => {
           const v = Number((e.target as HTMLInputElement).value);
+          setDraft(null);
           if (Number.isFinite(v)) p.onChange(Math.min(p.max, Math.max(p.min, v)));
         }}
       />
