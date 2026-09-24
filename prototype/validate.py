@@ -1,7 +1,10 @@
 """Validate a .timber map: everything the game needs to load it without dropping objects, plus
 playability rules calibrated on the official maps. A map passes only if every check passes.
 
-    python prototype/validate.py out/*.timber [--difficulty normal] [--json]
+    python prototype/validate.py out/*.timber [--difficulty normal] [--json] [--load-only] [--quiet]
+
+--load-only runs the load and design checks only (file, terrain, placement, slopes, start), as the
+TypeScript generator's M1 acceptance asks (ROADMAP M1); --quiet prints one line per file.
 
 Check ids and thresholds are documented in PLAN.md ("Validation"); the evidence behind them is
 in investigation/notes/*.md and investigation/REPORT.md.
@@ -324,7 +327,7 @@ def check_start(m: TimberMap, rep: Report, ents, occupied):
 
 # ---------------------------------------------------------------------------------------------
 
-def validate(path, difficulty="normal", water=None) -> Report:
+def validate(path, difficulty="normal", water=None, load_only=False) -> Report:
     import zipfile
     rep = Report(path)
     with zipfile.ZipFile(path) as z:
@@ -340,6 +343,8 @@ def validate(path, difficulty="normal", water=None) -> Report:
     ents = by_template(m)
     check_slopes(m, rep, ents)
     start = check_start(m, rep, ents, occupied)
+    if load_only:
+        return rep
     try:
         from playability import check_playability
         check_playability(m, rep, ents, start, difficulty, occupied, water)
@@ -355,9 +360,14 @@ def main():
         difficulty = sys.argv[sys.argv.index("--difficulty") + 1]
         args = [a for a in args if a != difficulty]
     all_ok = True
+    load_only = "--load-only" in sys.argv
     for path in args:
-        rep = validate(path, difficulty)
+        rep = validate(path, difficulty, load_only=load_only)
         all_ok &= rep.passed
+        if "--quiet" in sys.argv:
+            bad = [c.id for c in rep.failures()]
+            print(f"{'PASS' if rep.passed else 'FAIL'}  {path}" + (f"  ({', '.join(bad)})" if bad else ""))
+            continue
         if "--json" in sys.argv:
             print(json.dumps({"path": path, "passed": rep.passed, "checks": [c.__dict__ for c in rep.checks]}, default=str, indent=1))
             continue

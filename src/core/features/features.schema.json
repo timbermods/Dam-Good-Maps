@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timbermods.github.io/dam-good-maps/schema/features-v1.json",
+  "title": "Dam Good Maps feature list v1",
+  "description": "Parametric features (PLAN.md §19.2). Sizes in tiles, heights in terrain levels.",
+  "type": "array",
+  "items": { "$ref": "#/$defs/feature" },
+  "$defs": {
+    "point": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": -1, "maximum": 257 } },
+    "runs": {
+      "type": "array",
+      "items": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 0, "maximum": 255 } }
+    },
+    "orientation": { "enum": ["Cw0", "Cw90", "Cw180", "Cw270"] },
+    "edge": { "enum": ["west", "east", "south", "north"] },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "origin", "locked", "params"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^(f-[a-z2-7]{13}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$" },
+        "kind": { "enum": ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "mapObject", "start"] },
+        "origin": { "enum": ["generated", "user", "claude", "stamp"] },
+        "role": { "type": "string" },
+        "locked": { "type": "boolean" },
+        "params": { "type": "object" }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "river" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/river" } } } },
+        { "if": { "properties": { "kind": { "const": "lake" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/lake" } } } },
+        { "if": { "properties": { "kind": { "const": "landform" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/landform" } } } },
+        { "if": { "properties": { "kind": { "const": "setPiece" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/setPiece" } } } },
+        { "if": { "properties": { "kind": { "const": "forest" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/forest" } } } },
+        { "if": { "properties": { "kind": { "const": "berryPatch" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/berryPatch" } } } },
+        { "if": { "properties": { "kind": { "const": "ruinField" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/ruinField" } } } },
+        { "if": { "properties": { "kind": { "const": "start" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/start" } } } }
+      ]
+    },
+    "river": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "width", "bedDepth", "bedProfile", "flow", "style", "entry", "exit", "badwater"],
+      "properties": {
+        "path": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/point" } },
+        "width": { "type": "number", "minimum": 1, "maximum": 9 },
+        "bedDepth": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "bedProfile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["start", "steps"],
+          "properties": {
+            "start": { "type": "integer", "minimum": 0, "maximum": 16 },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["at", "drop"],
+                "properties": {
+                  "at": { "type": "number", "minimum": 0 },
+                  "drop": { "type": "integer", "minimum": 1, "maximum": 15 },
+                  "setPiece": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "flow": { "type": "number", "minimum": 0, "maximum": 100 },
+        "style": { "enum": ["straight", "meandering", "braided"] },
+        "meander": { "type": "number", "minimum": 0, "maximum": 1 },
+        "entry": { "type": "object" },
+        "exit": { "type": "object" },
+        "badwater": { "type": "boolean" }
+      }
+    },
+    "lake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outline", "floorDepth", "outlet", "inflow", "planned"],
+      "properties": {
+        "outline": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/point" } },
+        "floorDepth": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "outlet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["at", "sill", "to"],
+          "properties": {
+            "at": { "$ref": "#/$defs/point" },
+            "sill": { "type": "integer", "minimum": 0, "maximum": 16 },
+            "to": { "enum": ["edge", "river", "lake", "none"] },
+            "target": { "type": "string" }
+          }
+        },
+        "inflow": { "type": "object" },
+        "planned": { "type": "boolean" },
+        "river": { "type": "string" }
+      }
+    },
+    "landform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "edgeStyle"],
+      "properties": {
+        "kind": { "enum": ["hill", "plateau", "ridge", "canyon", "valley", "island", "terraces"] },
+        "edgeStyle": { "enum": ["gentle", "terraced", "cliff"] },
+        "outline": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/point" } },
+        "height": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "along": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["river", "halfWidth", "floorAboveBed"],
+          "properties": {
+            "river": { "type": "string" },
+            "halfWidth": { "type": "number", "minimum": 1, "maximum": 128 },
+            "floorAboveBed": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "side": { "enum": [1, -1] },
+            "baseLevel": { "type": "integer", "minimum": 0, "maximum": 16 },
+            "bands": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["at", "rise"],
+                "properties": { "at": { "type": "number" }, "rise": { "type": "integer", "minimum": 1, "maximum": 16 } }
+              }
+            },
+            "wobble": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["amp", "cell", "amp2", "cell2"],
+              "properties": {
+                "amp": { "type": "number", "minimum": 0, "maximum": 16 },
+                "cell": { "type": "integer", "minimum": 2, "maximum": 256 },
+                "amp2": { "type": "number", "minimum": 0, "maximum": 16 },
+                "cell2": { "type": "integer", "minimum": 2, "maximum": 256 }
+              }
+            },
+            "maxLevel": { "type": "integer", "minimum": 1, "maximum": 16 }
+          }
+        }
+      }
+    },
+    "setPiece": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "request", "plan", "report"],
+      "properties": {
+        "kind": { "enum": ["waterfall", "damSite", "gorge", "terracedCliffs", "badwaterBasin", "plugSpillway", "obstaclePayoff", "secondDistrict"] },
+        "request": { "type": "object" },
+        "plan": { "type": "object" },
+        "report": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "forest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "density", "speciesMix", "life", "youngShare"],
+      "properties": {
+        "area": { "$ref": "#/$defs/runs" },
+        "density": { "type": "number", "minimum": 0, "maximum": 1 },
+        "speciesMix": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "Pine": { "type": "number", "minimum": 0 },
+            "Birch": { "type": "number", "minimum": 0 },
+            "Oak": { "type": "number", "minimum": 0 },
+            "Succulent": { "type": "number", "minimum": 0 }
+          }
+        },
+        "groveSize": { "type": "integer", "minimum": 0 },
+        "life": { "enum": ["auto", "alive", "dead"] },
+        "youngShare": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "berryPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "density", "ripeShare"],
+      "properties": {
+        "area": { "$ref": "#/$defs/runs" },
+        "density": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ripeShare": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "ruinField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "scrapTarget", "heightMix", "centerBias"],
+      "properties": {
+        "area": { "$ref": "#/$defs/runs" },
+        "scrapTarget": { "type": "integer", "minimum": 0 },
+        "heightMix": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "number", "minimum": 0 } },
+        "centerBias": { "type": "number", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "start": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "orientation", "benchRadius", "benchLevel", "player"],
+      "properties": {
+        "position": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 0, "maximum": 255 } },
+        "orientation": { "$ref": "#/$defs/orientation" },
+        "benchRadius": { "type": "integer", "minimum": 2, "maximum": 12 },
+        "benchLevel": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "player": { "type": "integer", "minimum": 0, "maximum": 3 }
+      }
+    }
+  }
+}
