@@ -3,10 +3,14 @@
 A map generator for [Timberborn](https://mechanistry.com/). Pick settings, generate a map, see it
 in the browser and download a `.timber` file that loads and plays in Timberborn 1.1.
 
-The website is not built yet. This repository currently holds:
+The website is in progress, following [ROADMAP.md](ROADMAP.md). Milestone M1 works end to end:
+River Valley maps from a seed, a 2D preview, and downloads of the `.timber` and of the project
+file. Once Pages is on, it is served at <https://timbermods.github.io/dam-good-maps/>.
 
 | Path | What it is |
 |---|---|
+| [src/](src/) | The website. `src/core/` is the generator and format code: pure TypeScript that runs in the worker, in Node and in tests. |
+| [tools/](tools/) | Command-line tools on the same core: batch generation, the Python oracle, the benchmark and the in-game check files. |
 | [PLAN.md](PLAN.md) | The implementation plan for the website: architecture, settings, generation pipeline, validation rules, scoring, tests, and (§19) the foundations shared with the editor. |
 | [EDITOR_PLAN.md](EDITOR_PLAN.md) | The plan for the in-browser map editor and the Claude integration. |
 | [ROADMAP.md](ROADMAP.md) | One milestone order for both plans. |
@@ -16,6 +20,39 @@ The website is not built yet. This repository currently holds:
 | [investigation/REPORT.md](investigation/REPORT.md) | What the game's code, data and maps say about map rules and design, with the numbers behind every threshold. |
 | [investigation/calibration.json](investigation/calibration.json) | Measurements of the 19 official maps and 9 workshop maps. |
 | [prototype/](prototype/) | The Python prototype: map reader/writer, generator, validator and round-trip test. It stays as the reference implementation and test oracle for the website. |
+
+## Website quick start
+
+Node 22 or later. The oracle and the calibration test also need Python 3.11+ with
+`prototype/requirements.txt`.
+
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
+
+```bash
+npm test
+```
+
+```bash
+npm run oracle
+```
+
+```bash
+npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
+```
+
+- `npm run dev` serves the site at <http://localhost:5173/dam-good-maps/>.
+- `npm test` runs the unit and contract tests.
+- `npm run oracle` generates 50 seeds × 3 sizes and checks each map with the Python validator and
+  round-trip test.
+- `npm run gen` writes maps from the command line.
+- `npm run test:e2e` builds the site and checks that Chrome and Node produce the same bytes.
+- `npm run bench` times generation at 128².
 
 ## Prototype quick start
 

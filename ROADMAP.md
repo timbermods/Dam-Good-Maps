@@ -102,6 +102,15 @@ Teeth start. Add F2: sealed river mouth. Deferred (D11): logged as pending in
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `m1-core`. Every acceptance criterion passes:
+- the Python oracle: 150/150 maps;
+- Node = Chromium on 10 seeds;
+- the project rebuild and the id stability tests;
+- 128² in 85 ms median;
+- the contract tests.
+
+The deviations are PLAN §20 D15–D23. In-game checks A1–A5 and F2 are pending.
+
 ---
 
 ## M2. Water, playability and validation profiles

@@ -77,7 +77,7 @@ A fully client-side static site. There is no server; everything runs in the play
 | 2D preview | Canvas 2D with an `ImageData` buffer | 256² tiles is 65k pixels: one `putImageData` per layer change, scaled up with smoothing off. No library needed. |
 | 3D preview | three.js, lazy-loaded chunk | Only downloaded when the player opens 3D. Terrain columns are meshed as top faces plus side walls with greedy merging (about 40k quads on a 256² map); trees are instanced. |
 | Zip | fflate `zipSync` with a fixed `mtime` | Small, fast and synchronous in the worker. A fixed mtime makes the zip byte-reproducible. |
-| JPEG thumbnail | `jpeg-js` encoder in the worker | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
+| JPEG thumbnail | `jpeg-js` encoder in the worker (0.4.4, vendored as an ES module that returns a `Uint8Array`, D20) | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
 | Tests | Vitest (unit, golden files), Playwright (end-to-end and cross-browser determinism), plus the Python prototype as an oracle in CI | See §15. |
 | Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/dam-good-maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
 | Second build target | A single-file build for publishing as a Claude artifact (EDITOR_PLAN.md §7) | The same code with platform adapters swapped (§19.9). Keep it possible from the start: data is bundled, not fetched at runtime; workers can be inlined; libraries come from npm, since the artifact can load scripts only from cdnjs/jsDelivr/unpkg. |
@@ -97,8 +97,10 @@ Node:
   `Math.round`, `Math.abs`, `Math.min` and `Math.max`, which IEEE-754 makes exact across engines.
   - `Math.sin/cos/exp/log/pow/atan2` are implementation-defined in precision, so they are not used
     on output paths.
-  - Meanders use a polynomial sine (`core/math/sine.ts`: a 7th-order minimax polynomial on a
-    range-reduced argument).
+  - Meanders use a polynomial sine (`core/math/detmath.ts`: an odd polynomial through x¹⁷ on an
+    argument reduced to [−π/2, π/2], error below 1e-13). `exp` and `ln`, which the log-normal
+    draws and the size-aware densities need, are built the same way from basic operations
+    (D15).
   - Noise uses integer-hash value noise with a smoothstep fade.
 - **Iteration order.** Always over typed arrays in index order. Priority queues break ties by
   index. No iteration over `Object` keys on output paths.
@@ -170,24 +172,28 @@ dam-good-maps/
 ├─ index.html
 ├─ src/
 │  ├─ core/                        pure TS, no DOM: runs in worker, Node and tests
-│  │  ├─ math/        rng.ts (splitmix32, sfc32, streams)  noise.ts  sine.ts  grid.ts (typed 2-D helpers)
-│  │  ├─ format/      timber.ts (read/write zip)  world.ts (world.json encode/decode, C# float format)
+│  │  ├─ math/        rng.ts (splitmix32, sfc32, streams)  hash.ts (murmur3, ids)  noise.ts  detmath.ts (sin, exp, ln)
+│  │  │               grid.ts (typed 2-D helpers, chamfer distance, level regions, heap)
+│  │  ├─ format/      timber.ts (read/write zip)  world.ts (world.json encode/decode)  json.ts (C# float format)
 │  │  │               entities.ts (templates, component builders)  footprints.ts (generated from notes/footprints.json)
-│  │  │               thumbnail.ts (render + jpeg-js)
+│  │  │               vendor/jpeg-encoder.js (jpeg-js encoder)
+│  │  ├─ render/      shade.ts (top-down colours, the thumbnail)
 │  │  ├─ sim/         water.ts (exact single-layer port)  moisture.ts  contamination.ts  drought.ts
 │  │  ├─ analysis/    distance.ts  regions.ts (level regions, walk regions with slopes)  basins.ts (priority flood)
 │  │  │               damsites.ts  features.ts (rivers, falls, islands, plateaus)
 │  │  ├─ spec/        mapspec.schema.json  mapspec.ts (MapSpec, defaults, presets, URL codec, merge patch)  §19.1
-│  │  ├─ features/    schema.ts (every feature kind and its params, §19.2)  ids.ts (§19.4)
+│  │  │               schema.ts (the eval-free schema checker, D16)
+│  │  ├─ features/    schema.ts (every feature kind and its params, §19.2)  features.schema.json  ids.ts (§19.4)
+│  │  │               geometry.ts (river paths, bed profiles, polygons)  slopes.ts (derived slopes, §7.5)
 │  │  │               raster/*.ts (one rasterizer per kind)  setpieces/*.ts (shared builders, §19.3)
 │  │  │               build.ts (the one build pipeline, §19.8)
 │  │  ├─ doc/         document.ts (MapDocument)  ops.ts (edit operations, used by the editor)
-│  │  ├─ gen/         pipeline.ts (spec → features, then build)  layout/*.ts (one per archetype)
-│  │  │               slopes.ts  vegetation.ts  ruins.ts  extras.ts
+│  │  ├─ gen/         generate.ts (spec → features, then build, retries)  riverValley.ts (one planner per archetype)
+│  │  │               calibrated.ts (size-aware densities)  blobs.ts (ruin and grove shapes)  pack.ts (file, name, thumbnail)
 │  │  ├─ validate/    checks.ts (every check: id, class, rule, threshold)  placement.ts (load-time emulation)
 │  │  │               profiles.ts (generate / export / import, §19.5)  report.ts
 │  │  ├─ score/       score.ts  naming.ts
-│  │  └─ data/        calibration.json (subset used at runtime)  calibrated.ts  footprints.json
+│  │  └─ data/        footprints.json (the calibration subset lives in gen/calibrated.ts, tested against calibrated.py)
 │  ├─ platform/       adapters: files (save/open), storage, workers, claude (§19.9)
 │  ├─ render3d/       the one 3D renderer, used by the generator preview and the editor
 │  ├─ worker/         generator.worker.ts (Comlink API: generate, build, pack, cancel)
@@ -195,13 +201,14 @@ dam-good-maps/
 │  │                  Download.tsx  Share.tsx  Rate.tsx  InstallHelp.tsx  state.ts (signals)
 │  ├─ editor/         the editor UI (EDITOR_PLAN.md §8)
 │  └─ styles/
-├─ tools/            batch.ts (Node: N seeds × themes → pass rates, score distribution)  golden.ts
+├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  ingame-files.ts  export-footprints.ts
+│                    batch.ts (Node: N seeds × themes → pass rates, score distribution)  golden.ts
 │                    ratings.ts (issue export)  export-fixtures.py (Python → golden vectors)
-├─ tests/            unit/  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
+├─ tests/            unit/  contract/ (§15)  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
 ├─ prototype/        Python reference implementation and test oracle (kept, see §4)
 ├─ investigation/    report, calibration, notes, scripts (raw/ and decompiled/ stay local)
-├─ out/              prototype test map and batch results
-└─ .github/          workflows/ci.yml (lint, unit, golden, oracle, e2e) · deploy.yml (Pages, /v/<version>/)
+├─ out/              prototype test map and batch results; m1/ and later: the files for the in-game checks
+└─ .github/          workflows/ci.yml (typecheck, unit, contract, oracle, bench, e2e) · deploy.yml (Pages, /v/<version>/)
                      ISSUE_TEMPLATE/map-rating.yml
 ```
 
@@ -1222,12 +1229,13 @@ them: each milestone lists the checks it would have needed in
 [docs/ingame-log.md](docs/ingame-log.md) as *pending*, names the files to play, and relies on the
 automated validation and tests in §15. The checks below stay the definition of each one.
 
-**A. Load and start** (roadmap M1; now with `out/Dam Good Maps - River Valley 4242.timber`)
+**A. Load and start** (roadmap M1, with `out/m1/River Valley (4242).timber`; see
+[docs/ingame-log.md](docs/ingame-log.md))
 1. Copy the file to `Documents\Timberborn\Maps`. It appears under New game with its thumbnail and
    description.
 2. Start Folktails on Normal:
    - no "Loading issues" panel;
-   - the district center stands where the white square is on `out/…4242.png`, with the door facing
+   - the district center stands where the white square is on `out/m1/River Valley (4242).png`, with the door facing
      the river;
    - 9 adults and 4 children spawn.
 3. Walk test:
@@ -1413,7 +1421,6 @@ the editor's live checks and export gating.
 
 - **Check result:** `{id, class, severity, ok, value, limit, message, where?, fix?}`. The classes
   are `load`, `playability` and `design` (§11). A check marked advisory (today only
-  `plants.drought`) is reported in every profile and never blocks. A check marked advisory (today only
   `plants.drought`) is reported in every profile and never blocks.
 - **Profiles:**
 
@@ -1454,7 +1461,9 @@ There is one reader and one writer (`core/format`), verified by the round-trip t
   thumbnail.
 - **Project file** (`.damgoodmaps.json`, gzip-compressed): the `MapDocument` with its spec,
   features, edits, locks, meta, `generatorVersion` and built base (heights plus voxel overrides,
-  compressed). It opens exactly even after the generator has changed.
+  compressed). It opens exactly even after the generator has changed. In M1 the base holds the
+  heights only, since generated maps are heightfields, and a project file is rebuilt from its
+  features. Voxel overrides and opening from the stored base come with import in M3 (D18).
 
 ### 19.7 Determinism
 
@@ -1531,6 +1540,15 @@ list, and implementation adds to it.
 | D12 | The site lives in the `dam-good-maps` repository of the timbermods organization, served at `timbermods.github.io/dam-good-maps/`. The repository was renamed from `Dam-Good-Maps`; GitHub redirects the old name. | Kyler's answer to §17 question 1. | Kyler |
 | D13 | Difficulty mismatches are warned, never refused. A Hard-designed map with a Scarce reserve generates, with a warning on the map card. | Kyler: "hard maps are warned (that's part of the fun)". | Kyler |
 | D14 | Ratings use the pre-filled GitHub issue form (§2.3). | Kyler's answer to §17 question 3. | Kyler |
+| D15 | Deterministic `sin`, `exp` and `ln` in `core/math/detmath.ts`. `sin` is an odd polynomial through x¹⁷ after reduction to [−π/2, π/2] (measured error 4.4e-14), not a 7th-order minimax fit. `exp` and `ln` use range reduction and series. | A Taylor polynomial is exact to write down and easy to check. The extra terms cost nothing measurable. The log-normal draws and the size-aware density interpolation also need `exp` and `ln`. | M1 |
+| D16 | The JSON schemas are checked at runtime by a small eval-free checker (`core/spec/schema.ts`) that covers the keywords the two schemas use. Ajv checks the same schemas in the contract tests only, and they must agree. | Ajv compiles validators with `new Function`, which the artifact edition's CSP may refuse, and it would add over 100 KB to the worker. | M1 |
+| D17 | Entity `localIndex` (§19.4) is the entity's tile index, y·W + x. The ruin template in the hash is `RuinColumnH<h>`. | One owner never places two entities of one template on one tile. The id stays stable as long as that entity stays on its tile. | M1 |
+| D18 | In M1 the project file's base holds heights only, and a project file is rebuilt from its features. Voxel overrides, and opening from the stored base across generator versions, come with import in M3. | Generated maps are heightfields. Rebuilding from features is the M1 acceptance: it reproduces the `.timber` byte for byte. | M1 |
+| D19 | The River Valley planner in M1 follows the prototype: the river enters on the west edge and leaves on the east edge, and "highlands" are the upper bands of the two `terraces` landforms, not a separate feature. The planned lake basin runs from the basin start to 6 tiles above the gorge. There is no badwater (M2) and there are no map objects (M7). Every ruin column is in a field, within §9.7's "at most 5% outside fields". | Port the proven layout first and change one thing at a time. Other river directions come with the themes in M6. | M1 |
+| D20 | The JPEG encoder is jpeg-js 0.4.4, vendored as an ES module (`core/format/vendor/`, BSD notice kept) that returns a `Uint8Array`. | The npm build is CommonJS and returns a Node `Buffer` when a `module` object exists, so Node and the worker would run different code paths. | M1 |
+| D21 | In M1, slopes use the prototype's reach rule: every level region within ⌊0.6·max(W, H)⌋ tiles of the start is joined along the region tree (one slope per edge, a second on boundaries of 60+ pairs, at least 12 tiles apart). The §7.5 rules for the 40-tile core, the targeted regions and the 400-tile regions beyond come with `start.reach` and the playability class in M2. | The prototype's playability results were tuned with this rule. Measured over 10 seeds, it gives 14–21 slopes per 10k tiles at 96², 9–16 at 128² and 3–8 at 256². That is close to §7.5's target of up to 20 on small maps and 2–6 on large ones, slightly over at both ends. | M1; M2 revisits |
+| D22 | The browser test runs on the installed Chrome locally (`channel: "chrome"`) and on Playwright's Chromium in CI. CI runs the Python oracle on 5 seeds × 3 sizes on every push. The full 50 × 3 run is `npm run oracle`, run at each milestone. | Installing Playwright's browsers on Kyler's machine needs his go-ahead. The full oracle takes about a minute and CI keeps a fast subset. | M1 |
+| D23 | The site deploys to Pages from `main` only (`deploy.yml`). CI runs on every branch. | Kyler reviews `dev` and merges. Pages shows what was merged. | M1 |
 
 ---
 
