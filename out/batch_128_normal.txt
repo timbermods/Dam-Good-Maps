@@ -1,0 +1,22 @@
+seed 2000: PASS after 1 attempt(s)
+seed 2001: PASS after 1 attempt(s)
+seed 2002: PASS after 1 attempt(s)
+seed 2003: PASS after 2 attempt(s)
+seed 2004: PASS after 1 attempt(s)
+seed 2005: PASS after 1 attempt(s)
+seed 2006: PASS after 3 attempt(s)
+seed 2007: PASS after 3 attempt(s)
+{
+ "size": 128,
+ "difficulty": "normal",
+ "seeds": 8,
+ "first_attempt_pass_rate": 0.62,
+ "final_pass_rate": 1.0,
+ "mean_attempts": 1.62,
+ "failing_checks": {
+  "water.reservoir": 4,
+  "plants.survive": 1,
+  "start.dry": 1
+ },
+ "seconds_per_seed": 10.7
+}

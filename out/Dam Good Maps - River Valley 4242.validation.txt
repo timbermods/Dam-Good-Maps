@@ -1,0 +1,41 @@
+PASS  Dam Good Maps - River Valley 4242.timber  (difficulty normal)
+   ok  file.size              96x96
+   ok  file.layers            23 voxel layers
+   ok  file.version           1.1.2.4-52e959e-sw (generator writes 1.1.2.4-52e959e-sw)
+   ok  file.singletons        all present
+   ok  file.arrays            consistent
+   ok  file.metadata          96x96
+   ok  file.thumbnail         960x540 JPEG
+   ok  terrain.max_height     highest column 15 (editor limit 16, game limit 22)
+   ok  terrain.top_layer_free layer 22 must stay empty
+   ok  entities.templates     all common templates
+   ok  entities.enums         ok
+   ok  entities.components    required components present
+   ok  entities.ids           0 duplicate or malformed ids
+   ok  entities.placement     every object would load
+   ok  start.clear            nothing overlaps the start
+   ok  terrain.supported      0 voxels float more than 3 tiles from support
+   ok  slopes.connect         27 slopes join level z to z+1
+   ok  start.count            1 StartingLocation(s)
+   ok  start.flat             3x3 district center footprint is flat ground at the start level
+   ok  start.entrance         entrance tile (31,63) must be free ground at level 10 or no beavers spawn
+   ok  water.settles          steady after 768 ticks (1.0 days)
+   ok  water.no_flood         8% of the map under water (official p90 40%)
+   ok  water.clean_exists     638 tiles of clean water
+   ok  start.dry              district center and its ring stay dry after water settles
+   ok  start.water            clean water within pump reach (<= 2 below the start) 5.0 tiles away; Normal starts with no water and beavers die from ~day 6
+   ok  start.badwater         nearest badwater or contaminated soil 59 tiles
+   ok  start.reach            7178 dry tiles walkable from the start without stairs (official p10 431)
+   ok  start.reach_water      the pumpable water borders land the colony can walk to
+   ok  start.food             48 living berry bushes within 20 tiles (Normal food lasts ~4 days)
+   ok  start.wood             332 trees within 20 tiles
+   ok  start.ruins_clear      0 ruin columns within 15 tiles
+   ok  plants.survive         every living plant is on soil where it survives
+   ok  water.reservoir        best dam site within 40 tiles holds 1187, natural pools 0; 253 carries 50 beavers through a 9-day drought
+   ok  resources.scrap        6960 scrap (at least 3491: half the official median for this size)
+   ok  resources.trees        1212 trees (at least 606: half the official median for this size)
+   ok  resources.bushes       148 bushes (at least 73: half the official median for this size)
+   ok  ruins.fields           95% of columns in fields of 10+ (official median 97%)
+   ok  ruins.access           0 columns with no neighbour at their level
+
+generator: {'seed': 4242, 'layout': {'gorge_x': 45, 'basin_x': (29, 42), 'falls_x': 62}, 'start': (31, 65, 10), 'settled': True, 'sources': 6, 'clean_strength': 3.0, 'scrap': 6960, 'trees': 1212, 'bushes': 148, 'badwater': (91, 39, 7), 'badwater_strength': 1.52, 'fields': [31, 15, 27, 21, 50], 'slopes': 27}

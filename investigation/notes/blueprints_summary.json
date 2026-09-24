@@ -1,0 +1,8590 @@
+{
+ "DistrictCenter.Folktails": {
+  "file": "Buildings/DistrictManagement/DistrictCenter/DistrictCenter.Folktails.blueprint.json",
+  "size": [
+   3,
+   3,
+   5
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|Bottom, Top, Corners, Path, Middle|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None",
+     "Any|None|None"
+    ]
+   }
+  ],
+  "specs": {
+   "BuildingSpec": {
+    "SelectionSoundName": "DistrictCenter",
+    "LoopingSoundName": "",
+    "BuildingCost": [],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Finished",
+    "UnfinishedModelName": "#Unfinished",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 0
+   },
+   "TemplateSpec": {
+    "TemplateName": "DistrictCenter.Folktails",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BuildingAccessibleSpec": {
+    "LocalAccess": {
+     "X": 1.5,
+     "Y": 0.0,
+     "Z": 0.5
+    },
+    "ForceOneFinalAccess": true
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "DistrictManagement",
+    "ToolOrder": 10,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": false
+   },
+   "DistrictCenterSpec": {},
+   "NamedEntitySpec": {
+    "IsEditable": true
+   },
+   "NumberedEntityNamerSpec": {
+    "FormatLocKey": "Districts.DefaultDistrictName",
+    "NumberingGroup": "Districts",
+    "IsPersistent": false
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": false,
+    "EdgeGroups": [
+     {
+      "Cost": 1.0,
+      "Group": {
+       "UseGroup": false,
+       "GroupName": ""
+      },
+      "IsPath": true,
+      "AddedEdges": [
+       {
+        "Start": {
+         "X": 1,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 1,
+         "Y": -1,
+         "Z": 0
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 1,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 1,
+         "Y": 1,
+         "Z": 0
+        },
+        "IsTwoWay": true
+       }
+      ]
+     }
+    ],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "WorkplaceSpec": {
+    "MaxWorkers": 4,
+    "DefaultWorkers": 2,
+    "DefaultWorkerType": "Beaver",
+    "DisallowOtherWorkerTypes": false,
+    "WorkerTypeUnlockCosts": []
+   },
+   "EnterableSpec": {
+    "OperatingState": "Finished",
+    "LimitedCapacityFinished": false,
+    "CapacityFinished": 0,
+    "LimitedCapacityUnfinished": false,
+    "CapacityUnfinished": 0
+   },
+   "SimpleOutputInventorySpec": {
+    "Capacity": 20,
+    "IgnorableCapacity": true
+   },
+   "WorkplaceSlotManagerSpec": {},
+   "TransformSlotInitializerSpec": {
+    "Slots": [
+     {
+      "SlotKeyword": "Entrance",
+      "Animation": "Sitting",
+      "Inanimate": false,
+      "RandomizeYRotation": false,
+      "WaterSlot": false
+     }
+    ]
+   },
+   "WorkplaceIlluminatorSpec": {},
+   "FloodableFireSpec": {},
+   "BuilderHubSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.DistrictCenter.DisplayName",
+    "DescriptionLocKey": "Building.DistrictCenter.Description",
+    "FlavorDescriptionLocKey": "Building.DistrictCenter.FlavorDescription.Folktails",
+    "Icon": "Buildings/DistrictManagement/DistrictCenter/DistrictCenterIcon"
+   },
+   "ConnectionAnchorPointSpec": {
+    "Position": {
+     "X": 1.5,
+     "Y": 3.3,
+     "Z": 1.5
+    }
+   },
+   "FireSpec": {
+    "AttachmentId": "Fire",
+    "HasLight": false
+   },
+   "WorkplaceWorkerOutfitSpec": {
+    "WorkerOutfit": "Builder"
+   },
+   "PathSpec": {
+    "MainPathCoordinates": {
+     "X": 1,
+     "Y": 1,
+     "Z": 0
+    }
+   },
+   "TransputProviderSpec": {
+    "Transputs": [
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Down, Left, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Left, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Left, Up, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Up, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Down, Right, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Right, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Up, Right, Bottom",
+      "ReverseRotation": false
+     }
+    ],
+    "IgnoreRotation": false
+   },
+   "MechanicalConnectorTargetSpec": {},
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Fire",
+      "Prefab": "Buildings/DistrictManagement/DistrictCenter/DistrictCenterFire",
+      "Parent": "#Finished",
+      "Position": {
+       "X": 1.5,
+       "Y": 3.0,
+       "Z": 1.5
+      },
+      "Rotation": {
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "InventoryLimitRowHiderSpec": {},
+   "Children": {
+    "#Finished": {
+     "TimbermeshSpec": {
+      "Model": "Buildings/DistrictManagement/DistrictCenter/DistrictCenter.Folktails.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.7,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 3.0,
+         "Y": 1.4,
+         "Z": 3.0
+        }
+       },
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 1.6,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 1.2,
+         "Y": 1.4,
+         "Z": 1.5
+        }
+       },
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 3.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 0.6,
+         "Y": 2.0,
+         "Z": 0.7
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Unfinished": {
+     "Children": {
+      "ConstructionBase3x3#nested": {
+       "BlueprintPath": "ConstructionBases/ConstructionBase3x3/ConstructionBase3x3.blueprint"
+      }
+     }
+    }
+   }
+  }
+ },
+ "DistrictCenter.IronTeeth": {
+  "file": "Buildings/DistrictManagement/DistrictCenter/DistrictCenter.IronTeeth.blueprint.json",
+  "size": [
+   3,
+   3,
+   5
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|Bottom, Top, Corners, Path, Middle|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None",
+     "Any|None|None"
+    ]
+   }
+  ],
+  "specs": {
+   "BuildingSpec": {
+    "SelectionSoundName": "DistrictCenter",
+    "LoopingSoundName": "",
+    "BuildingCost": [],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Finished",
+    "UnfinishedModelName": "#Unfinished",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 0
+   },
+   "TemplateSpec": {
+    "TemplateName": "DistrictCenter.IronTeeth",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BuildingAccessibleSpec": {
+    "LocalAccess": {
+     "X": 1.5,
+     "Y": 0.0,
+     "Z": 0.5
+    },
+    "ForceOneFinalAccess": true
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "DistrictManagement",
+    "ToolOrder": 10,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": false
+   },
+   "DistrictCenterSpec": {},
+   "NamedEntitySpec": {
+    "IsEditable": true
+   },
+   "NumberedEntityNamerSpec": {
+    "FormatLocKey": "Districts.DefaultDistrictName",
+    "NumberingGroup": "Districts",
+    "IsPersistent": false
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": false,
+    "EdgeGroups": [
+     {
+      "Cost": 1.0,
+      "Group": {
+       "UseGroup": false,
+       "GroupName": ""
+      },
+      "IsPath": true,
+      "AddedEdges": [
+       {
+        "Start": {
+         "X": 1,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 1,
+         "Y": -1,
+         "Z": 0
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 1,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 1,
+         "Y": 1,
+         "Z": 0
+        },
+        "IsTwoWay": true
+       }
+      ]
+     }
+    ],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "WorkplaceSpec": {
+    "MaxWorkers": 4,
+    "DefaultWorkers": 2,
+    "DefaultWorkerType": "Beaver",
+    "DisallowOtherWorkerTypes": false,
+    "WorkerTypeUnlockCosts": []
+   },
+   "EnterableSpec": {
+    "OperatingState": "Finished",
+    "LimitedCapacityFinished": false,
+    "CapacityFinished": 0,
+    "LimitedCapacityUnfinished": false,
+    "CapacityUnfinished": 0
+   },
+   "SimpleOutputInventorySpec": {
+    "Capacity": 20,
+    "IgnorableCapacity": true
+   },
+   "WorkplaceSlotManagerSpec": {},
+   "TransformSlotInitializerSpec": {
+    "Slots": [
+     {
+      "SlotKeyword": "Entrance",
+      "Animation": "Sitting",
+      "Inanimate": false,
+      "RandomizeYRotation": false,
+      "WaterSlot": false
+     }
+    ]
+   },
+   "WorkplaceIlluminatorSpec": {},
+   "FloodableFireSpec": {},
+   "BuilderHubSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.DistrictCenter.DisplayName",
+    "DescriptionLocKey": "Building.DistrictCenter.Description",
+    "FlavorDescriptionLocKey": "Building.DistrictCenter.FlavorDescription.IronTeeth",
+    "Icon": "Buildings/DistrictManagement/DistrictCenter/DistrictCenterIcon"
+   },
+   "ConnectionAnchorPointSpec": {
+    "Position": {
+     "X": 1.5,
+     "Y": 3.3,
+     "Z": 1.5
+    }
+   },
+   "FireSpec": {
+    "AttachmentId": "Fire",
+    "HasLight": false
+   },
+   "WorkplaceWorkerOutfitSpec": {
+    "WorkerOutfit": "Builder"
+   },
+   "PathSpec": {
+    "MainPathCoordinates": {
+     "X": 1,
+     "Y": 1,
+     "Z": 0
+    }
+   },
+   "TransputProviderSpec": {
+    "Transputs": [
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Down, Left, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Left, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 0,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Left, Up, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Up, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Down, Right, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 1,
+       "Z": 0
+      },
+      "Directions": "Right, Bottom",
+      "ReverseRotation": false
+     },
+     {
+      "Coordinates": {
+       "X": 2,
+       "Y": 2,
+       "Z": 0
+      },
+      "Directions": "Up, Right, Bottom",
+      "ReverseRotation": false
+     }
+    ],
+    "IgnoreRotation": false
+   },
+   "MechanicalConnectorTargetSpec": {},
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Fire",
+      "Prefab": "Buildings/DistrictManagement/DistrictCenter/DistrictCenterFire",
+      "Parent": "#Finished",
+      "Position": {
+       "X": 1.5,
+       "Y": 3.0,
+       "Z": 1.5
+      },
+      "Rotation": {
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "InventoryLimitRowHiderSpec": {},
+   "Children": {
+    "#Finished": {
+     "TimbermeshSpec": {
+      "Model": "Buildings/DistrictManagement/DistrictCenter/DistrictCenter.IronTeeth.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.7,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 3.0,
+         "Y": 1.4,
+         "Z": 3.0
+        }
+       },
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 1.6,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 1.2,
+         "Y": 1.4,
+         "Z": 1.5
+        }
+       },
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 3.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 0.6,
+         "Y": 2.0,
+         "Z": 0.7
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Unfinished": {
+     "Children": {
+      "ConstructionBase3x3#nested": {
+       "BlueprintPath": "ConstructionBases/ConstructionBase3x3/ConstructionBase3x3.blueprint"
+      }
+     }
+    }
+   }
+  }
+ },
+ "Blockage": {
+  "file": "MapEditor/Objects/Blockage/Blockage.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Blockage",
+    "BackwardCompatibleTemplateNames": [
+     "Barrier"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": false,
+    "EdgeGroups": [
+     {
+      "Cost": 1.0,
+      "Group": {
+       "UseGroup": false,
+       "GroupName": ""
+      },
+      "IsPath": false,
+      "AddedEdges": [
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "End": {
+         "X": 0,
+         "Y": -1,
+         "Z": 1
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "End": {
+         "X": -1,
+         "Y": 0,
+         "Z": 1
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "End": {
+         "X": 0,
+         "Y": 1,
+         "Z": 1
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "End": {
+         "X": 1,
+         "Y": 0,
+         "Z": 1
+        },
+        "IsTwoWay": false
+       }
+      ]
+     }
+    ],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 100,
+    "ToolShape": "Square",
+    "Layout": "Line",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 1.0
+   },
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Blockage.DisplayName",
+    "DescriptionLocKey": "Building.Blockage.Description",
+    "FlavorDescriptionLocKey": "Building.Blockage.FlavorDescription",
+    "Icon": "MapEditor/Objects/Blockage/BlockageIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Blockage",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableFromTopSpec": {},
+   "BlockObjectRandomizablePlacementSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/Blockage/Blockage.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 1.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "GeothermalField": {
+  "file": "MapEditor/Objects/GeothermalField/GeothermalField.blueprint.json",
+  "size": [
+   3,
+   3,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "GeothermalField",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 700,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.GeothermalField.DisplayName",
+    "DescriptionLocKey": "Building.GeothermalField.Description",
+    "FlavorDescriptionLocKey": "Building.GeothermalField.FlavorDescription",
+    "Icon": "MapEditor/Objects/GeothermalField/GeothermalFieldIcon"
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     }
+    ]
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "GeothermalField",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 2
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "WindParticleControllerSpec": {
+    "AttachmentIds": [
+     "Smoke"
+    ]
+   },
+   "BlockableObjectParticleControllerSpec": {
+    "AttachmentIds": [
+     "Smoke"
+    ]
+   },
+   "BlockableFloodableObjectSpec": {},
+   "FloodableObjectSpec": {},
+   "WaterObjectSpec": {
+    "WaterCoordinates": {
+     "X": 1,
+     "Y": 1,
+     "Z": 0
+    }
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Smoke",
+      "Prefab": "MapEditor/Objects/GeothermalField/GeothermalFieldSmoke",
+      "Parent": "#Model",
+      "Position": {
+       "X": 1.5,
+       "Y": 0.0,
+       "Z": 1.5
+      },
+      "Rotation": {
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 0.6250944
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "Children": {
+    "#Model": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 2.54922676,
+         "Y": 0.1,
+         "Z": 2.58214927
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     },
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/GeothermalField/GeothermalField.Model"
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/GeothermalField/GeothermalField.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "LargeRelic": {
+  "file": "MapEditor/Objects/LargeRelic/LargeRelic.blueprint.json",
+  "size": [
+   3,
+   3,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None",
+     "Any|Floor, Bottom, Corners, Path, Middle|None",
+     "Any|None|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "LargeRelic",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1500,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Relic.DisplayName",
+    "DescriptionLocKey": "Building.Relic.Description",
+    "FlavorDescriptionLocKey": "Building.LargeRelic.FlavorDescription",
+    "Icon": "MapEditor/Objects/LargeRelic/LargeRelicIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Relic",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableScienceRewardSpec": {
+    "SciencePoints": 3000
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 8.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "DemolishableFromTopSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/LargeRelic/LargeRelic.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0487027019,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 2.5,
+         "Y": 0.0974054039,
+         "Z": 2.5
+        }
+       },
+       {
+        "Center": {
+         "X": 1.40271688,
+         "Y": 0.818405032,
+         "Z": 0.451267719
+        },
+        "Size": {
+         "X": 1.51957178,
+         "Y": 1.42754388,
+         "Z": 0.3999803
+        }
+       },
+       {
+        "Center": {
+         "X": 0.5080538,
+         "Y": 0.818405032,
+         "Z": 1.32464767
+        },
+        "Size": {
+         "X": 0.472197,
+         "Y": 1.42754388,
+         "Z": 1.32713985
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/LargeRelic/LargeRelic.Model.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "MediumRelic": {
+  "file": "MapEditor/Objects/MediumRelic/MediumRelic.blueprint.json",
+  "size": [
+   3,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "MediumRelic",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1400,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Relic.DisplayName",
+    "DescriptionLocKey": "Building.Relic.Description",
+    "FlavorDescriptionLocKey": "Building.MediumRelic.FlavorDescription",
+    "Icon": "MapEditor/Objects/MediumRelic/MediumRelicIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Relic",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableScienceRewardSpec": {
+    "SciencePoints": 800
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "DemolishableFromTopSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/MediumRelic/MediumRelic.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0487027019,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 2.55,
+         "Y": 0.0974054039,
+         "Z": 1.5
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/MediumRelic/MediumRelic.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "NaturalDam": {
+  "file": "MapEditor/Objects/NaturalDam/NaturalDam.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "NaturalDam",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 200,
+    "ToolShape": "Square",
+    "Layout": "Line",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 0.65
+   },
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.NaturalDam.DisplayName",
+    "DescriptionLocKey": "Building.NaturalDam.Description",
+    "FlavorDescriptionLocKey": "Building.NaturalDam.FlavorDescription",
+    "Icon": "MapEditor/Objects/NaturalDam/NaturalDamIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Blockage",
+    "AlternativeSoundName": ""
+   },
+   "DemolishableFromTopSpec": {},
+   "BlockObjectRandomizablePlacementSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalDam/NaturalDam.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.325750858,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.6515017,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "NaturalOverhang2x1": {
+  "file": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhang2x1.blueprint.json",
+  "size": [
+   1,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|All|BlockObject",
+     "GroundOrStackable|All|BlockObject"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "NaturalOverhang2x1",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 400,
+    "ToolShape": "Square",
+    "Layout": "SideLine",
+    "CustomPivot": {
+     "HasCustomPivot": true,
+     "Coordinates": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.NaturalOverhang2x1.DisplayName",
+    "DescriptionLocKey": "Building.NaturalOverhang.Description",
+    "FlavorDescriptionLocKey": "Building.NaturalOverhang.FlavorDescription",
+    "Icon": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhang2x1Icon"
+   },
+   "FinishableHorizontalWaterObstacleSpec": {
+    "Obstacles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 1
+     }
+    ]
+   },
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 1.0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableFromTopSpec": {},
+   "PathModelTypeEnforcerSpec": {
+    "PathModelType": "Ground"
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Full",
+    "UncoveredModelName": "#Uncovered",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "DemolishableStatusIconOffsetterSpec": {},
+   "Children": {
+    "#Full": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhang2x1.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.81552887,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.3605156,
+         "Z": 2.0
+        }
+       },
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.3137035,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.65,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Uncovered": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhangs.Uncovered"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 1.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "NaturalOverhang3x1": {
+  "file": "MapEditor/Objects/NaturalOverhang3x1/NaturalOverhang3x1.blueprint.json",
+  "size": [
+   1,
+   3,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|All|BlockObject",
+     "Any|Top|BlockObject",
+     "GroundOrStackable|All|BlockObject"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "NaturalOverhang3x1",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 500,
+    "ToolShape": "Square",
+    "Layout": "SideLine",
+    "CustomPivot": {
+     "HasCustomPivot": true,
+     "Coordinates": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.NaturalOverhang3x1.DisplayName",
+    "DescriptionLocKey": "Building.NaturalOverhang.Description",
+    "FlavorDescriptionLocKey": "Building.NaturalOverhang.FlavorDescription",
+    "Icon": "MapEditor/Objects/NaturalOverhang3x1/NaturalOverhang3x1Icon"
+   },
+   "FinishableHorizontalWaterObstacleSpec": {
+    "Obstacles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 2,
+      "Z": 1
+     }
+    ]
+   },
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 1.0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableFromTopSpec": {},
+   "PathModelTypeEnforcerSpec": {
+    "PathModelType": "Ground"
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Full",
+    "UncoveredModelName": "#Uncovered",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "DemolishableStatusIconOffsetterSpec": {},
+   "Children": {
+    "#Full": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang3x1/NaturalOverhang3x1.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.81552887,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.360515535,
+         "Z": 3.0
+        }
+       },
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.3137035,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.65,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Uncovered": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhangs.Uncovered"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 1.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "NaturalOverhang4x1": {
+  "file": "MapEditor/Objects/NaturalOverhang4x1/NaturalOverhang4x1.blueprint.json",
+  "size": [
+   1,
+   4,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|All|BlockObject",
+     "Any|Top|BlockObject",
+     "GroundOrStackable|All|BlockObject"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "NaturalOverhang4x1",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 600,
+    "ToolShape": "Square",
+    "Layout": "SideLine",
+    "CustomPivot": {
+     "HasCustomPivot": true,
+     "Coordinates": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.NaturalOverhang4x1.DisplayName",
+    "DescriptionLocKey": "Building.NaturalOverhang.Description",
+    "FlavorDescriptionLocKey": "Building.NaturalOverhang.FlavorDescription",
+    "Icon": "MapEditor/Objects/NaturalOverhang4x1/NaturalOverhang4x1Icon"
+   },
+   "FinishableHorizontalWaterObstacleSpec": {
+    "Obstacles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 2,
+      "Z": 1
+     },
+     {
+      "X": 0,
+      "Y": 3,
+      "Z": 1
+     }
+    ]
+   },
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 1.0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableFromTopSpec": {},
+   "PathModelTypeEnforcerSpec": {
+    "PathModelType": "Ground"
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Full",
+    "UncoveredModelName": "#Uncovered",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "DemolishableStatusIconOffsetterSpec": {},
+   "Children": {
+    "#Full": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang4x1/NaturalOverhang4x1.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.81552887,
+         "Z": 2.0
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.3605156,
+         "Z": 4.0
+        }
+       },
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.3137035,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.65,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Uncovered": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/NaturalOverhang2x1/NaturalOverhangs.Uncovered"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 1.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "ReservePile": {
+  "file": "MapEditor/Objects/ReservePile/ReservePile.blueprint.json",
+  "size": [
+   2,
+   2,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "BuildingSpec": {
+    "SelectionSoundName": "Pile",
+    "LoopingSoundName": "",
+    "BuildingCost": [
+     {
+      "Id": "ScrapMetal",
+      "Amount": 10
+     }
+    ],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "TemplateSpec": {
+    "TemplateName": "ReservePile",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Finished",
+    "UnfinishedModelName": "#Unfinished",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 0
+   },
+   "StockpileSpec": {
+    "MaxCapacity": 160,
+    "WhitelistedGoodType": "Pileable"
+   },
+   "EnterableSpec": {
+    "OperatingState": "Finished",
+    "LimitedCapacityFinished": false,
+    "CapacityFinished": 0,
+    "LimitedCapacityUnfinished": false,
+    "CapacityUnfinished": 0
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "BuildingAccessibleSpec": {
+    "LocalAccess": {
+     "X": 1.5,
+     "Y": 0.0,
+     "Z": 0.2
+    },
+    "ForceOneFinalAccess": false
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1000,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.ReservePile.DisplayName",
+    "DescriptionLocKey": "Building.SmallPile.Description",
+    "FlavorDescriptionLocKey": "Building.ReservePile.FlavorDescription",
+    "Icon": "MapEditor/Objects/ReservePile/ReservePileIcon"
+   },
+   "FixedStockpileSpec": {},
+   "StockpilePlaneVisualizerSpec": {
+    "StockpilePlaneVisualizations": [
+     {
+      "CenterOffset": {
+       "X": 0.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "MovementRange": {
+       "X": 0.01,
+       "Y": 0.95
+      },
+      "GoodVisualizationId": "Dirt",
+      "GoodVisualizationVariant": "2x2"
+     }
+    ]
+   },
+   "StockpileGoodPileVisualizerSpec": {
+    "CenterOffset": {
+     "X": 0.5,
+     "Y": 0.5,
+     "Z": 0.01
+    },
+    "GoodPileVisualizations": [
+     "Log",
+     "Plank",
+     "TreatedPlank",
+     "ScrapMetal",
+     "MetalBlock"
+    ]
+   },
+   "UnconnectedBuildingBlockerSpec": {},
+   "Children": {
+    "#Finished": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/ReservePile/ReservePile.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 0.244765878,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 2.0,
+         "Y": 0.4934506,
+         "Z": 2.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Unfinished": {}
+   }
+  }
+ },
+ "ReserveTank": {
+  "file": "MapEditor/Objects/ReserveTank/ReserveTank.blueprint.json",
+  "size": [
+   2,
+   2,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "BuildingSpec": {
+    "SelectionSoundName": "Tank",
+    "LoopingSoundName": "",
+    "BuildingCost": [
+     {
+      "Id": "ScrapMetal",
+      "Amount": 10
+     }
+    ],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "TemplateSpec": {
+    "TemplateName": "ReserveTank",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Finished",
+    "UnfinishedModelName": "#Unfinished",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 0
+   },
+   "StockpileSpec": {
+    "MaxCapacity": 300,
+    "WhitelistedGoodType": "Liquid"
+   },
+   "EnterableSpec": {
+    "OperatingState": "Finished",
+    "LimitedCapacityFinished": false,
+    "CapacityFinished": 0,
+    "LimitedCapacityUnfinished": false,
+    "CapacityUnfinished": 0
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "BuildingAccessibleSpec": {
+    "LocalAccess": {
+     "X": 1.5,
+     "Y": 0.0,
+     "Z": 0.2
+    },
+    "ForceOneFinalAccess": false
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1200,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.ReserveTank.DisplayName",
+    "DescriptionLocKey": "Building.SmallTank.Description",
+    "FlavorDescriptionLocKey": "Building.ReserveTank.FlavorDescription",
+    "Icon": "MapEditor/Objects/ReserveTank/ReserveTankIcon"
+   },
+   "FixedStockpileSpec": {},
+   "UnconnectedBuildingBlockerSpec": {},
+   "Children": {
+    "#Finished": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/ReserveTank/ReserveTank.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0709585,
+         "Y": 0.5,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 1.68822575,
+         "Y": 1.0,
+         "Z": 1.60959
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 1.59728277,
+         "Z": 1.0
+        },
+        "Radius": 0.700000048,
+        "Height": 2.275845,
+        "Axis": "Y"
+       }
+      ]
+     }
+    },
+    "#Unfinished": {}
+   }
+  }
+ },
+ "ReserveWarehouse": {
+  "file": "MapEditor/Objects/ReserveWarehouse/ReserveWarehouse.blueprint.json",
+  "size": [
+   2,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "BuildingSpec": {
+    "SelectionSoundName": "Warehouse",
+    "LoopingSoundName": "",
+    "BuildingCost": [
+     {
+      "Id": "ScrapMetal",
+      "Amount": 10
+     }
+    ],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "TemplateSpec": {
+    "TemplateName": "ReserveWarehouse",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Finished",
+    "UnfinishedModelName": "#Unfinished",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 0
+   },
+   "StockpileSpec": {
+    "MaxCapacity": 200,
+    "WhitelistedGoodType": "Box"
+   },
+   "EnterableSpec": {
+    "OperatingState": "Finished",
+    "LimitedCapacityFinished": false,
+    "CapacityFinished": 0,
+    "LimitedCapacityUnfinished": false,
+    "CapacityUnfinished": 0
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "BuildingAccessibleSpec": {
+    "LocalAccess": {
+     "X": 1.5,
+     "Y": 0.0,
+     "Z": 0.2
+    },
+    "ForceOneFinalAccess": false
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1100,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.ReserveWarehouse.DisplayName",
+    "DescriptionLocKey": "Building.SmallWarehouse.Description",
+    "FlavorDescriptionLocKey": "Building.ReserveWarehouse.FlavorDescription",
+    "Icon": "MapEditor/Objects/ReserveWarehouse/ReserveWarehouseIcon"
+   },
+   "StockpileGoodColumnVisualizerSpec": {
+    "CenterOffset": {
+     "X": 0.5,
+     "Y": 0.5,
+     "Z": 0.04
+    },
+    "GoodVisualizationId": "Box",
+    "GoodVisualizationVariant": "4H"
+   },
+   "FixedStockpileSpec": {},
+   "UnconnectedBuildingBlockerSpec": {},
+   "Children": {
+    "#Finished": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/ReserveWarehouse/ReserveWarehouse.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 0.349370062,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 2.0,
+         "Y": 0.6791348,
+         "Z": 2.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Unfinished": {}
+   }
+  }
+ },
+ "Slope": {
+  "file": "MapEditor/Objects/Slope/Slope.blueprint.json",
+  "size": [
+   1,
+   1,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|Floor, Bottom, Top, Path, Middle|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Air|Floor, Bottom, Path|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Slope",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 300,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": false,
+    "EdgeGroups": [
+     {
+      "Cost": 1.0,
+      "Group": {
+       "UseGroup": false,
+       "GroupName": ""
+      },
+      "IsPath": true,
+      "AddedEdges": [
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 0,
+         "Y": 1,
+         "Z": 0
+        },
+        "IsTwoWay": false
+       },
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "End": {
+         "X": 0,
+         "Y": -1,
+         "Z": 1
+        },
+        "IsTwoWay": false
+       }
+      ]
+     },
+     {
+      "Cost": 0.4,
+      "Group": {
+       "UseGroup": false,
+       "GroupName": ""
+      },
+      "IsPath": true,
+      "AddedEdges": [
+       {
+        "Start": {
+         "X": 0,
+         "Y": 0,
+         "Z": 0
+        },
+        "End": {
+         "X": 0,
+         "Y": 0,
+         "Z": 1
+        },
+        "IsTwoWay": true
+       }
+      ]
+     }
+    ],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Slope.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "Building.Slope.FlavorDescription",
+    "Icon": "MapEditor/Objects/Slope/SlopeIcon"
+   },
+   "PathSpec": {
+    "MainPathCoordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 4.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "DemolishableFromTopSpec": {},
+   "StartableMarkerPositionUpdaterSpec": {},
+   "BlockObjectWithPathRangeSpec": {},
+   "Slope": {},
+   "StraightStairsSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/Slope/Slope.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.501285553,
+         "Y": -0.0579071045,
+         "Z": 0.41267544
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.369476318,
+         "Z": 1.1926223
+        }
+       },
+       {
+        "Center": {
+         "X": 0.49054718,
+         "Y": 0.2802887,
+         "Z": 0.163392484
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.345977783,
+         "Z": 0.836966157
+        }
+       },
+       {
+        "Center": {
+         "X": 0.4915123,
+         "Y": 0.661713958,
+         "Z": -0.07957417
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.45215106,
+         "Z": 0.312731147
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "SmallRelic": {
+  "file": "MapEditor/Objects/SmallRelic/SmallRelic.blueprint.json",
+  "size": [
+   2,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "SmallRelic",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 1300,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Relic.DisplayName",
+    "DescriptionLocKey": "Building.Relic.Description",
+    "FlavorDescriptionLocKey": "Building.SmallRelic.FlavorDescription",
+    "Icon": "MapEditor/Objects/SmallRelic/SmallRelicIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Relic",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableScienceRewardSpec": {
+    "SciencePoints": 200
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 2.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "DemolishableFromTopSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/SmallRelic/SmallRelic.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 0.0487027019,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.8,
+         "Y": 0.0974054039,
+         "Z": 0.75
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/SmallRelic/SmallRelic.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "Thorns": {
+  "file": "MapEditor/Objects/Thorns/Thorns.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Thorns",
+    "BackwardCompatibleTemplateNames": [
+     "Bramble"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 800,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 10.0,
+    "ShowDemolishButtonInEntityPanel": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Thorns.DisplayName",
+    "DescriptionLocKey": "Building.Thorns.Description",
+    "FlavorDescriptionLocKey": "Building.Thorns.FlavorDescription",
+    "Icon": "MapEditor/Objects/Thorns/ThornsIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Thorns",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectRandomizablePlacementSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "SoilBarrierSpec": {
+    "BlockAboveMoisture": false,
+    "BlockFullMoisture": true,
+    "BlockContamination": true
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "DemolishableFromTopSpec": {},
+   "DemolishableEffectsSpec": {
+    "Effects": [
+     {
+      "NeedId": "Injury",
+      "Points": -1.0,
+      "Probability": "High"
+     }
+    ]
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/Thorns/Thorns.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.0487027019,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 0.8771647,
+         "Y": 0.0974054039,
+         "Z": 0.883003235
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "UnstableCore": {
+  "file": "MapEditor/Objects/UnstableCore/UnstableCore.blueprint.json",
+  "size": [
+   2,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "UnstableCore",
+    "BackwardCompatibleTemplateNames": [
+     "Bomb"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorObjects",
+    "ToolOrder": 900,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "StartableMarkerPositionUpdaterSpec": {},
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.UnstableCore.DisplayName",
+    "DescriptionLocKey": "Building.UnstableCore.Description",
+    "FlavorDescriptionLocKey": "Building.UnstableCore.FlavorDescription",
+    "Icon": "MapEditor/Objects/UnstableCore/UnstableCoreIcon"
+   },
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": false,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.5,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilExplosionProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": true
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "UnstableCoreCountdown",
+    "StatusLocKey": "Status.UnstableCoreActivationWarning",
+    "UseInfiniteWarning": true,
+    "WarningSound": "UI.Buildings.Warnings.UnstableCoreAlert"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "UnstableCore",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "UnstableCoreSpec": {
+    "MinExplosionRadius": 0,
+    "MaxExplosionRadius": 5,
+    "DefaultExplosionRadius": 5,
+    "InnerRadius": 1.0
+   },
+   "UnstableCoreEffectsSpawnerSpec": {
+    "ExplosionPrefabPath": "MapEditor/Objects/UnstableCore/UnstableCoreExplosion"
+   },
+   "IlluminatorLightObjectsSpec": {
+    "AttachmentIds": [
+     "Light"
+    ]
+   },
+   "UnstableCoreLightingSpec": {
+    "MinInterval": 0.5,
+    "MaxInterval": 1.5
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Light",
+      "Prefab": "MapEditor/Objects/UnstableCore/UnstableCoreLight",
+      "Parent": "#Model",
+      "Position": {
+       "X": 0.7,
+       "Y": 0.7,
+       "Z": 1.3
+      },
+      "Rotation": {
+       "X": -30.0,
+       "Y": -45.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/UnstableCore/UnstableCore.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [],
+      "SphereColliders": [
+       {
+        "Center": {
+         "X": 1.00291932,
+         "Y": 0.291050851,
+         "Z": 0.982491136
+        },
+        "Radius": 0.65
+       }
+      ],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Objects/UnstableCore/UnstableCore.Underground"
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH1": {
+  "file": "MapEditor/Ruins/RuinColumnH1/RuinColumnH1.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH1",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 1,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 1,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 15
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH1/RuinColumnH1Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 1.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH2": {
+  "file": "MapEditor/Ruins/RuinColumnH2/RuinColumnH2.blueprint.json",
+  "size": [
+   1,
+   1,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH2",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 2,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 2,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 30
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH2/RuinColumnH2Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 1.0,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 2.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH3": {
+  "file": "MapEditor/Ruins/RuinColumnH3/RuinColumnH3.blueprint.json",
+  "size": [
+   1,
+   1,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH3",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 3,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 3,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 45
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH3/RuinColumnH3Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 1.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 3.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH4": {
+  "file": "MapEditor/Ruins/RuinColumnH4/RuinColumnH4.blueprint.json",
+  "size": [
+   1,
+   1,
+   4
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH4",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 4,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 4,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 60
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH4/RuinColumnH4Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 2.0,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 4.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH5": {
+  "file": "MapEditor/Ruins/RuinColumnH5/RuinColumnH5.blueprint.json",
+  "size": [
+   1,
+   1,
+   5
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH5",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 5,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 5,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 75
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH5/RuinColumnH5Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 2.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 5.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH6": {
+  "file": "MapEditor/Ruins/RuinColumnH6/RuinColumnH6.blueprint.json",
+  "size": [
+   1,
+   1,
+   6
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 5,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH6",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 6,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 6,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 90
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH6/RuinColumnH6Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 3.0,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 6.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH7": {
+  "file": "MapEditor/Ruins/RuinColumnH7/RuinColumnH7.blueprint.json",
+  "size": [
+   1,
+   1,
+   7
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 5,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 6,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH7",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 7,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 7,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 105
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH7/RuinColumnH7Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 3.5,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 7.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "RuinColumnH8": {
+  "file": "MapEditor/Ruins/RuinColumnH8/RuinColumnH8.blueprint.json",
+  "size": [
+   1,
+   1,
+   8
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 5,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 6,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 7,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "RuinColumnH8",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 8,
+    "ToolShape": "Square",
+    "Layout": "Rectangle",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "RuinSpec": {
+    "ModelParentName": "#Models",
+    "RuinHeight": 8,
+    "Yielder": {
+     "YielderComponentName": "Ruin",
+     "Yield": {
+      "Id": "ScrapMetal",
+      "Amount": 120
+     },
+     "RemovalTimeInHours": 1.8,
+     "ResourceGroup": "Ruin"
+    }
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Ruins.DisplayName",
+    "DescriptionLocKey": "Building.Ruins.Description",
+    "FlavorDescriptionLocKey": "Building.Ruins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/RuinColumnH8/RuinColumnH8Icon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Ruin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 4.0,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 8.0,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "UndergroundRuins": {
+  "file": "MapEditor/Ruins/UndergroundRuins/UndergroundRuins.blueprint.json",
+  "size": [
+   5,
+   5,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "UndergroundRuins",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "Ruins",
+    "ToolOrder": 10,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.UndergroundRuins.DisplayName",
+    "DescriptionLocKey": "Building.UndergroundRuins.Description",
+    "FlavorDescriptionLocKey": "Building.UndergroundRuins.FlavorDescription",
+    "Icon": "MapEditor/Ruins/UndergroundRuins/UndergroundRuinsIcon"
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 2,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 3,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 4,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 2,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 3,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 4,
+      "Z": 0
+     },
+     {
+      "X": 2,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 2,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 2,
+      "Y": 2,
+      "Z": 0
+     },
+     {
+      "X": 2,
+      "Y": 3,
+      "Z": 0
+     },
+     {
+      "X": 2,
+      "Y": 4,
+      "Z": 0
+     },
+     {
+      "X": 3,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 3,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 3,
+      "Y": 2,
+      "Z": 0
+     },
+     {
+      "X": 3,
+      "Y": 3,
+      "Z": 0
+     },
+     {
+      "X": 3,
+      "Y": 4,
+      "Z": 0
+     },
+     {
+      "X": 4,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 4,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 4,
+      "Y": 2,
+      "Z": 0
+     },
+     {
+      "X": 4,
+      "Y": 3,
+      "Z": 0
+     },
+     {
+      "X": 4,
+      "Y": 4,
+      "Z": 0
+     }
+    ]
+   },
+   "DryObjectSpec": {},
+   "DryObjectModelSpec": {
+    "WetModelName": "#Wet",
+    "DryModelName": "#Dry"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "UndergroundRuin",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 2
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "Children": {
+    "#Model": {
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 2.5,
+         "Y": -0.2,
+         "Z": 2.5
+        },
+        "Size": {
+         "X": 5.0,
+         "Y": 0.5,
+         "Z": 5.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     },
+     "Children": {
+      "#Base": {
+       "TimbermeshSpec": {
+        "Model": "MapEditor/Ruins/UndergroundRuins/UndergroundRuins.Model"
+       }
+      },
+      "#Dry": {
+       "TimbermeshSpec": {
+        "Model": "MapEditor/Ruins/UndergroundRuins/UndergroundRuins.Ivy_Dry.Model"
+       }
+      },
+      "#Wet": {
+       "TimbermeshSpec": {
+        "Model": "MapEditor/Ruins/UndergroundRuins/UndergroundRuins.Ivy_Wet.Model"
+       }
+      }
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Ruins/UndergroundRuins/UndergroundRuins.Underground"
+     }
+    }
+   }
+  }
+ },
+ "StartingLocation": {
+  "file": "MapEditor/StartingLocation/StartingLocation.blueprint.json",
+  "size": [
+   3,
+   3,
+   5
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": true,
+    "Coordinates": {
+     "X": 1,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": true,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "GroundOrStackable|Bottom, Top, Corners, Path, Middle|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None"
+    ]
+   }
+  ],
+  "specs": {
+   "StartingLocationSpec": {},
+   "TemplateSpec": {
+    "TemplateName": "StartingLocation",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditor",
+    "ToolOrder": 100,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.StartingLocation.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "",
+    "Icon": "MapEditor/StartingLocation/StartingLocationIcon"
+   },
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/StartingLocation/StartingLocation.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 1.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 3.0,
+         "Y": 2.0,
+         "Z": 3.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    }
+   }
+  }
+ },
+ "AncientAquiferDrill": {
+  "file": "MapEditor/Water/AncientAquiferDrill/AncientAquiferDrill.blueprint.json",
+  "size": [
+   3,
+   3,
+   5
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 2,
+     "Y": -1,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|None|None",
+     "Ground|Top|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 3,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   },
+   {
+    "z": 4,
+    "kinds": [
+     "Any|All|None",
+     "Any|None|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "AncientAquiferDrill",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 400,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.AncientAquiferDrill.DisplayName",
+    "DescriptionLocKey": "Building.AquiferDrill.Description",
+    "FlavorDescriptionLocKey": "Building.AncientAquiferDrill.FlavorDescription",
+    "Icon": "MapEditor/Water/AncientAquiferDrill/AncientAquiferDrillIcon"
+   },
+   "UnderstructureConstraintSpec": {
+    "UnderstructureTemplateNames": [
+     "Aquifer"
+    ]
+   },
+   "TransputProviderSpec": {
+    "Transputs": [
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 0,
+       "Z": 0
+      },
+      "Directions": "Down, Left, Right",
+      "ReverseRotation": true
+     },
+     {
+      "Coordinates": {
+       "X": 1,
+       "Y": 0,
+       "Z": 1
+      },
+      "Directions": "Down, Left, Right",
+      "ReverseRotation": true
+     }
+    ],
+    "IgnoreRotation": false
+   },
+   "MechanicalBuildingSpec": {},
+   "MechanicalNodeSpec": {
+    "PowerOutput": 0,
+    "PowerInput": 200,
+    "IsShaft": false
+   },
+   "MechanicalNodeAnimatorSpec": {
+    "MinSpeedMultiplier": 0.0
+   },
+   "MechanicalConnectorTargetSpec": {},
+   "UndergroundWaterSourceDrillSpec": {},
+   "BuildingSpec": {
+    "SelectionSoundName": "AquiferDrill",
+    "LoopingSoundName": "WaterWheel",
+    "BuildingCost": [],
+    "ScienceCost": 0,
+    "PlaceFinished": true,
+    "FinishableWithBeaversOnSite": true,
+    "DrawRangeBoundsOnIt": false
+   },
+   "BuildingModelSpec": {
+    "FinishedModelName": "#Model",
+    "UnfinishedModelName": "",
+    "FinishedUncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "ConstructionModeModel": "Finished",
+    "UndergroundModelDepth": 99
+   },
+   "NoPowerStatusAlertDisablerSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/AncientAquiferDrill/AncientAquiferDrill.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 1.711572,
+         "Z": 0.505079
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 3.223073,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": [
+       {
+        "Center": {
+         "X": 1.50042367,
+         "Y": 2.382491,
+         "Z": 1.50951684
+        },
+        "Radius": 0.518045664,
+        "Height": 3.72041035,
+        "Axis": "Y"
+       }
+      ]
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/AncientAquiferDrill/AncientAquiferDrill.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "Aquifer": {
+  "file": "MapEditor/Water/Aquifer/Aquifer.blueprint.json",
+  "size": [
+   3,
+   3,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|None|None",
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Aquifer",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 300,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.Aquifer.DisplayName",
+    "DescriptionLocKey": "Building.Aquifer.Description",
+    "FlavorDescriptionLocKey": "Building.Aquifer.FlavorDescription",
+    "Icon": "MapEditor/Water/Aquifer/AquiferIcon"
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     }
+    ]
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Aquifer",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 2
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "UndergroundWaterSourceSpec": {},
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 1,
+      "Y": 1
+     }
+    ],
+    "DefaultStrength": 1.0
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 0.0
+   },
+   "BadtideWaterSourceContaminationControllerSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/Aquifer/Aquifer.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 3.0,
+         "Y": 0.2,
+         "Z": 1.0
+        }
+       },
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.2,
+         "Z": 3.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/Aquifer/Aquifer.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "BadtideDrain": {
+  "file": "MapEditor/Water/BadtideDrain/BadtideDrain.blueprint.json",
+  "size": [
+   1,
+   3,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Any|Middle|None",
+     "Ground|All|BlockObject|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "BadtideDrain",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 1
+     }
+    ],
+    "DefaultStrength": 1.0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 700,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.BadtideDrain.DisplayName",
+    "DescriptionLocKey": "Building.BadtideDrain.Description",
+    "FlavorDescriptionLocKey": "Building.BadtideDrain.FlavorDescription",
+    "Icon": "MapEditor/Water/BadtideDrain/BadtideDrainIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "BadwaterSource",
+    "AlternativeSoundName": ""
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 1.0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 2
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": true,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.0,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilActivationProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": true
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "WaterSourceCountdown",
+    "StatusLocKey": "Status.TimedActivationWarning",
+    "UseInfiniteWarning": false,
+    "WarningSound": "UI.Buildings.Warnings.SourceActivationAlert"
+   },
+   "HazardousWeatherWaterSourceSpec": {
+    "ActiveInHazardousWeather": [
+     "BadtideWeather"
+    ]
+   },
+   "FinishableHorizontalWaterObstacleSpec": {
+    "Obstacles": [
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 1
+     }
+    ]
+   },
+   "DirectionalWaterSourceSpec": {},
+   "WaterObstacleSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ]
+   },
+   "FinishableWaterObstacleSpec": {
+    "Height": 1.0
+   },
+   "BlockObjectNavMeshSettingsSpec": {
+    "NoAutoWalls": false,
+    "GenerateFloorsOnStackable": true,
+    "EdgeGroups": [],
+    "UnblockedCoordinates": [],
+    "BlockedEdges": []
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadtideDrain/BadtideDrain.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.5020208,
+         "Z": 0.992504
+        },
+        "Size": {
+         "X": 0.9652413,
+         "Y": 1.02567983,
+         "Z": 1.987962
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadtideDrain/BadtideDrain.Underground.Model"
+     }
+    }
+   }
+  }
+ },
+ "BadwaterSeep": {
+  "file": "MapEditor/Water/BadwaterSeep/BadwaterSeep.blueprint.json",
+  "size": [
+   2,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "BadwaterSeep",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     },
+     {
+      "X": 0,
+      "Y": 1
+     },
+     {
+      "X": 1,
+      "Y": 0
+     },
+     {
+      "X": 1,
+      "Y": 1
+     }
+    ],
+    "DefaultStrength": 1.0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 600,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.BadwaterSeep.DisplayName",
+    "DescriptionLocKey": "Building.BadwaterSeep.Description",
+    "FlavorDescriptionLocKey": "Building.BadwaterSeep.FlavorDescription",
+    "Icon": "MapEditor/Water/BadwaterSeep/BadwaterSeepIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "BadwaterSource",
+    "AlternativeSoundName": ""
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 1.0
+   },
+   "WaterSourceRendererSpec": {},
+   "BlockObjectNavMeshAdderSpec": {},
+   "BadtideWaterSourceContaminationControllerSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "WaterDepthStrengthModifierSpec": {
+    "DepthLimit": 0.8
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     }
+    ]
+   },
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": true,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.0,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilActivationProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": true
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "WaterSourceCountdown",
+    "StatusLocKey": "Status.TimedActivationWarning",
+    "UseInfiniteWarning": false,
+    "WarningSound": "UI.Buildings.Warnings.SourceActivationAlert"
+   },
+   "ActivationProgressParticlesSpec": {
+    "AttachmentIds": [
+     "Water"
+    ],
+    "MinEmission": 10,
+    "MaxEmission": 100
+   },
+   "BlockableObjectParticleControllerSpec": {
+    "AttachmentIds": [
+     "Water"
+    ]
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Water",
+      "Prefab": "MapEditor/Water/BadwaterSeep/BadwaterSeepActivation",
+      "Parent": "#Model",
+      "Position": {
+       "X": 1.0,
+       "Y": 0.15,
+       "Z": 1.0
+      },
+      "Rotation": {
+       "X": -90.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadwaterSeep/BadwaterSeep.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 0.03096795,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 2.0,
+         "Y": 0.122228041,
+         "Z": 2.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadwaterSeep/BadwaterSeep.Underground"
+     }
+    }
+   }
+  }
+ },
+ "BadwaterSource": {
+  "file": "MapEditor/Water/BadwaterSource/BadwaterSource.blueprint.json",
+  "size": [
+   3,
+   3,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "BadwaterSource",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     },
+     {
+      "X": 0,
+      "Y": 1
+     },
+     {
+      "X": 0,
+      "Y": 2
+     },
+     {
+      "X": 1,
+      "Y": 0
+     },
+     {
+      "X": 1,
+      "Y": 1
+     },
+     {
+      "X": 1,
+      "Y": 2
+     },
+     {
+      "X": 2,
+      "Y": 0
+     },
+     {
+      "X": 2,
+      "Y": 1
+     },
+     {
+      "X": 2,
+      "Y": 2
+     }
+    ],
+    "DefaultStrength": 3.0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 500,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.BadwaterSource.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "Building.BadwaterSource.FlavorDescription",
+    "Icon": "MapEditor/Water/BadwaterSource/BadwaterSourceIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "BadwaterSource",
+    "AlternativeSoundName": ""
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     }
+    ]
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 1.0
+   },
+   "WaterSourceRendererSpec": {},
+   "BlockObjectNavMeshAdderSpec": {},
+   "PipeIntersectionAllowerSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 2
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": true,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.0,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilActivationProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": true
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "WaterSourceCountdown",
+    "StatusLocKey": "Status.TimedActivationWarning",
+    "UseInfiniteWarning": false,
+    "WarningSound": "UI.Buildings.Warnings.SourceActivationAlert"
+   },
+   "BlockableObjectParticleControllerSpec": {
+    "AttachmentIds": [
+     "Water"
+    ]
+   },
+   "ActivationProgressParticlesSpec": {
+    "AttachmentIds": [
+     "Water"
+    ],
+    "MinEmission": 10,
+    "MaxEmission": 100
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Water",
+      "Prefab": "MapEditor/Water/BadwaterSource/BadwaterSourceActivation",
+      "Parent": "#Model",
+      "Position": {
+       "X": 1.5,
+       "Y": 0.0,
+       "Z": 1.5
+      },
+      "Rotation": {
+       "X": -90.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "LightingEnablerSpec": {},
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadwaterSource/BadwaterSource.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.5,
+         "Y": 0.0299314335,
+         "Z": 1.5
+        },
+        "Size": {
+         "X": 2.814118,
+         "Y": 0.120155081,
+         "Z": 2.811996
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/BadwaterSource/BadwaterSource.Underground"
+     }
+    }
+   }
+  }
+ },
+ "WaterSeep": {
+  "file": "MapEditor/Water/WaterSeep/WaterSeep.blueprint.json",
+  "size": [
+   2,
+   2,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "WaterSeep",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     },
+     {
+      "X": 0,
+      "Y": 1
+     },
+     {
+      "X": 1,
+      "Y": 0
+     },
+     {
+      "X": 1,
+      "Y": 1
+     }
+    ],
+    "DefaultStrength": 1.0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 200,
+    "ToolShape": "Square",
+    "Layout": "Single",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.WaterSeep.DisplayName",
+    "DescriptionLocKey": "Building.WaterSeep.Description",
+    "FlavorDescriptionLocKey": "Building.WaterSeep.FlavorDescription",
+    "Icon": "MapEditor/Water/WaterSeep/WaterSeepIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "WaterSource",
+    "AlternativeSoundName": ""
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 0.0
+   },
+   "WaterSourceRendererSpec": {},
+   "BlockObjectNavMeshAdderSpec": {},
+   "BadtideWaterSourceContaminationControllerSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "WaterDepthStrengthModifierSpec": {
+    "DepthLimit": 0.8
+   },
+   "BlockObjectTerrainCutoutSpec": {
+    "CutoutTiles": [
+     {
+      "X": 0,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 0,
+      "Y": 1,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 0,
+      "Z": 0
+     },
+     {
+      "X": 1,
+      "Y": 1,
+      "Z": 0
+     }
+    ]
+   },
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": true,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.0,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilActivationProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": false
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "WaterSourceCountdown",
+    "StatusLocKey": "Status.TimedActivationWarning",
+    "UseInfiniteWarning": false,
+    "WarningSound": "UI.Buildings.Warnings.SourceActivationAlert"
+   },
+   "ActivationProgressParticlesSpec": {
+    "AttachmentIds": [
+     "Water"
+    ],
+    "MinEmission": 10,
+    "MaxEmission": 100
+   },
+   "BlockableObjectParticleControllerSpec": {
+    "AttachmentIds": [
+     "Water"
+    ]
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Water",
+      "Prefab": "MapEditor/Water/WaterSeep/WaterSeepActivation",
+      "Parent": "#Model",
+      "Position": {
+       "X": 1.0,
+       "Y": 0.3,
+       "Z": 1.0
+      },
+      "Rotation": {
+       "X": -90.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/WaterSeep/WaterSeep.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 1.0,
+         "Y": 0.03096795,
+         "Z": 1.0
+        },
+        "Size": {
+         "X": 2.0,
+         "Y": 0.122228041,
+         "Z": 2.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/WaterSeep/WaterSeep.Underground"
+     }
+    }
+   }
+  }
+ },
+ "WaterSource": {
+  "file": "MapEditor/Water/WaterSource/WaterSource.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": true
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None|OAB"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "WaterSource",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "WaterSourceSpec": {
+    "Coordinates": [
+     {
+      "X": 0,
+      "Y": 0
+     }
+    ],
+    "DefaultStrength": 1.0
+   },
+   "PlaceableBlockObjectSpec": {
+    "ToolGroupId": "MapEditorWater",
+    "ToolOrder": 100,
+    "ToolShape": "Square",
+    "Layout": "Line",
+    "CustomPivot": {
+     "HasCustomPivot": false,
+     "Coordinates": {
+      "X": 0.0,
+      "Y": 0.0,
+      "Z": 0.0
+     }
+    },
+    "CanBeAttachedToTerrainSide": false,
+    "DevModeTool": true
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "Building.WaterSource.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "Building.WaterSource.FlavorDescription",
+    "Icon": "MapEditor/Water/WaterSource/WaterSourceIcon"
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "WaterSource",
+    "AlternativeSoundName": ""
+   },
+   "WaterSourceContaminationSpec": {
+    "DefaultContamination": 0.0
+   },
+   "BlockObjectNavMeshAdderSpec": {},
+   "BadtideWaterSourceContaminationControllerSpec": {},
+   "BlockObjectRandomizablePlacementSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Model",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "#Underground",
+    "UndergroundModelDepth": 1
+   },
+   "ContinuousTerrainConstraintSpec": {},
+   "TimedComponentActivatorSpec": {
+    "IsOptionallyActivable": true,
+    "CyclesUntilCountdownActivation": 5,
+    "DaysUntilActivation": 10.0,
+    "ProgressBarActiveLabelLocKey": "TimedComponentActivator.DaysUntilActivationProgress",
+    "ProgressBarNotActiveLabelLocKey": "TimedComponentActivator.CountdownNotActive",
+    "IsHazardousActivator": false
+   },
+   "ActivationWarningStatusSpec": {
+    "StatusSpriteName": "WaterSourceCountdown",
+    "StatusLocKey": "Status.TimedActivationWarning",
+    "UseInfiniteWarning": false,
+    "WarningSound": "UI.Buildings.Warnings.SourceActivationAlert"
+   },
+   "ActivationProgressParticlesSpec": {
+    "AttachmentIds": [
+     "Water"
+    ],
+    "MinEmission": 10,
+    "MaxEmission": 100
+   },
+   "BlockableObjectParticleControllerSpec": {
+    "AttachmentIds": [
+     "Water"
+    ]
+   },
+   "TemplateAttachmentsSpec": {
+    "Attachments": [
+     {
+      "AttachmentId": "Water",
+      "Prefab": "MapEditor/Water/WaterSource/WaterSourceActivation",
+      "Parent": "#Model",
+      "Position": {
+       "X": 0.5,
+       "Y": 0.9,
+       "Z": 0.5
+      },
+      "Rotation": {
+       "X": -90.0,
+       "Y": 0.0,
+       "Z": 0.0
+      },
+      "Scale": {
+       "X": 1.0,
+       "Y": 1.0,
+       "Z": 1.0
+      },
+      "CreateInstantly": true
+     }
+    ]
+   },
+   "Children": {
+    "#Model": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/WaterSource/WaterSource.Model"
+     },
+     "CollidersSpec": {
+      "BoxColliders": [
+       {
+        "Center": {
+         "X": 0.5,
+         "Y": 0.408401847,
+         "Z": 0.5
+        },
+        "Size": {
+         "X": 1.0,
+         "Y": 0.877095938,
+         "Z": 1.0
+        }
+       }
+      ],
+      "SphereColliders": [],
+      "CapsuleColliders": []
+     }
+    },
+    "#Underground": {
+     "TimbermeshSpec": {
+      "Model": "MapEditor/Water/WaterSource/WaterSource.Underground"
+     }
+    }
+   }
+  }
+ },
+ "BlueberryBush": {
+  "file": "NaturalResources/Bushes/Blueberry/BlueberryBush.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "BlueberryBush",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 1
+   },
+   "BushSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 12.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Bush",
+    "AlternativeSoundName": ""
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 0.8,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 12.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "Berries",
+      "Amount": 3
+     },
+     "RemovalTimeInHours": 0.8,
+     "ResourceGroup": "Gatherable"
+    }
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.37
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.02
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 9.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Blueberry.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Blueberry.FlavorDescription",
+    "Icon": "NaturalResources/Bushes/Blueberry/BlueberryBushIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 7.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.8,
+    "MaxHeightScaleFactor": 1.2,
+    "MinWidthScaleFactor": 0.8,
+    "MaxWidthScaleFactor": 1.2,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Blueberry/BlueberryBushMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "CoffeeBush": {
+  "file": "NaturalResources/Bushes/Coffee/CoffeeBush.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "CoffeeBush",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 5
+   },
+   "BushSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 9.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Bush",
+    "AlternativeSoundName": ""
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 0.8,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 3.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "CoffeeBean",
+      "Amount": 1
+     },
+     "RemovalTimeInHours": 0.8,
+     "ResourceGroup": "Gatherable"
+    }
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.2
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources\\Bushes\\Coffee\\CoffeeBushMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.02
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 8.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Coffee.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Coffee.FlavorDescription",
+    "Icon": "NaturalResources/Bushes/Coffee/CoffeeBushIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 4.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.8,
+    "MaxHeightScaleFactor": 1.2,
+    "MinWidthScaleFactor": 0.8,
+    "MaxWidthScaleFactor": 1.2,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.06,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": -0.05,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.05,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.2,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.2,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Coffee/CoffeeBushMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.2,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Dandelion": {
+  "file": "NaturalResources/Bushes/Dandelion/Dandelion.blueprint.json",
+  "size": [
+   1,
+   1,
+   1
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Dandelion",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 2
+   },
+   "BushSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 3.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Bush",
+    "AlternativeSoundName": ""
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 0.8,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 3.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "Dandelion",
+      "Amount": 1
+     },
+     "RemovalTimeInHours": 0.5,
+     "ResourceGroup": "Gatherable"
+    }
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.25
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Bushes/Dandelion/DandelionMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.01
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 8.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Dandelion.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Dandelion.FlavorDescription",
+    "Icon": "NaturalResources/Bushes/Dandelion/DandelionIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 4.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.8,
+    "MaxHeightScaleFactor": 1.2,
+    "MinWidthScaleFactor": 0.8,
+    "MaxWidthScaleFactor": 1.2,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.29
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Bushes/Dandelion/DandelionMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.0,
+             "Z": 0.5
+            },
+            "Radius": 0.38
+           }
+          ],
+          "CapsuleColliders": []
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Birch": {
+  "file": "NaturalResources/Trees/Birch/Birch.blueprint.json",
+  "size": [
+   1,
+   1,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Birch",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 5
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 7.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.5
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 1.2,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 1
+     },
+     "RemovalTimeInHours": 1.0,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/Birch/Mesh/BirchMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.03
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 11.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Birch.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Birch.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Birch/BirchIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 14.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.7,
+    "MaxHeightScaleFactor": 1.0,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.05
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.345513642,
+             "Z": 0.5
+            },
+            "Radius": 0.18786338,
+            "Height": 1.06248057,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.3,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 0.8,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.345513642,
+             "Z": 0.5
+            },
+            "Radius": 0.18786338,
+            "Height": 1.06248057,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.39,
+             "Z": 0.5
+            },
+            "Radius": 0.35,
+            "Height": 1.18,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.61,
+             "Z": 0.5
+            },
+            "Radius": 0.11,
+            "Height": 1.34,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.728804231,
+             "Z": 0.5
+            },
+            "Radius": 0.16,
+            "Height": 1.49,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Birch/Mesh/BirchMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.39,
+             "Z": 0.5
+            },
+            "Radius": 0.35,
+            "Height": 1.18,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.61,
+             "Z": 0.5
+            },
+            "Radius": 0.11,
+            "Height": 1.34,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Birch/Mesh/BirchMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.109086186,
+           "Z": 0.47
+          },
+          "Radius": 0.09999077,
+          "Height": 0.461116254,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "ChestnutTree": {
+  "file": "NaturalResources/Trees/ChestnutTree/ChestnutTree.blueprint.json",
+  "size": [
+   1,
+   1,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "ChestnutTree",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 7
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 23.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.74
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 1.2,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 4
+     },
+     "RemovalTimeInHours": 1.2,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.03
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 8.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.ChestnutTree.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.ChestnutTree.FlavorDescription",
+    "Icon": "NaturalResources/Trees/ChestnutTree/ChestnutTreeIcon"
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 8.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "Chestnut",
+      "Amount": 3
+     },
+     "RemovalTimeInHours": 1.0,
+     "ResourceGroup": "Gatherable"
+    }
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 10.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": true,
+    "MinHeightScaleFactor": 0.9,
+    "MaxHeightScaleFactor": 1.1,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.145
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.35,
+             "Z": 0.5
+            },
+            "Radius": 0.198561281,
+            "Height": 1.07,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.3,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 0.98,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.35,
+             "Z": 0.5
+            },
+            "Radius": 0.198561281,
+            "Height": 1.07,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.54,
+             "Z": 0.5
+            },
+            "Radius": 0.66,
+            "Height": 1.54,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.404359043,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 1.20717847,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.54,
+             "Z": 0.5
+            },
+            "Radius": 0.66,
+            "Height": 1.54,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.404359043,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 1.20717847,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.56,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 1.54,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/ChestnutTree/Mesh/ChestnutTreeMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.07685387,
+           "Z": 0.5
+          },
+          "Radius": 0.204731375,
+          "Height": 0.6003412,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Mangrove": {
+  "file": "NaturalResources/Trees/Mangrove/Mangrove.blueprint.json",
+  "size": [
+   1,
+   1,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Mangrove",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 8
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 10.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.6
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 1.2,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 2
+     },
+     "RemovalTimeInHours": 1.2,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.03
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 6.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Mangrove.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Mangrove.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Mangrove/MangroveIcon"
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 10.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "MangroveFruit",
+      "Amount": 4
+     },
+     "RemovalTimeInHours": 1.0,
+     "ResourceGroup": "Gatherable"
+    }
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 1,
+    "MaxWaterHeight": 1,
+    "DaysToDie": 16.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": true,
+    "MinHeightScaleFactor": 0.95,
+    "MaxHeightScaleFactor": 1.05,
+    "MinWidthScaleFactor": 0.95,
+    "MaxWidthScaleFactor": 1.05,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.039
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.492073119,
+             "Z": 0.5
+            },
+            "Radius": 0.147706091,
+            "Height": 1.08291566,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.327445984,
+             "Z": 0.5
+            },
+            "Radius": 0.1548264,
+            "Height": 1.03489184,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.512537,
+             "Z": 0.5
+            },
+            "Radius": 0.160858274,
+            "Height": 1.08506966,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.0,
+             "Z": 0.5
+            },
+            "Radius": 0.4
+           }
+          ],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.485916138,
+             "Z": 0.5
+            },
+            "Radius": 0.212837949,
+            "Height": 1.37029266,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.0,
+             "Z": 0.5
+            },
+            "Radius": 0.4
+           }
+          ],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.355710268,
+             "Z": 0.5
+            },
+            "Radius": 0.199999988,
+            "Height": 1.13142061,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.0,
+             "Z": 0.5
+            },
+            "Radius": 0.4
+           }
+          ],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.355710268,
+             "Z": 0.5
+            },
+            "Radius": 0.199999988,
+            "Height": 1.13142061,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Mangrove/Mesh/MangroveMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.07685387,
+           "Z": 0.5
+          },
+          "Radius": 0.204731375,
+          "Height": 0.6003412,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Maple": {
+  "file": "NaturalResources/Trees/Maple/Maple.blueprint.json",
+  "size": [
+   1,
+   1,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Maple",
+    "BackwardCompatibleTemplateNames": [],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 8
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 28.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 1.1
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 2.0,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 6
+     },
+     "RemovalTimeInHours": 2.0,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/Maple/Mesh/MapleMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.01
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 12.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Maple.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Maple.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Maple/MapleIcon"
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 12.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "MapleSyrup",
+      "Amount": 3
+     },
+     "RemovalTimeInHours": 2.0,
+     "ResourceGroup": "Tappable"
+    }
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 10.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": true,
+    "MinHeightScaleFactor": 0.9,
+    "MaxHeightScaleFactor": 1.1,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.098
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.33,
+             "Z": 0.5
+            },
+            "Radius": 0.26,
+            "Height": 1.09,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.25,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 0.6,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.307281375,
+             "Z": 0.5
+            },
+            "Radius": 0.26,
+            "Height": 1.15,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.582121,
+             "Z": 0.5
+            },
+            "Radius": 0.61,
+            "Height": 1.38,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.59048,
+             "Z": 0.5
+            },
+            "Radius": 0.186018273,
+            "Height": 1.55066144,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.582121,
+             "Z": 0.5
+            },
+            "Radius": 0.61,
+            "Height": 1.38,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.59048,
+             "Z": 0.5
+            },
+            "Radius": 0.186018273,
+            "Height": 1.55066144,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Maple/Mesh/MapleMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.71,
+             "Z": 0.5
+            },
+            "Radius": 0.25,
+            "Height": 1.79,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Maple/Mesh/MapleMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 1.582121,
+           "Z": 0.5
+          },
+          "Radius": 0.61,
+          "Height": 1.38,
+          "Axis": "Y"
+         },
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.59048,
+           "Z": 0.5
+          },
+          "Radius": 0.186018273,
+          "Height": 1.55066144,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Oak": {
+  "file": "NaturalResources/Trees/Oak/Oak.blueprint.json",
+  "size": [
+   1,
+   1,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Oak",
+    "BackwardCompatibleTemplateNames": [
+     "Maple"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 9
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 30.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 1.0
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 2.5,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 8
+     },
+     "RemovalTimeInHours": 2.0,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources\\Trees\\Oak\\Mesh\\OakMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.01
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 15.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Oak.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Oak.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Oak/OakIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 10.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": true,
+    "MinHeightScaleFactor": 0.9,
+    "MaxHeightScaleFactor": 1.1,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.2
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.33,
+             "Z": 0.5
+            },
+            "Radius": 0.26,
+            "Height": 1.09,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.25,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 0.6,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.307281375,
+             "Z": 0.5
+            },
+            "Radius": 0.26,
+            "Height": 1.15,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.582121,
+             "Z": 0.5
+            },
+            "Radius": 0.61,
+            "Height": 1.38,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.59048,
+             "Z": 0.5
+            },
+            "Radius": 0.186018273,
+            "Height": 1.55066144,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.71,
+             "Z": 0.5
+            },
+            "Radius": 0.25,
+            "Height": 1.79,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Oak/Mesh/OakMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.582121,
+             "Z": 0.5
+            },
+            "Radius": 0.61,
+            "Height": 1.38,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.59048,
+             "Z": 0.5
+            },
+            "Radius": 0.186018273,
+            "Height": 1.55066144,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Oak/Mesh/OakMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.0948844552,
+           "Z": 0.5
+          },
+          "Radius": 0.181779072,
+          "Height": 0.5928929,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Pine": {
+  "file": "NaturalResources/Trees/Pine/Pine.blueprint.json",
+  "size": [
+   1,
+   1,
+   3
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|All|None"
+    ]
+   },
+   {
+    "z": 2,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Pine",
+    "BackwardCompatibleTemplateNames": [
+     "ChestnutTree"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 6
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 12.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.75
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 1.2,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Log",
+      "Amount": 2
+     },
+     "RemovalTimeInHours": 1.5,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/Pine/Mesh/PineMature"
+   },
+   "ReproducibleSpec": {
+    "ReproductionChance": 0.03
+   },
+   "WateredNaturalResourceSpec": {
+    "DaysToDieDry": 13.0
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Pine.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Pine.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Pine/PineIcon"
+   },
+   "GatherableSpec": {
+    "YieldGrowthTimeInDays": 7.0,
+    "Yielder": {
+     "YielderComponentName": "Gatherable",
+     "Yield": {
+      "Id": "PineResin",
+      "Amount": 2
+     },
+     "RemovalTimeInHours": 1.2,
+     "ResourceGroup": "Tappable"
+    }
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 12.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.8,
+    "MaxHeightScaleFactor": 1.0,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.095
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.5613813,
+             "Z": 0.5
+            },
+            "Radius": 0.198561281,
+            "Height": 1.54919016,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.3,
+             "Z": 0.5
+            },
+            "Radius": 0.2,
+            "Height": 0.8,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.5613813,
+             "Z": 0.5
+            },
+            "Radius": 0.198561281,
+            "Height": 1.54919016,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.84,
+             "Z": 0.5
+            },
+            "Radius": 0.456594944,
+            "Height": 1.52,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.85,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 1.87,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 2.67,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 0.69,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.84,
+             "Z": 0.5
+            },
+            "Radius": 0.456594944,
+            "Height": 1.52,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.85,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 1.87,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 2.67,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 0.69,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Pine/Mesh/PineMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 1.84,
+             "Z": 0.5
+            },
+            "Radius": 0.456594944,
+            "Height": 1.52,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.85,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 1.87,
+            "Axis": "Y"
+           },
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 2.67,
+             "Z": 0.5
+            },
+            "Radius": 0.200641036,
+            "Height": 0.69,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Pine/Mesh/PineMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.07685387,
+           "Z": 0.5
+          },
+          "Radius": 0.204731375,
+          "Height": 0.6003412,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "Succulent": {
+  "file": "NaturalResources/Trees/Succulent/Succulent.blueprint.json",
+  "size": [
+   1,
+   1,
+   2
+  ],
+  "blockObject": {
+   "Entrance": {
+    "HasEntrance": false,
+    "Coordinates": {
+     "X": 0,
+     "Y": 0,
+     "Z": 0
+    }
+   },
+   "BaseZ": 0,
+   "Overridable": false,
+   "Flippable": false
+  },
+  "layers": [
+   {
+    "z": 0,
+    "kinds": [
+     "Ground|All|None"
+    ]
+   },
+   {
+    "z": 1,
+    "kinds": [
+     "Any|Floor, Bottom, Corners, Path, Middle|None"
+    ]
+   }
+  ],
+  "specs": {
+   "TemplateSpec": {
+    "TemplateName": "Succulent",
+    "BackwardCompatibleTemplateNames": [
+     "Cactus"
+    ],
+    "RequiredFeatureToggle": "",
+    "DisablingFeatureToggle": ""
+   },
+   "NaturalResourceSpec": {
+    "Order": 10
+   },
+   "TreeComponentSpec": {},
+   "GrowableSpec": {
+    "GrowthTimeInDays": 65.0
+   },
+   "BasicSelectionSoundSpec": {
+    "SoundName": "Tree",
+    "AlternativeSoundName": ""
+   },
+   "PlantableSpec": {
+    "ResourceGroup": "Forester",
+    "PlantTimeInHours": 0.5
+   },
+   "DemolishableSpec": {
+    "DemolishTimeInHours": 1.2,
+    "ShowDemolishButtonInEntityPanel": false
+   },
+   "CuttableSpec": {
+    "RemoveOnCut": false,
+    "LeftoverModelName": "#Leftover",
+    "Yielder": {
+     "YielderComponentName": "Cuttable",
+     "Yield": {
+      "Id": "Water",
+      "Amount": 2
+     },
+     "RemovalTimeInHours": 1.0,
+     "ResourceGroup": "Cuttable"
+    }
+   },
+   "PlantablePreviewModelSpec": {
+    "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentMature"
+   },
+   "LabeledEntitySpec": {
+    "DisplayNameLocKey": "NaturalResource.Succulent.DisplayName",
+    "DescriptionLocKey": "",
+    "FlavorDescriptionLocKey": "NaturalResource.Succulent.FlavorDescription",
+    "Icon": "NaturalResources/Trees/Succulent/SucculentIcon"
+   },
+   "FloodableNaturalResourceSpec": {
+    "MinWaterHeight": 0,
+    "MaxWaterHeight": 0,
+    "DaysToDie": 4.0
+   },
+   "NaturalResourceModelRandomizerSpec": {
+    "ConstrainProportion": false,
+    "MinHeightScaleFactor": 0.7,
+    "MaxHeightScaleFactor": 1.0,
+    "MinWidthScaleFactor": 0.9,
+    "MaxWidthScaleFactor": 1.1,
+    "RandomizedRotation": "BetweenMinAndMax",
+    "MinRotation": 0.0,
+    "MaxRotation": 360.0
+   },
+   "TreeCuttingRadiusSpec": {
+    "Radius": 0.2
+   },
+   "ContaminatedNaturalResourceSpec": {},
+   "BlockObjectModelSpec": {
+    "FullModelName": "#Models",
+    "UncoveredModelName": "",
+    "UndergroundModelName": "",
+    "UndergroundModelDepth": 0
+   },
+   "AridNaturalResourceSpec": {
+    "DaysToDieWet": 8.0
+   },
+   "YielderNeedApplierSpec": {
+    "Effects": [
+     {
+      "NeedId": "Injury",
+      "Points": -1.0,
+      "Probability": "Medium"
+     }
+    ]
+   },
+   "DeadCuttableYieldRemoverSpec": {},
+   "Children": {
+    "#Models": {
+     "Children": {
+      "Seedling": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentSeedling"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.207612336,
+             "Z": 0.5
+            },
+            "Radius": 0.1186592,
+            "Height": 0.591992736,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentSeedlingDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.154833138,
+             "Z": 0.5
+            },
+            "Radius": 0.129919469,
+            "Height": 0.505139649,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentSeedlingDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.214319825,
+             "Z": 0.5
+            },
+            "Radius": 0.157883525,
+            "Height": 0.685298443,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "Mature": {
+       "Children": {
+        "#Alive": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentMature"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.501234949,
+             "Z": 0.494938254
+            },
+            "Radius": 0.289937556,
+            "Height": 1.41221666,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dead": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentMatureDead"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.4,
+             "Z": 0.474691331
+            },
+            "Radius": 0.201317549,
+            "Height": 1.0,
+            "Axis": "Y"
+           }
+          ]
+         }
+        },
+        "#Dying": {
+         "TimbermeshSpec": {
+          "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentMatureDry"
+         },
+         "CollidersSpec": {
+          "BoxColliders": [],
+          "SphereColliders": [],
+          "CapsuleColliders": [
+           {
+            "Center": {
+             "X": 0.5,
+             "Y": 0.506296635,
+             "Z": 0.5
+            },
+            "Radius": 0.259530067,
+            "Height": 1.25344372,
+            "Axis": "Y"
+           }
+          ]
+         }
+        }
+       }
+      },
+      "#Leftover": {
+       "TimbermeshSpec": {
+        "Model": "NaturalResources/Trees/Succulent/Mesh/SucculentMatureStump"
+       },
+       "CollidersSpec": {
+        "BoxColliders": [],
+        "SphereColliders": [],
+        "CapsuleColliders": [
+         {
+          "Center": {
+           "X": 0.5,
+           "Y": 0.109086186,
+           "Z": 0.47
+          },
+          "Radius": 0.234295174,
+          "Height": 0.468590379,
+          "Axis": "Y"
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}
