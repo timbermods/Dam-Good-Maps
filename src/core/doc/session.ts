@@ -19,7 +19,7 @@ import { entityJson, placementOf, rawEntity } from "../format/entities";
 import { fromBase64, toBase64 } from "../format/base64";
 import { parse, stringify, type JsonObject } from "../format/json";
 import { writeTimber, type TimberFile } from "../format/timber";
-import { settledSimulationSingletons, type WorldModel } from "../format/world";
+import { settledSimulationSingletons, storedWater, type WorldModel } from "../format/world";
 import type { Feature } from "../features/schema";
 import { MAX_ATTEMPTS, planFeatures, type GenerateResult } from "../gen/generate";
 import { description, fileName as timberFileName, mapName, toTimberFile } from "../gen/pack";
@@ -30,6 +30,7 @@ import { GENERATOR_VERSION, type MapSpec, type Region } from "../spec/mapspec";
 import { applyMergePatch, clone } from "../spec/mergepatch";
 import { validateSpec } from "../spec/schema";
 import { validateMap, type Validation } from "../validate/checks";
+import type { PlayabilityAnalysis } from "../validate/playability";
 import { blocks, type Profile, type ValidationReport } from "../validate/report";
 import { baseFromFile, baseTerrain, fileFromBase, joinTerrain, type BaseMap, type BaseTerrain } from "./base";
 import { baseFeaturesOf, checkDocument, encodeProject, importDocument, toDocument, type DocMeta, type KeptContent, type MapDocument } from "./document";
@@ -103,6 +104,8 @@ export interface RegenerateResult {
   failures: { attempt: number; reason: string }[];
   /** The regenerated map's validation (generate profile), null when nothing was generated. */
   report: ValidationReport | null;
+  /** What that validation measured (reach, dam sites, distances), for the map card. */
+  analysis: PlayabilityAnalysis | null;
   /** The player's own features (user, Claude, stamps): every one is still in the document. */
   kept: string[];
   /** Kept features that no longer fit the new terrain (nothing of them could be placed). */
@@ -125,6 +128,7 @@ export class MapSession {
   private snaps = new Map<number, BuildResult>();
   private baseCache: { key: BaseMap; frozen: boolean; layer: BaseLayer; terrain: BaseTerrain; file: TimberFile } | null = null;
   private keptCache: { key: KeptContent; layer: LockedLayer } | null = null;
+  private storedWaterCache: { key: BaseMap; water: ReturnType<typeof storedWater> } | null = null;
   /** Things the player should know about how the document was opened. */
   readonly notices: string[] = [];
 
@@ -209,6 +213,25 @@ export class MapSession {
     return this.mode === "live" ? new Map() : this.baseStuff().terrain.columns;
   }
 
+  /** Operations in the log (the player's edits on this generation). */
+  get editCount(): number {
+    return this.log.length;
+  }
+
+  /** Whether the map's water is the file's own (an unedited import, or one with caves, whose
+   *  water export keeps): the 3D view then draws `storedWater()`, not `built.water`. */
+  get showsStoredWater(): boolean {
+    if (this.mode === "live") return false;
+    return this.cur.waterFromFile || this.baseStuff().terrain.columns.size > 0;
+  }
+
+  /** The water the base file stores (every level), for the 3D view. */
+  storedWater(): ReturnType<typeof storedWater> {
+    const b = this.baseStuff();
+    if (this.storedWaterCache?.key !== this.gen.base) this.storedWaterCache = { key: this.gen.base, water: storedWater(b.file.world.singletons, this.gen.base.sizeX, this.gen.base.sizeY) };
+    return this.storedWaterCache.water;
+  }
+
   /** The document as it stands, for the project file and autosave. */
   get document(): MapDocument {
     return {
@@ -227,8 +250,9 @@ export class MapSession {
     };
   }
 
-  project(): Uint8Array {
-    return encodeProject(this.document);
+  /** The project file. `level` is the gzip level (autosave uses a faster one; any level opens). */
+  project(level?: number): Uint8Array {
+    return encodeProject(this.document, level);
   }
 
   /** Operations that have no effect now, and why. */
@@ -404,6 +428,7 @@ export class MapSession {
       attempts: failures.length,
       failures,
       report: null,
+      analysis: null,
       kept: [],
       unfit: [],
       orphans: this.orphans(),
@@ -428,7 +453,7 @@ export class MapSession {
     const protect = protectMask(W, H, kept, this.st.locks, spec.constraints.keepOut);
     const fits = (op: AppliedOp) => opFitsMap(op, W, H);
     const failures: RegenerateResult["failures"] = [];
-    let best: { spec: MapSpec; planned: Feature[]; state: DocState; log: AppliedOp[]; built: BuildResult; report: ValidationReport; cache: SettleCache } | null = null;
+    let best: { spec: MapSpec; planned: Feature[]; state: DocState; log: AppliedOp[]; built: BuildResult; report: ValidationReport; analysis: PlayabilityAnalysis | null; cache: SettleCache } | null = null;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
       const specA: MapSpec = { ...spec, accepted: { attempt, candidate: 0 } };
       const cache = new SettleCache();
@@ -445,8 +470,9 @@ export class MapSession {
       }
       const r = replay(planned, this.log, fits);
       const built = buildMap(this.inputFor(W, H, spec.seed, r.state, null, keptLayer), { settleCache: cache });
-      const report = validateMap(toTimberFile(specA, built), { profile: "generate", spec: specA, features: r.state.features, water: { model: built.waterModel, settled: built.settle } }).report;
-      best = { spec: specA, planned, state: r.state, log: r.log, built, report, cache };
+      const v = validateMap(toTimberFile(specA, built), { profile: "generate", spec: specA, features: r.state.features, water: { model: built.waterModel, settled: built.settle } });
+      const report = v.report;
+      best = { spec: specA, planned, state: r.state, log: r.log, built, report, analysis: v.analysis, cache };
       if (report.passed) break;
       failures.push({ attempt, reason: report.checks.filter((c) => blocks("generate", c)).map((c) => c.id).join(", ") });
     }
@@ -481,6 +507,7 @@ export class MapSession {
       attempts: failures.length + 1,
       failures,
       report: best.report,
+      analysis: best.analysis,
       kept: kept.map((f) => f.id).filter((id) => this.st.features.some((f) => f.id === id)),
       unfit,
       orphans: this.orphans(),
@@ -615,14 +642,35 @@ export class MapSession {
     };
   }
 
-  exportTimber(): { bytes: Uint8Array; fileName: string } {
-    const name = this.gen.spec ? timberFileName(this.gen.spec) : `${this.gen.meta.name}.timber`;
-    return { bytes: writeTimber(this.exportFile()), fileName: name };
+  /** The .timber file. `warnings` are the problems the player confirmed at export (the `export`
+   *  profile, PLAN §19.5): they are noted at the end of the map's description. */
+  /** The exported file's name. */
+  exportTimberName(): string {
+    return this.gen.spec ? timberFileName(this.gen.spec) : `${this.gen.meta.name}.timber`;
+  }
+
+  exportTimber(opts: { warnings?: readonly string[] } = {}): { bytes: Uint8Array; fileName: string } {
+    const name = this.exportTimberName();
+    const file = this.exportFile();
+    if (opts.warnings?.length && file.metadata) {
+      const md = file.metadata;
+      const text = typeof md.MapDescription === "string" ? md.MapDescription : "";
+      const note = `Exported with ${opts.warnings.length === 1 ? "a warning" : `${opts.warnings.length} warnings`}: ${opts.warnings.join("; ")}.`;
+      file.metadata = { ...md, MapDescription: text ? `${text}\n\n${note}` : note };
+    }
+    return { bytes: writeTimber(file), fileName: name };
+  }
+
+  /** The map as it was opened, before any edit: the load and design checks of an imported
+   *  file's normalized base (its own problems, which the export gate does not blame on edits). */
+  validateOriginal(): Validation {
+    return validateMap(this.baseStuff().file, { profile: "export", external: true, loadOnly: true, spec: null, designedFor: this.gen.meta.designedFor });
   }
 
   /** Validate the map as it would be exported: the `export` profile for generated maps, `import`
-   *  for imported ones (PLAN §19.5), or the profile given. */
-  validate(profile?: Profile): Validation {
+   *  for imported ones (PLAN §19.5), or the profile given. `loadOnly` runs the load and design
+   *  classes only (no water settle). */
+  validate(profile?: Profile, opts: { loadOnly?: boolean } = {}): Validation {
     const live = this.mode === "live";
     return validateMap(this.exportFile(), {
       profile: profile ?? (this.gen.spec ? "export" : "import"),
@@ -631,6 +679,7 @@ export class MapSession {
       designedFor: this.gen.meta.designedFor,
       features: this.st.features,
       water: live ? { model: this.cur.waterModel, settled: this.cur.settle } : undefined,
+      loadOnly: opts.loadOnly,
     });
   }
 

@@ -227,3 +227,32 @@ export function decodeWorld(text: string, tv?: { voxels: Uint8Array; layers: num
     legacy,
   };
 }
+
+/** The water a map stores (WaterMapNew, every level): one entry per wet column, with its floor
+ *  (the token's fourth field; -1 when an old 3-field token has none), depth and badwater share.
+ *  Empty when the singleton is missing or its array does not fit the map. */
+export function storedWater(singletons: JsonObject, W: number, H: number): { tile: Int32Array; floor: Float32Array; depth: Float32Array; contamination: Float32Array } {
+  const empty = { tile: new Int32Array(0), floor: new Float32Array(0), depth: new Float32Array(0), contamination: new Float32Array(0) };
+  const wm = singletons.WaterMapNew;
+  if (!isObject(wm) || !isObject(wm.WaterColumns)) return empty;
+  const tokens = String(wm.WaterColumns.Array).split(" ");
+  const plane = W * H;
+  const levels = isObject(wm) && "Levels" in wm ? num(wm.Levels) : 1;
+  if (tokens.length !== levels * plane) return empty;
+  const tile: number[] = [];
+  const floor: number[] = [];
+  const depth: number[] = [];
+  const contamination: number[] = [];
+  for (let k = 0; k < tokens.length; k++) {
+    const t = tokens[k];
+    if (t === "0") continue;
+    const f = t.split(":");
+    const d = Number(f[0]);
+    if (!(d > 0.001)) continue;
+    tile.push(k % plane);
+    depth.push(d);
+    contamination.push(Number(f[1] ?? 0) || 0);
+    floor.push(f.length >= 4 ? Number(f[3]) : -1);
+  }
+  return { tile: Int32Array.from(tile), floor: Float32Array.from(floor), depth: Float32Array.from(depth), contamination: Float32Array.from(contamination) };
+}

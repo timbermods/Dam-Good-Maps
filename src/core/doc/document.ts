@@ -126,10 +126,12 @@ export function importDocument(bytes: Uint8Array, fileName: string): MapDocument
 
 // ------------------------------------------------------------------------------- project file
 
-export function encodeProject(doc: MapDocument): Uint8Array {
+/** The project file's bytes. `level` is the gzip level (9 for downloads; autosave may use a
+ *  faster one): the JSON inside is the same either way. */
+export function encodeProject(doc: MapDocument, level = 9): Uint8Array {
   const out: MapDocument = { ...doc };
   if (doc.baseFeatures && jsonEqual(doc.baseFeatures, doc.features)) delete out.baseFeatures;
-  return gzipSync(strToU8(JSON.stringify(out)), { level: 9, mtime: 0 });
+  return gzipSync(strToU8(JSON.stringify(out)), { level: level as 9, mtime: 0 });
 }
 
 export class ProjectError extends Error {}
