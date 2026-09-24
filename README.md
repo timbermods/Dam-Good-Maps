@@ -9,6 +9,10 @@ settled, checked for a colony's survival, shown in a 2D preview with water, mois
 layers, and downloaded as a `.timber` and a project file. Once Pages is on, it is served at
 <https://timbermods.github.io/dam-good-maps/>.
 
+M3 adds the engine the editor will run on. It opens any `.timber`, from 0.6 to 1.1. It edits
+features and objects with undo, and regenerates a map without losing your own work. The editor's
+screens come next.
+
 | Path | What it is |
 |---|---|
 | [src/](src/) | The website. `src/core/` is the generator and format code: pure TypeScript that runs in the worker, in Node and in tests. |
@@ -58,6 +62,9 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 - `npm run test:e2e` builds the site and checks that Chrome and Node produce the same bytes.
 - `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
 - `npm run fixtures` rewrites the water golden vectors from the Python reference.
+- `npm run build:spike` builds the Claude artifact test page into `dist-spike/`.
+- `npm run spike:check` runs that page and the Messages API CORS page in Chrome. It writes
+  `out/spike/checks.json`.
 
 ## Prototype quick start
 

@@ -69,15 +69,22 @@ function checkFile(file: TimberFile, c: Collector, external: boolean): void {
     const levels = num(wm.Levels);
     const n = levels * X * Y;
     const len = (o: unknown, key: string) => (isObject(o as JsonObject) && isObject((o as JsonObject)[key]) ? String(((o as JsonObject)[key] as JsonObject).Array).split(" ").length : -1);
-    const lens: Record<string, number> = {
-      WaterColumns: len(wm, "WaterColumns"),
-      ColumnOutflows: len(wm, "ColumnOutflows"),
-      MoistureLevels: len(s.SoilMoistureSimulator, "MoistureLevels"),
-      ContaminationLevels: len(s.SoilContaminationSimulator, "ContaminationLevels"),
-      ContaminationCandidates: len(s.SoilContaminationSimulator, "ContaminationCandidates"),
-      EvaporationModifiers: len(s.WaterEvaporationMap, "EvaporationModifiers"),
-    };
-    const bad = Object.entries(lens).filter(([, v]) => v !== n);
+    // each array is read with its own size field: water with WaterMapNew.Levels, soil with the
+    // simulators' Size and evaporation with its Levels (both default to 1, as the loaders do);
+    // 0.6 maps store one soil slot beside two water levels
+    const slots = (o: unknown, key: string) => (isObject(o as JsonObject) && key in (o as JsonObject) ? num((o as JsonObject)[key]) : 1);
+    const soilN = slots(s.SoilMoistureSimulator, "Size") * X * Y;
+    const dirtN = slots(s.SoilContaminationSimulator, "Size") * X * Y;
+    const evapN = slots(s.WaterEvaporationMap, "Levels") * X * Y;
+    const lens: [string, number, number][] = [
+      ["WaterColumns", len(wm, "WaterColumns"), n],
+      ["ColumnOutflows", len(wm, "ColumnOutflows"), n],
+      ["MoistureLevels", len(s.SoilMoistureSimulator, "MoistureLevels"), soilN],
+      ["ContaminationLevels", len(s.SoilContaminationSimulator, "ContaminationLevels"), dirtN],
+      ["ContaminationCandidates", len(s.SoilContaminationSimulator, "ContaminationCandidates"), dirtN],
+      ["EvaporationModifiers", len(s.WaterEvaporationMap, "EvaporationModifiers"), evapN],
+    ];
+    const bad = lens.filter(([, v, want]) => v !== want);
     const need2 = floorsOf(w).reduce((a, v) => Math.max(a, v), 1); // no spread: 65k args overflow a worker stack
     c.add({
       id: "file.arrays",
@@ -85,7 +92,7 @@ function checkFile(file: TimberFile, c: Collector, external: boolean): void {
       ok: bad.length === 0 && levels >= need2,
       value: levels,
       limit: need2,
-      message: bad.length ? `wrong lengths: ${bad.map(([k, v]) => `${k} ${v}`).join(", ")} (expected ${n})` : levels < need2 ? `water Levels ${levels} below the terrain's ${need2} floors` : "every packed array has W·H·Levels tokens",
+      message: bad.length ? `wrong lengths: ${bad.map(([k, v, want]) => `${k} ${v} (expected ${want})`).join(", ")}` : levels < need2 ? `water Levels ${levels} below the terrain's ${need2} floors` : "every packed array has W·H tokens per slot",
     });
   }
   const md = file.metadata;

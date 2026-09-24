@@ -131,14 +131,21 @@ def check_file(m: TimberMap, rep: Report, raw_zip: dict):
     if not missing:
         lv = s["WaterMapNew"]["Levels"]
         n = lv * X * Y
+        # each array is read with its own size field (water Levels, the soil simulators' Size,
+        # evaporation Levels; the soil and evaporation ones default to 1): 0.6 maps store one
+        # soil slot beside two water levels
+        soil_n = s["SoilMoistureSimulator"].get("Size", 1) * X * Y
+        dirt_n = s["SoilContaminationSimulator"].get("Size", 1) * X * Y
+        evap_n = s["WaterEvaporationMap"].get("Levels", 1) * X * Y
         lens = {
-            "WaterColumns": len(s["WaterMapNew"]["WaterColumns"]["Array"].split(" ")),
-            "ColumnOutflows": len(s["WaterMapNew"]["ColumnOutflows"]["Array"].split(" ")),
-            "MoistureLevels": len(s["SoilMoistureSimulator"]["MoistureLevels"]["Array"].split(" ")),
-            "ContaminationLevels": len(s["SoilContaminationSimulator"]["ContaminationLevels"]["Array"].split(" ")),
-            "EvaporationModifiers": len(s["WaterEvaporationMap"]["EvaporationModifiers"]["Array"].split(" ")),
+            "WaterColumns": (len(s["WaterMapNew"]["WaterColumns"]["Array"].split(" ")), n),
+            "ColumnOutflows": (len(s["WaterMapNew"]["ColumnOutflows"]["Array"].split(" ")), n),
+            "MoistureLevels": (len(s["SoilMoistureSimulator"]["MoistureLevels"]["Array"].split(" ")), soil_n),
+            "ContaminationLevels": (len(s["SoilContaminationSimulator"]["ContaminationLevels"]["Array"].split(" ")), dirt_n),
+            "ContaminationCandidates": (len(s["SoilContaminationSimulator"]["ContaminationCandidates"]["Array"].split(" ")), dirt_n),
+            "EvaporationModifiers": (len(s["WaterEvaporationMap"]["EvaporationModifiers"]["Array"].split(" ")), evap_n),
         }
-        bad = {k: v for k, v in lens.items() if v != n}
+        bad = {k: v for k, (v, want) in lens.items() if v != want}
         rep.add("file.arrays", not bad and lv >= m.water_levels(),
                 f"levels {lv} (terrain needs {m.water_levels()}), wrong lengths: {bad}" if bad or lv < m.water_levels() else "consistent")
     md = m.metadata or {}

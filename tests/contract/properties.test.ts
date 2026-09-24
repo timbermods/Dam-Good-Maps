@@ -14,6 +14,7 @@ import { writeTimber } from "../../src/core/format/timber";
 import { generate } from "../../src/core/gen/generate";
 import { stream } from "../../src/core/math/rng";
 import { makeSpec, SIZE_PRESETS } from "../../src/core/spec/mapspec";
+import { LOG_OPS, type EditOp } from "../../src/core/doc/ops";
 import { randomOp } from "./randomOps";
 
 const sha = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
@@ -42,8 +43,19 @@ describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side,
     const rng = stream(seed, "e1-property-test");
     let applied = 0;
     let rejected = 0;
-    for (let step = 0; step < OPS[side]; step++) {
-      const op = randomOp(s, rng);
+    const kinds = new Set<string>();
+    // the random operations, then once more each log operation the draw has not produced yet
+    const sweep = LOG_OPS.map((kind) => () => {
+      if (kinds.has(kind)) return null;
+      for (let tries = 0; tries < 400; tries++) {
+        const op = randomOp(s, rng);
+        if (op?.op === kind) return op;
+      }
+      return null;
+    });
+    const draws: (() => EditOp | null)[] = [...Array.from({ length: OPS[side] }, () => () => randomOp(s, rng)), ...sweep];
+    for (let step = 0; step < draws.length; step++) {
+      const op = draws[step]();
       if (!op) continue;
       const before = s.document.edits.length;
       const res = s.apply(op);
@@ -55,6 +67,7 @@ describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side,
         continue;
       }
       applied++;
+      kinds.add(op.op);
       expectSameBuild(s.built, s.fullBuild(), `after ${op.op} (step ${step})`);
       if (rng.float() < 0.25 && s.canUndo) {
         // step back and forth: the snapshots and the undo data give the same maps
@@ -69,6 +82,7 @@ describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side,
     }
     expect(applied).toBeGreaterThanOrEqual(OPS[side] * 0.6);
     expect(rejected).toBeGreaterThanOrEqual(0);
+    expect([...kinds].sort()).toEqual([...LOG_OPS].sort());
     // the incremental and the full build export the same file
     const exported = s.exportTimber().bytes;
     expect(sha(writeTimber(s.exportFile(s.fullBuild())))).toBe(sha(exported));

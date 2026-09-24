@@ -123,14 +123,20 @@ Generated maps expose their rivers, lakes, landforms, set pieces, forests, berry
 
 **Building the final map:** the one build pipeline in `PLAN.md` §19.8. It runs landforms, then set pieces, rivers and lakes, pads, sculpt edits, derived slopes, water, resources, the start and entity edits, in that order. Every step is deterministic, so the same document always produces a byte-identical `.timber` file. Changing a feature's parameter rebuilds only the area it affects. That incremental rebuild must equal a full rebuild (`PLAN.md` §19.7).
 
-**Edit operations** are small, serializable commands with undo data:
+**Edit operations** are small, serializable commands with undo data, in one envelope `{op, params}`
+(`core/doc/ops.ts`, `ops.schema.json`; the validation report's fixes use the same envelope, D35):
 
-- Feature operations: `AddFeature`, `UpdateFeature { id, patch }`, `DeleteFeature`, `ReorderFeature`
-- `Sculpt { mode: raise | lower | flatten | terrace | smooth | naturalize, cells, params }`
-- `PlaceEntity`, `MoveEntity`, `DeleteEntity`, `SetEntityProps` (advanced mode)
-- `PinSlope`, `RemoveSlope` (overrides on the derived slopes)
-- `RegenerateRegion { area, seedVariant, layers }`, `SetLock`
-- `SpecPatch { patch }` (a JSON Merge Patch on the `MapSpec`, used by Claude and by "change a setting and regenerate")
+- Feature operations: `addFeature`, `updateFeature { id, patch }` (a merge patch on `params` and
+  `locked`), `deleteFeature`, `reorderFeature`
+- `sculpt { mode: raise | lower | flatten | terrace | smooth | naturalize, cells, amount | level | step }`
+- `placeEntity`, `moveEntity`, `deleteEntities`, `setEntityProps` (advanced mode)
+- `pinSlope`, `removeSlope` (overrides on the derived slopes)
+- `regenerateRegion { area, seedVariant, layers }`, `setLock`
+- `specPatch { patch }` (a JSON Merge Patch on the `MapSpec`, used by Claude and by "change a setting and regenerate")
+
+The document keeps the applied operations as its log, on top of its generation (the spec, the
+planned features and the stored base, D37). A `specPatch` replaces the generation and replays the
+log on it; everything else joins the log.
 
 Operations validate their inputs against the schemas and reject invalid ones instead of clamping silently. The set-piece builders are the one place where a valid value may be reduced to what the map allows, and they always report it.
 
@@ -300,6 +306,12 @@ A mismatch goes back to Claude to revise, just like a validation failure.
 - the artifact can be opened by others on Kyler's plan, including by public link.
 
 Record the results in "Editor decisions".
+
+*Spike results (M3).* See [docs/spike-m3.md](docs/spike-m3.md) and decisions D8, D10 and D41. The
+page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp>.
+- Blob workers, file open and the `.zip` download all work under the artifact's rules.
+- Route B's browser calls pass CORS with the direct-browser-access header.
+- `sample`'s latency and who can open the artifact wait for Kyler's own run of the page.
 
 ## 8. Architecture
 

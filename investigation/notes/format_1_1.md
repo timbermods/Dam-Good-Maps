@@ -125,9 +125,10 @@ migration and what it does.
 | — | `TemplateNameMapper` | legacy template names via `TemplateSpec.BackwardCompatibleTemplateNames`: `Barrier`→`Blockage`, `Bramble`→`Thorns`, `Bomb`→`UnstableCore`, `Cactus`→`Succulent`, `Maple`→`Oak`, `ChestnutTree`→`Pine`. The last two apply only when the faction's own template is absent: real template names are registered first, so a Folktails game still gets a real Maple |
 
 For a 1.0-format map the only migration that changes anything is the water-column one. The prototype's water was
-all `"0"`, so even that had no effect. Obsolete 0.6/0.7 components (`BlockObjectState`, `DryObject`,
-`ContaminatedObject`, `NaturalResourceModelRandomizer`, `LivingWaterNaturalResource`, `StartingLocationPlayer`,
-and so on) are simply ignored.
+all `"0"`, so even that had no effect. Of the old 0.6/0.7 components, `DryObject`, `ContaminatedObject`,
+`NaturalResourceModelRandomizer` and `StartingLocationPlayer` are never read (Timber Together reads the last one).
+`BlockObjectState`, `WateredNaturalResource`, `LivingWaterNaturalResource` and `ContaminatedNaturalResource` are
+still read in 1.1 (checked against the decompiled loaders in M3, PLAN §20 D36).
 
 **Recommendation.** Write `version.txt` = `1.1.2.4-52e959e-sw` + `\r\n`, and `GameVersion` = the same string. This is
 exactly what the 1.1.2.4 build writes. Every 1.1.x build on the stable branch accepts it silently.

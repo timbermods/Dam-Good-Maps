@@ -73,7 +73,7 @@ describe("import of the investigation maps (local only)", () => {
       expect(w.layers, path).toBe(23);
       // the load checks the game runs on its structure pass: layers, arrays, enums, components
       const v = s.validate("import").report.checks;
-      for (const id of ["file.layers", "file.singletons", "entities.enums", "entities.components", "entities.ids"]) expect(v.find((c) => c.id === id)?.ok, `${path} ${id}`).toBe(true);
+      for (const id of ["file.layers", "file.singletons", "file.arrays", "entities.enums", "entities.components", "entities.ids"]) expect(v.find((c) => c.id === id)?.ok, `${path} ${id}`).toBe(true);
       const again = MapSession.importMap(out, path);
       expect(again.meta.source!.report.changes, path).toEqual([]);
     }

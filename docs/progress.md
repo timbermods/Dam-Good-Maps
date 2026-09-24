@@ -191,6 +191,103 @@ Also green:
   standing on dry soil. That is expected: imports never block, and those rules are ours for
   generated maps.
 
+## M3: map document and operations engine, delivery spike
+
+**Built** (branch `dev`; the generator stays 0.2.0 and its maps are byte-identical):
+- **The build pipeline in stages** (`src/core/features/build.ts`, `target.ts`, `raster/`,
+  `edits.ts`):
+  - One pipeline builds generated maps, edited maps and imported maps. Its input can carry an
+    imported base, sculpt edits, slope pins and removals, entity edits, and what locks kept.
+  - `rebuild(prev, input)` is the incremental path. It rasterizes terrain only inside the dirty
+    region (D38), and reuses slopes, the water settle, moisture and each resource feature when
+    their inputs are unchanged.
+  - Entity edits run in two passes, so a deleted source or a placed Blockage changes the water.
+  - The sculpt brushes: raise, lower, flatten, terrace and smooth.
+- **Import** (`src/core/format/normalize.ts`, `src/core/doc/base.ts`, D36):
+  - Any `.timber` normalizes once: 0.6 heightmaps, 0.7, 1.0 and 1.1.
+  - Pre-1.0 maps get the `WaterSimulationMigrator` halving; 4-field water tokens gain their fifth
+    field; maps over 23 layers are truncated with a warning.
+  - Old key shapes are migrated the way the game migrates them. Components 1.1 never reads are
+    dropped, unknown ones are kept, and `StartingLocationPlayer` is kept.
+  - Faction-only plants are flagged with a one-click fix. Saves are refused.
+  - Every change is listed for the player.
+- **The map document** (`src/core/doc/document.ts`, D37). A document is a generation (spec,
+  planned features, what locks kept, the stored base) plus an edit log.
+  - The base stores the whole map, so a document opens exactly after the generator changes.
+  - Project files are format 2. M1 and M2 files still open.
+- **The operations engine** (`src/core/doc/ops.ts`, `ops.schema.json`, D35). Every EDITOR_PLAN §3
+  operation, in the `{op, params}` envelope the validation fixes also use.
+  - Invalid operations are rejected with reasons.
+  - Operations apply with undo data and replay on a new generation.
+  - Operations whose target is gone are orphaned: kept and reported.
+- **The session** (`src/core/doc/session.ts`), the API the editor will run in its worker:
+  - `apply` and `applyAll`, `undo` and `redo` with built-map snapshots, `history`, `orphans`;
+  - `regenerate` around the player's features, locks and keep-out regions (D39);
+  - `rebuildWithCurrentGenerator`;
+  - `exportTimber`, `validate` and `project`.
+- **Planner constraints** (`src/core/gen/riverValley.ts`, PLAN §7.0). River Valley draws its
+  layout again until it keeps off protected tiles, and places no marsh or resources there.
+- **Validation:**
+  - `entities.placement` and `entities.templates` name their entities and offer a
+    `deleteEntities` fix;
+  - `file.arrays` checks each packed array against its own size field, in both validators (D36).
+- **The delivery spike** ([docs/spike-m3.md](spike-m3.md)):
+  - the artifact test page, published privately at
+    <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp> (`spike/artifact`, `npm run build:spike`);
+  - the Messages API CORS page (`spike/cors`);
+  - the local checks (`npm run spike:check`, results in `out/spike/checks.json`);
+  - a CI test of the page (`tests/e2e/spike.spec.ts`).
+- **Tests** (`tests/contract/`):
+  - `properties` (E1), `ops`, `document`, `regenerate` and `import` (local maps only);
+  - `tests/unit/normalize.test.ts` (hand-made old-format maps, so the rules run in CI).
+
+**Acceptance:**
+
+| Criterion | Result |
+|---|---|
+| The E1 property tests pass on generated maps of every size preset: random operations, then export, re-import and compare; undo all; incremental equals full | **pass**: `tests/contract/properties.test.ts` runs on 96², 128², 192² and 256² (seeds 301–304). Each preset gets 40, 32, 20 and 16 random operations, then one of each log operation the draw missed, so all 12 kinds apply on every preset. After every step the incremental rebuild equals a full rebuild (heights, water, moisture, soil contamination, every entity's JSON, orphans, notes), including after random runs of undo and redo. The export re-imports with nothing to normalize and exports the same bytes; the load checks agree; the project file reopens to the same map. Undoing everything gives the generator's own file byte for byte. A longer stress run found no difference either: 8 seeds × 80 operations at 96², 4 × 60 at 128² and 2 × 40 at 192² |
+| Every voxel-format investigation map imports and re-exports its normalized world byte for byte | **pass**: all 30 (19 official, 3 dev, 7 workshop, 1 user map; `tests/contract/import.test.ts`, local only). Each exports its normalized world.json byte for byte, with its original thumbnail. Re-imported, it needs no normalization and exports the same bytes. The 19 official maps change only their version stamp |
+| The two 0.6 maps import | **pass**: Beavers Canyons and Meander Multiplayer. Their heightmaps become voxels, with 13 migrations listed for Meander Multiplayer. They export 23 layers, pass the structural load checks, and re-import unchanged. Meander Multiplayer keeps its 3 starts and their `StartingLocationPlayer` |
+| Generate, add a user feature, change a setting, regenerate: the user feature survives and nothing is silently dropped | **pass**: `tests/contract/regenerate.test.ts`, 128², seed 21. A user plateau, a user forest and a Claude berry patch are added, next to edits of generated features. Then the map is regenerated twice: with new settings (forest density 150, ruins 200, a strong river), and with a new seed. All three features survive unchanged and built: the plateau stands at 15, and all 135 forest tiles carry trees. The new river, basin and generated resources keep off them. Every edit stays in the log and either applies or is flagged with its reason. Undo restores the previous generation. Also tested: locks keep their area, keep-out regions stay empty, and a regeneration that cannot avoid the player's features is refused without changing anything |
+| The spike report answers each open question with evidence | **pass, with two questions that need Kyler** ([docs/spike-m3.md](spike-m3.md)). Answered with evidence: blob workers (the whole core runs in one under the artifact's policy, byte-identical to Node); opening a local `.timber` (generated, official, 0.7 and 0.6 maps); `.zip` versus `.timber` downloads (the platform's allowlist; the `.zip` holds the map byte for byte); Messages API CORS (works with the header, blocked without). Needs Kyler: `sample`'s real latency with tools on the quick and default tiers (a call spends his plan and asks his consent), and who can open the artifact, including by public link (sharing is his; the private page needs his sign-in). The steps are below |
+
+Timings at 256², in Node:
+
+| Operation | Time |
+|---|---|
+| A forest's density changes (no terrain or water change) | 3 ms |
+| A tree is deleted | 3 ms |
+| An undo | 2 ms |
+| A 14×10 terrain raise (the canonical settle runs again) | 0.78 s |
+| A full build | 0.81 s |
+| A regeneration with a settings change | 3.0 s |
+
+The project file is 238 KB, against 205 KB for the `.timber`.
+
+**Deviations** (the plan is updated to match): PLAN §20 D35–D41, and D8 and D10 updated with the
+spike's results.
+- D35: one `{op, params}` envelope for operations and fixes, and what waits for later milestones.
+- D36: import normalization in detail. FORMAT.md §7 had four live components listed as obsolete.
+- D37: the document is a generation plus a log; the base stores the whole map; format-2 project
+  files. D37 replaces D18.
+- D38: entity edits in two passes; how the incremental rebuild finds its region.
+- D39: regeneration around protected tiles; what locks keep.
+- D40: the rules for editing imported maps.
+- D41: the artifact edition's build.
+
+**Look at:**
+- **The spike needs your run** (below): `sample` with tools on two tiers, the save dialog, and
+  sharing. Paste the page's results into [docs/spike-m3.md](spike-m3.md).
+- Three new defaults in [decisions-pending.md](decisions-pending.md):
+  - multi-colony imports and the export gate;
+  - what a lock keeps;
+  - the version stamp on imports.
+- A terrain edit re-runs the canonical settle (0.4–0.8 s at 256²), because a rebuild must
+  re-settle when terrain changes. M8 adds the warm-started preview for the editor.
+- The dam site's band can be wide on maps whose valley axis is tilted. An edit that touches the
+  band rebuilds the band's whole rectangle. That is correct, only slower (the E1 tests cover
+  it).
+
 ---
 
 ## What Kyler needs to do
@@ -207,3 +304,29 @@ Things the run can't do itself. Each has the exact steps.
    adds B1–B4 (files in `out/m2/`): the first time pre-filled water meets the real game.
 3. **Answer the pending decisions** in [decisions-pending.md](decisions-pending.md) when convenient;
    the run went ahead with the defaults listed there.
+4. **Run the delivery spike page** (M3). It needs your claude.ai account and your consent, so the
+   run leaves it to you. It takes about ten minutes.
+   1. Open <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp> while signed in to claude.ai.
+   2. **Check 1** runs by itself. Wait for the **Blob worker** chip to turn green (**Passed**).
+   3. **Check 2:** click **Choose a .timber** and pick any map from `Documents\Timberborn\Maps`.
+      Also try a map from a workshop folder if you like. The **Open a .timber** chip should turn
+      green, and the box below it should describe the map.
+   4. **Check 3:** click **Save the .zip**. Claude asks you to confirm the save: accept it.
+      `River Valley (4242).zip` should appear in your downloads, with `River Valley (4242).timber`
+      inside. Then click **Try a bare .timber** and note the message under the buttons. The
+      expected answer is `rejected_extension`.
+   5. **Check 4:** click **Ask on the quick tier**. The first time, Claude asks whether this
+      artifact may use Claude on your plan: allow it. Wait until the chip turns green or red.
+      Then click **Ask on the default tier** and wait again; that one can take a minute or two.
+   6. Click **Copy results**. Paste the JSON into [docs/spike-m3.md](spike-m3.md), in the
+      "Kyler's run" section. Fill in that table too: first-text and total times, the number of
+      tool calls, and whether each answer was right.
+   7. **Sharing.** Open the page's **Share** menu and note every option it offers. If it says a
+      public link is unavailable, copy the reason it gives.
+      - If someone else is on your plan or in your organization, share the page with them. Ask
+        them to open it and wait for check 1. Record whether it opened for them.
+      - If **Anyone with the link** is offered, turn it on. Open the link in a private browser
+        window where you are not signed in, and record what you see: a sign-in wall, or the
+        page with check 1 running. Turn public sharing off again afterwards if you prefer.
+   8. Record the sharing results in the same table (rows 5a–5c). If anything fails, the
+      page's box for that check says why.

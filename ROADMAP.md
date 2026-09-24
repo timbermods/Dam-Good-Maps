@@ -194,6 +194,21 @@ The deviations are PLAN §20 D24–D34. In-game checks B1–B4 are pending.
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `dev` (the generator stays 0.2.0). Every acceptance
+criterion passes:
+- the E1 property tests on 96², 128², 192² and 256², covering all 12 kinds of edit:
+  - the incremental rebuild equals a full rebuild after every step, undo and redo included;
+  - export, re-import and export again gives the same bytes;
+  - undoing everything gives back the generator's own file;
+- all 30 voxel-format investigation maps re-export their normalized world byte for byte, and the
+  two 0.6 maps import;
+- regeneration keeps the player's features and flags every edit that no longer applies, with
+  its reason;
+- the spike report answers the open questions with evidence.
+
+Two spike questions need Kyler's own run of the published page: `sample`'s latency with tools,
+and who can open the artifact. The deviations are PLAN §20 D35–D41, and D8 and D10 are updated.
+
 ---
 
 ## M4. Shared 3D view and editor shell
