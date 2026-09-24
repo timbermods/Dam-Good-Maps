@@ -223,9 +223,9 @@ What the file should show (from `checks.txt`):
 - NaturalDam, the weir: 5 tiles at (10, 87), (11, 88), (12, 89), (12, 90) and (13, 90), across the
   north-west inflow river. It holds the water about 0.65 above the river bed upstream.
 - Thorns: 32 in a belt within (92, 96)–(102, 100).
-- Small relic at (96, 107)–(96, 108). Medium relic at (121, 110)–(123, 111).
-- Geothermal fields at (34, 5)–(36, 7) and (8, 16)–(10, 18).
-- Mine sites (UndergroundRuins) at (21, 9)–(25, 13) and (114, 3)–(118, 7).
+- Small relic at (17, 107)–(17, 108). Medium relic at (118, 110)–(120, 111).
+- Geothermal fields at (33, 5)–(35, 7) and (110, 16)–(112, 18).
+- Mine sites (UndergroundRuins) at (18, 9)–(22, 13) and (112, 3)–(116, 7).
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|

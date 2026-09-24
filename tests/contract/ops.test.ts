@@ -32,6 +32,13 @@ describe("every operation applies and undoes", () => {
   const forest = r.features.find((f): f is ForestFeature => f.kind === "forest")!;
   const tree = r.built.entities.find((e) => e.template === "Pine")!;
   const slope = r.built.entities.find((e) => e.template === "Slope")!;
+  // a tile near the south-west corner where the game keeps the moved tree (placeEntity and
+  // moveEntity refuse what its loader would delete)
+  const to = ((): [number, number] => {
+    const s0 = fresh();
+    for (let y = 2; y < 30; y++) for (let x = 2; x < 30; x++) if (!entityProblem(s0, { template: tree.template, x, y, orientation: tree.orientation }, tree.id)) return [x, y];
+    throw new Error("no free tile for the tree");
+  })();
   const cases: [string, EditOp, (s: MapSession) => void][] = [
     ["addFeature", { op: "addFeature", params: { feature: { id: USER, kind: "landform", origin: "user", locked: false, params: { kind: "hill", edgeStyle: "gentle", outline: [[10, 70], [20, 70], [20, 80], [10, 80]], height: 13 } } } }, (s) => expect(s.built.heights[75 * W + 15]).toBe(13)],
     ["updateFeature", { op: "updateFeature", params: { id: forest.id, patch: { params: { life: "dead" } } } }, (s) => expect(s.built.entities.filter((e) => e.owner === forest.id).every((e) => "LivingNaturalResource" in e.components)).toBe(true)],
@@ -39,7 +46,7 @@ describe("every operation applies and undoes", () => {
     ["reorderFeature", { op: "reorderFeature", params: { id: forest.id, index: 0 } }, (s) => expect(s.features[0].id).toBe(forest.id)],
     ["sculpt", { op: "sculpt", params: { mode: "flatten", cells: rectRuns(3, 3, 8, 6), level: 12 } }, (s) => expect(s.built.heights[4 * W + 5]).toBe(12)],
     ["placeEntity", { op: "placeEntity", params: { id: "11111111-2222-4333-8444-555555555555", template: "Blockage", x: 40, y: 3, orientation: "Cw90" } }, (s) => expect(s.built.entities.find((e) => e.id === "11111111-2222-4333-8444-555555555555")?.orientation).toBe("Cw90")],
-    ["moveEntity", { op: "moveEntity", params: { id: tree.id, x: 2, y: 2 } }, (s) => expect(s.built.entities.find((e) => e.id === tree.id)).toMatchObject({ x: 2, y: 2 })],
+    ["moveEntity", { op: "moveEntity", params: { id: tree.id, x: to[0], y: to[1] } }, (s) => expect(s.built.entities.find((e) => e.id === tree.id)).toMatchObject({ x: to[0], y: to[1] })],
     ["deleteEntities", { op: "deleteEntities", params: { entities: [tree.id] } }, (s) => expect(s.built.entities.some((e) => e.id === tree.id)).toBe(false)],
     ["setEntityProps", { op: "setEntityProps", params: { id: tree.id, components: { Growable: { GrowthProgress: 0.5 } } } }, (s) => expect(stringify(s.exportFile().world.entities.find((e) => e.Id === tree.id)!)).toContain('"Growable":{"GrowthProgress":0.5}')],
     ["removeSlope", { op: "removeSlope", params: { x: slope.x, y: slope.y } }, (s) => expect(s.built.entities.some((e) => e.id === slope.id)).toBe(false)],
