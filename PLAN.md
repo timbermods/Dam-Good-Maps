@@ -59,7 +59,7 @@ Your brief was the starting point. These findings changed it; each is explained 
 | Only Pine, Birch, Oak, Succulent and BlueberryBush load for both factions and in the editor. | The species mix offers exactly these five. |
 | Pre-0.7 heightmaps and caves need extra format and water work; the 1.0+ objects differ widely in risk. | 1.0+ features are sorted into settings, theme ingredients and later/left out (§5.7). |
 | Map edges drain, except the padding next to a source cell. Water surfaces settle flat at their spill level. (Audit experiment: a channel mouth wider than its row of edge sources lost all its water back off the edge.) | River mouths on the edge are sealed: sources fill the whole mouth, or the mouth is walled and fed by inland springs (§7.6). A lake's level is its outlet sill, not a free number, and a lake without inflow slowly evaporates. |
-| A waterfall's width needs flow: lip depth is about 0.3·S/W. Official falls are at most about 10 tiles wide, with lips 0.12–0.3 deep. The terrain budget allows a drop of at most 15 levels. | Waterfalls are sized by measured rules (§9.2): the header pool, the flow per tile of width, and the achievable drop. |
+| A waterfall's width needs flow: lip depth is about 0.3·S/W. Official falls are 2–8 tiles wide on nearly every map, with lips 0.12–0.3 deep. The terrain budget allows a drop of at most 15 levels. | Waterfalls are sized by measured rules (§9.2): the header pool, the flow per tile of width, and the achievable drop. |
 
 ---
 
@@ -105,7 +105,8 @@ Node:
 - **File bytes.** Entity Ids are GUIDs hashed from their owning feature (§19.4), `Timestamp` is a
   constant, zip mtimes are fixed and the JPEG encoder is deterministic.
 - **Water.** The settled water written into the file always comes from the canonical settle
-  (§19.7): a cold start from the terrain and sources on a fixed schedule. It never comes from an
+  (§19.7). It starts from a state computed only from the terrain and sources (empty, or the
+  documented priority-flood pre-fill) and runs a fixed schedule. It never comes from an
   interactive, warm-started preview, because a warm start can end in a slightly different steady
   state (for example, thin sheets held at the 0.1 spill threshold).
 - **Versioned reproduction.** A share link carries the generator version (§14.5). Every release is
@@ -279,7 +280,7 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Forest density | 50% – 200% | 100% | Trees per 10k tiles, size-aware (small 1,715, medium 1,061, large 534, max 500). Living share comes from moisture (official 0.33). |
 | Grove size | Scattered, Normal, Big woods | Normal | Grove size median 6 / 10 / 20 trees, with a log-normal tail capped at 120 / 180 / 300. Groves are single-species, as every official grove of 20+ is. |
 | Species mix | weights for Pine, Birch, Oak, Succulent | 47 / 27 / 20 / 6 | The only species that load for both factions and in the editor. Succulents go on dry soil only. |
-| Berries near start | 20 – 100 | by difficulty (Easy 20, Normal 48, Hard 60) | Living bushes within 20 tiles of the start, in 2–3 patches beside water. |
+| Berries near start | 20 – 100 | by difficulty (Easy 20, Normal 48, Hard 60): the generation target; §5.6 gives the lower minimum that validation enforces | Living bushes within 20 tiles of the start, in 2–3 patches beside water. |
 | Berry bushes elsewhere | 50% – 300% | 100% | Bushes per 10k tiles, size-aware (medium 92, large 40), in patches of about 20–40 beside water. |
 | Ruins and scrap | 25% – 300% | 100% | Scrap per 1k tiles, size-aware (small 840, medium 705, large and max 236). |
 | Relics | Off, Some | Some | 0–3 small (13–70 tiles out), 0–2 medium (40–140), 0–1 large (140+, maps ≥ 192²). |
@@ -525,8 +526,8 @@ the first attempt and 100% within 6.
 ### 7.9 Candidates and score
 
 Build K = 3 valid candidates (candidate index 0, 1, 2 in the seed streams) and keep the highest
-score (§12). K is 1 on 256² when the first build took over 6 s; the card then says "single
-candidate".
+score (§12). K is 1 on 256² when the first build took over 6 s, and by default at 256² if the M2 benchmark
+leaves the settle above 3 s (§10); the card then says "single candidate".
 
 ### 7.10 Output
 
@@ -599,7 +600,7 @@ what the map allows are reduced to the nearest achievable value, and the reducti
   - Dam height (crest above the bed) is useful at 1–3 levels, 4 at most. A Folktails WaterPump
     reaches 2 levels below its base, a LargeWaterPump 4, and the Iron Teeth DeepWaterPump 6.
     Water deeper than that is storage the colony cannot pump. The ridge top can go up to 16.
-  - The basin is capped at 15% of the map area: 48² ≤ 345 tiles, 96² ≤ 1,380, 128² ≤ 2,450. The
+  - The basin is capped at 15% of the map area: 48² ≤ 345 tiles, 96² ≤ 1,382, 128² ≤ 2,457. The
     150–1,500 range above is for 128² and larger; on smaller maps it scales with area.
   - The reservoir must never touch a map edge. Edges drain, except next to a source.
   - The reservoir a difficulty needs, and so the minimum map size, is in §9.10.
@@ -641,8 +642,9 @@ what the map allows are reduced to the nearest achievable value, and the reducti
   - Hydraulically, the width is limited only by the map: the dimension along the lip minus about 8
     tiles for side walls. The builder caps it at 40% of that dimension so the map stays playable
     (§9.10).
-  - Official falls are narrow: the widest lip on an official map is 2–8 tiles (up to 10 counting sheets under 0.1 deep; Craters 15 as a
-    thin sheet; Pressure 22, measured on a map whose water also runs through roofed tunnels). Official lips are 0.12–0.29 deep
+  - Official falls are narrow: the widest lip on an official map is 2–8 tiles. Counting sheets under 0.1 deep, Canyon
+    reaches 10 and Craters 15; Pressure has 22, measured on a map whose water also runs through
+    roofed tunnels. Official lips are 0.12–0.29 deep
     (medians per map).
 - **Flow for a given width:**
   - The minimum is S ≥ 0.025·W plus the header pool's evaporation (about 0.00012 per pool tile).
@@ -653,13 +655,14 @@ what the map allows are reduced to the nearest achievable value, and the reducti
     in-game check (§18 F).
   - The builder takes flow from the river it sits on. Standalone, it adds springs of at most 0.5
     each, and at most 8 per tile (the game's cap), up to 100% of the map's flow budget. Beyond that
-    it builds the thinner sheet and reports it.
+    it builds the thinner sheet and reports it. An exact flow typed in advanced mode (or asked for
+    explicitly) can exceed the cap, with a warning. In-game check F1 uses that override.
 - **Downstream:** friction is negligible, so any channel carries the flow. The water depth in a
   channel draining to an edge is about 0.3·S/w, so banks 1 level high hold up to S ≈ 3·w (for
   example, 10 blocks/s in a 3-wide channel).
 - **Validated:** the settled water surface drops at least 1.5 between neighbouring wet tiles at the
   fall (detected as a waterfall feature). Tiles below it are not flooded above the bench. The
-  measured width, for Claude's intent checks, is the number of lip tiles with depth > 0.01 and a
+  measured width, for Claude's intent checks, is the number of lip tiles with any water (depth > 0.001) and a
   drop of at least 1.5.
 - **Counts:** from the waterfall setting, with 12+ tiles between falls.
 
@@ -771,7 +774,7 @@ words such as "giant".
 | Waterfall width cap (40% of the side along the lip; hydraulic limit about side − 8) | 19 | 38 | 51 | 76 | 102 |
 | Normal flow budget for the whole map (blocks/s, §5.3) | 1.2 | 3.0 | 3.6 | 4.4 | 7.2 |
 | Flow for a 20-wide fall: minimum / official-looking | over the width cap | 0.5 / 8 | 0.5 / 8 | 0.5 / 8 | 0.5 / 8 |
-| Dam-site basin cap (15% of the area, tiles) | 345 | 1,380 | 2,450 | 5,530 | 9,830 |
+| Dam-site basin cap (15% of the area, tiles) | 345 | 1,382 | 2,457 | 5,529 | 9,830 |
 | Reservoir, Normal difficulty with Normal reserve: 380 blocks ≈ 190 tiles at 2 deep | fits (8%) | fits | fits | fits | fits |
 | Reservoir, Normal difficulty with Plenty: 759 blocks ≈ 380 tiles | too big (16.5%) | fits | fits | fits | fits |
 | Reservoir, Hard with Scarce: 1,174 blocks ≈ 391 tiles at 3 deep | too big (17%) | fits | fits | fits | fits |
@@ -781,8 +784,9 @@ words such as "giant".
 
 A standalone waterfall needs a footprint of about (W + 4) × 12 tiles, plus an outflow route.
 Claude's example in EDITOR_PLAN.md, a 20-wide fall on 128², fits. Its lip would be about 0.03
-deep at S = 2, or about 0.12 deep at S = 8 (twice the map's Normal flow), so Claude reports
-which one it built.
+deep at S = 2, or about 0.12 deep at S = 8. S = 8 is more than twice the map's Normal flow, so
+it needs the advanced override (decision D6). Claude builds the S = 2 sheet by default and says
+so in its report.
 
 ---
 
@@ -834,8 +838,8 @@ fixtures. Agreement must be within 5% of stored volume.
 - Two things cut the work:
   1. start from the priority-flood fill (basins at spill level), which roughly halves it;
   2. update only an active set: wet tiles and their neighbours, typically 10–25% of the map.
-- With Float64Array state and a flat loop, that is about 65k × 0.2 × 4,000 substeps ≈ 50M cell
-  updates: 0.5–1.5 s in a worker.
+- The first estimate, now superseded by the measurement below: with Float64Array state and a
+  flat loop, about 65k × 0.2 × 4,000 substeps ≈ 50M cell updates, 0.5–1.5 s in a worker.
 - **Audit measurement** (Node 24, a straightforward Float64Array port of `watersim.py`, cold start
   from empty, prototype River Valley terrain):
 
@@ -849,26 +853,29 @@ fixtures. Agreement must be within 5% of stored volume.
   as an index list rather than a full-grid scan.
 - **Budget** (revised from 1.5 s / 0.4 s, which the measurement does not support for a cold
   start):
-  - Target a cold settle of ≤ 3 s at 256² and ≤ 0.6 s at 128², using the exact active list, a
-    priority-flood warm start for basins, and an analytic river pre-fill.
-  - M2 benchmarks this before the budget is final. If 256² stays above 3 s, generation at 256²
-    uses K = 1 (§7.9) and shows staged progress.
+  - Target a canonical settle of ≤ 3 s at 256² and ≤ 0.6 s at 128². It uses the exact active
+    list and starts from the deterministic priority-flood pre-fill for basins plus an analytic
+    river pre-fill, both computed from the document alone (§19.7).
+  - M2 benchmarks this before the budget is final. If 256² stays above 3 s, K = 1 becomes the
+    default at 256² (extending the §7.9 rule) and generation shows staged progress.
   - The editor's interactive preview re-settles from the previous state (EDITOR_PLAN.md §6). The
-    file always gets the canonical cold settle (§2.1).
+    file always gets the canonical settle (§2.1, §19.7).
 
 ---
 
 ## 11. Validation
 
-A generated map is offered for download only when **every** check passes. Check ids match
+A generated map is offered for download only when **every** check passes (apart from the one
+advisory check, `plants.drought`, §11.5). Check ids match
 `prototype/validate.py` and `prototype/playability.py`. Thresholds come from
 `data/calibrated.ts`, generated from `prototype/calibrated.py`.
 
 The same modules serve the editor. Each check has a class, and a profile decides what the class
 does (§19.5):
 - **load**: anything the game would crash on, silently drop, or break at start. That is all of
-  §11.1, and §11.2 except the two design checks below. It blocks download and export in every
-  profile.
+  §11.1, and §11.2 except the two design checks below. It blocks the download in `generate` and
+  the export in `export`. On import it is reported, and the importer fixes what the game itself
+  would fix.
 - **playability**: §11.3–11.4. In the `generate` profile it must pass (the generator retries). In
   the editor's `export` profile it is a warning. The player confirms, and the warning is noted in
   the map description.
@@ -974,7 +981,8 @@ copy three of its shortcuts, because imported maps break them:
 
 A parity test runs both validators on all 19 official maps.
 
-A further check, `plants.drought` (playability class, warning in every profile), is added. It
+A further check, `plants.drought`, is added. It is **advisory**: the one check that never blocks,
+in any profile, including `generate`. It
 flags living berry bushes within 20 tiles of the start whose moisture comes only from water that
 drains during a drought longer than 0.9 × their DaysToDieDry (blueberry: 9 days, and Normal
 droughts reach 9 days).
@@ -1130,7 +1138,7 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 - **Buttons:** Copy link, and "Copy seed + settings" as text for Discord.
 - **Edited maps:** a link encodes the `MapSpec` only, so it reproduces the generated map without
   the player's edits. An edited map is shared as its project file. Putting small edit lists into
-  the link is a later option (§20).
+  the link is a later option (ROADMAP.md, Later).
 
 ### 14.6 Ratings
 
@@ -1190,7 +1198,7 @@ milestone and says where it went. Effort: S under a day, M 1–3 days, L 3–7 d
 | GitHub-account friction for ratings. | Few ratings. | Copy-text fallback; add a Google Form behind the same button if needed. |
 | Map name is the file name. | Players rename files and lose the name. | Also stored in `MapDescription`. |
 | Iron Teeth's district center on the StartingLocation. | Iron Teeth starts fail on some maps. | Same 3×3×5 footprint and entrance per the blueprints; in-game check A covers one Iron Teeth start. |
-| The water sim is slower in JS than §10 first assumed (audit: 6.5–11 s cold at 256² unoptimized). | Slow generation at 256²; a sluggish editor preview. | Exact active list, warm starts and the analytic pre-fill; M2 benchmark gate; K = 1 at 256²; the editor re-settles only what changed (§10). |
+| The water sim is slower in JS than §10 first assumed (audit: 6.5–11 s cold at 256² unoptimized). | Slow generation at 256²; a sluggish editor preview. | Exact active list and the deterministic pre-fill; warm starts for editor previews; M2 benchmark gate; K = 1 at 256²; the editor re-settles only what changed (§10). |
 | Features first is a bigger port than "port the prototype". | M1 takes longer. | It is the price of an editor that edits what the generator made. The prototype's layout already has the structure (river path, bed profile, gorge, basin, falls); M1 only makes it explicit. |
 | Thin waterfall lips may not read as falls in game. | Claude's "giant waterfall" looks like a wet cliff. | In-game check F1; the waterfall builder reports lip depth; flow policy (§9.2). |
 | Imported pre-1.0 maps lack `WaterSimulationMigrator`. | Re-exported maps would run at double strength. | Halve strengths and outflows at import, as the game does on load (§19.6). |
@@ -1246,9 +1254,9 @@ says.
 3. Aquifer + powered drill during drought: no water?
 4. What a map with no StartingLocation does on a new game (for the error message).
 
-**F. Added by the audit** (milestones M5 and M8 in ROADMAP.md)
+**F. Added by the audit** (F2 in roadmap M1, F1 in M5, F3 and F4 in M8)
 1. **Waterfall visibility.** Two 20-wide standalone falls: one at S = 2 (lip about 0.03 deep) and
-   one at S = 8 (about 0.12 deep). Does the thin one read as a waterfall? Does a water wheel below
+   one at S = 8 (about 0.12 deep, set with the advanced flow override). Does the thin one read as a waterfall? Does a water wheel below
    each turn? The answer sets the waterfall flow policy (§9.2).
 2. **Sealed river mouth.** A river entering on the edge with sources across its whole mouth keeps
    its water. The same river with a gap in the source row drains back off the edge.
@@ -1387,7 +1395,9 @@ One set of modules (`core/validate/`) with the calibrated thresholds serves gene
 the editor's live checks and export gating.
 
 - **Check result:** `{id, class, severity, ok, value, limit, message, where?, fix?}`. The classes
-  are `load`, `playability` and `design` (§11).
+  are `load`, `playability` and `design` (§11). A check marked advisory (today only
+  `plants.drought`) is reported in every profile and never blocks. A check marked advisory (today only
+  `plants.drought`) is reported in every profile and never blocks.
 - **Profiles:**
 
   | Profile | load | playability | design |
@@ -1416,7 +1426,8 @@ There is one reader and one writer (`core/format`), verified by the round-trip t
     saved outflow, as the game does on load, then write `IsMigrated:true`. Otherwise the exported
     map would run at double strength.
   - 4-field water tokens: set `OldWaterDepth = WaterDepth`.
-  - More than 23 voxel layers: truncate to 22, as the game does, with a warning.
+  - More than 23 voxel layers: keep layers 0–21 and drop the rest, as the game does, with a
+    warning. The writer then writes the standard 23 layers, with layer 22 empty.
   - Obsolete components (FORMAT.md §7) are dropped. Unknown components, unknown singletons,
     multi-slot water and moisture arrays, and key order are all preserved verbatim.
   - Faction-only plants are flagged, with a one-click removal. They fail to load for the other
@@ -1491,13 +1502,13 @@ list, and implementation adds to it.
 |---|---|---|---|
 | D1 | The shared foundations are defined once, in §19. EDITOR_PLAN.md §11 points to it. | Each contract item must have one definition. | Audit |
 | D2 | Features first: the generator emits parametric features and builds the map from them. | The editor must edit what the generator made. | Audit |
-| D3 | Validation classes and profiles (§19.5). Generated maps pass everything; edited maps are blocked only by load problems. | Resolves "every check passes" (PLAN) against "errors block, warnings warn" (EDITOR_PLAN). | Audit |
+| D3 | Validation classes and profiles (§19.5). Generated maps pass every check except the advisory `plants.drought`; edited maps are blocked only by load problems. | Resolves "every check passes" (PLAN) against "errors block, warnings warn" (EDITOR_PLAN). | Audit |
 | D4 | Terrain stays at 16 or below in generated maps and editor tools. Imported maps with terrain up to 22 are preserved. | 16 is the in-game editor's limit; 17–22 is untested (§18 E1). | Audit default; Kyler may revisit |
 | D5 | Symmetry is a creative tool, not multiplayer support. A map has exactly one start. | Only one StartingLocation survives a load, and 1.1 has no multiplayer starts. | Audit |
-| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default; in-game check F1 |
+| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. An exact flow set in advanced mode may exceed the cap, with a warning. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default; in-game check F1 |
 | D7 | Share links carry the spec only. Edited maps are shared as project files. | An edit list does not fit reliably in a URL. | Audit default |
 | D8 | Claude: build the bridge against the Messages API first. It runs the request suite in Node and powers bring-your-own-key. The artifact edition follows, once the M3 spike confirms workers, file open, downloads and sharing. | EDITOR_PLAN.md §7. | Audit default; Kyler to confirm |
-| D9 | `prototype/calibrated.py` is aligned to §5.6 in M1. | The two tables disagree today (§4). | Audit |
+| D9 | `prototype/calibrated.py` is aligned to §5.2 and §5.6 in M1. | The two tables disagree today (§4). | Audit |
 | D10 | The artifact edition downloads a `.zip` that contains the `.timber`. | `.timber` is not on the artifact downloads allowlist. | Audit default; the spike confirms |
 
 ---

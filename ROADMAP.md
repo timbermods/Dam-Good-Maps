@@ -24,11 +24,11 @@ differently, this file wins.
 
 | # | Milestone | From | In-game check | Effort |
 |---|---|---|---|---|
-| M1 | Shared core and end-to-end slice | PLAN §2–4, §5.1, §7, §11.1–11.2, §14.1, §14.4, §19 · EDITOR §11 | yes (A) | xhigh |
+| M1 | Shared core and end-to-end slice | PLAN §2–4, §5.1, §7, §11.1–11.2, §14.1, §14.4, §19 · EDITOR §11 | yes (A, F2) | xhigh |
 | M2 | Water, playability and validation profiles | PLAN §10, §11.3–11.6, §14.2–14.3, §19.5, §19.7 | yes (B) | xhigh |
 | M3 | Map document and operations engine (headless), delivery spike | EDITOR §3, §7 (spike), E1 · PLAN §19.4, §19.6 | no | xhigh |
 | M4 | Shared 3D view and editor shell | EDITOR §4, §8, E2 · PLAN §14.2 (3D) | no | high |
-| M5 | Set pieces, land and water tools, slopes, fixes | PLAN §7.3, §7.5, §9.1–9.3, §9.9–9.10, §19.3 · EDITOR §3, §4, §6, E3 | yes (C, F1, F2, edited maps) | xhigh |
+| M5 | Set pieces, land and water tools, slopes, fixes | PLAN §7.3, §7.5, §9.1–9.3, §9.5, §9.9–9.10, §19.3 · EDITOR §3, §4, §6, E3 | yes (C, F1, edited maps) | xhigh |
 | M6 | Full settings, sharing, themes I | PLAN §5, §6, §8 (Canyon, Lake Basin), §9.5, §14.5 | yes (short) | high |
 | M7 | Resources, map objects, themes II | PLAN §5.7, §8 (Highlands, Delta, Islands), §9.4, §9.6–9.8 · EDITOR §4, E4 | yes (D) | high |
 | M8 | Water preview and background validation in the editor | EDITOR §6, E5 · PLAN §10, §19.7 | yes (preview vs game, F3, F4) | xhigh |
@@ -82,7 +82,7 @@ shared core, so its maps are editor-ready.
 - 2D preview (terrain, start, entities, feature outlines with hover labels).
 - Download of the `.timber` and of the project file (`.damgoodmaps.json`: spec, features and built
   base).
-- `prototype/calibrated.py` aligned with PLAN §5.6 (§4, decision D9).
+- `prototype/calibrated.py` aligned with PLAN §5.2 and §5.6 (§4, decision D9).
 
 **Acceptance**
 - 50 seeds × 3 sizes pass the Python `validate.py` load checks and `roundtrip_test.py`.
@@ -106,16 +106,16 @@ Teeth start. Add F2: sealed river mouth.
 **Delivers**
 - `sim/*`: the exact single-layer water port with golden vectors from the Python prototype.
   - Exact active list, recomputed per substep.
-  - Priority-flood warm start and analytic river pre-fill.
+  - The deterministic priority-flood and analytic river pre-fill for the canonical settle.
   - The canonical settle for files (PLAN §19.7).
 - Moisture and soil contamination at steady state; pre-filled water, moisture and contamination
   in the file; vegetation placed from simulated moisture.
-- All playability checks (PLAN §11.3–11.4), plus the new `plants.drought` warning.
+- All playability checks (PLAN §11.3–11.4), plus the new advisory `plants.drought` check.
 - The full check-result shape: class, severity, where, fix.
 - The `export` and `import` profiles.
 - The TypeScript validator handles every emitter and blocker by its footprint (PLAN §11.5).
 - The retry loop; the map card with the validation report; water, moisture and reach layers.
-- The water benchmark that fixes the budget in PLAN §10 (target ≤ 3 s cold at 256²).
+- The water benchmark that fixes the budget in PLAN §10 (target ≤ 3 s for the canonical settle at 256²).
 
 **Acceptance**
 - Golden vectors pass, and the game's own save is reproduced within 0.001.
@@ -242,7 +242,7 @@ alike. This takes the set-piece half of old PLAN milestone 3 and all of E3.
   - lip width is measured as defined in PLAN §9.2.
 - Generator batches for River Valley stay ≥ 98% final pass with the new builders.
 
-**In-game check:** C and F1–F2 (PLAN §18). Export three edited maps and play them:
+**In-game check:** C and F1 (PLAN §18). Export three edited maps and play them:
 - a 20-wide standalone waterfall at S = 2 and at S = 8, to judge visibility and whether a water
   wheel turns;
 - a dam site: build the dam and check the basin fills without leaking;
@@ -258,7 +258,8 @@ alike. This takes the set-piece half of old PLAN milestone 3 and all of E3.
 - The full settings panel (PLAN §5), with reference bands and the feasibility guards: drought
   reserve against map size (§5.3), and waterfall and set-piece limits.
 - The URL codec for the full `MapSpec`, and share links (spec only, decision D7).
-- Canyon and Lake Basin as feature planners; badwater with counterplay (§9.5).
+- Canyon and Lake Basin as feature planners; the badwater settings (§5.4), placing the badwater
+  basin builder from M5 (§9.5).
 
 **Acceptance**
 - Each setting moves its measured target in batch runs (a test per setting).

@@ -233,7 +233,7 @@ Claude lets users fine-tune a map in plain language, for example: "add a giant w
 Tool results stay small. The artifact caps a tool result at 32 KB, a tool's input schema at 4 KB and a whole request at 64 KiB. So the map summary Claude starts from is feature-level and at most about 16 KB, and details come through the tools. A text version of the same messages remains as a fallback for a view where tools are unavailable.
 
 **Intent checks.** Every proposal includes the measurable expectations behind the request, e.g. `{feature: waterfall, width: 20 ±3, location: north third}`. After applying the proposal to the preview copy, the app measures the actual result and compares:
-- the width of the falling water in the water preview: lip tiles with water deeper than 0.01 and a drop of at least 1.5;
+- the width of the falling water in the water preview: lip tiles with any water on them (deeper than 0.001) and a drop of at least 1.5;
 - where the feature ended up.
 
 A mismatch goes back to Claude to revise, just like a validation failure.
@@ -336,7 +336,7 @@ Record the results in "Editor decisions".
   - every voxel-format map from the investigation (official, dev and workshop, 0.7 to 1.1) imports, renders and validates;
   - with no edits, each re-exports its normalized world byte for byte (`PLAN.md` §19.6);
   - the two 0.6 heightmap maps import through the `Heights` conversion;
-  - the 90-layer workshop map is truncated to 22 layers with a warning, as the game does;
+  - the 90-layer workshop map keeps layers 0–21 with a warning, as the game does, and exports with the standard 23 layers;
   - a pre-1.0 map without `WaterSimulationMigrator` has its strengths halved at import.
 - **Performance budgets on 256×256** (revised by the audit; adjust in "Editor decisions" if measurements differ, with reasons):
   - tool feedback within one frame (16 ms), with lightweight proxies while dragging;
@@ -382,7 +382,7 @@ Features with parameters and deterministic rasterization; operations; undo and r
 
 **E3. Land and water features, start, slopes, instant validation with fixes.** [M5]
 Draw and reshape landforms, rivers, lakes, and the set pieces (waterfall, dam site, gorge) with handles; move the start with footprint preview; issue list with one-click fixes. Slopes are derived automatically after every terrain change (moved here from E4, so edited maps never strand the colony). The set-piece builders are the shared ones the generator also uses.
-*Accept:* feature property tests pass; drawn rivers always drain and keep their water; the set-piece range tests of `PLAN.md` §9.10 pass. **IN-GAME CHECK:** export three edited maps and play them. The three include a 20-wide standalone waterfall at two flows, a dam site and a gorge (`PLAN.md` §18 C and F1–F2).
+*Accept:* feature property tests pass; drawn rivers always drain and keep their water; the set-piece range tests of `PLAN.md` §9.10 pass. **IN-GAME CHECK:** export three edited maps and play them. The three include a 20-wide standalone waterfall at two flows, a dam site and a gorge (`PLAN.md` §18 C and F1).
 
 **E4. Resources and entities.** [M7]
 Forest, berry and ruin field areas; map objects (mine sites, relics, geothermal fields, thorn belts, weirs, plugs); badwater; advanced mode with individual entity placement and numeric values.
@@ -390,7 +390,7 @@ Forest, berry and ruin field areas; map objects (mine sites, relics, geothermal 
 
 **E5. Water preview and background validation.** [M8]
 Worker-based simulation and full validation; export rules for errors and warnings; the canonical settle on export; roofed water kept from the file.
-*Accept:* validation parity tests pass. **IN-GAME CHECK:** compare the preview with the game on three edited maps, one of them an imported official map with roofed water; record differences in "Editor decisions."
+*Accept:* validation parity tests pass. **IN-GAME CHECK:** compare the preview with the game on three edited maps, one of them an imported official map with roofed water (`PLAN.md` §18 F4), plus a re-exported pre-1.0 workshop map (F3); record differences in "Editor decisions."
 
 **E6. Sculpting, naturalize and symmetry.** [M10]
 Advanced sculpt brushes; the naturalize brush; symmetry across all tools.

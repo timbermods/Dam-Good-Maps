@@ -78,7 +78,8 @@ they are yours to overrule.
    one extra "extract" step. The alternative is to skip the artifact edition.
 3. **D6: waterfall flow policy.**
    - *Default:* a fall takes the flow of its river. A standalone fall adds at most 100% of the
-     map's flow budget; beyond that it becomes a thinner sheet and the report says so.
+     map's flow budget; beyond that it becomes a thinner sheet and the report says so. An exact
+     flow set in advanced mode may exceed the cap, with a warning.
    - The width cap is 40% of the side along the lip.
    - In-game check F1 (a 20-wide fall at 2 and at 8 blocks/s) will show whether thin sheets read
      as waterfalls.
@@ -91,7 +92,8 @@ they are yours to overrule.
    256² co-op save was made with BeaverBuddies), say so, and a mod-aware option can be planned
    later.
 6. **D3: edited maps can be exported with playability warnings.** This was already EDITOR_PLAN's
-   rule and is now explicit. Generated maps still have to pass every check.
+   rule and is now explicit. Generated maps still have to pass every check except the advisory
+   `plants.drought`.
 7. **D9: prototype calibration drift.** `prototype/calibrated.py` keeps badwater at 30 / 20 / 12
    tiles from the start, and PLAN §5.6 at 40 / 30 / 15. It also requires 750 reachable tiles
    where the default setting is 1,300.
@@ -258,9 +260,11 @@ import.** *Major.*
   - `calibrated.py` sets `badwater_min` to 30 / 20 / 12, against PLAN §5.6's 40 / 30 / 15.
   - `START.reach_min_tiles` is 750, the Tight value, against the Normal default of 1,300 in §5.2.
   - PLAN §4 claims a test asserts the tables are equal.
+  - Inside PLAN, §5.5 said Normal 48 and Hard 60 bushes near the start, while §5.6 said 40 and
+    40. They are a generation target and a validation minimum, which PLAN now says.
 - *Change:* PLAN's values are the intent, and `calibrated.py` is aligned in M1. This audit
   changed no code. Decision D9.
-- *Applied:* partly: in the plan (PLAN §4, §20), not in the code.
+- *Applied:* partly: in the plan (PLAN §4, §5.5, §20), not in the code.
 
 **F1.13 The prototype's playability module mishandles imported maps.** *Minor.*
 - *Evidence:* `prototype/playability.py`:
@@ -359,7 +363,7 @@ and F1.8.
 | Waterfall width cap (40% of the side; hydraulic limit about side − 8) | 19 | 38 | 51 | 76 | 102 |
 | The map's whole Normal flow (blocks/s) | 1.2 | 3.0 | 3.6 | 4.4 | 7.2 |
 | Flow for a 20-wide fall: minimum / official-looking | over the cap | 0.5 / 8 | 0.5 / 8 | 0.5 / 8 | 0.5 / 8 |
-| Dam-site basin cap (15% of the area) | 345 | 1,380 | 2,450 | 5,530 | 9,830 |
+| Dam-site basin cap (15% of the area) | 345 | 1,382 | 2,457 | 5,529 | 9,830 |
 | Reservoir for Normal with Plenty (759 blocks ≈ 380 tiles at 2 deep) | no (16.5%) | yes | yes | yes | yes |
 | Reservoir for Hard with the Normal reserve (1,761 blocks ≈ 587 tiles at 3 deep) | no (25%) | yes (6.4%) | yes | yes | yes |
 | Reservoir for Hard with Plenty (3,522 blocks ≈ 1,174 tiles) | no | yes (12.7%) | yes | yes | yes |
@@ -381,8 +385,8 @@ and F1.8.
   - With a header pool one level below the lip, the whole lip carried water: 20 of 20 at 0.5, and
     200 of 200 on a 256-wide map at 2.
   - The lip is about 0.3·S/W deep: 0.089 at S = 6, W = 20.
-  - Official falls (appendix C) are 2–8 tiles wide at most per map (10 counting thin sheets), with lips 0.12–0.29
-    deep. Only Craters (15, a thin sheet) and Pressure (22) are wider.
+  - Official falls (appendix C) are 2–8 tiles wide at most per map, with lips 0.12–0.29 deep. Counting sheets
+    under 0.1 deep, Canyon reaches 10 and Craters 15, and Pressure has 22.
 - *EDITOR assumed:* "a 20-block-wide waterfall needs far more flow" (true, but unquantified), and
   the fall builds "the channel and sources above it" (without a pool, the fall doesn't spread).
 - *Change:*
@@ -536,8 +540,8 @@ limits.** *Critical.*
   1.0 s and 0.7 s. PLAN §10 budgeted ≤ 1.5 s at 256² and ≤ 0.4 s at 128². EDITOR budgeted "water
   preview under 2 s".
 - *Change:*
-  - cold-settle targets of ≤ 3 s at 256² and ≤ 0.6 s at 128², using an exact active list, a
-    priority-flood warm start and an analytic river pre-fill;
+  - canonical-settle targets of ≤ 3 s at 256² and ≤ 0.6 s at 128², using an exact active list
+    and a deterministic priority-flood and river pre-fill computed from the document alone;
   - an M2 benchmark gate, with K = 1 at 256² if needed;
   - the editor re-settles from its previous state, with ≤ 2 s for a local edit.
 - *Applied:* yes. PLAN §10 and §17; EDITOR §6 and §9; ROADMAP M2 and M8.
@@ -615,7 +619,8 @@ limits.** *Critical.*
 - *Evidence:* sources stop in drought. Blueberries die after 9 × U(0.9, 1.1) days on dry soil,
   and Normal droughts last up to 9 days (water notes Q4 and Q7). `plants.survive` checks only the
   steady state.
-- *Change:* a new `plants.drought` warning for the berries near the start.
+- *Change:* a new `plants.drought` check for the berries near the start. It is advisory: it
+  never blocks, in any profile.
 - *Applied:* yes. PLAN §11.5; EDITOR §6.
 
 **F6.4 Terrain support after sculpting next to preserved overhangs.** *Minor.*
@@ -727,7 +732,7 @@ Largest connected lip, in tiles, then the median lip depth, measured on wet tile
 | Map | Largest lip | Median lip depth |
 |---|---|---|
 | Beaverome | 8 | 0.14 |
-| Canyon | 6 | 0.14 |
+| Canyon | 6 (10 counting sheets under 0.1 deep) | 0.14 |
 | Cliffside | 4 | 0.21 |
 | Craters | 2 (15 counting sheets under 0.1 deep) | 0.18 |
 | Diorama | 3 | 0.29 |
