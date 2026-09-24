@@ -77,9 +77,9 @@ A fully client-side static site. There is no server; everything runs in the play
 | 2D preview | Canvas 2D with an `ImageData` buffer | 256² tiles is 65k pixels: one `putImageData` per layer change, scaled up with smoothing off. No library needed. |
 | 3D preview | three.js, lazy-loaded chunk | Only downloaded when the player opens 3D. Terrain columns are meshed as top faces plus side walls with greedy merging (about 40k quads on a 256² map); trees are instanced. |
 | Zip | fflate `zipSync` with a fixed `mtime` | Small, fast and synchronous in the worker. A fixed mtime makes the zip byte-reproducible. |
-| JPEG thumbnail | `jpeg-js` encoder in the worker | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
+| JPEG thumbnail | `jpeg-js` encoder in the worker (0.4.4, vendored as an ES module that returns a `Uint8Array`, D20) | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
 | Tests | Vitest (unit, golden files), Playwright (end-to-end and cross-browser determinism), plus the Python prototype as an oracle in CI | See §15. |
-| Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/Dam-Good-Maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
+| Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/dam-good-maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
 | Second build target | A single-file build for publishing as a Claude artifact (EDITOR_PLAN.md §7) | The same code with platform adapters swapped (§19.9). Keep it possible from the start: data is bundled, not fetched at runtime; workers can be inlined; libraries come from npm, since the artifact can load scripts only from cdnjs/jsDelivr/unpkg. |
 | Visual design | The org's Impeccable site flow and the timbermods design system (walnut lodge palette, `DESIGN.md`) | Keeps it part of the family; done as its own milestone once the tool works. |
 
@@ -97,8 +97,10 @@ Node:
   `Math.round`, `Math.abs`, `Math.min` and `Math.max`, which IEEE-754 makes exact across engines.
   - `Math.sin/cos/exp/log/pow/atan2` are implementation-defined in precision, so they are not used
     on output paths.
-  - Meanders use a polynomial sine (`core/math/sine.ts`: a 7th-order minimax polynomial on a
-    range-reduced argument).
+  - Meanders use a polynomial sine (`core/math/detmath.ts`: an odd polynomial through x¹⁷ on an
+    argument reduced to [−π/2, π/2], error below 1e-13). `exp` and `ln`, which the log-normal
+    draws and the size-aware densities need, are built the same way from basic operations
+    (D15).
   - Noise uses integer-hash value noise with a smoothstep fade.
 - **Iteration order.** Always over typed arrays in index order. Priority queues break ties by
   index. No iteration over `Object` keys on output paths.
@@ -136,7 +138,7 @@ and the preview switches to the best one with a short notice. The map card says 
 A **GitHub issue form, pre-filled from the page**.
 
 - "Rate this map" opens
-  `github.com/timbermods/Dam-Good-Maps/issues/new?template=map-rating.yml&…` in a new tab. The seed,
+  `github.com/timbermods/dam-good-maps/issues/new?template=map-rating.yml&…` in a new tab. The seed,
   settings, share URL, generator version and score are already filled in.
 - The player picks one of *fun / too easy / boring terrain / frustrating / broken* and can add a
   comment.
@@ -164,44 +166,54 @@ same button without touching the generator.
 ## 3. Project structure
 
 ```
-Dam-Good-Maps/
+dam-good-maps/
 ├─ PLAN.md  FORMAT.md  README.md  LICENSE
 ├─ package.json  vite.config.ts  tsconfig.json  vitest.config.ts  playwright.config.ts
 ├─ index.html
 ├─ src/
 │  ├─ core/                        pure TS, no DOM: runs in worker, Node and tests
-│  │  ├─ math/        rng.ts (splitmix32, sfc32, streams)  noise.ts  sine.ts  grid.ts (typed 2-D helpers)
-│  │  ├─ format/      timber.ts (read/write zip)  world.ts (world.json encode/decode, C# float format)
+│  │  ├─ math/        rng.ts (splitmix32, sfc32, streams)  hash.ts (murmur3, ids)  noise.ts  detmath.ts (sin, exp, ln)
+│  │  │               grid.ts (typed 2-D helpers, chamfer distance, level regions, heap)
+│  │  ├─ format/      timber.ts (read/write zip)  world.ts (world.json encode/decode)  json.ts (C# float format)
 │  │  │               entities.ts (templates, component builders)  footprints.ts (generated from notes/footprints.json)
-│  │  │               thumbnail.ts (render + jpeg-js)
-│  │  ├─ sim/         water.ts (exact single-layer port)  moisture.ts  contamination.ts  drought.ts
-│  │  ├─ analysis/    distance.ts  regions.ts (level regions, walk regions with slopes)  basins.ts (priority flood)
-│  │  │               damsites.ts  features.ts (rivers, falls, islands, plateaus)
+│  │  │               normalize.ts (import normalization, §19.6)  base64.ts
+│  │  │               vendor/jpeg-encoder.js (jpeg-js encoder)
+│  │  ├─ render/      shade.ts (top-down colours, the thumbnail)
+│  │  ├─ sim/         water.ts (exact single-layer port, active list, settle test)  prefill.ts (pre-fill, canonical settle)
+│  │  │               model.ts (emitters and obstacles by footprint)  moisture.ts  contamination.ts  drought.ts
+│  │  ├─ analysis/    regions.ts (walk regions with slopes, components)  damsites.ts
+│  │  │               later: features.ts (rivers, falls, islands, plateaus)
 │  │  ├─ spec/        mapspec.schema.json  mapspec.ts (MapSpec, defaults, presets, URL codec, merge patch)  §19.1
-│  │  ├─ features/    schema.ts (every feature kind and its params, §19.2)  ids.ts (§19.4)
+│  │  │               schema.ts (the eval-free schema checker, D16)  mergepatch.ts (RFC 7396)
+│  │  ├─ features/    schema.ts (every feature kind and its params, §19.2)  features.schema.json  ids.ts (§19.4)
+│  │  │               geometry.ts (river paths, bed profiles, polygons)  slopes.ts (derived slopes, §7.5)
 │  │  │               raster/*.ts (one rasterizer per kind)  setpieces/*.ts (shared builders, §19.3)
-│  │  │               build.ts (the one build pipeline, §19.8)
-│  │  ├─ doc/         document.ts (MapDocument)  ops.ts (edit operations, used by the editor)
-│  │  ├─ gen/         pipeline.ts (spec → features, then build)  layout/*.ts (one per archetype)
-│  │  │               slopes.ts  vegetation.ts  ruins.ts  extras.ts
-│  │  ├─ validate/    checks.ts (every check: id, class, rule, threshold)  placement.ts (load-time emulation)
-│  │  │               profiles.ts (generate / export / import, §19.5)  report.ts
+│  │  │               build.ts (the one build pipeline, §19.8, with dirty-region rebuilds)  target.ts  edits.ts (entity and slope edits)
+│  │  ├─ doc/         document.ts (MapDocument, project files)  base.ts (the stored map)  ops.ts (edit operations)
+│  │  │               session.ts (apply, undo and redo, regenerate, export: what the editor runs)
+│  │  ├─ gen/         generate.ts (spec → features, then build, retries)  riverValley.ts (one planner per archetype)
+│  │  │               calibrated.ts (size-aware densities)  blobs.ts (ruin and grove shapes)  pack.ts (file, name, thumbnail)
+│  │  ├─ validate/    checks.ts (load and design classes, placement emulation, validateMap)  playability.ts
+│  │  │               report.ts (result shape, severity per profile, blocking, groups; §19.5)
 │  │  ├─ score/       score.ts  naming.ts
-│  │  └─ data/        calibration.json (subset used at runtime)  calibrated.ts  footprints.json
+│  │  └─ data/        footprints.json (the calibration subset lives in gen/calibrated.ts, tested against calibrated.py)
 │  ├─ platform/       adapters: files (save/open), storage, workers, claude (§19.9)
-│  ├─ render3d/       the one 3D renderer, used by the generator preview and the editor
-│  ├─ worker/         generator.worker.ts (Comlink API: generate, build, pack, cancel)
-│  ├─ ui/             App.tsx  SettingsPanel.tsx  Preview2D.tsx  Preview3D.tsx (lazy)  MapCard.tsx  Layers.tsx
+│  ├─ render3d/       the one 3D renderer, used by the generator preview and the editor: model.ts (the map view)
+│  │                  mesh.ts (32×32 chunks, voxel columns)  waterMesh.ts  entities3d.ts (instancing)  pick.ts
+│  │                  materials.ts  renderer.ts (camera, overlays, the orbit benchmark)
+│  ├─ worker/         generator.worker.ts (Comlink API: generate, and the editor's document)  api.ts  session.ts
+│  ├─ ui/             App.tsx  SettingsPanel.tsx  Preview2D.tsx  Preview3D.tsx (lazy)  View3D.tsx  MapCard.tsx  Layers.tsx
 │  │                  Download.tsx  Share.tsx  Rate.tsx  InstallHelp.tsx  state.ts (signals)
-│  ├─ editor/         the editor UI (EDITOR_PLAN.md §8)
+│  ├─ editor/         the editor UI (EDITOR_PLAN.md §8): Editor.tsx (lazy)  panels.tsx  features.ts  tools.ts
 │  └─ styles/
-├─ tools/            batch.ts (Node: N seeds × themes → pass rates, score distribution)  golden.ts
-│                    ratings.ts (issue export)  export-fixtures.py (Python → golden vectors)
-├─ tests/            unit/  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
+├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  bench3d.ts  ingame-files.ts  export-footprints.ts
+│                    batch.ts (Node: N seeds → first-attempt and final pass rates)  golden.ts
+│                    ratings.ts (issue export)  export-fixtures.py (Python → tests/golden/water.json.gz)
+├─ tests/            unit/  contract/ (§15)  golden/ (fixed seeds → sha256 + key metrics)  e2e/ (Playwright)
 ├─ prototype/        Python reference implementation and test oracle (kept, see §4)
 ├─ investigation/    report, calibration, notes, scripts (raw/ and decompiled/ stay local)
-├─ out/              prototype test map and batch results
-└─ .github/          workflows/ci.yml (lint, unit, golden, oracle, e2e) · deploy.yml (Pages, /v/<version>/)
+├─ out/              prototype test map and batch results; m1/ and later: the files for the in-game checks
+└─ .github/          workflows/ci.yml (typecheck, unit, contract, oracle, bench, e2e) · deploy.yml (Pages, /v/<version>/)
                      ISSUE_TEMPLATE/map-rating.yml
 ```
 
@@ -215,7 +227,7 @@ oracle** the TypeScript port is tested against.
 | Python (prototype/) | TypeScript (src/core/) | How it is kept in step |
 |---|---|---|
 | `tbmap.py` writer and reader | `format/*` | CI generates maps with the Node CLI, and the Python `roundtrip_test.py` and `validate.py` must pass on them. |
-| `watersim.py` (water, moisture, contamination) | `sim/*` | `tools/export-fixtures.py` writes golden vectors: terrain, sources and the state after 50/200/975 ticks, plus steady-state moisture, on a dozen small terrains and the game's own save. TS must match within 1e-6 (depth) and exactly on the moist/dry mask. |
+| `watersim.py` (water, moisture, contamination) | `sim/*` | `tools/export-fixtures.py` writes golden vectors: terrain, sources and the state after 50/200/975 ticks, plus steady-state moisture, soil contamination, the pre-fill, the canonical settle and the drought storage, on a dozen small terrains. TS must match within 1e-6 (depth) and exactly on the moist/dry mask; it matches bit for bit. The game's own save is a local-only test (it is not ours to commit): 975 ticks from empty reproduce it within 0.001. |
 | `analysis.py` (distances, regions, basins, dam sites) | `analysis/*` | The same fixtures carry expected region sizes and dam-site volumes. |
 | `validate.py`, `playability.py` | `validate/*` | Check ids are identical. The oracle job runs both validators on the same 50 maps; their verdicts must agree check by check. |
 | `generate.py`, `terrain.py`, `ruins.py`, `vegetation.py` | `gen/*` | Ported as the River Valley archetype for roadmap milestone M1, as feature planners (§7, §19). Not byte-compatible (numpy RNG differs from sfc32); compared through their calibration metrics instead. |
@@ -251,25 +263,25 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Relief | Gentle 0 – 100 Dramatic | 55 | Height range p5–p95 = 7 + 0.08·relief levels (7–15; official 9–15, median 13). Cliff-tile share 0.06 + 0.0018·relief (0.06–0.24; official 0.07–0.24, median 0.16). |
 | Highest terrain | 10 – 16 | 16 | Terrain never exceeds this. 16 is the map editor's limit and every official map's top. Heights 17–22 are allowed by the game but are left out: the editor cannot edit them (open question, §17). |
 | Terracing | Smooth 0 – 100 Distinct | 50 | The share of height steps that are one level: 0.86 − 0.0059·terracing (0.86–0.27; official median 0.62). Higher terracing gives wider flat benches and more cliffs. |
-| Buildable land | Tight, Normal, Generous | Normal | Land walkable from the start through slopes of at least 750 / 1,300 / 2,500 tiles (official min 765, median 1,296, p90 4,523), and flat share 0.40 / 0.52 / 0.60. |
+| Buildable land | Tight, Normal, Generous | Normal | Land walkable from the start through slopes of at least 750 / 1,300 / 2,500 tiles (official min 765, median 1,296, p90 4,523), and flat share 0.40 / 0.52 / 0.60. As built (M6, D59): the valley floor's width, how jagged the terrace edges are, and where the terraces' cliffs go (Tight: at the valley floor's edge; Generous: above every one-level rise). |
 
 ### 5.3 Water
 
 | Setting | Range | Default | Maps to |
 |---|---|---|---|
-| Rivers | 0 – 3 | theme | Number of river systems, each with 1–2 entry points on the map edge. 0 means only lakes, springs and seeps. |
+| Rivers | 0 – 3 | theme | Number of rivers entering on the map edge. 0 means only lakes, springs and seeps. As built (M6, D60): in River Valley and Canyon the first is the main river and the others are tributaries from the north or south edge, each bringing a quarter of the main river's flow; in Lake Basin they feed the lake. With 0 a spring feeds the main river (Lake Basin: the lake). |
 | River style | Straight, Meandering, Braided | Meandering | Straight: meander amplitude ≤ 0.05·H. Meandering: 0.12–0.2·H with 1–3 bends per 100 tiles. Braided: the channel splits into 2–4 parallel channels around islands over a wide flat stretch (Delta). |
 | River flow | Trickle, Normal, Strong, Lush | Normal | Total clean source strength: 0.6× / 1× / 2× / 4× the size-aware official median (medium 2.2, large 1.2, max 1.1 per 10k tiles). Lush is about the workshop median. Sources are mostly 0.5 each, in rows of 3–8 across a channel, as in official maps. This controls river size and how fast reservoirs refill, **not** drought survival. |
 | Drought reserve | Scarce, Normal, Plenty | Normal | Minimum stored water near the start, as a multiple of the colony's drought need (§11.4): 1× / 1.5× / 3×. Also sets the number of dam sites and natural basins the layout aims for. This setting is what makes droughts forgiving. **Not every combination fits a small map** (§9.1, §9.10). Reservoirs are 2 deep on Easy and Normal and 3 deep on Hard, so Hard with the Normal reserve needs about 590 tiles and Hard with Plenty about 1,170. The panel disables combinations whose reservoir would exceed 15% of the map area and says why. The smallest sides that fit are: Normal with Plenty 51, Hard with Scarce 52, Hard with Normal 63, Hard with Plenty 89. Every size preset (96² and up) fits every combination, so the guard only affects custom sizes. |
-| Lakes and basins | None, Few, Some, Many | Some | Natural basins of 20+ tiles that hold water without a dam: 0 / 0.5× / 1× / 2× the official median for the size (large maps have about 15). |
+| Lakes and basins | None, Few, Some, Many | Some | Natural basins of 20+ tiles that hold water without a dam: 0 / 0.5× / 1× / 2× the official median for the size (small 1.5, medium 4, large 15.5, max 15; `basins_ge20` in the calibration table). As built (M6, D61): riverside ponds, dug two levels below a river's bed beside it and joined to it by a short cut, so the river keeps them full and they keep their water through a drought. |
 | Waterfalls | Off, Few, Many | Few | Number of bed drops of 2+ levels: 0 / 1–2 / 3–6. Drop height, width and flow ranges in §9.2. Generated falls sit on rivers and carry that river's flow, so they are 1–9 tiles wide, like official falls. Wider "landmark" falls are a set piece the player or Claude adds. |
 
 ### 5.4 Hazards
 
 | Setting | Range | Default | Maps to |
 |---|---|---|---|
-| Badwater | Off, Low, Normal, High | Normal | Badwater-to-clean strength ratio 0 / 0.3 / 0.65 / 1.2 (official 0.18–2.2, median 0.65). Sources are BadwaterSource 3×3 at strength 1–3, inland on mid-height ground (as in official maps: none are on the edge). |
-| Badwater distance | 12 – 60 | 30 (Easy 40, Hard 15) | Minimum distance from the start to badwater or contaminated soil (official p10 12, median 30). |
+| Badwater | Off, Low, Normal, High | Normal | Badwater-to-clean strength ratio 0 / 0.3 / 0.65 / 1.2 (official 0.18–2.2, median 0.65). Sources are BadwaterSource 3×3 at strength 1–3, inland on mid-height ground (as in official maps: none are on the edge). As built (M6, D62): the total is split into basins of 1–3 each (§9.5), so High is higher than Normal on every map size. |
+| Badwater distance | 12 – 60 | 30 (Easy 40, Hard 15) | Minimum distance from the start to badwater or contaminated soil (official p10 12, median 30). The basins are placed about 14 tiles beyond it (D62). The start rule "No badwater within" (§5.6) is the same value: the panel sets both, and validation uses the larger. |
 | Thorn belts | Off, Some | Some (Highlands, River Valley) | 1–3 belts of 13–40 thorns across corridors or plateaus, never within 20 tiles of the start. |
 | Unstable cores | Off, On | Off | Advanced. 1–4 cores, 40+ tiles from the start, first countdown at cycle 5+, radius 2–3, never within radius + 2 of each other or of a dam site (no chain reactions). |
 
@@ -417,14 +429,15 @@ re-rolled from the `layout` stream, which is much cheaper than failing validatio
 ### 7.3 Set pieces
 
 Each set piece (§9) is a shared builder (§19.3), the same one the editor's tools and Claude use.
-`plan(params, context, rng)` resolves its anchor and footprint and clamps its parameters to the
+`plan(request, context)` resolves its anchor and footprint and clamps its parameters to the
 achievable ranges, reporting every adjustment. `rasterize(plan, target)` writes into:
-- a height **constraint field**: exact levels, minimum and maximum levels per tile;
+- the terrain: exact levels for its body, and levels it only raises (walls, rims, banks);
 - a **protected mask**: tiles later stages may not change;
-- its water sources and the list of entities it clears.
+- its water sources, its own slopes (stairs, chains) and the tiles it keeps clear of resources.
 
-In generation the context is the macro layout; in the editor it is the current map. The resolved
-parameters are stored in the set-piece feature, so rebuilding never re-plans it. For example, the
+In generation the context is the macro layout, and a piece that needs terrain (River Valley's
+badwater marsh) is planned on the layout's built ground; in the editor it is the current map. The
+resolved parameters are stored in the set-piece feature, so rebuilding never re-plans it (D47). For example, the
 dam site protects its abutments and basin floor. Set pieces are planned in order of priority
 (start, dam site, waterfalls, second district, ruins-on-plateau, badwater basin), so the important
 ones get space first. Planning priority only decides who gets space. Build order is §19.8.
@@ -444,7 +457,11 @@ ones get space first. Planning priority only decides who gets space. Build order
    stay flat.
 4. **Relief fit.** Rescale band rises until the p5–p95 height range and the cliff share meet the
    relief targets (±1 level). Clip to the highest-terrain setting (at most 16). Layer 22 stays
-   empty.
+   empty. As built (M6, D59): the lowest reach's floodplain is set `range` below the highest
+   terrain, the bands climb from the basin's floodplain to the top 80% of the way to the map edge
+   (so they are narrower than 9–16 tiles when the relief asks for a lot), and the built terrain is
+   measured and shifted up or down at most twice until its range is within one level of the
+   target. The cliff share follows the band rises; it is not fitted.
 5. **Flat pads.** Level the start bench (radius 5–8) and every set-piece footprint that needs flat
    ground: ruin fields, mine sites, geothermal fields, badwater source 3×3s.
 6. **Integrity pass.**
@@ -461,18 +478,31 @@ or ramps anyway.
 1. Label same-level regions (4-connected).
 2. Build the region graph: an edge exists wherever two regions differ by exactly one level along
    a boundary.
-3. From the start's region, grow a spanning tree over regions within 40 tiles of the start, plus
-   every region that holds the pumpable water edge, the near-start groves and berries, and the
-   second district. For each tree edge, place one Slope on the boundary pair nearest the start.
+3. From the start's region, grow a spanning tree over the regions whose boundary lies within 40
+   tiles of the start (Chebyshev). The pumpable water edge and the near-start groves and berries
+   lie inside it (within 20 tiles; the playability checks confirm); the second district joins it
+   when M7 plans one. For each tree edge, place one Slope on the boundary pair nearest the start.
    - The low tile must be free, and the tile behind its low side must be at the same level.
    - Orientation comes from the high side: Cw0 if the high side is south (y−1), Cw90 west,
      Cw180 north, Cw270 east.
-   - Long boundaries (60+ pairs) get a second slope at least 12 tiles from the first.
-4. Beyond 40 tiles, add one slope per region of 400+ tiles toward its lowest neighbour.
+   - Long boundaries (60+ pairs) get a second slope. Every slope stands at least 12 tiles
+     (Manhattan) from the others.
+   - Targets are joined wherever they are: the regions of a landform with gentle or terraced edges
+     (its steps are "joined by slopes", §19.2) and, on an edited import, the ground the edits
+     changed.
+   - Slopes that already stand join their regions without another: a set piece's own stairs and
+     chains, and an imported map's own slopes.
+4. Beyond 40 tiles, add one slope per region of 400+ tiles toward its lowest neighbour (the next
+   lowest when no slope fits there), nearest the start first.
 5. Leave 1–2 plateaus deliberately unconnected when a set piece asks for it: the "ruins on a
-   plateau need stairs" payoff.
+   plateau need stairs" payoff (the obstacle set piece, M7).
 6. Target density is 2–6 slopes per 10k tiles on large maps and up to 20 on small ones (official:
-   max-size maps 1.9, small 18).
+   max-size maps 1.9, small 18). Measured on River Valley (seeds 1–10): 13–16 per 10k at 96²,
+   7–10 at 128², 4–5 at 192² and 3–4 at 256² (D52).
+
+Slopes are derived again after every terrain change, in generation and in the editor; the player's
+pinned and removed slopes apply on top. An imported map keeps its own slopes, and only the ground its
+edits changed gets new ones (D52).
 
 ### 7.6 Water
 
@@ -486,7 +516,8 @@ or ramps anyway.
    - Springs are inland sources on highland plateaus feeding cascades.
    - Badwater sources are 3×3 at 1.0–3.0 strength, placed per §9.5.
    - Total strength follows the flow setting.
-2. Run the exact simulation (§10) to steady state from a priority-flood initial guess.
+2. Run the canonical settle (§10, §19.7): the exact simulation to steady state from the
+   deterministic pre-fill.
 3. Compute moisture and soil contamination at steady state.
 4. If the water share exceeds the theme target by 50%, or the settled rivers are not where the
    layout put them (overlap with the planned channel mask below 0.8), adjust strength once and
@@ -526,8 +557,9 @@ the first attempt and 100% within 6.
 ### 7.9 Candidates and score
 
 Build K = 3 valid candidates (candidate index 0, 1, 2 in the seed streams) and keep the highest
-score (§12). K is 1 on 256² when the first build took over 6 s, and by default at 256² if the M2 benchmark
-leaves the settle above 3 s (§10); the card then says "single candidate".
+score (§12). K is 1 on 256² when the first build took over 6 s; the card then says "single
+candidate". The M2 benchmark left the 256² settle well under 3 s (§10, D33), so K = 3 stays the
+default at every size.
 
 ### 7.10 Output
 
@@ -568,7 +600,24 @@ variant's must-have set pieces are listed in brackets.
 | **Islands** | A sea or lake filling 45–55% of the map, held by a rim with 1–2 outlets. Inflow rivers come from the edges. 6–25 islands of 100+ tiles, with the start on the largest island or shore. Islands without slopes are reachable over shallow water (water never blocks walking). | *Archipelago* [islands of varied heights, relics on far islands]; *Atoll* [ring island around a lagoon, dam site at the lagoon mouth] |
 
 Layout parameters per archetype live in `gen/layout/<name>.ts` as a typed table, so they can be
-tuned from rating data without code changes.
+tuned from rating data without code changes. As built (M6): River Valley and Canyon share one
+planner with a typed table (`gen/valley.ts`, D59, D63), Lake Basin has its own (`gen/lakeBasin.ts`,
+D64). Each theme builds one premise until names and premises (M9): River Valley's gorge-dammed
+basin, Canyon's Narrows, Lake Basin's Rising lake. River Valley and Canyon still flow west to east,
+and Lake Basin's outlet runs east (D67).
+
+**Canyon as built (M6, D63):** a canyon floor 18–25 tiles wide; walls 4–6 levels by the relief,
+then one-level rim terraces up to the plateau; the dam site in a narrows (a gorge 3–5 wide round
+the ridge); falls on the river by the Waterfalls setting; the start on a bench on the floor, with a
+flight of one-level steps and slopes up the wall beside it (the terraced cliffs builder's stair,
+§9.3). Tributaries run in side canyons; dry side canyons wait.
+
+**Lake Basin as built (M6, D64):** a central lake of 18–24% of a 128² map (a smaller share on
+larger maps), its water at the outlet's sill, 2 deep (3 with a Plenty reserve, 4 on Hard); rings of
+terraces from the shore up to the highest terrain at the map's edges; inflows from the west, north
+and south edges falling to the lake's level, one on each side at most; the outlet to the east edge
+through a narrow gap with the dam site (crest 1, so the shore bench stays dry when the lake rises);
+the start on the shore bench one level above the lake, away from the rivers' mouths.
 
 ---
 
@@ -613,14 +662,18 @@ what the map allows are reduced to the nearest achievable value, and the reducti
 
 ### 9.2 Waterfall and cascade (power spot)
 
-- **What it builds:** a bed drop of D levels over one tile, with the channel narrowing to 1–3 tiles
-  for 3–6 tiles above the drop. Water wheels want fast, narrow flow.
+- **What it builds:** a bed drop of D levels over one tile. Water wheels want fast, narrow flow; an
+  on-river fall keeps its river's width for now (the 1–3-tile narrows above the drop wait for
+  in-game check C2, D48), and a standalone fall's outflow channel is 1, 3 or 5 tiles wide.
 - **Two modes (one builder):**
   - *On a river* (what the generator makes). It splits the river's bed profile at the lip, and the
     river's own flow goes over it.
   - *Standalone* (a landmark added in the editor or by Claude). It builds its own cliff, a
     **header pool** one level below the lip, inland springs feeding the pool, the plunge pool, and
-    an outflow to an edge or an existing river.
+    an outflow to an edge or an existing river. As built (D48): the header pool is 3 rows deep,
+    the plunge pool 4 rows at the ground in front of the lip (lowered so the lip stays at 15 or
+    below), the springs are 0.5 each along the pool's back row, and the outflow channel is routed
+    to the nearest map edge, river or lake and carved with a bed that never rises.
 - **Achievable drops** (measured with the prototype water port in the audit, §9.10). The drop does
   not depend on map size.
   - The hard maximum with editor-safe terrain is **15 levels**. The lip is a bed at 15 with banks
@@ -672,6 +725,9 @@ what the map allows are reduced to the nearest achievable value, and the reducti
   slope chain climbs it at one end.
 - Official maps have 18 plateaus per map (small 3, max 24). This supplies wide, flat benches at
   several levels for tall builds with water close below.
+- **Stair (M6, D63):** with `stair: true` the builder makes a narrow flight: 2–8 steps 1–5 tiles
+  deep and 1–12 wide, a slope on each (its chain starts on the ground in front); steps one tile
+  deep make a chain of slopes. Canyon puts one up its wall beside the start.
 
 ### 9.4 Obstacle with payoff
 
@@ -700,6 +756,19 @@ what the map allows are reduced to the nearest achievable value, and the reducti
     "containable" proof.
 - **Badtide:** every clean source emits badwater during badtide, so only stored water stays clean.
   The map card says so when the drought reserve is Scarce.
+- **As built (M5, D51):** the builder's `basin` mode makes a 7×7 floor one level below the ground,
+  a rim two levels above the floor, one outlet 1 or 3 tiles wide (by strength) with its sill one
+  above the floor, and a channel to a river or a map edge that keeps 12 tiles beyond the start's
+  zone. A source never stops (notes Q1), so a levee on the outlet holds the badwater only while the
+  basin fills: the "containable" proof cannot pass at steady state. `water.badwater_contained`
+  therefore stays not applicable until M6 places basins from the badwater settings and defines
+  the rule (decisions-pending #11). River Valley keeps its marsh (D24), now planned by the builder.
+- **As built (M6, D57, D62):** every theme places its badwater in basins from the settings: the
+  total strength in basins of 1–3 each, about the badwater distance + 14 tiles from the start, each
+  outlet joining the main river below the first step downstream of the start's reach and beyond
+  where the river keeps its distance (Lake Basin: below the outlet's fall, or a map edge), and 2
+  tiles clear of other rivers. River Valley's marsh is replaced. The containment rule is §11.3's
+  `water.badwater_contained`: with the outlet blocked, the basin holds its water below its rim.
 
 ### 9.6 Plugged spillway
 
@@ -743,8 +812,9 @@ premise "a second valley beyond the ridge".
 
 ### 9.9 Gorge
 
-The editor and Claude treat the gorge as its own set piece, so it gets its own builder. The dam
-site (§9.1) and the Canyon archetype use it for their narrows.
+The editor and Claude treat the gorge as its own set piece, so it gets its own builder. The Canyon
+archetype uses it for its narrows (M6). The dam site keeps its own ridge (D25) for its narrows, and
+a dam site can be placed inside a gorge (D49).
 
 - **What it builds:** a channel 3–9 tiles wide between walls at least 2 levels above the bed,
   6–40 tiles long, with the river's bed profile running through it.
@@ -752,7 +822,13 @@ site (§9.1) and the Canyon archetype use it for their narrows.
   - Wall height is 2 up to 16 − bed.
   - A 3–9 wide gorge is also a dam site with a high volume per dam tile.
   - Beavers cannot climb the walls. When the gorge floor is part of the colony's route, the
-    builder cuts a stair notch: a 1-wide staircase of 1-level steps with a slope chain (§7.5).
+    builder cuts a stair notch: a 1-wide staircase of 1-level steps with a slope chain (§7.5). As
+    built (D49): a two-tile landing beside the water at the floodplain level, then steps up to the
+    ground behind the wall, square to the river along the nearest map axis, each with a chained
+    slope; where that ground is no higher than the floodplain (a wide valley), the notch is a plain
+    cut through the wall.
+  - A gorge sits on a river and narrows it to its width along its length (the river's rasterizer
+    reads the narrows). A gorge without a river is a canyon landform.
   - Rims 3 or more levels above the ceiled water surface get no moisture from the gorge water
     (6 tiles of reach are lost per level). A gorge therefore has dry rims unless another water body
     feeds them.
@@ -800,13 +876,35 @@ so in its report.
 - Flow: `f = 0.999·f_prev + 0.675·(H_c − H_n)`, minus 0.1 when spilling onto dry ground at the same
   floor. Flows are kept positive, then scaled so a tile never gives more than it has. The stored
   outflow is `max(0, f − 0.8·f_back)`.
+- The port mirrors `prototype/watersim.py` operation for operation and agrees with it bit for bit
+  on the golden fixtures; only `+ − × ÷`, `min`, `max` and `ceil` are used (§2.1).
 - Evaporation: `1e-4` per second (`1e-3` under 0.02 deep), times the cluster-saturation modifier.
 - Sources add `dt·S/N` per cell. **Map edges drain; the edge beside a source cell is a wall.**
-- Partial obstacles (NaturalDam 0.65) follow the dam rules in the spec.
+- Partial obstacles (NaturalDam 0.65) follow the dam rules in the spec. Blockage and a badtide
+  drain's back wall are full obstacles: the column floor rises by one (D28).
+- Emitters come from the map's objects through their footprints (`sim/model.ts`): WaterSource,
+  BadwaterSource (S/9 on its rotated 3×3), seeps (off above 0.8 deep at their anchor, back on below
+  0.72), and aquifers and badtide drains, which are off at map start. Delayed sources are off.
 - Contamination moves with flow as a volume-weighted mix.
 - Moisture and soil contamination are computed at steady state with a max-heap propagation:
   - moisture: 2·sat on water, then −1 orthogonal / −1.414 diagonal, −6 per level climbed;
-  - soil contamination: from water with contamination ≥ 0.5, reaching 7 tiles.
+  - soil contamination: from water with contamination ≥ 0.5, reaching 7 tiles;
+  - Thorns block both (a 4-connected barrier).
+
+**The canonical settle** (`sim/prefill.ts`, D27). It is what files store and what validation
+checks:
+1. **Pre-fill.** A priority flood from the draining map edge (edge tiles that emit water are
+   walled, so they are not outlets; a weir raises its tile by 0.65) gives every tile its spill
+   level. Water from each running emitter walks downhill or level on that filled surface. Every
+   depression on the path starts full at its spill level. Every other tile of the path starts at
+   `min(1, 0.3·Q/w)`: Q is the flow through it, and w the shorter of the row and column runs of
+   such tiles through it. The contamination starts at the badwater share of Q.
+2. **Settle.** The exact simulation, checked every 128 ticks, until the total volume changes by
+   under 0.2% and at least 99.5% of tiles move by at most 0.005 (the §11.3 rule, counted exactly,
+   with sums in index order so the Python oracle stops on the same tick); at most 4 game days.
+3. **The file** stores the settled depth and contamination (`depth:cont:0:floor:depth`, 7
+   significant digits, depths under 1e-6 dry), outflows 0, soil moisture and contamination at
+   steady state, and the evaporation modifiers of the settled water.
 
 **Fidelity.**
 - On heightfield maps the port matches the game:
@@ -825,13 +923,18 @@ so in its report.
   BeaverBuddies, HungryPathing, MixedStorage). None of them is known to touch water, but in-game
   check B confirms the result on vanilla.
 
-**Drought.** Sources ramp to 0 for the whole drought. The drought check is analytic:
-- water below each basin's spill level stays, and water above it drains through the edges;
-- evaporation is 0.0535 per day on wide water;
+**Drought.** Sources ramp to 0 for the whole drought. The drought check is analytic
+(`sim/drought.ts`, D29):
+- water below each basin's spill level stays, and water above it drains through the edges (a
+  weir's own tile drains over its lowest neighbour);
+- each pool (4-connected water at one spill level) loses what its surface evaporates: 1e-4 per
+  second times each tile's saturation modifier, shared over the flat pool. That is 0.0535 a day on
+  wide water, more at a small pool's corners;
 - colony drinking is 0.424 per beaver per day.
 
-A test compares this against running the sim with sources off for the drought length on
-fixtures. Agreement must be within 5% of stored volume.
+A test compares this against running the sim with sources off for 9 days on the fixtures with
+basins (a lake, a valley basin and a weir pool): they agree within 5% of the stored volume
+(measured 0.7%, 0.4% and 2.7%).
 
 **Performance.**
 - A 256² map needs about 1,500–3,000 ticks to settle, starting from empty.
@@ -852,12 +955,26 @@ fixtures. Agreement must be within 5% of stored volume.
   active set must be exact**: wet cells plus their 4-neighbours, recomputed every substep and kept
   as an index list rather than a full-grid scan.
 - **Budget** (revised from 1.5 s / 0.4 s, which the measurement does not support for a cold
-  start):
-  - Target a canonical settle of ≤ 3 s at 256² and ≤ 0.6 s at 128². It uses the exact active
-    list and starts from the deterministic priority-flood pre-fill for basins plus an analytic
-    river pre-fill, both computed from the document alone (§19.7).
-  - M2 benchmarks this before the budget is final. If 256² stays above 3 s, K = 1 becomes the
-    default at 256² (extending the §7.9 rule) and generation shows staged progress.
+  start), **fixed by the M2 benchmark (D33):**
+  - A canonical settle of **≤ 3 s at 256² and ≤ 0.6 s at 128²**, with the exact active list and
+    the deterministic pre-fill (above), both computed from the document alone (§19.7).
+  - **M2 measurement** (`npm run bench:water`, Node 24 on Kyler's machine, River Valley at
+    Normal, seeds 1–10, the settle alone, from the pre-fill):
+
+    | Map | Ticks | Median | Max |
+    |---|---|---|---|
+    | 128² | 640–768 | 0.07 s | 0.07 s |
+    | 256² | 1,152–1,408 | 0.39 s | 0.51 s |
+
+    With other work running on the machine the same benchmark measured 0.15 s and 0.77 s. A whole
+    256² generation (plan, build, settle, validate, pack) takes a median 0.95 s in Chrome's worker
+    (seeds 1–5) and 0.86 s in Node; 128² takes about 0.2 s.
+  - The budget holds with room to spare, so K = 3 candidates stay the default at 256² (§7.9).
+    CI gates the 256² settle median at 3 s on every push.
+  - **M6 measurement** (generator 0.4.0, the same benchmark with `--theme`, seeds 1–10): River
+    Valley 0.16 s at 128² and 0.95 s at 256² (riverside ponds and a taller relief); Canyon 0.06 s
+    and 0.45 s; Lake Basin 1.15 s at 128² (1,408–1,664 ticks) and 3.0 s at 256² (1,664–2,048
+    ticks), over the budget (D68). CI's gate runs River Valley.
   - The editor's interactive preview re-settles from the previous state (EDITOR_PLAN.md §6). The
     file always gets the canonical settle (§2.1, §19.7).
 
@@ -886,7 +1003,9 @@ does (§19.5):
 Imported maps have no spec, so thresholds come from the document's "designed for" difficulty
 (default Normal) and default settings. Checks that need a planned feature, such as
 `water.badwater_contained` (a badwater basin's outlet) or `water.outflow` (a planned lake), report
-"not applicable" when no such feature exists.
+"not applicable" when no such feature exists: the result passes, carries `applicable: false` and
+says why (D31). The playability class runs on every map. On maps with caves or overhangs it uses
+the top surface, which is an approximation that `terrain.single_floor` reports (D28).
 
 ### 11.1 File
 
@@ -921,17 +1040,18 @@ Imported maps have no spec, so thresholds come from the document's "designed for
 
 ### 11.3 Water
 
-The exact simulation of the map's own sources, run to steady state.
+The canonical settle (§10) of the map's own sources. A water tile is one deeper than 0.05;
+clean water has contamination under 0.05.
 
 | Id | Rule |
 |---|---|
 | `water.settles` | Steady within 4 game days: volume change under 0.2% and 99.5% of tiles within 0.005 between 128-tick checks. |
 | `water.no_flood` | Wet share ≤ 0.35 (≤ 0.55 for Islands and Lake Basin); official p90 0.40. |
 | `water.clean_exists` | Clean wet tiles ≥ 2% of the map. |
-| `water.outflow` | Every source's water reaches an edge or a planned basin: its connected wet region touches the map edge or a basin feature. |
-| `water.clean_reach` | At least one connected clean water body of 40+ tiles that badwater never reaches. |
-| `water.badwater_contained` | With the planned outlet tiles blocked (§9.5), the badwater region stays within its basin. |
-| `water.reservoir` | The better of these two ≥ need × drought reserve: (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). |
+| `water.outflow` | Every running source's water reaches an edge or a planned basin: its connected wet region (depth > 0) touches a map-edge tile that drains (not a walled source tile) or a lake feature. Not applicable without features (imports). |
+| `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. |
+| `water.badwater_contained` | With the planned outlet channel's tiles blocked (a levee, §9.5), the water rising in each planned badwater basin cannot leave the basin (its 7×7 floor and two-tile rim) or reach a map edge below the rim's level. A source never stops, so this proves the outlet is the basin's only way out, not that a levee holds forever (D57, pending Kyler). Not applicable without a basin with a planned outlet. |
+| `water.reservoir` | The better of these two ≥ need × drought reserve (Scarce 1×, Normal 1.5×, Plenty 3×; §5.3): (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). Dam sites are sampled on every second clean water tile within 60 tiles of the start, with crests 1–3, and flood at most max(6,000, 15% of the map) tiles (D30). |
 
 ### 11.4 Start and playability
 
@@ -962,36 +1082,45 @@ need     = drink + (drink / 2) × 0.0535 × (drought_days + 0.5)     (reservoir 
 
 That gives Easy 4 days × 40 beavers → 86; Normal 9 days × 50 → 253; Hard 30 days × 50 → 1,174.
 Hard also requires the reservoir's mean depth to be at least 3, because evaporation takes 1.6 over
-30 days.
+30 days. As built (M6, D58): on Hard the dam sites are sampled with crests 1–4 and count only when
+their reservoir is at least 3 deep on average; the natural water kept through the drought counts as
+before (it has lost the drought's evaporation already).
 
 ### 11.5 What the prototype already checks
 
-`prototype/validate.py` and `playability.py` implement every check above except `water.outflow`,
-`water.clean_reach`, `water.badwater_contained` and `extras.placement`. Those belong to set pieces
-the prototype does not build yet. `terrain.single_floor` is the prototype's `water.model` check.
+Since M2, `prototype/validate.py` and `playability.py` implement every check above, with the same
+ids, rules and "not applicable" cases as the TypeScript validator. A map with a project file beside
+it (`<stem>.damgoodmaps.json`) is checked with its spec and features; any other map as an import.
+`terrain.single_floor` replaced the prototype's `water.model` check.
 
-The prototype's playability module was written for generated maps. The TypeScript port must not
-copy three of its shortcuts, because imported maps break them:
-- It treats a BadwaterSource's tiles as Coordinates + (0..2, 0..2) whatever its orientation. The
-  port uses the footprint transform.
-- It ignores WaterSeep, BadwaterSeep, BadtideDrain and Aquifer as emitters. The port includes them
-  with their rules (§10).
-- It blocks walking only on the origin tile of multi-tile objects (mine sites, geothermal fields,
-  relics, cores). The port blocks their whole footprint.
+The prototype's first playability module was written for generated maps and took three shortcuts
+that imported maps break. The TypeScript port does not copy them, and the prototype was fixed to
+match (D28):
+- A BadwaterSource's tiles come from the footprint transform, whatever its orientation.
+- WaterSeep, BadwaterSeep, BadtideDrain and Aquifer are emitters with their rules (§10).
+- Multi-tile objects (mine sites, geothermal fields, relics, cores) block walking on their whole
+  footprint.
 
-A parity test runs both validators on all 19 official maps.
+The parity test (`npm run oracle`) runs both validators on 50 generated maps and on all 19
+official maps (import profile), and fails on any disagreement.
 
 A further check, `plants.drought`, is added. It is **advisory**: the one check that never blocks,
 in any profile, including `generate`. It
 flags living berry bushes within 20 tiles of the start whose moisture comes only from water that
 drains during a drought longer than 0.9 × their DaysToDieDry (blueberry: 9 days, and Normal
-droughts reach 9 days).
+droughts reach 9 days): their soil is dry in the moisture of the analytic drought water (§10).
+Every River Valley map at Normal carries this warning today, because its bushes live on the river,
+which drains in a drought (see docs/decisions-pending.md).
 
 ### 11.6 Report
 
-Each check yields `{id, class, severity, ok, value, limit, message, where?, fix?}` (§19.5): `where`
-is the tiles, region, feature or entity involved, and `fix` an optional list of edit operations
-the editor offers as a one-click fix. The map card groups them into File, Terrain and objects,
+Each check yields `{id, class, severity, ok, value, limit, message, where?, fix?, advisory?,
+applicable?}` (§19.5, `validate/report.ts`): `where` is the tiles, feature or entities involved,
+and `fix` an optional list of edit operations the editor offers as a one-click fix (M2 proposes
+`deleteEntities` for plants that would die and ruins next to the start; the M3 operations engine
+applies them). Severity follows the profile: load failures are errors everywhere; playability and
+design failures are errors in `generate`, warnings in `export`, and warnings and information in
+`import`; advisory checks warn. The map card groups them into File, Terrain and objects,
 Water, and Start and resources. Failures are explained in player terms, for example
 "The start is 23 tiles from pumpable clean water; Normal allows 16 (beavers go thirsty on day 6)."
 
@@ -1061,9 +1190,10 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
   - The preview canvas, with layer toggles and a 2D/3D switch.
   - The map card beneath: name, premise, score and the validation report.
   - Download, and **Refine this map**, which opens the same map in the editor with its features
-    ready to edit (EDITOR_PLAN.md). Before the editor ships, the button is replaced by "Download
-    project file" (`.damgoodmaps.json`, §19.6), so maps made early can be opened in the editor
-    later.
+    ready to edit (EDITOR_PLAN.md). "Download project file" (`.damgoodmaps.json`, §19.6) stays
+    beside it. After the editor, the page shows the edited map; downloading it goes through the
+    editor's export check, and generating again keeps the edits (D44).
+  - **Open a map**: any `.timber` or project file opens in the editor.
 - **Generate** is always visible. Seed has a dice button. Changing a setting marks the preview stale
   and offers "Generate"; auto-regenerate is optional (default off at 256²).
 
@@ -1092,8 +1222,10 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 - **Hover:** tile tooltip with level, water depth, moisture and what stands there.
 - **Zoom and pan:** wheel and drag, at 1–8× integer scaling.
 - **3D (lazy):** three.js orbit view of the terrain columns, water surfaces as translucent quads at
-  depth, and instanced trees and ruins. Budget: under 1.5 s to build, 60 fps on a mid-range laptop
-  at 256². Off by default on mobile.
+  depth, and instanced trees and ruins. It is the editor's renderer (`render3d`, D45), with the
+  editor's orbit and top-down views, compass and hover readout. Budget: under 1.5 s to build,
+  60 fps on a mid-range laptop at 256² (measured in M4, D46). The preview opens in 2D; 3D is a
+  switch, loaded on demand.
 
 ### 14.3 Map card
 
@@ -1139,6 +1271,15 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 - **Edited maps:** a link encodes the `MapSpec` only, so it reproduces the generated map without
   the player's edits. An edited map is shared as its project file. Putting small edit lists into
   the link is a later option (ROADMAP.md, Later).
+- **As built (M6, D65):** `core/spec/codec.ts`. Settings that differ from the theme preset at the
+  link's difficulty and size, in a fixed order with two-letter keys (`rl` relief, `ht` highest
+  terrain, `tr` terracing, `bl` buildable land, `rv` rivers, `rs` river style, `fl` flow, `dr` drought
+  reserve, `lk` lakes, `wf` waterfalls, `bw` badwater, `bd` badwater distance, `tb`, `uc`, `fd`, `gs`,
+  `sm` species (four bytes, base64url), `bn`, `bb`, `ru`, `rc`, `gt`, `ms`, `sa`, and `sw`, `st`,
+  `sb`, `sx`, `sr` for the start rules), enum values as one letter; then `a` archetype, `p` premise,
+  `c` colonies (reserved for Timber Together, D5) and `sp`, `k` for set pieces and constraints as
+  base64url JSON, each only when set. A value the decoder cannot use is reported and the preset's
+  value kept.
 
 ### 14.6 Ratings
 
@@ -1154,14 +1295,14 @@ downloaded maps are remembered in localStorage.
 |---|---|---|
 | **Unit** (Vitest) | RNG streams; sine polynomial error < 1e-9; noise; C#-style float formatting; world.json encoding; footprint transform (all templates × 4 orientations vs `footprints.json`); slope orientation; region labelling; dam-site finder; score normalisation. | every push |
 | **Round trip** | Read → write → read on every fixture map (official maps are not redistributable, so CI uses generated fixtures plus a local job for `investigation/raw`); byte-identical `world.json`. | every push (generated); local (official) |
-| **Water golden vectors** | TS sim vs Python fixtures after 50/200/975 ticks within 1e-6; moisture mask exact; the game's own save reproduced within 0.001. | every push |
+| **Water golden vectors** | TS sim vs Python fixtures (`tests/golden/water.json.gz`) after 50/200/975 ticks within 1e-6; moisture mask exact; pre-fill, canonical settle and drought storage; the analytic drought within 5% of the simulated one; the game's own save reproduced within 0.001 (local only). | every push |
 | **Determinism** | The same 20 seeds × 6 themes give identical sha256 in Node, Chromium, Firefox and WebKit (Playwright), and across two runs. | every push (Node), nightly (browsers) |
-| **Oracle** | The Node CLI writes 50 maps across themes and sizes; Python `validate.py` and `roundtrip_test.py` must pass; each TS check verdict must equal the Python verdict. | every push |
+| **Oracle** | The Node CLI writes 50 seeds × 3 sizes; Python `validate.py --load-only` and `roundtrip_test.py` must pass; on 50 of them, and on the 19 official maps when present, each TS check verdict must equal the Python verdict. | every push (5 seeds); full at each milestone |
 | **Contract** (§19) | The `MapSpec` schema accepts every preset and rejects out-of-bound values. Features survive a JSON round trip. `build(features)` equals the generated map byte for byte. An incremental rebuild after a feature edit equals a full rebuild. Feature and entity ids stay the same when an unrelated feature is added or removed. Import normalization (migrator halving, 4-field water, legacy `Heights`) is checked on the investigation maps. | every push |
 | **Golden maps** | 12 pinned seeds (2 per theme; 96² and 256²): sha256 of the `.timber` plus key metrics (score, check values). Any change must be intentional: `npm run golden:update`, and the diff shows the metric changes. | every push |
 | **Batch pass rates** | `tools/batch.ts`: 100 seeds per theme per size at Normal, plus 30 at Easy and Hard. Report first-attempt and final pass rates, failing checks, score distribution and timings, with generated metrics beside the official ranges. Gates: final pass rate ≥ 98% within 12 attempts, first attempt ≥ 60%, median 256² time ≤ 8 s. | nightly and before release |
 | **End-to-end** (Playwright) | Generate → preview → download on 128²; share link round trip; layer toggles; worker cancel. | every push |
-| **In-game** | §18, once per milestone that changes the file format or the generator's physical rules, recorded in `docs/ingame-log.md`. | per milestone |
+| **In-game** | §18, once per milestone that changes the file format or the generator's physical rules, recorded in `docs/ingame-log.md`. **Deferred (D11):** Kyler skips in-game checks for now. Each milestone lists its checks in the log as *pending* and does not wait for them; the automated validation and tests above carry the gate until the checks are played. | per milestone (pending) |
 
 ---
 
@@ -1203,11 +1344,12 @@ milestone and says where it went. Effort: S under a day, M 1–3 days, L 3–7 d
 | Thin waterfall lips may not read as falls in game. | Claude's "giant waterfall" looks like a wet cliff. | In-game check F1; the waterfall builder reports lip depth; flow policy (§9.2). |
 | Imported pre-1.0 maps lack `WaterSimulationMigrator`. | Re-exported maps would run at double strength. | Halve strengths and outflows at import, as the game does on load (§19.6). |
 
-Open questions for you:
-1. Is `timbermods.github.io/Dam-Good-Maps/` the address you want, or a custom domain?
-2. Should maps offer an optional in-game difficulty *warning* only, or also refuse to generate
-   Hard-designed maps with Scarce reserves (currently allowed with a warning)?
-3. Are GitHub issue ratings acceptable, or do you prefer a no-account form from the start?
+Kyler answered the open questions on 2026-09-24 (§20, D12–D14):
+1. The address is the `dam-good-maps` repository in the timbermods organization:
+   `timbermods.github.io/dam-good-maps/`.
+2. Hard maps are warned, never refused: a Hard-designed map with a Scarce reserve generates, and
+   the map card says so ("that's part of the fun").
+3. GitHub issue ratings are fine.
 
 ---
 
@@ -1216,12 +1358,18 @@ Open questions for you:
 Short, and needs you. Each item names the file to use from `out/` (or the milestone's batch
 output), what to do, and what should happen. Record the result in `docs/ingame-log.md`.
 
-**A. Load and start** (roadmap M1; now with `out/Dam Good Maps - River Valley 4242.timber`)
+**Deferred (D11).** Kyler is skipping in-game checks for now. Milestones do not stop or wait for
+them: each milestone lists the checks it would have needed in
+[docs/ingame-log.md](docs/ingame-log.md) as *pending*, names the files to play, and relies on the
+automated validation and tests in §15. The checks below stay the definition of each one.
+
+**A. Load and start** (roadmap M1, with `out/m1/River Valley (4242).timber`; see
+[docs/ingame-log.md](docs/ingame-log.md))
 1. Copy the file to `Documents\Timberborn\Maps`. It appears under New game with its thumbnail and
    description.
 2. Start Folktails on Normal:
    - no "Loading issues" panel;
-   - the district center stands where the white square is on `out/…4242.png`, with the door facing
+   - the district center stands where the white square is on `out/m1/River Valley (4242).png`, with the door facing
      the river;
    - 9 adults and 4 children spawn.
 3. Walk test:
@@ -1290,6 +1438,10 @@ interface MapSpec {
   premise?: PremiseId;                // rolled from the seed when absent; recorded after generation
   designedFor: "easy" | "normal" | "hard";
   settings: Settings;                 // every §5 value, complete, never a diff
+  colonies: {                         // room for Timber Together (D5); M1 accepts only {count: 1, mod: "none"}
+    count: 1 | 2 | 3 | 4;             // colonies on one map; 2+ requires mod "timberTogether"
+    mod: "none" | "timberTogether";   // "none" = vanilla: exactly one StartingLocation
+  };
   setPieces: SetPieceRequest[];       // added by the player or Claude: {kind, params, region?}
   constraints: {
     locks: Region[];                  // regeneration never changes these tiles
@@ -1306,6 +1458,13 @@ interface MapSpec {
   replaced whole. The patched spec is checked against the schema again. A patch that fails is
   rejected, never clamped.
 - `accepted` lets a document reproduce its map without running the retry loop again.
+- `colonies` reserves room for fair multi-colony maps for Timber Together (D5). With
+  `mod: "timberTogether"` and `count` N, a later milestone will plan N `start` features
+  (`player` 0..N−1), write each as a `StartingLocation` with a `StartingLocationPlayer
+  {PlayerIndex}` component and `MaxPlayers: N` in `map_metadata.json`, and add fairness checks
+  (each start's water, wood, food and reachable land within a tolerance of the others, and a
+  minimum separation). Until then the schema accepts only `{count: 1, mod: "none"}`, and nothing
+  may assume a map has one start in a way that would block this.
 - Imported maps have no spec (`spec: null` in the document). Their difficulty comes from the
   document's `meta.designedFor`.
 
@@ -1319,15 +1478,15 @@ planner emits features, the build pipeline (§19.8) rasterizes them, and the edi
 
 | Kind | Params | Game rules it must respect |
 |---|---|---|
-| `river` | path (control points from source to outlet), width 1–9, bedDepth 1–4 (default 1), bedProfile (start level; steps with their drop), flow (gentle 1 / steady 2 / strong 4 blocks/s, or an exact value), style (straight / meandering / braided), meander, entry (edge / spring / lake id), exit (edge / lake id / river id), badwater | The bed never rises downstream. An edge mouth is sealed (§7.6). Moisture reach is 16 tiles at bedDepth 1, 10 at 2, 4 at 3 and 0 at 4 (6 tiles lost per bank level above the ceiled surface). At most 8 blocks/s per source tile. |
-| `lake` | basin outline, floorDepth, outlet {at, sill level, to: edge / river / lake / none}, inflow (river ids or a spring strength) | The surface settles at the sill level: water is flat, so the level is not a free number. With no inflow the lake loses about 0.054 levels a day (warning). The basin never touches a map edge. |
-| `landform` | kind (hill / plateau / ridge / canyon / valley / island / terraces), outline, height (levels), edgeStyle (gentle / terraced / cliff), bands | gentle = 1-level steps at least 3 tiles apart, joined by slopes; terraced = 1-level bands 6–12 deep; cliff = a step of 2+ levels, impassable without player stairs. Terrain stays within 0–16. |
+| `river` | path (control points from source to outlet), width 1–9, bedDepth 1–4 (default 1), bedProfile (start level; steps with their drop), flow (gentle 1 / steady 2 / strong 4 blocks/s, or an exact value), style (straight / meandering / braided), meander, entry (edge / spring / lake id), exit (edge / lake id / river id), badwater, banks (drawn rivers raise the ground beside their channel to their banks, D53) | The bed never rises downstream. An edge mouth is sealed (§7.6). Moisture reach is 16 tiles at bedDepth 1, 10 at 2, 4 at 3 and 0 at 4 (6 tiles lost per bank level above the ceiled surface). At most 8 blocks/s per source tile. |
+| `lake` | basin outline, floorDepth, outlet {at, sill level, to: edge / river / lake / none, and its planned channel: path, levels, width}, inflow (river ids or a spring strength) | The surface settles at the sill level: water is flat, so the level is not a free number. With no inflow the lake loses about 0.054 levels a day (warning). The basin never touches a map edge. |
+| `landform` | kind (hill / plateau / ridge / canyon / valley / island / terraces), outline, height (levels), edgeStyle (gentle / terraced / cliff), base (the ground level its edge steps from), bandDepth (terraced, 6–12), bands | gentle = 1-level steps at least 3 tiles apart, joined by slopes; terraced = 1-level bands 6–12 deep; cliff = a step of 2+ levels, impassable without player stairs. Terrain stays within 0–16. |
 | `setPiece` | kind (waterfall / damSite / gorge / terracedCliffs / badwaterBasin / plugSpillway / obstaclePayoff / secondDistrict), params per §9, resolved plan and report | Built only by its shared builder (§19.3). |
 | `forest` | area, density, species mix, grove size, life (auto / alive / dead) | Alive only on moist, dry-footed, clean tiles. Succulents live only on dry soil. Common species only. |
 | `berryPatch` | area, density, ripe share | As forests (BlueberryBush). |
 | `ruinField` | area, scrap target, height mix | One level. Each column needs an 8-neighbour at its level. `RuinModels.VariantId` A–E. |
 | `mapObject` | kind (mineSite / relic small, medium, large / geothermal / thornBelt / weir, a NaturalDam line / plug, a Blockage line / bridge, a NaturalOverhang pair / unstableCore), placement | Footprints, OccupyAllBelow and first-column rules (§11.2). |
-| `start` | position (centre tile), orientation, bench radius | A flat 3×3 with 5 free layers, and the entrance tile free at the same level. Exactly one. |
+| `start` | position (centre tile), orientation, bench radius, player (0–3, default 0) | A flat 3×3 with 5 free layers, and the entrance tile free at the same level. Exactly one per map in vanilla. `player` is reserved for Timber Together maps (D5): one start per colony, numbered from 0. |
 
 - **Derived layers** are rebuilt every time and never edited as features: slopes (pinned or
   removed slopes are stored as edits), water, soil moisture and soil contamination.
@@ -1344,14 +1503,23 @@ There is one module per kind in `core/features/setpieces/`. The generator's plan
 tools and Claude's proposals all use it.
 
 ```ts
-interface SetPieceBuilder<P> {
+interface SetPieceBuilder {
   kind: SetPieceKind;
-  schema: JSONSchema;                                    // hard bounds: outside them, rejected
-  limits(ctx: BuildContext): AchievableRanges;           // §9.10 for this map and this place
-  plan(params: P, ctx: BuildContext, rng: Rng): SetPiecePlan;   // anchor, footprint, params clamped to limits, report
-  rasterize(plan: SetPiecePlan, target: RasterTarget): void;    // height constraints, protected mask, sources, entity clears
+  request: JSONSchema;                                   // hard bounds of a request: outside them, rejected
+  limits(ctx: PlanContext, request?): AchievableRanges;  // §9.10 for this map and this place
+  plan(request, ctx: PlanContext, id): PlanOutcome;      // anchor, footprint, values reduced to the limits, report; or why it cannot
+  check(plan, W, H): string[];                           // a stored plan outside the hard bounds (an operation may bring one)
+  rasterize(feature, target: BuildTarget): void;         // terrain, protected mask
+  footprint(feature, target): Rect | "all" | null;       // what it reads and writes (dirty-region rebuilds)
+  sources?, slopes?, clears?, area?                      // its springs, its own slopes, the tiles it keeps clear, what the editor shows
 }
 ```
+
+As built in M5 (D47): `PlanContext` is the map a piece is planned on (its surface, river channels,
+taken tiles, the start's zone, locked and protected tiles, the objects on it). A set-piece feature
+stores `{kind, request, plan, report}`; operations that add or change one are checked against the
+builder's hard bounds, and the editor and Claude get plans from the builder
+(`core/doc/tools.ts` plans every tool's edit, set pieces included).
 
 - `BuildContext` is the macro layout during generation and the current map in the editor. It is
   the same code with the same results.
@@ -1366,7 +1534,8 @@ interface SetPieceBuilder<P> {
   fails with the reason.
 - The kinds are waterfall (on-river and standalone modes, §9.2), damSite, gorge, terracedCliffs,
   badwaterBasin, plugSpillway, obstaclePayoff and secondDistrict. Ruin fields are ordinary
-  features with their own placement rules (§9.7).
+  features with their own placement rules (§9.7). M5 builds the first five; the plugged spillway
+  and the obstacle arrive with the map objects (M7), the second district with its planner.
 
 ### 19.4 Stable ids
 
@@ -1396,7 +1565,6 @@ the editor's live checks and export gating.
 
 - **Check result:** `{id, class, severity, ok, value, limit, message, where?, fix?}`. The classes
   are `load`, `playability` and `design` (§11). A check marked advisory (today only
-  `plants.drought`) is reported in every profile and never blocks. A check marked advisory (today only
   `plants.drought`) is reported in every profile and never blocks.
 - **Profiles:**
 
@@ -1412,6 +1580,10 @@ the editor's live checks and export gating.
 - **Thresholds** come from `spec.designedFor` and `spec.settings`. For imported maps they come from
   `meta.designedFor` (default Normal) and the default settings.
 - **Check ids** match the prototype, which stays the oracle (§4).
+- **Imported maps' own problems** (D43): a check that already failed, over the same entities or
+  tiles, on the map as it was opened is listed at export but never blocks it and is not noted in
+  the description. The editor never makes a map worse, and an unedited import exports unchanged,
+  multi-colony starts included (D5).
 
 ### 19.6 Format I/O
 
@@ -1428,7 +1600,9 @@ There is one reader and one writer (`core/format`), verified by the round-trip t
   - 4-field water tokens: set `OldWaterDepth = WaterDepth`.
   - More than 23 voxel layers: keep layers 0–21 and drop the rest, as the game does, with a
     warning. The writer then writes the standard 23 layers, with layer 22 empty.
-  - Obsolete components (FORMAT.md §7) are dropped. Unknown components, unknown singletons,
+  - Components 1.1 never reads (FORMAT.md §7) are dropped; `StartingLocationPlayer` is kept for
+    Timber Together (D5). Old key shapes are migrated the way the game migrates them, and the
+    version is stamped 1.1.2.4 (D36). Unknown components, unknown singletons,
     multi-slot water and moisture arrays, and key order are all preserved verbatim.
   - Faction-only plants are flagged, with a one-click removal. They fail to load for the other
     faction and in the in-game editor.
@@ -1436,8 +1610,11 @@ There is one reader and one writer (`core/format`), verified by the round-trip t
   normalized `world.json` byte for byte and keeps the original thumbnail. An edited map gets a new
   thumbnail.
 - **Project file** (`.damgoodmaps.json`, gzip-compressed): the `MapDocument` with its spec,
-  features, edits, locks, meta, `generatorVersion` and built base (heights plus voxel overrides,
-  compressed). It opens exactly even after the generator has changed.
+  features, edits, locks, meta, `generatorVersion` and built base. The base is the whole map:
+  surface heights, the multi-run columns verbatim, and world.json's exact text without its
+  terrain array (D37). A document opens exactly even after the generator has changed: it shows
+  its stored base until the player rebuilds it with the current generator. M1 and M2 files
+  (format 1, heights only) still open, rebuilt from their features.
 
 ### 19.7 Determinism
 
@@ -1469,11 +1646,11 @@ Generation and editing use one pipeline (`core/features/build.ts`):
 6. sculpt edits, in order;
 7. integrity pass: remove pits and spikes, keep beds non-increasing downstream;
 8. slopes: derived, plus pinned and removed overrides;
-9. water sources;
+9. water sources, then the entity edits whose targets exist by now (D38);
 10. water settle, soil moisture and soil contamination (canonical for export);
 11. resources: berries, forests, ruin fields, map objects, placed using moisture;
 12. the start entity;
-13. entity edits: place, move, delete, set properties;
+13. the remaining entity edits, on resources and the start (place, move, delete, set properties);
 14. validation.
 
 Generation plans the features (§7.1–7.3), then runs this pipeline. On regeneration, steps 1–13
@@ -1484,8 +1661,9 @@ leave locked regions untouched.
 The core never touches the DOM or a platform API. Five adapters let one codebase build both the
 website and the Claude artifact edition (EDITOR_PLAN.md §7):
 
-- **files:** save and open;
-- **storage:** autosave;
+- **files:** save and open (a file input or a drop, read as bytes);
+- **storage:** autosave (IndexedDB on the website; every call fails quietly when browser storage is
+  unavailable, D44);
 - **workers:** a module URL on the website, an inlined blob in the artifact;
 - **claude:** the Messages API, or the artifact's `sample` capability;
 - **download naming:** `.timber` on the website; a `.zip` holding the `.timber` in the artifact,
@@ -1503,13 +1681,71 @@ list, and implementation adds to it.
 | D1 | The shared foundations are defined once, in §19. EDITOR_PLAN.md §11 points to it. | Each contract item must have one definition. | Audit |
 | D2 | Features first: the generator emits parametric features and builds the map from them. | The editor must edit what the generator made. | Audit |
 | D3 | Validation classes and profiles (§19.5). Generated maps pass every check except the advisory `plants.drought`; edited maps are blocked only by load problems. | Resolves "every check passes" (PLAN) against "errors block, warnings warn" (EDITOR_PLAN). | Audit |
-| D4 | Terrain stays at 16 or below in generated maps and editor tools. Imported maps with terrain up to 22 are preserved. | 16 is the in-game editor's limit; 17–22 is untested (§18 E1). | Audit default; Kyler may revisit |
-| D5 | Symmetry is a creative tool, not multiplayer support. A map has exactly one start. | Only one StartingLocation survives a load, and 1.1 has no multiplayer starts. | Audit |
-| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. An exact flow set in advanced mode may exceed the cap, with a warning. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default; in-game check F1 |
-| D7 | Share links carry the spec only. Edited maps are shared as project files. | An edit list does not fit reliably in a URL. | Audit default |
-| D8 | Claude: build the bridge against the Messages API first. It runs the request suite in Node and powers bring-your-own-key. The artifact edition follows, once the M3 spike confirms workers, file open, downloads and sharing. | EDITOR_PLAN.md §7. | Audit default; Kyler to confirm |
-| D9 | `prototype/calibrated.py` is aligned to §5.2 and §5.6 in M1. | The two tables disagree today (§4). | Audit |
-| D10 | The artifact edition downloads a `.zip` that contains the `.timber`. | `.timber` is not on the artifact downloads allowlist. | Audit default; the spike confirms |
+| D4 | Terrain stays at 16 or below in generated maps and editor tools. Imported maps with terrain up to 22 are preserved. | 16 is the in-game editor's limit; 17–22 is untested (§18 E1). | Audit default, accepted by Kyler |
+| D5 | **Revised by Kyler, 2026-09-24.** Vanilla maps have exactly one start, and symmetry is a creative tool. Dam Good Maps will *later* make fair maps for Kyler's Timber Together mod (separate colonies on one shared map). The spec and feature schema keep room for it now (`MapSpec.colonies`, §19.1; `start.player`, §19.2), and nothing multi-colony is built until a milestone schedules it. | Vanilla 1.1 keeps one StartingLocation. The mod (BeaverBuddies lineage) reads extra starts as `StartingLocation` entities with a `StartingLocationPlayer {PlayerIndex}` component, plus `MaxPlayers` in `map_metadata.json`. | Kyler |
+| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. An exact flow set in advanced mode may exceed the cap, with a warning. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default, accepted by Kyler; in-game check F1 pending |
+| D7 | Share links carry the spec only. Edited maps are shared as project files. | An edit list does not fit reliably in a URL. | Audit default, accepted by Kyler |
+| D8 | Claude: build the bridge against the Messages API first. It runs the request suite in Node and powers bring-your-own-key. The artifact edition follows. **M3 spike ([docs/spike-m3.md](docs/spike-m3.md)):** route B works. A browser request with `anthropic-dangerous-direct-browser-access: true` passes its preflight (204, the origin and headers allowed) and gets a readable 401. Without the header the response is blocked. Route A's building blocks work under the artifact's rules: the whole core runs in a blob worker (its file equals Node's byte for byte); a file input and FileReader open `.timber` files of every format; a `.zip` holds the map; `sample` takes page functions as tools. `sample`'s real latency and who can open the artifact (sharing, public links) wait for Kyler's run of the published spike page. | EDITOR_PLAN.md §7. | Audit default, accepted by Kyler; spike run M3, Kyler's live run pending |
+| D9 | `prototype/calibrated.py` is aligned to §5.2 and §5.6 in M1. | The two tables disagree today (§4). | Audit, accepted by Kyler |
+| D10 | The artifact edition downloads a `.zip` that contains the `.timber`. Project files save as `.json`. | `.timber` is not on the artifact downloads allowlist. **Confirmed in M3** by the platform's downloads contract (0.2.54): the allowlist is `gif png jpg jpeg webp mp4 webm txt json md docx pptx epub csv ttf html svg pdf xlsx zip`, and other names reject with `rejected_extension`. The spike page's `.zip` holds the generated `.timber` byte for byte. | Audit default, accepted by Kyler; confirmed by the M3 spike |
+| D11 | In-game checks are deferred. Milestones list the checks they would have needed in `docs/ingame-log.md` as *pending*, never stop or wait for them, and rely on the automated validation and tests (§15). | Kyler, 2026-09-24: "I'm skipping in-game checks for now." | Kyler |
+| D12 | The site lives in the `dam-good-maps` repository of the timbermods organization, served at `timbermods.github.io/dam-good-maps/`. The repository was renamed from `Dam-Good-Maps`; GitHub redirects the old name. | Kyler's answer to §17 question 1. | Kyler |
+| D13 | Difficulty mismatches are warned, never refused. A Hard-designed map with a Scarce reserve generates, with a warning on the map card. | Kyler: "hard maps are warned (that's part of the fun)". | Kyler |
+| D14 | Ratings use the pre-filled GitHub issue form (§2.3). | Kyler's answer to §17 question 3. | Kyler |
+| D15 | Deterministic `sin`, `exp` and `ln` in `core/math/detmath.ts`. `sin` is an odd polynomial through x¹⁷ after reduction to [−π/2, π/2] (measured error 4.4e-14), not a 7th-order minimax fit. `exp` and `ln` use range reduction and series. | A Taylor polynomial is exact to write down and easy to check. The extra terms cost nothing measurable. The log-normal draws and the size-aware density interpolation also need `exp` and `ln`. | M1 |
+| D16 | The JSON schemas are checked at runtime by a small eval-free checker (`core/spec/schema.ts`) that covers the keywords the two schemas use. Ajv checks the same schemas in the contract tests only, and they must agree. | Ajv compiles validators with `new Function`, which the artifact edition's CSP may refuse, and it would add over 100 KB to the worker. | M1 |
+| D17 | Entity `localIndex` (§19.4) is the entity's tile index, y·W + x. The ruin template in the hash is `RuinColumnH<h>`. | One owner never places two entities of one template on one tile. The id stays stable as long as that entity stays on its tile. | M1 |
+| D18 | In M1 the project file's base holds heights only, and a project file is rebuilt from its features. Voxel overrides, and opening from the stored base across generator versions, come with import in M3. | Generated maps are heightfields. Rebuilding from features is the M1 acceptance: it reproduces the `.timber` byte for byte. | M1; replaced by D37 in M3 |
+| D19 | The River Valley planner in M1 follows the prototype (M6: other flow directions still wait, D67): the river enters on the west edge and leaves on the east edge, and "highlands" are the upper bands of the two `terraces` landforms, not a separate feature. The planned lake basin runs from the basin start to 6 tiles above the gorge. There is no badwater (M2) and there are no map objects (M7). Every ruin column is in a field, within §9.7's "at most 5% outside fields". | Port the proven layout first and change one thing at a time. Other river directions come with the themes in M6. | M1 |
+| D20 | The JPEG encoder is jpeg-js 0.4.4, vendored as an ES module (`core/format/vendor/`, BSD notice kept) that returns a `Uint8Array`. | The npm build is CommonJS and returns a Node `Buffer` when a `module` object exists, so Node and the worker would run different code paths. | M1 |
+| D21 | In M1, slopes use the prototype's reach rule: every level region within ⌊0.6·max(W, H)⌋ tiles of the start is joined along the region tree (one slope per edge, a second on boundaries of 60+ pairs, at least 12 tiles apart). The §7.5 rules for the 40-tile core, the targeted regions and the 400-tile regions beyond come with `start.reach` and the playability class in M2. | The prototype's playability results were tuned with this rule. Measured over 10 seeds, it gives 14–21 slopes per 10k tiles at 96², 9–16 at 128² and 3–8 at 256². That is close to §7.5's target of up to 20 on small maps and 2–6 on large ones, slightly over at both ends. | M1; M2 kept it (below) |
+| D22 | The browser test runs on the installed Chrome locally (`channel: "chrome"`) and on Playwright's Chromium in CI. CI runs the Python oracle on 5 seeds × 3 sizes on every push. The full 50 × 3 run is `npm run oracle`, run at each milestone. | Installing Playwright's browsers on Kyler's machine needs his go-ahead. The full oracle takes about a minute and CI keeps a fast subset. | M1 |
+| D23 | The site deploys to Pages from `main` only (`deploy.yml`). CI runs on every branch. | Kyler reviews `dev` and merges. Pages shows what was merged. | M1 |
+| D24 | (M6: replaced by basins from the settings, D62; the builder keeps the marsh mode for older documents.) River Valley gets the prototype's badwater, as a `badwaterBasin` set piece in a `marsh` mode: a BadwaterSource 3×3 below the falls, as far from the start as the valley allows, at the badwater ratio × the river's flow (0.65 at Normal, §5.4), clamped to 1–3. It sits in a pit one level below the floodplain, with a one-tile ditch to the river. `water.badwater_contained` is not applicable until the §9.5 side basin with its planned outlet arrives with the shared builder (M5). | M2 needs badwater for `start.badwater`, `water.clean_reach` and in-game check B4. The prototype's marsh on flat floodplain spread a thin badwater sheet over the whole lower valley: contaminated soil reached within 30 tiles of the start on 7% of maps, and sheets were the slowest water to settle. The pit and ditch send the badwater straight into the river. | M2 |
+| D25 | The dam-site ridge is a straight band square to the valley's axis (the river's source-to-outlet line), as in the prototype. Each end runs on until it is 4 tiles into ground at least as high as the useful crest (the terrain of build step 2). The gorge goes on the gentlest stretch of the river within 8% of the map of its drawn place. M1's ridge, which followed the river's arc position, is replaced. | With the reservoir checked (`water.reservoir`), the M1 ridge leaked: on a bend its band broke up, and a fixed 40-tile span let the valley floor of a downstream loop wrap round its end. A river that runs along the axis crosses an axis-square band once, and sealing by terrain holds whatever the loop. A steep crossing left a gap no straight dam closes. | M2 |
+| D26 | River Valley layout fixes that settled water exposed. (1) Floodplains step down 4 tiles below each bed step (`PLUNGE`), a short plunge gorge. (2) The channel widens with flow so its water stays about 0.55 deep: width = flow / (0.55 / (0.3 + 0.0015 · 0.8 · W)), from 4.4 to 8.4 (only 256² maps change today, to 7.95). (3) The start bench never fills channel tiles. (4) The start is 6–10 tiles from the channel's edge by true distance to the river path (§7.2), and within 34 tiles of the gorge. (5) The river's centre stays 0.2·H + 12 tiles off the north and south edges, and the planned basin 4 tiles. | (1) The upper channel's lip sat beside the lower floodplain, one level below its bed, and poured over the whole basin floor. (2) A 5-wide channel's surface rose 0.3 over a long 256² reach and overtopped its banks. (3) The bench dammed the river where the start was close. (4) The prototype's vertical offset put starts in the water where the river is steep, and a gorge more than 40 tiles away failed `water.reservoir`. (5) A basin touching the edge drains any dam. With D25, these take the 128² batch to 96% on the first attempt (100 seeds). | M2 |
+| D27 | The canonical settle is defined in §10: a priority-flood basin pre-fill plus an open-channel pre-fill of `min(1, 0.3·Q/w)`, then the simulation until the §11.3 test passes, checked every 128 ticks for at most 4 days. The test counts "at least 99.5% of tiles within 0.005" exactly (not a percentile) and sums volumes in index order. Both validators run this settle on the file (the `generate` profile reuses the build's). Files store 7-significant-digit water tokens and the settled evaporation modifiers. | One definition, computed from the document alone (§19.7), which the Python oracle reproduces bit for bit, so the two validators stop on the same tick and agree on every verdict. From empty, River Valley settled in about 900 ticks at 128² and never within 4 days at 256² with the sheets of D26; from the pre-fill it takes 640–768 and 1,152–1,408. | M2 |
+| D28 | The water model of map objects (`sim/model.ts`, and `prototype/playability.py` alike): emitters and walking blockers by footprint; Blockage and a badtide drain's back wall are full obstacles; NaturalDam follows the spec's partial-obstacle rules; seeps switch off above 0.8 deep and on below 0.72 without the game's real-time fade; aquifers, badtide drains and delayed sources are off; every emitter walls its map-edge padding, also when off. Roofs are not modelled: maps with caves or overhangs are simulated on their top surface, which `terrain.single_floor` reports (information on import). The prototype's three §11.5 shortcuts are fixed in the prototype too. | Parity needs one rule set in both validators. NaturalDam's rules and the seep hysteresis come from the code notes and are untested in game (the golden fixtures cover the port, not the game). Every official map has some multi-floor columns (3–4,790), so refusing the playability class on them would leave nothing to compare; the top-surface approximation is what the editor's preview will also show (EDITOR_PLAN §6). | M2 |
+| D29 | The analytic drought (§10) evaporates each pool by its tiles' own saturation modifiers, shared over the flat pool, instead of a flat 0.0535 a day, and a weir tile's own water drains over its lowest neighbour. | With the flat rate, a small weir pool kept 27% more than the simulation after 9 days (its corners evaporate 2.3× faster), outside the 5% the §10 test allows. Now the three fixtures agree within 0.4–2.7%. | M2 |
+| D30 | `water.reservoir` needs the colony's drought need × the drought reserve (Normal 1.5×: 380 at Normal). Dam sites are sampled within 60 tiles of the start (the same sampling in both validators) and may flood max(6,000, 15% of the map) tiles. Hard's "mean depth ≥ 3" rule (§11.4) waits for M6. | §5.3 defines the reserve multiplier; the prototype used 1×. Sampling only near the start keeps the Python oracle fast without changing any site within 40 tiles. On 256² maps the gorge basin is larger than 6,000 tiles (the prototype's limit), and §9.1 caps basins at 15% of the map. A mean depth of 3 needs crest-4 dam sites and the Hard feasibility guards of §5.3, which M6 builds. | M2; Hard rule built in M6 (D58), pending Kyler |
+| D31 | Validation reports (`validate/report.ts`): a check that does not apply to a map is reported as passing with `applicable: false` and the reason (both validators). Severity follows the profile (§11.6). `fix` holds edit operations in the shape the M3 engine takes (today `deleteEntities` for plants that would die and ruins next to the start). The map card groups results as §11.6 says and shows advisory and export-profile failures as warnings. | Parity compares pass, fail and not applicable, so "not applicable" had to be a first-class result, not a missing check. | M2 |
+| D32 | The generator version is 0.2.0. M1's 0.1.0 files (out/m1) stay as they were logged. | Every map changes in M2: settled water in the file, the layout fixes of D25 and D26, the badwater of D24. | M2 |
+| D33 | **Water budget (the M2 benchmark, §10):** the canonical settle takes ≤ 3 s at 256² and ≤ 0.6 s at 128². Measured medians in Node: 0.39 s at 256² (max 0.51 s) and 0.07 s at 128² (max 0.07 s); a whole 256² generation takes a median 0.95 s in Chrome. K = 3 candidates stay the default at 256² (§7.9). CI checks the 256² median on every push. | The M2 acceptance asks for the budget to be measured and recorded here. The exact active list plus the pre-fill cut the audit's 6.5–11.3 s cold start at 256² to under 0.6 s. | M2 |
+| D34 | The M1 slope rule (the prototype's reach rule, D21) stays through M2. §7.5's 40-tile core, targeted regions and the 400-tile rule arrive with the slope tools in M5, which lists §7.5. | With it, `start.reach` passed on every one of 100 maps at 128² (12,000+ walkable tiles against 1,300 needed), so M2 had no reason to change a rule M5 rebuilds. | M2; replaced by D52 in M5 |
+| D35 | Edit operations share one envelope, `{op, params}`, with camelCase names. Every EDITOR_PLAN §3 operation is covered: `addFeature`, `updateFeature` (a merge patch on `params` and `locked`), `deleteFeature`, `reorderFeature`, `sculpt`, `placeEntity`, `moveEntity`, `deleteEntities` (plural, so one fix removes many), `setEntityProps`, `pinSlope`, `removeSlope`, `setLock`, `regenerateRegion` and `specPatch`. The validation report's fixes are this envelope plus a label (D31). Operations are rejected with reasons when invalid, never clamped. Operations whose tools come later are rejected until their milestone: naturalize (M10), `regenerateRegion` (M11), adding set pieces (M5) and map objects (M7). The sculpt brushes keep terrain within 0–16, as the in-game editor's do. Hand-placed entities get a random GUID when the operation is made, stored in it. | One shape for the tools, the fixes and Claude (M12). Plural `deleteEntities` was already the fix shape. A brush that stops at the editor's limit is a defined tool, not a silent clamp of an invalid value. | M3; set pieces open in M5 (D47) |
+| D36 | Import normalization (§19.6) applies the game's own load-time migrations once. It also stamps the native 1.1.2.4 version, and it halves `CurrentStrength` along with `SpecifiedStrength`. It drops only the components 1.1 never reads: `DryObject`, `ContaminatedObject` and `NaturalResourceModelRandomizer`. It keeps `BlockObjectState`, `WateredNaturalResource`, `LivingWaterNaturalResource` and `ContaminatedNaturalResource`, which 1.1 still reads. It keeps `StartingLocationPlayer` and every start of a multi-colony map (D5); `start.count` stays a vanilla load check until the Timber Together milestone. A map with fewer than 23 layers is padded, with a warning. `file.arrays` (both validators) checks each packed array against its own size field, as the loaders read them. | FORMAT.md §7 listed four live components as obsolete; the decompiled loaders read them. Timber Together reads `StartingLocationPlayer`. The halved `CurrentStrength` is what the game computes from the halved `SpecifiedStrength` on load. 0.6 maps store one soil slot beside two water levels. On all 30 voxel-format investigation maps the normalized world exports byte for byte, and it normalizes to itself. | M3 |
+| D37 | A document is a generation plus an edit log. The generation is the spec, the planned features, what locks kept, and the built `base`. The base stores the whole map, for generated maps too: the surface heights, the multi-run columns verbatim, and world.json's exact text without its terrain array. A document from another generator version therefore opens exactly from its base ("frozen"). There the player's own edits apply, and edits to what the generator made wait for `rebuildWithCurrentGenerator`. Project files are format 2: `features` and `locks` are the log applied to the generation, checked on open, and `baseFeatures` is stored only when it differs. Format-1 files (M1, M2) still open: their base is rebuilt with the current generator, with a notice when the version differs. The log persists and still undoes after reopening; a regeneration's previous generation stays in the session only. | §19.7 asks a document to open exactly after the generator changes, and heights alone (D18) cannot do that. Storing world.json as text keeps every float's digits. Storing earlier generations would multiply the file's size for an undo that the log mostly covers. | M3, replaces D18 |
+| D38 | Build order (§19.8): entity edits run in two passes. The first runs after the sources (step 9), on everything that exists by then: slopes, sources, an imported map's objects and hand-placed objects. A deleted source or a placed Blockage therefore changes the water. The second pass runs at step 13, on resources and the start. Hand-placed objects take their tiles before resources are placed. Incremental rebuilds (§19.7) rasterize terrain only inside the dirty region: the footprints of the changed features, old and new, the whole map when a river other features follow changes, and the sculpted cells. The region widens to the dam site's whole band and a smooth brush's cells when it touches them, and by one tile for the integrity pass. Slopes, the water settle, moisture and each resource feature are reused when their inputs are unchanged. | Step 13 alone would settle water around objects the player had deleted. Region-restricted rasterizers keep a feature edit cheap. The settle (0.4–0.75 s at 256²) is skipped for every edit that does not change terrain or water objects. The E1 property tests check that it equals a full build after every step. | M3 |
+| D39 | Regeneration (a `specPatch`) plans around the player's features, locked regions and keep-out regions (§7.0). They form one protect mask. River Valley draws its layout again, up to 24 times per attempt, until the river with its bank, the basin, the dam ridge and the start keep off it; its marsh and resources keep off it too. The log is replayed on the new plan, and the retry loop validates the whole document in the `generate` profile. If no attempt passes, the last one is kept with its report. If no layout fits, the regeneration is refused and the document is unchanged. Locks keep the previous generation's generated content in their area: its surface and generated objects, but not its slopes or start. Generated features skip locked tiles, the player's edits replay on top, and water is derived again. Changing the map size while areas are locked is refused. | Nothing the player made is dropped, and nothing is silently lost: operations that no longer apply are flagged with reasons. Keeping the generation's content under a lock, not the final map, stops the player's own edits from being applied twice. | M3; locks are revisited with the lock tools in M11 |
+| D40 | Editing imported maps: the file's own slopes are kept (no derived slopes), and the slope pin and remove operations still work. The sculpt tools refuse columns with caves or overhangs, and features leave them unchanged. The integrity pass and the terrain clip touch only tiles an edit changed. Imported objects move to the new ground when an edit changes the surface under them. The water is re-settled only on heightfield maps; maps with caves keep the file's water until M8 brings the roofed-water rule, with a notice. The thumbnail is redrawn only when terrain or water changed. | An unedited import must export byte for byte, and terrain up to 22 must survive (D4). A top-surface settle is an approximation under roofs (D28). The thumbnail shows only terrain and water. | M3; its slope rule replaced by D52 in M5 |
+| D41 | The artifact edition's build (the M3 spike): two Vite builds, with the worker bundled on its own and inlined as a string the page turns into a `blob:` URL, then the page script inlined into one HTML file. Fonts are the only thing fetched at run time. The page declares only `sample` and `downloads`, reaches the runtime through `window.claude.use()`, and renders without it. | The spike page proves the shape: 209 KB, of which the core is 189 KB, with no `eval`, under the artifact's rules. Vite's own inline worker falls back to a `data:` URL, which would hide whether blob workers work. | M3 spike |
+| D42 | The editor's tools in M4 (the shell, EDITOR_PLAN §4). Rectangle tools make a plateau (Land: flat, cliff edges, 2 levels above the highest ground under it unless a height is picked) and a forest, berry patch or ruin field (Resources). Water has no drawing tool yet. A selected feature gets a move handle (drag it, or focus it and use the arrow keys, placed 0.7 s after the last key) and a delete handle. The start, resource areas, landforms with an outline, lakes of their own and rivers move; a river keeps the ends on the map edge on that edge, so its sealed mouth stays a mouth; the start's bench takes the ground level at its new place. Set pieces, the valley landforms that follow a river and a river's reservoir site do not move, and say why. Deleting a feature others build on is refused with their names. The inspector changes a forest's or berry patch's density, a plateau's height and the start's facing. | The roadmap puts the land and water tools in M5 and the resource tools in M7. The M4 acceptance needs the player's own edits made on the page, and these features were already built by the engine (D35), so the tools are the same operations those milestones extend. Features that follow a river are rebuilt from it; moving them alone would break what builds on them. | M4 |
+| D43 | The export check (§19.5, `export` profile) in the editor. Load problems block; playability and design problems warn, and when the player exports anyway they are noted at the end of the map's description; advisory checks are listed and never noted. An imported map's own problems (a check that already failed, over the same entities or tiles, on the map as it was opened) are listed apart and never block or get noted. Imported maps get the load and design checks at export; their water and colony checks wait for the background validation of M8. The map's health pill runs the same check 0.7 s after each change. | 30 of the 32 investigation maps have problems of their own as they are. 12 fail a load check (`slopes.connect` on 10, `start.count` on 2 including the multi-colony map, `start.flat`, `start.entrance`, `entities.placement`), and 27 warn in the design class (caves or overhangs, `terrain.single_floor`; terrain above 16, `terrain.max_height`). Blocking them, or noting them in the description, would stop them exporting unchanged, and a multi-colony map must survive export (D5). A settle for the water checks takes 5–13 s on a 256² import. Noting the advisory check, which warns on every River Valley map, would change the bytes of an unedited export. | M4 |
+| D44 | The page keeps one open map (the document in the worker). "Refine this map" opens the generated map; "Back to settings" shows the edited map, its card validated in the `export` profile; while it has edits, Generate becomes "Generate, keeping my edits" (a `specPatch`, D39) and "Discard edits" starts over. Opening another map or refining a new one asks first when the open map has edits, and offers its project file. The open map is autosaved to IndexedDB through the storage adapter (the project file, gzip level 6) 1.2 s after each change; a reload in the editor opens it again, and the settings page offers to continue it. The editor and the 3D view are separate chunks, loaded on demand. | EDITOR_PLAN §1 and §3: moving between the screens never loses work, and autosave recovers the last session. One map at a time keeps "which map am I editing" obvious. IndexedDB takes bytes and has room for 256² imports (up to 2 MB), where localStorage has about 5 MB of text. | M4 |
+| D45 | `render3d` (EDITOR_PLAN §8): world X = x, Y = height, Z = −y, so the top-down view has north up. Terrain is shaded by height, with a tile grid on tops and level lines on walls that fade out when zoomed out, and no textures; colours are display values (no colour management). A per-tile overlay texture shows selections and previews without remeshing. Water is a flat quad per wet tile at its surface, with curtains where a neighbour's water or ground is lower. An unedited import, or one with caves, shows the file's own water (`WaterMapNew`, every level), which is what its export keeps (D40). Objects are our own low-poly models (trees, bushes, ruin columns, slopes, sources, the start), and every other template is boxes on the blocks of its footprint. Columns with caves or overhangs are picked by their surface. | One light look for every map the game can load, cheap enough for 583,000 triangles (Beavertopia) to orbit at the display's rate on an integrated GPU. The overlay keeps tool feedback within a frame (EDITOR_PLAN §9). The game's assets are not ours to use (EDITOR_PLAN §2). | M4 |
+| D46 | The 3D budget (PLAN §14.2) is measured by `npm run bench:3d` in the installed Chrome, headed, on 256² maps (generated and the local 256² investigation maps). This machine is not a mid-range laptop (Ryzen 7 9800X3D, RTX 4080 SUPER), so the fps budget is judged on its integrated GPU (AMD Radeon Graphics, 2 compute units, weaker than a mid-range laptop's), picked with `--use-adapter-luid`, with the page's CPU also slowed 4× by Chrome's throttling. CI renders in software, so it checks the build with a 3 s bound (376 ms there), and correctness (`tests/e2e/render3d.spec.ts`). | The budget names a mid-range laptop. The integrated GPU and the throttled CPU are a lower bound for one; the dedicated GPU is reported too. | M4 |
+| D47 | The set-piece builders (§19.3) as built: each has `request` (the hard bounds of what may be asked, a JSON Schema checked by the eval-free checker), `limits`, `plan(request, context, id)`, `check(plan)`, `rasterize`, `footprint`, and optionally `sources`, `slopes` (its own stairs and chains), `clears` (tiles kept free of resources) and `area` (what the editor highlights). A plan is deterministic from the map, so it takes no random stream. The context (`PlanContext`) is the map: its surface, river channels, taken tiles, the start's zone, locked and protected tiles and the objects on it; a generation's macro layout has no terrain yet, and a piece that needs terrain is planned on the layout's built ground. A feature stores `{kind, request, plan, report}`; `addFeature` and `updateFeature` of a set piece are checked against its builder's bounds (a set piece keeps its kind), and `core/doc/tools.ts` gives the editor, and later Claude, the planned operations. | One place reduces values and reports it, and a stored plan outside the bounds (from a project file or a proposal) is rejected rather than built. A random stream would make the same request give different pieces in the tool and in a proposal. | M5 |
+| D48 | Waterfalls (§9.2) as built. Standalone: a lip `width` tiles wide at level L facing one of four ways; a header pool 3 rows deep at L − 1 behind it; the plunge pool 4 rows deep in front at the ground's level, lowered so L stays at 15 or below; walls round both; springs of 0.5 along the pool's back row (more rows past its width), the whole flow capped at the map's budget unless `exactFlow` (D6), at least 0.025·W plus the pool's evaporation; the outflow channel routed from the plunge pool to the nearest map edge, river or lake (1, 3 or 5 wide by the flow) and carved with a bed that never rises and banks one above it. The width is capped at 40% of the side along the lip (48² 19, 96² 38, 128² 51, 192² 76, 256² 102) and the drop at 15, reported. On a river: a bed step, at least 12 tiles from the next fall and no deeper than the river's bed allows downstream. It keeps the river's width: the 1–3-tile narrows above the drop wait for in-game check C2. | The port wets all 20 lip tiles of a 20-wide fall at 0.5, 2 and 8 water/s with the header pool, 0.3·S/W deep, as the audit measured; the range tests check it on 96², 128² and 256² maps. Narrowing River Valley's falls would change every generated map's water for a benefit only the game can show. | M5 |
+| D49 | The other builders as built. Dam site: the D25 ridge planned from the river, the place along it and the crest (1–4, the ridge top 3 above it, at most 16); on a map that exists, the plan measures the reservoir a dam across the gap holds, and says so. Its narrows stay the D25 ridge, not a gorge (§9.9 said the dam site uses the gorge builder): River Valley's reservoir checks are tuned on the ridge, and a dam site can be placed inside a gorge. Gorge: on a river only, narrowing it to 3–9 tiles for 6–40 tiles between walls 3 thick, 2 or more above the bed and at most 16; the stair notch is described in §9.9. Terraced cliffs: 3–6 bands 6–12 deep rising away from the way they face, from the lowest ground in front, with a slope chain at the end nearer the start; the step from the ground to the first band is left to the derived slopes. | A gorge without a river is a canyon landform, which the Land tab draws. A notch that climbed where the ground behind the wall is no higher than the floodplain would lead nowhere. | M5 |
+| D50 | River Valley plans its dam site, its two falls and its badwater marsh with the shared builders (§7.3). The marsh's site search moved into the builder and reads the river's centre from its path, where the planner used its own curve. River Valley keeps one premise, a gorge-dammed basin with a cascade and falls; the other premises of §8 come with names and premises in M9. With the §7.5 slopes (D52) every generated map changes, so the generator is 0.3.0. | The roadmap asks the premises to switch to the builders; adding premises is M9's work. The batches stay at 100% final: 96² 97% first try, 128² 97%, 192² 99% and 256² 99% (100 seeds each). | M5 |
+| D51 | Badwater basins (§9.5): the builder's `basin` mode (7×7 floor, rim two above it, one outlet 1 or 3 wide with its sill one above the floor, a channel to a river or edge kept 12 tiles beyond the start's zone) is built and offered by the editor's Badwater spring tool. `water.badwater_contained` stays not applicable: a source never stops emitting (notes Q1), so with its outlet blocked a basin holds the badwater only until it fills, and the §9.5 proof cannot pass at steady state. M6, which places basins from the badwater settings, defines the rule. | Checking a rule that can never pass would fail every map with a basin. The choice of a replacement rule (for example, how many days a levee must hold) is Kyler's, so it waits in decisions-pending #11. | M5; rule defined in M6 (D57), pending Kyler |
+| D52 | Slopes follow §7.5 as written there: the 40-tile core, targets, one slope from each region of 400+ tiles beyond, 12 tiles apart, and standing slopes joining their regions for free. Targets are the regions of landforms with gentle or terraced edges and, on an edited import, the ground its edits changed; an unedited import gets no new slopes (D40 kept the file's slopes and derived none). The start's water, groves and berries lie inside the core, so they need no targets of their own. | §7.5 was deferred to M5 (D34). Measured on River Valley: 13–16 slopes per 10k tiles at 96², 7–10 at 128², 4–5 at 192², 3–4 at 256², inside §7.5's targets (the M1 rule gave 14–21, 9–16 and 3–8); the fewest tiles walkable from the start on seeds 1–10 are 6,659 (need 1,300). Without slopes on an import's changed ground, a gentle hill drawn on it would be a stair nobody can climb. | M5 |
+| D53 | Rivers drawn in the editor. They start at the map edge (a point within 2.5 tiles snaps to it: a sealed mouth) or inland (a spring: sources of at most 8 on the channel tiles nearest it), and end at another edge, in another river or in a lake; anything else is refused. The bed is the lowest ground along the channel and its banks, less the bed depth, never rising downstream, one below any river it crosses (their water pours in and never back), and never below 0; `banks` raises the ground beside the channel to bed + depth. The width keeps the water inside its banks: w ≥ Q·(0.3 + 0.0015·L)/(depth − 0.35), with Q its flow plus the rivers it crosses and L its longest flat reach (D26's rule); the bed depth goes up when 9 tiles are not enough; below 1.25 water/s it is one tile wide, so the water is no thin sheet. Refused: loops and hairpin turns, a mouth within 8 tiles of another river on the map edge, a course through the start's area or along another map edge, and an end below the bed of the river it joins or below the level of the lake it joins. A lake it flows into gets its outlet planned again for the extra water. | EDITOR_PLAN §1: rivers always flow downhill to an outlet and keep their water. The property test draws rivers in random directions on 96², 128² and 256² maps; each rule above came from a case where the water pooled, spilled or never settled. | M5 |
+| D54 | Lakes and landforms drawn in the editor. A lake is its basin: the water level is its outlet's sill, by default the lowest ground round it (1–15); the floor lies 1–4 below it (default 2); a rim two tiles wide stands one above the sill; an outlet channel is routed from the basin at the sill to an edge, a river or another lake; a spring (default 0.5 water/s) keeps it full. It keeps 3 tiles from the map edge and off rivers. A landform is its outline, a height and an edge style: `base` records the lowest ground on its edge when it was drawn, and gentle edges step one level every 3 tiles from it toward the height, terraced edges every 6–12; the inside ends at the height. A plateau drawn in M4 (no base) keeps its cliff. | The level of a lake is not a free number (settled water is flat), and a lake without an outlet overflows its rim wherever it is lowest. Storing the base keeps the rasterizer tile by tile, which the dirty-region rebuilds need. | M5 |
+| D55 | The editor's tools in M5 (EDITOR_PLAN §4). Land: hill, plateau, ridge, canyon, valley, island (drag a rectangle or click the corners), terraced cliffs and slopes (click a step to pin one, a slope to remove it). Water: river (click from source to outlet), lake (as landforms), waterfall (on a river it adds a bed step, anywhere else a standalone fall), dam site and gorge (click a river), badwater spring, and a dam-site layer (the `water.reservoir` sampling, the 12 best). Every gesture is planned by the worker and shown with its report; Place applies it as one step. Moving a river, a lake or a set piece plans it again at its new place (an on-river piece moves along its river); the inspector plans it again with new values. The start's footprint shows green or red while it moves, with the water, trees and berries within 20 tiles by straight distance (the checks use walking distance); an imported start moves with a handle of its own. | See it before you commit (EDITOR_PLAN §1). Planning in the worker keeps one implementation for the tools and for Claude. The straight distance keeps the indicators within a frame while dragging. | M5 |
+| D56 | Instant validation (§19.5, EDITOR_PLAN §6): after every edit the worker runs the load and design checks on the map as it now stands, about 25 ms at 256² (no water settle, no thumbnail), and marks the problems in the region the edit touched (its features' old and new footprints and the ground that changed). The page shows the load problems an edit made at once, with their fixes; the full export check still runs 0.7 s later. One-click fixes: move the start to the nearest good spot (start.flat, start.entrance, start.dry, start.clear), remove the slopes that join nothing (slopes.connect), and the M2 removals. Check items carry their fixes and the tiles of their entities. | The instant subset is cheap on the whole map, so checking all of it and marking what lies in the edited region gives the same answer as checking only that region, without a second implementation. | M5 |
+| D57 | `water.badwater_contained` (§11.3), in both validators: for each badwater basin with a planned outlet, the outlet channel's bed tiles are blocked (the levee), and a flood from the source's 3×3 over tiles lower than the rim (floor + 2) must stay inside the basin's floor and rim (an 11×11 square) and off the map edge. The value is the number of basins that leak; not applicable without such a basin. The editor's Badwater spring tool and the generator make basins that pass; a later cut through a rim (a sculpt, another feature's carve) fails it. | A source never stops (notes Q1), so no rule can prove a levee holds forever: with a 1–3 water/s source a 7×7 basin fills from its sill to its rim in about 16–49 seconds of game time. What the rule proves is that the outlet is the basin's only way out below its rim, so the levee on the outlet is the counterplay §9.5 describes. How long a levee must hold is Kyler's call (decisions-pending #11). | M6; pending Kyler |
+| D58 | Hard's reservoir rule (§11.4), in both validators: on Hard the dam sites are sampled with crests 1–4 and count only when their reservoir's volume ÷ area is at least 3; the natural water kept through the drought counts as before. The generator makes Hard maps that pass: in River Valley and Canyon the cascade above the basin drops 4, the first rise round the valley is a 3-level cliff, the dam site's crest is 4 and the start stands below the gorge (where a dam 4 high cannot flood it); Lake Basin's lake is 4 deep. | The plan's words, exactly (decisions-pending #1). A crest-4 reservoir over a floodplain basin is about 3.1 deep on average only when terraces do not add shallow margins and the river upstream does not flood (it must rise 4 at the cascade). Natural storage already loses the drought's 1.6 of evaporation. Measured: Hard passes 100% within 12 attempts on 30 seeds at 128² in all three themes (see progress). | M6; pending Kyler |
+| D59 | The settings move the layout (§5, §7.4). Relief: the lowest reach's floodplain sits `7 + 0.08·relief` below the highest terrain, and the built terrain is measured and shifted (at most three builds) until its p5–p95 range is within one level. Terracing: each band rise is one level with probability 0.86 − 0.0059·terracing, else a 2- or 3-level cliff. Bands climb to the highest terrain 80% of the way to the map edge, so they can be narrower than 9–16 tiles. Buildable land (Tight / Normal / Generous): the valley floor's half-width (0.16 / 0.2 / 0.25 of the side across; Canyon's drawn floor × 1 / 1.1 / 1.25, Tight being its preset; Lake Basin's shore bench 11 / 14 / 18 tiles), how far band edges wander (4.2 / 3.2 / 2.2 tiles) and how jagged they are (a fine wiggle of 0.9 / 0.3 / 0.15 of it, in cells of 5 / 8 / 8 tiles; Canyon's stays 0.3 in 8), and where the terraces' cliffs go: Tight moves the first cliff to the valley floor's edge (or the lake's shore bench), so the start's walkable land ends there, and Generous puts every cliff above the one-level rises (the same rises in another order, so the terracing's share stays). Start rules: the start's distance from the water follows the clean-water rule, near-start groves aim at 1.2× the trees rule, near-start berries at the larger of the setting and 1.15× the bushes rule, ruins keep the ruins rule + 7 tiles away, and near-start food and wood go on land the colony can walk to. Every map changes: generator 0.4.0. | The M6 acceptance: each setting moves its measured target (tests/contract/settings.test.ts, tools/settings-batch.ts). River Valley was far flatter than the official maps (height range 4–6 against the relief target 11, flat share 0.80 against 0.52); now its range meets the target. Walkable land from the start moves from 2,951 to 4,641 tiles (Tight to Generous, 20 seeds at 96²; 3,240 to 9,211 at 128²) with the cliffs moved; the floor's width alone moved it 306. Measured targets that move less than the formulas: flat share 0.52–0.59 for Tight–Generous at 96² (target 0.40–0.60), and larger maps are flatter at every setting (about 0.63–0.68 at 128², 0.73–0.76 at 192²), because the relief's levels are spread over a wider map; one-level share 0.68–0.44 for terracing 10–90 (target 0.80–0.33); cliff share about 0.1 (target 0.15): channel banks, ridges and falls add steps the settings do not set. | M6 |
+| D60 | Rivers (§5.3) counts the rivers that enter on the map edge. In River Valley and Canyon the extra ones are tributaries from the north or south edge into the main river, clear of the start and the dam site, each in its own valley, climbing in 1-level steps (2-level falls when the waterfalls are Many), each bringing a quarter of the main river's flow; the main channel is sized for all of it. With 0, a spring three tiles in feeds the main river (Lake Basin: a spring in the lake). River flow sets the main river's strength (the tributaries add theirs). Braided waits for the Delta theme (M7): the panel offers it disabled and the planners treat it as meandering. A river under 90% of the Normal flow may be narrower than 4.4 tiles, down to 2.4, so its water stays deep enough to pump. | Splitting the budget between the rivers left the main river too shallow to pump from (0.1–0.2 deep) or its lower course, sized for its own share, overflowing its banks below the confluences. A Trickle river in a 4.4-wide channel was also too shallow (start.water failed on every attempt). | M6; pending Kyler |
+| D61 | Lakes and basins (§5.3) are riverside ponds: an outline of 24+ tiles on a river's floodplain, off the start's zone, the reservoir basin and the dam site's band, dug to two levels below the river's bed (three on Hard), joined to the river by a cut at the bed's level, with no spring. The count is the multiplier × the official median for the size (new calibration row `basins_ge20`: 1.5, 4, 15.5, 15, in both calibration tables). Ponds stand only on reaches badwater never reaches. Lake Basin counts its lake as one. | Ponds with a spring and an outlet channel (the editor's lakes) took 2–3 game days to settle: a thin outflow running flat across a terrace, or backed up by the river, oscillates for days. Riverside ponds settle with the river (the canonical settle stayed at 768–1,024 ticks at 128²) and keep their water below the bed through a drought. The canonical pre-fill spreads badwater along a flat reach, and a dead-end pond is never flushed. | M6; pending Kyler |
+| D62 | Badwater from the settings (§5.4, §9.5): the ratio × the main river's flow, split into basins of 1–3 (strength each total ÷ ⌈total ÷ 3⌉), placed nearest `badwater distance + 14` tiles from the start (at least distance + 12), planned by the basin builder, its outlet at least distance + 8 from the start; the outlet joins the main river below the first step downstream of the start's reach and beyond where the rest of the river keeps distance + 12 from the start, or runs to a map edge; it never crosses or runs beside (within 2 tiles) another river, the reservoir basin, the dam site's band or a pond. Lake Basin's outlets join the outlet river below its fall, or run to an edge; never within 4 tiles of the lake. River Valley's marsh (D24) is replaced. | The Badwater distance setting must move the measured distance (tools/settings-batch.ts). Joining the river on the start's own flat reach let the pre-fill carry badwater past the start; a meander could bring a joined reach back near the start; an outlet beside another river spilled into it (in Lake Basin, into the lake). | M6 |
+| D63 | Canyon as built (§8): the valley planner with a canyon floor 9–12.5 tiles each side of the river, walls 4–6 levels (3 + 0.04·relief), then one-level rim terraces up to the plateau (terracing does not apply to Canyon's rims), band edges wandering 0.45× as much, a gorge 3–5 wide round the dam site (its walls one above the crest), and a basin reach at least 34 tiles long so the start and its stair fit on one level of the floor. The stair is the terraced cliffs builder's new `stair` variant: 2–8 steps 1–5 deep, 1–12 wide, a slope on each; Canyon's runs one tile wide along the wall's foot beside the start's bench, one level per tile. One premise (Narrows) until M9; tributaries run in side canyons, dry side canyons wait. | §8's "slope chains up the walls near the start". Derived slopes stand 12 tiles apart, so a stair needs its own slopes; terraced cliffs 6+ deep dug a trench whose top step met higher rim ground. With rim cliffs (terracing 75) the start's region ended at the first cliff (reach 700 against 750); the canyon floor between falls is too small alone. | M6; pending Kyler |
+| D64 | Lake Basin as built (§8): premise Rising lake only (Crater lakes with M9, the NaturalDam weir with M7). The lake is a lake feature of its own at its outlet's sill (18–24% of the map up to 128², × (128² ÷ area)^0.75 beyond), floor 2 deep (3 with Plenty, 4 on Hard); the highlands and the rings of terraces are nested landforms (the whole map at the highest terrain, then each ring lower, one per band rise); inflow and outlet rivers cut valleys through the rings; the outlet's dam site has crest 1. | A lake fills by its outlet's head over its whole area: at 256² a lake of a fifth of the map took nearly all of the canonical settle's 3,072 ticks and often failed `water.settles`; at the smaller share (about 5,000 tiles) it settles in about 2,000. Crest 1 raises the lake to the shore bench's level, so the start stays dry. | M6; pending Kyler |
+| D65 | The URL codec (§14.5) as built in `core/spec/codec.ts`, with Copy link and Copy seed + settings on the page. Share links carry the spec only (D7). | One fragment per spec, readable keys, and room for Timber Together's colonies (D5). | M6 |
+| D66 | The settings panel (§14.1) as built: the theme strip (Highlands, Delta and Islands marked "Coming later"), Basics, Terrain, Water, Hazards, Resources, Advanced start rules, a Limits note for the map size, and "Reset to the theme's settings". Each control shows its band from the official maps. Guards: a drought reserve whose reservoir (need × reserve ÷ 2 deep, 3 on Hard) would cover more than 15% of the map is disabled with the reason; Hard with a Scarce reserve warns (D13); Many waterfalls says how many fit under the highest terrain. Thorn belts, unstable cores, relics, geothermal fields and mine sites are not offered ("come in a later version"): their objects arrive in M7, and until then those settings do not change a map. The colonies are not shown (D5). Changing the theme resets every setting to its preset; changing the difficulty resets the start rules, badwater distance and berries target. | PLAN §5.7 and ROADMAP M7 put the map objects in M7, so their settings cannot move a target in M6. | M6 |
+| D67 | River Valley and Canyon still flow west to east (D19), and Lake Basin's outlet runs east. The eight flow axes of §7.1 wait for M9's premises. | Rotating a layout needs every planner and set piece in a common frame; the themes' batches and settings came first. | M6 |
+| D68 | Lake Basin's canonical settle is over the §10 budget: a median 1.15 s at 128² (budget 0.6 s) and 3.0 s at 256² (budget 3 s); a whole Lake Basin generation takes a median 0.9 s at 128² and 3.0 s at 256² in Node. Accepted for M6; CI's settle gate stays on River Valley. | The pre-fill fills the lake to its outlet's sill, and the sim then raises the whole lake by the head its outlet's flow needs, over a long flat reach to the dam site: 1,400–2,000 ticks, each over 3,000–5,000 wet tiles. Faster options change the layout or the shared pre-fill (Python too): a short lip at the lake's mouth with the dam site on it, or a pre-fill that adds the outlet's head. The lake already shrinks on large maps (D64). Decisions-pending #22. | M6; pending Kyler |
 
 ---
 

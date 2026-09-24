@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timbermods.github.io/dam-good-maps/schema/ops-v1.json",
+  "title": "Dam Good Maps edit operation v1",
+  "description": "One edit operation (EDITOR_PLAN.md §3), the envelope the validation report's fixes also use. Features are checked against the feature schema, and every bound that depends on the map (its size, what exists on it) is checked by the operations engine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["op", "params"],
+  "properties": {
+    "op": {
+      "enum": ["addFeature", "updateFeature", "deleteFeature", "reorderFeature", "sculpt", "placeEntity", "moveEntity", "deleteEntities", "setEntityProps", "pinSlope", "removeSlope", "setLock", "regenerateRegion", "specPatch"]
+    },
+    "params": { "type": "object" },
+    "label": { "type": "string" }
+  },
+  "allOf": [
+    { "if": { "properties": { "op": { "const": "addFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/addFeature" } } } },
+    { "if": { "properties": { "op": { "const": "updateFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/updateFeature" } } } },
+    { "if": { "properties": { "op": { "const": "deleteFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/featureRef" } } } },
+    { "if": { "properties": { "op": { "const": "reorderFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/reorderFeature" } } } },
+    { "if": { "properties": { "op": { "const": "sculpt" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/sculpt" } } } },
+    { "if": { "properties": { "op": { "const": "placeEntity" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/placeEntity" } } } },
+    { "if": { "properties": { "op": { "const": "moveEntity" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/moveEntity" } } } },
+    { "if": { "properties": { "op": { "const": "deleteEntities" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/deleteEntities" } } } },
+    { "if": { "properties": { "op": { "const": "setEntityProps" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/setEntityProps" } } } },
+    { "if": { "properties": { "op": { "const": "pinSlope" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/pinSlope" } } } },
+    { "if": { "properties": { "op": { "const": "removeSlope" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/tile" } } } },
+    { "if": { "properties": { "op": { "const": "setLock" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/setLock" } } } },
+    { "if": { "properties": { "op": { "const": "regenerateRegion" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/regenerateRegion" } } } },
+    { "if": { "properties": { "op": { "const": "specPatch" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/specPatch" } } } }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^(f-[a-z2-7]{13}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$" },
+    "guid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+    "coordinate": { "type": "integer", "minimum": 0, "maximum": 255 },
+    "orientation": { "enum": ["Cw0", "Cw90", "Cw180", "Cw270"] },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 0, "maximum": 255 } }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs"],
+      "properties": { "runs": { "$ref": "#/$defs/runs" } }
+    },
+    "addFeature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature"],
+      "properties": {
+        "feature": { "type": "object" },
+        "index": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "updateFeature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "patch"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "patch": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "params": { "type": "object" }, "locked": { "type": "boolean" } }
+        }
+      }
+    },
+    "featureRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": { "id": { "$ref": "#/$defs/id" } }
+    },
+    "reorderFeature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "index"],
+      "properties": { "id": { "$ref": "#/$defs/id" }, "index": { "type": "integer", "minimum": 0 } }
+    },
+    "sculpt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "cells"],
+      "properties": {
+        "mode": { "enum": ["raise", "lower", "flatten", "terrace", "smooth", "naturalize"] },
+        "cells": { "$ref": "#/$defs/runs" },
+        "amount": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "level": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "step": { "type": "integer", "minimum": 2, "maximum": 8 }
+      }
+    },
+    "placeEntity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "template", "x", "y", "orientation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/guid" },
+        "template": { "type": "string" },
+        "x": { "$ref": "#/$defs/coordinate" },
+        "y": { "$ref": "#/$defs/coordinate" },
+        "orientation": { "$ref": "#/$defs/orientation" },
+        "flipped": { "type": "boolean" },
+        "components": { "type": "object" }
+      }
+    },
+    "moveEntity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "x", "y"],
+      "properties": {
+        "id": { "$ref": "#/$defs/guid" },
+        "x": { "$ref": "#/$defs/coordinate" },
+        "y": { "$ref": "#/$defs/coordinate" },
+        "orientation": { "$ref": "#/$defs/orientation" }
+      }
+    },
+    "deleteEntities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entities"],
+      "properties": { "entities": { "type": "array", "minItems": 1, "maxItems": 65536, "items": { "$ref": "#/$defs/guid" } } }
+    },
+    "setEntityProps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "components"],
+      "properties": { "id": { "$ref": "#/$defs/guid" }, "components": { "type": "object" } }
+    },
+    "pinSlope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "orientation"],
+      "properties": { "x": { "$ref": "#/$defs/coordinate" }, "y": { "$ref": "#/$defs/coordinate" }, "orientation": { "$ref": "#/$defs/orientation" } }
+    },
+    "tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "$ref": "#/$defs/coordinate" }, "y": { "$ref": "#/$defs/coordinate" } }
+    },
+    "setLock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "region"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{1,40}$" },
+        "region": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["runs"],
+          "properties": { "runs": { "$ref": "#/$defs/runs" } }
+        }
+      }
+    },
+    "regenerateRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "seedVariant", "layers"],
+      "properties": {
+        "area": { "$ref": "#/$defs/region" },
+        "seedVariant": { "type": "integer", "minimum": 0 },
+        "layers": { "type": "array", "minItems": 1, "items": { "enum": ["terrain", "water", "resources"] } }
+      }
+    },
+    "specPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["patch"],
+      "properties": { "patch": { "type": "object" } }
+    }
+  }
+}

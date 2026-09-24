@@ -1,0 +1,95 @@
+// Regions (PLAN §3 analysis/): connected tile sets for reachability, water bodies and ruin fields.
+// Ports of prototype/analysis.py `walk_regions` and `components`; labels are assigned in index
+// order, so both implementations number regions alike.
+
+/** Land walkable on foot: 4-neighbour moves between tiles of the same level, plus slope links
+ *  (low tile ↔ high tile). `blocked` tiles (Thorns, Blockage, relics, ...) are never entered. */
+export function walkRegions(h: Uint8Array, W: number, H: number, blocked: Uint8Array | null, links: readonly [number, number][]): Int32Array {
+  const N = W * H;
+  const labels = new Int32Array(N).fill(-1);
+  // adjacency of the slope links, in insertion order (a CSR list)
+  const count = new Int32Array(N + 1);
+  for (const [a, b] of links) {
+    count[a + 1]++;
+    count[b + 1]++;
+  }
+  for (let i = 0; i < N; i++) count[i + 1] += count[i];
+  const fill = count.slice(0, N);
+  const adj = new Int32Array(count[N]);
+  for (const [a, b] of links) {
+    adj[fill[a]++] = b;
+    adj[fill[b]++] = a;
+  }
+  const queue = new Int32Array(N);
+  let lab = 0;
+  for (let s = 0; s < N; s++) {
+    if (labels[s] >= 0 || (blocked && blocked[s])) continue;
+    labels[s] = lab;
+    let head = 0;
+    let tail = 0;
+    queue[tail++] = s;
+    while (head < tail) {
+      const c = queue[head++];
+      const x = c % W;
+      const y = (c - x) / W;
+      const hc = h[c];
+      for (let k = 0; k < 4; k++) {
+        let n: number;
+        if (k === 0) n = y + 1 < H ? c + W : -1;
+        else if (k === 1) n = y > 0 ? c - W : -1;
+        else if (k === 2) n = x + 1 < W ? c + 1 : -1;
+        else n = x > 0 ? c - 1 : -1;
+        if (n >= 0 && labels[n] < 0 && h[n] === hc && !(blocked && blocked[n])) {
+          labels[n] = lab;
+          queue[tail++] = n;
+        }
+      }
+      for (let k = count[c]; k < count[c + 1]; k++) {
+        const n = adj[k];
+        if (labels[n] < 0 && !(blocked && blocked[n])) {
+          labels[n] = lab;
+          queue[tail++] = n;
+        }
+      }
+    }
+    lab++;
+  }
+  return labels;
+}
+
+/** Connected set tiles (4- or 8-connected). Labels −1 on unset tiles; sizes per label. */
+export function components(mask: Uint8Array, W: number, H: number, eight = false): { labels: Int32Array; sizes: number[] } {
+  const N = W * H;
+  const labels = new Int32Array(N).fill(-1);
+  const sizes: number[] = [];
+  const queue = new Int32Array(N);
+  for (let s = 0; s < N; s++) {
+    if (!mask[s] || labels[s] >= 0) continue;
+    const lab = sizes.length;
+    labels[s] = lab;
+    let head = 0;
+    let tail = 0;
+    queue[tail++] = s;
+    while (head < tail) {
+      const c = queue[head++];
+      const x = c % W;
+      const y = (c - x) / W;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          if (!eight && dx && dy) continue;
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || xx >= W || yy < 0 || yy >= H) continue;
+          const n = yy * W + xx;
+          if (mask[n] && labels[n] < 0) {
+            labels[n] = lab;
+            queue[tail++] = n;
+          }
+        }
+      }
+    }
+    sizes.push(tail);
+  }
+  return { labels, sizes };
+}

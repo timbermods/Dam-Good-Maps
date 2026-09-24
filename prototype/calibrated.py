@@ -13,13 +13,13 @@ RESOURCE_BUILDING_RANGE = 20     # walk steps from a gatherer/lumberjack/scaveng
 
 # ---- difficulty: what the first days demand (official medians define Normal)
 DIFFICULTY = {
-    #            clean water    pump reach   trees r20   bushes r20  badwater    ruins   drought
-    #            (tiles, p50/75/90 of official 13/17/22)            (official p10 12, med 30)
-    "easy":   {"water_dist": 10, "trees_r20": 80, "bushes_r20": 20, "badwater_min": 30, "ruin_min": 20,
+    # Aligned with PLAN.md §5.6 in roadmap M1 (decision D9): clean water 10/16/22 tiles (official
+    # p50/75/90 13/17/22), badwater at least 40/30/15 (official p10 12, median 30), ruins 20/15/12.
+    "easy":   {"water_dist": 10, "trees_r20": 80, "bushes_r20": 20, "badwater_min": 40, "ruin_min": 20,
                "drought_days": 4, "colony": 40},
-    "normal": {"water_dist": 16, "trees_r20": 50, "bushes_r20": 40, "badwater_min": 20, "ruin_min": 15,
+    "normal": {"water_dist": 16, "trees_r20": 50, "bushes_r20": 40, "badwater_min": 30, "ruin_min": 15,
                "drought_days": 9, "colony": 50},
-    "hard":   {"water_dist": 22, "trees_r20": 40, "bushes_r20": 40, "badwater_min": 12, "ruin_min": 12,
+    "hard":   {"water_dist": 22, "trees_r20": 40, "bushes_r20": 40, "badwater_min": 15, "ruin_min": 12,
                "drought_days": 30, "colony": 50},
 }
 
@@ -44,6 +44,7 @@ DENSITY = {
     "bushes_per_10k": (265, 92, 40, 38),
     "water_strength_per_10k": (5.0, 2.2, 1.2, 1.1),   # official 8.5/1.5/1.0/1.1; floor of ~2 on small maps keeps rivers visible
     "ruin_field_columns": (21, 31, 40, 41),
+    "basins_ge20": (1.5, 4, 15.5, 15),                 # natural basins of 20+ tiles per map (Lakes and basins)
 }
 
 
@@ -63,7 +64,10 @@ def density(key: str, area: int) -> float:
 
 # ---- start area (official medians; p10 in comments)
 START = {
-    "reach_min_tiles": 750,          # tiles walkable from the start through map slopes (official min 765, p10 1007, median 1296)
+    # tiles walkable from the start through map slopes, for Buildable land = Normal (PLAN §5.2;
+    # Tight 750, Generous 2500; official min 765, p10 1007, median 1296)
+    "reach_min_tiles": 1300,
+    "reach_by_buildable_land": {"tight": 750, "normal": 1300, "generous": 2500},
     "pad_radius": 6,                 # levelled bench around the district center
     "clear_radius": 3,               # nothing placed within this Chebyshev distance of the start centre
 }
@@ -105,3 +109,21 @@ RUINS = {
     "min_start_dist": 22,            # official nearest ruin to start: p10 22, median 45
     "min_field_spacing": 18,         # official median spacing 58 on big maps; small maps pack closer
 }
+
+
+def shared_json():
+    """The values PLAN.md §5–§11 and src/core/gen/calibrated.ts must share (checked by
+    tests/contract/calibrated.test.ts)."""
+    return {
+        "difficulty": DIFFICULTY,
+        "reservoir_needed": {d: reservoir_needed(d) for d in DIFFICULTY},
+        "reach_by_buildable_land": START["reach_by_buildable_land"],
+        "size_anchors": list(SIZE_ANCHORS),
+        "density": {k: list(v) for k, v in DENSITY.items()},
+        "ruin_height_shares": [RUINS["height_shares"][f"H{k}"] for k in range(1, 9)],
+    }
+
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(shared_json()))

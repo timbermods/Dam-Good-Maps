@@ -1,0 +1,813 @@
+// The valley archetypes (PLAN §8): River Valley and Canyon, one planner with a typed table of
+// layout parameters per archetype. A river crosses the map west to east inside a valley floor, with
+// terraces (River Valley) or canyon walls and rim terraces (Canyon) rising to the highlands on both
+// sides. Its bed steps down over falls. Upstream of the start a basin opens behind a rock ridge the
+// river cuts through: the dam site (in Canyon, inside a narrows). The colony starts on a bench
+// beside the river; in Canyon a stairway climbs the wall beside it.
+//
+// The settings move the layout (PLAN §5): relief sets how far the land rises from the lowest reach
+// to the highest terrain, terracing how many of the rises are one level, buildable land the width
+// of the valley floor and how much the band edges wander, rivers and river style the river's
+// tributaries, spring and meander, waterfalls the falls on its bed, drought reserve the basin's
+// length, lakes and basins the ponds, and the badwater settings the badwater basins.
+//
+// The planner emits features only (PLAN §19.2): it builds the layout's terrain to fit the relief
+// and place ponds and badwater on it, then builds through the canonical water settle to
+// plan the resources on the simulated moisture, and hands the full list to the one build pipeline.
+
+import type { Orientation } from "../format/footprints";
+import { arcAtX, bedAt, pathField, pointAtArc, polygonMask, round } from "../features/geometry";
+import { buildMap, START_CLEAR_RADIUS, type LockedLayer, type SettleCache } from "../features/build";
+import { featureId } from "../features/ids";
+import { BUILDERS, flowBudget, planSetPiece, type PlanContext as PieceContext, type PlanRecord } from "../features/setpieces";
+import type {
+  BedStep,
+  Feature,
+  LakeFeature,
+  LandformFeature,
+  Point,
+  RiverFeature,
+  SetPieceFeature,
+  StartFeature,
+} from "../features/schema";
+import { PI, sinDet, TWO_PI } from "../math/detmath";
+import { stream, type Rng } from "../math/rng";
+import type { MapSpec } from "../spec/mapspec";
+import { bandsFor, drawBands, fitRelief, layoutTargets, type LayoutTargets } from "./layout";
+import { planResources } from "./resources";
+import { groundOf, placeBadwater, placeRiversidePonds, reachOf, type PlanGround } from "./water";
+
+export type ValleyArchetype = "riverValley" | "canyon";
+
+/** Layout parameters per archetype (PLAN §8: a typed table, tunable without code changes). */
+export const VALLEY: Record<
+  ValleyArchetype,
+  {
+    /** Valley floor half-width: a share of the side across the flow (null: `canyonFloor` tiles). */
+    floorShare: boolean;
+    canyonFloor: [number, number];
+    /** The first rise at the valley floor's edge: the canyon's wall (null: from the terracing). */
+    wall: boolean;
+    /** Band-edge wiggle, relative to the buildable land's. */
+    wobble: number;
+    /** How jagged the band edges are, fixed (null: from Buildable land). */
+    jag: number | null;
+    /** A gorge narrows the river at the dam site. */
+    narrows: boolean;
+    /** A stairway climbs the valley wall beside the start. */
+    stairs: boolean;
+  }
+> = {
+  riverValley: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false },
+  canyon: { floorShare: false, canyonFloor: [9, 12.5], wall: true, wobble: 0.45, jag: 0.3, narrows: true, stairs: true },
+};
+
+const MIN_RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
+/** A river with less than 90% of the map's Normal flow may be narrower, down to 3 rows, so its water
+ *  stays deep enough to pump (0.3, PLAN §11.4). */
+const MIN_THIN_RIVER_WIDTH = 2.4;
+const MAX_RIVER_WIDTH = 8.4;
+const BENCH_RADIUS = { small: 5, normal: 6, large: 8 } as const;
+/** Bed steps stand at least this far apart along the river (PLAN §5.3: 12+ tiles between falls). */
+const STEP_GAP = 12;
+
+/** Channel width for a flow: wide enough that the water stays about 0.55 deep, well inside its
+ *  one-level banks. A channel passes its flow over a lip at about 0.3·q deep (q = flow per tile of
+ *  width) and its surface climbs about 0.0015·q per tile upstream of the lip (PLAN §9.2), so long
+ *  flat reaches on big maps need a wider channel (PLAN §20, D26). */
+export function riverWidth(flow: number, W: number, H = W): number {
+  const reach = 0.8 * W; // the longest flat reach, in tiles along the river
+  const q = 0.55 / (0.3 + 0.0015 * reach);
+  const min = flow < 0.9 * flowBudget(W, H) ? MIN_THIN_RIVER_WIDTH : MIN_RIVER_WIDTH;
+  return Math.min(MAX_RIVER_WIDTH, Math.max(min, round(flow / q, 2)));
+}
+
+/** Regeneration constraints for the planner (PLAN §7.0). */
+export interface PlanContext {
+  /** Tiles the planner keeps its rivers, lakes, set pieces, start and resources off: the player's
+   *  features, locked regions and keep-out regions. */
+  protect: Uint8Array | null;
+  /** The player's features, built with the plan, so the resources are planned on their ground. */
+  features: readonly Feature[];
+  /** What a regeneration keeps under locks. */
+  locked: LockedLayer | null;
+}
+
+/** The planner could not keep its layout off the protected tiles. */
+export class PlanConflict extends Error {}
+
+/** Layouts drawn per attempt before the planner gives up on the protected tiles. */
+export const MAX_LAYOUT_TRIES = 24;
+
+interface StepPlan {
+  x: number;
+  drop: number;
+  /** A named fall (an on-river waterfall set piece) or a 1-level step. */
+  role: string | null;
+}
+
+export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: number, candidate = 0, settleCache?: SettleCache, context?: PlanContext): Feature[] {
+  const A = VALLEY[archetype];
+  const W = spec.size.x;
+  const H = spec.size.y;
+  const seed = spec.seed;
+  const t = layoutTargets(spec);
+  const rng = stream(seed, "layout", candidate, attempt);
+  const id = (kind: Feature["kind"], role: string) => featureId(seed, kind, role);
+  const hard = spec.designedFor === "hard";
+
+  for (let tryN = 0; ; tryN++) {
+    // ------------------------------------------------------------------ macro layout
+    const ph1 = rng.float() * TWO_PI;
+    const ph2 = rng.float() * TWO_PI;
+    const l1 = W * rng.range(0.7, 1.1);
+    const l2 = W * rng.range(0.3, 0.45);
+    const halfWidth = A.floorShare ? round(H * t.land.floor, 2) : round(rng.range(A.canyonFloor[0], A.canyonFloor[1]) * t.land.canyon, 2);
+    // the valley floor reaches about halfWidth + 11 tiles from the river before the first terrace;
+    // keeping that inside the map keeps a dammed basin off the map edge (edges drain, PLAN §9.1)
+    const edgeMargin = halfWidth + 12;
+    const M = t.meander;
+    const centre = (x: number) =>
+      Math.min(H - 1 - edgeMargin, Math.max(edgeMargin, H / 2 + H * M * sinDet((TWO_PI * x) / l1 + ph1) + H * M * 0.35 * sinDet((TWO_PI * x) / l2 + ph2)));
+    // the gorge goes on the gentlest stretch near its drawn place: a river crossing the ridge at a
+    // steep angle leaves a gap no short straight dam can close (PLAN §9.1, D25)
+    const gorgeDraw = Math.floor(W * rng.range(0.42, 0.58));
+    let gorgeX = gorgeDraw;
+    let gentlest = Infinity;
+    const reachX = Math.round(W * 0.08);
+    for (let x = Math.max(Math.round(W * 0.38), gorgeDraw - reachX); x <= Math.min(Math.round(W * 0.62), gorgeDraw + reachX); x++) {
+      const slope = Math.abs(centre(x + 3) - centre(x - 3)) / 6;
+      const score = slope + 0.002 * Math.abs(x - gorgeDraw);
+      if (score < gentlest) {
+        gentlest = score;
+        gorgeX = x;
+      }
+    }
+    // the drought reserve sets the basin's length (PLAN §5.3)
+    const basinShare = t.reserve >= 3 ? rng.range(0.2, 0.26) : t.reserve >= 1.5 ? rng.range(0.14, 0.2) : rng.range(0.12, 0.16);
+    // a canyon's basin reach holds the start's bench and the flight beside it
+    const basinLen = Math.max(A.stairs ? 34 : 0, Math.floor(W * basinShare));
+    const basinX0 = Math.max(4, gorgeX - basinLen - 2);
+    const basinX1 = gorgeX - 6; // ends clear of the ridge (it spans about ±4 around the gorge)
+    // on Hard the start stands between the gorge and the falls, so the falls keep 26 tiles off
+    const fallsX = Math.floor(Math.min(W - 8, Math.max(hard ? gorgeX + (A.stairs ? 40 : 26) : 0, gorgeX + W * rng.range(0.16, 0.24))));
+    const cascadeX = Math.max(3, basinX0 - 2);
+
+    // ---- the bed's steps (PLAN §5.3 Waterfalls: 0 / 1–2 / 3–6 falls of 2+ levels). A Hard map's
+    // cascade drops 4, so a dam 4 high holds a reservoir 3 deep on average (PLAN §11.4).
+    const off = t.waterfalls === "off";
+    const steps: StepPlan[] = [];
+    const cascadeDrop = hard ? 4 : off ? 1 : 2;
+    steps.push({ x: cascadeX, drop: cascadeDrop, role: off && !hard ? null : "setpiece/waterfall/cascade" });
+    if (off && !hard && cascadeX - STEP_GAP >= 3) steps.push({ x: cascadeX - STEP_GAP, drop: 1, role: null });
+    steps.push({ x: fallsX, drop: off ? 1 : 2, role: off ? null : "setpiece/waterfall/falls" });
+    if (off && fallsX + STEP_GAP <= W - 6) steps.push({ x: fallsX + STEP_GAP, drop: 1, role: null });
+    const extra = t.waterfalls === "many" ? 1 + rng.int(0, 4) : 0; // 3–6 falls in all
+    const slots: number[] = [];
+    for (let x = cascadeX - STEP_GAP - 2; x >= 8; x -= STEP_GAP + 4) slots.push(x);
+    for (let x = fallsX + STEP_GAP + 2; x <= W - 8; x += STEP_GAP + 4) slots.push(x);
+    const slotOrder = rng.shuffle(slots.slice());
+    for (let k = 0; k < extra && k < slotOrder.length; k++) steps.push({ x: slotOrder[k], drop: 2, role: `setpiece/waterfall/extra/${slotOrder[k] < cascadeX ? "up" : "down"}/${k}` });
+    steps.sort((a, b) => a.x - b.x);
+    const crest = hard ? 4 : 2;
+    // the falls must fit under the highest terrain: the upstream floodplain at most one below it,
+    // the ridge above the basin (crest + 3) within it; extra falls go first, then 2-level drops
+    // become 1
+    const fits = () => {
+      const total = steps.reduce((a, s) => a + s.drop, 0);
+      const below = steps.filter((s) => s.x > cascadeX).reduce((a, s) => a + s.drop, 0);
+      return total <= t.top - 3 && below <= t.top - crest - 4;
+    };
+    while (!fits()) {
+      const k = steps.findIndex((s) => s.role?.startsWith("setpiece/waterfall/extra/"));
+      if (k >= 0) {
+        steps.splice(k, 1);
+        continue;
+      }
+      const big = steps.find((s) => s.drop > 1 && !(hard && s.x === cascadeX));
+      if (!big) break;
+      big.drop -= 1;
+      if (big.drop < 2) big.role = null;
+    }
+    const dropBelow = (x: number) => steps.filter((s) => s.x > x).reduce((a, s) => a + s.drop, 0);
+    const totalDrop = steps.reduce((a, s) => a + s.drop, 0);
+
+    // ---- draws for the terraces, taken once so the relief fit never draws again
+    const draws = { north: drawBands(rng, t.p1), south: drawBands(rng, t.p1) };
+    const wob = t.land.wobble * A.wobble;
+    const flowTotal = t.flow;
+    // the main river carries the River flow setting's water; each tributary brings a stream of a
+    // quarter of it more, and the main channel is sized for all of it (its water stays deep enough
+    // to pump above the confluences and inside its banks below them)
+    const tributaries = Math.max(0, t.rivers - 1);
+    const mainFlow = flowTotal;
+    const tribFlow = round(0.25 * flowTotal, 2);
+    const riverW = riverWidth(round(flowTotal * (1 + 0.25 * tributaries), 2), W, H);
+    const startSide = rng.float() < 0.5 ? 1 : -1;
+    const startEdge = rng.int(6, 10);
+    const startDraw = rng.float();
+    const tribDraws = [0, 1].map(() => ({ at: rng.float(), wiggle: rng.range(-0.5, 0.5), x2: rng.range(-8, 8), steps: rng.float() }));
+
+    // the path follows the meander; a river fed by a spring (no river enters on the edge) starts
+    // three tiles in
+    const x0 = t.rivers === 0 ? 3 : 0;
+    const path: Point[] = [];
+    for (let x = x0; x < W - 1; x += 4) path.push([x, round(centre(x), 2)]);
+    path.push([W - 1, round(centre(W - 1), 2)]);
+    const riverId = id("river", "river/main");
+    const arc = (x: number) => round(arcAtX(path, Math.max(x0, x)), 2);
+    const sGorge = arc(gorgeX);
+    const gorgePoint = pointAtArc(path, sGorge).p;
+
+    // levels: the lowest reach's floodplain sits `range` below the highest terrain (the relief),
+    // and every level above follows the steps; the ridge above the basin stays within the top
+    const lowFloor0 = t.top - t.range;
+    const basinDrop = dropBelow(cascadeX);
+    const maxLowBed = Math.min(t.top - 2 - totalDrop, t.top - crest - 3 - basinDrop, 13);
+    const make = (shift: number): { features: Feature[]; river: RiverFeature; lake: LakeFeature; start: StartFeature; damSite: SetPieceFeature; floorTop: number } | null => {
+      const lowBed = Math.max(0, Math.min(maxLowBed, lowFloor0 - 1 + shift));
+      const bedSteps: BedStep[] = steps.map((s) => ({ at: arc(s.x), drop: s.drop, ...(s.role ? { setPiece: id("setPiece", s.role) } : {}) }));
+      const bedProfile = { start: lowBed + totalDrop, steps: bedSteps };
+      const floorTop = bedAt(bedProfile, sGorge) + 1; // the basin's floodplain
+      const river: RiverFeature = {
+        id: riverId,
+        kind: "river",
+        origin: "generated",
+        role: "river/main",
+        locked: false,
+        params: {
+          path,
+          width: riverW,
+          bedDepth: 1,
+          bedProfile,
+          flow: mainFlow,
+          style: spec.settings.water.riverStyle === "straight" ? "straight" : "meandering",
+          meander: M,
+          entry: t.rivers === 0 ? { spring: [path[0][0], path[0][1]] } : { edge: "west" },
+          exit: { edge: "east" },
+          badwater: false,
+        },
+      };
+      const valley: LandformFeature = {
+        id: id("landform", "landform/valley"),
+        kind: "landform",
+        origin: "generated",
+        role: "landform/valley",
+        locked: false,
+        params: { kind: "valley", edgeStyle: A.wall ? "cliff" : "terraced", along: { river: riverId, halfWidth, floorAboveBed: 1 } },
+      };
+      // terraces: from the basin's floodplain up to the highest terrain, reached 80% of the way to
+      // the map edge; a canyon's first rise is its wall (4–6 levels by the relief), a Hard map's a
+      // cliff of 3 round the basin (a dam 4 high then holds water 3 deep on average)
+      const lift = Math.max(0, t.top - floorTop);
+      const span = Math.max(8, 0.8 * (H / 2 - halfWidth - 2));
+      const wall = A.wall ? Math.max(4, Math.min(6, Math.round(3 + 0.04 * spec.settings.terrain.relief))) : hard ? 3 : undefined;
+      const terraces = (side: 1 | -1, name: "north" | "south"): LandformFeature => ({
+        id: id("landform", `landform/terraces/${name}`),
+        kind: "landform",
+        origin: "generated",
+        role: `landform/terraces/${name}`,
+        locked: false,
+        params: {
+          kind: "terraces",
+          edgeStyle: "terraced",
+          along: {
+            river: riverId,
+            halfWidth,
+            floorAboveBed: 1,
+            side,
+            baseLevel: floorTop,
+            // a canyon's rims are terraces (PLAN §8), one level each, up to the plateau
+            bands: bandsFor(draws[name], lift, span, wall, A.wall ? 16 : 0, t.land.cliffs),
+            wobble: { amp: round(wob, 2), cell: 24, amp2: round(wob * (A.jag ?? t.land.jag), 2), cell2: A.jag === null ? t.land.grain : 8 },
+            maxLevel: t.top,
+          },
+        },
+      });
+      // the basin: the valley widens upstream of the gorge; a planned lake (dry until dammed). The
+      // outline runs column by column (the river flows west to east), which never self-intersects
+      // the way offsets along a meandering path would.
+      const left: Point[] = [];
+      const right: Point[] = [];
+      const nSteps = Math.max(2, Math.ceil((basinX1 - basinX0) / 2));
+      // River Valley's basin bulges to 1.45× the floor's width, Canyon's to 1.6× (the start's reach
+      // of a canyon floor needs room for its fields)
+      const bw = halfWidth;
+      const bulge = A.floorShare ? 0.45 : 0.6;
+      for (let k = 0; k <= nSteps; k++) {
+        const x = basinX0 + ((basinX1 - basinX0) * k) / nSteps;
+        const w = bw * (1 + bulge * sinDet((PI * k) / nSteps));
+        const c = centre(x);
+        // the basin stays 4 tiles off the map edges: a reservoir must never touch an edge (PLAN §9.1)
+        left.push([round(x, 2), round(Math.min(H - 5, c + w), 2)]);
+        right.push([round(x, 2), round(Math.max(4, c - w), 2)]);
+      }
+      const lake: LakeFeature = {
+        id: id("lake", "lake/basin/primary"),
+        kind: "lake",
+        origin: "generated",
+        role: "lake/basin/primary",
+        locked: false,
+        params: {
+          outline: [...left, ...right.reverse()],
+          floorDepth: 1,
+          outlet: { at: [round(gorgePoint[0], 2), round(gorgePoint[1], 2)], sill: bedAt(bedProfile, sGorge), to: "river", target: riverId },
+          inflow: { rivers: [riverId] },
+          planned: true,
+          river: riverId,
+        },
+      };
+      const layoutCtx = (features: Feature[]): PieceContext => ({ W, H, seed, features, heights: new Uint8Array(0) });
+      const piece = (kind: SetPieceFeature["params"]["kind"], request: PlanRecord, features: Feature[], role: string): SetPieceFeature => {
+        const r = planSetPiece(kind, request, layoutCtx(features), { id: id("setPiece", role), origin: "generated", role }, true);
+        if (!r.ok) throw new Error(`${archetype}'s ${role}: ${r.errors.join("; ")}`);
+        return r.feature;
+      };
+      // the ridge's top stands 3 above the crest (PLAN §9.1, D25)
+      const damSite = piece("damSite", { river: riverId, at: sGorge, crest }, [river], "setpiece/damSite/primary");
+      const falls = steps.filter((s) => s.role).map((s) => piece("waterfall", { mode: "on-river", river: riverId, at: arc(s.x), drop: s.drop }, [river], s.role!));
+      const narrows = A.narrows
+        ? [piece("gorge", { river: riverId, from: round(Math.max(1, sGorge - 7), 2), length: 14, width: Math.max(3, Math.min(5, Math.floor(riverW))), wallHeight: crest + 1, access: "none" }, [river], "setpiece/gorge/narrows")]
+        : [];
+
+      // ---- the start: on a bench beside the river, its door toward the water. Its edge distance
+      // follows the rule for pumpable water (PLAN §5.6); it keeps within 34 tiles of the gorge so
+      // the dam site is within 40 (PLAN §9.1). On Hard it stands below the gorge, where a dam 4 high
+      // cannot flood it.
+      const rules = spec.settings.start.rules;
+      const hi = Math.max(3, Math.min(9, rules.waterWithin - 4));
+      const edge = Math.max(3, Math.min(hi, startEdge));
+      const floorRoom = halfWidth - riverW / 2 - 2;
+      const dist = riverW / 2 + Math.max(3, Math.min(edge, A.floorShare ? edge : Math.floor(floorRoom)));
+      const startY = (x: number, sd: number) => {
+        let y = Math.round(centre(x));
+        while (y > 8 && y < H - 9 && distToPath(path, x, y) < dist) y += sd;
+        return Math.min(H - 9, Math.max(8, y));
+      };
+      const toGorge = (x: number, sd: number) => {
+        const dx = x - gorgePoint[0];
+        const dy = startY(x, sd) - gorgePoint[1];
+        return Math.sqrt(dx * dx + dy * dy);
+      };
+      let side = startSide;
+      let sx: number;
+      const benchR = BENCH_RADIUS[spec.settings.start.area];
+      if (A.stairs) {
+        // a canyon's start leaves room downstream for the flight up the wall beside its bench
+        const lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
+        const hi = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
+        sx = lo + Math.floor(startDraw * (hi - lo + 1));
+      } else if (hard) {
+        // below the ridge, clear of it by the bench and its margin
+        const first = gorgeX + 14;
+        sx = Math.min(fallsX - 10, first + Math.floor(startDraw * Math.max(1, fallsX - 10 - first)));
+      } else {
+        sx = basinX0 + 2 + Math.floor(startDraw * Math.max(1, gorgeX - 6 - basinX0 - 2));
+        const lastX = Math.max(basinX0 + 2, gorgeX - 7);
+        while (sx < lastX && toGorge(sx, side) > 34) sx++;
+      }
+      if (toGorge(sx, side) > 34 && toGorge(sx, -side) < toGorge(sx, side)) side = -side;
+      const sy = startY(sx, side);
+      const orientation: Orientation = centre(sx) < sy ? "Cw0" : "Cw180";
+      const start: StartFeature = {
+        id: id("start", "start/main"),
+        kind: "start",
+        origin: "generated",
+        role: "start/main",
+        locked: false,
+        params: {
+          position: [sx, sy],
+          orientation,
+          benchRadius: BENCH_RADIUS[spec.settings.start.area],
+          benchLevel: bedAt(river.params.bedProfile, arcAtX(path, sx)) + 2,
+          player: 0,
+        },
+      };
+
+      // ---- tributaries (Rivers 2–3): from the north or south edge into the main river, clear of
+      // the start and the basin, each in its own valley cut through the terraces
+      const tribFeatures: Feature[] = [];
+      const tribRivers: RiverFeature[] = [];
+      // a tributary keeps clear of the dam site's ridge, of the start's zone on the start's side,
+      // and of the other tributaries
+      const startN: 1 | -1 = centre(sx) < sy ? 1 : -1;
+      const busy: [number, number, number][] = [[gorgeX - 12, gorgeX + 12, 0], [sx - 18, sx + 18, startN]];
+      for (let k = 0; k < tributaries; k++) {
+        const d = tribDraws[k];
+        const tside = (k % 2 === 0 ? -startN : startN) as 1 | -1;
+        const free: number[] = [];
+        for (let x = 10; x <= W - 12; x++) if (!busy.some(([a, b, sd]) => x >= a && x <= b && (sd === 0 || sd === tside))) free.push(x);
+        if (!free.length) break;
+        const xj = free[Math.min(free.length - 1, Math.floor(d.at * free.length))];
+        busy.push([xj - 16, xj + 16, 0]);
+        const tr = tributary(k, tside, xj, d, river, centre, t, tribFlow, W, H, id, halfWidth);
+        tribFeatures.push(...tr.features);
+        tribRivers.push(tr.river);
+      }
+
+      const features: Feature[] = [
+        river,
+        ...tribRivers,
+        valley,
+        terraces(1, "north"),
+        terraces(-1, "south"),
+        ...tribFeatures,
+        lake,
+        damSite,
+        ...narrows,
+        ...falls,
+        start,
+      ];
+      return { features, river, lake, start, damSite, floorTop };
+    };
+
+    const lowMin = -(lowFloor0 - 1);
+    const fitted = fitRelief(make, t.range, W, H, seed, { min: lowMin, max: maxLowBed - (lowFloor0 - 1) });
+    if (!fitted) throw new Error(`${archetype}: no layout`);
+    const { river, lake, start, damSite } = fitted;
+    const layout = fitted.features;
+
+    // regeneration (PLAN §7.0): the layout stays off the player's features, locks and keep-out
+    // regions; a layout that touches them is drawn again from the same stream
+    if (context?.protect) {
+      const hit = layoutConflict(context.protect, W, H, river, lake, start, damSite, layout);
+      if (hit) {
+        if (tryN + 1 < MAX_LAYOUT_TRIES) continue;
+        throw new PlanConflict(`the ${archetype === "canyon" ? "canyon" : "river valley"} could not keep ${hit} off your features, locks and keep-out areas (${MAX_LAYOUT_TRIES} layouts tried)`);
+      }
+    }
+
+    // ------------------------------------------------------------------ on the built ground
+    const extrasRng = stream(seed, "extras", candidate, attempt);
+    const others = context?.features ?? [];
+    let ground = groundOf(W, H, seed, [...layout, ...others]);
+    const [sx, sy] = start.params.position;
+    const zone = { x: sx, y: sy, radius: Math.max(start.params.benchRadius, START_CLEAR_RADIUS) + 1 };
+    // nothing may cut the dam site's band: its ridge seals into the ground at both ends
+    const band = damBandMask(W, H, river, damSite, 4);
+    const avoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 10, band);
+    // ponds may lie near the start (drinking water and storage), off its zone
+    const pondsAvoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 2, band);
+
+    // Canyon: a stair climbs the wall right behind the start (PLAN §8: slope chains up the walls
+    // near the start), a terraced cliff of 2-deep steps with a slope on each
+    if (A.stairs) {
+      const keep = ground.protect.slice();
+      if (context?.protect) for (let i = 0; i < keep.length; i++) if (context.protect[i]) keep[i] = 1;
+      const st = planStairs(ground, river, start, keep, id);
+      if (st) {
+        layout.splice(layout.indexOf(start), 0, st);
+        ground = groundOf(W, H, seed, [...layout, ...others]);
+        const tiles = BUILDERS.terracedCliffs!.area!(st, W, H, layout);
+        for (const i of tiles)
+          for (const a of [avoid, pondsAvoid])
+            for (let dy = -3; dy <= 3; dy++)
+              for (let dx = -3; dx <= 3; dx++) {
+                const x = (i % W) + dx;
+                const y = Math.floor(i / W) + dy;
+                if (x >= 0 && y >= 0 && x < W && y < H) a[y * W + x] = 1;
+              }
+      }
+    }
+
+    // badwater basins first: their outlets join the river below the first step downstream of the
+    // start's reach (the canonical pre-fill spreads badwater along a flat reach, so it must not
+    // share the start's), and far enough that the rest of the river keeps its distance
+    const fromStep = firstStepAfter(river, arcAtX(river.params.path, hard ? fallsX - 1 : gorgeX));
+    const reachFrom = Math.max(fromStep + 4, farReach(river.params.path, sx, sy, t.badwaterDistance + 12));
+    const bad = placeBadwater({
+      rng: extrasRng,
+      ground,
+      t,
+      drains: [reachOf(river, reachFrom)],
+      avoid: withChannelBanks(avoid, ground),
+      noRoute: noRouteMask(W, H, lake, [], context?.protect ?? null, band),
+      start: { x: sx, y: sy },
+      idOf: (k) => ({ id: id("setPiece", `setpiece/badwaterBasin/${k}`), role: `setpiece/badwaterBasin/${k}` }),
+    });
+    // the reaches below the lowest bed badwater reaches take it in: no pond there
+    let tainted = -1;
+    if (bad.length) {
+      layout.splice(layout.indexOf(start), 0, ...bad);
+      ground = groundOf(W, H, seed, [...layout, ...others]);
+      for (const b of bad) {
+        const p = b.params.plan as { outlet: number[]; outletTo: string; x: number; y: number };
+        for (let yy = p.y - 3; yy <= p.y + 5; yy++) for (let xx = p.x - 3; xx <= p.x + 5; xx++) if (xx >= 0 && yy >= 0 && xx < W && yy < H) pondsAvoid[yy * W + xx] = 1;
+        for (let k = 0; k + 1 < p.outlet.length; k += 2) {
+          for (let dy = -3; dy <= 3; dy++)
+            for (let dx = -3; dx <= 3; dx++) {
+              const xx = p.outlet[k] + dx;
+              const yy = p.outlet[k + 1] + dy;
+              if (xx >= 0 && yy >= 0 && xx < W && yy < H) pondsAvoid[yy * W + xx] = 1;
+            }
+        }
+        if (p.outletTo === river.id) {
+          const n = p.outlet.length;
+          const s = arcAtX(river.params.path, p.outlet[n - 2]);
+          tainted = Math.max(tainted, bedAt(river.params.bedProfile, s));
+        }
+      }
+    }
+
+    // ponds (Lakes and basins), on reaches the badwater never reaches; Plenty asks some within
+    // reach of the start
+    const ponds = placeRiversidePonds({
+      rng: extrasRng,
+      ground,
+      rivers: layout.filter((f): f is RiverFeature => f.kind === "river"),
+      count: t.basins,
+      avoid: pondsAvoid,
+      near: t.reserve >= 3 ? { x: sx, y: sy, count: Math.min(2, t.basins) } : undefined,
+      floorDepth: hard ? 3 : 2,
+      minSill: tainted + 1,
+      idOf: (k) => ({ id: id("lake", `lake/pond/${k}`), role: `lake/pond/${k}` }),
+    });
+    if (ponds.length) layout.splice(layout.indexOf(start), 0, ...ponds);
+
+    // ------------------------------------------------------------------ resources on the settled water
+    const base = buildMap({ W, H, seed, features: [...layout, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
+    const resources = planResources(spec, base, candidate, attempt, context ? { protect: context.protect, lockedMask: context.locked?.mask ?? null } : undefined);
+    return [...layout, ...resources];
+  }
+}
+
+// ---------------------------------------------------------------------------------- tributaries
+
+function tributary(
+  k: number,
+  side: 1 | -1,
+  xj: number,
+  d: { wiggle: number; x2: number; steps: number },
+  main: RiverFeature,
+  centre: (x: number) => number,
+  t: LayoutTargets,
+  flow: number,
+  W: number,
+  H: number,
+  id: (kind: Feature["kind"], role: string) => string,
+  mainHalf: number,
+): { river: RiverFeature; features: Feature[] } {
+  const role = `river/tributary/${k}`;
+  const rid = id("river", role);
+  const yEdge = side > 0 ? H - 1 : 0;
+  const yj = centre(xj);
+  const xe = Math.min(W - 10, Math.max(10, round(xj + d.x2, 2)));
+  // from the edge to the main river's centreline, gently bent
+  const path: Point[] = [];
+  const n = 6;
+  for (let q = 0; q <= n; q++) {
+    const u = q / n;
+    const x = xe + (xj - xe) * u + d.wiggle * 6 * sinDet(PI * u);
+    const y = yEdge + (yj - yEdge) * u;
+    path.push([round(x, 2), round(y, 2)]);
+  }
+  let len = 0;
+  for (let q = 0; q + 1 < path.length; q++) {
+    const dx = path[q + 1][0] - path[q][0];
+    const dy = path[q + 1][1] - path[q][1];
+    len += Math.sqrt(dx * dx + dy * dy);
+  }
+  // its bed joins the main river's bed and climbs to 3 below the highest terrain at the edge, in
+  // 1-level steps (2-level falls when the waterfalls are Many) outside the main valley floor
+  const sj = arcAtX(main.params.path, xj);
+  const joinBed = bedAt(main.params.bedProfile, sj);
+  const climb = Math.max(0, t.top - 3 - joinBed);
+  const steps: BedStep[] = [];
+  const upper = len - (mainHalf + 10); // arc positions from the edge; the lower end stays flat
+  if (climb > 0 && upper > 6) {
+    const dropEach = t.waterfalls === "many" ? 2 : 1;
+    const count = Math.ceil(climb / dropEach);
+    let left = climb;
+    for (let q = 0; q < count; q++) {
+      const at = round(4 + ((upper - 4) * (q + 0.5 + 0.3 * (d.steps - 0.5))) / count, 2);
+      const dr = Math.min(dropEach, left);
+      left -= dr;
+      steps.push({ at, drop: dr });
+    }
+  }
+  const width = Math.max(3, Math.min(6, round(riverWidth(flow, W) * 0.7, 2)));
+  const river: RiverFeature = {
+    id: rid,
+    kind: "river",
+    origin: "generated",
+    role,
+    locked: false,
+    params: {
+      path,
+      width,
+      bedDepth: 1,
+      bedProfile: { start: joinBed + steps.reduce((a, s) => a + s.drop, 0), steps },
+      flow,
+      style: "meandering",
+      meander: 0,
+      entry: { edge: side > 0 ? "north" : "south" },
+      exit: { river: main.id },
+      badwater: false,
+    },
+  };
+  const valley: LandformFeature = {
+    id: id("landform", `landform/valley/tributary/${k}`),
+    kind: "landform",
+    origin: "generated",
+    role: `landform/valley/tributary/${k}`,
+    locked: false,
+    params: { kind: "valley", edgeStyle: "cliff", along: { river: rid, halfWidth: round(width / 2 + 3, 2), floorAboveBed: 1 } },
+  };
+  return { river, features: [valley] };
+}
+
+// ---------------------------------------------------------------------------------- stairs
+
+/** The stair beside the start (Canyon): a flight of 1-level steps with a slope on each, one tile
+ *  wide, running along the foot of the canyon wall from the floor up to the wall's top. It starts a
+ *  couple of tiles past the start's bench, on the side where the wall's foot runs straight. */
+function planStairs(g: PlanGround, river: RiverFeature, start: StartFeature, keep: Uint8Array, id: (kind: Feature["kind"], role: string) => string): SetPieceFeature | null {
+  const { W, H, heights: h } = g;
+  const [sx, sy] = start.params.position;
+  const field = pathField(river.params.path, W, H);
+  const away = field.side[sy * W + sx]; // +1: the start is left of the flow (north for a west-east river)
+  const dy = away > 0 ? 1 : -1;
+  const floor = start.params.benchLevel - 1;
+  const r = start.params.benchRadius;
+  const wallRow = (x: number): number => {
+    let y = sy;
+    while (y > 1 && y < H - 2 && h[y * W + x] <= floor + 1) y += dy;
+    return y;
+  };
+  const role = "setpiece/terracedCliffs/stairs";
+  const ctx: PieceContext = { W, H, seed: g.seed, features: [river], heights: h, channel: g.channel, start: { x: sx, y: sy, radius: r - 1 }, locked: keep };
+  for (const dir of [1, -1]) {
+    for (let off = r + 2; off <= r + 8; off++) {
+      const x0 = sx + dir * off;
+      const yw = wallRow(x0);
+      if (yw <= 1 || yw >= H - 2) continue;
+      const rise = h[yw * W + x0] - floor;
+      if (rise < 2 || rise > 8) continue;
+      const yf = yw - dy;
+      // the floor in front of the flight two tiles deep, no river under it, and the wall's top
+      // beside its last step at that step's level
+      let ok = true;
+      for (let k = -2; k < rise && ok; k++) {
+        const x = x0 + dir * k;
+        if (x < 1 || x > W - 2 || g.channel[yf * W + x]) ok = false;
+        else if (k < 0) ok = h[yf * W + x] === floor;
+      }
+      if (!ok || h[yw * W + x0 + dir * (rise - 1)] !== floor + rise) continue;
+      const facing = dir > 0 ? "west" : "east";
+      const res = planSetPiece("terracedCliffs", { at: [x0, yf], facing, bands: rise, depth: 1, width: 1, stair: true }, ctx, { id: id("setPiece", role), origin: "generated", role }, true);
+      if (res.ok) return res.feature;
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------------- helpers
+
+/** Tiles ponds and basins keep off: the start's zone and a margin, the reservoir basin, the
+ *  set pieces' protected tiles, the map's border, and the player's protected tiles. */
+function keepOff(W: number, H: number, g: PlanGround, lake: LakeFeature, zone: { x: number; y: number; radius: number }, protect: Uint8Array | null, margin: number, band: Uint8Array): Uint8Array {
+  const N = W * H;
+  const avoid = band.slice();
+  const basin = polygonMask(lake.params.outline, W, H);
+  for (let i = 0; i < N; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    if (basin[i] || g.protect[i] || protect?.[i] || x < 3 || y < 3 || x > W - 4 || y > H - 4) avoid[i] = 1;
+    if (Math.abs(x - zone.x) <= zone.radius + margin && Math.abs(y - zone.y) <= zone.radius + margin) avoid[i] = 1;
+  }
+  return avoid;
+}
+
+/** The arc position of the first bed step at or after `s` on a river (its length when none). */
+function firstStepAfter(r: RiverFeature, s: number): number {
+  let best = Infinity;
+  for (const st of r.params.bedProfile.steps) if (st.at >= s && st.at < best) best = st.at;
+  if (best < Infinity) return best;
+  let len = 0;
+  const p = r.params.path;
+  for (let k = 0; k + 1 < p.length; k++) len += Math.sqrt((p[k + 1][0] - p[k][0]) * (p[k + 1][0] - p[k][0]) + (p[k + 1][1] - p[k][1]) * (p[k + 1][1] - p[k][1]));
+  return len;
+}
+
+/** Tiles a badwater outlet may not cross: the reservoir basin, the ponds and the player's tiles. */
+function noRouteMask(W: number, H: number, lake: LakeFeature, ponds: readonly LakeFeature[], protect: Uint8Array | null, band: Uint8Array): Uint8Array {
+  const out = polygonMask(lake.params.outline, W, H);
+  for (let i = 0; i < out.length; i++) if (band[i]) out[i] = 1;
+  for (const p of ponds) {
+    const m = polygonMask(p.params.outline, W, H);
+    for (let i = 0; i < m.length; i++) if (m[i]) out[i] = 1;
+  }
+  if (protect) for (let i = 0; i < out.length; i++) if (protect[i]) out[i] = 1;
+  return out;
+}
+
+/** The avoid mask with every river channel and its banks added. */
+function withChannelBanks(avoid: Uint8Array, g: PlanGround): Uint8Array {
+  const { W, H } = g;
+  const out = avoid.slice();
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!g.channel[y * W + x]) continue;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < H) out[(y + dy) * W + x + dx] = 1;
+    }
+  return out;
+}
+
+/** The arc position from which the whole rest of a river keeps at least `d` from (x, y): the reach
+ *  a badwater outlet may join, so badwater never flows back past the start on a meander. */
+export function farReach(path: Point[], x: number, y: number, d: number): number {
+  let total = 0;
+  for (let k = 0; k + 1 < path.length; k++) total += Math.sqrt((path[k + 1][0] - path[k][0]) * (path[k + 1][0] - path[k][0]) + (path[k + 1][1] - path[k][1]) * (path[k + 1][1] - path[k][1]));
+  let from = total;
+  for (let s = total; s >= 0; s -= 1) {
+    const p = pointAtArc(path, s).p;
+    if ((p[0] - x) * (p[0] - x) + (p[1] - y) * (p[1] - y) < d * d) break;
+    from = s;
+  }
+  return from;
+}
+
+/** Distance from (x, y) to a polyline. */
+function distToPath(path: Point[], x: number, y: number): number {
+  let best = Infinity;
+  for (let i = 0; i + 1 < path.length; i++) {
+    const [ax, ay] = path[i];
+    const vx = path[i + 1][0] - ax;
+    const vy = path[i + 1][1] - ay;
+    const l2 = vx * vx + vy * vy;
+    let u = l2 > 0 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0;
+    if (u < 0) u = 0;
+    else if (u > 1) u = 1;
+    const px = ax + u * vx - x;
+    const py = ay + u * vy - y;
+    const d = px * px + py * py;
+    if (d < best) best = d;
+  }
+  return Math.sqrt(best);
+}
+
+export type { Rng };
+
+/** The dam site's band across the valley (damSite.ts), `margin` tiles wider along the river: the
+ *  ridge and the ground its ends seal into. */
+export function damBandMask(W: number, H: number, river: RiverFeature, dam: SetPieceFeature, margin: number): Uint8Array {
+  const out = new Uint8Array(W * H);
+  const plan = dam.params.plan as { at: number; thickness: number; wobble: number };
+  const path = river.params.path;
+  const c = pointAtArc(path, plan.at).p;
+  const ax = path[path.length - 1][0] - path[0][0];
+  const ay = path[path.length - 1][1] - path[0][1];
+  const al = Math.sqrt(ax * ax + ay * ay) || 1;
+  const half = plan.thickness / 2 + plan.wobble + margin;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const along = ((x - c[0]) * ax + (y - c[1]) * ay) / al;
+      if (Math.abs(along) <= half) out[y * W + x] = 1;
+    }
+  return out;
+}
+
+/** What of a drawn layout lands on protected tiles (PLAN §7.0): the channel with a tile of bank,
+ *  the basin, the dam ridge across the valley floor, a tributary, or the start with its bench and
+ *  clear zone. */
+function layoutConflict(
+  protect: Uint8Array,
+  W: number,
+  H: number,
+  river: RiverFeature,
+  lake: LakeFeature,
+  start: StartFeature,
+  dam: SetPieceFeature,
+  features: readonly Feature[],
+): string | null {
+  const N = W * H;
+  for (const r of features) {
+    if (r.kind !== "river") continue;
+    const field = pathField(r.params.path, W, H);
+    const bank = r.params.width / 2 + 1;
+    for (let i = 0; i < N; i++) if (protect[i] && field.d[i] < bank) return r.id === river.id ? "the river" : "a tributary";
+  }
+  const basin = polygonMask(lake.params.outline, W, H);
+  for (let i = 0; i < N; i++) if (protect[i] && basin[i]) return "the basin";
+  const [cx, cy] = start.params.position;
+  const r = Math.max(start.params.benchRadius, START_CLEAR_RADIUS + 1);
+  for (let y = Math.max(0, cy - r); y <= Math.min(H - 1, cy + r); y++)
+    for (let x = Math.max(0, cx - r); x <= Math.min(W - 1, cx + r); x++) if (protect[y * W + x]) return "the start";
+  // the ridge reaches across the valley floor and into the first terraces (damSite.ts)
+  const plan = dam.params.plan as { at: number; thickness: number; wobble: number };
+  const path = river.params.path;
+  const c = pointAtArc(path, plan.at).p;
+  const ax = path[path.length - 1][0] - path[0][0];
+  const ay = path[path.length - 1][1] - path[0][1];
+  const al = Math.sqrt(ax * ax + ay * ay) || 1;
+  const half = plan.thickness / 2 + plan.wobble + 1;
+  const across = H * 0.2 + 12;
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      if (!protect[y * W + x]) continue;
+      const along = ((x - c[0]) * ax + (y - c[1]) * ay) / al;
+      const side = ((y - c[1]) * ax - (x - c[0]) * ay) / al;
+      if (Math.abs(along) <= half && Math.abs(side) <= across) return "the dam site";
+    }
+  return null;
+}

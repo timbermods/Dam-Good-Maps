@@ -1,0 +1,20 @@
+River Valley (4242): 128×128, seed 4242, generator 0.2.0
+sha256 a713596b3a08c163d3d8e60b69be865ff17078ea868161f34d5a7186e337314d  River Valley (4242).timber
+sha256 7c28c158f65a1c198014a657285cc907f29355008608da8e4da7093a3a98a61c  River Valley (4242) (empty water).timber
+
+Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
+PNG: north up, 5 px per tile, dotted grid every 16 tiles; water blue, badwater brown; start white (door red);
+living trees green, dead trees grey-brown; living berry bushes within 20 tiles of the start purple; the badwater
+source and its ditch magenta; the best dam site orange; depth samples and the nearest pumpable water cyan.
+
+Start: StartingLocation at (47, 30), z 10, Cw180; door tile (46, 31).
+Settled water: 824 wet tiles after the canonical settle (640 ticks from the pre-fill).
+River: 5 sources on the west edge, 3.6 water/s in all.
+River depth samples, west to east (B1: the same on day 1, no surge or drain): (2, 78) 0.49 deep, surface 10.49; (32, 45) 0.42 deep, surface 10.42; (58, 53) 0.46 deep, surface 8.46; (83, 64) 0.42 deep, surface 8.42; (109, 89) 0.75 deep, surface 6.75, badwater 81%; (125, 67) 0.68 deep, surface 6.68, badwater 40%.
+Nearest pumpable clean water to the start: (42, 38), 0.49 deep, 9.2 tiles from the start.
+Living berry bushes within 20 tiles of the start (B1: none flagged dry): 77; for example (37, 33) (38, 33) (39, 33) (40, 33) (36, 34).
+Trees: 1738, 855 alive. Living groves (B3: still alive after 15 days): 139 Pine around (34, 27); 70 Birch around (58, 63); 64 Pine around (22, 86); 49 Oak around (71, 64).
+Dead stands (B3: still dead, with logs): 98 Pine around (56, 121); 53 Pine around (120, 2); 32 Oak around (10, 115); 31 Birch around (72, 2).
+Badwater (B4): BadwaterSource at (107, 93)–(109, 95), strength 2.34, in a pit with a ditch of 2 tiles to the river; the nearest badwater or contaminated soil is 81 tiles from the start.
+Best dam site: a 5-tile dam at (66, 56), 2 level(s) high, holds 1402 water (the colony needs 380 stored through the worst drought).
+Advisory: plants.drought: 77 berry bushes near the start dry out in a 9-day drought (their water drains; a blueberry dies after about 9 dry days). Irrigate or dam upstream.

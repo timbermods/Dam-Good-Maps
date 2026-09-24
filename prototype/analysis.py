@@ -325,7 +325,8 @@ def dam_candidate(h, water_surface, y, x, dy, dx, dam_height, max_half=10, max_f
     """Dam line through (y, x) along (dy, dx), crest = h[y,x] + dam_height. The line extends
     until terrain reaches the crest on both sides. The reservoir is the tile set below the crest
     connected to the higher-water side, which must not leak around the dam ends or reach the map
-    edge. Returns dict(length, volume, area) or None."""
+    edge. Returns dict(length, volume, area, ratio) or None. Values are not rounded, so the
+    TypeScript port (src/core/analysis/damsites.ts) picks the same sites."""
     Y, X = h.shape
     crest = h[y, x] + dam_height
     line = [(y, x)]
@@ -370,24 +371,36 @@ def dam_candidate(h, water_surface, y, x, dy, dx, dam_height, max_half=10, max_f
             seen.add((yy, xx))
             q.append((yy, xx))
     return {"y": int(y), "x": int(x), "dir": (dy, dx), "height": dam_height, "length": len(line),
-            "area": len(seen), "volume": round(vol, 1), "ratio": round(vol / len(line), 1)}
+            "area": len(seen), "volume": float(vol), "ratio": float(vol) / len(line)}
 
 
-def dam_sites(h, channel_mask, water_surface=None, heights=(1, 2, 3), stride=3, min_ratio=30.0):
-    """Best dam per channel tile sample. Returns sites sorted by volume per dam tile, keeping
-    only sites at least 8 tiles apart."""
+def max_flood_for(W: int, H: int) -> int:
+    """The largest reservoir a dam site may flood: 6,000 tiles, or 15% of the map on maps larger
+    than 200x200 (the dam-site basin cap, PLAN §9.1)."""
+    return max(6000, int(0.15 * W * H))
+
+
+def dam_sites(h, channel_mask, water_surface=None, heights=(1, 2, 3), stride=3, min_ratio=30.0,
+              start_dist=None, max_dist=60, min_depth=0.0):
+    """Best dam per channel tile sample (every stride-th channel tile in index order; with
+    start_dist, only samples within max_dist of the start). Returns sites sorted by volume per dam
+    tile, keeping only sites at least 8 tiles apart. With min_depth, only reservoirs at least that
+    deep on average count (Hard: 3, PLAN §11.4)."""
     if water_surface is None:
         water_surface = h.astype(float)
     ys, xs = np.nonzero(channel_mask)
     order = np.lexsort((xs, ys))
     found = []
+    max_flood = max_flood_for(h.shape[1], h.shape[0])
     for i in order[::stride]:
         y, x = int(ys[i]), int(xs[i])
+        if start_dist is not None and start_dist[y, x] > max_dist:
+            continue
         best = None
         for H in heights:
             for dy, dx in DAM_DIRS:
-                c = dam_candidate(h, water_surface, y, x, dy, dx, H)
-                if c and (best is None or c["ratio"] > best["ratio"]):
+                c = dam_candidate(h, water_surface, y, x, dy, dx, H, max_flood=max_flood)
+                if c and (min_depth <= 0 or c["volume"] / c["area"] >= min_depth) and (best is None or c["ratio"] > best["ratio"]):
                     best = c
         if best and best["ratio"] >= min_ratio:
             found.append(best)

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "spike/artifact/page.html"
+        ],
+        "createdAt": "2026-09-24T11:19:24.709Z",
+        "reason": "Claude: static detector pairs one theme's tokens with the default black/white ground; each theme's text and ground tokens resolve together (light muted 5.8:1, accent 5.1:1; dark muted on surface 6.9:1)"
+      }
+    ]
+  }
+}

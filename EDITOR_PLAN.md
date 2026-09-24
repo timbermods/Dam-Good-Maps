@@ -26,7 +26,7 @@ If any of these is missing, stop and tell me.
 
 **Working rules.**
 - Build one milestone at a time. Each ends with its acceptance criteria met, tests passing, and a short summary of what changed.
-- Stop at milestones marked **IN-GAME CHECK** and wait for my results before continuing.
+- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate.
 - The editor must never be able to export a file that breaks the game. Load problems block export. Playability and design problems warn. The classes are defined in `PLAN.md` §19.5.
 - Everything works without Claude. Claude features are an add-on.
 
@@ -65,7 +65,7 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
   - The tools edit surface height only.
   - Design the data model so voxel editing can be added later.
 - Terrain above 16. It is the in-game editor's limit, and every tool keeps to it. Imported maps with terrain up to 22 are preserved.
-- Multiplayer starts. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts.
+- Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
 - Matching the game's exact visuals. The game's assets can't be included, so the editor uses its own clear, stylized look. The game remains the reference for final appearance and exact water behaviour.
 
@@ -123,14 +123,20 @@ Generated maps expose their rivers, lakes, landforms, set pieces, forests, berry
 
 **Building the final map:** the one build pipeline in `PLAN.md` §19.8. It runs landforms, then set pieces, rivers and lakes, pads, sculpt edits, derived slopes, water, resources, the start and entity edits, in that order. Every step is deterministic, so the same document always produces a byte-identical `.timber` file. Changing a feature's parameter rebuilds only the area it affects. That incremental rebuild must equal a full rebuild (`PLAN.md` §19.7).
 
-**Edit operations** are small, serializable commands with undo data:
+**Edit operations** are small, serializable commands with undo data, in one envelope `{op, params}`
+(`core/doc/ops.ts`, `ops.schema.json`; the validation report's fixes use the same envelope, D35):
 
-- Feature operations: `AddFeature`, `UpdateFeature { id, patch }`, `DeleteFeature`, `ReorderFeature`
-- `Sculpt { mode: raise | lower | flatten | terrace | smooth | naturalize, cells, params }`
-- `PlaceEntity`, `MoveEntity`, `DeleteEntity`, `SetEntityProps` (advanced mode)
-- `PinSlope`, `RemoveSlope` (overrides on the derived slopes)
-- `RegenerateRegion { area, seedVariant, layers }`, `SetLock`
-- `SpecPatch { patch }` (a JSON Merge Patch on the `MapSpec`, used by Claude and by "change a setting and regenerate")
+- Feature operations: `addFeature`, `updateFeature { id, patch }` (a merge patch on `params` and
+  `locked`), `deleteFeature`, `reorderFeature`
+- `sculpt { mode: raise | lower | flatten | terrace | smooth | naturalize, cells, amount | level | step }`
+- `placeEntity`, `moveEntity`, `deleteEntities`, `setEntityProps` (advanced mode)
+- `pinSlope`, `removeSlope` (overrides on the derived slopes)
+- `regenerateRegion { area, seedVariant, layers }`, `setLock`
+- `specPatch { patch }` (a JSON Merge Patch on the `MapSpec`, used by Claude and by "change a setting and regenerate")
+
+The document keeps the applied operations as its log, on top of its generation (the spec, the
+planned features and the stored base, D37). A `specPatch` replaces the generation and replays the
+log on it; everything else joins the log.
 
 Operations validate their inputs against the schemas and reject invalid ones instead of clamping silently. The set-piece builders are the one place where a valid value may be reduced to what the map allows, and they always report it.
 
@@ -155,7 +161,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 **Persistence**
 - Project file download and upload (`.damgoodmaps.json`, compressed). It holds the spec, features, edits, locks, meta, generator version and the built base (`PLAN.md` §19.6), so a project opens exactly even after the generator changes. For imported maps it holds the original file's data.
-- Autosave in the browser through the storage adapter (`PLAN.md` §19.9), guarded against storage failures; recover the last session on reload.
+- Autosave in the browser through the storage adapter (`PLAN.md` §19.9; IndexedDB on the website), guarded against storage failures; recover the last session on reload (`PLAN.md` §20, D44).
 - `.timber` export through the `export` validation profile. Re-importing a `.timber` file bakes everything into a new imported map.
 
 **Undo and redo** run over the operation list, with periodic snapshots so undo stays fast on 256×256 maps. The history is visible as a list the user can step back through.
@@ -182,6 +188,10 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 **Overlays** can be toggled in both modes, with the most useful ones (water preview, start reach) in simple mode.
 
+**Built in roadmap M4** (`PLAN.md` §20, D42–D45): the shell. The 3D view with orbit and top-down views, the compass and the hover readout; the four tabs, each listing its features; selection by click or list, with move and delete handles and a small inspector; undo, redo and the history; the health pill and export in the `export` profile; import of any `.timber`; project files and autosave. Its only drawing tools are rectangles: a plateau (Land), and a forest, berry patch or ruin field (Resources). The tools above replace them with their milestones (land and water in M5, resources in M7) and make the same features.
+
+**Built in roadmap M5** (`PLAN.md` §20, D47–D56): the land and water tools. Land: hill, plateau, ridge, canyon, valley and island by outline (drag a rectangle or click the corners) with a height and gentle, terraced or cliff edges; terraced cliffs; a Slope tool that pins a slope on a step or removes one. Water: rivers clicked from source to outlet (a sealed mouth at the map edge or a spring inland; they end at an edge, in a river or in a lake), lakes by their basin (the water level is the outlet's sill), waterfalls (a bed step on a river, a standalone landmark elsewhere), dam sites and gorges on a river, badwater springs, and a layer that shows the best dam sites. Every tool plans its edit on the map with the shared builders and shows it with its report before Place applies it as one step; moving a feature or changing it in the inspector plans it again. Dragging the start shows its footprint in green or red and the water, trees and berries nearby. After every edit the instant checks run, and the problems the edit made show at once with their one-click fixes.
+
 ## 5. Creative features
 
 - **Parametric features** (section 3): everything the user draws stays editable.
@@ -197,7 +207,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 ## 6. Live validation, fixes and water preview
 
-- Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5).
+- Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5). An imported map's own problems, the ones it had when it was opened, are listed but never blamed on the player's edits: they do not block its export (`PLAN.md` §20, D43).
 - **Instant checks** after every edit, on the dirty region: footprints, ground support, overlaps, start area, limits, slopes, terrain support.
 - **Background checks** in a web worker, debounced and cancelled when a newer edit arrives: water simulation, reachability, resource totals, moisture reach, drought survival, interestingness scores.
 - Issues have a severity, a location and a plain-language explanation; clicking one flies the camera to it.
@@ -301,6 +311,12 @@ A mismatch goes back to Claude to revise, just like a validation failure.
 
 Record the results in "Editor decisions".
 
+*Spike results (M3).* See [docs/spike-m3.md](docs/spike-m3.md) and decisions D8, D10 and D41. The
+page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp>.
+- Blob workers, file open and the `.zip` download all work under the artifact's rules.
+- Route B's browser calls pass CORS with the direct-browser-access header.
+- `sample`'s latency and who can open the artifact wait for Kyler's own run of the page.
+
 ## 8. Architecture
 
 - **Module boundaries** (the same tree as `PLAN.md` §3):
@@ -315,7 +331,7 @@ Record the results in "Editor decisions".
   - `platform` adapters.
 - The operations engine and feature rasterization are headless and fully testable without the UI.
 - Determinism: the same document always produces a byte-identical `.timber` file (`PLAN.md` §19.7).
-- 3D rendering:
+- 3D rendering (`src/render3d`, `PLAN.md` §20, D45):
   - chunked meshing (32×32 chunks) with remeshing of dirty chunks only;
   - a voxel mesher only for columns with more than one solid run (1% of official map columns, up to 58% on one workshop map);
   - instanced trees, bushes and ruins;
@@ -366,7 +382,7 @@ Record the results in "Editor decisions".
   5. Make the map mirror-symmetric while keeping one valid start.
   6. Export the map and fix any warnings first.
   7. The full journey: generate a map from settings, refine it with at least one manual edit and one Claude request, export it and load it in Timberborn, in under 10 minutes.
-- **In-game checklist** for the IN-GAME CHECK milestones: the map loads, water settles as the preview showed, the district center places, beavers survive the first drought, and edited features behave as intended. Add the audit's checks in `PLAN.md` §18 F (waterfall visibility, sealed river mouths, halved pre-1.0 imports, roofed water in imported maps).
+- **In-game checklist** for the IN-GAME CHECK milestones (deferred, logged as pending in `docs/ingame-log.md`, D11): the map loads, water settles as the preview showed, the district center places, beavers survive the first drought, and edited features behave as intended. Add the audit's checks in `PLAN.md` §18 F (waterfall visibility, sealed river mouths, halved pre-1.0 imports, roofed water in imported maps).
 
 ## 10. Milestones
 

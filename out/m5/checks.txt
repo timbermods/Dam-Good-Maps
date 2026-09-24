@@ -1,0 +1,31 @@
+River Valley (4242): 128×128, seed 4242, generator 0.3.0, edited with the M5 tools (one edit per map).
+
+Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
+PNGs: north up, 5 px per tile, dotted grid every 16 tiles; water blue, start white (door red); each map's marks are listed below.
+Start: StartingLocation at (47, 30), z 10, Cw180; door tile (46, 31).
+
+sha256 398b6445638fbc92c962bc5df76944ca76e95fcd8238137a35d1772660c6be0a  River Valley (4242) F1 waterfall S2.timber
+F1 waterfall S2: a standalone waterfall, 20 wide, falling north: lip (74, 118)–(55, 118) at level 15, plunge pool below it at level 9 (rows y 119–122).
+  2 water/s from 4 springs of 0.5 in the header pool (y 115–117); settled: 20 of 20 lip tiles wet, 0.030 deep (0.3·S/W = 0.030), a drop of 5.71.
+  The outflow (cyan) runs 5 tiles to the map edge, 3 wide; a water wheel fits on it, e.g. at (75, 123), (75, 124), (75, 125). The plunge pool is at (74, 119)–(55, 119).
+  Export warnings: none.
+
+sha256 915b5b2c5505de50a7c85d53f25e435bcdf04659c5d368997546ae9477531166  River Valley (4242) F1 waterfall S8.timber
+F1 waterfall S8: a standalone waterfall, 20 wide, falling north: lip (74, 118)–(55, 118) at level 15, plunge pool below it at level 9 (rows y 119–122).
+  8 water/s from 16 springs of 0.5 in the header pool (y 115–117); settled: 20 of 20 lip tiles wet, 0.120 deep (0.3·S/W = 0.120), a drop of 5.24.
+  The outflow (cyan) runs 5 tiles to the map edge, 5 wide; a water wheel fits on it, e.g. at (75, 123), (75, 124), (75, 125). The plunge pool is at (74, 119)–(55, 119).
+  Export warnings: none.
+
+sha256 5bb02515b3fc382f643c07d0de447d7522cd87bff664f7bdab157585da054f4e  River Valley (4242) C1 dam site.timber
+C1 dam site: a rock ridge (top level 13) across the river's lower reach. Build a dam 2 high on its 10 gap tiles (orange): (83, 63) (83, 64) (83, 65) (83, 66) (83, 67) (83, 68) (83, 69) (83, 70) (83, 71) (83, 72). The river bed there is at level 8, so the crest is at level 10.
+  The basin behind it should fill to about level 10: 2267 tiles, about 2903 blocks of water, and none of it should leak round the ridge's ends.
+  C3 (first drought on Normal): the colony needs about 380 blocks stored; this reservoir holds 2903. Export warnings: none.
+
+C2 (any of these maps): the generated river falls at (40, 39), a drop of 2 and (88, 76), a drop of 2; a water wheel just below either should turn.
+
+sha256 3f1a3e6a1b48dc5df8d909c7bcf83c148a5f4ca1fb5beb529f54079b257f8732  River Valley (4242) gorge stairs.timber
+Gorge stairs: two edits. A river drawn from the south edge at (66, 0) through (66, 28) into the main river at (64, 57), 1 water/s (1.5 wide); 2 steps down where the ground falls.
+Gorge: the tributary runs 3 wide between walls 3 levels above its bed, from about (66, 14) to (66, 26).
+  The stair notch: 3 slopes (orange, high side brown) climb one wall from a two-tile landing beside the water: (64, 20) z10 Cw90; (63, 20) z11 Cw90; (62, 20) z12 Cw90.
+  Beavers should walk down the notch to the landing and back up, and a water pump on the landing should reach the water.
+  walls 3 levels above the river's bed, 3 tiles thick; a stair notch with slopes climbs one wall to a landing beside the water. Export warnings: none.

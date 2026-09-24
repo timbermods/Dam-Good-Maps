@@ -1,7 +1,16 @@
 """Validate a .timber map: everything the game needs to load it without dropping objects, plus
 playability rules calibrated on the official maps. A map passes only if every check passes.
 
-    python prototype/validate.py out/*.timber [--difficulty normal] [--json]
+    python prototype/validate.py out/*.timber [--difficulty normal] [--json] [--load-only] [--quiet]
+
+--load-only runs the load and design checks only (file, terrain, placement, slopes, start), as the
+TypeScript generator's M1 acceptance asks (ROADMAP M1); --quiet prints one line per file.
+
+A map "<stem>.timber" with a project file "<stem>.damgoodmaps.json" beside it (the website's
+download, gzip JSON) is checked with its spec's thresholds and its planned lakes, as the website's
+`generate` profile does; any other map with the defaults for --difficulty, as an import.
+A check that does not apply to the map is reported as passing with "na"; the one advisory check
+(plants.drought) never fails the map.
 
 Check ids and thresholds are documented in PLAN.md ("Validation"); the evidence behind them is
 in investigation/notes/*.md and investigation/REPORT.md.
@@ -52,6 +61,8 @@ class Check:
     detail: str = ""
     value: object = None
     limit: object = None
+    na: bool = False
+    advisory: bool = False
 
 
 @dataclass
@@ -59,15 +70,15 @@ class Report:
     path: str
     checks: list = field(default_factory=list)
 
-    def add(self, id, ok, detail="", value=None, limit=None):
-        self.checks.append(Check(id, bool(ok), detail, value, limit))
+    def add(self, id, ok, detail="", value=None, limit=None, na=False, advisory=False):
+        self.checks.append(Check(id, bool(ok), detail, value, limit, bool(na), bool(advisory)))
 
     @property
     def passed(self):
-        return all(c.ok for c in self.checks)
+        return all(c.ok or c.advisory for c in self.checks)
 
     def failures(self):
-        return [c for c in self.checks if not c.ok]
+        return [c for c in self.checks if not c.ok and not c.advisory]
 
 
 def load_footprints():
@@ -120,14 +131,21 @@ def check_file(m: TimberMap, rep: Report, raw_zip: dict):
     if not missing:
         lv = s["WaterMapNew"]["Levels"]
         n = lv * X * Y
+        # each array is read with its own size field (water Levels, the soil simulators' Size,
+        # evaporation Levels; the soil and evaporation ones default to 1): 0.6 maps store one
+        # soil slot beside two water levels
+        soil_n = s["SoilMoistureSimulator"].get("Size", 1) * X * Y
+        dirt_n = s["SoilContaminationSimulator"].get("Size", 1) * X * Y
+        evap_n = s["WaterEvaporationMap"].get("Levels", 1) * X * Y
         lens = {
-            "WaterColumns": len(s["WaterMapNew"]["WaterColumns"]["Array"].split(" ")),
-            "ColumnOutflows": len(s["WaterMapNew"]["ColumnOutflows"]["Array"].split(" ")),
-            "MoistureLevels": len(s["SoilMoistureSimulator"]["MoistureLevels"]["Array"].split(" ")),
-            "ContaminationLevels": len(s["SoilContaminationSimulator"]["ContaminationLevels"]["Array"].split(" ")),
-            "EvaporationModifiers": len(s["WaterEvaporationMap"]["EvaporationModifiers"]["Array"].split(" ")),
+            "WaterColumns": (len(s["WaterMapNew"]["WaterColumns"]["Array"].split(" ")), n),
+            "ColumnOutflows": (len(s["WaterMapNew"]["ColumnOutflows"]["Array"].split(" ")), n),
+            "MoistureLevels": (len(s["SoilMoistureSimulator"]["MoistureLevels"]["Array"].split(" ")), soil_n),
+            "ContaminationLevels": (len(s["SoilContaminationSimulator"]["ContaminationLevels"]["Array"].split(" ")), dirt_n),
+            "ContaminationCandidates": (len(s["SoilContaminationSimulator"]["ContaminationCandidates"]["Array"].split(" ")), dirt_n),
+            "EvaporationModifiers": (len(s["WaterEvaporationMap"]["EvaporationModifiers"]["Array"].split(" ")), evap_n),
         }
-        bad = {k: v for k, v in lens.items() if v != n}
+        bad = {k: v for k, (v, want) in lens.items() if v != want}
         rep.add("file.arrays", not bad and lv >= m.water_levels(),
                 f"levels {lv} (terrain needs {m.water_levels()}), wrong lengths: {bad}" if bad or lv < m.water_levels() else "consistent")
     md = m.metadata or {}
@@ -147,6 +165,10 @@ def check_terrain(m: TimberMap, rep: Report):
     rep.add("terrain.max_height", h.max() <= LIMITS["editor_max_height"],
             f"highest column {h.max()} (editor limit 16, game limit 22)", int(h.max()), 16)
     rep.add("terrain.top_layer_free", not m.voxels[-1].any(), "layer 22 must stay empty")
+    # design: the water model covers one floor per tile (caves and overhangs are approximated on
+    # the top surface); imported maps report it as information
+    multi = int((m.floors() > 1).sum())
+    rep.add("terrain.single_floor", multi == 0, f"{multi} columns with caves or overhangs", multi, 0)
 
 
 def terrain_unsupported(m: TimberMap, object_tops=()) -> int:
@@ -324,13 +346,29 @@ def check_start(m: TimberMap, rep: Report, ents, occupied):
 
 # ---------------------------------------------------------------------------------------------
 
-def validate(path, difficulty="normal", water=None) -> Report:
+def load_project(path):
+    """The spec and features of '<stem>.damgoodmaps.json' beside a map, or (None, None)."""
+    import gzip
+    stem = path[:-len(".timber")] if path.endswith(".timber") else path
+    proj = stem + ".damgoodmaps.json"
+    if not os.path.exists(proj):
+        return None, None
+    with open(proj, "rb") as f:
+        raw = f.read()
+    if raw[:2] == b"\x1f\x8b":
+        raw = gzip.decompress(raw)
+    doc = json.loads(raw.decode("utf-8"))
+    return doc.get("spec"), doc.get("features")
+
+
+def validate(path, difficulty="normal", water=None, load_only=False) -> Report:
     import zipfile
     rep = Report(path)
     with zipfile.ZipFile(path) as z:
         raw = {"version.txt": z.read("version.txt").decode("utf-8-sig") if "version.txt" in z.namelist() else ""}
     m = TimberMap.read(path)
     fps = load_footprints()
+    spec, features = load_project(path)
     stackable_tops.clear()
     check_file(m, rep, raw)
     check_terrain(m, rep)
@@ -340,12 +378,25 @@ def validate(path, difficulty="normal", water=None) -> Report:
     ents = by_template(m)
     check_slopes(m, rep, ents)
     start = check_start(m, rep, ents, occupied)
-    try:
-        from playability import check_playability
-        check_playability(m, rep, ents, start, difficulty, occupied, water)
-    except ImportError:
-        pass
+    if load_only:
+        return rep
+    from playability import check_playability
+    check_playability(m, rep, fps, difficulty, spec, features, water)
     return rep
+
+
+def _jsonable(d):
+    """Plain JSON values: numpy numbers as Python numbers, non-finite floats and tuples as text."""
+    out = {}
+    for k, v in d.items():
+        if isinstance(v, (np.integer,)):
+            v = int(v)
+        elif isinstance(v, (float, np.floating)):
+            v = float(v) if np.isfinite(v) else str(float(v))
+        elif isinstance(v, (tuple, list)):
+            v = str(v)
+        out[k] = v
+    return out
 
 
 def main():
@@ -355,15 +406,21 @@ def main():
         difficulty = sys.argv[sys.argv.index("--difficulty") + 1]
         args = [a for a in args if a != difficulty]
     all_ok = True
+    load_only = "--load-only" in sys.argv
     for path in args:
-        rep = validate(path, difficulty)
+        rep = validate(path, difficulty, load_only=load_only)
         all_ok &= rep.passed
+        if "--quiet" in sys.argv:
+            bad = [c.id for c in rep.failures()]
+            print(f"{'PASS' if rep.passed else 'FAIL'}  {path}" + (f"  ({', '.join(bad)})" if bad else ""))
+            continue
         if "--json" in sys.argv:
-            print(json.dumps({"path": path, "passed": rep.passed, "checks": [c.__dict__ for c in rep.checks]}, default=str, indent=1))
+            print(json.dumps({"path": path, "passed": rep.passed, "checks": [_jsonable(c.__dict__) for c in rep.checks]}))
             continue
         print(f"{'PASS' if rep.passed else 'FAIL'}  {path}")
         for c in rep.checks:
-            print(f"   {'ok ' if c.ok else 'BAD'} {c.id:28s} {c.detail}")
+            mark = "na " if c.na else "ok " if c.ok else "adv" if c.advisory else "BAD"
+            print(f"   {mark} {c.id:28s} {c.detail}")
     sys.exit(0 if all_ok else 1)
 
 
