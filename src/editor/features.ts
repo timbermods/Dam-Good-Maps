@@ -8,6 +8,7 @@ import type { Feature, Point, RiverFeature } from "../core/features/schema";
 import { runsToTiles, tilesToRuns, type Runs } from "../core/math/grid";
 import type { OpParams } from "../core/doc/ops";
 import { movePatch as corePatch } from "../core/doc/tools";
+import { OBJECT_NAMES as OBJECT_KIND_NAMES, objectTiles } from "../core/features/objects";
 import { DEAD, YOUNG, type EntityView, type SurfaceWater } from "../render3d/model";
 
 // ------------------------------------------------------------------------------------- names
@@ -63,7 +64,7 @@ export function featureName(f: Feature): string {
     case "ruinField":
       return "Ruin field";
     case "mapObject":
-      return "Map object";
+      return OBJECT_KIND_NAMES[f.params.kind];
     case "start":
       return "Start";
   }
@@ -82,6 +83,9 @@ export function tabOf(f: Feature): Tab {
       return "water";
     case "start":
       return "start";
+    case "mapObject":
+      // thorn belts are drawn on the land; weirs and plugs sit in the water; the rest are resources
+      return f.params.kind === "thornBelt" ? "land" : f.params.kind === "weir" || f.params.kind === "plug" ? "water" : "resources";
     default:
       return "resources";
   }
@@ -192,6 +196,8 @@ export class FeatureIndex {
       }
       case "setPiece":
         return this.setPieceTiles(f).filter(([x, y]) => inMap(x, y)).map(([x, y]) => y * W + x);
+      case "mapObject":
+        return objectTiles(f, W, H).filter(([x, y]) => inMap(x, y)).map(([x, y]) => y * W + x);
       default:
         return [];
     }
@@ -229,6 +235,7 @@ export class FeatureIndex {
     const i = y * W + x;
     const out: Feature[] = [];
     for (const f of this.features) if (f.kind === "start" && this.tilesOf(f).includes(i)) out.push(f);
+    for (const f of this.features) if (f.kind === "mapObject" && this.tilesOf(f).includes(i)) out.push(f);
     for (const f of this.features) if (f.kind === "setPiece" && this.tilesOf(f).includes(i)) out.push(f);
     if (this.area[i] >= 0) out.push(this.features[this.area[i]]);
     if (this.river[i] >= 0) out.push(this.features[this.river[i]]);
@@ -336,7 +343,7 @@ export function moveBlocked(f: Feature): string | null {
       if (f.params.kind === "badwaterBasin" && f.params.plan.mode === "marsh") return "The generated badwater marsh stays where the valley put it.";
       return null;
     case "mapObject":
-      return "Map objects arrive in a later version.";
+      return null;
     case "landform":
       return f.params.outline ? null : "This follows its river: move the river instead.";
     case "lake":
@@ -354,6 +361,9 @@ function coordsBounds(f: Feature, W: number, H: number): { x0: number; y0: numbe
     case "berryPatch":
     case "ruinField":
       for (const [y, a, b] of f.params.area) pts.push([a, y], [b, y]);
+      break;
+    case "mapObject":
+      pts = objectTiles(f, W, H);
       break;
     case "start":
       pts = [[f.params.position[0] - 1, f.params.position[1] - 1], [f.params.position[0] + 1, f.params.position[1] + 1]];

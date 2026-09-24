@@ -21,7 +21,7 @@ import { stream } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { bandsFor, drawBands, fitRelief, layoutTargets } from "./layout";
 import { planResources } from "./resources";
-import { farReach, MAX_LAYOUT_TRIES, PlanConflict, riverWidth, type PlanContext } from "./valley";
+import { farReach, MAX_LAYOUT_TRIES, objectsAndResources, PlanConflict, riverWidth, type PlanContext } from "./valley";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf } from "./water";
 
 /** Layout parameters (PLAN §8: a typed table). */
@@ -416,9 +416,8 @@ export function planLakeBasin(spec: MapSpec, attempt: number, candidate = 0, set
     });
     if (ponds.length) layout.splice(layout.indexOf(start), 0, ...ponds);
 
-    // ------------------------------------------------------------------ resources on the settled water
-    const base = buildMap({ W, H, seed, features: [...layout, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
-    const resources = planResources(spec, base, candidate, attempt, context ? { protect: context.protect, lockedMask: context.locked?.mask ?? null } : undefined);
+    // ------------------------------------------------------------------ objects and resources on the settled water
+    const resources = objectsAndResources(spec, layout, others, context, candidate, attempt, settleCache, band);
     return [...layout, ...resources];
   }
 }

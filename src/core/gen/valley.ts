@@ -34,6 +34,7 @@ import { PI, sinDet, TWO_PI } from "../math/detmath";
 import { stream, type Rng } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { bandsFor, drawBands, fitRelief, layoutTargets, type LayoutTargets } from "./layout";
+import { planExtras } from "./extras";
 import { planResources } from "./resources";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf, type PlanGround } from "./water";
 
@@ -524,11 +525,39 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     });
     if (ponds.length) layout.splice(layout.indexOf(start), 0, ...ponds);
 
-    // ------------------------------------------------------------------ resources on the settled water
-    const base = buildMap({ W, H, seed, features: [...layout, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
-    const resources = planResources(spec, base, candidate, attempt, context ? { protect: context.protect, lockedMask: context.locked?.mask ?? null } : undefined);
+    // ------------------------------------------------------------------ objects and resources on the settled water
+    const resources = objectsAndResources(spec, layout, others, context, candidate, attempt, settleCache, band);
     return [...layout, ...resources];
   }
+}
+
+// ----------------------------------------------------------------------- objects and resources
+
+/** The map objects (PLAN §5.4–5.5) and then the resources, both on the layout's settled water: the
+ *  objects take their tiles first (and thorn belts stop moisture), so the ground is built again
+ *  with them before the resources are planned (the water settle is reused: none of them moves
+ *  water). Returns the new features; the objects are also appended to `layout`. */
+export function objectsAndResources(
+  spec: MapSpec,
+  layout: Feature[],
+  others: readonly Feature[],
+  context: PlanContext | undefined,
+  candidate: number,
+  attempt: number,
+  settleCache: SettleCache | undefined,
+  avoid: Uint8Array | null,
+): Feature[] {
+  const W = spec.size.x;
+  const H = spec.size.y;
+  const seed = spec.seed;
+  let base = buildMap({ W, H, seed, features: [...layout, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
+  const objects = planExtras({ spec, base, features: [...layout, ...others], protect: context?.protect ?? null, avoid, candidate, attempt });
+  if (objects.length) {
+    layout.push(...objects);
+    base = buildMap({ W, H, seed, features: [...layout, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
+  }
+  const constraints = context ? { protect: context.protect, lockedMask: context.locked?.mask ?? null } : undefined;
+  return planResources(spec, base, candidate, attempt, constraints);
 }
 
 // ---------------------------------------------------------------------------------- tributaries

@@ -17,6 +17,7 @@ import { FOOTPRINTS, ORIENTATIONS, type Orientation } from "../format/footprints
 import { hasDefaults, type PlaceEntityParams } from "../features/edits";
 import { checkChannel } from "../features/route";
 import { checkSetPiece } from "../features/setpieces";
+import { BUILT_OBJECTS, isLine, OBJECT_NAMES, objectTiles } from "../features/objects";
 import { REQUIRED } from "../validate/checks";
 import type { Feature, FeatureKind } from "../features/schema";
 import type { Runs } from "../math/grid";
@@ -378,8 +379,8 @@ export interface OpContext {
   otherStarts?: number;
 }
 
-/** Kinds a player can add in this version. Map objects arrive with roadmap M7. */
-export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "start"];
+/** Kinds a player can add in this version. */
+export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "mapObject", "start"];
 
 /** Templates a player may place by hand: the common set, minus the start (it is a feature). */
 export const PLACEABLE = new Set([
@@ -447,6 +448,14 @@ function featureGeometryProblems(f: Feature, W: number, H: number): string[] {
     }
     case "setPiece":
       return checkSetPiece(f, W, H);
+    case "mapObject": {
+      const m = f.params;
+      if (!BUILT_OBJECTS.includes(m.kind)) return [`${OBJECT_NAMES[m.kind].toLowerCase()}s come in a later version`];
+      if (isLine(m.kind) !== "area" in m.placement) return [isLine(m.kind) ? `a ${OBJECT_NAMES[m.kind].toLowerCase()} covers an area of tiles` : `a ${OBJECT_NAMES[m.kind].toLowerCase()} stands at one place, with an orientation`];
+      if (m.core && m.kind !== "unstableCore") return ["only an unstable core has a countdown and a radius"];
+      if ("area" in m.placement) return runsProblems(m.placement.area, W, H, `${OBJECT_NAMES[m.kind].toLowerCase()} tiles`);
+      return objectTiles(f, W, H).every(([x, y]) => x >= 0 && y >= 0 && x < W && y < H) ? [] : [`the ${OBJECT_NAMES[m.kind].toLowerCase()} does not fit on the map there`];
+    }
     default:
       return p ? [] : ["no params"];
   }
@@ -481,7 +490,7 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (errors.length) return errors;
       const missing = dependenciesOf(after).filter((d) => !featureById(d));
       if (missing.length) return [`it would build on ${missing.join(", ")}, which does not exist`];
-      if (f.kind === "mapObject") return ["map objects are edited with their tools (roadmap M7)"];
+      if (after.kind === "mapObject" && f.kind === "mapObject" && after.params.kind !== f.params.kind) return ["a map object keeps its kind: delete it and add another"];
       if (after.kind === "setPiece" && f.kind === "setPiece" && after.params.kind !== f.params.kind) return ["a set piece keeps its kind: delete it and add another"];
       return featureGeometryProblems(after, W, H);
     }

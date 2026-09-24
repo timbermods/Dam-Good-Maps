@@ -5,7 +5,7 @@
 //
 // Steps: 1 base terrain (the fill, or an imported map's surface), 2 landforms, 3 set-piece terrain,
 // 4 rivers and lakes, 5 the start bench, 6 sculpt edits, 7 integrity pass, 8 slopes (derived, then
-// pinned and removed), 9 water sources, then the first pass of entity edits, 10 the canonical water
+// pinned and removed), 9 water sources and map objects, then the first pass of entity edits, 10 the canonical water
 // settle with soil moisture and soil contamination, 11 resources placed on the simulated moisture,
 // 12 the start, 13 the second pass of entity edits.
 //
@@ -44,8 +44,9 @@ import {
   type SculptEdit,
 } from "./raster/terrain";
 import { rasterizeResource, resourceOrder, type Placed } from "./raster/resources";
+import { objectTiles, rasterizeObjects } from "./objects";
 import { BuildTarget, clipRect, fullRegion, type FieldCache, type Rect, type TileRegion } from "./target";
-import type { Feature, SetPieceFeature, StartFeature } from "./schema";
+import type { Feature, MapObjectFeature, SetPieceFeature, StartFeature } from "./schema";
 
 export { BuildTarget } from "./target";
 export { assignRuinHeights } from "./raster/resources";
@@ -486,6 +487,10 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     springs.set(f.id, tiles);
     for (const i of tiles) reserved[i] = 1;
   }
+  //    map objects (mine sites, relics, thorn belts, weirs, plugs, ...) take their tiles now, so the
+  //    derived slopes go round them (PLAN §20, D69)
+  const objectFeatures = features.filter((f): f is MapObjectFeature => f.kind === "mapObject" && live(f));
+  for (const f of objectFeatures) for (const [x, y] of objectTiles(f, W, H)) if (x >= 0 && x < W && y >= 0 && y < H) reserved[y * W + x] = 1;
   const pieceSources: { feature: SetPieceFeature; src: SetPieceSource }[] = [];
   for (const f of features) {
     if (f.kind !== "setPiece" || !live(f)) continue;
@@ -584,6 +589,9 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     sources.push({ x: src.x, y: src.y, z: heights[i], strength: src.strength, owner: feature.id, template: src.template });
     entities.push(waterSource({ id: entityId(feature.id, src.template, i), owner: feature.id, x: src.x, y: src.y, z: heights[i], strength: src.strength, bad }));
   }
+  //    map objects: they hold water (a weir, a plug) and stop moisture (thorns), so they stand
+  //    before the water settles
+  for (const f of objectFeatures) entities.push(...rasterizeObjects(f, W, H, heights, input.locked?.mask ?? null));
   //    what a regeneration kept in locked regions, and the imported map's own objects (snapped to
   //    the ground where an edit changed the surface under them)
   if (input.locked) entities.push(...input.locked.entities);
@@ -694,8 +702,8 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     return { ...withWater, dirty: null, cache: makeCache({ settle: settleEntry, barrierKey, moisture: settle ? moist : null, soil: settle ? soil : null }) };
   }
 
-  // 11. resources: berries, forests, ruin fields (map objects arrive in M7). Each feature's output
-  //     is reused when it and the ground under its area are unchanged.
+  // 11. resources: berries, forests, ruin fields (map objects stood at step 9, D69). Each feature's
+  //     output is reused when it and the ground under its area are unchanged.
   const occBefore = occupied.slice();
   const resources = new Map<string, ResourceEntry>();
   const order = resourceFeatures.map((f) => f.id);
