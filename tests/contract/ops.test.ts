@@ -98,7 +98,9 @@ describe("invalid operations are rejected with a reason and change nothing", () 
       },
       /drop of 1–15/,
     ],
-    ["a set piece kind not built yet", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "plugSpillway", request: {}, plan: {}, report: [] } } } }, /not built by this version/],
+    // every set piece is built since M7; natural bridges (a map object) come later
+    ["a map object not built yet", { op: "addFeature", params: { feature: { id: USER, kind: "mapObject", origin: "claude", locked: false, params: { kind: "bridge", placement: { x: 3, y: 3, orientation: "Cw0" } } } } }, /later version/],
+    ["a set piece whose stored plan is out of bounds", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "plugSpillway", request: { lake: "x" }, plan: {}, report: [] } } } }, /belongs to a lake/],
     ["the naturalize brush", { op: "sculpt", params: { mode: "naturalize", cells: [[1, 1, 3]] } }, /roadmap M10/],
     ["regenerating an area", { op: "regenerateRegion", params: { area: { runs: [[1, 1, 3]] }, seedVariant: 1, layers: ["terrain"] } }, /roadmap M11/],
     ["a faction-only plant", { op: "placeEntity", params: { id: "11111111-2222-4333-8444-555555555555", template: "Maple", x: 3, y: 3, orientation: "Cw0" } }, /cannot be placed/],

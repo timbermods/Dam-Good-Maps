@@ -14,7 +14,8 @@ import { footprintAt, fitProblems, OBJECT_NAMES, rotatedSize } from "../features
 import type { Feature, MapObjectFeature, MapObjectKind } from "../features/schema";
 import { polygonMask } from "../features/geometry";
 import { ORIENTATIONS, type Orientation } from "../format/footprints";
-import { distanceFrom, tilesToRuns } from "../math/grid";
+import { distanceFrom, levelRegions, tilesToRuns } from "../math/grid";
+import { DISTRICT_LAND, DISTRICT_RADIUS, DISTRICT_WATER } from "../features/setpieces/secondDistrict";
 import { stream, type Rng } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { bandScale, EXTRA_BANDS, FLOOD_MARGIN, WET } from "../validate/playability";
@@ -270,6 +271,68 @@ function thornBelt(
     }
   if (tiles.length < 13) return null;
   return tiles.slice(0, 40).sort((a, b) => a - b);
+}
+
+/** Candidate sites for a second district (PLAN §9.8), best first: tiles 60–120 tiles from the start
+ *  (chamfer), dry and free, on level ground of 600+ tiles, with pumpable clean water within 16
+ *  tiles; the best have the most moist free land round them (for its grove and berries) and stand
+ *  nearest 85 tiles out. At most `n`, 24+ tiles apart. */
+export function districtCandidates(b: BuildResult, features: readonly Feature[], avoid: Uint8Array | null, n: number): [number, number][] {
+  const { W, H } = b;
+  const N = W * H;
+  if (!b.start) return [];
+  const startMask = new Uint8Array(N);
+  for (let y = b.start.y - 1; y <= b.start.y + 1; y++) for (let x = b.start.x - 1; x <= b.start.x + 1; x++) if (x >= 0 && y >= 0 && x < W && y < H) startMask[y * W + x] = 1;
+  const sd = distanceFrom(startMask, W, H);
+  const h = b.heights;
+  const regions = levelRegions(h, W, H);
+  // distance to pumpable water for a site at each level: clean, 0.3+ deep, its surface 0–2 below
+  const pump: (Float64Array | null)[] = [];
+  const pumpFor = (lv: number) => {
+    if (pump[lv] !== undefined) return pump[lv];
+    const m = new Uint8Array(N);
+    let any = false;
+    for (let i = 0; i < N; i++) {
+      const s = h[i] + b.water[i];
+      if (b.water[i] >= 0.3 && b.contamination[i] < 0.05 && s <= lv + 0.01 && s >= lv - 2) {
+        m[i] = 1;
+        any = true;
+      }
+    }
+    pump[lv] = any ? distanceFrom(m, W, H) : null;
+    return pump[lv];
+  };
+  const lakes = new Uint8Array(N);
+  for (const f of features) {
+    if (f.kind !== "lake") continue;
+    const m = polygonMask(f.params.outline, W, H);
+    for (let i = 0; i < N; i++) if (m[i]) lakes[i] = 1;
+  }
+  const moist = new Uint8Array(N);
+  for (let i = 0; i < N; i++) moist[i] = b.moisture[i] > 0 && !(b.water[i] > 0) && !b.occupied[i] ? 1 : 0;
+  const scored: [number, number][] = [];
+  const r = DISTRICT_RADIUS;
+  for (let y = r; y < H - r; y += 2)
+    for (let x = r; x < W - r; x += 2) {
+      const i = y * W + x;
+      if (sd[i] < 60 || sd[i] > 120 || b.water[i] > 0.05 || b.occupied[i] || b.channel[i] || lakes[i] || avoid?.[i] || b.cache.terrain.protect[i]) continue;
+      if (regions.size[regions.labels[i]] < DISTRICT_LAND) continue;
+      const p = pumpFor(h[i]);
+      if (!p || p[i] > DISTRICT_WATER - 1) continue;
+      let m = 0;
+      for (let yy = y - 12; yy <= y + 12; yy += 2) for (let xx = x - 12; xx <= x + 12; xx += 2) if (xx >= 0 && yy >= 0 && xx < W && yy < H && moist[yy * W + xx]) m++;
+      scored.push([m - Math.abs(sd[i] - 85) * 0.5, i]);
+    }
+  scored.sort((a, c) => c[0] - a[0] || a[1] - c[1]);
+  const out: [number, number][] = [];
+  for (const [, i] of scored) {
+    const x = i % W;
+    const y = (i - x) / W;
+    if (out.some(([ox, oy]) => (ox - x) * (ox - x) + (oy - y) * (oy - y) < 24 * 24)) continue;
+    out.push([x, y]);
+    if (out.length >= n) break;
+  }
+  return out;
 }
 
 export { OBJECT_NAMES };

@@ -98,7 +98,20 @@
         },
         "inflow": { "type": "object" },
         "planned": { "type": "boolean" },
-        "river": { "type": "string" }
+        "river": { "type": "string" },
+        "islands": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["outline", "height"],
+            "properties": {
+              "outline": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/point" } },
+              "height": { "type": "integer", "minimum": 0, "maximum": 16 }
+            }
+          }
+        }
       }
     },
     "landform": {

@@ -128,6 +128,14 @@ export function rasterizeLake(f: LakeFeature, t: BuildTarget): void {
   t.forEach((i) => {
     if (mask[i] && !t.protectedMask[i] && t.writable(i, f)) heights[i] = floor;
   });
+  // islands rise from the floor, a cliff round each
+  for (const isl of f.params.islands ?? []) {
+    const m = polygonMask(isl.outline, W, H);
+    const level = Math.min(MAX_TERRAIN, isl.height);
+    t.forEach((i) => {
+      if (m[i] && mask[i] && !t.protectedMask[i] && t.writable(i, f)) heights[i] = level;
+    });
+  }
 }
 
 /** The channel's half-width at arc position s: the river's own, or a gorge's narrows. */

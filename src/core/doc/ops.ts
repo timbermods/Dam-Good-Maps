@@ -128,7 +128,7 @@ export function dependenciesOf(f: Feature): string[] {
       const r = f.params.plan.river;
       if (typeof r === "string") out.push(r);
       // the river or lake a standalone piece's channel drains into
-      for (const k of ["outflowTo", "outletTo"]) {
+      for (const k of ["outflowTo", "outletTo", "lake"]) {
         const to = f.params.plan[k];
         if (typeof to === "string" && to !== "edge" && to !== r) out.push(to);
       }

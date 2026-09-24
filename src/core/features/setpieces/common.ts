@@ -30,6 +30,9 @@ export interface PlanContext {
   protect?: Uint8Array | null;
   /** Objects standing on the map (x, y, template), for the report of what a piece clears. */
   objects?: readonly { x: number; y: number; template: string }[] | null;
+  /** The settled water, when the map has it (a second district's site looks for water to pump). */
+  water?: ArrayLike<number> | null;
+  contamination?: ArrayLike<number> | null;
 }
 
 /** A value a plan resolved, or asked for: numbers, words, flags and flat lists of numbers. */

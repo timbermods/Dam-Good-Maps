@@ -17,6 +17,8 @@ import { badwaterBasin } from "./badwaterBasin";
 import type { AchievableRanges, PlanContext, PlanOutcome, PlanRecord } from "./common";
 import { damSite } from "./damSite";
 import { gorge } from "./gorge";
+import { plugSpillway } from "./plugSpillway";
+import { secondDistrict } from "./secondDistrict";
 import { terracedCliffs } from "./terracedCliffs";
 import { waterfall } from "./waterfall";
 
@@ -31,6 +33,16 @@ export interface SetPieceSource {
   strength: number;
   /** Tiles it covers relative to (x, y); they are kept free of slopes and resources. */
   tiles: [number, number][];
+}
+
+/** A 1×1 object a set piece places itself (a spillway's Blockage plug), at build step 9 with the
+ *  map objects; `turn` picks its orientation (Cw0…Cw270), as the map editor turns them at random. */
+export interface SetPieceBlock {
+  template: string;
+  x: number;
+  y: number;
+  turn: number;
+  flipped: boolean;
 }
 
 /** A slope a set piece places itself (a stair notch, a chain up terraces), on the low tile (x, y),
@@ -55,6 +67,8 @@ export interface SetPieceBuilder {
   footprint(feature: SetPieceFeature, target: Pick<BuildTarget, "W" | "H" | "river">): Rect | "all" | null;
   /** The sources the set piece adds, if any. */
   sources?(feature: SetPieceFeature): SetPieceSource[];
+  /** Objects it places itself (a spillway's plug). */
+  blocks?(feature: SetPieceFeature): SetPieceBlock[];
   /** The slopes it places itself, read on the built terrain. */
   slopes?(feature: SetPieceFeature, heights: ArrayLike<number>, W: number, H: number, features: readonly Feature[]): SetPieceSlope[];
   /** Tiles kept free of trees, bushes and ruins (its body and channels). */
@@ -67,6 +81,8 @@ export const BUILDERS: Partial<Record<SetPieceKind, SetPieceBuilder>> = {
   badwaterBasin,
   damSite,
   gorge,
+  plugSpillway,
+  secondDistrict,
   terracedCliffs,
   waterfall,
 };

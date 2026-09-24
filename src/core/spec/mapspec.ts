@@ -10,8 +10,8 @@ export type Difficulty = "easy" | "normal" | "hard";
 export type SizePreset = "small" | "medium" | "large" | "max";
 
 export const THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
-/** Themes the generator can build today (M6: River Valley, Canyon and Lake Basin; the rest in M7). */
-export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "lakeBasin"];
+/** Themes the generator can build (all six since M7). */
+export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
 export const THEME_NAMES: Record<ThemeId, string> = {
   riverValley: "River Valley",
   canyon: "Canyon",

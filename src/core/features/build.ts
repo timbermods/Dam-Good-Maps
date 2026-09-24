@@ -15,8 +15,8 @@
 // moisture and each resource feature are reused when their inputs are unchanged. The property
 // tests check that it equals a full build.
 
-import { coordinatesForMinCorner, footprintTiles, rotate, slopeHighSide } from "../format/footprints";
-import { startingLocation, waterSource, slope, type EntitySpec } from "../format/entities";
+import { coordinatesForMinCorner, footprintTiles, ORIENTATIONS, rotate, slopeHighSide } from "../format/footprints";
+import { blockObject, startingLocation, waterSource, slope, type EntitySpec } from "../format/entities";
 import type { MapSpec } from "../spec/mapspec";
 import { soilContamination } from "../sim/contamination";
 import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
@@ -25,7 +25,7 @@ import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
 import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
-import { BUILDERS, orientationForHigh, type SetPieceSource } from "./setpieces";
+import { BUILDERS, orientationForHigh, type SetPieceBlock, type SetPieceSource } from "./setpieces";
 import { applyEntityEdits, applySlopeEdits, entityTiles, orphansOf, type EntityEdit, type Orphan, type SlopeEdit } from "./edits";
 import {
   applySculpt,
@@ -45,6 +45,7 @@ import {
 } from "./raster/terrain";
 import { rasterizeResource, resourceOrder, type Placed } from "./raster/resources";
 import { objectTiles, rasterizeObjects } from "./objects";
+import type { DistrictPlan } from "./setpieces/secondDistrict";
 import { BuildTarget, clipRect, fullRegion, type FieldCache, type Rect, type TileRegion } from "./target";
 import type { Feature, MapObjectFeature, SetPieceFeature, StartFeature } from "./schema";
 
@@ -491,6 +492,16 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   //    derived slopes go round them (PLAN §20, D69)
   const objectFeatures = features.filter((f): f is MapObjectFeature => f.kind === "mapObject" && live(f));
   for (const f of objectFeatures) for (const [x, y] of objectTiles(f, W, H)) if (x >= 0 && x < W && y >= 0 && y < H) reserved[y * W + x] = 1;
+  //    and the objects set pieces place themselves (a spillway's plug)
+  const pieceBlocks: { feature: SetPieceFeature; block: SetPieceBlock }[] = [];
+  for (const f of features) {
+    if (f.kind !== "setPiece" || !live(f)) continue;
+    for (const block of BUILDERS[f.params.kind]?.blocks?.(f) ?? []) {
+      if (block.x < 0 || block.x >= W || block.y < 0 || block.y >= H) continue;
+      pieceBlocks.push({ feature: f, block });
+      reserved[block.y * W + block.x] = 1;
+    }
+  }
   const pieceSources: { feature: SetPieceFeature; src: SetPieceSource }[] = [];
   for (const f of features) {
     if (f.kind !== "setPiece" || !live(f)) continue;
@@ -592,6 +603,10 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   //    map objects: they hold water (a weir, a plug) and stop moisture (thorns), so they stand
   //    before the water settles
   for (const f of objectFeatures) entities.push(...rasterizeObjects(f, W, H, heights, input.locked?.mask ?? null));
+  for (const { feature, block: b } of pieceBlocks) {
+    const i = b.y * W + b.x;
+    entities.push(blockObject({ id: entityId(feature.id, b.template, i), owner: feature.id, x: b.x, y: b.y, z: heights[i], template: b.template, orientation: ORIENTATIONS[b.turn & 3], flipped: b.flipped }));
+  }
   //    what a regeneration kept in locked regions, and the imported map's own objects (snapped to
   //    the ground where an edit changed the surface under them)
   if (input.locked) entities.push(...input.locked.entities);
@@ -778,6 +793,14 @@ function landformTargets(features: readonly Feature[], t: BuildTarget): { mask: 
   let mask: Uint8Array | null = null;
   const keys: string[] = [];
   for (const f of features) {
+    // a second district's site joins the start's network wherever it is (PLAN §7.5, §9.8)
+    if (f.kind === "setPiece" && f.params.kind === "secondDistrict") {
+      const p = f.params.plan as unknown as DistrictPlan;
+      mask ??= new Uint8Array(t.W * t.H);
+      if (p.x >= 0 && p.y >= 0 && p.x < t.W && p.y < t.H) mask[p.y * t.W + p.x] = 1;
+      keys.push(f.id);
+      continue;
+    }
     if (f.kind !== "landform" || !f.params.outline || f.params.height === undefined || !edgeStep(f.params)) continue;
     const inward = t.inward(f.params.outline);
     mask ??= new Uint8Array(t.W * t.H);

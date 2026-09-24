@@ -77,6 +77,9 @@ export interface LakeParams {
   planned: boolean;
   /** The river whose bed profile sets the floor level. */
   river?: string;
+  /** Islands in the lake (the Islands theme's sea): each rises from the lake's floor to its height,
+   *  with a cliff round it. */
+  islands?: { outline: Point[]; height: number }[];
 }
 
 // --------------------------------------------------------------------------------------- landform

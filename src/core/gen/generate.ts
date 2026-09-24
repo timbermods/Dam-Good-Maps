@@ -44,8 +44,11 @@ export function planFeatures(spec: MapSpec, attempt: number, candidate = 0, sett
   switch (spec.archetype) {
     case "riverValley":
     case "canyon":
+    case "highlands":
+    case "delta":
       return planValley(spec.archetype, spec, attempt, candidate, settleCache, context);
     case "lakeBasin":
+    case "islands":
       return planLakeBasin(spec, attempt, candidate, settleCache, context);
     default:
       throw new Error(`the ${spec.archetype} layout is not available yet`);
