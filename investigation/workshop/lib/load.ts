@@ -105,6 +105,10 @@ export function loadMap(ref: MapRef): Loaded {
   }
   if (unknown.length) return { ...base, skip: `needs mods: templates ${unknown.join(", ")}` };
   if (above > 0) return { ...base, skip: `needs mods: ${above} terrain voxels above the vanilla height limit (${w.layers} layers)` };
+  // vanilla keeps one StartingLocation; maps with more are made for a multiplayer mod
+  // (BeaverBuddies, Timber Together) and crash or lose starts in the unmodded game
+  const starts = templates.StartingLocation ?? 0;
+  if (starts > 1) return { ...base, skip: `needs mods: ${starts} starts, a multiplayer map (BeaverBuddies)` };
   return { ...base, file: fileFromBase(doc.base), report: doc.meta.source?.report ?? null };
 }
 

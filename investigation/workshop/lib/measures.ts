@@ -14,7 +14,7 @@ import type { TimberFile } from "../../../src/core/format/timber";
 import { floorsOf, surfaceOf } from "../../../src/core/format/world";
 import type { Feature } from "../../../src/core/features/schema";
 import { distanceFrom, MinHeap } from "../../../src/core/math/grid";
-import { mapObjects, specifiedStrength, type MapObject } from "../../../src/core/sim/model";
+import { isDelayed, mapObjects, specifiedStrength, type MapObject } from "../../../src/core/sim/model";
 import type { MapSpec } from "../../../src/core/spec/mapspec";
 import { validateMap, type Validation } from "../../../src/core/validate/checks";
 import { WALK_BLOCKERS } from "../../../src/core/validate/playability";
@@ -102,6 +102,20 @@ export interface MapMeasures {
     sourceEdgeShare: number | null;
   };
   sources: Record<string, { count: number; strength: number }>;
+  /** Water that is not running from day one, which a steady state of the running sources cannot
+   *  show: delayed sources (TimeActivatedComponent enabled), aquifers (off until a powered drill),
+   *  seeps (off above 0.8 deep), badtide drains; and why this map's settled water or start may
+   *  not be representative (`special`, empty when it is). */
+  mechanics: {
+    cleanRunning: number;
+    cleanDelayed: number;
+    aquifers: number;
+    seeps: number;
+    drains: number;
+    badDelayed: number;
+    cores: number;
+    special: string[];
+  };
   dams: {
     sites: number;
     per10k: number;
@@ -135,6 +149,33 @@ export interface MapMeasures {
   start: StartMeasures | null;
   natural: Naturalness;
   layout: { heights: number[]; water: number[] };
+  /** The inputs of the interestingness score (PLAN §12) that need the map itself. */
+  score: ScoreInputs;
+}
+
+/** PLAN §12's components, measured on any map (imports have no features, so rivers are read from
+ *  the settled water). */
+export interface ScoreInputs {
+  /** Best volume per dam tile within 60 tiles of the start, and the other sites there of 100+. */
+  damRatioNearStart: number;
+  damSites100NearStart: number;
+  /** Raised tables: level regions of max(40, area/1000)+ tiles whose every neighbour is lower. */
+  plateaus: number;
+  /** Water between walls 3+ levels above its surface on both sides within 4 tiles. */
+  gorgeTiles: number;
+  /** The main watercourse through the settled water, from its sources to where it leaves the map:
+   *  its length over the straight line (1 when there is none), and its length over the diagonal. */
+  courseSinuosity: number;
+  courseLengthPerDiagonal: number;
+  /** Shares of living trees, berry bushes and scrap by distance from the start (0–16, 16–32, 32–64,
+   *  64–128, 128+ tiles). */
+  rings: { trees: number[] | null; bushes: number[] | null; scrap: number[] | null };
+  /** Level regions and water bodies of 1%+ of the map, groves of 50+ trees. */
+  regions: number;
+  /** Share of the three largest flat regions whose own pumpable water is over 10 tiles away. */
+  tradeoff: number;
+  /** Share of scrap, and whether the largest reservoir site, lie beyond half the start's reach. */
+  frontier: number;
 }
 
 export interface MeasureOptions {
@@ -242,11 +283,31 @@ export function measureValidated(file: TimberFile, v: Validation, features: read
   const flow = flowOf(v.model!, D, W, H);
 
   const sources: Record<string, { count: number; strength: number }> = {};
+  const mech = { cleanRunning: 0, cleanDelayed: 0, aquifers: 0, seeps: 0, drains: 0, badDelayed: 0, cores: 0, special: [] as string[] };
   for (const o of objects) {
+    if (o.template === "UnstableCore") mech.cores++;
     if (!["WaterSource", "BadwaterSource", "WaterSeep", "BadwaterSeep", "Aquifer", "BadtideDrain"].includes(o.template)) continue;
     const s = (sources[o.template] ??= { count: 0, strength: 0 });
     s.count++;
-    s.strength = round(s.strength + specifiedStrength(o.components), 3);
+    const st = specifiedStrength(o.components);
+    s.strength = round(s.strength + st, 3);
+    const late = isDelayed(o.components);
+    if (o.template === "WaterSource") late ? (mech.cleanDelayed += st) : (mech.cleanRunning += st);
+    else if (o.template === "WaterSeep") mech.seeps += st;
+    else if (o.template === "Aquifer") mech.aquifers += st;
+    else if (o.template === "BadtideDrain") mech.drains += st;
+    else if (late) mech.badDelayed += st;
+  }
+  {
+    const caveShare = [...floors].filter((f) => f > 1).length / N;
+    const clean = mech.cleanRunning + mech.cleanDelayed + mech.aquifers + mech.seeps;
+    if (caveShare >= 0.02) mech.special.push("caves: water under roofs");
+    if (clean > 0 && mech.cleanDelayed >= 0.25 * clean) mech.special.push("delayed sources");
+    if (clean > 0 && mech.aquifers >= 0.25 * clean) mech.special.push("aquifers");
+    if (clean > 0 && mech.seeps >= 0.5 * (mech.cleanRunning + mech.seeps)) mech.special.push("seeps");
+    if (mech.cores > 0) mech.special.push("unstable cores");
+    if (centre && h[centre.y * W + centre.x] !== centre.z) mech.special.push("start below the top surface");
+    for (const k of ["cleanRunning", "cleanDelayed", "aquifers", "seeps", "drains", "badDelayed"] as const) mech[k] = round(mech[k], 3);
   }
 
   // ---- dam sites over the whole map (clean water, crests 1-3), sampled evenly
@@ -303,6 +364,7 @@ export function measureValidated(file: TimberFile, v: Validation, features: read
       ...flow,
     },
     sources,
+    mechanics: mech,
     dams: {
       sites: sites.length,
       per10k: round((sites.length * 1e4) / N, 2),
@@ -320,7 +382,245 @@ export function measureValidated(file: TimberFile, v: Validation, features: read
     start,
     natural: naturalness(h, W, H, D, sites, maxFloodFor(W, H)),
     layout: layoutSignature(h, D, W, H),
+    score: scoreInputs(h, W, H, D, C, objects, v, sites, wet),
   };
+}
+
+// --------------------------------------------------------------------------- score inputs
+
+const RINGS = [16, 32, 64, 128, Infinity];
+
+function ringShares(sd: Float64Array | null, pts: { i: number; w: number }[]): number[] | null {
+  if (!sd || !pts.length) return null;
+  const out = [0, 0, 0, 0, 0];
+  let tot = 0;
+  for (const p of pts) {
+    const d = sd[p.i];
+    if (!Number.isFinite(d)) continue;
+    const k = RINGS.findIndex((r) => d < r);
+    out[k] += p.w;
+    tot += p.w;
+  }
+  return tot ? out.map((v) => round(v / tot, 3)) : null;
+}
+
+export function scoreInputs(
+  h: Uint8Array,
+  W: number,
+  H: number,
+  D: ArrayLike<number>,
+  C: ArrayLike<number>,
+  objects: readonly MapObject[],
+  v: Validation,
+  sites: readonly DamSite[],
+  wet: Uint8Array,
+): ScoreInputs {
+  const N = W * H;
+  const a = v.analysis!;
+  const sd = a.startDistance;
+  // dam value near the start (the validator samples within 60 tiles of it)
+  const near = a.damSites.slice().sort((p, q) => q.ratio - p.ratio);
+  // plateaus (prototype/analysis.py `plateaus`): level regions whose rim drops on 90%+ of its sides
+  const lr = levelRegionsOf(h, W, H);
+  const minArea = Math.max(40, Math.floor(N / 1000));
+  const rimLower = new Float64Array(lr.size.length);
+  const rimTotal = new Float64Array(lr.size.length);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      for (const n of [x + 1 < W ? i + 1 : -1, y + 1 < H ? i + W : -1]) {
+        if (n < 0 || lr.labels[n] === lr.labels[i]) continue;
+        rimTotal[lr.labels[i]]++;
+        rimTotal[lr.labels[n]]++;
+        if (h[n] < h[i]) rimLower[lr.labels[i]]++;
+        else if (h[i] < h[n]) rimLower[lr.labels[n]]++;
+      }
+    }
+  }
+  let plateaus = 0;
+  for (let k = 0; k < lr.size.length; k++) if (lr.size[k] >= minArea && rimTotal[k] && rimLower[k] / rimTotal[k] >= 0.9) plateaus++;
+  // gorges: water between walls 3+ above its surface on both sides within 4 tiles
+  let gorge = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (!wet[i]) continue;
+      const s = h[i] + D[i] + 3;
+      const wall = (dx: number, dy: number) => {
+        for (let k = 1; k <= 4; k++) {
+          const xx = x + k * dx;
+          const yy = y + k * dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) return false;
+          if (h[yy * W + xx] >= s) return true;
+        }
+        return false;
+      };
+      if ((wall(1, 0) && wall(-1, 0)) || (wall(0, 1) && wall(0, -1))) gorge++;
+    }
+  }
+  const course = courseOf(v.model!, D, W, H);
+  // resources by distance from the start
+  const trees: { i: number; w: number }[] = [];
+  const bushes: { i: number; w: number }[] = [];
+  const scrap: { i: number; w: number }[] = [];
+  const treeTiles: number[] = [];
+  for (const o of objects) {
+    if (o.x < 0 || o.y < 0 || o.x >= W || o.y >= H) continue;
+    const i = o.y * W + o.x;
+    if (LIVING_TREES.has(o.template)) {
+      treeTiles.push(i);
+      if (!isDead(o)) trees.push({ i, w: 1 });
+    } else if (FOOD_BUSHES.has(o.template) && !isDead(o)) bushes.push({ i, w: 1 });
+    else if (o.template.startsWith("RuinColumnH")) scrap.push({ i, w: 15 * Number(o.template.slice(11)) });
+  }
+  // regions: level regions and water bodies of 1%+, groves of 50+
+  const one = 0.01 * N;
+  const bodies = components(wet, W, H, false).sizes.filter((s) => s >= one).length;
+  const groves = clusterSizes(treeTiles, W, H).sizes.filter((s) => s >= 50).length;
+  const regions = lr.size.filter((s) => s >= one).length + bodies + groves;
+  // tradeoff: the three largest flat (dry) regions, and their own pumpable water
+  const dryCount = new Map<number, number>();
+  for (let i = 0; i < N; i++) if (!wet[i]) dryCount.set(lr.labels[i], (dryCount.get(lr.labels[i]) ?? 0) + 1);
+  const big = [...dryCount].sort((p, q) => q[1] - p[1]).slice(0, 3).map(([k]) => k);
+  let far = 0;
+  for (const k of big) {
+    const L = lr.level[k];
+    const pump = new Uint8Array(N);
+    let any = false;
+    for (let i = 0; i < N; i++) {
+      const s = h[i] + D[i];
+      if (D[i] >= 0.3 && C[i] < 0.05 && s >= L - 2 && s <= L + 0.01) {
+        pump[i] = 1;
+        any = true;
+      }
+    }
+    if (!any) {
+      far++;
+      continue;
+    }
+    const dist = distanceFrom(pump, W, H);
+    let best = Infinity;
+    for (let i = 0; i < N; i++) if (lr.labels[i] === k && dist[i] < best) best = dist[i];
+    if (best > 10) far++;
+  }
+  // frontier: scrap and the largest reservoir site beyond half the start's reach
+  let frontier = 0;
+  if (sd) {
+    let maxD = 0;
+    for (let i = 0; i < N; i++) if (Number.isFinite(sd[i]) && sd[i] > maxD) maxD = sd[i];
+    const half = maxD / 2;
+    let tot = 0;
+    let beyond = 0;
+    for (const p of scrap) {
+      tot += p.w;
+      if (sd[p.i] > half) beyond += p.w;
+    }
+    const bigSite = sites.slice().sort((p, q) => q.volume - p.volume)[0];
+    const parts: number[] = [];
+    if (tot) parts.push(beyond / tot);
+    if (bigSite) parts.push(sd[bigSite.y * W + bigSite.x] > half ? 1 : 0);
+    frontier = parts.length ? parts.reduce((s, x) => s + x, 0) / parts.length : 0;
+  }
+  return {
+    damRatioNearStart: round(near[0]?.ratio ?? 0, 1),
+    damSites100NearStart: near.filter((s) => s.ratio >= 100).length,
+    plateaus,
+    gorgeTiles: gorge,
+    courseSinuosity: round(course.sinuosity, 3),
+    courseLengthPerDiagonal: round(course.length / Math.sqrt(W * W + H * H), 3),
+    rings: { trees: ringShares(sd, trees), bushes: ringShares(sd, bushes), scrap: ringShares(sd, scrap) },
+    regions,
+    tradeoff: big.length ? round(far / big.length, 3) : 0,
+    frontier: round(frontier, 3),
+  };
+}
+
+function levelRegionsOf(h: Uint8Array, W: number, H: number): { labels: Int32Array; level: number[]; size: number[] } {
+  const labels = new Int32Array(W * H).fill(-1);
+  const level: number[] = [];
+  const size: number[] = [];
+  const q = new Int32Array(W * H);
+  for (let s = 0; s < W * H; s++) {
+    if (labels[s] >= 0) continue;
+    const lab = level.length;
+    labels[s] = lab;
+    let head = 0;
+    let tail = 0;
+    q[tail++] = s;
+    while (head < tail) {
+      const c = q[head++];
+      const x = c % W;
+      const y = (c - x) / W;
+      for (const n of [x > 0 ? c - 1 : -1, x + 1 < W ? c + 1 : -1, y > 0 ? c - W : -1, y + 1 < H ? c + W : -1]) {
+        if (n >= 0 && labels[n] < 0 && h[n] === h[s]) {
+          labels[n] = lab;
+          q[tail++] = n;
+        }
+      }
+    }
+    level.push(h[s]);
+    size.push(tail);
+  }
+  return { labels, level, size };
+}
+
+/** The main watercourse: through the settled water (8-way, √2 diagonals) from the clean sources to
+ *  the draining map edge tile with the deepest water (or, with no draining edge, to the farthest
+ *  wet tile). Its sinuosity is its length over the straight line from the source it started at. */
+function courseOf(model: WaterModel, D: ArrayLike<number>, W: number, H: number): { length: number; sinuosity: number } {
+  const N = W * H;
+  const dist = new Float64Array(N).fill(Infinity);
+  const from = new Int32Array(N).fill(-1);
+  const heap = new MinHeap();
+  const walled = new Uint8Array(N);
+  const onEdge = (i: number) => {
+    const x = i % W;
+    const y = (i - x) / W;
+    return x === 0 || y === 0 || x === W - 1 || y === H - 1;
+  };
+  for (const e of model.emitters) {
+    for (const c of e.cells) if (onEdge(c)) walled[c] = 1;
+    if (e.contamination > 0 || e.strength <= 0) continue;
+    for (const c of e.cells) {
+      if (dist[c] === 0) continue;
+      dist[c] = 0;
+      from[c] = c;
+      heap.push(0, c);
+    }
+  }
+  if (!heap.size) return { length: 0, sinuosity: 1 };
+  while (heap.size) {
+    const c = heap.pop();
+    const k = heap.lastKey;
+    if (k > dist[c]) continue;
+    const x = c % W;
+    const y = (c - x) / W;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      const n = yy * W + xx;
+      if (!(D[n] > 0.05)) continue;
+      const nd = k + (dx && dy ? Math.SQRT2 : 1);
+      if (nd < dist[n]) {
+        dist[n] = nd;
+        from[n] = from[c];
+        heap.push(nd, n);
+      }
+    }
+  }
+  let end = -1;
+  for (let i = 0; i < N; i++) {
+    if (!onEdge(i) || walled[i] || !Number.isFinite(dist[i]) || !(D[i] > 0.05)) continue;
+    if (end < 0 || D[i] > D[end]) end = i;
+  }
+  if (end < 0) {
+    for (let i = 0; i < N; i++) if (Number.isFinite(dist[i]) && (end < 0 || dist[i] > dist[end])) end = i;
+  }
+  if (end < 0 || !(dist[end] > 0)) return { length: 0, sinuosity: 1 };
+  const s = from[end];
+  const straight = Math.hypot((end % W) - (s % W), Math.floor(end / W) - Math.floor(s / W));
+  return { length: dist[end], sinuosity: straight > 0 ? Math.max(1, dist[end] / straight) : 1 };
 }
 
 // ------------------------------------------------------------------------------------ helpers

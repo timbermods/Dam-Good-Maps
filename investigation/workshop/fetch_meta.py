@@ -167,6 +167,7 @@ def parse(item_id: str, s: str) -> dict:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
     offline = "--offline" in sys.argv
     os.makedirs(PAGES, exist_ok=True)
     ids = sorted(d for d in os.listdir(ITEMS) if d.isdigit())
