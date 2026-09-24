@@ -139,7 +139,7 @@ function courseInfo(v: MapView, x: number, y: number): Site["course"] {
 
 // ----------------------------------------------------------------------------------- the entry
 
-export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {}): SitesResult {
+export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, ctxRefs: RefContext = {}): SitesResult {
   const v = viewOf(s);
   const where = q.where ?? { valley: null };
   const r = typeof where === "string" && !where.trim() ? resolve(v, { valley: null }, ctxRefs) : resolve(v, where, ctxRefs);
@@ -147,6 +147,8 @@ export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {})
   const base: SitesResult = { ok: false, kind: q.kind, region, sites: [], searched: 0 };
   if (!r.ok) return { ...base, reason: r.errors.join("; ") };
   const limit = Math.min(5, Math.max(1, q.limit ?? 3));
+  // "far from" places rank their farthest spots first
+  if (r.place && JSON.stringify(r.place).includes('"far"')) q = { ...q, farFirst: true };
   const found = search(s, v, q, r.mask);
   base.target = found.target;
   base.searched = found.searched;
@@ -258,7 +260,7 @@ interface Found {
   why?: string;
 }
 
-function search(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Found {
+function search(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean }, mask: Uint8Array): Found {
   const designedFor = s.spec?.designedFor ?? s.meta.designedFor;
   const size = q.size;
   switch (q.kind) {
@@ -538,7 +540,7 @@ function cliffs(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Foun
   return { sites: spaced(sites, 16), searched, why: sites.length ? undefined : why };
 }
 
-function badwater(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Found {
+function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean }, mask: Uint8Array): Found {
   const ctx = planContextOf(s);
   const rules = rulesFor(s.spec, s.meta.designedFor);
   const sd = startDistance(v);
@@ -548,7 +550,7 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Fo
   const cands = gridTiles(v, mask, 200, 6).filter((i) => !v.channel[i] && !(v.water[i] > 0.05) && (!sd || sd[i] >= minD));
   // as near the start as the rules allow ("dangerous"); in a named place, nearest its middle;
   // otherwise as far from the start as the map allows
-  const ex = q.where !== undefined ? extent(v, mask) : null;
+  const ex = q.where !== undefined && !q.farFirst ? extent(v, mask) : null;
   if (q.nearStart && sd) cands.sort((a, b) => sd[a] - sd[b]);
   else if (ex) cands.sort((a, b) => Math.hypot((a % v.W) - ex.centroid[0], Math.floor(a / v.W) - ex.centroid[1]) - Math.hypot((b % v.W) - ex.centroid[0], Math.floor(b / v.W) - ex.centroid[1]));
   else if (sd) cands.sort((a, b) => sd[b] - sd[a]);

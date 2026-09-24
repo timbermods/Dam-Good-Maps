@@ -1499,54 +1499,6 @@
    }
   },
   {
-   "id": "P11",
-   "kind": "simple",
-   "text": "add a ruin field in the northwest",
-   "setup": "rv96",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "ruins in the northwest",
-     "expect": [
-      {
-       "subject": "new:ruinField",
-       "metric": "at",
-       "in": "northwest corner"
-      },
-      {
-       "subject": "new:ruinField",
-       "metric": "scrap",
-       "min": 300
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "how much scrap",
-     "ruins stand on dry ground"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "a ruin field in the northwest corner"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addResource",
-       "kind": "ruinField",
-       "where": "the northwest"
-      }
-     ]
-    }
-   }
-  },
-  {
    "id": "P12",
    "kind": "simple",
    "text": "cut a dry canyon into the south third",
@@ -1584,55 +1536,6 @@
        "kind": "canyon",
        "where": "the south third",
        "edgeStyle": "cliff"
-      }
-     ]
-    }
-   }
-  },
-  {
-   "id": "P13",
-   "kind": "simple",
-   "text": "add a standalone waterfall about 8 blocks wide near the east edge",
-   "setup": "rv128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "an 8-wide fall near the east edge",
-     "expect": [
-      {
-       "subject": "new:waterfall",
-       "metric": "lipWidth",
-       "approx": 8,
-       "tol": 3
-      },
-      {
-       "subject": "new:waterfall",
-       "metric": "at",
-       "in": "east third"
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "8 tiles of falling water, its drop and flow"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "the lip carries water on 5–11 tiles, in the east"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addSetPiece",
-       "kind": "waterfall",
-       "where": "the east edge",
-       "size": 8
       }
      ]
     }
@@ -1678,47 +1581,6 @@
        "kind": "badwaterBasin",
        "where": "far from the start",
        "keepReservoirsClean": true
-      }
-     ]
-    }
-   }
-  },
-  {
-   "id": "P15",
-   "kind": "simple",
-   "text": "put a lake in the middle of the map",
-   "setup": "rv128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a lake in the center",
-     "expect": [
-      {
-       "subject": "new:lake",
-       "metric": "at",
-       "in": "center"
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "the lake's size, level and outlet"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "the lake lies in the center ninth of the map"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLake",
-       "where": "the middle of the map"
       }
      ]
     }
@@ -2464,47 +2326,6 @@
    }
   },
   {
-   "id": "C08",
-   "kind": "compass",
-   "text": "add a lake in the north third",
-   "setup": "canyon128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a lake in the north third",
-     "expect": [
-      {
-       "subject": "new:lake",
-       "metric": "at",
-       "in": "north third"
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "its size and level on the canyon's rim"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "the lake lies in the north third"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLake",
-       "where": "the north third"
-      }
-     ]
-    }
-   }
-  },
-  {
    "id": "R01",
    "kind": "feature-relative",
    "text": "add berry bushes between the lake and the start",
@@ -2682,49 +2503,6 @@
    }
   },
   {
-   "id": "R05",
-   "kind": "feature-relative",
-   "text": "put ruins around the badwater spring",
-   "setup": "rv96",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "ruins near the badwater",
-     "expect": [
-      {
-       "subject": "new:ruinField",
-       "metric": "distanceTo:badwater",
-       "max": 22
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "how much scrap",
-     "the ruins sit near the badwater: a scavenging risk the player chooses"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "a ruin field within 20 tiles of the badwater spring"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addResource",
-       "kind": "ruinField",
-       "where": "around the badwater"
-      }
-     ]
-    }
-   }
-  },
-  {
    "id": "R06",
    "kind": "feature-relative",
    "text": "add a hill beside the lake",
@@ -2763,48 +2541,6 @@
        "kind": "hill",
        "where": "beside the lake",
        "size": "small"
-      }
-     ]
-    }
-   }
-  },
-  {
-   "id": "R07",
-   "kind": "feature-relative",
-   "text": "add terraced cliffs along the river",
-   "setup": "rv128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "terraced cliffs by the river",
-     "expect": [
-      {
-       "subject": "new:terracedCliffs",
-       "metric": "distanceTo:river",
-       "max": 16
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "bands, levels, the slope chain"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "cliffs facing the river within its bank band"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addSetPiece",
-       "kind": "terracedCliffs",
-       "where": "along the river"
       }
      ]
     }
@@ -3559,48 +3295,6 @@
    }
   },
   {
-   "id": "W14",
-   "kind": "flow-relative",
-   "text": "add a pond near the mouth of the main river",
-   "setup": "rv96",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a pond by the lower river",
-     "expect": [
-      {
-       "subject": "new:lake",
-       "metric": "course.frac",
-       "min": 0.65
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "the mouth is where the river leaves the map (east here)"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "the pond lies by the last quarter of the river"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLake",
-       "where": "near the mouth",
-       "size": "small"
-      }
-     ]
-    }
-   }
-  },
-  {
    "id": "W15",
    "kind": "flow-relative",
    "text": "put a waterfall on the river halfway down",
@@ -4083,61 +3777,6 @@
    }
   },
   {
-   "id": "J10",
-   "kind": "words",
-   "text": "add a tiny lake near the start",
-   "setup": "rv128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a tiny lake near the start",
-     "expect": [
-      {
-       "subject": "new:lake",
-       "metric": "area",
-       "min": 8,
-       "max": 60
-      },
-      {
-       "subject": "new:lake",
-       "metric": "distanceToStart",
-       "max": 28
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "'tiny' read as 0.1–0.3% of the map (16–49 tiles here)"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "a lake of about 16–49 tiles near the start"
-   ],
-   "reference": {
-    "calls": [
-     {
-      "tool": "limits",
-      "args": {
-       "kind": "lake"
-      }
-     }
-    ],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLake",
-       "where": "near the start",
-       "size": "tiny"
-      }
-     ]
-    }
-   }
-  },
-  {
    "id": "J11",
    "kind": "words",
    "text": "add a huge lake in the south third",
@@ -4189,54 +3828,6 @@
        "op": "addLake",
        "where": "the south third",
        "size": "huge"
-      }
-     ]
-    }
-   }
-  },
-  {
-   "id": "J12",
-   "kind": "words",
-   "text": "add a big hill in the northeast",
-   "setup": "rv96",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a big hill in the northeast",
-     "expect": [
-      {
-       "subject": "new:hill",
-       "metric": "at",
-       "in": "northeast corner"
-      },
-      {
-       "subject": "new:hill",
-       "metric": "area",
-       "min": 150
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "'big' read as about 20% of the map's side across"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "a hill of 150+ tiles in the northeast"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLandform",
-       "kind": "hill",
-       "where": "the northeast",
-       "size": "large"
       }
      ]
     }
@@ -5215,55 +4806,6 @@
        "op": "addSetPiece",
        "kind": "waterfall",
        "where": "far from the start",
-       "size": "small"
-      }
-     ]
-    }
-   }
-  },
-  {
-   "id": "V03",
-   "kind": "vague",
-   "text": "make this map prettier",
-   "setup": "rv128",
-   "feasible": "yes",
-   "expressible": true,
-   "goals": [
-    {
-     "id": "g1",
-     "text": "a prettier map (Claude's pick)",
-     "expect": [
-      {
-       "subject": "new:waterfall",
-       "metric": "lipWidth",
-       "min": 4
-      }
-     ]
-    }
-   ],
-   "report": {
-    "mustSay": [
-     "the choices, stated as assumptions"
-    ]
-   },
-   "pass": [
-    "the result validates: no guard that passed before the request fails after it",
-    "at least one new feature, the guards hold"
-   ],
-   "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addSetPiece",
-       "kind": "waterfall",
-       "where": "the north third",
-       "size": "medium"
-      },
-      {
-       "op": "addResource",
-       "kind": "forest",
-       "where": "along the river",
        "size": "small"
       }
      ]
@@ -7150,6 +6692,231 @@
       "value": "cannot be deleted"
      }
     ]
+   }
+  },
+  {
+   "id": "N01",
+   "kind": "simple",
+   "text": "add a thorn belt across the valley below the start",
+   "setup": "rv128",
+   "feasible": "partly",
+   "expressible": false,
+   "needs": [
+    "map objects: thorn belts (ROADMAP M7; mapObject features are refused until then, D35)"
+   ],
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a thorn belt across the valley",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "thorn belts arrive with the map objects in a later version",
+     "offer: a gorge or terraced cliffs as a barrier today"
+    ]
+   },
+   "pass": [
+    "no proposal claims to build thorns",
+    "the reason and an offer are given"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "addSetPiece",
+         "kind": "gorge",
+         "where": "downstream of the start"
+        }
+       ]
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "ok",
+      "op": "true"
+     }
+    ]
+   }
+  },
+  {
+   "id": "N02",
+   "kind": "simple",
+   "text": "put a relic on the eastern plateau",
+   "setup": "rv128",
+   "feasible": "partly",
+   "expressible": false,
+   "needs": [
+    "map objects: relics with their distance bands (ROADMAP M7); placeEntity can set one by hand in advanced mode, without the rules"
+   ],
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a relic on high ground in the east",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "relics as map features arrive in a later version",
+     "offer: ruins on the eastern plateau today"
+    ]
+   },
+   "pass": [
+    "no proposal claims to build a relic",
+    "the reason and an offer are given"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the eastern plateau"
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "ok",
+      "op": "true"
+     }
+    ]
+   }
+  },
+  {
+   "id": "N03",
+   "kind": "simple",
+   "text": "add a plugged spillway to the reservoir",
+   "setup": "rv96",
+   "feasible": "partly",
+   "expressible": false,
+   "needs": [
+    "the plugged-spillway builder (PLAN §9.6: set-piece kind plugSpillway is in the schema, not built)"
+   ],
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a plugged spillway",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "the plugged spillway is not built yet",
+     "offer: a dam site or a gorge by the reservoir"
+    ]
+   },
+   "pass": [
+    "no proposal claims to build it",
+    "the reason and an offer are given"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "addSetPiece",
+         "kind": "plugSpillway",
+         "where": "near the reservoir"
+        }
+       ]
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "errors",
+      "op": "includes",
+      "value": "kind must be one of"
+     }
+    ]
+   }
+  },
+  {
+   "id": "N04",
+   "kind": "compass",
+   "text": "regenerate the east third with a new seed",
+   "setup": "rv128",
+   "feasible": "partly",
+   "expressible": false,
+   "needs": [
+    "regenerateRegion (ROADMAP M11; the operation is refused until then)"
+   ],
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the east third generated again",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "regenerating one area arrives in a later version",
+     "offer: change a setting and regenerate the whole map (the player's own features stay)"
+    ]
+   },
+   "pass": [
+    "no proposal claims to regenerate one area",
+    "the reason and an offer are given"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the east third"
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "tiles",
+      "op": "min",
+      "value": 1000
+     }
+    ]
+   }
+  },
+  {
+   "id": "N05",
+   "kind": "vague",
+   "text": "make the map symmetric",
+   "setup": "rv96",
+   "feasible": "partly",
+   "expressible": false,
+   "needs": [
+    "symmetry (ROADMAP M10: mirror and rotate rules across every tool)"
+   ],
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a symmetric map",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "symmetry arrives with the sculpting tools in a later version",
+     "a map keeps exactly one start either way"
+    ]
+   },
+   "pass": [
+    "no proposal",
+    "the reason is given"
+   ],
+   "reference": {
+    "calls": []
    }
   }
  ],

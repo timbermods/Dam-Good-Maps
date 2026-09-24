@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { openSetup } from "../lib/fixtures";
 import { ClaudeTools, TOOL_DEFS } from "../lib/tools";
 import type { Corpus } from "../lib/corpus";
+import { budgetFor, firstMessage } from "../harness/prompts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -55,9 +56,11 @@ function reopen(s: State): ClaudeTools {
 }
 
 const rounds = (s: State) => s.calls.filter((c) => c.tool === "dry_run" || c.tool === "propose").length;
+const goals = (s: State) => Math.max(1, ...s.calls.map((c) => (Array.isArray(c.args.goals) ? c.args.goals.length : 0)));
 
 function status(s: State): string {
-  return `[budget] rounds ${rounds(s)} of 3 · tool calls ${s.calls.length} of 10 (EDITOR_PLAN §7 today)`;
+  const b = budgetFor(goals(s));
+  return `[budget] rounds ${rounds(s)} of ${b.rounds} · tool calls ${s.calls.length} of ${b.calls} (today's rule: 3 rounds, about 10 calls)`;
 }
 
 function log(s: State, text: string): void {
@@ -74,8 +77,12 @@ switch (cmd) {
     save(s);
     const t = reopen(s);
     const summary = t.summary();
-    writeFileSync(join(transcripts, `${id}.md`), `# ${id}\n\nRequest: "${r.text}"\n\nSummary: ${summary.length} bytes\n\n`);
-    console.log(`REQUEST: ${r.text}\n\nMAP SUMMARY (${summary.length} bytes):\n${summary}`);
+    const o = openSetup(corpus.setups, s.setup);
+    const selected = o.conv.selected ? Object.entries(o.conv.handles).find(([, v]) => v === o.conv.selected)?.[0] ?? o.conv.selected : null;
+    const first = firstMessage(r.text, summary, budgetFor(1), selected);
+    const text = first.map((b) => b.text).join("\n\n");
+    writeFileSync(join(transcripts, `${id}.md`), `# ${id}\n\nRequest: "${r.text}" (setup ${r.setup})\n\nFirst message: ${text.length} bytes (summary ${summary.length})\n\n`);
+    console.log(text);
     break;
   }
   case "tools":

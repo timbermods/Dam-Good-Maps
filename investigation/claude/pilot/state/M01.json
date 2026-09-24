@@ -1,0 +1,220 @@
+{
+ "id": "M01",
+ "text": "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side.",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "resolve_region",
+   "args": {
+    "where": "upstream"
+   },
+   "bytes": 592,
+   "error": false
+  },
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "damSite",
+    "where": "halfway down this valley",
+    "size": "huge",
+    "limit": 2
+   },
+   "bytes": 775,
+   "error": false
+  },
+  {
+   "tool": "dry_run",
+   "args": {
+    "request": "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "make this valley harsher"
+     },
+     {
+      "id": "g2",
+      "text": "put the start upstream"
+     },
+     {
+      "id": "g3",
+      "text": "a huge dam opportunity halfway down"
+     },
+     {
+      "id": "g4",
+      "text": "a dangerous badwater route on the opposite side"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSettings",
+      "word": "harsher"
+     },
+     {
+      "op": "moveStart",
+      "to": "upstream"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "where": "halfway down this valley",
+      "size": "huge",
+      "handle": "dam"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "badwaterBasin",
+      "where": "the opposite bank",
+      "size": "huge",
+      "handle": "badwater"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "cleanStrength",
+      "change": "down"
+     },
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "badwaterRatio",
+      "change": "up"
+     },
+     {
+      "goal": "g2",
+      "subject": "start",
+      "metric": "at",
+      "in": "upstream"
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "reservoir.volume",
+      "min": 1518
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "course.frac",
+      "min": 0.4,
+      "max": 0.6
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "reservoirClean",
+      "equals": true
+     },
+     {
+      "goal": "g4",
+      "subject": "badwater",
+      "metric": "course.bank",
+      "equals": "opposite bank"
+     }
+    ]
+   },
+   "bytes": 6907,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "make this valley harsher"
+     },
+     {
+      "id": "g2",
+      "text": "put the start upstream"
+     },
+     {
+      "id": "g3",
+      "text": "a huge dam opportunity halfway down"
+     },
+     {
+      "id": "g4",
+      "text": "a dangerous badwater route on the opposite side"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSettings",
+      "word": "harsher"
+     },
+     {
+      "op": "moveStart",
+      "to": "upstream"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "where": "halfway down this valley",
+      "size": "huge",
+      "handle": "dam"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "badwaterBasin",
+      "where": "the opposite bank",
+      "request": {
+       "strength": 3
+      },
+      "handle": "badwater"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "cleanStrength",
+      "change": "down"
+     },
+     {
+      "goal": "g2",
+      "subject": "start",
+      "metric": "at",
+      "in": "upstream"
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "reservoir.volume",
+      "min": 1518
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "course.frac",
+      "min": 0.4,
+      "max": 0.6
+     },
+     {
+      "goal": "g3",
+      "subject": "dam",
+      "metric": "reservoirClean",
+      "equals": true
+     },
+     {
+      "goal": "g4",
+      "subject": "badwater",
+      "metric": "course.bank",
+      "equals": "opposite bank"
+     },
+     {
+      "goal": "g4",
+      "subject": "badwater",
+      "metric": "strength",
+      "min": 2.5
+     }
+    ],
+    "report": "Made the whole map harsher (settings are map-wide): the river is a trickle (2.2 blocks/s, was 3.6), the drought reserve is scarce, badwater is high, and there are a quarter fewer trees and berries. Moved the start upstream, 20% of the way down the river; I planted a berry patch and a grove beside it so it keeps its food and wood. Added a huge dam site 57% of the way down: a dam 4 tiles long would hold about 1,640 blocks, over 6 times a drought's need, and its water stays clean. Added a strong badwater spring (3 blocks/s) on the far bank from the start; its route drains into the river below the dam, so the reservoir stays clean. Trade-off: the weaker river fills that reservoir in about 13 minutes instead of 7. Assumptions: upstream means the upper third of the river; the opposite side means the far bank from the start. Every start rule still holds."
+   },
+   "bytes": 6886,
+   "error": false,
+   "accepted": true
+  }
+ ]
+}
