@@ -50,14 +50,16 @@ export const VALLEY: Record<
     wall: boolean;
     /** Band-edge wiggle, relative to the buildable land's. */
     wobble: number;
+    /** How jagged the band edges are, fixed (null: from Buildable land). */
+    jag: number | null;
     /** A gorge narrows the river at the dam site. */
     narrows: boolean;
     /** A stairway climbs the valley wall beside the start. */
     stairs: boolean;
   }
 > = {
-  riverValley: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, narrows: false, stairs: false },
-  canyon: { floorShare: false, canyonFloor: [9, 12.5], wall: true, wobble: 0.45, narrows: true, stairs: true },
+  riverValley: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false },
+  canyon: { floorShare: false, canyonFloor: [9, 12.5], wall: true, wobble: 0.45, jag: 0.3, narrows: true, stairs: true },
 };
 
 const MIN_RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
@@ -120,7 +122,7 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const ph2 = rng.float() * TWO_PI;
     const l1 = W * rng.range(0.7, 1.1);
     const l2 = W * rng.range(0.3, 0.45);
-    const halfWidth = A.floorShare ? round(H * t.land.floor, 2) : round(rng.range(A.canyonFloor[0], A.canyonFloor[1]), 2);
+    const halfWidth = A.floorShare ? round(H * t.land.floor, 2) : round(rng.range(A.canyonFloor[0], A.canyonFloor[1]) * t.land.canyon, 2);
     // the valley floor reaches about halfWidth + 11 tiles from the river before the first terrace;
     // keeping that inside the map keeps a dammed basin off the map edge (edges drain, PLAN §9.1)
     const edgeMargin = halfWidth + 12;
@@ -276,8 +278,8 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
             side,
             baseLevel: floorTop,
             // a canyon's rims are terraces (PLAN §8), one level each, up to the plateau
-            bands: bandsFor(draws[name], lift, span, wall, A.wall ? 16 : 0),
-            wobble: { amp: round(wob, 2), cell: 24, amp2: round(wob * 0.3, 2), cell2: 8 },
+            bands: bandsFor(draws[name], lift, span, wall, A.wall ? 16 : 0, t.land.cliffs),
+            wobble: { amp: round(wob, 2), cell: 24, amp2: round(wob * (A.jag ?? t.land.jag), 2), cell2: A.jag === null ? t.land.grain : 8 },
             maxLevel: t.top,
           },
         },

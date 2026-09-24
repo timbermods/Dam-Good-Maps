@@ -20,9 +20,12 @@ export interface LayoutTargets {
   range: number;
   /** Share of terrace rises that are one level (Terracing): 0.86 − 0.0059·terracing. */
   p1: number;
-  /** Buildable land: valley floor half-width (× the side across the flow), band width scale and
-   *  the wiggle of band edges in tiles. */
-  land: { floor: number; band: number; wobble: number };
+  /** Buildable land: the valley floor's half-width (× the side across the flow; a canyon's drawn
+   *  floor × `canyon`, Tight being Canyon's preset), the wiggle of band edges in tiles, how jagged they are (the fine wiggle ×
+   *  the wiggle, and its cell in tiles, `grain`), and where the cliffs go among the terrace rises (early: the first rise, at the
+   *  valley floor's edge, so the start's walkable land ends there; late: after every one-level
+   *  rise). */
+  land: { floor: number; canyon: number; wobble: number; jag: number; grain: number; cliffs: CliffOrder };
   /** Meander amplitude as a share of the side across the flow (River style). */
   meander: number;
   /** Total river flow in blocks per second (River flow): the size-aware official median × the
@@ -41,11 +44,15 @@ export interface LayoutTargets {
   badwaterDistance: number;
 }
 
+/** Where the terraces' cliffs (rises of 2+ levels) go among the drawn rises: the same rises in
+ *  another order, so the terracing's one-level share stays. */
+export type CliffOrder = "early" | "drawn" | "late";
+
 const LAND = {
-  tight: { floor: 0.16, band: 0.8, wobble: 4.2 },
-  normal: { floor: 0.2, band: 1, wobble: 3.2 },
-  generous: { floor: 0.25, band: 1.3, wobble: 2.2 },
-} as const;
+  tight: { floor: 0.16, canyon: 1, wobble: 4.2, jag: 0.9, grain: 5, cliffs: "early" },
+  normal: { floor: 0.2, canyon: 1.1, wobble: 3.2, jag: 0.3, grain: 8, cliffs: "drawn" },
+  generous: { floor: 0.25, canyon: 1.25, wobble: 2.2, jag: 0.15, grain: 8, cliffs: "late" },
+} as const satisfies Record<string, LayoutTargets["land"]>;
 
 /** Meander amplitudes (PLAN §5.3): straight ≤ 0.05·H, meandering 0.12–0.2·H. Braided rivers are
  *  the Delta's (roadmap M7): until then they meander. */
@@ -98,8 +105,10 @@ export function drawBands(rng: Rng, p1: number, n = 32): BandDraws {
 
 /** The bands that rise `lift` levels: the drawn rises in order (the last one cut to fit), spaced
  *  so the top is reached `span` tiles past the valley floor's edge. `first` forces the first rise
- *  (a canyon's wall, a Hard basin's cliff), and `ones` one-level rises after it. */
-export function bandsFor(d: BandDraws, lift: number, span: number, first?: number, ones = 0): TerraceBand[] {
+ *  (a canyon's wall, a Hard basin's cliff), and `ones` one-level rises after it. `cliffs` reorders
+ *  the drawn rises (Buildable land): "early" moves the first cliff to the first of them, "late"
+ *  puts every cliff after the one-level rises. */
+export function bandsFor(d: BandDraws, lift: number, span: number, first?: number, ones = 0, cliffs: CliffOrder = "drawn"): TerraceBand[] {
   const rises: number[] = [];
   let sum = 0;
   if (first !== undefined && lift > 0) {
@@ -117,6 +126,22 @@ export function bandsFor(d: BandDraws, lift: number, span: number, first?: numbe
     sum += r;
   }
   if (sum < lift) rises.push(lift - sum);
+  const fixed = (first !== undefined && lift > 0 ? 1 : 0) + ones;
+  if (cliffs === "late") {
+    const free = rises.slice(fixed);
+    let k = fixed;
+    for (const r of free) if (r === 1) rises[k++] = r;
+    for (const r of free) if (r > 1) rises[k++] = r;
+  } else if (cliffs === "early") {
+    let j = fixed;
+    while (j < rises.length && rises[j] === 1) j++;
+    // the first cliff becomes the first drawn rise, at the valley floor's edge
+    if (j < rises.length && j > fixed) {
+      const r = rises[j];
+      for (let k = j; k > fixed; k--) rises[k] = rises[k - 1];
+      rises[fixed] = r;
+    }
+  }
   const n = rises.length;
   let weight = 0;
   for (let k = 0; k < n; k++) weight += d.widths[k % d.widths.length];

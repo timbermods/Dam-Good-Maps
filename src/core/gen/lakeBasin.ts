@@ -110,7 +110,7 @@ export function planLakeBasin(spec: MapSpec, attempt: number, candidate = 0, set
       // outlet's sill, and the shore one above it
       const L = Math.max(floorDepth + 1, Math.min(t.top - 4, t.top - t.range + floorDepth + shift));
       const lift = t.top - (L + 1);
-      const bands = bandsFor(draws, lift, room);
+      const bands = bandsFor(draws, lift, room, undefined, 0, t.land.cliffs);
       // the highlands, then rings from the outermost down to the shore
       const features: Feature[] = [];
       features.push({
