@@ -1,12 +1,12 @@
 // The 3D view (PLAN §14.2, ROADMAP M4) as far as CI can check it: the generator's 3D switch builds
 // a 256² map into 64 chunks with water and objects, hover reads tiles in plain words, a terrain
 // change remeshes only its chunks, and the camera orbits. The build budget (under 1.5 s at 256²)
-// is asserted on a machine with a GPU; CI renders in software, so there it gets a generous bound
+// is asserted on a machine with a GPU; CI renders in software (376 ms there in M4), so it gets 3 s
 // and the number is logged. The fps budget needs a real GPU and display: `npm run bench:3d`.
 
 import { expect, test } from "@playwright/test";
 
-const BUILD_BUDGET_MS = process.env.CI ? 10_000 : 1_500;
+const BUILD_BUDGET_MS = process.env.CI ? 3_000 : 1_500;
 
 test("the 3D preview builds a 256² map, reads tiles on hover, and remeshes only dirty chunks", async ({ page }) => {
   const errors: string[] = [];

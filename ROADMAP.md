@@ -241,6 +241,19 @@ and who can open the artifact. The deviations are PLAN §20 D35–D41, and D8 an
 
 **Effort:** high.
 
+**Status:** done, 2026-09-24, on branch `dev` (the generator stays 0.2.0). Every acceptance
+criterion passes:
+- all 32 investigation maps open through the page, draw in the 3D view and export unchanged,
+  byte for byte;
+- the 3D view builds a 256² map in at most 445 ms and orbits at the display's rate, with 0 of
+  46,631 frames longer than 1/60 s. This machine is a high-end desktop, not a mid-range laptop, so
+  the budget was judged on its integrated GPU with the CPU slowed 4× on a laptop-sized screen
+  (D46);
+- generate → refine → back to settings → regenerate → refine keeps the player's edits, tested
+  through the page.
+
+The deviations are PLAN §20 D42–D46.
+
 ---
 
 ## M5. Set pieces, land and water tools, slopes, fixes
