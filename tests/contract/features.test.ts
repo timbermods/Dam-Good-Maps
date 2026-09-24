@@ -35,13 +35,16 @@ describe.each([
     expect(validateFeatures(r.features)).toEqual([]);
     expect(validateSpec(r.spec)).toEqual([]);
     const kinds = new Set(r.features.map((f) => f.kind));
-    for (const k of ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "start"]) expect(kinds.has(k as Feature["kind"])).toBe(true);
+    for (const k of ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "mapObject", "start"]) expect(kinds.has(k as Feature["kind"])).toBe(true);
     const ids = r.features.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     const setPieces = r.features.filter((f) => f.kind === "setPiece").map((f) => (f.params as { kind: string }).kind).sort();
-    // the badwater setting's strength in basins of 1–3 each (0.65 × 7.2 at 256² makes two)
+    // the badwater setting's strength in basins of 1–3 each (0.65 × 7.2 at 256² makes two); since
+    // M7 also ruins on a plateau (where it fits) and, from 128², a second district's site
     const basins = Math.ceil(layoutTargets(r.spec).badwater / 3);
-    expect(setPieces).toEqual([...Array(basins).fill("badwaterBasin"), "damSite", "waterfall", "waterfall"]);
+    const layoutPieces = setPieces.filter((k) => k !== "obstaclePayoff" && k !== "secondDistrict");
+    expect(layoutPieces).toEqual([...Array(basins).fill("badwaterBasin"), "damSite", "waterfall", "waterfall"]);
+    expect(setPieces.filter((k) => k === "obstaclePayoff" || k === "secondDistrict").length).toBeLessThanOrEqual(2);
   });
 
   it("every entity records its owning feature", () => {

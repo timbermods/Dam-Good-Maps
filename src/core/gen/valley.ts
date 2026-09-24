@@ -43,6 +43,9 @@ import { obstacleTiles } from "../features/setpieces/obstaclePayoff";
 import { RUIN_HEIGHT_SHARES, RUINS } from "./calibrated";
 import { walkRegions } from "../analysis/regions";
 import { slopeHighSide } from "../format/footprints";
+import { entityTiles } from "../features/edits";
+import { objectTiles } from "../features/objects";
+import { WALK_BLOCKERS } from "../validate/playability";
 import { planResources } from "./resources";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf, type PlanGround } from "./water";
 
@@ -649,6 +652,40 @@ export function objectsAndResources(
   const seed = spec.seed;
   const buildWith = (fs: readonly Feature[]) => buildMap({ W, H, seed, features: [...fs, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
   let base = buildWith(layout);
+  // a weir whose water spills out of the channel onto the valley floor round the reservoir site
+  // is left out (the estimate in weirAt missed it)
+  const weir = layout.findIndex((f) => f.kind === "mapObject" && f.role === "mapObject/weir/primary");
+  const main = layout.find((f): f is RiverFeature => f.kind === "river" && f.role === "river/main");
+  if (weir >= 0 && main) {
+    // the river over its banks: wet tiles beside its channel, off every lake and pond
+    const field = pathField(main.params.path, W, H);
+    const lakes = new Uint8Array(W * H);
+    for (const f of layout) {
+      if (f.kind !== "lake" || f.params.planned) continue;
+      const m = polygonMask(f.params.outline, W, H);
+      for (let i = 0; i < m.length; i++) if (m[i]) lakes[i] = 1;
+    }
+    // (the floodplain upstream of the weir, one level above the river's bed there)
+    const at = Number((layout.find((f) => f.kind === "setPiece" && f.params.kind === "damSite") as SetPieceFeature | undefined)?.params.plan.at ?? 0);
+    let flooded = false;
+    for (let i = 0; i < W * H && !flooded; i++) {
+      if (base.channel[i] || lakes[i] || !(base.water[i] > 0.05) || field.d[i] > main.params.width / 2 + 6) continue;
+      const s = field.s[i];
+      if (s < at - 60 || s >= at) continue;
+      if (base.heights[i] === bedAt(main.params.bedProfile, s) + 1) flooded = true;
+    }
+    // the weir blocks walking too: it may not cut the colony's way along the river's bed
+    const land = (fs: readonly Feature[]) => startWalkable(buildMap({ W, H, seed, features: [...fs, ...others], locked: context?.locked }, { stopBeforeWater: true }));
+    if (!flooded && land(layout) < land(layout.filter((_, k) => k !== weir)) - 60) flooded = true;
+    if (flooded) {
+      layout.splice(weir, 1);
+      base = buildWith(layout);
+    }
+  }
+  // what the colony walks on from the start: an object or a plateau may not cut it off (a mine
+  // site in a corridor), beyond the tiles it stands on
+  const walked = startWalkable(base);
+  const keepsWalk = (b: BuildResult, own: number) => startWalkable(b) >= walked - own - 40;
   // the second district's site (PLAN §9.8, maps of 128² and up): the first candidate whose ground
   // the derived slopes join to the start's
   const avoidAll = avoid ? avoid.slice() : new Uint8Array(W * H);
@@ -681,22 +718,59 @@ export function objectsAndResources(
       const r = planSetPiece("obstaclePayoff", { at: [x, y], radius, rise: 2 }, ctx, { id: featureId(seed, "setPiece", role), origin: "generated", role }, true);
       if (!r.ok) continue;
       const disc = obstacleTiles({ x, y, radius }, W, H);
+      const b2 = buildWith([...layout, r.feature]);
+      if (!keepsWalk(b2, disc.length)) continue;
       const meanH = RUIN_HEIGHT_SHARES.reduce((a, s, k) => a + s * (k + 1), 0);
       const fr = "ruinField/obstacle";
       layout.push(r.feature);
       extraFeatures.push({ id: featureId(seed, "ruinField", fr), kind: "ruinField", origin: "generated", role: fr, locked: false, params: { area: tilesToRuns(disc, W), scrapTarget: Math.round(disc.length * 15 * meanH), heightMix: [...RUIN_HEIGHT_SHARES], centerBias: RUINS.centerBias } });
       for (const i of obstacleTiles({ x, y, radius: radius + 3 }, W, H)) avoidAll[i] = keepOffResources[i] = 1;
-      base = buildWith(layout);
+      base = b2;
       break;
     }
   }
   const objects = planExtras({ spec, base, features: [...layout, ...others], protect: context?.protect ?? null, avoid: avoidAll, candidate, attempt });
   if (objects.length) {
-    layout.push(...objects);
-    base = buildWith(layout);
+    const before = startWalkable(base);
+    let b2 = buildWith([...layout, ...objects]);
+    // objects that cut the colony's land in two go (the thorn belts, then the biggest first)
+    const own = (f: MapObjectFeature) => objectTiles(f, W, H).length;
+    const kept = objects.slice();
+    const total = () => kept.reduce((a, f) => a + own(f), 0);
+    while (kept.length && startWalkable(b2) < before - total() - 40) {
+      kept.sort((a, c) => (a.params.kind === "thornBelt" ? 0 : 1) - (c.params.kind === "thornBelt" ? 0 : 1) || own(c) - own(a));
+      kept.shift();
+      b2 = buildWith([...layout, ...kept]);
+    }
+    layout.push(...kept);
+    base = b2;
   }
   const constraints = { protect: keepOffResources, lockedMask: context?.locked?.mask ?? null };
   return [...extraFeatures, ...planResources(spec, base, candidate, attempt, constraints, sites)];
+}
+
+/** Dry tiles the colony walks on from the start: same level, the built slopes, round the objects
+ *  that block walking (the `start.reach` rule of the playability checks). */
+export function startWalkable(b: BuildResult): number {
+  if (!b.start) return 0;
+  const { W, H } = b;
+  const N = W * H;
+  const links: [number, number][] = [];
+  const blocked = new Uint8Array(N);
+  for (const e of b.entities) {
+    if (WALK_BLOCKERS.has(e.template)) for (const [x, y] of entityTiles(e)) if (x >= 0 && y >= 0 && x < W && y < H) blocked[y * W + x] = 1;
+    if (e.template !== "Slope") continue;
+    const [dx, dy] = slopeHighSide(e.orientation);
+    const hx = e.x + dx;
+    const hy = e.y + dy;
+    if (e.x < 0 || e.y < 0 || e.x >= W || e.y >= H || hx < 0 || hy < 0 || hx >= W || hy >= H) continue;
+    links.push([e.y * W + e.x, hy * W + hx]);
+  }
+  const labels = walkRegions(b.heights, W, H, blocked, links);
+  const root = labels[b.start.y * W + b.start.x];
+  let n = 0;
+  for (let i = 0; i < N; i++) if (root >= 0 && labels[i] === root && !(b.water[i] > 0.05)) n++;
+  return n;
 }
 
 /** Whether (x, y) is on ground the colony can walk to from the start (same level, and the built
@@ -723,8 +797,13 @@ function walkableFromStart(b: BuildResult, x: number, y: number): boolean {
  *  arc position is within half a tile of the ridge's centre. A slab one tile thick across the flow
  *  leaves no side-to-side gap, so the water stands 0.65 above the bed upstream before it spills. */
 export function weirAt(g: PlanGround, river: RiverFeature, damSite: SetPieceFeature, flows: number, id: (kind: Feature["kind"], role: string) => string): MapObjectFeature | null {
+  return weirOn(g, river, Number(damSite.params.plan.at), river.params.flow * (1 + 0.25 * Math.max(0, flows - 1)), id, "mapObject/weir/primary");
+}
+
+/** A weir across a river's channel at arc position `at`, carrying `flow`, or null when it would not
+ *  fit (see weirAt). */
+export function weirOn(g: PlanGround, river: RiverFeature, at: number, flow: number, id: (kind: Feature["kind"], role: string) => string, role: string): MapObjectFeature | null {
   const { W, H } = g;
-  const at = Number(damSite.params.plan.at);
   const field = pathField(river.params.path, W, H);
   const half = river.params.width / 2;
   const tiles: number[] = [];
@@ -732,9 +811,7 @@ export function weirAt(g: PlanGround, river: RiverFeature, damSite: SetPieceFeat
   if (tiles.length < 2 || tiles.length > 16) return null;
   // the water spills over the weir about 0.3·q deep (q the flow per tile across it, PLAN §9.2): it
   // must stay below the floodplain one level above the bed, or the weir floods the valley floor
-  const flow = river.params.flow * (1 + 0.25 * Math.max(0, flows - 1));
   if (0.65 + (0.35 * flow) / tiles.length > 0.93) return null;
-  const role = "mapObject/weir/primary";
   return { id: id("mapObject", role), kind: "mapObject", origin: "generated", role, locked: false, params: { kind: "weir", placement: { area: tilesToRuns(tiles, W) } } };
 }
 

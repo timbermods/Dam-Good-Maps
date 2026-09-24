@@ -52,6 +52,7 @@ const api = {
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),
   moveStartTo: (x: number, y: number) => sendUpdate(ed.moveStartTo(x, y)),
   damSites: () => ed.damSiteLayer(),
+  entitiesAt: (x: number, y: number) => ed.entitiesAt(x, y),
   instantCheck: () => ed.instantCheck(),
   async settingsResponse(): Promise<GenerateResponse> {
     const r = await ed.settingsResponse();

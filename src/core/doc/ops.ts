@@ -377,6 +377,9 @@ export interface OpContext {
   buildableKinds?: readonly FeatureKind[];
   /** Starts on the map that are not a start feature (an imported map's own StartingLocation). */
   otherStarts?: number;
+  /** Why the game would not keep an entity placed (or moved, by id) there, or null: the loader's
+   *  rules on the current map (placing.ts `entityProblem`). */
+  placement?: (p: { template?: string; id?: string; x: number; y: number; orientation?: Orientation; flipped?: boolean }) => string | null;
 }
 
 /** Kinds a player can add in this version. */
@@ -524,14 +527,21 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (!PLACEABLE.has(p.template) || !FOOTPRINTS[p.template]) return [`${p.template} cannot be placed by hand`];
       if (!inMap(p.x, p.y)) return [`(${p.x}, ${p.y}) is outside the map`];
       if (!ORIENTATIONS.includes(p.orientation)) return [`bad orientation ${String(p.orientation)}`];
-      if (!p.components) return hasDefaults(p.template) ? [] : [`${p.template} needs its components`];
-      const missing = (REQUIRED[p.template] ?? []).filter((c) => !(c in p.components!));
-      if (missing.length) return [`${p.template} needs the components ${missing.join(", ")}`];
-      return "BlockObject" in p.components ? ["BlockObject comes from the operation's position"] : [];
+      if (!p.components && !hasDefaults(p.template)) return [`${p.template} needs its components`];
+      if (p.components) {
+        const missing = (REQUIRED[p.template] ?? []).filter((c) => !(c in p.components!));
+        if (missing.length) return [`${p.template} needs the components ${missing.join(", ")}`];
+        if ("BlockObject" in p.components) return ["BlockObject comes from the operation's position"];
+      }
+      // an object the game would delete on load is refused
+      const why = ctx.placement?.({ template: p.template, x: p.x, y: p.y, orientation: p.orientation, flipped: p.flipped });
+      return why ? [`it can't stand there: ${why}`] : [];
     }
     case "moveEntity": {
       if (!ctx.entityIds.has(op.params.id)) return [`entity ${op.params.id} does not exist`];
-      return inMap(op.params.x, op.params.y) ? [] : [`(${op.params.x}, ${op.params.y}) is outside the map`];
+      if (!inMap(op.params.x, op.params.y)) return [`(${op.params.x}, ${op.params.y}) is outside the map`];
+      const why = ctx.placement?.({ id: op.params.id, x: op.params.x, y: op.params.y, orientation: op.params.orientation });
+      return why ? [`it can't stand there: ${why}`] : [];
     }
     case "deleteEntities": {
       const missing = op.params.entities.filter((id) => !ctx.entityIds.has(id));

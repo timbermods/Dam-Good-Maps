@@ -23,7 +23,7 @@ import { distanceFrom } from "../math/grid";
 import { stream, type Rng } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { bandsFor, drawBands, fitRelief, layoutTargets } from "./layout";
-import { farReach, MAX_LAYOUT_TRIES, objectsAndResources, PlanConflict, riverWidth, type PlanContext } from "./valley";
+import { farReach, MAX_LAYOUT_TRIES, objectsAndResources, PlanConflict, riverWidth, weirOn, type PlanContext } from "./valley";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf } from "./water";
 
 /** Layout parameters per archetype (PLAN §8: a typed table). */
@@ -468,6 +468,23 @@ export function planLakeBasin(spec: MapSpec, attempt: number, candidate = 0, set
       layout.splice(layout.indexOf(start), 0, spill);
       ground = groundOf(W, H, seed, [...layout, ...others]);
       break;
+    }
+
+    // a pre-built weir (PLAN §5.7) across the first inflow, 8 tiles above its mouth, on half the
+    // maps: it holds a pool in the river's bed, where it cuts no way the colony walks
+    const inflow0 = layout.find((f): f is RiverFeature => f.kind === "river" && f.role === "river/inflow/0");
+    if (inflow0 && stream(seed, "weir", candidate, attempt).float() < 0.5) {
+      const len = pathLen(inflow0.params.path);
+      const w = weirOn(ground, inflow0, round(len - 8, 2), inflow0.params.flow, id, "mapObject/weir/inflow");
+      if (w) {
+        const now = startLand(W, H, seed, [...layout, ...others], lakeMask, sx, sy);
+        const withIt = [...layout, ...others];
+        withIt.splice(layout.indexOf(start), 0, w);
+        if (startLand(W, H, seed, withIt, lakeMask, sx, sy) >= now - 60) {
+          layout.splice(layout.indexOf(start), 0, w);
+          ground = groundOf(W, H, seed, [...layout, ...others]);
+        }
+      }
     }
 
     // badwater first: its outlets join the outlet river below its fall (never at the lake's own

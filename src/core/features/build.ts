@@ -473,6 +473,9 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     const tiles = mouthTiles(f, target);
     mouths.set(f.id, tiles);
     for (const i of tiles) reserved[i] = 1;
+    // a badwater river's sources reach two tiles inland
+    if (f.params.badwater && "edge" in f.params.entry)
+      for (const [x, y] of badwaterMouth(tiles, f.params.entry.edge, W, H, heights).groups) for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) reserved[(y + dy) * W + x + dx] = 1;
   }
   //    springs: a river that starts inland, a lake fed by a spring
   const springs = new Map<string, number[]>();
@@ -571,6 +574,24 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     if (f.kind !== "river" || !live(f)) continue;
     const tiles = mouths.get(f.id)!;
     if (!tiles.length) continue;
+    // a badwater river: BadwaterSources (3×3) along its mouth, and a source at strength 0 on any
+    // mouth tile left over, so the mouth stays sealed (EDITOR_PLAN §4's badwater toggle)
+    const bad = f.params.badwater && "edge" in f.params.entry ? badwaterMouth(tiles, f.params.entry.edge, W, H, heights) : null;
+    if (bad && bad.groups.length) {
+      const each = Math.min(72, Math.round((f.params.flow / bad.groups.length) * 1000) / 1000);
+      for (const [x, y] of bad.groups) {
+        const i = y * W + x;
+        sources.push({ x, y, z: heights[i], strength: each, owner: f.id, template: "BadwaterSource" });
+        entities.push(waterSource({ id: entityId(f.id, "BadwaterSource", i), owner: f.id, x, y, z: heights[i], strength: each, bad: true }));
+      }
+      for (const i of bad.seals) {
+        const x = i % W;
+        const y = (i - x) / W;
+        sources.push({ x, y, z: heights[i], strength: 0, owner: f.id, template: "WaterSource" });
+        entities.push(waterSource({ id: entityId(f.id, "WaterSource", i), owner: f.id, x, y, z: heights[i], strength: 0 }));
+      }
+      continue;
+    }
     const each = Math.min(8, Math.round((f.params.flow / tiles.length) * 1000) / 1000);
     for (const i of tiles) {
       const x = i % W;
@@ -808,6 +829,38 @@ function landformTargets(features: readonly Feature[], t: BuildTarget): { mask: 
     keys.push(f.id);
   }
   return { mask, key: keys.join(",") };
+}
+
+/** A badwater river's sources on its mouth: BadwaterSources (3×3, placed Cw0 with their minimum
+ *  corner at each group) covering the mouth's border tiles three at a time and reaching two tiles
+ *  inland, and the tiles left over (fewer than three), which get a source at strength 0 so the
+ *  mouth stays sealed. */
+export function badwaterMouth(tiles: readonly number[], edge: "west" | "east" | "south" | "north", W: number, H: number, heights: ArrayLike<number>): { groups: [number, number][]; seals: number[] } {
+  const sorted = [...tiles].sort((a, b) => a - b);
+  const groups: [number, number][] = [];
+  const seals: number[] = [];
+  let k = 0;
+  const level = (x: number, y: number) => {
+    const lv = heights[y * W + x];
+    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) if (heights[(y + dy) * W + x + dx] !== lv) return false;
+    return true;
+  };
+  while (k < sorted.length) {
+    // three consecutive border tiles, their 3×3 level (a BadwaterSource stands on flat ground)
+    const a = sorted[k];
+    const step = edge === "west" || edge === "east" ? W : 1;
+    const x = a % W;
+    const y = (a - x) / W;
+    const at: [number, number] = edge === "west" ? [0, y] : edge === "east" ? [W - 3, y] : edge === "south" ? [x, 0] : [x, H - 3];
+    if (k + 2 < sorted.length && sorted[k + 1] === a + step && sorted[k + 2] === a + 2 * step && level(at[0], at[1])) {
+      groups.push(at);
+      k += 3;
+    } else {
+      seals.push(a);
+      k++;
+    }
+  }
+  return { groups, seals };
 }
 
 /** The centre of an imported map's start, when it has exactly one. */
