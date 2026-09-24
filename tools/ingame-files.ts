@@ -39,6 +39,7 @@ import { planContextOf, planPiece, planRiver, type PlannedEdit } from "../src/co
 import { pointAtArc } from "../src/core/features/geometry";
 import type { RiverFeature, SetPieceFeature } from "../src/core/features/schema";
 import { lipTiles, measureLip, type StandalonePlan } from "../src/core/features/setpieces/waterfall";
+import { reservoirOf, type DamSitePlan } from "../src/core/features/setpieces/damSite";
 import { generate } from "../src/core/gen/generate";
 import { fileName, toTimberFile } from "../src/core/gen/pack";
 import { rotate, slopeHighSide, startEntranceTile, type Orientation } from "../src/core/format/footprints";
@@ -345,24 +346,26 @@ function m5(): void {
   if (!dam) throw new Error("no place for the C1 dam site");
   const dC = apply(sC, dam);
   const outC = exportOf(sC, "C1 dam site");
-  const dp = dC.params.plan as unknown as { at: number; crest: number; topLevel: number };
-  const c = pointAtArc(river.params.path, dp.at);
-  const half = Math.ceil(river.params.width / 2) + 1;
-  const line: [number, number][] = [];
-  for (let k = -half; k <= half; k++) line.push([Math.round(c.p[0] + c.normal[0] * k), Math.round(c.p[1] + c.normal[1] * k)]);
-  const gap = line.filter(([x, y]) => sC.built.heights[y * W + x] < dp.topLevel);
-  const bed = Math.min(...gap.map(([x, y]) => sC.built.heights[y * W + x]));
+  const dp = dC.params.plan as unknown as DamSitePlan;
+  const held = reservoirOf(dp, river, planContextOf(sC, dC.id), dC.id)!;
   const marksC = startMarks(sC.built);
-  for (const [x, y] of gap) marksC.push({ x, y, rgb: [255, 140, 20] });
+  for (const [x, y] of held.line) marksC.push({ x, y, rgb: [255, 140, 20] });
   writeFileSync(join(outDir, `${base} C1 dam site.png`), preview(sC.built, marksC, true));
+  const need = Math.round(rulesFor(r.spec).reservoirNeed);
   lines.push(
     `sha256 ${sha(outC.bytes)}  ${base} C1 dam site.timber`,
-    `C1 dam site: a rock ridge (top level ${dp.topLevel}) across the river; build the dam in its gap (orange): ${gap.map(([x, y]) => `(${x}, ${y})`).join(" ")}, on the river bed at level ${bed}.`,
-    `  ${dC.params.report.join("; ")}.`,
-    `  A dam ${dp.crest} high there (a crest at level ${bed + dp.crest}) should fill the basin upstream to about that level, and the water should not leak round the ridge's ends.`,
-    `  The generated map's own dam site (the gorge above the basin) is still there too. Export warnings: ${outC.warnings.join("; ") || "none"}.`,
+    `C1 dam site: a rock ridge (top level ${dp.topLevel}) across the river's lower reach. Build a dam ${dp.crest} high on its ${held.line.length} gap tiles (orange): ${held.line.map(([x, y]) => `(${x}, ${y})`).join(" ")}. The river bed there is at level ${held.bed}, so the crest is at level ${held.bed + dp.crest}.`,
+    `  The basin behind it should fill to about level ${held.bed + dp.crest}: ${held.area} tiles, about ${Math.round(held.volume)} blocks of water, and none of it should leak round the ridge's ends.`,
+    `  C3 (first drought on Normal): the colony needs about ${need} blocks stored; this reservoir holds ${Math.round(held.volume)}. Export warnings: ${outC.warnings.join("; ") || "none"}.`,
     "",
   );
+  // C2: the generated falls, where a water wheel should turn
+  const falls = r.features.filter((f): f is SetPieceFeature => f.kind === "setPiece" && f.params.kind === "waterfall");
+  const fallAt = falls.map((f) => {
+    const q = pointAtArc(river.params.path, Number(f.params.plan.at)).p;
+    return `(${Math.round(q[0])}, ${Math.round(q[1])}), a drop of ${f.params.plan.drop}`;
+  });
+  lines.push(`C2 (any of these maps): the generated river falls at ${fallAt.join(" and ")}; a water wheel just below either should turn.`, "");
 
   // ---- a gorge with a stair notch near the start. River Valley's valley floor is wide, so a gorge
   //      on the main river has floodplain behind its walls and its notch is a plain cut. The check

@@ -119,7 +119,9 @@ function notchLevels(p: GorgePlan, river: RiverFeature, tiles: number[], h: Arra
   }
   out.push(F, F);
   for (let lv = F + 1; lv < R && out.length < tiles.length - 1; lv++) out.push(lv);
-  out.push(R);
+  // the top: cut through what is left of the wall at the rim's level, to the rim
+  do out.push(R);
+  while (out.length <= rimAt && out.length < tiles.length);
   return out;
 }
 

@@ -182,7 +182,9 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     message: `the largest body of clean water badwater never reaches has ${largest} tiles (at least 40)`,
   });
   const planned = inp.features?.some((f) => f.kind === "setPiece" && f.params.kind === "badwaterBasin" && (f.params.plan as { outlet?: unknown }).outlet);
-  if (planned) c.notApplicable("water.badwater_contained", "playability", "the containment re-simulation arrives with the badwater basin builder (roadmap M5)");
+  // a source never stops, so a blocked outlet only holds the badwater while the basin fills: the
+  // proof of §9.5 comes with the badwater settings that place basins (roadmap M6, D51)
+  if (planned) c.notApplicable("water.badwater_contained", "playability", "the containment rule comes with the badwater settings (roadmap M6)");
   else c.notApplicable("water.badwater_contained", "playability", "no badwater basin with a planned outlet on this map");
 
   const M = moisture(h, D, C, W, H, barrier);

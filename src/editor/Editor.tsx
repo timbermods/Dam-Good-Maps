@@ -715,7 +715,14 @@ export default function Editor(props: EditorProps) {
       <div class="editor-main">
         <TabPanel
           tab={tab}
-          onTab={setTab}
+          onTab={(t) => {
+            // a tool belongs to its tab: another tab puts it away
+            if (t !== tab) {
+              setTool(null);
+              cancelTool();
+            }
+            setTab(t);
+          }}
           info={info}
           index={indexed}
           selected={selected}

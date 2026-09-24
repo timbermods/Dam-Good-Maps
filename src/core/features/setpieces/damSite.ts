@@ -201,7 +201,7 @@ export function damBand(feature: SetPieceFeature, t: Pick<BuildTarget, "W" | "H"
 /** The reservoir a dam across the ridge's gap would hold, measured on the planning map with the
  *  ridge rasterized on it: the dam line runs across the valley through the channel tile at the
  *  ridge's centre, and the flood must not reach a map edge or walk round the dam. */
-function reservoirOf(plan: DamSitePlan, river: RiverFeature, ctx: PlanContext, id: string | null): { length: number; area: number; volume: number } | null {
+export function reservoirOf(plan: DamSitePlan, river: RiverFeature, ctx: PlanContext, id: string | null): { length: number; area: number; volume: number; line: [number, number][]; bed: number } | null {
   const { W, H } = ctx;
   const heights = ctx.heights.slice();
   const feature = { id: id ?? "planning", kind: "setPiece", origin: "user", locked: false, params: { kind: "damSite", request: {}, plan: plan as unknown as PlanRecord, report: [] } } as SetPieceFeature;
@@ -243,5 +243,17 @@ function reservoirOf(plan: DamSitePlan, river: RiverFeature, ctx: PlanContext, i
   const x = at % W;
   const y = (at - x) / W;
   const site = damCandidate(heights, surface, W, H, x, y, dir[0], dir[1], plan.crest, stamp, 20, Math.max(6000, Math.floor(0.3 * W * H)));
-  return site ? { length: site.length, area: site.area, volume: site.volume } : null;
+  if (!site) return null;
+  // the dam's tiles: from the bed tile each way until the ground reaches the crest
+  const crest = heights[at] + plan.crest;
+  const line: [number, number][] = [[x, y]];
+  for (const sgn of [1, -1])
+    for (let k = 1; k <= 20; k++) {
+      const xx = x + sgn * k * dir[1];
+      const yy = y + sgn * k * dir[0];
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H || heights[yy * W + xx] >= crest) break;
+      line.push([xx, yy]);
+    }
+  line.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return { length: site.length, area: site.area, volume: site.volume, line, bed: heights[at] };
 }
