@@ -20,7 +20,7 @@ const info = (page: Page) => page.evaluate(() => window.dgmEditor!.info());
 test("generate → refine → back to settings → regenerate → refine keeps the player's edits", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("./#s=4242&z=96&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=4242&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
 
   // refine: the editor opens the generated map in 3D
@@ -119,7 +119,7 @@ test("generate → refine → back to settings → regenerate → refine keeps t
 });
 
 test("a feature is selected by clicking it, and its delete handle refuses what others build on", async ({ page }) => {
-  await page.goto("./#s=77&z=96&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=77&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Refine this map" }).click();
   await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 60_000 });

@@ -27,6 +27,8 @@ export interface MapFacts {
   cleanSources: number;
   cleanFlow: number;
   badwaterFlow: number;
+  /** Badwater sources (one per basin). */
+  badwaterSources: number;
   /** Share of the map under water (deeper than 0.05). */
   wetShare: number;
   /** The best dam site within 40 tiles of the start. */
@@ -122,6 +124,7 @@ export async function responseOf(r: ResponseInput): Promise<GenerateResponse> {
     cleanSources: clean.length,
     cleanFlow: sum(clean),
     badwaterFlow: sum(bad),
+    badwaterSources: bad.length,
     wetShare: wet / N,
     bestDam: a?.bestDam ?? null,
     naturalStorage: a ? Math.round(a.naturalStorage) : 0,

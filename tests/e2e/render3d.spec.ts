@@ -13,7 +13,7 @@ test("the 3D preview builds a 256² map, reads tiles on hover, and remeshes only
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("./#s=1&z=256&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=1&z=256&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 120_000 });
   await page.getByRole("button", { name: "3D", exact: true }).click();
   await page.waitForFunction(() => !!window.dgm3d, null, { timeout: 60_000 });

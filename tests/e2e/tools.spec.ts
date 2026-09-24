@@ -26,7 +26,7 @@ async function preview(page: Page) {
 test("the land and water tools: plan, preview, place", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("./#s=4242&z=96&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=4242&z=96&d=n&t=riverValley&lk=0");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Refine this map" }).click();
   await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 60_000 });
@@ -112,7 +112,7 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
 });
 
 test("the start: its footprint and what is nearby while it moves; a broken start gets a one-click fix", async ({ page }) => {
-  await page.goto("./#s=77&z=96&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=77&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Refine this map" }).click();
   await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 60_000 });

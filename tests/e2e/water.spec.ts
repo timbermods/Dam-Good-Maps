@@ -8,7 +8,7 @@ import { encodeSpecFragment, makeSpec } from "../../src/core/spec/mapspec";
 test("the map card shows the water facts, the layers toggle, and both water variants download", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
-  await page.goto("./#s=4242&z=128&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=4242&z=128&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed, 1 warning/)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText("Best dam site", { exact: true })).toBeVisible();
   await expect(page.getByText(/water behind a \d+-tile dam/)).toBeVisible();
@@ -24,7 +24,7 @@ test("the map card shows the water facts, the layers toggle, and both water vari
 });
 
 test("256² in the browser (timing for PLAN §10)", async ({ page }) => {
-  await page.goto("./#s=1&z=128&d=n&t=riverValley&v=0.3.0");
+  await page.goto("./#s=1&z=128&d=n&t=riverValley");
   await page.waitForFunction(() => "dgm" in window);
   const times: number[] = [];
   for (const seed of [1, 2, 3, 4, 5]) {

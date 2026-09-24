@@ -345,3 +345,207 @@ code {
 .foot a {
   color: inherit;
 }
+
+/* ---- the settings panel (PLAN §14.1) ---- */
+
+.panes {
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+@media (max-width: 780px) {
+  .panes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.themes {
+  border: 0;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.themes legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.theme {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px;
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  min-width: 0;
+}
+
+.theme[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.theme[aria-pressed="true"] .theme-note {
+  color: var(--accent-ink);
+  opacity: 0.85;
+}
+
+.theme[aria-pressed="true"] .g-land,
+.theme[aria-pressed="true"] .g-isle {
+  stroke: var(--accent-ink);
+}
+
+/* Generate stays in reach while the settings scroll (PLAN §14.1) */
+.generate-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: 8px -14px 0;
+  padding: 10px 14px;
+  background: var(--panel);
+  border-top: 1px solid var(--rule);
+}
+
+.generate-bar .primary {
+  margin-top: 0;
+}
+
+.theme svg {
+  width: 100%;
+  height: 28px;
+}
+
+.theme-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.theme-note {
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.25;
+}
+
+.g-land {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.g-water {
+  fill: none;
+  stroke: #3f7fbf;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.g-lake,
+.g-sea {
+  fill: #3f7fbf;
+  opacity: 0.8;
+}
+
+.g-isle {
+  fill: var(--muted);
+}
+
+.settings .field {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.field-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.field-head output {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.settings input[type="range"] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.band {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.section {
+  border-top: 1px solid var(--rule);
+  padding: 8px 0 2px;
+}
+
+.section summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.section-body {
+  padding-top: 4px;
+}
+
+.mix {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 0 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 8px;
+}
+
+.mix legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.mix .band {
+  grid-column: 1 / -1;
+}
+
+.row.two {
+  gap: 8px;
+}
+
+.row.two > .field {
+  flex: 1;
+}
+
+.limits {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
+
+.wide {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.share {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}

@@ -8,18 +8,18 @@ import type { ComponentType } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { createGenerator, readFile, saveFile, storage, type Autosave } from "../platform";
 import {
-  AVAILABLE_THEMES,
   decodeSpecFragment,
+  defaultSettings,
+  DIFFICULTY_RULES,
   encodeSpecFragment,
   GENERATOR_VERSION,
   makeSpec,
+  mineSitesForSize,
   seedFromText,
-  SIZE_PRESETS,
-  THEME_NAMES,
-  THEMES,
+  shareLink,
   type Difficulty,
   type MapSpec,
-  type SizePreset,
+  type Settings,
   type ThemeId,
 } from "../core/spec/mapspec";
 import type { GenerateResponse } from "../worker/api";
@@ -28,6 +28,8 @@ import type { EditorProps } from "../editor/Editor";
 import type { ExportDialogProps } from "../editor/panels";
 import { Preview2D, type Layers } from "./Preview2D";
 import { MapCard } from "./MapCard";
+import { SettingsPanel } from "./SettingsPanel";
+import { shareText } from "./settingsModel";
 
 const generator = createGenerator();
 
@@ -43,16 +45,24 @@ const LAYER_NAMES: Record<keyof Layers, string> = {
 
 declare global {
   interface Window {
-    /** Test hook: generate a map from a URL fragment and return its sha256 (tests/e2e). */
-    dgm?: { generate(fragment: string): Promise<{ sha256: string; bytes: number; passed: boolean; ms: number; ticks: number }> };
+    /** Test hooks (tests/e2e): generate a map from a URL fragment and return its sha256; the map
+     *  on screen, its sha256 and its share link. */
+    dgm?: {
+      generate(fragment: string): Promise<{ sha256: string; bytes: number; passed: boolean; ms: number; ticks: number }>;
+      current?(): { sha256: string; link: string; passed: boolean } | null;
+    };
   }
 }
+let shown: GenerateResponse | null = null;
 window.dgm = {
   async generate(fragment: string) {
     const d = decodeSpecFragment(fragment);
     if (!d) throw new Error("bad fragment");
     const r = await generator.generate(d.spec);
     return { sha256: r.sha256, bytes: r.timber.length, passed: r.passed, ms: r.ms, ticks: r.facts.settle.ticks };
+  },
+  current() {
+    return shown ? { sha256: shown.sha256, link: shareLink(location.href, shown.spec), passed: shown.passed } : null;
   },
 };
 
@@ -101,6 +111,8 @@ export function App() {
   const [size, setSize] = useState<{ x: number; y: number }>(init.spec.size);
   const [difficulty, setDifficulty] = useState<Difficulty>(init.spec.designedFor);
   const [theme, setTheme] = useState<ThemeId>(init.spec.theme);
+  const [settings, setSettings] = useState<Settings>(init.spec.settings);
+  const [copied, setCopied] = useState("");
   const [result, setResult] = useState<GenerateResponse | null>(null);
   /** The settings page shows the open document's map (its edits included). */
   const [fromSession, setFromSession] = useState(false);
@@ -126,8 +138,8 @@ export function App() {
   const Dialog = useLazy(() => import("../editor/panels").then((m) => m.ExportDialog as ComponentType<ExportDialogProps>), exporting);
 
   const spec = useMemo(
-    () => makeSpec({ seed: seedFromText(seedText || "0"), size, designedFor: difficulty, theme }),
-    [seedText, size, difficulty, theme],
+    () => ({ ...makeSpec({ seed: seedFromText(seedText || "0"), size, designedFor: difficulty, theme }), settings }),
+    [seedText, size, difficulty, theme, settings],
   );
   const stale = !!result && encodeSpecFragment(result.spec) !== encodeSpecFragment(spec);
   const edited = fromSession && !!session && session.kind === "generated" && session.edits > 0;
@@ -137,6 +149,38 @@ export function App() {
     setSize(s.size);
     setDifficulty(s.designedFor);
     setTheme(s.theme);
+    setSettings(s.settings);
+  }
+
+  // a theme pre-fills every setting (PLAN §6); a difficulty sets the start rules and its badwater
+  // distance and berry target (PLAN §5.6); a size sets the default number of mine sites
+  function chooseTheme(t: ThemeId) {
+    setTheme(t);
+    setSettings(defaultSettings(t, difficulty, size));
+  }
+  function chooseDifficulty(d: Difficulty) {
+    setDifficulty(d);
+    const r = DIFFICULTY_RULES[d];
+    setSettings((s) => ({
+      ...s,
+      hazards: { ...s.hazards, badwaterDistance: r.badwaterWithin },
+      resources: { ...s.resources, berriesNearStart: r.berriesTarget },
+      start: { ...s.start, rules: { waterWithin: r.waterWithin, treesWithin20: r.treesWithin20, bushesWithin20: r.bushesWithin20, badwaterWithin: r.badwaterWithin, ruinsWithin: r.ruinsWithin } },
+    }));
+  }
+  function chooseSize(z: { x: number; y: number }) {
+    setSize(z);
+    setSettings((s) => ({ ...s, resources: { ...s.resources, mineSites: mineSitesForSize(z.x, z.y) } }));
+  }
+
+  async function copy(text: string, what: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(`${what} copied.`);
+    } catch {
+      setCopied(`Could not copy. ${what}: ${text}`);
+    }
+    window.setTimeout(() => setCopied(""), 4000);
   }
 
   // ------------------------------------------------------------------------------ generating
@@ -308,8 +352,7 @@ export function App() {
 
   // ---------------------------------------------------------------------------------- render
 
-  const presetOf = (s: { x: number; y: number }) =>
-    (Object.entries(SIZE_PRESETS).find(([, v]) => v === s.x && v === s.y)?.[0] as SizePreset | undefined) ?? "custom";
+  shown = result;
 
   const confirmDialog = confirm ? (
     <div class="dialog-backdrop">
@@ -414,74 +457,43 @@ export function App() {
       ) : null}
       <main class="panes">
         <section class="settings" aria-label="Settings">
-          <h2>Map</h2>
-          <label>
-            Seed
-            <div class="row">
-              <input value={seedText} onInput={(e) => setSeedText((e.target as HTMLInputElement).value)} aria-label="Seed (a number or any text)" />
-              <button type="button" class="ghost" title="Random seed" onClick={() => setSeedText(String(randomSeed()))}>
-                Dice
-              </button>
-            </div>
-          </label>
-          <label>
-            Size
-            <select
-              value={presetOf(size)}
-              onChange={(e) => {
-                const v = (e.target as HTMLSelectElement).value as SizePreset;
-                if (v in SIZE_PRESETS) setSize({ x: SIZE_PRESETS[v], y: SIZE_PRESETS[v] });
-              }}
-            >
-              {(Object.keys(SIZE_PRESETS) as SizePreset[]).map((p) => (
-                <option value={p} key={p}>
-                  {p[0].toUpperCase() + p.slice(1)} ({SIZE_PRESETS[p]}×{SIZE_PRESETS[p]})
-                </option>
-              ))}
-              {presetOf(size) === "custom" && <option value="custom">Custom ({size.x}×{size.y})</option>}
-            </select>
-          </label>
-          <label>
-            Theme
-            <select value={theme} onChange={(e) => setTheme((e.target as HTMLSelectElement).value as ThemeId)}>
-              {THEMES.map((t) => (
-                <option value={t} key={t} disabled={!AVAILABLE_THEMES.includes(t)}>
-                  {THEME_NAMES[t]}
-                  {AVAILABLE_THEMES.includes(t) ? "" : " (coming later)"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Designed for
-            <select value={difficulty} onChange={(e) => setDifficulty((e.target as HTMLSelectElement).value as Difficulty)}>
-              <option value="easy">Easy</option>
-              <option value="normal">Normal</option>
-              <option value="hard">Hard</option>
-            </select>
-          </label>
-          <button type="button" class="primary" disabled={busy} onClick={() => run(spec)}>
-            {busy ? "Generating…" : edited ? "Generate, keeping my edits" : stale ? "Generate (settings changed)" : "Generate"}
-          </button>
-          {edited ? (
-            <p class="note">
-              Your {session!.edits} edit{session!.edits > 1 ? "s stay" : " stays"} when you generate again.{" "}
-              <button type="button" class="linkish" onClick={discardEdits}>
-                Discard edits
-              </button>
-            </p>
-          ) : null}
+          <SettingsPanel
+            spec={spec}
+            seedText={seedText}
+            onSeed={setSeedText}
+            onDice={() => setSeedText(String(randomSeed()))}
+            onSize={chooseSize}
+            onTheme={chooseTheme}
+            onDifficulty={chooseDifficulty}
+            onSettings={setSettings}
+            onReset={() => setSettings(defaultSettings(theme, difficulty, size))}
+          />
+          <div class="generate-bar">
+            <button type="button" class="primary" disabled={busy} onClick={() => run(spec)}>
+              {busy ? "Generating…" : edited ? "Generate, keeping my edits" : stale ? "Generate (settings changed)" : "Generate"}
+            </button>
+            {edited ? (
+              <p class="note">
+                Your {session!.edits} edit{session!.edits > 1 ? "s stay" : " stays"} when you generate again.{" "}
+                <button type="button" class="linkish" onClick={discardEdits}>
+                  Discard edits
+                </button>
+              </p>
+            ) : null}
+          </div>
           {note && <p class="note">{note}</p>}
           {openInput}
           <details class="more">
             <summary>What's in this version</summary>
             <p>
-              One theme, River Valley. The water is simulated with the game's own rules and shipped settled, so rivers
-              run from the first tick; trees live where that water keeps the soil moist. Every map is checked against
-              the game's loading rules and for a colony's survival: clean water in pump reach, food, wood, land to
-              build on, and a dam site that holds a drought's water. Refine a map in the editor, or open any map to
-              look at it in 3D and change it.
+              Three themes: River Valley, Canyon and Lake Basin. The water is simulated with the game's own rules and
+              shipped settled, so rivers run from the first tick. Trees live where that water keeps the soil moist.
             </p>
+            <p>
+              Every map is checked against the game's loading rules and for a colony's survival: clean water in pump
+              reach, food, wood, land to build on, and a dam site that holds a drought's water.
+            </p>
+            <p>Refine a map in the editor, or open any map to look at it in 3D and change it.</p>
           </details>
         </section>
         <section class="view" aria-label="Map">
@@ -568,6 +580,17 @@ export function App() {
                     </button>
                   </>
                 )}
+              </div>
+              <div class="share" role="group" aria-label="Share this map">
+                <button type="button" class="ghost" onClick={() => void copy(shareLink(location.href, result.spec), "Link")}>
+                  Copy link
+                </button>
+                <button type="button" class="ghost" onClick={() => void copy(shareText(result.spec, shareLink(location.href, result.spec)), "Seed and settings")}>
+                  Copy seed + settings
+                </button>
+                <span class="muted" role="status">
+                  {copied || (fromSession ? "The link makes the generated map. To share your edits, send the project file." : "The link makes this exact map.")}
+                </span>
               </div>
               <MapCard result={result} />
               <div class={downloaded ? "install open" : "install"}>

@@ -38,7 +38,7 @@ export function MapCard({ result: r }: { result: GenerateResponse }) {
       <p class="premise">{r.premise}</p>
       <dl class="facts">
         <div><dt>River</dt><dd>{f.cleanSources} sources, {f.cleanFlow} water/s</dd></div>
-        <div><dt>Badwater</dt><dd>{f.badwaterFlow ? `${f.badwaterFlow} water/s, downstream` : "none"}</dd></div>
+        <div><dt>Badwater</dt><dd>{f.badwaterFlow ? `${f.badwaterFlow} water/s from ${f.badwaterSources} source${f.badwaterSources > 1 ? "s" : ""}` : "none"}</dd></div>
         <div><dt>Under water</dt><dd>{Math.round(f.wetShare * 100)}% of the map</dd></div>
         <div><dt>Water from the start</dt><dd>{f.waterDistance === null ? "none within pump reach" : `${f.waterDistance} tiles`}</dd></div>
         <div>
