@@ -63,12 +63,16 @@ interface GenerationRecord {
   log: AppliedOp[];
 }
 
-type HistoryEntry = { kind: "op"; op: AppliedOp } | { kind: "generation"; label: string; before: GenerationRecord; after: GenerationRecord };
+/** One undo step: one operation, a group applied together (a fix, a proposal), or a regeneration. */
+type HistoryEntry = { kind: "ops"; ops: AppliedOp[]; label?: string } | { kind: "generation"; label: string; before: GenerationRecord; after: GenerationRecord };
 
 export interface HistoryItem {
   label: string;
+  /** The (first) operation of the step. */
   op: OpName | "regenerate";
   seq?: number;
+  /** Operations in the step (a fix or a proposal may hold several). */
+  count?: number;
   /** False for entries that were undone (redo would apply them again). */
   applied: boolean;
   orphaned?: string;
@@ -148,7 +152,7 @@ export class MapSession {
     this.cur = built ?? buildMap(this.input());
     // the log is the history of an opened document: its operations undo one by one (a
     // regeneration's earlier generation is not stored, so the history starts at this one)
-    this.undoStack = this.log.map((op) => ({ kind: "op", op }));
+    this.undoStack = this.log.map((op) => ({ kind: "ops", ops: [op] }));
     this.snaps.set(this.undoStack.length, this.cur);
   }
 
@@ -243,10 +247,12 @@ export class MapSession {
   }
 
   history(): HistoryItem[] {
-    const item = (e: HistoryEntry, applied: boolean): HistoryItem =>
-      e.kind === "op"
-        ? { label: labelOf(e.op), op: e.op.op, seq: e.op.seq, applied, ...(e.op.orphaned ? { orphaned: e.op.orphaned } : {}) }
-        : { label: e.label, op: "regenerate", applied };
+    const item = (e: HistoryEntry, applied: boolean): HistoryItem => {
+      if (e.kind === "generation") return { label: e.label, op: "regenerate", applied };
+      const first = e.ops[0];
+      const orphaned = e.ops.find((o) => o.orphaned)?.orphaned;
+      return { label: e.label ?? labelOf(first), op: first.op, seq: first.seq, count: e.ops.length, applied, ...(orphaned ? { orphaned } : {}) };
+    };
     return [...this.undoStack.map((e) => item(e, true)), ...this.redoStack.slice().reverse().map((e) => item(e, false))];
   }
 
@@ -294,13 +300,14 @@ export class MapSession {
     const errors = this.check(op);
     if (errors.length) return { ok: false, errors, applied: [], dirty: null };
     const applied = this.applyChecked(op, origin, label);
-    this.pushHistory({ kind: "op", op: applied });
+    this.pushHistory({ kind: "ops", ops: [applied] });
     this.cur = rebuild(this.cur, this.input());
     this.snapshot();
     return { ok: true, errors: [], applied: [applied], dirty: this.cur.dirty };
   }
 
-  /** Apply several operations as one step (a fix, or an accepted proposal): all or none. */
+  /** Apply several operations as one step (a fix, or an accepted proposal): all or none, and
+   *  one undo takes them all back. */
   applyAll(ops: readonly EditOp[], origin: OpOrigin = "user", label?: string): ApplyResult {
     const done: AppliedOp[] = [];
     for (const op of ops) {
@@ -317,7 +324,7 @@ export class MapSession {
       // later operations of the group may refer to what earlier ones made
       this.cur = rebuild(this.cur, this.input());
     }
-    for (const a of done) this.pushHistory({ kind: "op", op: a });
+    this.pushHistory({ kind: "ops", ops: done, ...(label ? { label } : {}) });
     this.snapshot();
     return { ok: true, errors: [], applied: done, dirty: this.cur.dirty };
   }
@@ -334,10 +341,12 @@ export class MapSession {
   undo(): boolean {
     const e = this.undoStack.pop();
     if (!e) return false;
-    if (e.kind === "op") {
-      const last = this.log.pop();
-      if (last?.seq !== e.op.seq) throw new Error("the log and the history disagree");
-      invertOp(this.st, last);
+    if (e.kind === "ops") {
+      for (let k = e.ops.length - 1; k >= 0; k--) {
+        const last = this.log.pop();
+        if (last?.seq !== e.ops[k].seq) throw new Error("the log and the history disagree");
+        invertOp(this.st, last);
+      }
     } else this.setGeneration(e.before);
     this.redoStack.push(e);
     this.cur = this.snaps.get(this.undoStack.length) ?? rebuild(this.cur, this.input());
@@ -347,9 +356,11 @@ export class MapSession {
   redo(): boolean {
     const e = this.redoStack.pop();
     if (!e) return false;
-    if (e.kind === "op") {
-      applyOp(this.st, e.op);
-      this.log.push(e.op);
+    if (e.kind === "ops") {
+      for (const op of e.ops) {
+        applyOp(this.st, op);
+        this.log.push(op);
+      }
     } else this.setGeneration(e.after);
     this.undoStack.push(e);
     this.cur = this.snaps.get(this.undoStack.length) ?? rebuild(this.cur, this.input());

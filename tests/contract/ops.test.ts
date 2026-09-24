@@ -107,6 +107,25 @@ describe("invalid operations are rejected with a reason and change nothing", () 
     expect(s.spec!.settings.resources.ruins).toBe(100);
   });
 
+  it("a group of operations is one step: one undo takes it all back", () => {
+    const g = fresh();
+    const tree = r.built.entities.find((e) => e.template === "Birch")!;
+    const res = g.applyAll(
+      [
+        { op: "sculpt", params: { mode: "raise", cells: rectRuns(2, 2, 4, 4), amount: 1 } },
+        { op: "deleteEntities", params: { entities: [tree.id] } },
+      ],
+      "claude",
+      "Raise the corner and clear a tree",
+    );
+    expect(res.ok).toBe(true);
+    expect(g.history()).toEqual([{ label: "Raise the corner and clear a tree", op: "sculpt", seq: 1, count: 2, applied: true }]);
+    g.undo();
+    expect(sha(g.exportTimber().bytes)).toBe(sha(r.bytes));
+    g.redo();
+    expect(g.built.entities.some((e) => e.id === tree.id)).toBe(false);
+  });
+
   it("a group of operations applies all or nothing", () => {
     const res = s.applyAll([
       { op: "sculpt", params: { mode: "raise", cells: rectRuns(2, 2, 4, 4), amount: 1 } },
