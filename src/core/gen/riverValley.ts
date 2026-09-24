@@ -1,15 +1,16 @@
 // River Valley (PLAN §8), the prototype's archetype ported as a feature planner (ROADMAP M1).
 // Premise "gorge-dammed basin": a river enters from the west edge, drops over a cascade into a
-// basin that a rock ridge pinches into a gorge (the dam site), then over falls, and leaves at the
-// east edge. The colony starts on a bench above the basin.
+// basin that a rock ridge pinches into a gorge (the dam site), then over falls, past a badwater
+// marsh, and leaves at the east edge. The colony starts on a bench above the basin.
 //
-// The planner emits features only (PLAN §19.2). It builds the terrain part of them once (build
-// steps up to the slopes and the planned water) to plan groves, berry patches and ruin fields on
-// real ground, then hands the full list to the one build pipeline.
+// The planner emits features only (PLAN §19.2). It builds the terrain part of them (build steps up
+// to the water sources) to find flat ground for the marsh, then builds through the canonical water
+// settle to plan groves, berry patches and ruin fields on the simulated moisture, and hands the full
+// list to the one build pipeline.
 
 import type { Orientation } from "../format/footprints";
-import { build } from "../features/build";
-import { arcAtX, bedAt, pointAtArc, round } from "../features/geometry";
+import { build, type SettleCache } from "../features/build";
+import { arcAtX, bedAt, floorAt, pointAtArc, round } from "../features/geometry";
 import { featureId } from "../features/ids";
 import type {
   BerryPatchFeature,
@@ -29,14 +30,14 @@ import { PI, sinDet, TWO_PI } from "../math/detmath";
 import { stream, type Rng } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { groupSizes, growBlob, pickSeeds, punchHoles } from "./blobs";
-import { BUSHES, density, FOREST, RIVER_FLOW_MULTIPLIER, RUIN_HEIGHT_SHARES, RUINS } from "./calibrated";
+import { BADWATER_RATIO, BUSHES, density, FOREST, RIVER_FLOW_MULTIPLIER, RUIN_HEIGHT_SHARES, RUINS } from "./calibrated";
 
 const BED_TOP = 8; // basin bed level; the upper reach sits 2 higher, the lower reach 2 lower
 const RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
 const MEANDER = 0.16;
 const BENCH_RADIUS = { small: 5, normal: 6, large: 8 } as const;
 
-export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): Feature[] {
+export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, settleCache?: SettleCache): Feature[] {
   const W = spec.size.x;
   const H = spec.size.y;
   const seed = spec.seed;
@@ -48,9 +49,28 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): 
   const ph2 = rng.float() * TWO_PI;
   const l1 = W * rng.range(0.7, 1.1);
   const l2 = W * rng.range(0.3, 0.45);
+  // the valley floor reaches about halfWidth + 11 tiles from the river before the first terrace;
+  // keeping that inside the map keeps a dammed basin off the map edge (edges drain, PLAN §9.1)
+  const edgeMargin = H * 0.2 + 12;
   const centre = (x: number) =>
-    H / 2 + H * MEANDER * sinDet((TWO_PI * x) / l1 + ph1) + H * MEANDER * 0.35 * sinDet((TWO_PI * x) / l2 + ph2);
-  const gorgeX = Math.floor(W * rng.range(0.42, 0.58));
+    Math.min(
+      H - 1 - edgeMargin,
+      Math.max(edgeMargin, H / 2 + H * MEANDER * sinDet((TWO_PI * x) / l1 + ph1) + H * MEANDER * 0.35 * sinDet((TWO_PI * x) / l2 + ph2)),
+    );
+  // the gorge goes on the gentlest stretch near its drawn place: a river crossing the ridge at a
+  // steep angle leaves a gap no short straight dam can close (PLAN §9.1, D25)
+  const gorgeDraw = Math.floor(W * rng.range(0.42, 0.58));
+  let gorgeX = gorgeDraw;
+  let gentlest = Infinity;
+  const reachX = Math.round(W * 0.08);
+  for (let x = Math.max(Math.round(W * 0.38), gorgeDraw - reachX); x <= Math.min(Math.round(W * 0.62), gorgeDraw + reachX); x++) {
+    const slope = Math.abs(centre(x + 3) - centre(x - 3)) / 6;
+    const score = slope + 0.002 * Math.abs(x - gorgeDraw);
+    if (score < gentlest) {
+      gentlest = score;
+      gorgeX = x;
+    }
+  }
   const basinLen = Math.floor(W * rng.range(0.14, 0.2));
   const basinX0 = Math.max(4, gorgeX - basinLen - 2);
   const basinX1 = gorgeX - 6; // ends clear of the ridge (it spans about ±4 around the gorge)
@@ -159,8 +179,9 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): 
     const x = basinX0 + ((basinX1 - basinX0) * k) / steps;
     const w = halfWidth * (1 + 0.45 * sinDet((PI * k) / steps));
     const c = centre(x);
-    left.push([round(x, 2), round(c + w, 2)]);
-    right.push([round(x, 2), round(c - w, 2)]);
+    // the basin stays 4 tiles off the map edges: a reservoir must never touch an edge (PLAN §9.1)
+    left.push([round(x, 2), round(Math.min(H - 5, c + w), 2)]);
+    right.push([round(x, 2), round(Math.max(4, c - w), 2)]);
   }
   const gorgePoint = pointAtArc(path, sGorge).p;
   const lake: LakeFeature = {
@@ -188,16 +209,33 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): 
     params: {
       kind: "damSite",
       request: { crest: 2 },
-      plan: { river: riverId, at: sGorge, thickness: 5, halfSpan: round(halfWidth + 14, 2), topLevel: floorTop + 4, crest: 2, wobble: 1.25 },
+      plan: { river: riverId, at: sGorge, thickness: 5, halfSpan: Math.max(W, H), topLevel: floorTop + 4, crest: 2, wobble: 1.25 },
       report: [],
     },
   };
 
-  // the start bench: above the basin, 6–9 tiles from the channel, door facing the river
-  const sx = rng.int(basinX0 + 2, Math.max(basinX0 + 3, gorgeX - 6));
-  const side = rng.float() < 0.5 ? 1 : -1;
-  const dist = rng.int(6, 10);
-  const sy = Math.min(H - 9, Math.max(8, Math.round(centre(sx) + side * dist)));
+  // the start bench: above the basin, 6–10 tiles from the channel's edge, door facing the river
+  // (the dam site must lie within 40 tiles of the start, PLAN §9.1: move the start downstream,
+  // then across the river, until the gorge is within 34 tiles of it)
+  let sx = rng.int(basinX0 + 2, Math.max(basinX0 + 3, gorgeX - 6));
+  let side = rng.float() < 0.5 ? 1 : -1;
+  const dist = RIVER_WIDTH / 2 + rng.int(6, 10); // 6–10 tiles from the channel edge (PLAN §7.2)
+  // walk away from the river until the true distance to its path is `dist` (the river can be
+  // steep here, so the vertical offset alone would put the start in the water)
+  const startY = (x: number, sd: number) => {
+    let y = Math.round(centre(x));
+    while (y > 8 && y < H - 9 && distToPath(path, x, y) < dist) y += sd;
+    return Math.min(H - 9, Math.max(8, y));
+  };
+  const toGorge = (x: number, sd: number) => {
+    const dx = x - gorgePoint[0];
+    const dy = startY(x, sd) - gorgePoint[1];
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+  const lastX = Math.max(basinX0 + 2, gorgeX - 7);
+  while (sx < lastX && toGorge(sx, side) > 34) sx++;
+  if (toGorge(sx, side) > 34 && toGorge(sx, -side) < toGorge(sx, side)) side = -side;
+  const sy = startY(sx, side);
   const orientation: Orientation = centre(sx) < sy ? "Cw0" : "Cw180";
   const start: StartFeature = {
     id: id("start", "start/main"),
@@ -226,8 +264,53 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): 
     start,
   ];
 
-  // ------------------------------------------------------------------ resources on the built terrain
-  const base = build(spec, layout, { stopBeforeResources: true });
+  // ------------------------------------------------------------------ the badwater marsh (PLAN §9.5, D24)
+  // a BadwaterSource 3×3 on flat floodplain beside the river below the falls, as far from the start
+  // as possible (the prototype's rule); its water joins the river downstream of the start
+  const ratio = BADWATER_RATIO[spec.settings.hazards.badwater];
+  if (ratio > 0) {
+    const ground = build(spec, layout, { stopBeforeWater: true });
+    const strength = Math.min(3, Math.max(1, round(flow * ratio, 2)));
+    let best = -1;
+    let site: { x: number; y: number; level: number } | null = null;
+    for (let x = fallsX + 3; x < W - 4; x++) {
+      const level = floorAt(river.params, arcAtX(path, x), 1);
+      for (const sgn of [1, -1]) {
+        const y = Math.round(centre(x) + sgn * 4);
+        if (y < 1 || y >= H - 3) continue;
+        let flat = true;
+        for (let yy = y; yy < y + 3 && flat; yy++)
+          for (let xx = x; xx < x + 3 && flat; xx++) {
+            const i = yy * W + xx;
+            if (ground.heights[i] !== level || ground.occupied[i]) flat = false;
+          }
+        if (!flat) continue;
+        const d2 = (x + 1 - sx) * (x + 1 - sx) + (y + 1 - sy) * (y + 1 - sy);
+        if (d2 > best) {
+          best = d2;
+          site = { x, y, level };
+        }
+      }
+    }
+    if (site) {
+      layout.splice(layout.length - 1, 0, {
+        id: id("setPiece", "setpiece/badwaterBasin/marsh"),
+        kind: "setPiece",
+        origin: "generated",
+        role: "setpiece/badwaterBasin/marsh",
+        locked: false,
+        params: {
+          kind: "badwaterBasin",
+          request: { mode: "marsh", badwater: spec.settings.hazards.badwater },
+          plan: { mode: "marsh", x: site.x, y: site.y, level: site.level, strength },
+          report: [],
+        },
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------ resources on the settled water
+  const base = build(spec, layout, { stopBeforeResources: true, settleCache });
   const resources = planResources(spec, base, candidate, attempt);
   return [...layout, ...resources];
 }
@@ -238,8 +321,9 @@ interface Ground {
   W: number;
   H: number;
   heights: Uint8Array;
-  water: Float32Array;
-  moisture: Float32Array;
+  water: Float64Array;
+  moisture: Float64Array;
+  soilContamination: Float64Array;
   occupied: Uint8Array;
   start?: { x: number; y: number };
 }
@@ -255,7 +339,8 @@ function planResources(spec: MapSpec, g: Ground, candidate: number, attempt: num
   for (let i = 0; i < N; i++) {
     wet[i] = g.water[i] > 0 ? 1 : 0;
     free[i] = !g.occupied[i] && !wet[i] ? 1 : 0;
-    moist[i] = g.moisture[i] > 0 && !wet[i] ? 1 : 0;
+    // living plants need moist, dry-footed, clean soil
+    moist[i] = g.moisture[i] > 0 && !wet[i] && !(g.soilContamination[i] > 0) ? 1 : 0;
   }
   const startMask = new Uint8Array(N);
   if (g.start) {
@@ -443,6 +528,25 @@ function planResources(spec: MapSpec, g: Ground, candidate: number, attempt: num
     growGrove(seeds[0], size, false);
   }
   return out;
+}
+
+/** Distance from (x, y) to a polyline. */
+function distToPath(path: Point[], x: number, y: number): number {
+  let best = Infinity;
+  for (let i = 0; i + 1 < path.length; i++) {
+    const [ax, ay] = path[i];
+    const vx = path[i + 1][0] - ax;
+    const vy = path[i + 1][1] - ay;
+    const l2 = vx * vx + vy * vy;
+    let t = l2 > 0 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0;
+    if (t < 0) t = 0;
+    else if (t > 1) t = 1;
+    const px = ax + t * vx - x;
+    const py = ay + t * vy - y;
+    const d = px * px + py * py;
+    if (d < best) best = d;
+  }
+  return Math.sqrt(best);
 }
 
 export type { Rng };

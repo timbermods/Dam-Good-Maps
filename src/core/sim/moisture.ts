@@ -1,6 +1,6 @@
 // Soil moisture at steady state, the game's rules on a heightfield (notes/water_and_soil.md Q3;
 // port of prototype/watersim.py `moisture`, which reproduces the game's saved moisture exactly).
-// M1 applies it to the *planned* water (river channels); M2 applies it to the simulated water.
+// The build applies it to the canonical settle (sim/prefill.ts); validation to the same water.
 
 import { MinHeap } from "../math/grid";
 
@@ -44,8 +44,16 @@ const DIRS4: readonly [number, number][] = [[0, -1], [-1, 0], [0, 1], [1, 0]];
 
 /** Steady-state moisture per tile. `depth` > 0 marks water; `contamination` 0–1 per tile.
  *  Clean water gets 2·sat; a tile beside water gets range − 6·(levels above the ceiled water
- *  surface); spreading costs 1 orthogonal, √2 diagonal and 6 per level climbed. */
-export function moisture(floor: Uint8Array, depth: Float32Array, contamination: Float32Array, W: number, H: number): Float32Array {
+ *  surface); spreading costs 1 orthogonal, √2 diagonal and 6 per level climbed. `barrier` tiles
+ *  (Thorns: BlockFullMoisture) stay at 0 and pass nothing on. */
+export function moisture(
+  floor: Uint8Array,
+  depth: ArrayLike<number>,
+  contamination: ArrayLike<number>,
+  W: number,
+  H: number,
+  barrier?: Uint8Array | null,
+): Float64Array {
   const wet = new Uint8Array(W * H);
   for (let i = 0; i < wet.length; i++) wet[i] = depth[i] > 0 ? 1 : 0;
   const sat = clusterSaturation(wet, W, H);
@@ -64,6 +72,14 @@ export function moisture(floor: Uint8Array, depth: Float32Array, contamination: 
     if (wet[i] && contamination[i] <= 0.01) {
       M[i] = 2 * sat[i];
       fixed[i] = 1;
+    }
+  }
+  if (barrier) {
+    for (let i = 0; i < wet.length; i++) {
+      if (barrier[i]) {
+        M[i] = 0;
+        fixed[i] = 1;
+      }
     }
   }
   for (let y = 0; y < H; y++) {
@@ -114,7 +130,7 @@ export function moisture(floor: Uint8Array, depth: Float32Array, contamination: 
       }
     }
   }
-  const out = new Float32Array(W * H);
+  const out = new Float64Array(W * H);
   for (let i = 0; i < out.length; i++) {
     let v = M[i] * (wet[i] ? 1 - contamination[i] : 1);
     if (v < 0.01) v = 0;

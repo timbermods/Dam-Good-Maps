@@ -1,10 +1,12 @@
-// A built map as a native 1.1 .timber (FORMAT.md §8): voxels from the heights, fresh simulation
-// singletons (M1 writes no water; M2 pre-fills the canonical settle), entities, metadata, a
-// 960×540 thumbnail. `pack(build(spec, features))` is the one path to file bytes (PLAN §19.7).
+// A built map as a native 1.1 .timber (FORMAT.md §8): voxels from the heights, simulation
+// singletons pre-filled with the canonical settle (water, soil moisture and contamination, as
+// official maps ship), entities, metadata, a 960×540 thumbnail. `pack(build(spec, features))` is
+// the one path to file bytes (PLAN §19.7). `emptyWater` writes the same map with no water, for the
+// in-game A/B check (PLAN §14.4, §18 B2).
 
 import { entityJson } from "../format/entities";
 import { mapMetadata, writeTimber, type TimberFile } from "../format/timber";
-import { emptySimulationSingletons, GAME_VERSION, LAYERS, voxelsFromHeights, type WorldModel } from "../format/world";
+import { emptySimulationSingletons, GAME_VERSION, LAYERS, settledSimulationSingletons, voxelsFromHeights, type WorldModel } from "../format/world";
 import { thumbnailJpeg } from "../render/shade";
 import type { BuildResult } from "../features/build";
 import { GENERATOR_VERSION, THEME_NAMES, type MapSpec } from "../spec/mapspec";
@@ -29,7 +31,22 @@ export function description(spec: MapSpec): string {
   );
 }
 
-export function toWorld(spec: MapSpec, built: BuildResult): WorldModel {
+export interface PackOptions {
+  /** Write no water, moisture or contamination: the game fills the rivers in about a day. */
+  emptyWater?: boolean;
+}
+
+export function toWorld(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): WorldModel {
+  const singletons = opts.emptyWater
+    ? emptySimulationSingletons(built.W, built.H, 1)
+    : settledSimulationSingletons(built.W, built.H, {
+        floor: built.heights,
+        depth: built.water,
+        contamination: built.contamination,
+        moisture: built.moisture,
+        soilContamination: built.soilContamination,
+        sat: built.settle.sat,
+      });
   return {
     gameVersion: GAME_VERSION,
     timestamp: TIMESTAMP,
@@ -37,21 +54,21 @@ export function toWorld(spec: MapSpec, built: BuildResult): WorldModel {
     sizeY: built.H,
     layers: LAYERS,
     voxels: voxelsFromHeights(built.heights, built.W, built.H),
-    singletons: emptySimulationSingletons(built.W, built.H, 1),
+    singletons,
     entities: built.entities.map(entityJson),
   };
 }
 
-export function toTimberFile(spec: MapSpec, built: BuildResult): TimberFile {
+export function toTimberFile(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): TimberFile {
   return {
-    metadata: mapMetadata(built.W, built.H, description(spec)),
+    metadata: mapMetadata(built.W, built.H, description(spec) + (opts.emptyWater ? " This copy starts without water." : "")),
     thumbnail: thumbnailJpeg(built.heights, built.W, built.H, built.water),
     versionTxt: GAME_VERSION + "\r\n",
-    world: toWorld(spec, built),
+    world: toWorld(spec, built, opts),
     extraFiles: [],
   };
 }
 
-export function pack(spec: MapSpec, built: BuildResult): Uint8Array {
-  return writeTimber(toTimberFile(spec, built));
+export function pack(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): Uint8Array {
+  return writeTimber(toTimberFile(spec, built, opts));
 }

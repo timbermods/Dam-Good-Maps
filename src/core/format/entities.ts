@@ -2,8 +2,8 @@
 // included. Every builder takes its Id from the caller: ids are hashed from the owning feature
 // (PLAN §19.4), never random.
 
-import { F, type JsonObject } from "./json";
-import type { Orientation } from "./footprints";
+import { F, isObject, num, type JsonObject } from "./json";
+import type { Orientation, Placement } from "./footprints";
 
 export interface EntitySpec {
   id: string;
@@ -112,4 +112,25 @@ export function startingLocation(b: Base & { orientation: Orientation; player?: 
 
 function pos(b: Base): Omit<EntitySpec, "template" | "components"> {
   return { id: b.id, owner: b.owner, x: b.x, y: b.y, z: b.z, orientation: "Cw0", flipped: false };
+}
+
+/** Where a world.json entity stands: template, Coordinates, Orientation and Flipped (0.6 maps
+ *  wrap the enums as {"Value": ...}). Null for entities without a BlockObject. */
+export function placementOf(e: JsonObject): Placement | null {
+  const comps = e.Components;
+  if (!isObject(comps)) return null;
+  const bo = comps.BlockObject;
+  if (!isObject(bo) || !isObject(bo.Coordinates)) return null;
+  let o = bo.Orientation ?? "Cw0";
+  if (isObject(o)) o = (o.Value as string) ?? "Cw0";
+  let fl = bo.Flipped ?? false;
+  if (isObject(fl)) fl = (fl.Value as boolean) ?? false;
+  return {
+    template: String(e.Template),
+    x: num(bo.Coordinates.X),
+    y: num(bo.Coordinates.Y),
+    z: num(bo.Coordinates.Z),
+    orientation: o as Orientation,
+    flipped: fl === true,
+  };
 }

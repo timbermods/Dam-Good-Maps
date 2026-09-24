@@ -9,7 +9,7 @@ const HIGH = [196, 178, 140]; // dry rock on the heights
 const WATER = [64, 128, 200];
 
 /** RGB per tile (3 bytes per tile, row-major, y north = row index). */
-export function shadeTiles(heights: Uint8Array, W: number, H: number, water?: Float32Array | null): Uint8Array {
+export function shadeTiles(heights: Uint8Array, W: number, H: number, water?: ArrayLike<number> | null): Uint8Array {
   let lo = 255;
   let hi = 0;
   for (let i = 0; i < heights.length; i++) {
@@ -60,7 +60,7 @@ export const THUMB_H = 540;
 
 /** 960×540 RGBA thumbnail: the shaded map fitted and centred on a dark background, north up,
  *  sampled bilinearly between tile centres. */
-export function thumbnailRgba(heights: Uint8Array, W: number, H: number, water?: Float32Array | null): Uint8Array {
+export function thumbnailRgba(heights: Uint8Array, W: number, H: number, water?: ArrayLike<number> | null): Uint8Array {
   const tiles = shadeTiles(heights, W, H, water);
   const fit = Math.min(THUMB_W / W, THUMB_H / H);
   const w = Math.max(1, Math.floor(W * fit));
@@ -96,7 +96,7 @@ export function thumbnailRgba(heights: Uint8Array, W: number, H: number, water?:
   return out;
 }
 
-export function thumbnailJpeg(heights: Uint8Array, W: number, H: number, water?: Float32Array | null): Uint8Array {
+export function thumbnailJpeg(heights: Uint8Array, W: number, H: number, water?: ArrayLike<number> | null): Uint8Array {
   const rgba = thumbnailRgba(heights, W, H, water);
   return encodeJpeg({ data: rgba, width: THUMB_W, height: THUMB_H }, 88).data;
 }

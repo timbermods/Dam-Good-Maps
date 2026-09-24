@@ -103,9 +103,15 @@ export function bedAt(profile: { start: number; steps: BedStep[] }, s: number): 
   return lv;
 }
 
-/** Floodplain (valley floor) level at arc length s. */
+/** Tiles the floodplain runs on at the upper level below each bed step: the plunge gorge. Without
+ *  it the upper channel's lip sits beside the lower floodplain, one level below its bed, and the
+ *  river pours sideways over the whole valley floor downstream (PLAN §20, D26). */
+export const PLUNGE = 4;
+
+/** Floodplain (valley floor) level at arc length s: the bed plus `floorAboveBed`, stepping down
+ *  PLUNGE tiles after each bed step. */
 export function floorAt(river: RiverParams, s: number, floorAboveBed = river.bedDepth): number {
-  return bedAt(river.bedProfile, s) + floorAboveBed;
+  return bedAt(river.bedProfile, s - PLUNGE) + floorAboveBed;
 }
 
 /** Tiles whose centre lies inside a polygon (even-odd rule), as a mask. */

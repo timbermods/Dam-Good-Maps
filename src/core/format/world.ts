@@ -2,7 +2,7 @@
 // 1 = solid); every other singleton and every entity is kept as parsed JSON, so unknown data passes
 // through untouched and an unedited file re-serializes byte for byte.
 
-import { F, isObject, num, parse, stringify, type JsonObject, type JsonValue } from "./json";
+import { F, formatFloat, isObject, num, parse, stringify, type JsonObject, type JsonValue } from "./json";
 
 export const GAME_VERSION = "1.1.2.4-52e959e-sw";
 export const LAYERS = 23; // MaxGameTerrainHeight 22 + 1
@@ -112,6 +112,59 @@ export function emptySimulationSingletons(sizeX: number, sizeY: number, levels =
     NumberedEntityNamerService: { NextNumbers: [] },
     WindService: { WindStrength: F(0), WindDirection: { X: F(0), Y: F(0) }, NextWindChangeTime: F(0) },
   };
+}
+
+/** A packed-array number the way the game writes it: whole values 0–16 as bare integers, other
+ *  values with 7 significant digits in C# style (prototype tbmap `_num`). */
+export function numToken(v: number): string {
+  if (Number.isInteger(v) && v >= 0 && v <= 16) return String(v);
+  return formatFloat(Number(v.toPrecision(7)));
+}
+
+export interface SettledState {
+  /** Surface (water column floor) per tile. */
+  floor: Uint8Array;
+  depth: ArrayLike<number>;
+  contamination: ArrayLike<number>;
+  moisture: ArrayLike<number>;
+  soilContamination: ArrayLike<number>;
+  /** Cluster saturation of the water (for the evaporation modifiers). */
+  sat: ArrayLike<number>;
+}
+
+/** Simulation singletons holding settled water, the way official maps ship (FORMAT.md §4.3): one
+ *  water column per tile (slot 0, a heightfield), `depth:contamination:0:floor:depth` tokens,
+ *  outflows 0 (momentum rebuilds within a few ticks), soil moisture and contamination at steady
+ *  state, and the evaporation modifiers of the settled water. Depths under 1e-6 are written as dry. */
+export function settledSimulationSingletons(sizeX: number, sizeY: number, st: SettledState): JsonObject {
+  const n = sizeX * sizeY;
+  const s = emptySimulationSingletons(sizeX, sizeY, 1);
+  const water: string[] = new Array(n);
+  const moist: string[] = new Array(n);
+  const soil: string[] = new Array(n);
+  const evap: string[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const d = st.depth[i];
+    if (d > 1e-6) {
+      const ds = numToken(d);
+      const c = st.contamination[i];
+      water[i] = `${ds}:${c > 1e-6 ? numToken(c) : "0"}:0:${st.floor[i]}:${ds}`;
+    } else water[i] = "0";
+    moist[i] = numToken(st.moisture[i]);
+    soil[i] = numToken(st.soilContamination[i]);
+    const sat = st.sat[i];
+    if (sat > 0) {
+      const t = 10 - sat;
+      evap[i] = numToken(0.0595 * (t * t) + 0.101 * t + 0.72);
+    } else evap[i] = "1";
+  }
+  (s.WaterMapNew as JsonObject).WaterColumns = { Array: water.join(" ") };
+  (s.WaterEvaporationMap as JsonObject).EvaporationModifiers = { Array: evap.join(" ") };
+  (s.SoilMoistureSimulator as JsonObject).MoistureLevels = { Array: moist.join(" ") };
+  const soilText = soil.join(" ");
+  (s.SoilContaminationSimulator as JsonObject).ContaminationCandidates = { Array: soilText };
+  (s.SoilContaminationSimulator as JsonObject).ContaminationLevels = { Array: soilText };
+  return s;
 }
 
 export function repeatToken(token: string, n: number): string {

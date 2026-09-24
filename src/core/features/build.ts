@@ -3,11 +3,10 @@
 // every edit. It is a pure function of (spec, features): rebuilding a saved document reproduces the
 // map exactly (PLAN §19.7).
 //
-// Steps built in M1 (ROADMAP M1): 1 base terrain, 2 landforms, 3 set-piece terrain, 4 rivers and
-// lakes, 5 start bench, 7 integrity pass, 8 slopes, 9 water sources, 11 resources, 12 the start.
-// Step 10 (the water settle) arrives in M2; until then the moisture that decides where trees live
-// comes from the exact moisture rule applied to the planned river water. Steps 6 and 13 (sculpt and
-// entity edits) arrive with the editor.
+// Steps built: 1 base terrain, 2 landforms, 3 set-piece terrain, 4 rivers and lakes, 5 start bench,
+// 7 integrity pass, 8 slopes, 9 water sources, 10 the canonical water settle with soil moisture and
+// soil contamination (M2), 11 resources placed on the simulated moisture, 12 the start. Steps 6 and
+// 13 (sculpt and entity edits) arrive with the editor.
 
 import { coordinatesForMinCorner, ORIENTATIONS, rotate } from "../format/footprints";
 import { bush, RUIN_VARIANTS, ruin, slope, startingLocation, tree, waterSource, type EntitySpec, type TreeSpecies } from "../format/entities";
@@ -16,11 +15,15 @@ import { hash32, tileHash01 } from "../math/hash";
 import { fbm } from "../math/noise";
 import { runsToTiles } from "../math/grid";
 import { stream, type Rng } from "../math/rng";
+import { soilContamination } from "../sim/contamination";
+import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
 import { moisture } from "../sim/moisture";
+import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
+import type { WaterModel } from "../sim/water";
 import { bedAt, floorAt, pathField, polygonMask, type PathField } from "./geometry";
 import { DERIVED_SLOPES, entityId } from "./ids";
 import { placeSlopes, type PlacedSlope } from "./slopes";
-import { BUILDERS } from "./setpieces";
+import { BUILDERS, type SetPieceSource } from "./setpieces";
 import type {
   BerryPatchFeature,
   Feature,
@@ -29,6 +32,7 @@ import type {
   LandformFeature,
   RiverFeature,
   RuinFieldFeature,
+  SetPieceFeature,
   StartFeature,
 } from "./schema";
 
@@ -85,6 +89,7 @@ export interface PlacedSource {
   z: number;
   strength: number;
   owner: string;
+  template: "WaterSource" | "BadwaterSource";
 }
 
 export interface BuildResult {
@@ -92,9 +97,17 @@ export interface BuildResult {
   H: number;
   seed: number;
   heights: Uint8Array;
-  /** Planned water depth (M1: river channels); M2 replaces it with the settled simulation. */
-  water: Float32Array;
-  moisture: Float32Array;
+  /** Settled water depth per tile: the canonical settle (PLAN §19.7), written into the file. */
+  water: Float64Array;
+  /** Contamination of that water, 0–1. */
+  contamination: Float64Array;
+  /** Soil moisture at steady state (> 0 = moist: living plants survive). */
+  moisture: Float64Array;
+  /** Soil contamination at steady state (> 0 kills plants). */
+  soilContamination: Float64Array;
+  /** The water model the settle ran on, and the settle itself (ticks, settled, saturation). */
+  waterModel: WaterModel;
+  settle: CanonicalWater;
   /** Tiles taken by objects on the ground (start zone, slopes, sources, resources). */
   occupied: Uint8Array;
   channel: Uint8Array;
@@ -108,6 +121,35 @@ export interface BuildResult {
 export interface BuildOptions {
   /** Stop before resources (the planner uses the terrain, slopes and water to plan them). */
   stopBeforeResources?: boolean;
+  /** Stop before the water settle (the planner looks for flat ground on the built terrain). */
+  stopBeforeWater?: boolean;
+  /** Reuse the canonical settle of a previous build of exactly the same terrain and sources. */
+  settleCache?: SettleCache;
+}
+
+/** The last canonical settle and the model it ran on. The settle depends only on the water model,
+ *  so the planner's base build and the full build of the same attempt share it: the result is
+ *  identical to settling again, only faster. */
+export class SettleCache {
+  private last: { model: WaterModel; emitters: string; water: CanonicalWater } | null = null;
+
+  get(m: WaterModel): CanonicalWater | null {
+    const l = this.last;
+    if (!l || l.model.W !== m.W || l.model.H !== m.H || l.emitters !== JSON.stringify(m.emitters)) return null;
+    for (let i = 0; i < m.floor.length; i++) if (l.model.floor[i] !== m.floor[i]) return null;
+    if (!!l.model.dam !== !!m.dam) return null;
+    if (l.model.dam && m.dam) for (let i = 0; i < m.dam.length; i++) if (l.model.dam[i] !== m.dam[i]) return null;
+    return l.water;
+  }
+
+  set(m: WaterModel, water: CanonicalWater): void {
+    this.last = { model: { ...m, floor: m.floor.slice(), dam: m.dam ? m.dam.slice() : null }, emitters: JSON.stringify(m.emitters), water };
+  }
+}
+
+/** A built entity as a map object (for the water model and validation). */
+export function toMapObject(e: EntitySpec): MapObject {
+  return { template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, flipped: e.flipped, components: { ...(e.before ?? {}), ...e.components } };
 }
 
 export function build(spec: MapSpec, features: readonly Feature[], opts: BuildOptions = {}): BuildResult {
@@ -141,7 +183,8 @@ export function build(spec: MapSpec, features: readonly Feature[], opts: BuildOp
     const r = f.params.benchRadius;
     for (let y = Math.max(0, cy - r); y <= Math.min(H - 1, cy + r); y++) {
       for (let x = Math.max(0, cx - r); x <= Math.min(W - 1, cx + r); x++) {
-        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r) {
+        // the bench never fills the river channel (it would dam the river)
+        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r && !channel[y * W + x]) {
           heights[y * W + x] = f.params.benchLevel;
           t.protect(y * W + x);
         }
@@ -177,6 +220,18 @@ export function build(spec: MapSpec, features: readonly Feature[], opts: BuildOp
     mouths.set(f.id, tiles);
     for (const i of tiles) occupied[i] = 1;
   }
+  const pieceSources: { feature: SetPieceFeature; src: SetPieceSource }[] = [];
+  for (const f of features) {
+    if (f.kind !== "setPiece") continue;
+    for (const src of BUILDERS[f.params.kind]?.sources?.(f) ?? []) {
+      pieceSources.push({ feature: f, src });
+      for (const [dx, dy] of src.tiles) {
+        const x = src.x + dx;
+        const y = src.y + dy;
+        if (x >= 0 && x < W && y >= 0 && y < H) occupied[y * W + x] = 1;
+      }
+    }
+  }
 
   // 8. slopes
   const slopes = startInfo ? placeSlopes(heights, W, H, startInfo, occupied, Math.floor(Math.max(W, H) * 0.6)) : [];
@@ -198,24 +253,45 @@ export function build(spec: MapSpec, features: readonly Feature[], opts: BuildOp
     for (const i of tiles) {
       const x = i % W;
       const y = (i - x) / W;
-      sources.push({ x, y, z: heights[i], strength: each, owner: f.id });
+      sources.push({ x, y, z: heights[i], strength: each, owner: f.id, template: "WaterSource" });
       entities.push(waterSource({ id: entityId(f.id, "WaterSource", i), owner: f.id, x, y, z: heights[i], strength: each }));
     }
   }
-
-  // 10 (M1): planned water in the channels, and the exact moisture rule on it
-  const water = new Float32Array(N);
-  for (const f of features) {
-    if (f.kind !== "river") continue;
-    const depth = Math.min(0.9, Math.max(0.05, (0.3 * f.params.flow) / f.params.width));
-    const field = t.pathField(f.id);
-    for (let i = 0; i < N; i++) if (field.d[i] < f.params.width / 2) water[i] = Math.max(water[i], depth);
+  //    set pieces add theirs (the badwater marsh)
+  for (const { feature, src } of pieceSources) {
+    if (src.x < 0 || src.x >= W || src.y < 0 || src.y >= H) continue;
+    const i = src.y * W + src.x;
+    const bad = src.template === "BadwaterSource";
+    sources.push({ x: src.x, y: src.y, z: heights[i], strength: src.strength, owner: feature.id, template: src.template });
+    entities.push(waterSource({ id: entityId(feature.id, src.template, i), owner: feature.id, x: src.x, y: src.y, z: heights[i], strength: src.strength, bad }));
   }
-  const moist = moisture(heights, water, new Float32Array(N), W, H);
+  const base = { W, H, seed: spec.seed, heights, occupied, channel, entities, slopes, sources, start: startInfo, notes: t.notes };
+  if (opts.stopBeforeWater) {
+    const none = new Float64Array(N);
+    const model = waterModel(W, H, heights, []);
+    return { ...base, water: none, contamination: none, moisture: none, soilContamination: none, waterModel: model, settle: { settled: false, ticks: 0, depth: none, contamination: none, sat: new Uint8Array(N) } };
+  }
+
+  // 10. the canonical water settle (PLAN §19.7), then soil moisture and contamination on it
+  const objects = entities.map(toMapObject);
+  const model = waterModel(W, H, heights, objects);
+  let settle = opts.settleCache?.get(model) ?? null;
+  if (!settle) {
+    settle = canonicalSettle(model);
+    opts.settleCache?.set(model, settle);
+  }
+  const barrier = moistureBarrier(W, H, objects);
+  const moist = moisture(heights, settle.depth, settle.contamination, W, H, barrier);
+  const soil = soilContamination(heights, settle.depth, settle.contamination, W, H, barrier);
 
   const result: BuildResult = {
-    W, H, seed: spec.seed, heights, water, moisture: moist, occupied, channel, entities, slopes, sources,
-    start: startInfo, notes: t.notes,
+    ...base,
+    water: settle.depth,
+    contamination: settle.contamination,
+    moisture: moist,
+    soilContamination: soil,
+    waterModel: model,
+    settle,
   };
   if (opts.stopBeforeResources) return result;
 
@@ -290,7 +366,7 @@ function rasterizeLake(f: LakeFeature, t: BuildTarget): void {
   const field = river ? t.pathField(river.id) : undefined;
   for (let i = 0; i < W * H; i++) {
     if (!mask[i] || t.protectedMask[i]) continue;
-    if (river && field) heights[i] = bedAt(river.params.bedProfile, field.s[i]) + f.params.floorDepth;
+    if (river && field) heights[i] = floorAt(river.params, field.s[i], f.params.floorDepth);
     else heights[i] = Math.max(0, f.params.outlet.sill - f.params.floorDepth);
   }
 }
@@ -363,7 +439,7 @@ function rasterizeBerries(f: BerryPatchFeature, r: BuildResult): void {
     const y = (i - x) / W;
     if (i < 0 || i >= r.heights.length) continue;
     if (f.params.density < 1 && tileHash01(sPlace, x, y) >= f.params.density) continue;
-    if (r.moisture[i] <= 0) continue; // a bush on dry soil dies in 9 days
+    if (r.moisture[i] <= 0 || r.soilContamination[i] > 0) continue; // a bush on dry or contaminated soil dies
     if (!place(r, i)) continue;
     const ripe = tileHash01(sRipe, x, y) < f.params.ripeShare;
     const regrowth = Math.round((0.1 + 0.8 * tileHash01(sGrow, x, y)) * 1000) / 1000;
@@ -397,15 +473,16 @@ function rasterizeForest(f: ForestFeature, r: BuildResult): void {
       }
     }
     const moist = r.moisture[i] > 0;
+    const poisoned = r.soilContamination[i] > 0;
     let dead: boolean;
     if (sp === "Succulent") {
-      if (moist || f.params.life === "dead") continue; // succulents live only on dry soil
+      if (moist || poisoned || f.params.life === "dead") continue; // succulents live only on dry, clean soil
       dead = false;
     } else if (f.params.life === "alive") {
-      if (!moist) continue;
+      if (!moist || poisoned) continue;
       dead = false;
     } else if (f.params.life === "dead") dead = true;
-    else dead = !moist; // auto: official maps store trees on dry soil dead
+    else dead = !moist || poisoned; // auto: official maps store trees on dry soil dead
     if (!place(r, i)) continue;
     let growth = 1;
     if (!dead && tileHash01(sYoung, x, y) < f.params.youngShare) {

@@ -56,8 +56,8 @@ export async function runGenerate(spec: MapSpec): Promise<GenerateResponse> {
     W: r.built.W,
     H: r.built.H,
     heights: r.built.heights,
-    water: r.built.water,
-    moisture: r.built.moisture,
+    water: Float32Array.from(r.built.water),
+    moisture: Float32Array.from(r.built.moisture),
     entities: r.built.entities.map((e) => ({
       template: e.template,
       x: e.x,

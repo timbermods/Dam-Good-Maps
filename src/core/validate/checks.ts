@@ -1,36 +1,24 @@
 // Validation modules (PLAN §11, §19.5). Every check has an id (matching prototype/validate.py), a
-// class and a severity; profiles decide what a class does. M1 has the load class (§11.1–11.2: what
-// the game would crash on, silently drop, or break at start) and the design class
-// (terrain.max_height, terrain.single_floor). The playability class arrives in M2.
+// class and a severity; profiles decide what a class does (report.ts). This file holds the load
+// class (§11.1–11.2: what the game would crash on, silently drop, or break at start), the design
+// class (terrain.max_height, terrain.single_floor) and `validateFile`, which adds the playability
+// class (playability.ts) on the map's canonically settled water.
 
 import { FOOTPRINTS, OCC, ORIENTATIONS, slopeHighSide, startEntranceTile, worldBlocks, type Orientation, type Placement } from "../format/footprints";
 import { isObject, num, type JsonObject } from "../format/json";
+import { placementOf } from "../format/entities";
 import { EDITOR_MAX_HEIGHT, floorsOf, GAME_VERSION, MAX_OBJECT_Z, surfaceOf } from "../format/world";
 import type { TimberFile } from "../format/timber";
+import type { Feature } from "../features/schema";
+import { mapObjects, waterModel, type MapObject } from "../sim/model";
+import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
+import type { WaterModel } from "../sim/water";
+import type { Difficulty, MapSpec } from "../spec/mapspec";
+import { checkPlayability, rulesFor, type PlayabilityAnalysis } from "./playability";
+import { blocks, Collector, type CheckResult, type Profile, type ValidationReport } from "./report";
 
-export type CheckClass = "load" | "playability" | "design";
-export type Severity = "error" | "warning" | "info";
-
-export interface CheckResult {
-  id: string;
-  class: CheckClass;
-  severity: Severity;
-  ok: boolean;
-  value?: number | string;
-  limit?: number | string;
-  message: string;
-  /** Tiles, a feature or an entity involved. */
-  where?: { tiles?: [number, number][]; feature?: string; entity?: string };
-  advisory?: boolean;
-}
-
-export type Profile = "generate" | "export" | "import";
-
-export interface ValidationReport {
-  profile: Profile;
-  checks: CheckResult[];
-  passed: boolean;
-}
+export type { CheckClass, CheckResult, Profile, Severity, ValidationReport } from "./report";
+export { blocks } from "./report";
 
 /** Templates in the Common collections: they load for both factions and in the map editor
  *  (FORMAT.md §4.4). Faction-only plants fail. */
@@ -51,32 +39,6 @@ for (let k = 1; k <= 8; k++) REQUIRED[`RuinColumnH${k}`] = ["RuinModels", "Yield
 /** Ground blocks of these must stand on the first (lowest) terrain column. */
 const CONTINUOUS = new Set(["WaterSource", "BadwaterSource", "WaterSeep", "BadwaterSeep", "Aquifer", "BadtideDrain", "GeothermalField", "UndergroundRuins"]);
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
-export function placementOf(e: JsonObject): Placement | null {
-  const comps = e.Components;
-  if (!isObject(comps)) return null;
-  const bo = comps.BlockObject;
-  if (!isObject(bo) || !isObject(bo.Coordinates)) return null;
-  let o = bo.Orientation ?? "Cw0";
-  if (isObject(o)) o = (o.Value as string) ?? "Cw0"; // 0.6 maps: {"Value": "Cw90"}
-  let fl = bo.Flipped ?? false;
-  if (isObject(fl)) fl = (fl.Value as boolean) ?? false;
-  return {
-    template: String(e.Template),
-    x: num(bo.Coordinates.X),
-    y: num(bo.Coordinates.Y),
-    z: num(bo.Coordinates.Z),
-    orientation: o as Orientation,
-    flipped: fl === true,
-  };
-}
-
-class Collector {
-  readonly checks: CheckResult[] = [];
-  add(r: Omit<CheckResult, "severity"> & { severity?: Severity }): void {
-    this.checks.push({ severity: r.severity ?? (r.ok ? "info" : "error"), ...r } as CheckResult);
-  }
-}
 
 // ------------------------------------------------------------------------------------------------ file
 
@@ -367,32 +329,72 @@ function checkStart(file: TimberFile, c: Collector, surface: Uint8Array, scan: E
   c.add({ id: "start.entrance", class: "load", ok: free, where: { tiles: [[ex, ey]] }, message: free ? `entrance tile (${ex},${ey}) is free ground at level ${p.z}` : `entrance tile (${ex},${ey}) must be free ground at level ${p.z}, or no beavers spawn` });
 }
 
-// ---------------------------------------------------------------------------------------- profiles
-
-/** What each class does in each profile (PLAN §19.5). */
-export function blocks(profile: Profile, r: CheckResult): boolean {
-  if (r.ok || r.advisory || r.severity === "warning" || r.severity === "info") return false;
-  if (profile === "generate") return true;
-  if (profile === "export") return r.class === "load";
-  return false;
-}
+// ---------------------------------------------------------------------------------------- validate
 
 export interface ValidateOptions {
   profile: Profile;
   /** External files (imports) accept any 1.1.x version. */
   external?: boolean;
+  /** Thresholds come from the spec; imported maps have none and use `designedFor` (default Normal)
+   *  with the default settings (PLAN §19.5). */
+  spec?: MapSpec | null;
+  designedFor?: Difficulty;
+  /** The features the map was built from, for the checks about planned lakes and basins. */
+  features?: readonly Feature[] | null;
+  /** The canonical settle already computed for exactly this terrain and these sources (the build's),
+   *  so generation does not settle twice. */
+  water?: { model: WaterModel; settled: CanonicalWater };
+  /** Only the load and design classes (the M1 oracle's --load-only). */
+  loadOnly?: boolean;
 }
 
-export function validateFile(file: TimberFile, opts: ValidateOptions): ValidationReport {
-  const c = new Collector();
+export interface Validation {
+  report: ValidationReport;
+  /** What the playability checks measured (null with loadOnly). */
+  analysis: PlayabilityAnalysis | null;
+  model: WaterModel | null;
+  water: CanonicalWater | null;
+}
+
+export function validateMap(file: TimberFile, opts: ValidateOptions): Validation {
+  const c = new Collector(opts.profile);
   checkFile(file, c, opts.external ?? opts.profile === "import");
   const surface = surfaceOf(file.world);
   const scan = checkEntities(file, c, surface);
   checkTerrain(file, c, surface, scan.stackTops);
   checkSlopes(file, c, surface, scan);
   checkStart(file, c, surface, scan);
+  let analysis: PlayabilityAnalysis | null = null;
+  let model: WaterModel | null = null;
+  let water: CanonicalWater | null = null;
+  if (!opts.loadOnly) {
+    // the heightfield water model runs on the top surface; on maps with caves or overhangs
+    // (terrain.single_floor) it is an approximation, as the design check says
+    const w = file.world;
+    const objects: MapObject[] = mapObjects(w);
+    model = opts.water?.model ?? waterModel(w.sizeX, w.sizeY, surface, objects);
+    water = opts.water?.settled ?? canonicalSettle(model);
+    analysis = checkPlayability(
+      {
+        W: w.sizeX,
+        H: w.sizeY,
+        surface,
+        objects,
+        model,
+        water,
+        rules: rulesFor(opts.spec ?? null, opts.designedFor ?? "normal"),
+        features: opts.features ?? null,
+        ids: w.entities.filter((e) => placementOf(e)).map((e) => String(e.Id)),
+      },
+      c,
+    );
+  }
   const checks = c.checks;
-  return { profile: opts.profile, checks, passed: !checks.some((r) => blocks(opts.profile, r)) };
+  return { report: { profile: opts.profile, checks, passed: !checks.some((r) => blocks(opts.profile, r)) }, analysis, model, water };
+}
+
+export function validateFile(file: TimberFile, opts: ValidateOptions): ValidationReport {
+  return validateMap(file, opts).report;
 }
 
 export { OCC };

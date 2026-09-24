@@ -24,7 +24,9 @@ describe.each([
   const r = generate(spec);
 
   it("passes the generate profile", () => {
-    expect(r.report.checks.filter((c) => !c.ok)).toEqual([]);
+    // every check passes except, possibly, the one advisory check (PLAN §11, §19.5)
+    expect(r.report.checks.filter((c) => !c.ok && !c.advisory)).toEqual([]);
+    expect(r.report.checks.filter((c) => c.advisory).map((c) => c.id)).toEqual(["plants.drought"]);
     expect(r.report.passed).toBe(true);
   });
 
@@ -36,7 +38,7 @@ describe.each([
     const ids = r.features.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     const setPieces = r.features.filter((f) => f.kind === "setPiece").map((f) => (f.params as { kind: string }).kind).sort();
-    expect(setPieces).toEqual(["damSite", "waterfall", "waterfall"]);
+    expect(setPieces).toEqual(["badwaterBasin", "damSite", "waterfall", "waterfall"]);
   });
 
   it("every entity records its owning feature", () => {

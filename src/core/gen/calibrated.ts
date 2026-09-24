@@ -77,6 +77,9 @@ export const BUSHES = {
 
 export const RIVER_FLOW_MULTIPLIER = { trickle: 0.6, normal: 1, strong: 2, lush: 4 } as const;
 
+/** Badwater-to-clean strength ratio by the Badwater setting (PLAN §5.4; official median 0.65). */
+export const BADWATER_RATIO = { off: 0, low: 0.3, normal: 0.65, high: 1.2 } as const;
+
 /** Stored water a colony needs through the worst drought (PLAN §11.4). */
 export const DROUGHT = {
   easy: { days: 4, colony: 40 },
