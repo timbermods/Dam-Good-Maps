@@ -19,6 +19,7 @@ import { normalizeImport, type ImportReport } from "../format/normalize";
 import type { Runs } from "../math/grid";
 import { GENERATOR_VERSION, type Difficulty, type MapSpec } from "../spec/mapspec";
 import { jsonEqual } from "../spec/mergepatch";
+import { validateFeatures, validateSpec } from "../spec/schema";
 import { description, mapName, toTimberFile } from "../gen/pack";
 import { baseFromFile, type BaseMap } from "./base";
 import { replay, type AppliedOp, type Lock } from "./ops";
@@ -184,6 +185,8 @@ function fromV1(v1: DocumentV1): MapDocument {
 
 /** The stored current state must be the log applied to the generation. */
 export function checkDocument(doc: MapDocument): void {
+  const bad = [...(doc.spec ? validateSpec(doc.spec) : []), ...validateFeatures(baseFeaturesOf(doc)), ...validateFeatures(doc.features)];
+  if (bad.length) throw new ProjectError(`the project file is damaged: ${bad[0].path || "/"} ${bad[0].message}`);
   const { state } = replay(baseFeaturesOf(doc), doc.edits);
   if (!jsonEqual(state.features, doc.features)) throw new ProjectError("the project file is damaged: its features do not match its edits");
   if (!jsonEqual(state.locks, doc.locks)) throw new ProjectError("the project file is damaged: its locks do not match its edits");
