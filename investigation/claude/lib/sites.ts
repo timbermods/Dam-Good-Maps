@@ -13,6 +13,7 @@ import type { LandformFeature, Point, RiverFeature, SetPieceKind } from "../../.
 import { distanceFrom } from "../../../src/core/math/grid";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { locate, network, type Course } from "./flow";
+import { reservoirIsClean } from "./metrics";
 import { compassWords, extent, resolve, type Place, type RefContext } from "./places";
 import { sizeTarget, type SizeTarget, type SizeWord } from "./words";
 import { round1, round2, viewOf, type MapView } from "./view";
@@ -38,6 +39,16 @@ export type SiteKind =
 
 export const SITE_KINDS: readonly SiteKind[] = ["waterfall", "riverFall", "damSite", "gorge", "terracedCliffs", "badwaterBasin", "start", "lake", "hill", "plateau", "ridge", "island", "canyon", "valley", "forest", "berryPatch", "ruinField"];
 
+/** Checks a site's step on the map: apply, validate, take back. Returns the guards it would break
+ *  (checks that pass now and fail with it), or why it cannot be built. Registered by steps.ts. */
+export type Verifier = (s: MapSession, step: Record<string, unknown>) => { broken: string[]; error?: string };
+let verifier: Verifier | null = null;
+export function setVerifier(v: Verifier): void {
+  verifier = v;
+}
+/** Candidates verified per query, at most. */
+const VERIFY_MAX = 10;
+
 export interface SiteQuery {
   kind: SiteKind;
   where?: Place | string;
@@ -51,6 +62,8 @@ export interface SiteQuery {
   /** badwaterBasin: as near the start as the rules allow ("dangerous"). */
   nearStart?: boolean;
   limit?: number;
+  /** Check each offered site against the guards with a real build (default true). */
+  verify?: boolean;
 }
 
 export interface Site {
@@ -76,6 +89,8 @@ export interface SitesResult {
   searched: number;
   reason?: string;
   alternative?: { kind: "size" | "place"; note: string; site: Site };
+  /** Sites passed over because a build showed they break a guard. */
+  rejected?: string;
   /** When the size fails here: where the full size would fit instead (null: nowhere on this map). */
   alsoPossible?: { kind: "place"; note: string; site: Site } | null;
 }
@@ -135,8 +150,43 @@ export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {})
   const found = search(s, v, q, r.mask);
   base.target = found.target;
   base.searched = found.searched;
-  const good = found.sites.filter((x) => x.meetsSize);
-  if (good.length) return { ...base, ok: true, sites: good.slice(0, limit).map((x, k) => ({ ...x, rank: k + 1 })) };
+  // every offered site is checked with a real build: a site that breaks a guard (a start rule,
+  // the reservoir, the water's way out) is not offered, and why is kept
+  const rejected: string[] = [];
+  const verified = (list: Site[], want: number): Site[] => {
+    if (!verifier || q.verify === false) return list.slice(0, want);
+    const out: Site[] = [];
+    let tries = 0;
+    for (const x of list) {
+      if (out.length >= want || tries >= VERIFY_MAX) break;
+      if (x.step.existing) {
+        out.push(x);
+        continue;
+      }
+      tries++;
+      const res = verifier(s, x.step);
+      if (res.error || res.broken.length) {
+        rejected.push(res.error ?? `breaks ${res.broken.join(", ")}`);
+        continue;
+      }
+      out.push(x);
+    }
+    return out;
+  };
+  // sites right beside the start tend to take its berries, trees or walkable land: try them last
+  // unless the place itself is about the start
+  if (v.start) {
+    const ex0 = extent(v, r.mask);
+    const placeNearStart = ex0 ? Math.hypot(ex0.centroid[0] - v.start.x, ex0.centroid[1] - v.start.y) < 25 : false;
+    if (!placeNearStart) {
+      const near = (x: Site) => Math.hypot(x.at[0] - v.start!.x, x.at[1] - v.start!.y) < 18;
+      found.sites = [...found.sites.filter((x) => !near(x)), ...found.sites.filter(near)];
+    }
+  }
+  const good = verified(found.sites.filter((x) => x.meetsSize), limit);
+  if (good.length) return { ...base, ok: true, sites: good.map((x, k) => ({ ...x, rank: k + 1 })), ...(rejected.length ? { rejected: summarize(rejected) } : {}) };
+  if (rejected.length) found.why = `every site that fits here breaks a check that passes now (${summarize(rejected)})`;
+  found.sites = verified(found.sites.filter((x) => !x.meetsSize), 1);
   // nothing fits here: the nearest feasible alternative, a smaller size here or the size elsewhere
   if (found.sites.length) {
     const best = found.sites[0];
@@ -146,7 +196,7 @@ export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {})
       alternative: { kind: "size", note: `the best this place allows: ${sizeNote(best)}`, site: { ...best, rank: 1 } },
       sites: [],
     };
-    const elsewhere = search(s, v, q, new Uint8Array(v.W * v.H).fill(1)).sites.filter((x) => x.meetsSize);
+    const elsewhere = verified(search(s, v, q, new Uint8Array(v.W * v.H).fill(1)).sites.filter((x) => x.meetsSize), 1);
     const ex = extent(v, r.mask);
     if (elsewhere.length && ex) {
       elsewhere.sort((a, b) => Math.hypot(a.at[0] - ex.centroid[0], a.at[1] - ex.centroid[1]) - Math.hypot(b.at[0] - ex.centroid[0], b.at[1] - ex.centroid[1]));
@@ -160,6 +210,8 @@ export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {})
   const wide = new Uint8Array(v.W * v.H).fill(1);
   const elsewhere = search(s, v, q, wide);
   const ex = extent(v, r.mask);
+  if (ex) elsewhere.sites.sort((a, b) => Math.hypot(a.at[0] - ex.centroid[0], a.at[1] - ex.centroid[1]) - Math.hypot(b.at[0] - ex.centroid[0], b.at[1] - ex.centroid[1]));
+  elsewhere.sites = [...verified(elsewhere.sites.filter((x) => x.meetsSize), 1), ...elsewhere.sites.filter((x) => !x.meetsSize).slice(0, 1)];
   const fits = elsewhere.sites.filter((x) => x.meetsSize);
   const pick = (fits.length ? fits : elsewhere.sites).sort((a, b) => (ex ? Math.hypot(a.at[0] - ex.centroid[0], a.at[1] - ex.centroid[1]) - Math.hypot(b.at[0] - ex.centroid[0], b.at[1] - ex.centroid[1]) : 0))[0];
   const reason = found.why ?? `no ${q.kind} fits in this place (${r.tiles} tiles searched at ${found.searched} spots)`;
@@ -174,6 +226,12 @@ export function findSites(s: MapSession, q: SiteQuery, ctxRefs: RefContext = {})
       site: { ...pick, rank: 1 },
     },
   };
+}
+
+function summarize(reasons: string[]): string {
+  const n = new Map<string, number>();
+  for (const r of reasons) n.set(r, (n.get(r) ?? 0) + 1);
+  return [...n].map(([r, k]) => `${k} ${r}`).join("; ");
 }
 
 function describeTarget(t: SizeTarget): string {
@@ -278,6 +336,7 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
       const p = pointAtArc(river.params.path, at).p;
       const x = Math.round(p[0]);
       const y = Math.round(p[1]);
+      const clean = reservoirIsClean(v, c.id, at);
       const site: Site = {
         rank: 0,
         kind: "damSite",
@@ -285,7 +344,7 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
         where: compassWords(v, x, y),
         course: courseInfo(v, x, y),
         step: { op: "addSetPiece", kind: "damSite", request: req },
-        measured: { reservoir: Math.round(held.volume), area: held.area, damLength: held.length, crest: Number(r.feature.params.plan.crest), fillMinutes: river.params.flow > 0 ? round1(held.volume / river.params.flow / 60) : null },
+        measured: { reservoir: Math.round(held.volume), area: held.area, damLength: held.length, crest: Number(r.feature.params.plan.crest), reservoirClean: clean, fillMinutes: river.params.flow > 0 ? round1(held.volume / river.params.flow / 60) : null },
         meetsSize: meets(target, held.volume),
         report: r.feature.params.report,
       };
@@ -312,18 +371,20 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
       where: compassWords(v, x, y),
       course: courseInfo(v, x, y),
       step: { existing: f.id, note: "already on the map: no step needed" },
-      measured: { reservoir: Math.round(held.volume), area: held.area, damLength: held.length, crest: Number(f.params.plan.crest), existing: f.id, fillMinutes: river.params.flow > 0 ? round1(held.volume / river.params.flow / 60) : null },
+      measured: { reservoir: Math.round(held.volume), area: held.area, damLength: held.length, crest: Number(f.params.plan.crest), reservoirClean: reservoirIsClean(v, river.id, Number(f.params.plan.at)), existing: f.id, fillMinutes: river.params.flow > 0 ? round1(held.volume / river.params.flow / 60) : null },
       meetsSize: meets(target, held.volume),
       report: [`the dam site ${f.id} is already here`],
     });
   }
   // sites that meet the size first, new ones before those already on the map; among them the most
   // water per dam tile (a short dam holding a big reservoir is the best opportunity)
-  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(!!a.measured.existing) - Number(!!b.measured.existing) || Number(b.measured.reservoir) / Number(b.measured.damLength) - Number(a.measured.reservoir) / Number(a.measured.damLength));
+  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(b.measured.reservoirClean) - Number(a.measured.reservoirClean) || Number(!!a.measured.existing) - Number(!!b.measured.existing) || Number(b.measured.reservoir) / Number(b.measured.damLength) - Number(a.measured.reservoir) / Number(a.measured.damLength));
+  const dirty = sites.filter((x) => !x.measured.reservoirClean).length;
+  if (dirty && dirty === sites.length) why = "the river here already carries badwater (the map's own badwater joins it upstream): every reservoir here would hold badwater";
   // when nothing meets the size, the biggest reservoir is the nearest alternative
   if (!sites.some((x) => x.meetsSize)) sites.sort((a, b) => Number(b.measured.reservoir) - Number(a.measured.reservoir));
   if (!arcs.length) why = "no river runs through this place";
-  return { sites: spaced(sites, 8), searched: arcs.length, target, why: sites.length ? undefined : why ?? "no dam across the river here holds water (it reaches a map edge or walks round the dam)" };
+  return { sites: spaced(sites, 8), searched: arcs.length, target, why: sites.length ? (dirty === sites.length ? why : undefined) : why ?? "no dam across the river here holds water (it reaches a map edge or walks round the dam)" };
 }
 
 /** Keep sites at least `d` tiles apart. */
@@ -485,7 +546,11 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Fo
   // beyond the start rule, plus the basin's own half-width
   const minD = rules.badwaterWithin + 12;
   const cands = gridTiles(v, mask, 200, 6).filter((i) => !v.channel[i] && !(v.water[i] > 0.05) && (!sd || sd[i] >= minD));
+  // as near the start as the rules allow ("dangerous"); in a named place, nearest its middle;
+  // otherwise as far from the start as the map allows
+  const ex = q.where !== undefined ? extent(v, mask) : null;
   if (q.nearStart && sd) cands.sort((a, b) => sd[a] - sd[b]);
+  else if (ex) cands.sort((a, b) => Math.hypot((a % v.W) - ex.centroid[0], Math.floor(a / v.W) - ex.centroid[1]) - Math.hypot((b % v.W) - ex.centroid[0], Math.floor(b / v.W) - ex.centroid[1]));
   else if (sd) cands.sort((a, b) => sd[b] - sd[a]);
   const damPieces = s.features.filter((f) => f.kind === "setPiece" && f.params.kind === "damSite");
   const net = network(v);
@@ -655,12 +720,23 @@ function octagon(cx: number, cy: number, rx: number, ry: number): Point[] {
   return out;
 }
 
+/** The tiles within `r` of a mask: centres of pieces whose body reaches the place. */
+function dilate(v: MapView, mask: Uint8Array, r: number): Uint8Array {
+  const d = distanceFrom(mask, v.W, v.H);
+  const out = new Uint8Array(mask.length);
+  for (let i = 0; i < out.length; i++) if (d[i] <= r) out[i] = 1;
+  return out;
+}
+
 function lakes(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, target?: SizeTarget): Found {
   const ctx = planContextOf(s);
   const sd = startDistance(v);
   const want = target ? (target.approx ?? ((target.min ?? 60) + (target.max ?? target.min ?? 60)) / 2) : Number(q.request?.area ?? 80);
   const r0 = Math.max(2, Math.sqrt(want / Math.PI) * 1.08);
-  const cands = gridTiles(v, mask, 150, Math.ceil(r0) + 4).filter((i) => !v.channel[i] && (!sd || sd[i] >= r0 + 10));
+  const cands = gridTiles(v, dilate(v, mask, r0), 150, Math.ceil(r0) + 4).filter((i) => !v.channel[i] && (!sd || sd[i] >= r0 + 8));
+  // nearest the place first
+  const ex = extent(v, mask);
+  if (ex) cands.sort((a, b) => Number(!mask[a]) - Number(!mask[b]) || Math.hypot((a % v.W) - ex.centroid[0], Math.floor(a / v.W) - ex.centroid[1]) - Math.hypot((b % v.W) - ex.centroid[0], Math.floor(b / v.W) - ex.centroid[1]));
   const sites: Site[] = [];
   let why: string | undefined;
   let searched = 0;
@@ -691,7 +767,9 @@ function landforms(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): F
   const kind = q.kind as LandformFeature["params"]["kind"];
   const rx = kind === "ridge" ? d / 2 : d / 2;
   const ry = kind === "ridge" ? Math.max(2, d / 6) : d / 2;
-  const cands = gridTiles(v, mask, 150, Math.ceil(d / 2) + 2).filter((i) => !v.channel[i] && (!sd || sd[i] >= d / 2 + 10));
+  const cands = gridTiles(v, dilate(v, mask, Math.ceil(d / 2)), 150, Math.ceil(d / 2) + 2).filter((i) => !v.channel[i] && (!sd || sd[i] >= d / 2 + 8));
+  const ex = extent(v, mask);
+  if (ex) cands.sort((a, b) => Number(!mask[a]) - Number(!mask[b]) || Math.hypot((a % v.W) - ex.centroid[0], Math.floor(a / v.W) - ex.centroid[1]) - Math.hypot((b % v.W) - ex.centroid[0], Math.floor(b / v.W) - ex.centroid[1]));
   const sites: Site[] = [];
   let why: string | undefined;
   let searched = 0;

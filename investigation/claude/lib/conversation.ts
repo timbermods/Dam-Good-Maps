@@ -15,6 +15,8 @@ export interface Made {
 
 export interface Conversation {
   handles: Record<string, string>;
+  /** Kind words and the feature each first meant ("lake" → its id). */
+  aliases: Record<string, string>;
   selected: string | null;
   last: string | null;
   made: Made[];
@@ -25,11 +27,12 @@ export interface Conversation {
 }
 
 export function newConversation(seed = 0): Conversation {
-  return { handles: {}, selected: null, last: null, made: [], accepted: [], counter: 0, seed };
+  return { handles: {}, aliases: {}, selected: null, last: null, made: [], accepted: [], counter: 0, seed };
 }
 
 export function refContext(c: Conversation): RefContext {
-  return { handles: c.handles, selected: c.selected, last: c.last };
+  c.aliases ??= {};
+  return { handles: c.handles, selected: c.selected, last: c.last, aliases: c.aliases };
 }
 
 /** A fresh feature id (a lowercase GUID, as user and Claude features have, PLAN §19.4). */

@@ -210,28 +210,13 @@ function measurePiece(s: MapSession, v: MapView, f: SetPieceFeature): Record<str
       if (!river) return { crest: p.crest };
       const ctx = planContextOf(s);
       const held = reservoirOf(p as unknown as DamSitePlan, river, ctx, f.id);
-      // is the water at the dam clean? contamination on the channel next to the ridge
-      const c = pointAtArc(river.params.path, Number(p.at)).p;
-      let bad = 0;
-      let n = 0;
-      for (let dy = -4; dy <= 4; dy++)
-        for (let dx = -4; dx <= 4; dx++) {
-          const x = Math.round(c[0]) + dx;
-          const y = Math.round(c[1]) + dy;
-          if (x < 0 || y < 0 || x >= v.W || y >= v.H) continue;
-          const i = y * v.W + x;
-          if (v.water[i] > 0.05) {
-            n++;
-            if (v.contamination[i] >= 0.05) bad++;
-          }
-        }
       const fillSeconds = held && river.params.flow > 0 ? held.volume / river.params.flow : null;
       return {
         crest: p.crest,
         river: p.river,
         arc: p.at,
         reservoir: held ? { volume: Math.round(held.volume), area: held.area, damLength: held.length } : null,
-        reservoirClean: n ? bad === 0 : true,
+        reservoirClean: reservoirIsClean(v, river.id, Number(p.at)),
         ...(fillSeconds !== null ? { fillMinutes: round1(fillSeconds / 60) } : {}),
       };
     }
@@ -257,6 +242,21 @@ function measurePiece(s: MapSession, v: MapView, f: SetPieceFeature): Record<str
     default:
       return {};
   }
+}
+
+/** Whether the water a dam at arc `at` (the river feature's own order) would hold is clean: the
+ *  channel just upstream of it carries no badwater (contamination under 0.05). */
+export function reservoirIsClean(v: MapView, riverId: string, at: number): boolean {
+  const c = network(v).byId.get(riverId);
+  if (!c) return true;
+  const s0 = c.reversed ? c.length - at : at;
+  const half = c.width / 2 + 1;
+  for (let i = 0; i < v.W * v.H; i++) {
+    const s = c.field.s[i];
+    if (c.field.d[i] >= half || s < s0 - 14 || s > s0 - 2) continue;
+    if (v.water[i] > 0.05 && v.contamination[i] >= 0.05) return false;
+  }
+  return true;
 }
 
 export function anchorOf(v: MapView, f: Feature): [number, number] {

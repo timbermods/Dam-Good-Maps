@@ -23,7 +23,7 @@ import { locate, network } from "./flow";
 import { MAP_METRICS, mapMetric, measureFeature, measureSession, startRequirements } from "./metrics";
 import { compassWords, extent, resolve, resolveRef, type Place } from "./places";
 import { findSites, SITE_KINDS, type SiteKind } from "./sites";
-import { STEP_OPS } from "./steps";
+import { hintIds, STEP_OPS } from "./steps";
 import { mapSummary, SUMMARY_LIMIT } from "./summary";
 import { JUDGEMENT, sizeTarget, type SizeWord } from "./words";
 import { round1, viewOf } from "./view";
@@ -338,6 +338,7 @@ export class ClaudeTools {
     if (away !== undefined && !(typeof away === "number" && away >= 0 && away <= 256)) throw new ArgError("awayFromStart is 0–256 tiles");
     const limit = a.limit;
     if (limit !== undefined && !(Number.isInteger(limit) && Number(limit) >= 1 && Number(limit) <= 5)) throw new ArgError("limit is 1–5");
+    hintIds(this.conv);
     const r = findSites(this.session, { kind, where: this.whereArg(a), size: size as SizeWord | number | undefined, request, awayFromStart: away as number | undefined, keepReservoirsClean: a.keepReservoirsClean === true, nearStart: a.nearStart === true, limit: limit as number | undefined }, refContext(this.conv));
     return {
       ok: r.ok,

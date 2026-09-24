@@ -75,7 +75,13 @@ export function openSetup(setups: Record<string, Setup>, which: string | Setup, 
   // a fresh session per request: open the generated document again, so no two requests share
   // a built map
   let session = MapSession.fromGenerated({ ...r, built: r.built });
-  session = MapSession.open(session.document);
+  try {
+    session = MapSession.open(session.document);
+  } catch {
+    // some generated Lake Basin documents fail their own check on reopening (a ring outline past
+    // the schema's bound; see M12-INTEGRATION.md): generate again instead
+    session = MapSession.fromGenerated(generate(spec));
+  }
   const conv = newConversation(seed);
   for (const e of s.edits ?? []) {
     const res = runProposal(session, conv, { request: e.request, steps: e.steps }, "propose");

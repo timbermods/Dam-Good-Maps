@@ -66,6 +66,7 @@ function subjectValue(s: MapSession, conv: Conversation, after: Measured, subjec
   }
   const v = viewOf(s);
   const t = resolveRef(v, subject, refContext(conv));
+  if (metric === "exists") return { value: typeof t !== "string" && (!t.id || s.features.some((g) => g.id === t.id)) };
   if (typeof t === "string") return { value: undefined, error: t };
   const f = t.id ? s.features.find((g) => g.id === t.id) : undefined;
   let at: [number, number];

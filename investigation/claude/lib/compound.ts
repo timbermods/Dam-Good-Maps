@@ -123,12 +123,13 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
   if (!Array.isArray(p.steps) || p.steps.length === 0) return { ...base, errors: ["a proposal needs at least one step"] };
   if (p.steps.length > MAX_STEPS) return { ...base, errors: [`a proposal has at most ${MAX_STEPS} steps; split the request`] };
   p.steps.forEach((st, k) => checkStep(st, W, H).forEach((e) => errors.push(`step ${k}: ${e}`)));
+  if (errors.length) return base;
   if (p.steps.some((st) => st.op === "undoLast") && p.steps.length > 1) errors.push("undoLast takes back the whole last proposal and must be the only step; to remove one thing, use deleteFeature");
   if ((p.expectations?.length ?? 0) > 40) errors.push("at most 40 expectations");
   if (errors.length) return base;
   const work = mode === "dry_run" ? cloneConv(conv) : conv;
   const before = measureSession(s);
-  const was = valuesBefore(s, conv, before, p.expectations ?? []);
+  const was = valuesBefore(s, work, before, p.expectations ?? []);
   const ordered = orderSteps(p.steps);
   const reordered = ordered.some((o, k) => o.index !== k);
   const results: StepResult[] = [];

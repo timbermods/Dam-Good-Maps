@@ -47,6 +47,8 @@ export type Place =
   | { compass: Compass; part?: Part }
   | { near: Ref; within?: number }
   | { far: Ref; beyond?: number }
+  /** Tiles nearer to `closer` than `than` (default: the start) is now, by at least `by` tiles. */
+  | { closer: Ref; than?: Ref; by?: number }
   | { along: Ref; within?: number }
   | { between: [Ref, Ref]; width?: number }
   | { upstream: Ref | null; river?: Ref; reach?: "just" | "far" | "any" }
@@ -66,6 +68,9 @@ export interface RefContext {
   handles?: Record<string, string>;
   selected?: string | null;
   last?: string | null;
+  /** What kind words ("the lake", "the dam site") meant the first time they were read in this
+   *  conversation, so "the lake" stays the same lake after the start moves. */
+  aliases?: Record<string, string>;
 }
 
 export interface Resolved {
@@ -226,10 +231,20 @@ export function resolveRef(v: MapView, ref: Ref, ctx: RefContext = {}, assumptio
     if (!c) return `there is no river from the ${trib[2]} edge`;
     return { name: c.name, id: c.id, course: c, anchor: courseAnchor(c), mask: courseMask(v, c) };
   }
+  const remembered = ctx.aliases?.[word.replace(/^the /, "")];
+  if (remembered) {
+    const f = byId(remembered);
+    if (f) return f.kind === "river" && net.byId.get(f.id) ? { name: net.byId.get(f.id)!.name, id: f.id, course: net.byId.get(f.id), anchor: courseAnchor(net.byId.get(f.id)!), mask: courseMask(v, net.byId.get(f.id)!) } : asFeature(f, `the ${word.replace(/^the /, "")}`);
+  }
   for (const [re, test, name] of KIND_WORDS) {
     if (!re.test(word)) continue;
-    const all = v.features.filter(test);
+    // an imported map has its StartingLocation but no start feature
+    if (name === "the start" && !v.features.some(test) && v.start) return { name: "the start", anchor: [v.start.x, v.start.y] };
+    let all = v.features.filter(test);
     if (!all.length) return `there is no ${name.replace(/^the /, "")} on this map`;
+    // River Valley names its falls: "the cascade" is the upper fall, "the falls" the lower one
+    const named = /cascade/.test(word) ? all.filter((f) => f.role?.endsWith("/cascade")) : /falls$/.test(word) ? all.filter((f) => f.role?.endsWith("/falls")) : [];
+    if (named.length) all = named;
     // prefer what this conversation made, then the player's own, then the one nearest the start
     const made = new Set(Object.values(ctx.handles ?? {}));
     const start = v.start;
@@ -237,6 +252,7 @@ export function resolveRef(v: MapView, ref: Ref, ctx: RefContext = {}, assumptio
     all.sort((a, b) => score(a) - score(b));
     if (all.length > 1) assumptions.push(`"${ref}" read as ${all[0].id}, ${made.has(all[0].id) ? "the one made in this conversation" : "the one nearest the start"} (of ${all.length})`);
     const f = all[0];
+    if (ctx.aliases && !/start/.test(word)) ctx.aliases[word.replace(/^the /, "")] = f.id;
     if (f.kind === "river") {
       const c = net.byId.get(f.id)!;
       return { name: c.name, id: c.id, course: c, anchor: courseAnchor(c), mask: courseMask(v, c) };
@@ -414,6 +430,18 @@ export function resolvePlace(v: MapView, place: Place, ctx: RefContext = {}, ass
       const r = Number(p.within ?? t.course.width / 2 + 6);
       for (let i = 0; i < N; i++) if (t.course.field.d[i] <= r) m[i] = 1;
     }
+    return { mask: m, errors };
+  }
+  if ("closer" in p) {
+    const t = resolveRef(v, p.closer as Ref, ctx, assumptions);
+    if (typeof t === "string") return fail(t);
+    const than = resolveRef(v, (p.than as Ref | undefined) ?? "start", ctx, assumptions);
+    if (typeof than === "string") return fail(than);
+    const d = distanceTo(v, t);
+    const now = d[than.anchor[1] * W + than.anchor[0]];
+    const by = Number(p.by ?? 3);
+    for (let i = 0; i < N; i++) if (d[i] <= now - by) m[i] = 1;
+    assumptions.push(`"closer to ${t.name}" read as nearer to it than ${than.name} is now (${Math.round(now)} tiles), by at least ${by}`);
     return { mask: m, errors };
   }
   if ("between" in p) {
@@ -612,7 +640,8 @@ const RULES: Rule[] = [
   { re: /(?:on )?(?:the )?(left|right) bank/, make: (m) => ({ bank: m[1] as "left" | "right" }) },
   { re: new RegExp(`(?:in |of )?(?:this|the|our) valley|${REF} valley`), make: (m) => ({ valley: m[1] ? refOf(m[1]) : null }) },
   { re: new RegExp(`(next to|beside|right by|alongside|adjacent to) ${REF}`), make: (m) => ({ near: refOf(m[2]), within: 8 }) },
-  { re: new RegExp(`(close to|closer to|near to) ${REF}`), make: (m) => ({ near: refOf(m[2]), within: 12 }) },
+  { re: new RegExp(`(?:closer|nearer) to ${REF}`), make: (m) => ({ closer: refOf(m[1]) }) },
+  { re: new RegExp(`(close to|near to) ${REF}`), make: (m) => ({ near: refOf(m[2]), within: 12 }) },
   { re: new RegExp(`(far from|away from|well away from|not near|distant from|far away from) ${REF}`), make: (m) => ({ far: refOf(m[2]), beyond: /far|well|distant/.test(m[1]) ? 40 : 30 }) },
   { re: new RegExp(`(?:along|by|beside) (?:the (?:banks? of the )?)?(river|stream|main river|(?:north|south|east|west) (?:tributary|inflow))`), make: (m) => ({ along: m[1] === "stream" ? "river" : m[1] }) },
   { re: new RegExp(`(near|around|by|at) ${REF}`), make: (m) => (m[2] === "this" || m[2] === "that" ? null : { near: refOf(m[2]) }) },

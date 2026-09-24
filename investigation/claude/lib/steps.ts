@@ -21,7 +21,9 @@ import { rulesFor } from "../../../src/core/validate/playability";
 import { newHandle, newId, refContext, type Conversation } from "./conversation";
 import { anchorOf } from "./metrics";
 import { resolve, resolveRef, type Place } from "./places";
-import { findSites, resourceArea, type SiteKind, type SitesResult } from "./sites";
+import { findSites, resourceArea, setVerifier, type SiteKind, type SitesResult } from "./sites";
+import { guardsOf } from "./metrics";
+import { newConversation } from "./conversation";
 import { comparative, findWord, JUDGEMENT, leverPatch, sizeWordOf, type SizeWord } from "./words";
 import { viewOf } from "./view";
 
@@ -266,6 +268,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     }
     case "addSetPiece": {
       const id = newId(conv, step.kind);
+      hintIds({ ...conv, counter: conv.counter - 1 });
       let request = step.request;
       let resolved: Record<string, unknown> = {};
       if (!request || step.where !== undefined) {
@@ -334,6 +337,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       const id = newId(conv, "river");
       const flow = typeof step.flow === "string" ? { gentle: 1, steady: 2, strong: 4 }[step.flow] : (step.flow ?? 2);
       const r = planRiver({ points: step.points, flow, ...(step.width ? { width: step.width } : {}), ...(step.bedDepth ? { bedDepth: step.bedDepth } : {}) }, planContextOf(s), id, "claude");
+      if (step.badwater) return fail(step, ["a river's badwater switch is not built yet: draw the river clean and add a badwater spring that drains into it"]);
       if (r.ok && step.badwater && r.feature.kind === "river") {
         r.feature.params.badwater = true;
         const op = r.ops[0];
@@ -344,6 +348,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     }
     case "addLake": {
       const id = newId(conv, "lake");
+      hintIds({ ...conv, counter: conv.counter - 1 });
       let outline = step.outline;
       let resolved: Record<string, unknown> = {};
       if (!outline) {
@@ -357,6 +362,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     }
     case "addLandform": {
       const id = newId(conv, step.kind);
+      hintIds({ ...conv, counter: conv.counter - 1 });
       let outline = step.outline;
       let height = step.height;
       let resolved: Record<string, unknown> = {};
@@ -420,6 +426,9 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       return { ok: true, step, ops: r.ops, made: [], report: [], resolved: { target: f.id, kind: f.kind === "setPiece" ? f.params.kind : f.kind }, errors: [], tiles: 0 };
     }
     case "setRiverBadwater": {
+      // the river feature stores the flag, but no build step reads it yet: the river would stay
+      // clean, and the step would claim a change that never happens
+      if (step.badwater) return fail(step, ["a river's badwater switch is not built yet (the map's water ignores it): add a badwater spring (badwaterBasin) whose outlet joins the river instead"], { note: "a badwater spring beside the river, draining into it", step: { op: "addSetPiece", kind: "badwaterBasin", where: { along: step.target, within: 20 }, keepReservoirsClean: true } });
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
       if (f.kind !== "river") return fail(step, [`${step.target} is not a river`]);
@@ -447,6 +456,7 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
   let resolved: Record<string, unknown> = {};
   if (Array.isArray(step.to) && step.to.length === 2 && typeof step.to[0] === "number") to = [Math.round(step.to[0]), Math.round(Number(step.to[1]))];
   else {
+    hintIds(conv);
     const r = findSites(s, { kind: "start", where: step.to as Where, limit: 1 }, refs);
     resolved = siteSummary(r);
     if (!r.ok) return fail(step, [r.reason ?? "no spot meets the start rules there"], alternativeOf(r), resolved);
@@ -497,6 +507,39 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
   }
   return { ok: true, step, ops, made, report, resolved: { ...resolved, to }, errors: [], tiles: 0 };
 }
+
+// ---------------------------------------------------------------------------- site verification
+
+const guardCache = new Map<string, Map<string, boolean>>();
+
+/** The id the next feature will get: builders shape some pieces from their id (a dam ridge's
+ *  wobble), so a site is checked with the id the real step will use. */
+let idHint: { seed: number; counter: number } | null = null;
+export function hintIds(conv: Conversation | null): void {
+  idHint = conv ? { seed: conv.seed, counter: conv.counter } : null;
+}
+
+/** Build a site's step on the session, validate, and take it back: which guards it breaks. */
+setVerifier((s, raw) => {
+  const step = raw as unknown as Step;
+  const key = viewOf(s).key;
+  let before = guardCache.get(key);
+  if (!before) {
+    before = new Map(guardsOf(s.validate().report).map((g) => [g.id, g.ok]));
+    if (guardCache.size > 8) guardCache.clear();
+    guardCache.set(key, before);
+  }
+  const scratch = newConversation(idHint?.seed ?? 7);
+  scratch.counter = idHint?.counter ?? 0;
+  const ex = expandStep(s, scratch, step);
+  if (!ex.ok) return { broken: [], error: ex.errors[0] ?? "it cannot be built" };
+  if (!ex.ops.length) return { broken: [] };
+  const r = ex.ops[0].op === "specPatch" ? s.apply(ex.ops[0], "claude") : s.applyAll(ex.ops, "claude");
+  if (!r.ok) return { broken: [], error: r.errors[0] ?? "it cannot be built" };
+  const after = guardsOf(s.validate().report);
+  s.undo();
+  return { broken: after.filter((g) => !g.ok && g.applicable && before!.get(g.id) !== false).map((g) => g.id) };
+});
 
 export function isSetPiece(f: Feature): f is SetPieceFeature {
   return f.kind === "setPiece";
