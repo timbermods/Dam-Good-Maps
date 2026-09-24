@@ -384,25 +384,35 @@ export function planLakeBasin(spec: MapSpec, attempt: number, candidate = 0, set
           }
 
       // the start: on the shore, 6–10 tiles from the water, at the angle farthest from the
-      // rivers' mouths, its door toward the lake
+      // rivers' mouths where its bench stays on the map (a sea can reach close to the edge), its
+      // door toward the lake
       const used = [outAngle, ...inflowAngles, ...(second ? [second.angle] : [])];
+      const edge = Math.max(3, Math.min(Math.max(3, spec.settings.start.rules.waterWithin - 4), startEdgeDraw));
+      const margin = BENCH_RADIUS[spec.settings.start.area] + 2;
+      const onMap = (th: number) => {
+        const p = lakePoint(th);
+        const x = Math.round(p[0] + cosDet(th) * (edge + 1.5));
+        const y = Math.round(p[1] + sinDet(th) * (edge + 1.5));
+        return x >= margin && y >= margin && x < W - margin && y < H - margin;
+      };
       let bestTh = 0;
       let bestGap = -1;
       const samples = 72;
-      for (let q = 0; q < samples; q++) {
-        const th = (TWO_PI * (q + startAngleDraw)) / samples;
-        let gap = Infinity;
-        for (const u of used) {
-          let d = Math.abs(th - u) % TWO_PI;
-          if (d > PI) d = TWO_PI - d;
-          gap = Math.min(gap, d);
+      for (let pass = 0; pass < 2 && bestGap < 0; pass++)
+        for (let q = 0; q < samples; q++) {
+          const th = (TWO_PI * (q + startAngleDraw)) / samples;
+          if (pass === 0 && !onMap(th)) continue;
+          let gap = Infinity;
+          for (const u of used) {
+            let d = Math.abs(th - u) % TWO_PI;
+            if (d > PI) d = TWO_PI - d;
+            gap = Math.min(gap, d);
+          }
+          if (gap > bestGap + 1e-9) {
+            bestGap = gap;
+            bestTh = th;
+          }
         }
-        if (gap > bestGap + 1e-9) {
-          bestGap = gap;
-          bestTh = th;
-        }
-      }
-      const edge = Math.max(3, Math.min(Math.max(3, spec.settings.start.rules.waterWithin - 4), startEdgeDraw));
       const lp = lakePoint(bestTh);
       const nx = cosDet(bestTh);
       const ny = sinDet(bestTh);
