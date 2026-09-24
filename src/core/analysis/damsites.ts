@@ -35,7 +35,7 @@ export function damCandidate(
   dy: number,
   dx: number,
   height: number,
-  stamp: { seen: Int32Array; mark: number; queue: Int32Array; line: Int32Array },
+  stamp: { seen: Int32Array; mark: number; queue: Int32Array },
   maxHalf = 10,
   maxFlood = 6000,
 ): DamSite | null {
@@ -95,6 +95,12 @@ export function damCandidate(
   return { x, y, dir: [dy, dx], height, length: line.length, area: count, volume: vol, ratio: vol / line.length };
 }
 
+/** The largest reservoir a dam site may flood: 6,000 tiles (the prototype's limit), or 15% of the
+ *  map on maps larger than 200² (the dam-site basin cap, PLAN §9.1). */
+export function maxFloodFor(W: number, H: number): number {
+  return Math.max(6000, Math.floor(0.15 * W * H));
+}
+
 /** The best dam per sampled channel tile (every `stride`-th channel tile in index order, only those
  *  within `maxDist` of the start by `startDist`), sorted by volume per dam tile, keeping only sites
  *  at least 8 tiles apart. */
@@ -111,7 +117,8 @@ export function damSites(
   minRatio = 30,
 ): DamSite[] {
   const N = W * H;
-  const stamp = { seen: new Int32Array(N), mark: 0, queue: new Int32Array(N), line: new Int32Array(0) };
+  const stamp = { seen: new Int32Array(N), mark: 0, queue: new Int32Array(N) };
+  const maxFlood = maxFloodFor(W, H);
   const found: DamSite[] = [];
   let k = 0;
   for (let i = 0; i < N; i++) {
@@ -125,7 +132,7 @@ export function damSites(
     let best: DamSite | null = null;
     for (const hh of heights) {
       for (const [dy, dx] of DAM_DIRS) {
-        const c = damCandidate(h, surface, W, H, x, y, dy, dx, hh, stamp);
+        const c = damCandidate(h, surface, W, H, x, y, dy, dx, hh, stamp, 10, maxFlood);
         if (c && (!best || c.ratio > best.ratio)) best = c;
       }
     }

@@ -33,7 +33,18 @@ import { groupSizes, growBlob, pickSeeds, punchHoles } from "./blobs";
 import { BADWATER_RATIO, BUSHES, density, FOREST, RIVER_FLOW_MULTIPLIER, RUIN_HEIGHT_SHARES, RUINS } from "./calibrated";
 
 const BED_TOP = 8; // basin bed level; the upper reach sits 2 higher, the lower reach 2 lower
-const RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
+const MIN_RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
+const MAX_RIVER_WIDTH = 8.4;
+
+/** Channel width for a flow: wide enough that the water stays about 0.55 deep, well inside its
+ *  one-level banks. A channel passes its flow over a lip at about 0.3·q deep (q = flow per tile of
+ *  width) and its surface climbs about 0.0015·q per tile upstream of the lip (PLAN §9.2), so long
+ *  flat reaches on big maps need a wider channel (PLAN §20, D26). */
+export function riverWidth(flow: number, W: number): number {
+  const reach = 0.8 * W; // the longest flat reach, in tiles along the river
+  const q = 0.55 / (0.3 + 0.0015 * reach);
+  return Math.min(MAX_RIVER_WIDTH, Math.max(MIN_RIVER_WIDTH, round(flow / q, 2)));
+}
 const MEANDER = 0.16;
 const BENCH_RADIUS = { small: 5, normal: 6, large: 8 } as const;
 
@@ -99,6 +110,7 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
 
   const flowBase = density("water_strength_per_10k", W * H) * ((W * H) / 1e4);
   const flow = round(flowBase * RIVER_FLOW_MULTIPLIER[spec.settings.water.riverFlow], 2);
+  const riverW = riverWidth(flow, W);
 
   const river: RiverFeature = {
     id: riverId,
@@ -108,7 +120,7 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
     locked: false,
     params: {
       path,
-      width: RIVER_WIDTH,
+      width: riverW,
       bedDepth: 1,
       bedProfile,
       flow,
@@ -219,7 +231,7 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
   // then across the river, until the gorge is within 34 tiles of it)
   let sx = rng.int(basinX0 + 2, Math.max(basinX0 + 3, gorgeX - 6));
   let side = rng.float() < 0.5 ? 1 : -1;
-  const dist = RIVER_WIDTH / 2 + rng.int(6, 10); // 6–10 tiles from the channel edge (PLAN §7.2)
+  const dist = riverW / 2 + rng.int(6, 10); // 6–10 tiles from the channel edge (PLAN §7.2)
   // walk away from the river until the true distance to its path is `dist` (the river can be
   // steep here, so the vertical offset alone would put the start in the water)
   const startY = (x: number, sd: number) => {
