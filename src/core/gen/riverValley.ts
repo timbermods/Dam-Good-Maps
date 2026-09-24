@@ -149,19 +149,18 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0): 
     };
   };
 
-  // the basin: the valley widens upstream of the gorge; a planned lake (dry until dammed)
-  const s0 = arcAtX(path, basinX0);
-  const s1 = arcAtX(path, basinX1);
+  // the basin: the valley widens upstream of the gorge; a planned lake (dry until dammed). The
+  // outline runs column by column (the river flows west to east), which never self-intersects the
+  // way offsets along a meandering path would.
   const left: Point[] = [];
   const right: Point[] = [];
-  const steps = Math.max(2, Math.ceil((s1 - s0) / 2));
+  const steps = Math.max(2, Math.ceil((basinX1 - basinX0) / 2));
   for (let k = 0; k <= steps; k++) {
-    const s = s0 + ((s1 - s0) * k) / steps;
-    const t = k / steps;
-    const w = halfWidth * (1 + 0.45 * sinDet(PI * t));
-    const { p, normal } = pointAtArc(path, s);
-    left.push([round(p[0] + normal[0] * w, 2), round(p[1] + normal[1] * w, 2)]);
-    right.push([round(p[0] - normal[0] * w, 2), round(p[1] - normal[1] * w, 2)]);
+    const x = basinX0 + ((basinX1 - basinX0) * k) / steps;
+    const w = halfWidth * (1 + 0.45 * sinDet((PI * k) / steps));
+    const c = centre(x);
+    left.push([round(x, 2), round(c + w, 2)]);
+    right.push([round(x, 2), round(c - w, 2)]);
   }
   const gorgePoint = pointAtArc(path, sGorge).p;
   const lake: LakeFeature = {
