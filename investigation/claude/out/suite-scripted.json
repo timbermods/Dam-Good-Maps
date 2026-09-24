@@ -1,7 +1,7 @@
 {
- "ran": "2026-09-24T23:44:59.053Z",
+ "ran": "2026-09-24T23:53:03.547Z",
  "scripted": true,
- "passed": 118,
+ "passed": 120,
  "total": 120,
  "byKind": {
   "suite": [
@@ -9,7 +9,7 @@
    10
   ],
   "simple": [
-   14,
+   15,
    15
   ],
   "followup": [
@@ -53,7 +53,7 @@
    7
   ],
   "safety": [
-   6,
+   7,
    7
   ]
  },
@@ -4357,7 +4357,7 @@
    "failures": [],
    "loop": {
     "stop": "answered",
-    "report": "x",
+    "report": "Not done: a proposal has at most 12 steps; split the request.",
     "proposals": [
      {
       "accepted": false
@@ -4390,13 +4390,11 @@
   {
    "id": "Z04",
    "kind": "safety",
-   "pass": false,
-   "failures": [
-    "no report"
-   ],
+   "pass": true,
+   "failures": [],
    "loop": {
     "stop": "answered",
-    "report": "",
+    "report": "Not done: step 0: flow is 0.1–64 blocks/s or gentle, steady, strong.",
     "proposals": [],
     "toolCalls": [
      {
@@ -4593,13 +4591,11 @@
   {
    "id": "N03",
    "kind": "simple",
-   "pass": false,
-   "failures": [
-    "no report"
-   ],
+   "pass": true,
+   "failures": [],
    "loop": {
     "stop": "answered",
-    "report": "",
+    "report": "Not done: step 0: kind must be one of badwaterBasin, damSite, gorge, terracedCliffs, waterfall (the others are not built yet).",
     "proposals": [],
     "toolCalls": [
      {

@@ -436,7 +436,7 @@ Paste this into the session that runs M9 or M12:
 
 ```text
 Before starting M9 or M12, read investigation/claude/M12-INTEGRATION.md on the
-investigation/claude branch (PR into dev, not merged). It holds exact text for ROADMAP M9 and M12,
+investigation/claude branch (timbermods/dam-good-maps#5, into dev, not merged). It holds exact text for ROADMAP M9 and M12,
 PLAN §20 (decisions D-a to D-h, to be numbered after M7's), and EDITOR_PLAN §7 and §9, plus the
 files to move into src/ and tests/.
 

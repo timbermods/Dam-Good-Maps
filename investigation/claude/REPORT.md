@@ -41,7 +41,7 @@ are labelled as self-played pilot throughout.
 - **Reference solutions:** 120 of 120 pass through `MapSession` with the real validators
   (`out/REFERENCE.md`).
 - **Tests:** 53 of 53 pass (the resolver and the words).
-- **Scripted harness:** see "Harness" below.
+- **Scripted harness:** 120 of 120 (see "Harness" below).
 - **Against dev at `5b17375`** (M7 in progress, 12 commits after the branch point):
   - it typechecks;
   - 51 of 53 tests and 106 of 120 reference solutions pass;
@@ -130,8 +130,10 @@ numbers:
 ## Harness
 
 - The scripted harness replays every reference solution through the real loop and grader, with
-  the artifact limits on.
-- Largest input: 37 KiB (M01).
+  the artifact limits on: 120 of 120 pass (`out/suite-scripted.json`).
+- The largest input was 37 KiB (M01), and the median 21 KiB; none came near 64 KiB.
+- The reference solutions use at most 2 rounds and 4 calls.
+- This tests the loop, budget and grader, not the model.
 
 ## Top M12 risks
 
