@@ -42,7 +42,15 @@ are labelled as self-played pilot throughout.
   (`out/REFERENCE.md`).
 - **Tests:** 53 of 53 pass (the resolver and the words).
 - **Scripted harness:** see "Harness" below.
-- **Against dev:** see "Checked against dev" below.
+- **Against dev at `5b17375`** (M7 in progress, 12 commits after the branch point):
+  - it typechecks;
+  - 51 of 53 tests and 106 of 120 reference solutions pass;
+  - M7 made every generated map different and added map objects (mine sites, relics, thorn belts,
+    weirs);
+  - 7 failures are sites or drawn creeks that would undercut or cover a new object, which the
+    guards refuse;
+  - 7 more are setups whose hand-picked sites no longer exist on the new maps.
+  - The setups need re-tuning once M7 lands (M12-INTEGRATION.md section 11).
 
 ### Requests by kind
 
@@ -140,7 +148,10 @@ numbers:
 5. **Regeneration side effects.** Judgement words regenerate the whole map. They are map-wide even
    when the player says "this valley", and the generated start can move. Both are now reported,
    but a regional version needs M11.
-6. **Engine gaps worked around here** (M12-INTEGRATION.md section 8):
+6. **Map objects in the way.** On dev, generated maps carry M7's map objects, and the planners
+   do not keep off them. The guards catch it, but a player asking for a creek or a waterfall is
+   told no where a small detour would do (M12-INTEGRATION.md section 8, item 9).
+7. **Engine gaps worked around here** (M12-INTEGRATION.md section 8):
    - a proposal is several undo entries;
    - a site's shape depends on its feature id;
    - builders do not return their reservoir or lip tiles;

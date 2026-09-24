@@ -28,6 +28,9 @@ import { comparative, findWord, JUDGEMENT, leverPatch, sizeWordOf, type SizeWord
 import { viewOf } from "./view";
 
 export const MAX_STEPS = 12;
+/** Set pieces a step can place: the kinds with a site search. Kinds the engine builds beyond these
+ *  (M7's plugSpillway, obstaclePayoff, secondDistrict) are refused with the reason until they get one. */
+export const STEP_PIECES: readonly SetPieceKind[] = ["waterfall", "damSite", "gorge", "terracedCliffs", "badwaterBasin"];
 /** The share of the map one proposal may change (tiles of areas, outlines and sculpts). */
 export const MAX_AREA_SHARE = 0.3;
 
@@ -136,7 +139,7 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       }
       return [];
     case "addSetPiece":
-      if (!BUILT_KINDS.includes(s.kind as SetPieceKind)) return [`kind must be one of ${BUILT_KINDS.join(", ")} (the others are not built yet)`];
+      if (!STEP_PIECES.includes(s.kind as SetPieceKind)) return [`kind must be one of ${STEP_PIECES.join(", ")} (${BUILT_KINDS.includes(s.kind as SetPieceKind) ? `the engine builds ${String(s.kind)}, but no step places it yet` : "the others are not built yet"})`];
       errs.push(...checkRequest(s.request), ...checkPlace(s.where, "where", W, H));
       if (s.request === undefined && s.where === undefined) errs.push("addSetPiece needs a request or a where");
       if (s.awayFromStart !== undefined && !num(s.awayFromStart, 0, 256)) errs.push("awayFromStart is 0–256 tiles");

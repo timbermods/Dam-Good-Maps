@@ -10,9 +10,9 @@ How roadmap M9 and M12 adopt the Claude groundwork in `investigation/claude/`. I
 - a message for the milestone session.
 
 Nothing here has been applied. The investigation changed no file outside `investigation/claude/`.
-It branched from dev at `a04a313`. On 2026-09-24 it was also checked against dev at `5b17375` (M7
-in progress): it typechecks, its tests pass and its reference solutions run there. See
-"Checked against dev" at the end.
+It branched from dev at `a04a313`. On 2026-09-24 it was also run against dev at `5b17375` (M7 in
+progress). It typechecks there; 51 of 53 tests and 106 of 120 reference solutions pass, and the
+failures come from M7's new map objects and changed maps (section 11).
 
 Numbers from the self-played pilot are labelled as such. The model never ran: there is no API key
 in this environment.
@@ -404,10 +404,29 @@ place. Patterns today's steps cannot build are marked `expressible: false` with 
 
 ## 11. Checked against dev
 
-On 2026-09-24, with `investigation/claude/` copied into a worktree of dev at `5b17375`:
-- `tsc --noEmit -p investigation/claude/tsconfig.json`: clean.
-- The resolver and word tests: see REPORT.md.
-- The reference solutions: see REPORT.md.
+On 2026-09-24, `investigation/claude/` was copied into a worktree of dev at `5b17375` (M7 in
+progress) and run there. Nothing was committed to dev.
+
+- **Typecheck:** clean.
+- **Tests:** 51 of 53 pass. The two failures are the drawn-creek fixtures: the north and east
+  creeks now cross a generated mine site, and the guards refuse the edit
+  (`entities.placement`: "UndergroundRuins at (91,82,16): floating").
+- **Reference solutions:** 106 of 120 pass. M7 changed every generated map, and the corpus's
+  setups were tuned on the maps at the branch point. The 14 failures:
+
+| Why | Requests |
+|---|---|
+| A drawn creek or a chosen site undercuts or covers a new map object (`entities.placement`, `extras.placement`) | P08, C01, W05, W06, W07, X04, M04 |
+| The regenerated map is different: the sites the setup relied on now break `start.reach` or no longer exist | S03, S04, M02, V02 |
+| The headline request's "start upstream": all 10 checked upstream spots on the harsher dev map break `water.reservoir` | M01, and F07 and F08, which use M01 as their setup |
+
+What M12 should do:
+- Re-tune the setups (seeds and drawn points) once M7 has landed.
+- Make the planners keep off map objects (section 8, item 9).
+- Give the start search a pre-filter for `water.reservoir`, as it has for water, trees and
+  berries: it checks only 10 candidates with a real build.
+
+None of the failures is the resolver or the tools misreading a request.
 
 ---
 
@@ -424,6 +443,9 @@ files to move into src/ and tests/.
 M9: move lib/view.ts, lib/flow.ts, lib/places.ts and lib/words.ts into src/core (section 1),
 with tests/places.test.ts and tests/words.test.ts. Keep the rule that "upstream" is read from
 each river's flow, never from a compass direction; the tests draw rivers in all four directions.
+
+Against dev at 5b17375 (M7 in progress), 106 of 120 reference solutions pass; the rest need
+their setups re-tuned for M7's maps and objects (section 11).
 
 M12: move the rest (lib/*, harness/*) as section 1 says, and make the src/ changes in section 8
 first: one undo entry per proposal, stable preview ids, builders that return their reservoir

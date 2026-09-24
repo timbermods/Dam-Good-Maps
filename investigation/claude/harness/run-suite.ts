@@ -62,7 +62,9 @@ export class ScriptedBridge implements ClaudeBridge {
       const p = this.r.reference.proposal;
       return turn([use("propose", { request: this.r.text, goals: this.r.goals.map((g) => ({ id: g.id, text: g.text })), steps: substitute(p.steps, this.results), expectations: this.r.goals.flatMap((g) => g.expect.map((e) => ({ ...e, goal: g.id }))), report: "(scripted: the app's draft follows)" })], "tool_use");
     }
-    const draft = (this.results[this.results.length - 1] as { draftReport?: string } | undefined)?.draftReport ?? "(no proposal: answered from the tools)";
+    // the app's draft; a refused dry run has none, so its errors stand in (a model would explain them)
+    const final = this.results[this.results.length - 1] as { draftReport?: string; errors?: string[] } | undefined;
+    const draft = final?.draftReport || (final?.errors?.length ? `Not done: ${final.errors.join("; ")}.` : "(no proposal: answered from the tools)");
     return turn([{ type: "text", text: draft, citations: null } as unknown as Anthropic.Beta.BetaContentBlock], "end_turn");
   }
 }
