@@ -317,9 +317,9 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
       report: [`the dam site ${f.id} is already here`],
     });
   }
-  // sites that meet the size first; among them the most water per dam tile (a short dam holding a
-  // big reservoir is the best opportunity)
-  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(b.measured.reservoir) / Number(b.measured.damLength) - Number(a.measured.reservoir) / Number(a.measured.damLength));
+  // sites that meet the size first, new ones before those already on the map; among them the most
+  // water per dam tile (a short dam holding a big reservoir is the best opportunity)
+  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(!!a.measured.existing) - Number(!!b.measured.existing) || Number(b.measured.reservoir) / Number(b.measured.damLength) - Number(a.measured.reservoir) / Number(a.measured.damLength));
   // when nothing meets the size, the biggest reservoir is the nearest alternative
   if (!sites.some((x) => x.meetsSize)) sites.sort((a, b) => Number(b.measured.reservoir) - Number(a.measured.reservoir));
   if (!arcs.length) why = "no river runs through this place";
@@ -801,7 +801,7 @@ function resources(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): F
     at: [x, y],
     where: compassWords(v, x, y),
     course: courseInfo(v, x, y),
-    step: { op: "addResource", kind, tiles: area.length, at: [x, y], where: q.where ?? null, amount: Math.round(want) },
+    step: { op: "addResource", kind, where: q.where ?? { near: [x, y], within: 12 }, amount: Math.round(want), at: [x, y] },
     measured: kind === "ruinField" ? { area: area.length, scrap: got } : kind === "forest" ? { area: area.length, trees: got } : { area: area.length, bushes: got },
     meetsSize: meets(t, got) || got >= (t?.min ?? 0),
     report: [],

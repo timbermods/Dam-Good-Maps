@@ -451,7 +451,14 @@ export function resolvePlace(v: MapView, place: Place, ctx: RefContext = {}, ass
       assumptions.push(`"${up ? "upstream" : "downstream"}" read as the ${up ? "upper" : "lower"} third of ${c.name}'s course (it flows ${c.heading}, read from its ${c.evidence === "water" ? "water surface" : c.evidence === "bed" ? "bed" : "feature"})`);
       return { mask: stretchMask(v, net, [[c, from, to]]), errors };
     }
-    const l = locate(net, W, at.anchor[0], at.anchor[1], c);
+    // a river named as the reference on another river: where it joins (or leaves) that river
+    let anchor = at.anchor;
+    if (at.course && at.course !== c) {
+      const k = at.course;
+      anchor = k.outlet.kind === "river" && k.outlet.river === c.id ? [Math.round(k.path[k.path.length - 1][0]), Math.round(k.path[k.path.length - 1][1])] : [Math.round(k.path[0][0]), Math.round(k.path[0][1])];
+      assumptions.push(`${at.name} read as the place where it meets ${c.name}`);
+    }
+    const l = locate(net, W, Math.min(W - 1, Math.max(0, anchor[0])), Math.min(H - 1, Math.max(0, anchor[1])), c);
     if (!l) return fail(`${at.name} is not near ${c.name}`);
     const margin = Math.max(3, c.width);
     const just = Math.max(12, 0.15 * c.length);

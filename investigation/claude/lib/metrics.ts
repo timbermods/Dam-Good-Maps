@@ -175,7 +175,15 @@ export function measureFeature(s: MapSession, f: Feature): FeatureMeasure {
   }
   if (f.kind === "river") {
     const c = net.byId.get(f.id);
-    if (c) Object.assign(out, { flows: c.heading, length: Math.round(c.length), width: c.width, flow: c.flow, badwater: c.badwater });
+    if (c) {
+      Object.assign(out, { name: c.name, flows: c.heading, length: Math.round(c.length), width: c.width, flow: c.flow, badwater: c.badwater, from: c.source.edge ?? c.source.kind });
+      if (c.outlet.kind === "river" && c.outlet.river) {
+        const t = net.byId.get(c.outlet.river);
+        if (t) out.joins = { river: t.name, frac: round2((c.outlet.joinsAt ?? 0) / t.length) };
+      }
+      // a river's own place on the flow is its middle, on itself
+      out.course = { river: c.name, frac: 0.5, bank: "on the river" };
+    }
   }
   if (f.kind === "landform" && f.params.outline) {
     const m = polygonMask(f.params.outline, v.W, v.H);
