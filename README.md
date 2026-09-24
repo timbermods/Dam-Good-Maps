@@ -3,11 +3,19 @@
 A map generator for [Timberborn](https://mechanistry.com/). Pick settings, generate a map, see it
 in the browser and download a `.timber` file that loads and plays in Timberborn 1.1.
 
-The website is in progress, following [ROADMAP.md](ROADMAP.md). Milestones M1 and M2 work end to
-end: River Valley maps from a seed, with their water simulated by the game's own rules and shipped
-settled, checked for a colony's survival, shown in a 2D preview with water, moisture and reach
-layers, and downloaded as a `.timber` and a project file. Once Pages is on, it is served at
+The website is in progress, following [ROADMAP.md](ROADMAP.md). Once Pages is on, it is served at
 <https://timbermods.github.io/dam-good-maps/>.
+
+The generator:
+- Pick a theme: **River Valley**, **Canyon** or **Lake Basin**. Then pick the size and the
+  difficulty.
+- Open **Terrain**, **Water**, **Hazards**, **Resources** or **Advanced: start rules** to change the
+  map. Each setting shows what the official maps use.
+- **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
+  colony's survival.
+- The preview shows water, moisture and reach layers.
+- **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
+- **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
 
 The editor:
 - **Refine this map** opens the map in 3D.

@@ -334,6 +334,19 @@ are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN
 
 **Effort:** high.
 
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.4.0). Every acceptance criterion
+passes:
+- each of the 27 settings experiments moves its measured target (`tests/contract/settings.test.ts`,
+  and `tools/settings-batch.ts` on 20 seeds at 96² and 10 at 128²); at 192² all but Buildable
+  land's flat share do (it moves 0.029, walkable land moves 15,606 tiles);
+- share links reproduce the same bytes in Node and through the page in Chromium, in all three
+  themes;
+- 100 seeds per theme at 96², 128², 192² and 256² pass 100% final (River Valley, Canyon, Lake
+  Basin); Easy and Hard at 128² pass 100% too.
+
+The in-game check is skipped for now (D11): the files are in `out/m6/`, and checks M6-1a to M6-1c
+are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D57–D68.
+
 ---
 
 ## M7. Resources, map objects, themes II

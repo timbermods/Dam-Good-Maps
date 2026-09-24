@@ -111,8 +111,9 @@ What the files should show (from `checks.txt`):
 
 Checks C1–C3 and F1 of PLAN §18, on maps edited with the M5 tools. The files are in
 [out/m5/](../out/m5/), made with generator 0.3.0 from River Valley seed 4242 at 128 × 128. Remake
-them with `npx tsx tools/ingame-files.ts --milestone m5`: every edit is planned by the editor's own
-code with fixed ids, so the bytes reproduce. [out/m5/checks.txt](../out/m5/checks.txt) lists their
+them with `npx tsx tools/ingame-files.ts --milestone m5` at commit 180d914 (tag m5-done): every
+edit is planned by the editor's own code with fixed ids, so the bytes reproduce. From generator
+0.4.0 (M6) the tool makes different maps, so test the committed files. [out/m5/checks.txt](../out/m5/checks.txt) lists their
 sha256 and every coordinate below.
 
 - **`River Valley (4242) F1 waterfall S2.timber`:** a standalone waterfall 20 tiles wide, falling
@@ -157,9 +158,45 @@ What the files should show (from `checks.txt`):
 
 ## M6: full settings, sharing, themes I
 
+Check M6-1: the two new themes load, and their dam sites hold. The files are in
+[out/m6/](../out/m6/), made with generator 0.4.0, seed 4242 at 128 × 128, designed for Normal,
+every setting at its theme's preset. Remake them with
+`npx tsx tools/ingame-files.ts --milestone m6`; [out/m6/checks.txt](../out/m6/checks.txt) lists
+their sha256 and every coordinate below. The same maps open on the website from a link:
+`#s=4242&t=canyon&z=128&d=n` and `#s=4242&t=lakeBasin&z=128&d=n`.
+
+- **`Canyon (4242).timber`:** a river in a canyon 4–6 levels deep, a dam site in a narrows, and a
+  stair of slopes up the canyon wall beside the start.
+- **`Lake Basin (4242).timber`:** a lake in the middle, rings of terraces round it, and a dam site on
+  the lake's outlet to the east.
+- **One PNG per map** (north up, 5 pixels per tile, grid every 16 tiles): water blue, badwater
+  brown, start white with its door red, the dam line orange, the stair's slopes orange, badwater
+  sources magenta.
+
+What the files should show (from `checks.txt`):
+- Canyon: StartingLocation at (42, 54), level 8, door (41, 55). The dam site's gap is the 4 tiles
+  (66, 61)–(66, 64), on a river bed at level 6. A dam 2 high there should hold about 844 water over
+  685 tiles; the colony needs about 380 through the first Normal drought. The stair's six slopes
+  are at (48, 47) to (53, 47), levels 7 to 12, climbing east. The badwater source is at (82, 43),
+  in a basin whose outlet joins the river below the dam site.
+- Lake Basin: StartingLocation at (68, 97), level 10, door (69, 96), on the shore bench. The lake
+  stands at about level 9. The dam site's gap is the 5 tiles (113, 59)–(113, 63) on the outlet. A
+  dam 1 high there should raise the lake to about level 10: about 13,500 water over 3,622 tiles;
+  the colony needs about 759 (this theme's reserve is Plenty). The badwater source is at (26, 104),
+  in a basin whose outlet runs to the west edge.
+
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| M6-1 | Load one Canyon and one Lake Basin map, and dam their dam sites. | Both load, and each dam site holds. | set by M6 | pending |
+| M6-1a | Load the Canyon map. Build a dam 2 high (or 2 levees stacked) on the 4 gap tiles (66, 61)–(66, 64). Watch the canyon floor fill over a few days. Send a beaver up the stair at (48, 47)–(53, 47) to the rim and back. | The map loads with no issues. The floor behind the dam fills to about level 8 and stays there; no water leaks round the ridge. The beaver walks up and down the stair. | `Canyon (4242).timber`, `.png` | pending |
+| M6-1b | Load the Lake Basin map. Build a dam 1 high (or one levee) on the 5 gap tiles (113, 59)–(113, 63). Watch the lake for a few days. | The map loads with no issues. The lake rises about one level to level 10 and stays there; no water leaks round the ridge; the start's bench at level 10 stays dry. | `Lake Basin (4242).timber`, `.png` | pending |
+| M6-1c | Block the badwater basin's outlet, 3 tiles wide, with levees where its channel leaves the basin: Canyon (87, 46)–(87, 48), the channel running east; Lake Basin (26, 101)–(28, 101), the channel running south. | No badwater leaves the basin until it fills to its rim (a source never stops, so it spills over the rim later). | `Canyon (4242).timber`, `Lake Basin (4242).timber` | pending |
+
+**Automated stand-ins used meanwhile (all green at M6):**
+- the batches: 100 seeds per theme at 96², 128², 192² and 256² pass the generate profile (every
+  playability check, including `water.reservoir` on the dam site and `water.badwater_contained`);
+- the share-link tests: links open the same bytes in Node and in Chromium;
+- the Python oracle: both validators agree on 50 generated maps of the three themes and the 19
+  official maps.
 
 ## M7: resources, map objects, themes II
 
