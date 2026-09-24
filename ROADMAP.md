@@ -300,6 +300,20 @@ alike. This takes the set-piece half of old PLAN milestone 3 and all of E3.
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.3.0). Every acceptance criterion
+passes:
+- the feature property tests pass on all four size presets with the new tools among the random
+  edits, and rivers drawn in random directions on 96², 128² and 256² maps all drain, carry water
+  along their whole course and keep their mouths sealed;
+- a 20-wide waterfall keeps all 20 lip tiles wet on 96², 128² and 256², 0.03 deep at 2 water/s;
+  on 48² it is reduced to 19, with a report; drops above 15 are reduced to 15; the lip width is
+  measured as PLAN §9.2 defines it;
+- River Valley's batches stay at 100% final with the builders: 100 seeds each at 96², 128², 192²
+  and 256².
+
+The in-game checks C and F1 are skipped for now (D11): the files are in `out/m5/`, and the checks
+are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D47–D56.
+
 ---
 
 ## M6. Full settings, sharing, themes I
