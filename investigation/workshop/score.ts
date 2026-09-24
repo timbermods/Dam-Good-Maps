@@ -11,15 +11,15 @@
 // Default target: the one-level step share and the water share aim at the median of the
 // "preferred" maps: the recommended official maps and the workshop maps in the top third of
 // popularity for their age. The other components are "more is better" within official ranges.
-// Weights start from PLAN §12 (lib/score.ts DEFAULT_WEIGHTS); when the criterion fails, a small
+// Weights start from lib/score.ts DEFAULT_WEIGHTS (PLAN §12 reshaped); when the criterion fails, a small
 // search moves weight between components, as little as it can, until it holds.
 
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readGenerated, readTable, spearman, stat, type Row } from "./lib/table";
 import { ROOT } from "./lib/paths";
 import { popularityResiduals } from "./lib/popularity";
-import { COMPONENTS, components, DEFAULT_WEIGHTS, scoreOf, type Component, type ScoreParams } from "./lib/score";
+import { COMPONENTS, components, DEFAULT_WEIGHTS, scoreOf, type Component, type ReservoirHelp, type ScoreParams } from "./lib/score";
 import { distance, featureVector, scaleFrom, type VarietyInput } from "./lib/variety";
 
 const rows = readTable();
@@ -78,7 +78,6 @@ const params: ScoreParams = {
     waterShare: r3(Math.max(0.1, (pctl(workshop.map((r) => r.v.waterShare!), 90) - pctl(workshop.map((r) => r.v.waterShare!), 10)) / 2)),
   },
   norms: {
-    damLog: [r3(Math.log10(65)), r3(Math.log10(4479))],
     levels1pct: [12, 17],
     regions: [pctl(official.map((r) => r.raw.score.regions), 10), pctl(official.map((r) => r.raw.score.regions), 90)],
     sinuosity: [1, 1.6],
@@ -91,8 +90,13 @@ const params: ScoreParams = {
   },
 };
 
+// how obvious each map's reservoir is (obviousness.ts); maps whose water cannot be trusted count as
+// unknown (0.5)
+const obvPath = join(ROOT, "obviousness.json");
+const obv: Record<string, ReservoirHelp> = existsSync(obvPath) ? JSON.parse(readFileSync(obvPath, "utf8")) : {};
+const obvOf = (r: Row): ReservoirHelp | null => (!r.waterReliable ? null : obv[r.source === "generated" ? `generated:${r.key}` : r.key] ?? null);
 const comps = new Map<string, Record<Component, number>>();
-for (const r of [...workshop, ...official, ...gen]) comps.set(r.key, components(r.raw, params, surprise.get(r.key) ?? null));
+for (const r of [...workshop, ...official, ...gen]) comps.set(r.key, components(r.raw, params, surprise.get(r.key) ?? null, obvOf(r)));
 
 function officialRanks(w: Record<Component, number>): { name: string; score: number; rank: number }[] {
   return official

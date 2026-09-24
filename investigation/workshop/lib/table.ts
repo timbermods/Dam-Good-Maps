@@ -30,7 +30,26 @@ export interface Row {
   v: Record<string, number | null>;
   flow: string;
   objects: Record<string, number>;
+  /** Our steady-state water can stand for this map's water: caves on under 5% of tiles, and no
+   *  delayed sources, aquifers or seeps carrying much of its clean water. */
+  waterReliable: boolean;
+  /** The start can be measured: water reliable, one start standing on the top surface, and dry
+   *  after the settle. */
+  startMeasurable: boolean;
   raw: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+/** Numbers that read the settled water (the rest read the terrain and the objects). */
+export const WATER_KEYS = new Set([
+  "waterShare", "cleanShare", "badwaterShare", "outflows", "lakes", "lakeShare", "ponds", "waterfalls", "waterfallsPer10k", "maxFallDrop", "tallFalls",
+  "islands100", "moistShare", "damSitesPer10k", "bigDamSitesPer10k", "bestDamRatio", "storageNearStart", "livingShare",
+  "shoreStraightShare8", "ditchShare", "damRimThicknessCV", "damRimHeightStd", "damRimThicknessMean", "narrowsThicknessCV", "narrowsHeightStd",
+]);
+
+export function waterReliable(r: any): boolean { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const special: string[] = r.mechanics?.special ?? [];
+  if (special.some((s) => s !== "caves: water under roofs" && s !== "unstable cores")) return false;
+  return (r.terrain?.caveShare ?? 0) < 0.05;
 }
 
 const OFFICIAL_RECOMMENDED = new Set(["Plains", "Lakes", "Waterfalls"]);
@@ -134,6 +153,17 @@ export function values(r: any): Record<string, number | null> { // eslint-disabl
   };
 }
 
+/** Water numbers of maps whose water a steady state cannot show, and start numbers of starts that
+ *  cannot be measured, become null: they drop out of every statistic. */
+function masked(v: Record<string, number | null>, reliable: boolean, startOk: boolean): Record<string, number | null> {
+  const out = { ...v };
+  for (const k of Object.keys(out)) {
+    if (!reliable && WATER_KEYS.has(k)) out[k] = null;
+    if (!startOk && k.startsWith("start")) out[k] = null;
+  }
+  return out;
+}
+
 function sizeClassOf(area: number): SizeClass {
   if (area <= 12_000) return "small";
   if (area <= 20_000) return "medium";
@@ -170,7 +200,12 @@ export function readGenerated(dir = join(ROOT, "generated")): Row[] {
 export function rowOf(r: any, meta: WorkshopMeta | null, tags: string[]): Row { // eslint-disable-line @typescript-eslint/no-explicit-any
   const name = r.source === "official" ? String(r.file).replace(/\.timber$/, "") : r.source === "generated" ? r.key : meta?.title ?? String(r.file).replace(/\.timber$/, "");
   const aspect = Math.max(r.W, r.H) / Math.min(r.W, r.H);
+  const reliable = r.source === "generated" ? true : waterReliable(r);
+  const special: string[] = r.mechanics?.special ?? [];
+  const startOk = reliable && !!r.start && !special.includes("start below the top surface") && r.checks?.["start.dry"]?.ok === true;
   return {
+    waterReliable: reliable,
+    startMeasurable: startOk,
     key: r.key,
     source: r.source,
     id: r.id ?? null,
@@ -188,7 +223,7 @@ export function rowOf(r: any, meta: WorkshopMeta | null, tags: string[]): Row { 
     recommended: r.source === "official" ? OFFICIAL_RECOMMENDED.has(name) : undefined,
     meta,
     tags,
-    v: values(r),
+    v: masked(values(r), reliable, startOk),
     flow: r.water.flow,
     objects: r.objects,
     raw: r,

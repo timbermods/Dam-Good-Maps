@@ -9,7 +9,7 @@
 // Local output: C:\dgm-workshop\recipes\<recipe>-<size>-<seed>.json (+ .timber and settled water
 // for renders); the aggregate goes to C:\dgm-workshop\recipes-aggregate.json.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { blocks } from "../../src/core/validate/report";
 import { writeTimber } from "../../src/core/format/timber";
@@ -92,6 +92,12 @@ for (const recipe of RECIPES) {
   }
 }
 
+// a partial rerun (--only) replaces those recipes' runs and keeps the others
+const runsPath = join(ROOT, "recipes-runs.json");
+if (only.length && existsSync(runsPath)) {
+  const earlier = (JSON.parse(readFileSync(runsPath, "utf8")) as RunResult[]).filter((r) => !only.includes(r.recipe));
+  results.unshift(...earlier);
+}
 const agg: Record<string, unknown> = {};
 for (const recipe of RECIPES) {
   const rs = results.filter((r) => r.recipe === recipe.id);
@@ -116,6 +122,6 @@ for (const recipe of RECIPES) {
     medianMs: rs.map((r) => r.ms).sort((a, b) => a - b)[rs.length >> 1],
   };
 }
-writeFileSync(join(ROOT, "recipes-runs.json"), JSON.stringify(results, null, 1));
+writeFileSync(runsPath, JSON.stringify(results, null, 1));
 writeFileSync(join(ROOT, "recipes-aggregate.json"), JSON.stringify(agg, null, 1));
 console.log(JSON.stringify(agg, null, 1));

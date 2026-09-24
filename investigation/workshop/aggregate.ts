@@ -282,6 +282,51 @@ function maps(): Record<string, unknown> {
   };
 }
 
+/** How obvious the reservoir is (obviousness.ts): the shortest straight dam near the start that
+ *  holds a Normal drought's need. Only maps whose water our settle can show. */
+function reservoirs(): Record<string, unknown> | null {
+  const p = join(ROOT, "obviousness.json");
+  if (!existsSync(p)) return null;
+  const d = JSON.parse(readFileSync(p, "utf8")) as Record<string, { source: string; shortestHolding40: number | null; shortestHolding20: number | null; bestShortDam: number; best: number }>;
+  const group = (keys: string[]) => {
+    const vs = keys.map((k) => d[k]).filter(Boolean);
+    const n = vs.length;
+    const share = (f: (v: (typeof vs)[number]) => boolean) => (n ? Math.round((1000 * vs.filter(f).length) / n) / 1000 : null);
+    return {
+      maps: n,
+      holdingDamWithin40: share((v) => v.shortestHolding40 !== null),
+      holdingDamWithin20: share((v) => v.shortestHolding20 !== null),
+      shortDamHoldsNeed: share((v) => v.bestShortDam >= 380),
+      shortestHoldingDam40: stat(vs.map((v) => v.shortestHolding40), 1),
+    };
+  };
+  const reliable = (set: Row[]) => set.filter((r) => r.waterReliable && r.raw.checks?.["start.dry"]?.ok).map((r) => r.key);
+  const out: Record<string, unknown> = {
+    note: "The validator's own dam sampling near the start (straight dams across clean water, crests 1-3, lines up to 21 tiles); 'holding' = its reservoir holds a Normal drought's need of 380 blocks; 'short dam' = 5 tiles or fewer.",
+    official: group(reliable(official)),
+    workshop: group(reliable(workshop)),
+  };
+  const themes = [...new Set(gen.map((g) => g.theme!))].sort();
+  for (const t of themes) out[`generated:${t}`] = group(Object.keys(d).filter((k) => k.startsWith(`generated:${t}-`)));
+  const recipes = [...new Set(Object.keys(d).filter((k) => k.startsWith("recipes:")).map((k) => k.slice(8).replace(/-\d+-\d+$/, "")))].sort();
+  for (const r of recipes) out[`recipe:${r}`] = group(Object.keys(d).filter((k) => k.startsWith(`recipes:${r}-`)));
+  return out;
+}
+
+/** Verticality: relief, cliffs, tall falls, terrain above the editor's limit of 16. */
+function verticality(): Record<string, unknown> {
+  const f = (set: Row[]) => ({
+    maps: set.length,
+    above16: set.filter((r) => (r.v.maxHeight ?? 0) > 16).length,
+    heightRange: stat(set.map((r) => r.v.heightRange)),
+    cliffShare: stat(set.map((r) => r.v.cliffShare)),
+    maxFallDrop: stat(set.map((r) => r.v.maxFallDrop)),
+    withTallFall: set.filter((r) => (r.v.tallFalls ?? 0) > 0).length,
+    caveShareOver5pct: set.filter((r) => (r.v.caveShare ?? 0) >= 0.05).length,
+  });
+  return { official: f(official), workshop: f(workshop), workshop10: f(w10), generated128: f(gen) };
+}
+
 function optional(name: string): unknown {
   const p = join(ROOT, name);
   return existsSync(p) ? JSON.parse(readFileSync(p, "utf8")) : null;
@@ -303,6 +348,8 @@ const out = {
   features10: features10(),
   flow: flows(),
   popularity: popularity(),
+  reservoirs: reservoirs(),
+  verticality: verticality(),
   catalogue: optional("catalogue-aggregate.json"),
   variety: optional("variety.json"),
   score: optional("score.json"),

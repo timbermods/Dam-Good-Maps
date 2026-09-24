@@ -19,8 +19,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readGenerated, readTable, spearman, type Row } from "./lib/table";
-import { RATINGS } from "./lib/paths";
-import { COMPONENTS, components, scoreOf, type Component, type ScoreParams } from "./lib/score";
+import { RATINGS, ROOT } from "./lib/paths";
+import { COMPONENTS, components, scoreOf, type Component, type ReservoirHelp, type ScoreParams } from "./lib/score";
 import { distance, featureVector, scaleFrom, type VarietyInput } from "./lib/variety";
 
 const PARAMS = join(process.cwd(), "investigation", "workshop", "score-params.json");
@@ -41,6 +41,9 @@ const input = (r: Row): VarietyInput => ({ key: r.key, layout: r.raw.layout, fea
 const scale = scaleFrom(rows.filter((r) => r.source === "workshop").map(input));
 const familiar = [...rows.filter((r) => r.source === "official"), ...gen].map(input);
 const surprise = (r: Row) => familiar.reduce((m, b) => (b.key === r.key ? m : Math.min(m, distance(input(r), b, scale))), Infinity);
+const obvPath = join(ROOT, "obviousness.json");
+const obv: Record<string, ReservoirHelp> = existsSync(obvPath) ? JSON.parse(readFileSync(obvPath, "utf8")) : {};
+const obvOf = (r: Row): ReservoirHelp | null => (r.waterReliable ? obv[r.key] ?? null : null);
 
 interface Sample {
   row: Row;
@@ -55,7 +58,7 @@ const samples: Sample[] = [];
 for (const [key, r] of Object.entries(file.ratings)) {
   const row = byKey.get(key);
   if (!row || !(r.fun && r.unique)) continue;
-  samples.push({ row, c: components(row.raw, defaults, surprise(row)), y: (r.fun + r.unique) / 2, fun: r.fun, unique: r.unique, step1: row.v.step1Share!, water: row.v.waterShare! });
+  samples.push({ row, c: components(row.raw, defaults, surprise(row), obvOf(row)), y: (r.fun + r.unique) / 2, fun: r.fun, unique: r.unique, step1: row.v.step1Share!, water: row.v.waterShare! });
 }
 if (samples.length < 8) {
   console.log(`Only ${samples.length} maps have both ratings: at least 8 are needed. The default target stands.`);
@@ -73,7 +76,7 @@ const shrink = (vals: (d: Sample) => number, def: number) => {
   return Math.round(((above.length * fit + 10 * def) / (above.length + 10)) * 1000) / 1000;
 };
 const targets = { step1Share: shrink((d) => d.step1, defaults.targets.step1Share), waterShare: shrink((d) => d.water, defaults.targets.waterShare) };
-for (const d of samples) d.c = components(d.row.raw, { ...defaults, targets }, surprise(d.row));
+for (const d of samples) d.c = components(d.row.raw, { ...defaults, targets }, surprise(d.row), obvOf(d.row));
 
 /** a + b·s by least squares, and the squared error. */
 function affine(s: number[], y: number[]): { a: number; b: number; sse: number } {
@@ -151,12 +154,12 @@ const w = fitWeights(samples, bestL);
 const weights = Object.fromEntries(COMPONENTS.map((k, i) => [k, Math.round(w[i] * 1000) / 1000])) as Record<Component, number>;
 const fitted: ScoreParams = { ...defaults, weights, targets };
 
-const before = samples.map((d) => scoreOf(components(d.row.raw, defaults, surprise(d.row)), defaults.weights));
+const before = samples.map((d) => scoreOf(components(d.row.raw, defaults, surprise(d.row), obvOf(d.row)), defaults.weights));
 const after = samples.map((d) => scoreOf(d.c, fitted.weights));
 const rho = (s: number[], key: "y" | "fun" | "unique") => Math.round(spearman(s, samples.map((d) => d[key])) * 100) / 100;
 // M9's criterion with the fitted weights
 const official = rows.filter((r) => r.source === "official");
-const offScores = official.map((r) => ({ r, s: scoreOf(components(r.raw, fitted, surprise(r)), fitted.weights) })).sort((a, b) => b.s - a.s);
+const offScores = official.map((r) => ({ r, s: scoreOf(components(r.raw, fitted, surprise(r), obvOf(r)), fitted.weights) })).sort((a, b) => b.s - a.s);
 const cut = Math.ceil(official.length / 3);
 const criterion = offScores.filter((x) => x.r.recommended).every((x) => offScores.indexOf(x) < cut);
 

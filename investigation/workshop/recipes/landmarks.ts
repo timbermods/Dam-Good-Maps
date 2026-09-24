@@ -19,6 +19,7 @@ import {
   groundUnder,
   newId,
   RecipeFailure,
+  spotScaled,
   startOf,
   type Recipe,
   type RecipeContext,
@@ -70,11 +71,13 @@ export const volcano: Recipe = {
     const oldAt: [number, number] = [Number(old.params.plan.x) + 1, Number(old.params.plan.y) + 1];
     const strength = Number(old.params.plan.strength);
     apply(ctx, [{ op: "deleteFeature", params: { id: old.id } }], "remove the base's badwater basin");
-    const R = (15 + 4 * ctx.rand()) * s;
+    const R0 = (15 + 4 * ctx.rand()) * s;
     const st = startOf(ctx);
     const rule = ctx.spec.settings.hazards.badwaterDistance;
     const blocked = forbidden(ctx, 10);
-    const spot = findSpot(ctx, R + 1, blocked, (x, y) => (dist([x, y], st) < rule + R + 16 ? -1e6 : 0) - dist([x, y], oldAt) - 2 * spread(ctx, circle(x, y, R)));
+    const fit = spotScaled(ctx, R0 + 1, blocked, (x, y, k) => (dist([x, y], st) < rule + R0 * k + 16 ? -1e6 : 0) - dist([x, y], oldAt) - 2 * spread(ctx, circle(x, y, R0 * k)));
+    const R = fit ? (R0 + 1) * fit.k - 1 : R0;
+    const spot = fit?.at;
     if (!spot || dist(spot, st) < rule + R + 16) throw new RecipeFailure("no room for a volcano far enough from the start");
     const [cx, cy] = spot;
     const cone = circle(cx, cy, R, 36, 0.1, ctx.rand);
@@ -96,10 +99,11 @@ export const hangingLake: Recipe = {
   theme: "riverValley",
   apply(ctx) {
     const s = scaleOf(ctx);
-    const R = (10 + 3 * ctx.rand()) * s;
-    const spot = findSpot(ctx, R + 2, forbidden(ctx, 10), (x, y) => -spread(ctx, circle(x, y, R)));
-    if (!spot) throw new RecipeFailure("no room for the mesa");
-    const [cx, cy] = spot;
+    const R0 = (10 + 3 * ctx.rand()) * s;
+    const fit = spotScaled(ctx, R0 + 2, forbidden(ctx, 10), (x, y, k) => -spread(ctx, circle(x, y, R0 * k)));
+    if (!fit) throw new RecipeFailure("no room for the mesa");
+    const R = (R0 + 2) * fit.k - 2;
+    const [cx, cy] = fit.at;
     const mesa = circle(cx, cy, R, 28, 0.14, ctx.rand);
     clearResources(ctx, mesa, 2);
     const g = groundUnder(ctx, mesa);
@@ -123,10 +127,11 @@ export const mesaField: Recipe = {
   apply(ctx) {
     const { W, H } = ctx;
     const s = scaleOf(ctx);
-    const Rr = 20 * s;
     const blocked = forbidden(ctx, 12);
-    const region = findSpot(ctx, Rr, blocked, (x, y) => -spread(ctx, circle(x, y, Rr)) + ctx.rand());
-    if (!region) throw new RecipeFailure("no room for a mesa field");
+    const fit = spotScaled(ctx, 20 * s, blocked, (x, y, k) => -spread(ctx, circle(x, y, 20 * s * k)) + ctx.rand());
+    if (!fit) throw new RecipeFailure("no room for a mesa field");
+    const Rr = 20 * s * fit.k;
+    const region = fit.at;
     const placed: [number, number, number][] = [];
     for (let tries = 0; tries < 200 && placed.length < 9; tries++) {
       const a = ctx.rand() * 2 * Math.PI;

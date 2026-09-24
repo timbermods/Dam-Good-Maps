@@ -19,6 +19,7 @@ import {
   newId,
   RecipeFailure,
   slopeBetween,
+  spotScaled,
   type Recipe,
   type RecipeContext,
 } from "./lib";
@@ -68,9 +69,11 @@ export const heartLake: Recipe = {
   theme: "riverValley",
   apply(ctx) {
     const s = scaleOf(ctx);
-    const size = Math.round((28 + 10 * ctx.rand()) * s);
-    const spot = findSpot(ctx, 0.56 * size, forbidden(ctx, 10), (x, y) => -spread(ctx, heart(x, y, size)));
-    if (!spot) throw new RecipeFailure("no room for the heart");
+    const full = Math.round((28 + 10 * ctx.rand()) * s);
+    const fit = spotScaled(ctx, 0.56 * full, forbidden(ctx, 10), (x, y, k) => -spread(ctx, heart(x, y, full * k)));
+    if (!fit) throw new RecipeFailure("no room for the heart");
+    const size = full * fit.k;
+    const spot = fit.at;
     const outline = heart(spot[0], spot[1], size);
     clearResources(ctx, outline, 3);
     lakeWithIslands(ctx, outline, () => [], "heart-shaped lake");
@@ -85,11 +88,12 @@ export const moatIsland: Recipe = {
   theme: "riverValley",
   apply(ctx) {
     const s = scaleOf(ctx);
-    const R = (15 + 5 * ctx.rand()) * s;
+    const R0 = (15 + 5 * ctx.rand()) * s;
     const moat = Math.max(4, Math.round(5 * s));
-    const spot = findSpot(ctx, R + 3, forbidden(ctx, 10), (x, y) => -spread(ctx, circle(x, y, R)));
-    if (!spot) throw new RecipeFailure("no room for the moat");
-    const [cx, cy] = spot;
+    const fit = spotScaled(ctx, R0 + 3, forbidden(ctx, 10), (x, y, k) => -spread(ctx, circle(x, y, R0 * k)));
+    if (!fit) throw new RecipeFailure("no room for the moat");
+    const R = Math.max(moat + 5, (R0 + 3) * fit.k - 3);
+    const [cx, cy] = fit.at;
     const outline = circle(cx, cy, R, 32, 0.06, ctx.rand);
     const isle = circle(cx, cy, R - moat, 24, 0.12, ctx.rand);
     clearResources(ctx, outline, 3);
@@ -106,10 +110,11 @@ export const craterLake: Recipe = {
   theme: "riverValley",
   apply(ctx) {
     const s = scaleOf(ctx);
-    const Rout = (17 + 5 * ctx.rand()) * s;
-    const spot = findSpot(ctx, Rout + 2, forbidden(ctx, 12), (x, y) => -spread(ctx, circle(x, y, Rout)));
-    if (!spot) throw new RecipeFailure("no room for the crater");
-    const [cx, cy] = spot;
+    const R0 = (17 + 5 * ctx.rand()) * s;
+    const fit = spotScaled(ctx, R0 + 2, forbidden(ctx, 12), (x, y, k) => -spread(ctx, circle(x, y, R0 * k)));
+    if (!fit) throw new RecipeFailure("no room for the crater");
+    const Rout = (R0 + 2) * fit.k - 2;
+    const [cx, cy] = fit.at;
     const skirt = circle(cx, cy, Rout, 32, 0.08, ctx.rand);
     const wall = circle(cx, cy, 0.78 * Rout, 32, 0.06, ctx.rand);
     clearResources(ctx, skirt, 2);
@@ -124,22 +129,29 @@ export const craterLake: Recipe = {
 
 export const spiralMountain: Recipe = {
   id: "spiral-mountain",
-  name: "Spiral mountain",
+  name: "Spiral mountain or spiral quarry",
   pattern: "spiral",
   whimsical: true,
   theme: "riverValley",
   apply(ctx) {
     const { W, H } = ctx;
     const s = scaleOf(ctx);
-    const R = (18 + 4 * ctx.rand()) * s;
-    const spot = findSpot(ctx, R + 2, forbidden(ctx, 10), (x, y) => -spread(ctx, circle(x, y, R)));
-    if (!spot) throw new RecipeFailure("no room for the mountain");
-    const [cx, cy] = spot;
+    const R0 = (14 + 4 * ctx.rand()) * s;
+    const fit = spotScaled(ctx, R0 + 2, forbidden(ctx, 10), (x, y, k) => -spread(ctx, circle(x, y, R0 * k)));
+    if (!fit) throw new RecipeFailure("no room for the spiral");
+    const R = (R0 + 2) * fit.k - 2;
+    const [cx, cy] = fit.at;
     const disc = circle(cx, cy, R + 1, 32);
+    const g = groundUnder(ctx, disc);
+    // on low ground a mountain climbs; on high ground a quarry winds down (a reverse helix)
+    const up = g.max <= 9;
+    // the ramp starts from the highest ground round it: a quarry is cut down from the rim
+    const base = g.max;
+    const K = up ? Math.min(9, 15 - base) : Math.min(9, base - 2);
+    if (K < 5) throw new RecipeFailure(`ground at levels ${g.min}-${g.max}: no room for 5 turns of the ramp`);
     clearResources(ctx, disc, 2);
-    const base = groundUnder(ctx, disc).max;
+    const step = up ? 1 : -1;
     const turns = 1.5;
-    const K = Math.max(4, Math.min(9, 15 - base));
     const r0 = 0.24 * R;
     const w = (R - r0) / turns;
     const tMax = 2 * Math.PI * turns;
@@ -152,7 +164,8 @@ export const spiralMountain: Recipe = {
     };
     const segs: { outline: Point[]; height: number }[] = [];
     for (let k = 0; k < K; k++) {
-      const t0 = (tMax * k) / K;
+      // each step starts a little inside the one before, so the two share an edge (no gap)
+      const t0 = Math.max(0, (tMax * k) / K - (k ? 2 / (R - ((R - r0) * k) / K) : 0));
       const t1 = (tMax * (k + 1)) / K;
       const n = 8;
       const outer: Point[] = [];
@@ -162,25 +175,33 @@ export const spiralMountain: Recipe = {
         outer.push(at(t, w / 2));
         inner.push(at(t, -w / 2));
       }
-      segs.push({ outline: [...outer, ...inner.reverse()], height: base + 1 + k });
+      segs.push({ outline: [...outer, ...inner.reverse()], height: base + step * (1 + k) });
     }
-    for (const [k, sg] of segs.entries()) addLandform(ctx, { outline: sg.outline, kind: "plateau", edgeStyle: "cliff", height: sg.height }, `spiral step ${k + 1}`);
+    for (const [k, sg] of segs.entries()) addLandform(ctx, { outline: sg.outline, kind: up ? "plateau" : "canyon", edgeStyle: "cliff", height: sg.height }, `spiral step ${k + 1}`);
     const summit = circle(cx, cy, Math.max(3, r0), 16);
-    addLandform(ctx, { outline: summit, kind: "plateau", edgeStyle: "cliff", height: base + K + 1 }, "summit");
-    // the ramp: a slope at each step, where the spiral turns up a level
+    const coreLevel = base + step * (K + 1);
+    addLandform(ctx, { outline: summit, kind: up ? "plateau" : "canyon", edgeStyle: "cliff", height: coreLevel }, up ? "summit" : "quarry floor");
+    // the ramp: a slope at each step, where the spiral turns a level
     const masks = [...segs.map((sg) => polygonMask(sg.outline, W, H)), polygonMask(summit, W, H)];
-    const heights = [...segs.map((sg) => sg.height), base + K + 1];
+    const heights = [...segs.map((sg) => sg.height), coreLevel];
     const h = () => ctx.session.built.heights;
+    const inAny = (i: number) => masks.some((m) => m[i]);
     const ops = [];
-    const first = slopeBetween(ctx, (i) => h()[i] === base && !masks.some((m) => m[i]), (i) => !!masks[0][i] && h()[i] === heights[0], at(0, 0).map(Math.round) as [number, number]);
+    const edge = at(0, 0).map(Math.round) as [number, number];
+    const first = up
+      ? slopeBetween(ctx, (i) => h()[i] === base && !inAny(i), (i) => !!masks[0][i] && h()[i] === heights[0], edge)
+      : slopeBetween(ctx, (i) => !!masks[0][i] && h()[i] === heights[0], (i) => h()[i] === base && !inAny(i), edge);
     if (first) ops.push(first);
     for (let k = 0; k + 1 < masks.length; k++) {
       const near = (k + 1 < segs.length ? at((tMax * (k + 1)) / K, 0) : [cx, cy]).map(Math.round) as [number, number];
-      const op = slopeBetween(ctx, (i) => !!masks[k][i] && h()[i] === heights[k], (i) => !!masks[k + 1][i] && h()[i] === heights[k + 1], near);
-      if (!op) throw new RecipeFailure(`no place for the slope up to step ${k + 2}`);
+      const a = (i: number) => !!masks[k][i] && h()[i] === heights[k];
+      const b = (i: number) => !!masks[k + 1][i] && h()[i] === heights[k + 1];
+      const op = up ? slopeBetween(ctx, a, b, near) : slopeBetween(ctx, b, a, near);
+      if (!op) throw new RecipeFailure(`no place for the slope at step ${k + 2}`);
       ops.push(op);
     }
     apply(ctx, ops, "the spiral's slopes");
-    ruinsOn(ctx, summit, Math.round(600 * s * s), "ruins on the summit");
+    ruinsOn(ctx, summit, Math.round(600 * s * s), up ? "ruins on the summit" : "ruins at the bottom of the quarry");
+    ctx.notes.push(up ? `a spiral mountain climbing ${K + 1} levels` : `a spiral quarry winding ${K + 1} levels down`);
   },
 };

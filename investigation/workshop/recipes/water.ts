@@ -1,7 +1,7 @@
 // Water premises: an oxbow lake beside the river, and a valley whose river runs north to south (or
 // south to north) instead of west to east (D67).
 
-import { pathField, pointAtArc, polygonMask } from "../../../src/core/features/geometry";
+import { bedAt, pathField, pointAtArc, polygonMask } from "../../../src/core/features/geometry";
 import { RUIN_HEIGHT_SHARES } from "../../../src/core/gen/calibrated";
 import { tilesToRuns } from "../../../src/core/math/grid";
 import type { EditOp } from "../../../src/core/doc/ops";
@@ -123,7 +123,7 @@ export const northSouth: Recipe = {
     const s0 = L * (0.42 + 0.14 * ctx.rand());
     const { p, normal } = pointAtArc(pts, s0);
     const side = ctx.rand() < 0.5 ? 1 : -1;
-    const off = width / 2 + 7;
+    const off = width / 2 + 13;
     const sx = Math.round(p[0] + side * normal[0] * off);
     const sy = Math.round(p[1] + side * normal[1] * off);
     const dx = p[0] - sx;
@@ -131,10 +131,11 @@ export const northSouth: Recipe = {
     const orientation = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? "Cw90" : "Cw270") : dy < 0 ? "Cw0" : "Cw180";
     const start = ctx.session.features.find((f): f is StartFeature => f.kind === "start")!;
     apply(ctx, [{ op: "updateFeature", params: { id: start.id, patch: { params: { position: [sx, sy], orientation, benchLevel: floor + 1 } } } }], "move the start beside the new river");
-    // the ground: one level everywhere, then the river, its valley floor and terraces on both sides
-    rawFeature(ctx, { kind: "landform", params: { kind: "plateau", edgeStyle: "cliff", outline: [[-0.5, -0.5], [W - 0.5, -0.5], [W - 0.5, H - 0.5], [-0.5, H - 0.5]], height: floor } } as Omit<LandformFeature, "id" | "origin" | "locked">, "the ground");
+    // the river on today's ground, then its bed raised so falls have room below it; its valley floor
+    // covers the whole map one level above the bed, and terraces rise on both sides
     const river = addRiver(ctx, { points: pts, flow, width }, "the new river") as RiverFeature;
-    rawFeature(ctx, { kind: "landform", params: { kind: "valley", edgeStyle: "terraced", along: { river: river.id, halfWidth: hw, floorAboveBed: 1 } } } as Omit<LandformFeature, "id" | "origin" | "locked">, "the valley floor");
+    apply(ctx, [{ op: "updateFeature", params: { id: river.id, patch: { params: { bedProfile: { start: bed, steps: [] } } } } }], "set the river's bed");
+    rawFeature(ctx, { kind: "landform", params: { kind: "valley", edgeStyle: "terraced", along: { river: river.id, halfWidth: Math.min(128, Math.max(W, H)), floorAboveBed: 1 } } } as Omit<LandformFeature, "id" | "origin" | "locked">, "the valley floor");
     const top = 16;
     for (const sd of [1, -1] as const) {
       const bands = [];
@@ -150,13 +151,20 @@ export const northSouth: Recipe = {
     }
     // the dam site upstream of the start, a fall downstream
     const Lr = arcLength(river.params.path);
-    addPiece(ctx, "damSite", { river: river.id, at: Math.max(8, Math.min(Lr - 8, s0 - 22 * s)), crest: 2 }, "the dam site");
+    // a cascade upstream keeps the reservoir from backing up to the entry edge (D26), then the dam site
+    const damAt = Math.max(30 * s, Math.min(Lr - 8, s0 - 22 * s));
+    addPiece(ctx, "waterfall", { mode: "on-river", river: river.id, at: Math.max(6, damAt - 24 * s), drop: 3 }, "a cascade upstream");
+    addPiece(ctx, "damSite", { river: river.id, at: damAt, crest: 2 }, "the dam site");
     try {
       addPiece(ctx, "waterfall", { mode: "on-river", river: river.id, at: Math.min(Lr - 10, s0 + 28 * s), drop: 2 }, "a fall downstream");
     } catch (e) {
       if (!(e instanceof RecipeFailure)) throw e;
       ctx.notes.push(e.message);
     }
+    // the bench one level above the valley floor where the start stands, now the falls are in
+    const now = ctx.session.features.find((f): f is RiverFeature => f.id === river.id)!;
+    const bench = bedAt(now.params.bedProfile, s0) + 2;
+    apply(ctx, [{ op: "updateFeature", params: { id: start.id, patch: { params: { benchLevel: bench } } } }], "set the start's bench");
     // food and wood near the start, ruins on the terraces far from it
     const field = pathField(river.params.path, W, H);
     const berries: number[] = [];
@@ -175,10 +183,10 @@ export const northSouth: Recipe = {
     ];
     apply(ctx, ops, "berries and groves near the start");
     const blocked = forbidden(ctx, 30);
-    for (let k = 0; k < 3; k++) {
-      const spot = findSpot(ctx, 5 * s + 2, blocked, (x, y) => field.d[y * W + x]);
+    for (let k = 0; k < 4; k++) {
+      const spot = findSpot(ctx, 6 * s + 2, blocked, (x, y) => field.d[y * W + x]);
       if (!spot) break;
-      const disc = circle(spot[0], spot[1], 5 * s + 1, 16);
+      const disc = circle(spot[0], spot[1], 6 * s + 1, 16);
       const mask = polygonMask(disc, W, H);
       const hgt = ctx.session.built.heights;
       let lvl = 0;
@@ -187,7 +195,7 @@ export const northSouth: Recipe = {
       for (let i = 0; i < mask.length; i++) if (mask[i] && hgt[i] === lvl) tiles.push(i);
       for (let i = 0; i < mask.length; i++) if (mask[i]) blocked[i] = 1;
       if (tiles.length < 12) continue;
-      apply(ctx, [{ op: "addFeature", params: { feature: { id: newId(ctx), kind: "ruinField", origin: "user", locked: false, params: { area: tilesToRuns(tiles, W), scrapTarget: Math.round(2400 * s * s), heightMix: [...RUIN_HEIGHT_SHARES], centerBias: 0.35 } } } }], "a ruin field");
+      apply(ctx, [{ op: "addFeature", params: { feature: { id: newId(ctx), kind: "ruinField", origin: "user", locked: false, params: { area: tilesToRuns(tiles, W), scrapTarget: Math.round(3000 * s * s), heightMix: [...RUIN_HEIGHT_SHARES], centerBias: 0.35 } } } }], "a ruin field");
     }
     ctx.notes.push(`the river runs ${southward ? "north to south" : "south to north"}`);
   },

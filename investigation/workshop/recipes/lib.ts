@@ -12,7 +12,7 @@ import type { Feature, Point, SetPieceKind } from "../../../src/core/features/sc
 import { polygonMask } from "../../../src/core/features/geometry";
 import { tilesToRuns, runsToTiles, type Runs } from "../../../src/core/math/grid";
 import { decodeSpecFragment, type MapSpec, type ThemeId } from "../../../src/core/spec/mapspec";
-import type { PlanRecord } from "../../../src/core/features/setpieces";
+import { BUILDERS, type PlanRecord } from "../../../src/core/features/setpieces";
 
 export interface RecipeContext {
   session: MapSession;
@@ -165,22 +165,77 @@ export function band(path: Point[], width: number): Point[] {
 
 // ----------------------------------------------------------------------------------- the map
 
-/** Tiles a new piece must stay off: the start's zone (plus a margin), river channels, set pieces
- *  and lakes of the base, and a margin at the map edge. */
+/** Generated pieces a premise may displace to make room for its landmark, as a planner would when
+ *  it lays the premise out first: the second district's site, the obstacle plateau, riverside
+ *  ponds and map objects. The river, the start, the dam site, falls, gorges and badwater stay. */
+const OPTIONAL_PIECES = new Set(["secondDistrict", "obstaclePayoff"]);
+
+function optionalFeature(f: Feature): boolean {
+  if (f.origin !== "generated") return false;
+  if (f.kind === "mapObject") return true;
+  if (f.kind === "lake") return !f.params.planned && (f.role ?? "").startsWith("lake/pond");
+  if (f.kind === "setPiece") return OPTIONAL_PIECES.has(f.params.kind);
+  return false;
+}
+
+function featureTiles(ctx: RecipeContext, f: Feature): number[] {
+  const { W, H } = ctx;
+  if (f.kind === "lake") return [...polygonMask(f.params.outline, W, H).entries()].filter(([, v]) => v).map(([i]) => i);
+  if (f.kind === "setPiece") return BUILDERS[f.params.kind]?.area?.(f, W, H, ctx.session.features) ?? [];
+  if (f.kind === "mapObject") {
+    const p = f.params.placement;
+    return "area" in p ? runsToTiles(p.area, W) : [p.y * W + p.x];
+  }
+  return [];
+}
+
+/** Tiles a new piece must stay off: the start's zone (plus a margin), river channels, the pieces a
+ *  premise keeps (dam site, falls, gorges, badwater, the planned reservoir basin), and a margin at
+ *  the map edge. Optional generated pieces are not in it: `makeRoom` removes them when needed. */
 export function forbidden(ctx: RecipeContext, startMargin = 14, edge = 4): Uint8Array {
   const { W, H } = ctx;
   const out = new Uint8Array(W * H);
   const pc = planContextOf(ctx.session);
-  for (let i = 0; i < W * H; i++) if (pc.channel?.[i] || pc.protect?.[i]) out[i] = 1;
+  for (let i = 0; i < W * H; i++) if (pc.channel?.[i]) out[i] = 1;
   if (pc.start) {
     const r = pc.start.radius + startMargin;
     for (let y = pc.start.y - r; y <= pc.start.y + r; y++) for (let x = pc.start.x - r; x <= pc.start.x + r; x++) if (x >= 0 && y >= 0 && x < W && y < H) out[y * W + x] = 1;
   }
   for (const f of ctx.session.features) {
-    if (f.kind === "lake") polygonMask(f.params.outline, W, H).forEach((v, i) => v && (out[i] = 1));
+    if (optionalFeature(f)) continue;
+    if (f.kind === "lake" || f.kind === "setPiece") {
+      for (const i of featureTiles(ctx, f)) {
+        // keep a margin of 3 round what stays
+        const x = i % W;
+        const y = (i - x) / W;
+        for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < H) out[(y + dy) * W + x + dx] = 1;
+      }
+    }
   }
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (x < edge || y < edge || x >= W - edge || y >= H - edge) out[y * W + x] = 1;
   return out;
+}
+
+/** Remove the optional generated pieces within `margin` tiles of an outline. */
+export function makeRoom(ctx: RecipeContext, outline: Point[], margin = 6): void {
+  const { W, H } = ctx;
+  const mask = polygonMask(outline, W, H);
+  const near = (i: number) => {
+    const x = i % W;
+    const y = (i - x) / W;
+    for (let dy = -margin; dy <= margin; dy++) for (let dx = -margin; dx <= margin; dx++) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx >= 0 && yy >= 0 && xx < W && yy < H && mask[yy * W + xx]) return true;
+    }
+    return false;
+  };
+  const ops: EditOp[] = [];
+  for (const f of ctx.session.features) {
+    if (!optionalFeature(f)) continue;
+    if (featureTiles(ctx, f).some(near)) ops.push({ op: "deleteFeature", params: { id: f.id } });
+  }
+  if (ops.length) apply(ctx, ops, "make room for the premise");
 }
 
 /** A centre where a disc of radius r lies off `blocked`, drawn at random among the fits (null when
@@ -212,6 +267,7 @@ export function findSpot(ctx: RecipeContext, r: number, blocked: Uint8Array, sco
  *  piece's ground is free (the editor's tools do the same when a piece is placed). */
 export function clearResources(ctx: RecipeContext, outline: Point[], margin = 1): void {
   const { W, H } = ctx;
+  makeRoom(ctx, outline);
   const mask = polygonMask(outline, W, H);
   if (margin > 0) {
     const grown = mask.slice();
@@ -301,4 +357,14 @@ export function slopeBetween(ctx: RecipeContext, low: (i: number) => boolean, hi
     }
   }
   return best?.op ?? null;
+}
+
+/** findSpot for a piece that may shrink to fit: tries its full radius, then 85% and 70%.
+ *  Returns the centre and the factor it fit at. */
+export function spotScaled(ctx: RecipeContext, r: number, blocked: Uint8Array, score?: (x: number, y: number, k: number) => number): { at: [number, number]; k: number } | null {
+  for (const k of [1, 0.85, 0.7]) {
+    const at = findSpot(ctx, r * k, blocked, score ? (x, y) => score(x, y, k) : undefined);
+    if (at) return { at, k };
+  }
+  return null;
 }

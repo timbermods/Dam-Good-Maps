@@ -81,18 +81,18 @@ export const spurNarrows: Recipe = {
         const lump = 1 + 0.3 * fbm(seed + 11 * side, k * 5, 3, 5, 2);
         widths.push(Math.max(3, (rootWidth + (tipWidth - rootWidth) * t) * lump));
       }
-      const outline = taper(center, widths);
-      const inMap = outline.every(([x, y]) => x >= -0.5 && y >= -0.5 && x <= W - 0.5 && y <= H - 0.5);
-      if (!inMap) throw new RecipeFailure("a spur would leave the map");
+      // roots that would run off the map stop at its edge
+      const clamp = (o: Point[]): Point[] => o.map(([x, y]) => [Math.min(W - 1, Math.max(0, x)), Math.min(H - 1, Math.max(0, y))]);
+      const outline = clamp(taper(center, widths));
       clearResources(ctx, outline, 1);
       const ground = groundUnder(ctx, outline);
       // an apron with gentle sides up to the crest, a core above it, and a crown toward the root
       const core = Math.min(16, crestLevel + 1 + (side === tall ? 1 : 0));
       landform(ctx, { kind: "ridge", edgeStyle: "gentle", outline, height: core, base: ground.min }, "a spur's apron");
-      const coreLine = taper(center.slice(0, 11), widths.slice(0, 11).map((w) => 0.6 * w));
+      const coreLine = clamp(taper(center.slice(0, 11), widths.slice(0, 11).map((w) => 0.6 * w)));
       landform(ctx, { kind: "ridge", edgeStyle: "cliff", outline: coreLine, height: core }, "a spur's core");
       const crownN = 5 + Math.floor(3 * ctx.rand());
-      const crown = taper(center.slice(0, crownN), widths.slice(0, crownN).map((w) => 0.45 * w));
+      const crown = clamp(taper(center.slice(0, crownN), widths.slice(0, crownN).map((w) => 0.45 * w)));
       landform(ctx, { kind: "ridge", edgeStyle: "cliff", outline: crown, height: Math.min(16, Math.max(core + 1, plan.topLevel - (side === tall ? 0 : 1))) }, "a spur's crown");
     }
     ctx.notes.push(`spurs: crest ${crestLevel}, ridge top ${plan.topLevel}`);
