@@ -88,7 +88,7 @@ export function mapSummary(s: MapSession, conv: Conversation): Record<string, un
   });
   const start = features.find((f) => f.kind === "start");
   const startInfo = start ? { ...brief(start).out, level: v.start?.z, facing: start.kind === "start" ? start.params.orientation : undefined } : v.start ? { at: [v.start.x, v.start.y], level: v.start.z, where: compassWords(v, v.start.x, v.start.y) } : null;
-  const failing = m.report.checks.filter((c) => !c.ok && c.applicable !== false).map((c) => ({ id: c.id, class: c.class, severity: c.severity, ...(c.value !== undefined ? { value: c.value } : {}), ...(c.limit !== undefined ? { limit: c.limit } : {}), ...(c.advisory ? { advisory: true } : {}) }));
+  const failing = m.report.checks.filter((c) => !c.ok && c.applicable !== false).map((c) => ({ id: c.id, class: c.class, severity: c.severity, ...(c.value !== undefined ? { value: c.value } : {}), ...(c.limit !== undefined ? { limit: c.limit } : {}), ...(c.advisory ? { advisory: true } : {}), message: c.message.length > 160 ? `${c.message.slice(0, 157)}…` : c.message }));
   const startRules = startRequirements(m).filter((r) => !["start.clear", "start.count", "start.flat", "start.entrance"].includes(r.id)).map((r) => ({ id: r.id, ok: r.ok, value: r.value, limit: r.limit }));
   const out: Record<string, unknown> = {
     map: {

@@ -21,6 +21,7 @@ import type { Conversation } from "./conversation";
 import { checkExpectations, valuesBefore, type Checked, type Expectation } from "./intent";
 import { guardsOf, measureFeature, measureSession, reservoirTiles, type Guard, type Measured } from "./metrics";
 import { locate, network } from "./flow";
+import { compassWords } from "./places";
 import { writeReport } from "./report";
 import { checkStep, expandStep, MAX_AREA_SHARE, MAX_STEPS, type Expanded, type Step } from "./steps";
 import { viewOf } from "./view";
@@ -367,6 +368,13 @@ function interference(s: MapSession, conv: Conversation, p: Proposal, before: Me
   // a dam site already on the map that holds less now (a gorge or a fall built in its basin, a
   // lake or landform in the way); a settings change is reported as less-flow instead
   const regenerated = results.some((r) => r.op === "changeSettings" && r.applied);
+  // a regenerated map places its own start again: say where it went
+  const s0 = before.view.start;
+  const s1 = after.view.start;
+  if (regenerated && s0 && s1 && !results.some((r) => r.op === "moveStart" && r.applied)) {
+    const d = Math.hypot(s1.x - s0.x, s1.y - s0.y);
+    if (d >= 3) out.push({ kind: "start-moved", text: `the regenerated map put the start ${Math.round(d)} tiles from where it was, at (${s1.x}, ${s1.y}) in the ${compassWords(after.view, s1.x, s1.y)}: distances to the start changed` });
+  }
   for (const d of dams) {
     const was = damsBefore.get(d.id);
     if (!was || d.kind !== "setPiece") continue;

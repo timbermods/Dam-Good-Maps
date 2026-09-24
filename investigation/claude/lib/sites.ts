@@ -471,8 +471,8 @@ function gorges(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Foun
     sites.push({ rank: 0, kind: "gorge", at: [x, y], where: compassWords(v, x, y), course: courseInfo(v, x, y), step: { op: "addSetPiece", kind: "gorge", request: req }, measured: { width: r.feature.params.plan.width, length: round1(to - from), wallHeight: r.feature.params.plan.wallHeight, ...(encloses.length ? { encloses } : {}) }, meetsSize: true, report: r.feature.params.report });
   }
   const clear = (x: Site) => !(x.measured as { encloses?: string[] }).encloses;
-  const ordered = [...sites.filter(clear), ...sites.filter((x) => !clear(x))];
-  return { sites: spaced(ordered, 20), searched: arcs.length, why: sites.length ? undefined : why ?? "no river runs through this place" };
+  const kept = spaced(sites, 20);
+  return { sites: [...kept.filter(clear), ...kept.filter((x) => !clear(x))], searched: arcs.length, why: sites.length ? undefined : why ?? "no river runs through this place" };
 }
 
 // ------------------------------------------------------------------------------ standalone pieces
@@ -544,11 +544,12 @@ function standaloneFalls(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Arr
       break;
     }
   }
-  // the size first, then what the fall would clear (ruins and berries weigh more than trees),
-  // then short outflows
+  // short outflows and falls that suit the ground first; of the spaced sites, those that clear
+  // less (ruins and berries weigh more than trees) are offered first
+  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(a.measured.outflowTiles) - Number(b.measured.outflowTiles));
   const cost = (x: Site) => Math.round(clearedCost(x.report) / 20);
-  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || cost(a) - cost(b) || Number(a.measured.outflowTiles) - Number(b.measured.outflowTiles));
-  return { sites: spaced(sites, 10), searched, target, why: sites.length ? undefined : why ?? "no spot here fits the fall without moving it" };
+  const kept = spaced(sites, 10).sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || cost(a) - cost(b));
+  return { sites: kept, searched, target, why: sites.length ? undefined : why ?? "no spot here fits the fall without moving it" };
 }
 
 function cliffs(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Found {

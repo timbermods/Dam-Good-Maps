@@ -10,12 +10,14 @@
 
 import { STEP_OPS } from "../lib/steps";
 
-/** Rounds and tool calls for a request with `goals` goals (EDITOR_PLAN §7: 3 rounds and about 10
- *  calls today). The scaling is the one the self-played pilot proposes (pilot/PILOT.md): a round
- *  is a dry_run or a propose. */
+/** Rounds and tool calls for a request with `goals` goals. One goal keeps today's rule (EDITOR_PLAN
+ *  §7: 3 rounds, about 10 calls); each further goal adds 3 calls and every second one a round, up
+ *  to 6 rounds and 20 calls. A round is a dry_run or a propose. The ceiling is what route A's
+ *  64 KiB input holds: a fixed prefix of about 17 KiB, and a compound dry run of about 7 KB each.
+ *  Proposed from the self-played pilot (pilot/PILOT.md); the M12 suite should re-measure it. */
 export function budgetFor(goals: number): { rounds: number; calls: number } {
   const g = Math.max(1, goals);
-  return { rounds: Math.min(6, 2 + Math.ceil(g / 2) + (g > 1 ? 1 : 0)), calls: Math.min(24, 7 + 3 * g) };
+  return { rounds: Math.min(6, 3 + Math.ceil((g - 1) / 2)), calls: Math.min(20, 10 + 3 * (g - 1)) };
 }
 
 export const INSTRUCTIONS = `You edit a Timberborn map in Dam Good Maps for the player. You never change terrain or objects directly: you ask the app questions with tools, then propose steps. The app plans every step with its own builders, checks it, and shows the player a before/after.

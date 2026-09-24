@@ -604,15 +604,15 @@ R("M07", "compound", "Make the map easier, add berries near the start, and give 
 });
 R("M08", "compound", "Make it harsher but keep a big reservoir near the start.", "rv128", {
   feasible: "partly",
-  note: "on this map the harsher layout leaves no dam site near the start that holds 3× the need: the best is offered",
-  goals: [G("g1", "harsher", down("cleanStrength")), G("g2", "a big reservoir near the start", m("new:damSite", "reservoir.volume", { min: 759 }), m("new:damSite", "distanceToStart", { max: 30 }))],
-  report: { mustSay: ["the map is harsher: which settings moved", "not met: no dam site near the start holds a big reservoir (3× the drought need) on the harsher map; the best one holds less, and it was built / offered", "trade-off: the weaker river fills any reservoir more slowly"] },
+  note: "the regenerated map puts the start about 31 tiles from the old dam site (13 before), and no site near the new start holds a large reservoir (2.5× the harsher map's drought need of 253): the best is built and the full size offered 33 tiles away. The self-played pilot read 'keep' as the old dam site and missed that the start moved; the app now reports it",
+  goals: [G("g1", "harsher", down("cleanStrength")), G("g2", "a big reservoir near the start", m("new:damSite", "reservoir.volume", { min: 633 }), m("new:damSite", "distanceToStart", { max: 30 }))],
+  report: { mustSay: ["the map is harsher: which settings moved", "the start moved when the map regenerated", "not met: no dam site near the start holds a big reservoir (2.5× the drought need) on the harsher map; the best one holds less, and it was built / offered", "trade-off: the weaker river fills any reservoir more slowly"] },
   pass: [VALID, START_RULES_HOLD, "the big-reservoir goal is reported unmet with the best alternative, never hidden"],
   reference: {
     calls: [call("dry_run", { steps: [{ op: "changeSettings", word: "harsher" }, { op: "addSetPiece", kind: "damSite", where: "near the start", size: "large" }] })],
     proposal: { steps: [{ op: "changeSettings", word: "harsher" }, { op: "addSetPiece", kind: "damSite", where: "near the start" }] },
     expect: { notMet: ["g2"], tradeoffs: ["less-flow"] },
-    checks: [chk("call:0", "steps.1.errors", "includes", "reservoir of at least 759")],
+    checks: [chk("call:0", "steps.1.errors", "includes", "reservoir of at least 633")],
   },
 });
 R("M09", "compound", "Add a waterfall on each tributary.", "rv128-tribs8", {

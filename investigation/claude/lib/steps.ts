@@ -262,7 +262,8 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
         if (!w) return fail(step, [`"${step.word}" is not in the judgement-word table (${JUDGEMENT.map((j) => j.word).join(", ")})`]);
         const { patch, moved, atBound } = leverPatch(s.spec, w.levers, step.degree ?? 1);
         if (!moved.length) return fail(step, [`the map is already as ${w.word} as its settings go (${atBound.join(", ")} at their limits)`]);
-        return { ok: true, step, ops: [{ op: "specPatch", params: { patch: { settings: patch } } }], made: [], report: [], resolved: { word: w.word, means: w.means, moved, ...(atBound.length ? { atBound } : {}), levers: w.levers.map((l) => l.setting.join(".")) }, errors: [], tiles: 0 };
+        const weak = w.weakOn?.includes(s.spec.theme) ? { weakHere: `on a ${s.spec.theme} map these settings barely move ${w.targets.map((t) => t.metric).join(", ")}` } : {};
+        return { ok: true, step, ops: [{ op: "specPatch", params: { patch: { settings: patch } } }], made: [], report: [], resolved: { word: w.word, means: w.means, moved, ...(atBound.length ? { atBound } : {}), levers: w.levers.map((l) => l.setting.join(".")), ...weak }, errors: [], tiles: 0 };
       }
       return { ok: true, step, ops: [{ op: "specPatch", params: { patch: step.patch as Record<string, unknown> } }], made: [], report: [], resolved: { patch: step.patch }, errors: [], tiles: 0 };
     }

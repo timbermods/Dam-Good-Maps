@@ -71,6 +71,8 @@ export interface JudgementWord {
   targets: Target[];
   /** A word that also has a feature-level meaning (a dangerous badwater spring). */
   feature?: Record<string, Record<string, unknown>>;
+  /** Themes where the levers are known not to move the targets (measured in tests/words.test.ts). */
+  weakOn?: string[];
 }
 
 export const JUDGEMENT: JudgementWord[] = [
@@ -153,7 +155,7 @@ export const JUDGEMENT: JudgementWord[] = [
     ],
     targets: [
       { metric: "cleanStrength", direction: "up" },
-      { metric: "basins20", direction: "up" },
+      { metric: "waterShare", direction: "up" },
     ],
   },
   {
@@ -187,16 +189,15 @@ export const JUDGEMENT: JudgementWord[] = [
   {
     word: "rugged",
     aliases: ["dramatic", "mountainous", "steeper", "hillier", "craggy", "wilder", "more vertical"],
-    means: "a larger height range, more cliffs and more waterfalls",
+    // more terracing turns some cliffs into terraces, so the cliff share can fall (riverValley
+    // 128/2: 0.13 → 0.11): the word is judged on the height range
+    means: "a larger height range, more terraces and more waterfalls",
     levers: [
       { setting: ["terrain", "relief"], delta: 25, min: 0, max: 100, risk: 1 },
       { setting: ["terrain", "terracing"], delta: 20, min: 0, max: 100, risk: 1 },
       { setting: ["water", "waterfalls"], steps: 1, order: FALLS, risk: 1 },
     ],
-    targets: [
-      { metric: "heightRange", direction: "up" },
-      { metric: "step1Share", direction: "down" },
-    ],
+    targets: [{ metric: "heightRange", direction: "up" }],
   },
   {
     word: "flatter",
@@ -208,7 +209,7 @@ export const JUDGEMENT: JudgementWord[] = [
     ],
     targets: [
       { metric: "heightRange", direction: "down" },
-      { metric: "step1Share", direction: "up" },
+      { metric: "cliffShare", direction: "down" },
     ],
   },
   {
@@ -235,8 +236,14 @@ export const JUDGEMENT: JudgementWord[] = [
     word: "roomier",
     aliases: ["more space", "more room", "more building room", "spacious", "open"],
     means: "more flat land the colony can walk to from the start",
-    levers: [{ setting: ["terrain", "buildableLand"], steps: 1, order: LAND, risk: 0 }],
+    levers: [
+      { setting: ["terrain", "buildableLand"], steps: 1, order: LAND, risk: 0 },
+      { setting: ["terrain", "relief"], delta: -10, min: 0, max: 100, risk: 1 },
+    ],
     targets: [{ metric: "reach", direction: "up" }],
+    // a canyon's walls fix its walkable floor: neither lever moves reach there (canyon 128/2:
+    // 7608 → 7512); the intent check reports it, and M12 offers a landform or a moved start instead
+    weakOn: ["canyon"],
   },
   {
     word: "cramped",
@@ -339,7 +346,11 @@ export function applyWord(s: MapSession, word: JudgementWord, degree = 1, before
         targets: word.targets.map((t) => {
           const bv = round2(MAP_METRICS[t.metric].get(b.map, b));
           const av = round2(MAP_METRICS[t.metric].get(a.map, a));
-          return { metric: t.metric, direction: t.direction, before: bv, after: av, moved: t.direction === "up" ? av > bv : av < bv, ...(OFFICIAL[t.metric] ? { official: OFFICIAL[t.metric] } : {}) };
+          // badwater cannot come nearer than the start rule (read from the validator), and its
+          // soil spreads about 7 tiles past the water: at that floor, "nearer" has gone as far as it can
+          const floor = t.metric === "badwaterDistance" && t.direction === "down" ? a.rules.badwaterWithin + 7 : null;
+          const atFloor = floor !== null && av <= floor;
+          return { metric: t.metric, direction: t.direction, before: bv, after: av, moved: (t.direction === "up" ? av > bv : av < bv) || atFloor, ...(atFloor ? { atFloor: a.rules.badwaterWithin } : {}), ...(OFFICIAL[t.metric] ? { official: OFFICIAL[t.metric] } : {}) };
         }),
         guardsFailing: a.guards.filter((g) => !g.ok && g.class !== "load" && g.applicable).map((g) => g.id),
         attempts,

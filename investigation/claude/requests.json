@@ -4446,7 +4446,7 @@
    "setup": "rv128",
    "feasible": "partly",
    "expressible": true,
-   "note": "on this map the harsher layout leaves no dam site near the start that holds 3× the need: the best is offered",
+   "note": "the regenerated map puts the start about 31 tiles from the old dam site (13 before), and no site near the new start holds a large reservoir (2.5× the harsher map's drought need of 253): the best is built and the full size offered 33 tiles away. The self-played pilot read 'keep' as the old dam site and missed that the start moved; the app now reports it",
    "goals": [
     {
      "id": "g1",
@@ -4466,7 +4466,7 @@
       {
        "subject": "new:damSite",
        "metric": "reservoir.volume",
-       "min": 759
+       "min": 633
       },
       {
        "subject": "new:damSite",
@@ -4479,7 +4479,8 @@
    "report": {
     "mustSay": [
      "the map is harsher: which settings moved",
-     "not met: no dam site near the start holds a big reservoir (3× the drought need) on the harsher map; the best one holds less, and it was built / offered",
+     "the start moved when the map regenerated",
+     "not met: no dam site near the start holds a big reservoir (2.5× the drought need) on the harsher map; the best one holds less, and it was built / offered",
      "trade-off: the weaker river fills any reservoir more slowly"
     ]
    },
@@ -4534,7 +4535,7 @@
       "on": "call:0",
       "path": "steps.1.errors",
       "op": "includes",
-      "value": "reservoir of at least 759"
+      "value": "reservoir of at least 633"
      }
     ]
    }

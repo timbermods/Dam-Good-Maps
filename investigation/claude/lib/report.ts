@@ -105,7 +105,7 @@ export function writeReport(r: ProposalResult, p: Proposal, after: Measured): st
     }
   }
   // side effects (what a step cleared or planted) are reported, but they are not trade-offs
-  for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(t.kind === "cleared" || t.kind === "start-moved" ? TEMPLATES.also(t.text) : TEMPLATES.tradeoff(t.text));
+  for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(t.kind === "cleared" || (t.kind === "start-moved" && !/regenerated/.test(t.text)) ? TEMPLATES.also(t.text) : TEMPLATES.tradeoff(t.text));
   for (const n of r.notMet) {
     lines.push(TEMPLATES.notDone(n.text, n.why));
     if (n.alternative) lines.push(TEMPLATES.offer(n.alternative));

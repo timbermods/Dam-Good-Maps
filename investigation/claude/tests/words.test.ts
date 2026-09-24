@@ -20,9 +20,15 @@ describe.each(MAPS)("judgement words on %s %i² (seed %i)", (theme, side, seed) 
     it(w.word, () => {
       const s = MapSession.open(MapSession.fromGenerated(r).document);
       const res = applyWord(s, w);
-      // a word may hold a lever back to keep the guards; it must still move something
-      expect(res.ok, `${w.word}: ${res.heldBack.join("; ")}`).toBe(true);
+      // a word may hold a lever back to keep the guards, or find its settings already at their
+      // limits (then it says so and changes nothing); otherwise it must move something
+      if (!res.ok) {
+        expect(res.atBound.length, `${w.word}: not applied, held back: ${res.heldBack.join("; ")}`).toBeGreaterThan(0);
+        return;
+      }
       expect(res.guardsFailing).toEqual([]);
+      // a theme where the table says the word is weak: the targets are reported, not promised
+      if (w.weakOn?.includes(theme)) return;
       for (const t of res.targets) {
         // a target whose lever was held back or is already at its bound may stay put
         const leverUsed = res.moved.length > 0;

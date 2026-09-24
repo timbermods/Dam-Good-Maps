@@ -96,11 +96,11 @@ export const TOOL_DEFS: ToolDef[] = [
   },
   {
     name: "limits",
-    description: "The achievable ranges for a set piece on this map (PLAN §9.10) and what each size word means here: widths, drops, flow budget, reservoir sizes, basin cap; for the start, the start rules the validator applies.",
+    description: "The achievable ranges for a set piece on this map (PLAN §9.10) and what each size word means here: widths, drops, flow budget, reservoir sizes, basin cap; for the start, the start rules the validator applies; for words, what each judgement word changes and whether it works on this theme.",
     input_schema: {
       type: "object",
       properties: {
-        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, start" },
+        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, start, words" },
         facing: { type: "string", enum: ["north", "east", "south", "west"] },
       },
       required: ["kind"],
@@ -433,7 +433,13 @@ export class ClaudeTools {
     const { x: W, y: H } = s.size;
     const designedFor = s.spec?.designedFor ?? s.meta.designedFor;
     const words = ["tiny", "small", "medium", "large", "huge"] as const;
-    const sizes = (k: string, side?: number) => Object.fromEntries(words.map((w) => [w, sizeTarget(k, w, { W, H, designedFor, side })]));
+    const need = rulesFor(s.spec, designedFor).reservoirNeed;
+    const sizes = (k: string, side?: number) => Object.fromEntries(words.map((w) => [w, sizeTarget(k, w, { W, H, designedFor, side, need })]));
+    if (kind === "words") {
+      const theme = s.spec?.theme;
+      if (!s.spec) return { words: [], note: "an imported map has no settings: judgement words cannot change it; use steps on features instead" };
+      return { words: JUDGEMENT.map((w) => ({ word: w.word, means: w.means, changes: w.levers.map((l) => l.setting.join(".")), measuredBy: w.targets.map((t) => `${t.metric} ${t.direction}`), ...(theme && w.weakOn?.includes(theme) ? { weakHere: `on a ${theme} map these settings barely move ${w.targets.map((t) => t.metric).join(", ")}: offer a feature instead` } : {}) })), note: "settings apply to the whole map and regenerate it; the player's own features stay" };
+    }
     const budget = flowBudget(W, H);
     if (kind === "start") {
       const r = rulesFor(s.spec, designedFor);
@@ -454,7 +460,7 @@ export class ClaudeTools {
     if (kind === "badwaterBasin") return { strength: { min: 1, max: 3 }, keepsFromStart: rulesFor(s.spec, designedFor).badwaterWithin, sizeWords: sizes("badwaterBasin"), note: "a 7×7 basin with one outlet; its channel runs to a river or the map edge" };
     const b = BUILDERS[kind as SetPieceKind];
     if (b) return { ranges: b.limits(planContextOf(s)) };
-    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river or start");
+    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river, start or words");
   }
 }
 

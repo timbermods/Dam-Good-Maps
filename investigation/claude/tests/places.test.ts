@@ -197,7 +197,10 @@ describe("compass and feature places", () => {
   });
 
   it("parses phrases into places and lists the words it ignores", () => {
-    expect(parse("halfway down this valley").place).toEqual({ all: [{ course: [0.4, 0.6] }, { valley: null }] });
+    expect(parse("halfway down this valley").place).toEqual({ course: [0.4, 0.6] });
+    // a named river's course: never the compass word inside its name
+    expect(parse("halfway down the north tributary").place).toEqual({ course: [0.4, 0.6], river: "north tributary" });
+    expect(parse("near the mouth of the south creek").place).toEqual({ course: [0.75, 1], river: "south tributary" });
     expect(parse("the opposite bank").place).toEqual({ bank: "opposite" });
     expect(parse("just upstream of the start").place).toEqual({ upstream: "start", reach: "just" });
     expect(parse("between the lake and the start").place).toEqual({ between: ["lake", "start"] });
