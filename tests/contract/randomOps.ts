@@ -1,10 +1,15 @@
 // Random edit operations for the E1 property tests (EDITOR_PLAN §9, §10): every kind the engine
 // takes, drawn from a seeded stream so a failure reproduces. Each one targets what exists on the
-// map now, so almost all pass their check; the rest must be rejected cleanly.
+// map now, so almost all pass their check; the rest must be rejected cleanly. Since M5 the draw
+// also makes the land and water tools' edits: drawn rivers, lakes, landforms with gentle and
+// terraced edges, every set piece, and moving and deleting them, each a group of operations the
+// tools apply as one step.
 
 import type { MapSession } from "../../src/core/doc/session";
 import type { EditOp } from "../../src/core/doc/ops";
-import type { Feature, LandformFeature } from "../../src/core/features/schema";
+import { deleteEdit, moveEdit, planContextOf, planLake, planLandform, planPiece, planRiver, type PlannedEdit } from "../../src/core/doc/tools";
+import type { Facing } from "../../src/core/features/setpieces/common";
+import type { Feature, LandformFeature, Point, RiverFeature } from "../../src/core/features/schema";
 import type { Orientation } from "../../src/core/format/footprints";
 import { tilesToRuns } from "../../src/core/math/grid";
 import type { Rng } from "../../src/core/math/rng";
@@ -34,8 +39,75 @@ function rectRuns(r: { x0: number; y0: number; x1: number; y1: number }, W: numb
 
 const pick = <T>(rng: Rng, xs: readonly T[]): T | undefined => (xs.length ? xs[rng.int(0, xs.length)] : undefined);
 
-/** One random operation for the session's current map, or null when the drawn kind has no target. */
-export function randomOp(s: MapSession, rng: Rng): EditOp | null {
+const FACINGS: Facing[] = ["north", "east", "south", "west"];
+
+/** A random edit of the land and water tools (M5), as the operations they apply together; null
+ *  when the draw has no target or the tool refuses it (the tools refuse invalid requests with a
+ *  reason, which the tool tests cover). */
+export function randomToolEdit(s: MapSession, rng: Rng): EditOp[] | null {
+  const { x: W, y: H } = s.size;
+  const at = (m: number): Point => [rng.int(m, W - m), rng.int(m, H - m)];
+  const planned = (r: PlannedEdit): EditOp[] | null => (r.ok ? r.ops : null);
+  const roll = rng.int(0, 12);
+  switch (roll) {
+    case 0: {
+      const edge = rng.int(0, 4);
+      const e: Point = edge === 0 ? [0, rng.int(12, H - 12)] : edge === 1 ? [W - 1, rng.int(12, H - 12)] : edge === 2 ? [rng.int(12, W - 12), 0] : [rng.int(12, W - 12), H - 1];
+      const end: Point = edge < 2 ? [rng.int(12, W - 12), edge === 0 ? H - 1 : 0] : [edge === 2 ? W - 1 : 0, rng.int(12, H - 12)];
+      return planned(planRiver({ points: [e, at(12), end], flow: [1, 2, 4][rng.int(0, 3)] }, planContextOf(s), guid(rng)));
+    }
+    case 1: {
+      const [cx, cy] = at(12);
+      const w = rng.int(3, 7);
+      const h = rng.int(3, 6);
+      return planned(planLake({ outline: [[cx - w, cy - h], [cx + w, cy - h], [cx + w, cy + h], [cx - w, cy + h]], spring: [0.25, 0.5, 1][rng.int(0, 3)] }, planContextOf(s), guid(rng)));
+    }
+    case 2: {
+      const [cx, cy] = at(10);
+      const r = rng.int(4, 9);
+      const edgeStyle = (["gentle", "terraced", "cliff"] as const)[rng.int(0, 3)];
+      const kind = (["hill", "plateau", "ridge", "canyon", "island"] as const)[rng.int(0, 5)];
+      return planned(planLandform({ outline: [[cx - r, cy - r], [cx + r, cy - r + 2], [cx + r - 1, cy + r], [cx - r + 2, cy + r - 1]], kind, edgeStyle }, planContextOf(s), guid(rng)));
+    }
+    case 3:
+    case 4:
+      return planned(planPiece(s, "waterfall", { mode: "standalone", lip: at(8), facing: FACINGS[rng.int(0, 4)], width: rng.int(3, 24), drop: rng.int(2, 17), flow: (["gentle", "steady", "strong"] as const)[rng.int(0, 3)] }, guid(rng)));
+    case 5:
+    case 6: {
+      const river = pick(rng, s.features.filter((f): f is RiverFeature => f.kind === "river"));
+      if (!river) return null;
+      const len = river.params.path.reduce((a, p, k, ps) => (k ? a + Math.hypot(p[0] - ps[k - 1][0], p[1] - ps[k - 1][1]) : 0), 0);
+      const kind = (["waterfall", "damSite", "gorge"] as const)[rng.int(0, 3)];
+      const where = Math.round(rng.range(8, Math.max(9, len - 8)) * 100) / 100;
+      if (kind === "waterfall") return planned(planPiece(s, "waterfall", { mode: "on-river", river: river.id, at: where, drop: rng.int(1, 4) }, guid(rng)));
+      if (kind === "damSite") return planned(planPiece(s, "damSite", { river: river.id, at: where, crest: rng.int(1, 5) }, guid(rng)));
+      return planned(planPiece(s, "gorge", { river: river.id, from: where, length: rng.int(6, 30), width: rng.int(3, 9), wallHeight: rng.int(2, 5), access: rng.float() < 0.5 ? "stairs" : "none" }, guid(rng)));
+    }
+    case 7:
+      return planned(planPiece(s, "terracedCliffs", { at: at(10), facing: FACINGS[rng.int(0, 4)], bands: rng.int(3, 7), depth: rng.int(6, 13), width: rng.int(8, 24) }, guid(rng)));
+    case 8:
+      return planned(planPiece(s, "badwaterBasin", { mode: "basin", at: at(10), strength: rng.int(1, 4) }, guid(rng)));
+    case 9:
+    case 10: {
+      // move a player's feature: rivers, lakes and set pieces are planned again at their new place
+      const f = pick(rng, s.features.filter((g) => g.origin !== "generated" && (g.kind === "river" || g.kind === "lake" || g.kind === "landform" || g.kind === "setPiece")));
+      if (!f) return null;
+      return planned(moveEdit(s, f.id, rng.int(-6, 7), rng.int(-6, 7)));
+    }
+    default: {
+      const f = pick(rng, s.features.filter((g) => g.kind === "setPiece" && g.origin !== "generated"));
+      return f ? planned(deleteEdit(s, f.id)) : null;
+    }
+  }
+}
+
+/** One random operation (or a tool's group of them) for the session's current map, or null when
+ *  the drawn kind has no target. */
+export function randomOp(s: MapSession, rng: Rng): EditOp | EditOp[] | null {
+  if (rng.float() < 0.2) {
+    const ops = randomToolEdit(s, rng);
+    if (ops) return ops;
+  }
   const { x: W, y: H } = s.size;
   const features = s.features;
   const entities = s.built.entities;

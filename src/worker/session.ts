@@ -21,6 +21,8 @@ import {
   planLandform,
   planPiece,
   planRiver,
+  replacePatch,
+  cornerFor,
   startCentre,
   type LakeRequest,
   type LandformRequest,
@@ -251,7 +253,9 @@ function changed(s: MapSession, ok: boolean, errors: string[], t0: number): Sess
 export function instantCheck(s: MapSession = need()): InstantCheck {
   const t0 = performance.now();
   const d = s.built.dirty;
-  const region = d ? (d.terrain ?? d.region) : null;
+  // what the edit touched: the features it changed, old and new, and the ground that changed
+  const parts = d ? [d.region, d.terrain].filter((r): r is NonNullable<typeof r> => !!r) : [];
+  const region = parts.length ? { x0: Math.min(...parts.map((r) => r.x0)), y0: Math.min(...parts.map((r) => r.y0)), x1: Math.max(...parts.map((r) => r.x1)), y1: Math.max(...parts.map((r) => r.y1)) } : null;
   const file = s.mode === "live" ? toTimberFile(s.spec!, s.built, { thumbnail: blankThumbnail() }) : s.exportFile();
   const v = validateMap(file, { profile: "export", external: s.mode !== "live", spec: s.spec, designedFor: s.meta.designedFor, features: s.features, loadOnly: true });
   const items: CheckItem[] = [];
@@ -457,7 +461,15 @@ function itemOf(c: CheckResult, s: MapSession | null = session): CheckItem {
     const ops = at ? moveStartNear(s, at[0], at[1]) : null;
     if (ops) fix = ops.map((op, k) => ({ ...op, label: k === 0 ? "Move the start to the nearest good spot" : "" }) as FixOp);
   }
-  return { id: c.id, class: c.class, message: c.message, ...(c.where ? { where: c.where } : {}), ...(fix ? { fix } : {}) };
+  // entities are named by id; the page finds them by their tiles
+  let where = c.where;
+  if (s && where?.entities?.length && !where.tiles?.length) {
+    const want = new Set(where.entities.slice(0, 50));
+    const tiles: [number, number][] = [];
+    for (const e of s.built.entities) if (want.has(e.id)) tiles.push([e.x, e.y]);
+    if (tiles.length) where = { ...where, tiles };
+  }
+  return { id: c.id, class: c.class, message: c.message, ...(where ? { where } : {}), ...(fix ? { fix } : {}) };
 }
 
 /** The middle of the map's start, from its feature or its StartingLocation. */
@@ -548,16 +560,15 @@ function toolPlan(r: PlannedEdit): ToolPlan {
  *  feature's id, or the id of the set piece planned again. */
 export function planTool(req: ToolRequest, id: string): ToolPlan {
   const s = need();
-  switch (req.tool) {
-    case "river":
-      return toolPlan(planRiver(req, planContextOf(s), id));
-    case "lake":
-      return toolPlan(planLake(req, planContextOf(s), id));
-    case "landform":
-      return toolPlan(planLandform(req, planContextOf(s), id));
-    case "setPiece":
-      return toolPlan(planPiece(s, req.piece, req.request, id));
-  }
+  if (req.tool === "setPiece") return toolPlan(planPiece(s, req.piece, req.request, id));
+  // a feature on the map is planned again on the map without it, and changed in place
+  const existing = s.features.find((f) => f.id === id) ?? null;
+  const ctx = planContextOf(s, existing ? id : null);
+  const origin = existing?.origin ?? "user";
+  const r = req.tool === "river" ? planRiver(req, ctx, id, origin) : req.tool === "lake" ? planLake(req, ctx, id, origin) : planLandform(req, ctx, id, origin);
+  if (!r.ok || !existing) return toolPlan(r);
+  const patch = { params: replacePatch(existing.params, r.feature.params) as Record<string, unknown> };
+  return toolPlan({ ...r, ops: [{ op: "updateFeature", params: { id, patch } }, ...r.ops.slice(1)], label: `Change ${r.label.replace(/^Add /, "")}` });
 }
 
 /** Plan and apply a tool's edit as one undo step. */
@@ -578,6 +589,23 @@ export function moveFeature(id: string, dx: number, dy: number): SessionUpdate {
   if (!r.ok) return changed(s, false, r.errors, t0);
   const a = s.applyAll(r.ops, "user", r.label);
   return changed(s, a.ok, a.errors, t0);
+}
+
+/** Move the map's start so its middle is at (x, y): the start feature of a generated map, or an
+ *  imported map's own StartingLocation. */
+export function moveStartTo(x: number, y: number): SessionUpdate {
+  const t0 = performance.now();
+  const s = need();
+  const f = s.features.find((g) => g.kind === "start");
+  if (f) {
+    const at = startAt(s)!;
+    return moveFeature(f.id, x - at[0], y - at[1]);
+  }
+  const e = s.built.entities.find((g) => g.template === "StartingLocation");
+  if (!e) return changed(s, false, ["this map has no start to move"], t0);
+  const [cx, cy] = cornerFor(x, y, e.orientation);
+  const r = s.apply({ op: "moveEntity", params: { id: e.id, x: cx, y: cy } }, "user", "Move start");
+  return changed(s, r.ok, r.errors, t0);
 }
 
 /** Delete a feature (an on-river fall takes its step out of its river). */

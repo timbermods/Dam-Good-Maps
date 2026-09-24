@@ -673,6 +673,17 @@ function movedRequest(s: MapSession, f: SetPieceFeature, dx: number, dy: number)
   }
 }
 
+/** A feature's plain name, as the player sees it. */
+export function plainName(f: Feature): string {
+  if (f.kind === "landform") return f.params.kind === "valley" ? "valley floor" : f.params.kind;
+  if (f.kind === "lake") return f.params.planned ? "reservoir site" : "lake";
+  return kindName(f);
+}
+
+function plural(n: string): string {
+  return n.endsWith("s") ? n : n.endsWith("h") ? `${n}es` : `${n}s`;
+}
+
 export function kindName(f: Feature): string {
   switch (f.kind) {
     case "setPiece":
@@ -708,7 +719,14 @@ export function deleteEdit(s: MapSession, id: string): PlannedEdit {
     }
   }
   const deps = dependentsOf(features, id);
-  if (deps.length) return fail(`${deps.map((d) => kindName(d)).join(" and ")} ${deps.length === 1 ? "builds" : "build"} on it: delete ${deps.length === 1 ? "that" : "them"} first`);
+  if (deps.length) {
+    // "the valley floor, the terraces and the dam site build on this river"
+    const counts = new Map<string, number>();
+    for (const d of deps) counts.set(plainName(d), (counts.get(plainName(d)) ?? 0) + 1);
+    const names = [...counts].map(([n, k]) => (k > 1 ? `${k} ${plural(n)}` : `the ${n}`));
+    const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0];
+    return fail(`${list} ${deps.length === 1 ? "builds" : "build"} on this ${plainName(f)}: delete ${deps.length === 1 ? "it" : "them"} first`);
+  }
   ops.push({ op: "deleteFeature", params: { id } });
   return { ok: true, ops, feature: f, report: [], label: `Delete ${kindName(f)}`, tiles: [] };
 }

@@ -8,7 +8,7 @@ import type { Feature } from "../../src/core/features/schema";
 import { generate } from "../../src/core/gen/generate";
 import { makeSpec } from "../../src/core/spec/mapspec";
 import { anchorOf, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, movePatch, rectOf, rectOutline, rectRuns, tabOf } from "../../src/editor/features";
-import { featureFromRect, paintOverlay, SELECTED, type ToolKind } from "../../src/editor/tools";
+import { DEFAULT_OPTIONS, featureFromRect, paintOverlay, SELECTED, type ToolKind } from "../../src/editor/tools";
 import { entityView, surfaceWater, waterFromDepth } from "../../src/render3d/model";
 
 const W = 64;
@@ -119,13 +119,13 @@ describe("the drawing tools", () => {
     expect(rect).toEqual({ x0: 2, y0: 3, x1: 8, y1: 9 });
     const ctx = { state: emptyState([]), W, H, generated: true, entityIds: new Set<string>(), slopeTiles: new Set<number>(), lockedColumns: null };
     for (const kind of ["plateau", "forest", "berryPatch", "ruinField"] as ToolKind[]) {
-      const f = featureFromRect(kind, rect, { height: 0, density: 0.5, species: "mixed" }, W, heights);
+      const f = featureFromRect(kind, rect, { ...DEFAULT_OPTIONS, height: 0, density: 0.5, species: "mixed" }, W, heights);
       expect(f.origin).toBe("user");
       expect(validateOp({ op: "addFeature", params: { feature: f } }, ctx), kind).toEqual([]);
     }
     // a plateau two levels above the highest ground under it, unless a height is picked
-    expect((featureFromRect("plateau", rect, { height: 0, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(13);
-    expect((featureFromRect("plateau", rect, { height: 7, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(7);
+    expect((featureFromRect("plateau", rect, { ...DEFAULT_OPTIONS, height: 0, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(13);
+    expect((featureFromRect("plateau", rect, { ...DEFAULT_OPTIONS, height: 7, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(7);
   });
 
   it("paint the overlay", () => {

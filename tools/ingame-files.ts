@@ -19,12 +19,26 @@
 //                                                 source and its ditch, the dam site, the depth samples
 //       checks.txt                                sha256, and where to look, with the expected values
 //
+//   npx tsx tools/ingame-files.ts --milestone m5 [--seed 4242] [--size 128] [--out out/m5]
+//     C (set pieces) and F1 (waterfall visibility), on three maps edited with the M5 tools:
+//       River Valley (4242) F1 waterfall S2.timber   a 20-wide standalone waterfall, 2 water/s
+//       River Valley (4242) F1 waterfall S8.timber   the same fall at 8 water/s (the exact flow)
+//       River Valley (4242) C1 dam site.timber       a dam site placed on the river's lower reach
+//       River Valley (4242) gorge stairs.timber      a gorge with a stair notch near the start
+//       one .png per map                             where to look (see checks.txt for the colours)
+//       checks.txt                                   sha256, coordinates and what should happen
+//
 // Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
 
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { BuildResult } from "../src/core/features/build";
+import { MapSession } from "../src/core/doc/session";
+import { planContextOf, planPiece, planRiver, type PlannedEdit } from "../src/core/doc/tools";
+import { pointAtArc } from "../src/core/features/geometry";
+import type { RiverFeature, SetPieceFeature } from "../src/core/features/schema";
+import { lipTiles, measureLip, type StandalonePlan } from "../src/core/features/setpieces/waterfall";
 import { generate } from "../src/core/gen/generate";
 import { fileName, toTimberFile } from "../src/core/gen/pack";
 import { rotate, slopeHighSide, startEntranceTile, type Orientation } from "../src/core/format/footprints";
@@ -147,6 +161,8 @@ if (milestone === "m1") {
     `River-mouth sources (${sources.length}): ${sources.map((e) => `(${e.x}, ${e.y})`).join(" ")}; strength ${b.sources[0]?.strength} each`,
     `F2 gap: the source at (${mid.x}, ${mid.y}) is removed in the gap file.`,
   );
+} else if (milestone === "m5") {
+  m5();
 } else {
   // ---- B: pre-filled water, tree survival, the empty-water A/B file, badwater downstream
   const emptyBytes = writeTimber(toTimberFile(r.spec, b, { emptyWater: true }));
@@ -242,3 +258,167 @@ if (milestone === "m1") {
 }
 writeFileSync(join(outDir, "checks.txt"), lines.join("\n") + "\n");
 console.log(lines.join("\n"));
+
+// ------------------------------------------------------------------------------------------ M5
+
+/** C and F1 on three maps edited with the M5 tools. Every edit is planned by the same code the
+ *  editor runs, with fixed ids, so the files reproduce. */
+function m5(): void {
+  const id = (k: number) => `00000000-0000-4000-8000-${String(k).padStart(12, "0")}`;
+  const open = () => MapSession.fromGenerated(r);
+  const river = r.features.find((f): f is RiverFeature => f.kind === "river")!;
+  const H = b.H;
+  const exportOf = (s: MapSession, name: string) => {
+    const { bytes } = s.exportTimber();
+    writeFileSync(join(outDir, `${base} ${name}.timber`), bytes);
+    const v = s.validate("export");
+    const failing = v.report.checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false);
+    if (failing.some((c) => c.class === "load")) throw new Error(`${name}: load problems: ${failing.map((c) => c.id).join(", ")}`);
+    return { bytes, warnings: failing.map((c) => `${c.id}: ${c.message}`) };
+  };
+  const apply = (s: MapSession, r2: PlannedEdit) => {
+    if (!r2.ok) throw new Error(r2.errors.join("; "));
+    const a = s.applyAll(r2.ops, "user", r2.label);
+    if (!a.ok) throw new Error(a.errors.join("; "));
+    return r2.feature as SetPieceFeature;
+  };
+  lines.push(
+    `${base}: ${size}×${size}, seed ${seed}, generator ${r.spec.generatorVersion}, edited with the M5 tools (one edit per map).`,
+    "",
+    "Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.",
+    "PNGs: north up, 5 px per tile, dotted grid every 16 tiles; water blue, start white (door red); each map's marks are listed below.",
+    `Start: StartingLocation at (${start.x}, ${start.y}), z ${start.z}, ${start.orientation}; door tile (${door.join(", ")}).`,
+    "",
+  );
+
+  // ---- F1: a 20-wide standalone waterfall at S = 2, and the same fall at S = 8
+  const sA = open();
+  let fall: PlannedEdit | null = null;
+  search: for (let y = H - 10; y >= Math.floor((2 * H) / 3); y -= 3)
+    for (let dx = 0; dx <= W / 2; dx += 4)
+      for (const x of dx ? [Math.floor(W / 2) + dx, Math.floor(W / 2) - dx] : [Math.floor(W / 2)]) {
+        const p = planPiece(sA, "waterfall", { mode: "standalone", lip: [x, y], facing: "north", width: 20, drop: 6, flow: "steady" }, id(1));
+        if (p.ok && !p.report.some((l) => l.startsWith("moved"))) {
+          fall = p;
+          break search;
+        }
+      }
+  if (!fall) throw new Error("no place for the F1 waterfall");
+  const fA = apply(sA, fall);
+  const lip = (fA.params.plan as unknown as StandalonePlan).lip;
+  const sB = open();
+  const fB = apply(sB, planPiece(sB, "waterfall", { mode: "standalone", facing: "north", width: 20, drop: 6, flow: 8, exactFlow: true, lip }, id(1)));
+  for (const [name, s, f, flow] of [
+    ["F1 waterfall S2", sA, fA, 2],
+    ["F1 waterfall S8", sB, fB, 8],
+  ] as const) {
+    const out = exportOf(s, name);
+    const p = f.params.plan as unknown as StandalonePlan;
+    const m = measureLip(f, W, s.built.heights, s.built.water)!;
+    const marks = startMarks(s.built);
+    for (const [x, y] of lipTiles(p)) marks.push({ x, y, rgb: [230, 0, 200] });
+    for (let k = 0; k + 1 < p.springs.length; k += 2) marks.push({ x: p.springs[k], y: p.springs[k + 1], rgb: [30, 60, 230], inset: 1 });
+    for (let k = 0; k + 1 < p.outflow.length; k += 2) marks.push({ x: p.outflow[k], y: p.outflow[k + 1], rgb: [0, 230, 255], inset: 1 });
+    writeFileSync(join(outDir, `${base} ${name}.png`), preview(s.built, marks, true));
+    const lt = lipTiles(p);
+    const below = lt.map(([x, y]) => [x, y + 1] as [number, number]);
+    const channel: string[] = [];
+    for (let k = 0; k + 1 < p.outflow.length && channel.length < 3; k += Math.max(2, 2 * Math.floor(p.outflow.length / 8))) channel.push(`(${p.outflow[k]}, ${p.outflow[k + 1]})`);
+    lines.push(
+      `sha256 ${sha(out.bytes)}  ${base} ${name}.timber`,
+      `${name}: a standalone waterfall, 20 wide, falling north: lip (${lt[0].join(", ")})–(${lt[lt.length - 1].join(", ")}) at level ${p.lipLevel}, plunge pool below it at level ${p.lipLevel - p.drop} (rows y ${lip[1] + 1}–${lip[1] + 4}).`,
+      `  ${flow} water/s from ${p.springs.length / 2} springs of ${p.springStrength} in the header pool (y ${lip[1] - 3}–${lip[1] - 1}); settled: ${m.width} of 20 lip tiles wet, ${m.depth.toFixed(3)} deep (0.3·S/W = ${((0.3 * flow) / 20).toFixed(3)}), a drop of ${m.drop.toFixed(2)}.`,
+      `  The outflow (cyan) runs ${p.outflow.length / 2} tiles to ${p.outflowTo === "edge" ? "the map edge" : "the river"}, ${p.outflowWidth} wide; a water wheel fits on it, e.g. at ${channel.join(", ")}. The plunge pool is at (${below[0].join(", ")})–(${below[below.length - 1].join(", ")}).`,
+      `  Export warnings: ${out.warnings.join("; ") || "none"}.`,
+      "",
+    );
+  }
+
+  // ---- C1: a dam site on the river's lower reach, where a dam holds a reservoir
+  const sC = open();
+  let dam: PlannedEdit | null = null;
+  const length = river.params.path.reduce((a, q, k, ps) => (k ? a + Math.hypot(q[0] - ps[k - 1][0], q[1] - ps[k - 1][1]) : 0), 0);
+  for (let at = Math.round(length * 0.62); at < length - 12 && !dam; at += 3) {
+    const p = planPiece(sC, "damSite", { river: river.id, at, crest: 2 }, id(2));
+    if (p.ok && p.report.some((l) => l.startsWith("a dam "))) dam = p;
+  }
+  if (!dam) throw new Error("no place for the C1 dam site");
+  const dC = apply(sC, dam);
+  const outC = exportOf(sC, "C1 dam site");
+  const dp = dC.params.plan as unknown as { at: number; crest: number; topLevel: number };
+  const c = pointAtArc(river.params.path, dp.at);
+  const half = Math.ceil(river.params.width / 2) + 1;
+  const line: [number, number][] = [];
+  for (let k = -half; k <= half; k++) line.push([Math.round(c.p[0] + c.normal[0] * k), Math.round(c.p[1] + c.normal[1] * k)]);
+  const gap = line.filter(([x, y]) => sC.built.heights[y * W + x] < dp.topLevel);
+  const bed = Math.min(...gap.map(([x, y]) => sC.built.heights[y * W + x]));
+  const marksC = startMarks(sC.built);
+  for (const [x, y] of gap) marksC.push({ x, y, rgb: [255, 140, 20] });
+  writeFileSync(join(outDir, `${base} C1 dam site.png`), preview(sC.built, marksC, true));
+  lines.push(
+    `sha256 ${sha(outC.bytes)}  ${base} C1 dam site.timber`,
+    `C1 dam site: a rock ridge (top level ${dp.topLevel}) across the river; build the dam in its gap (orange): ${gap.map(([x, y]) => `(${x}, ${y})`).join(" ")}, on the river bed at level ${bed}.`,
+    `  ${dC.params.report.join("; ")}.`,
+    `  A dam ${dp.crest} high there (a crest at level ${bed + dp.crest}) should fill the basin upstream to about that level, and the water should not leak round the ridge's ends.`,
+    `  The generated map's own dam site (the gorge above the basin) is still there too. Export warnings: ${outC.warnings.join("; ") || "none"}.`,
+    "",
+  );
+
+  // ---- a gorge with a stair notch near the start. River Valley's valley floor is wide, so a gorge
+  //      on the main river has floodplain behind its walls and its notch is a plain cut. The check
+  //      wants stairs: a tributary drawn from the south edge through the terraces to the main
+  //      river, with the gorge where it cuts through high ground, its notch on the start's side.
+  const sD = open();
+  let gorge: PlannedEdit | null = null;
+  let trib: RiverFeature | null = null;
+  const sx = start.x + 1;
+  const sy = start.y + 1;
+  tries: for (const dx of [18, -18, 24, -24, 30, -30, 12, -12]) {
+    const x0 = sx + dx;
+    if (x0 < 12 || x0 > W - 12) continue;
+    // the main river's point above x0
+    const join = river.params.path.reduce((q, p) => (Math.abs(p[0] - x0) < Math.abs(q[0] - x0) ? p : q));
+    const sDraft = open();
+    const rv = planRiver({ points: [[x0, 0], [x0, Math.round(join[1] * 0.5)], [Math.round(join[0]), Math.round(join[1])]], flow: 1 }, planContextOf(sDraft), id(4));
+    if (!rv.ok || !sDraft.applyAll(rv.ops, "user", rv.label).ok) continue;
+    const tr = rv.feature as RiverFeature;
+    const len = tr.params.path.reduce((acc, q, k, ps) => (k ? acc + Math.hypot(q[0] - ps[k - 1][0], q[1] - ps[k - 1][1]) : 0), 0);
+    for (let from = 6; from < len - 20; from += 4) {
+      const g = planPiece(sDraft, "gorge", { river: tr.id, from, length: 12, width: 3, wallHeight: 3, access: "stairs" }, id(3));
+      if (!g.ok) continue;
+      // keep it only when its notch climbs: the slopes it places on the built map
+      const probe = open();
+      if (!probe.applyAll(rv.ops, "user", rv.label).ok || !probe.applyAll(g.ops, "user", g.label).ok) continue;
+      if (probe.built.entities.filter((e) => e.owner === id(3) && e.template === "Slope").length < 2) continue;
+      if (!sD.applyAll(rv.ops, "user", rv.label).ok) throw new Error("the tributary did not apply");
+      gorge = g;
+      trib = tr;
+      break tries;
+    }
+  }
+  void sx;
+  void sy;
+  if (!gorge) throw new Error("no place for the gorge");
+  const gD = apply(sD, gorge);
+  const outD = exportOf(sD, "gorge stairs");
+  const notch = sD.built.entities.filter((e) => e.owner === gD.id && e.template === "Slope");
+  const marksD = startMarks(sD.built);
+  for (const e of notch) {
+    marksD.push({ x: e.x, y: e.y, rgb: [245, 150, 20] });
+    const [hx, hy] = slopeHighSide(e.orientation as Orientation);
+    marksD.push({ x: e.x + hx, y: e.y + hy, rgb: [150, 80, 0], inset: 1 });
+  }
+  writeFileSync(join(outDir, `${base} gorge stairs.png`), preview(sD.built, marksD, true));
+  const gp = gD.params.plan as unknown as { from: number; to: number; width: number; wallHeight: number };
+  const g0 = pointAtArc(trib!.params.path, gp.from).p.map(Math.round);
+  const g1 = pointAtArc(trib!.params.path, gp.to).p.map(Math.round);
+  const tp = trib!.params.path;
+  lines.push(
+    `sha256 ${sha(outD.bytes)}  ${base} gorge stairs.timber`,
+    `Gorge stairs: two edits. A river drawn from the south edge at (${tp[0].join(", ")}) through (${tp[1].join(", ")}) into the main river at (${tp[tp.length - 1].join(", ")}), 1 water/s (${trib!.params.width} wide); ${trib!.params.bedProfile.steps.length} steps down where the ground falls.`,
+    `Gorge: the tributary runs ${gp.width} wide between walls ${gp.wallHeight} levels above its bed, from about (${g0.join(", ")}) to (${g1.join(", ")}).`,
+    `  The stair notch: ${notch.length} slopes (orange, high side brown) climb one wall from a two-tile landing beside the water: ${notch.map((e) => `(${e.x}, ${e.y}) z${e.z} ${e.orientation}`).join("; ")}.`,
+    "  Beavers should walk down the notch to the landing and back up, and a water pump on the landing should reach the water.",
+    `  ${gD.params.report.join("; ")}. Export warnings: ${outD.warnings.join("; ") || "none"}.`,
+  );
+}

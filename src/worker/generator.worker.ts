@@ -50,6 +50,7 @@ const api = {
   applyTool: (req: ed.ToolRequest, id: string) => sendUpdate(ed.applyTool(req, id)),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),
+  moveStartTo: (x: number, y: number) => sendUpdate(ed.moveStartTo(x, y)),
   damSites: () => ed.damSiteLayer(),
   instantCheck: () => ed.instantCheck(),
   async settingsResponse(): Promise<GenerateResponse> {

@@ -49,26 +49,32 @@ describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side,
       if (kinds.has(kind)) return null;
       for (let tries = 0; tries < 400; tries++) {
         const op = randomOp(s, rng);
-        if (op?.op === kind) return op;
+        // the sweep looks for an operation of the kind that applies here (the random draws
+        // already test rejections)
+        if (op && !Array.isArray(op) && op.op === kind && s.check(op).length === 0) return op;
       }
       return null;
     });
-    const draws: (() => EditOp | null)[] = [...Array.from({ length: OPS[side] }, () => () => randomOp(s, rng)), ...sweep];
+    const draws: (() => EditOp | EditOp[] | null)[] = [...Array.from({ length: OPS[side] }, () => () => randomOp(s, rng)), ...sweep];
+    let tools = 0;
     for (let step = 0; step < draws.length; step++) {
-      const op = draws[step]();
-      if (!op) continue;
+      const drawn = draws[step]();
+      if (!drawn) continue;
       const before = s.document.edits.length;
-      const res = s.apply(op);
+      // a tool's edit is a group of operations applied as one step
+      const res = Array.isArray(drawn) ? s.applyAll(drawn, "user", "tool") : s.apply(drawn);
       if (!res.ok) {
         // a rejection is clean: a reason, and nothing changed
         rejected++;
-        expect(res.errors.length, JSON.stringify(op)).toBeGreaterThan(0);
+        expect(res.errors.length, JSON.stringify(drawn)).toBeGreaterThan(0);
         expect(s.document.edits.length).toBe(before);
         continue;
       }
       applied++;
-      kinds.add(op.op);
-      expectSameBuild(s.built, s.fullBuild(), `after ${op.op} (step ${step})`);
+      if (Array.isArray(drawn)) tools++;
+      for (const op of Array.isArray(drawn) ? drawn : [drawn]) kinds.add(op.op);
+      const name = Array.isArray(drawn) ? `a tool's ${drawn.map((o) => o.op).join("+")}` : drawn.op;
+      expectSameBuild(s.built, s.fullBuild(), `after ${name} (step ${step})`);
       if (rng.float() < 0.25 && s.canUndo) {
         // step back and forth: the snapshots and the undo data give the same maps
         const n = 1 + rng.int(0, Math.min(3, s.history().filter((h) => h.applied).length));
@@ -81,6 +87,7 @@ describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side,
       }
     }
     expect(applied).toBeGreaterThanOrEqual(OPS[side] * 0.6);
+    expect(tools).toBeGreaterThan(0);
     expect(rejected).toBeGreaterThanOrEqual(0);
     expect([...kinds].sort()).toEqual([...LOG_OPS].sort());
     // the incremental and the full build export the same file

@@ -3,9 +3,11 @@
 // how a feature moves. Pure TypeScript on the map view and the feature list the worker sends.
 
 import { pathField, pointAtArc, polygonMask, type PathField } from "../core/features/geometry";
+import { BUILDERS } from "../core/features/setpieces";
 import type { Feature, Point, RiverFeature } from "../core/features/schema";
 import { runsToTiles, tilesToRuns, type Runs } from "../core/math/grid";
 import type { OpParams } from "../core/doc/ops";
+import { movePatch as corePatch } from "../core/doc/tools";
 import { DEAD, YOUNG, type EntityView, type SurfaceWater } from "../render3d/model";
 
 // ------------------------------------------------------------------------------------- names
@@ -196,6 +198,8 @@ export class FeatureIndex {
   }
 
   private setPieceTiles(f: Extract<Feature, { kind: "setPiece" }>): [number, number][] {
+    const own = BUILDERS[f.params.kind]?.area?.(f, this.W, this.H, this.features);
+    if (own?.length) return own.map((i) => [i % this.W, Math.floor(i / this.W)]);
     const plan = f.params.plan as Record<string, unknown>;
     if (f.params.kind === "badwaterBasin" && typeof plan.x === "number" && typeof plan.y === "number") {
       const out: [number, number][] = [];
@@ -329,7 +333,8 @@ export function describeTile(c: TileContext, x: number, y: number): string {
 export function moveBlocked(f: Feature): string | null {
   switch (f.kind) {
     case "setPiece":
-      return "Set pieces move with their river. Their own tools arrive in the next version.";
+      if (f.params.kind === "badwaterBasin" && f.params.plan.mode === "marsh") return "The generated badwater marsh stays where the valley put it.";
+      return null;
     case "mapObject":
       return "Map objects arrive in a later version.";
     case "landform":
@@ -362,6 +367,14 @@ function coordsBounds(f: Feature, W: number, H: number): { x0: number; y0: numbe
     case "river":
       pts = f.params.path.filter(([x, y]) => x > 0 && y > 0 && x < W - 1 && y < H - 1);
       break;
+    case "setPiece": {
+      // a set piece is planned again where it lands; its builder fits it on the map
+      const p = f.params.plan;
+      const a = (Array.isArray(p.lip) ? p.lip : Array.isArray(p.at) ? p.at : typeof p.x === "number" ? [Number(p.x) + 1, Number(p.y) + 1] : null) as number[] | null;
+      if (a) pts = [[a[0], a[1]]];
+      else return { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+      break;
+    }
     default:
       return null;
   }
@@ -390,33 +403,10 @@ export function clampMove(f: Feature, dx: number, dy: number, W: number, H: numb
 
 const onEdge = (v: number, max: number) => v <= 0 || v >= max;
 
-/** The `updateFeature` patch that moves a feature by (dx, dy) tiles. A river keeps the ends that
- *  sit on the map edge on that edge (its sealed mouth stays a mouth); the start's bench takes the
- *  ground level at its new place. */
+/** The `updateFeature` patch that moves a feature by (dx, dy) tiles (the core's rule: a river keeps
+ *  its edge ends on their edge, the start's bench takes the ground level at its new place). */
 export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array): OpParams["updateFeature"]["patch"] {
-  const shift = (p: Point): Point => [p[0] + dx, p[1] + dy];
-  switch (f.kind) {
-    case "forest":
-    case "berryPatch":
-    case "ruinField":
-      return { params: { area: f.params.area.map(([y, a, b]) => [y + dy, a + dx, b + dx]) as Runs } };
-    case "start": {
-      const [x, y] = shift(f.params.position);
-      return { params: { position: [x, y], benchLevel: heights[y * W + x] } };
-    }
-    case "landform":
-      return { params: { outline: (f.params.outline ?? []).map(shift) } };
-    case "lake":
-      return { params: { outline: f.params.outline.map(shift), outlet: { at: shift(f.params.outlet.at) } } };
-    case "river":
-      return {
-        params: {
-          path: f.params.path.map(([x, y]) => [onEdge(x, W - 1) ? x : x + dx, onEdge(y, H - 1) ? y : y + dy]),
-        },
-      };
-    default:
-      return {};
-  }
+  return corePatch(f, dx, dy, W, H, heights);
 }
 
 /** Where a feature's move handle sits: the middle of its tiles. */
@@ -476,4 +466,90 @@ export function rectOutline(r: { x0: number; y0: number; x1: number; y1: number 
 /** A random id for a feature the player makes (PLAN §19.4). */
 export function newId(): string {
   return crypto.randomUUID();
+}
+
+// ------------------------------------------------------------------------------------- the start
+
+export interface StartCheck {
+  /** Why the district center cannot stand there (null: it can). */
+  problem: string | null;
+  /** The 3×3 footprint and the tile at its door. */
+  tiles: number[];
+  door: number;
+  /** Tiles to the nearest water a pump reaches (0–2 levels below the start, 0.3+ deep), trees and
+   *  living berry bushes within 20 tiles. */
+  water: number | null;
+  trees: number;
+  bushes: number;
+}
+
+/** The start's footprint and nearby water, wood and food at (x, y), from what the page shows
+ *  (EDITOR_PLAN §4: the footprint preview, green or red, and simple indicators). `level` is the
+ *  bench level for a start that levels its ground (a generated map), or null for an imported start
+ *  that stands on the ground as it is. */
+export function checkStartAt(c: TileContext, x: number, y: number, door: [number, number], level: number | null, self: string | null): StartCheck {
+  const { W, H } = c;
+  const tiles: number[] = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) tiles.push((y + dy) * W + (x + dx));
+  const doorI = door[1] * W + door[0];
+  let problem: string | null = null;
+  const z = level ?? c.heights[y * W + x];
+  for (const i of [...tiles, doorI]) {
+    const tx = i % W;
+    const ty = Math.floor(i / W);
+    if (tx < 1 || ty < 1 || tx > W - 2 || ty > H - 2 || i < 0) {
+      problem = "too close to the map edge";
+      break;
+    }
+    if (c.index && c.index.river[i] >= 0) {
+      problem = "in a river";
+      break;
+    }
+    if (c.water.depth[i] > 0.05) {
+      problem = "under water";
+      break;
+    }
+    if (level === null && c.heights[i] !== z) {
+      problem = "not on level ground";
+      break;
+    }
+    const here = c.entitiesAt.get(i);
+    if (here?.some((k) => c.entities.owners[c.entities.owner[k]] !== self && !/^(Pine|Birch|Oak|Succulent|BlueberryBush|RuinColumnH\d|StartingLocation)$/.test(c.entities.templates[c.entities.template[k]]))) {
+      problem = "on an object";
+      break;
+    }
+  }
+  // indicators: pumpable water, trees and bushes within 20 tiles (straight distance)
+  let water: number | null = null;
+  let trees = 0;
+  let bushes = 0;
+  const r = 24;
+  for (let yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++)
+    for (let xx = Math.max(0, x - r); xx <= Math.min(W - 1, x + r); xx++) {
+      const i = yy * W + xx;
+      const d = Math.max(0, Math.hypot(xx - x, yy - y) - 1);
+      const depth = c.water.depth[i];
+      const surface = c.heights[i] + depth;
+      if (depth >= 0.3 && c.water.contamination[i] < 0.05 && surface <= z + 0.01 && surface >= z - 2 && (water === null || d < water)) water = Math.round(d);
+      if (d > 20) continue;
+      for (const k of c.entitiesAt.get(i) ?? []) {
+        const t = c.entities.templates[c.entities.template[k]];
+        const dead = (c.entities.flags[k] & DEAD) !== 0;
+        if (t === "Pine" || t === "Birch" || t === "Oak") trees++;
+        else if (t === "BlueberryBush" && !dead) bushes++;
+      }
+    }
+  return { problem, tiles, door: doorI, water, trees, bushes };
+}
+
+/** The river whose channel holds tile (x, y), and the arc position there (a click on a river). */
+export function riverAt(index: FeatureIndex, x: number, y: number): { id: string; at: number } | null {
+  const { W, H } = index;
+  if (x < 0 || y < 0 || x >= W || y >= H) return null;
+  const k = index.river[y * W + x];
+  if (k < 0) return null;
+  const f = index.features[k];
+  if (f.kind !== "river") return null;
+  const field = index.riverField(f);
+  return { id: f.id, at: Math.round(field.s[y * W + x] * 100) / 100 };
 }

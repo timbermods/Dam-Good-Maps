@@ -548,6 +548,116 @@ button[aria-pressed="true"] {
   font-size: 0.85rem;
 }
 
+/* M5: the tool preview, the problems an edit made, the start's indicators, map layers */
+
+.preview-card,
+.instant {
+  position: absolute;
+  left: 10px;
+  bottom: 52px;
+  width: min(360px, 80%);
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.preview-card h2,
+.instant h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.preview-card ul,
+.instant ul,
+.inspector .report {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.preview-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.instant {
+  left: auto;
+  right: 10px;
+  bottom: 52px;
+  border-color: var(--bad);
+}
+
+.instant header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.instant h2 {
+  color: var(--bad);
+}
+
+.start-indicators {
+  position: absolute;
+  left: 10px;
+  top: 96px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.start-indicators p {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.start-indicators .ok {
+  color: var(--ok);
+}
+
+.start-indicators .bad,
+.start-indicators .low {
+  color: var(--bad);
+}
+
+.start-indicators ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.layer-toggle {
+  margin: 0 0 12px;
+}
+
+.inspector select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.inspector details {
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+
+.tool-options .check,
+.inspector .check {
+  font-weight: 400;
+}
+
 /* dialogs */
 
 .dialog-backdrop {

@@ -37,9 +37,12 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   await page.getByRole("tab", { name: "Land" }).click();
   await page.getByRole("button", { name: "Plateau", exact: true }).click();
   await drag(page, [80, 8], [88, 14]);
+  // the plateau is planned on the map and shown first; Place adds it
+  await page.getByRole("complementary", { name: "Preview" }).getByRole("button", { name: "Place" }).click();
+  await page.evaluate(() => window.dgmEditor!.idle());
   await page.getByRole("button", { name: "Done" }).click();
   let i = await info(page);
-  expect(i.history.map((h) => h.label)).toEqual(["Add forest", "Add landform"]);
+  expect(i.history.map((h) => h.label)).toEqual(["Add forest", "Add plateau"]);
   const mine = i.features.filter((f) => f.origin === "user");
   expect(mine.map((f) => f.kind)).toEqual(["forest", "landform"]);
 
@@ -92,7 +95,7 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   await page.waitForFunction(() => !!window.dgmEditor, null, { timeout: 60_000 });
   i = await info(page);
   expect(i.spec!.designedFor).toBe("hard");
-  expect(i.history.map((h) => h.label)).toEqual(["Add forest", "Add landform", "Move start", "Change settings and regenerate"]);
+  expect(i.history.map((h) => h.label)).toEqual(["Add forest", "Add plateau", "Move start", "Change settings and regenerate"]);
   expect(i.edits).toBe(3);
   for (const f of mine) expect(i.features.find((g) => g.id === f.id)).toEqual(f);
   expect(i.orphans).toEqual([]);
@@ -129,7 +132,7 @@ test("a feature is selected by clicking it, and its delete handle refuses what o
   await expect(page.getByRole("button", { name: "Delete Start" })).toBeVisible();
   // the river: the valley builds on it, so deleting it is refused with the reason
   await page.getByRole("tab", { name: "Water" }).click();
-  await page.getByRole("button", { name: "River", exact: true }).first().click();
+  await page.locator(".feature-list").getByRole("button", { name: "River", exact: true }).first().click();
   await page.getByRole("button", { name: "Delete River" }).click();
   await expect(page.getByRole("alert")).toContainText(/build on this river/);
   expect((await info(page)).edits).toBe(0);
