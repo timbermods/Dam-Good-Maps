@@ -5,7 +5,7 @@
 // (gorge ridge across a valley), the on-river waterfall (a bed step) and, from M2, the badwater
 // marsh.
 
-import type { BuildTarget } from "../build";
+import type { BuildTarget, Rect } from "../target";
 import type { SetPieceFeature, SetPieceKind } from "../schema";
 import { badwaterBasin } from "./badwaterBasin";
 import { damSite } from "./damSite";
@@ -29,6 +29,8 @@ export interface SetPieceBuilder {
   kind: SetPieceKind;
   limits(target: BuildTarget): AchievableRanges;
   rasterize(feature: SetPieceFeature, target: BuildTarget): void;
+  /** Every tile the rasterizer reads or writes (a dirty-region rebuild widens to it), or "all". */
+  footprint(feature: SetPieceFeature, target: BuildTarget): Rect | "all" | null;
   /** The sources the set piece adds, if any. */
   sources?(feature: SetPieceFeature): SetPieceSource[];
 }

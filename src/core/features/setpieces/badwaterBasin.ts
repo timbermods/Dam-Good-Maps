@@ -6,7 +6,7 @@
 // full §9.5 set piece, with the `water.badwater_contained` proof) arrives with the shared builder in
 // roadmap M5; its plan will carry an `outlet`.
 
-import type { BuildTarget } from "../build";
+import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
 import type { SetPieceBuilder, SetPieceSource } from "./index";
 
@@ -38,9 +38,17 @@ export const badwaterBasin: SetPieceBuilder = {
     if (p.mode !== "marsh") return t.note(`badwater basin ${feature.id}: mode ${String(p.mode)} is not built by this version`);
     for (const [x, y] of pitTiles(p)) {
       if (x < 0 || x >= t.W || y < 0 || y >= t.H) continue;
-      t.heights[y * t.W + x] = p.level;
-      t.protect(y * t.W + x);
+      const i = y * t.W + x;
+      if (!t.inRegion(i) || !t.writable(i, feature)) continue;
+      t.heights[i] = p.level;
+      t.protect(i);
     }
+  },
+  footprint(feature: SetPieceFeature, t: BuildTarget): Rect | "all" | null {
+    const p = feature.params.plan as unknown as MarshPlan;
+    if (p.mode !== "marsh") return null;
+    const b = boundsOf(pitTiles(p));
+    return b && clipRect(b, t.W, t.H, 1);
   },
   sources(feature: SetPieceFeature): SetPieceSource[] {
     const p = feature.params.plan as unknown as MarshPlan;

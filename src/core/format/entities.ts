@@ -18,9 +18,13 @@ export interface EntitySpec {
   before?: JsonObject;
   /** The feature that placed it (kept in the document, never written to the .timber). */
   owner: string;
+  /** An entity read from a file (an imported map, or a generation's stored base): its JSON exactly
+   *  as read, written back unchanged. Edits replace it with an edited copy. */
+  raw?: JsonObject;
 }
 
 export function entityJson(e: EntitySpec): JsonObject {
+  if (e.raw) return e.raw;
   const bo: JsonObject = { Coordinates: { X: e.x, Y: e.y, Z: e.z } };
   if (e.orientation !== "Cw0") bo.Orientation = e.orientation;
   if (e.flipped) bo.Flipped = true;
@@ -112,6 +116,23 @@ export function startingLocation(b: Base & { orientation: Orientation; player?: 
 
 function pos(b: Base): Omit<EntitySpec, "template" | "components"> {
   return { id: b.id, owner: b.owner, x: b.x, y: b.y, z: b.z, orientation: "Cw0", flipped: false };
+}
+
+/** An entity of a world.json as a spec that writes back exactly as it was read. */
+export function rawEntity(e: JsonObject, owner: string): EntitySpec {
+  const p = placementOf(e);
+  return {
+    id: String(e.Id),
+    template: String(e.Template),
+    x: p?.x ?? 0,
+    y: p?.y ?? 0,
+    z: p?.z ?? 0,
+    orientation: p?.orientation ?? "Cw0",
+    flipped: p?.flipped ?? false,
+    components: {},
+    owner,
+    raw: e,
+  };
 }
 
 /** Where a world.json entity stands: template, Coordinates, Orientation and Flipped (0.6 maps

@@ -3,7 +3,7 @@
 // drop so the editor and Claude can grab it; standalone falls (header pool, springs, plunge pool)
 // arrive with the editor tools (roadmap M5).
 
-import type { BuildTarget } from "../build";
+import type { BuildTarget } from "../target";
 import type { SetPieceFeature } from "../schema";
 import type { SetPieceBuilder } from "./index";
 
@@ -32,4 +32,6 @@ export const waterfall: SetPieceBuilder = {
       t.note(`waterfall ${feature.id} and river ${p.river} disagree about the step at ${p.at}`);
     }
   },
+  // an on-river fall writes no terrain of its own
+  footprint: () => null,
 };

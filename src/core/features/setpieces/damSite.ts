@@ -12,7 +12,7 @@
 import { fbm } from "../../math/noise";
 import { hash32 } from "../../math/hash";
 import { bedAt, pointAtArc } from "../geometry";
-import type { BuildTarget } from "../build";
+import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
 import type { SetPieceBuilder } from "./index";
 
@@ -85,19 +85,42 @@ export const damSite: SetPieceBuilder = {
       }
       reach[side] = k;
     }
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const i = y * W + x;
-        if (field.d[i] < channelHalf + 0.5) continue;
-        const along = (x - c[0]) * tx + (y - c[1]) * ty;
-        if (Math.abs(along) > half) continue;
-        const across = (x - c[0]) * nx + (y - c[1]) * ny;
-        if (across > reach[0] || -across > reach[1]) continue;
-        const wob = p.wobble * fbm(noiseSeed, x, y, 24, 3);
-        if (Math.abs(along + wob) > p.thickness / 2) continue;
-        if (heights[i] < p.topLevel) heights[i] = p.topLevel;
-        t.protect(i);
-      }
-    }
+    t.forEach((i, x, y) => {
+      if (field.d[i] < channelHalf + 0.5 || !t.writable(i, feature)) return;
+      const along = (x - c[0]) * tx + (y - c[1]) * ty;
+      if (Math.abs(along) > half) return;
+      const across = (x - c[0]) * nx + (y - c[1]) * ny;
+      if (across > reach[0] || -across > reach[1]) return;
+      const wob = p.wobble * fbm(noiseSeed, x, y, 24, 3);
+      if (Math.abs(along + wob) > p.thickness / 2) return;
+      if (heights[i] < p.topLevel) heights[i] = p.topLevel;
+      t.protect(i);
+    });
+  },
+  // the ridge's ends are found by reading the terrain along the whole band, and it is written
+  // within it: a rebuild that touches the band rebuilds all of it
+  footprint(feature: SetPieceFeature, t: BuildTarget): Rect | "all" | null {
+    return damBand(feature, t);
   },
 };
+
+/** The rectangle around every tile the dam site reads or writes: the band across the valley
+ *  through the ridge centre, as far as it may reach (halfSpan), plus the wobble. */
+export function damBand(feature: SetPieceFeature, t: BuildTarget): Rect | null {
+  const p = feature.params.plan as unknown as DamSitePlan;
+  const river = t.river(p.river);
+  if (!river) return null;
+  const path = river.params.path;
+  const c = pointAtArc(path, p.at).p;
+  const ax = path[path.length - 1][0] - path[0][0];
+  const ay = path[path.length - 1][1] - path[0][1];
+  const al = Math.sqrt(ax * ax + ay * ay) || 1;
+  const tx = ax / al;
+  const ty = ay / al;
+  const nx = -ty;
+  const ny = tx;
+  const a = Math.ceil(p.thickness / 2 + p.wobble) + 2;
+  const corners: [number, number][] = [];
+  for (const s of [-p.halfSpan - 1, p.halfSpan + 1]) for (const u of [-a, a]) corners.push([c[0] + s * nx + u * tx, c[1] + s * ny + u * ty]);
+  return clipRect(boundsOf(corners)!, t.W, t.H, 2);
+}
