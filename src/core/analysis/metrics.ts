@@ -66,6 +66,14 @@ export interface MapMetrics {
   ruinsNearest: number;
   /** Tiles of the start's bench: at the start's level within 8 tiles (Start area). */
   benchTiles: number;
+  /** The map objects (Thorn belts, Unstable cores, Relics, Geothermal fields, Mine sites) and the
+   *  rivers leaving by the map edge (River style: a braided river's delta has 2–4). */
+  thorns: number;
+  cores: number;
+  relics: number;
+  geothermal: number;
+  mines: number;
+  edgeExits: number;
 }
 
 export interface Measurable {
@@ -238,8 +246,16 @@ export function measure(m: Measurable): MapMetrics {
       }
   }
 
+  // ---- the 1.0 map objects (PLAN §5.4–5.5)
+  const count = (re: RegExp) => m.built.entities.filter((e) => re.test(e.template)).length;
   const per10k = 1e4 / N;
   return {
+    thorns: count(/^Thorns$/),
+    cores: count(/^UnstableCore$/),
+    relics: count(/^(Small|Medium|Large)Relic$/),
+    geothermal: count(/^GeothermalField$/),
+    mines: count(/^UndergroundRuins$/),
+    edgeExits: rivers.filter((r) => "edge" in r.params.exit).length,
     heightRange,
     cliffShare: cliff / N,
     step1Share: steps ? steps1 / steps : 0,

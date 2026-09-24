@@ -37,8 +37,10 @@ import { stream, type Rng } from "../math/rng";
 import type { MapSpec } from "../spec/mapspec";
 import { bandsFor, drawBands, fitRelief, layoutTargets, type LayoutTargets } from "./layout";
 import { planRiver } from "../doc/tools";
-import { districtCandidates, planExtras } from "./extras";
+import { districtCandidates, obstacleSpots, planExtras } from "./extras";
 import { DISTRICT_RADIUS, districtTiles } from "../features/setpieces/secondDistrict";
+import { obstacleTiles } from "../features/setpieces/obstaclePayoff";
+import { RUIN_HEIGHT_SHARES, RUINS } from "./calibrated";
 import { walkRegions } from "../analysis/regions";
 import { slopeHighSide } from "../format/footprints";
 import { planResources } from "./resources";
@@ -63,20 +65,22 @@ export const VALLEY: Record<
     narrows: boolean;
     /** A stairway climbs the valley wall beside the start. */
     stairs: boolean;
-    /** Where the dam site's gorge is drawn, as shares of the map's width. */
+    /** Where the dam site's gorge is drawn, as shares of the map's width (Delta's lies west, to
+     *  leave room for the delta a braided river builds below it: the river ends in a head pool,
+     *  and 2–4 channels fan out from it across a low plain to the east edge, the start at the
+     *  head; PLAN §5.3, §8). */
     gorge: [number, number];
-    /** Delta: below the gorge the river ends in a head pool, and 2–4 channels fan out from it
-     *  across a low plain to the east edge; the start stands at the head (PLAN §8). */
-    delta: boolean;
     /** Highlands: how many plateaus rise on the terraces (a cliff all round), and a stream from a
      *  spring on the highest cascades down to the river (PLAN §8). */
     plateaus: [number, number];
+    /** Ruins on a plateau that takes player stairs to reach (PLAN §9.4). */
+    obstacle: boolean;
   }
 > = {
-  riverValley: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false, gorge: [0.42, 0.58], delta: false, plateaus: [0, 0] },
-  canyon: { floorShare: false, canyonFloor: [9, 12.5], wall: true, wobble: 0.45, jag: 0.3, narrows: true, stairs: true, gorge: [0.42, 0.58], delta: false, plateaus: [0, 0] },
-  highlands: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 0.8, jag: null, narrows: false, stairs: false, gorge: [0.42, 0.58], delta: false, plateaus: [2, 4] },
-  delta: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false, gorge: [0.3, 0.4], delta: true, plateaus: [0, 0] },
+  riverValley: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false, gorge: [0.42, 0.58], plateaus: [0, 0], obstacle: true },
+  canyon: { floorShare: false, canyonFloor: [9, 12.5], wall: true, wobble: 0.45, jag: 0.3, narrows: true, stairs: true, gorge: [0.42, 0.58], plateaus: [0, 0], obstacle: false },
+  highlands: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 0.8, jag: null, narrows: false, stairs: false, gorge: [0.42, 0.58], plateaus: [2, 4], obstacle: true },
+  delta: { floorShare: true, canyonFloor: [0, 0], wall: false, wobble: 1, jag: null, narrows: false, stairs: false, gorge: [0.3, 0.4], plateaus: [0, 0], obstacle: true },
 };
 
 const MIN_RIVER_WIDTH = 4.4; // tiles with centre distance < 2.2 are channel (5 rows)
@@ -168,8 +172,11 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const basinX1 = gorgeX - 6; // ends clear of the ridge (it spans about ±4 around the gorge)
     // on Hard the start stands between the gorge and the falls, so the falls keep 26 tiles off; a
     // delta's river ends at its head pool, and the delta fills the rest of the map
-    const headX = A.delta ? Math.min(W - Math.max(24, Math.round(0.28 * W)), gorgeX + 32 + Math.round(0.05 * W)) : 0;
-    const fallsX = A.delta ? headX : Math.floor(Math.min(W - 8, Math.max(hard ? gorgeX + (A.stairs ? 40 : 26) : 0, gorgeX + W * rng.range(0.16, 0.24))));
+    // (a braided river builds the delta in any valley but a canyon's narrows; Delta's preset is
+    // braided)
+    const braided = spec.settings.water.riverStyle === "braided" && !A.narrows;
+    const headX = braided ? Math.min(W - Math.max(24, Math.round(0.28 * W)), gorgeX + 32 + Math.round(0.05 * W)) : 0;
+    const fallsX = braided ? headX : Math.floor(Math.min(W - 8, Math.max(hard ? gorgeX + (A.stairs ? 40 : 26) : 0, gorgeX + W * rng.range(0.16, 0.24))));
     const cascadeX = Math.max(3, basinX0 - 2);
 
     // ---- the bed's steps (PLAN §5.3 Waterfalls: 0 / 1–2 / 3–6 falls of 2+ levels). A Hard map's
@@ -180,14 +187,14 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const cascadeDrop = hard ? 4 : off ? 1 : 2;
     steps.push({ x: cascadeX, drop: cascadeDrop, role: off && !hard ? null : "setpiece/waterfall/cascade" });
     if (off && !hard && cascadeX - STEP_GAP >= 3) steps.push({ x: cascadeX - STEP_GAP, drop: 1, role: null });
-    if (!A.delta) {
+    if (!braided) {
       steps.push({ x: fallsX, drop: off ? 1 : 2, role: off ? null : "setpiece/waterfall/falls" });
       if (off && fallsX + STEP_GAP <= W - 6) steps.push({ x: fallsX + STEP_GAP, drop: 1, role: null });
     }
     const extra = t.waterfalls === "many" ? 1 + rng.int(0, 4) : 0; // 3–6 falls in all
     const slots: number[] = [];
     for (let x = cascadeX - STEP_GAP - 2; x >= 8; x -= STEP_GAP + 4) slots.push(x);
-    if (!A.delta) for (let x = fallsX + STEP_GAP + 2; x <= W - 8; x += STEP_GAP + 4) slots.push(x);
+    if (!braided) for (let x = fallsX + STEP_GAP + 2; x <= W - 8; x += STEP_GAP + 4) slots.push(x);
     const slotOrder = rng.shuffle(slots.slice());
     for (let k = 0; k < extra && k < slotOrder.length; k++) steps.push({ x: slotOrder[k], drop: 2, role: `setpiece/waterfall/extra/${slotOrder[k] < cascadeX ? "up" : "down"}/${k}` });
     steps.sort((a, b) => a.x - b.x);
@@ -230,14 +237,14 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const startDraw = rng.float();
     const tribDraws = [0, 1].map(() => ({ at: rng.float(), wiggle: rng.range(-0.5, 0.5), x2: rng.range(-8, 8), steps: rng.float() }));
     // a delta's channels: 2–4 of them, their mouths spread over 30–60% of the east edge
-    const deltaDraws = A.delta ? { n: 2 + rng.int(0, 3), spread: rng.range(0.3, 0.6), wiggle: [0, 1, 2, 3].map(() => rng.range(-1, 1)) } : null;
+    const deltaDraws = braided ? { n: 2 + rng.int(0, 3), spread: rng.range(0.3, 0.6), wiggle: [0, 1, 2, 3].map(() => rng.range(-1, 1)) } : null;
     // Highlands: the plateaus' draws (count, then per plateau: where, size, height)
     const plateauDraws = A.plateaus[1] > 0 ? { n: A.plateaus[0] + rng.int(0, A.plateaus[1] - A.plateaus[0] + 1), each: [0, 1, 2, 3, 4, 5].map(() => ({ u: rng.float(), r: rng.range(0.8, 1.2), rise: 2 + rng.int(0, 3), shape: rng.float() })) } : null;
 
     // the path follows the meander; a river fed by a spring (no river enters on the edge) starts
     // three tiles in; a delta's ends at its head pool
     const x0 = t.rivers === 0 ? 3 : 0;
-    const xEnd = A.delta ? headX : W - 1;
+    const xEnd = braided ? headX : W - 1;
     const path: Point[] = [];
     for (let x = x0; x < xEnd; x += 4) path.push([x, round(centre(x), 2)]);
     path.push([xEnd, round(centre(xEnd), 2)]);
@@ -384,11 +391,11 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
         const lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
         const hi = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
         sx = lo + Math.floor(startDraw * (hi - lo + 1));
-      } else if (hard || A.delta) {
+      } else if (hard || braided) {
         // below the ridge, clear of it by the bench and its margin (a delta's start stands at the
         // head of the delta, clear of its pool)
         const first = gorgeX + 14;
-        const last = A.delta ? headX - 16 : fallsX - 10;
+        const last = braided ? headX - 16 : fallsX - 10;
         sx = Math.min(last, first + Math.floor(startDraw * Math.max(1, last - first)));
       } else {
         sx = basinX0 + 2 + Math.floor(startDraw * Math.max(1, gorgeX - 6 - basinX0 - 2));
@@ -421,7 +428,7 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
       // and of the other tributaries
       const startN: 1 | -1 = centre(sx) < sy ? 1 : -1;
       const busy: [number, number, number][] = [[gorgeX - 12, gorgeX + 12, 0], [sx - 18, sx + 18, startN]];
-      if (A.delta) busy.push([headX - 16, W, 0]);
+      if (braided) busy.push([headX - 16, W, 0]);
       for (let k = 0; k < tributaries; k++) {
         const d = tribDraws[k];
         const tside = (k % 2 === 0 ? -startN : startN) as 1 | -1;
@@ -520,7 +527,7 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     }
 
     // a delta's head pool is kept clear like the basin
-    if (A.delta) {
+    if (braided) {
       for (const f of layout) {
         if (f.kind !== "lake" || f.role !== "lake/delta/head") continue;
         const m = polygonMask(f.params.outline, W, H);
@@ -569,7 +576,7 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
       rng: extrasRng,
       ground,
       t,
-      drains: A.delta ? [] : [reachOf(river, reachFrom)],
+      drains: braided ? [] : [reachOf(river, reachFrom)],
       avoid: withChannelBanks(avoid, ground),
       noRoute: noRouteMask(W, H, lake, [], context?.protect ?? null, band),
       start: { x: sx, y: sy },
@@ -615,7 +622,7 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     if (ponds.length) layout.splice(layout.indexOf(start), 0, ...ponds);
 
     // ------------------------------------------------------------------ objects and resources on the settled water
-    const resources = objectsAndResources(spec, layout, others, context, candidate, attempt, settleCache, band);
+    const resources = objectsAndResources(spec, layout, others, context, candidate, attempt, settleCache, band, A.obstacle);
     return [...layout, ...resources];
   }
 }
@@ -635,6 +642,7 @@ export function objectsAndResources(
   attempt: number,
   settleCache: SettleCache | undefined,
   avoid: Uint8Array | null,
+  obstacle = false,
 ): Feature[] {
   const W = spec.size.x;
   const H = spec.size.y;
@@ -661,13 +669,34 @@ export function objectsAndResources(
       break;
     }
   }
+  // ruins on a plateau (PLAN §9.4): a plateau two levels above ground the colony walks on, a ruin
+  // field on top; one flight of player stairs reaches it
+  const keepOffResources = context?.protect ? context.protect.slice() : new Uint8Array(W * H);
+  const extraFeatures: Feature[] = [];
+  if (obstacle) {
+    const radius = W * H >= 128 * 128 ? 5 : 4;
+    for (const [x, y] of obstacleSpots(base, [...layout, ...others], avoidAll, radius, 3)) {
+      const ctx: PieceContext = { W, H, seed, features: [...layout, ...others], heights: base.heights, channel: base.channel, start: base.start ? { x: base.start.x, y: base.start.y, radius: 8 } : null, protect: base.cache.terrain.protect };
+      const role = "setpiece/obstaclePayoff/ruins";
+      const r = planSetPiece("obstaclePayoff", { at: [x, y], radius, rise: 2 }, ctx, { id: featureId(seed, "setPiece", role), origin: "generated", role }, true);
+      if (!r.ok) continue;
+      const disc = obstacleTiles({ x, y, radius }, W, H);
+      const meanH = RUIN_HEIGHT_SHARES.reduce((a, s, k) => a + s * (k + 1), 0);
+      const fr = "ruinField/obstacle";
+      layout.push(r.feature);
+      extraFeatures.push({ id: featureId(seed, "ruinField", fr), kind: "ruinField", origin: "generated", role: fr, locked: false, params: { area: tilesToRuns(disc, W), scrapTarget: Math.round(disc.length * 15 * meanH), heightMix: [...RUIN_HEIGHT_SHARES], centerBias: RUINS.centerBias } });
+      for (const i of obstacleTiles({ x, y, radius: radius + 3 }, W, H)) avoidAll[i] = keepOffResources[i] = 1;
+      base = buildWith(layout);
+      break;
+    }
+  }
   const objects = planExtras({ spec, base, features: [...layout, ...others], protect: context?.protect ?? null, avoid: avoidAll, candidate, attempt });
   if (objects.length) {
     layout.push(...objects);
     base = buildWith(layout);
   }
-  const constraints = context ? { protect: context.protect, lockedMask: context.locked?.mask ?? null } : undefined;
-  return planResources(spec, base, candidate, attempt, constraints, sites);
+  const constraints = { protect: keepOffResources, lockedMask: context?.locked?.mask ?? null };
+  return [...extraFeatures, ...planResources(spec, base, candidate, attempt, constraints, sites)];
 }
 
 /** Whether (x, y) is on ground the colony can walk to from the start (same level, and the built
