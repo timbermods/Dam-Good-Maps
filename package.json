@@ -17,7 +17,9 @@
     "bench": "tsx tools/bench.ts",
     "bench:water": "tsx tools/bench.ts --water",
     "batch": "tsx tools/batch.ts",
-    "fixtures": "python tools/export-fixtures.py"
+    "fixtures": "python tools/export-fixtures.py",
+    "build:spike": "tsx tools/build-spike.ts",
+    "spike:check": "tsx tools/build-spike.ts && tsx tools/spike-check.ts"
   },
   "dependencies": {
     "@preact/signals": "^2.11.2",

@@ -1,0 +1,191 @@
+<title>Dam Good Maps Spike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #eef2ef;
+    --surface: #f9fbf9;
+    --ink: #1c2622;
+    --muted: #56665f;
+    --line: #d2ddd7;
+    --accent: #1f6f7a;
+    --accent-ink: #ffffff;
+    --pass: #3d7a38;
+    --fail: #b0402b;
+    --wait: #8a6414;
+    --you: #574c9c;
+    --off: #6d7a74;
+    --code: #e6ece8;
+    --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #111816;
+      --surface: #182220;
+      --ink: #e1eae5;
+      --muted: #97a79f;
+      --line: #2b3834;
+      --accent: #62b3bd;
+      --accent-ink: #0d1614;
+      --pass: #85c27b;
+      --fail: #e57b63;
+      --wait: #d8a646;
+      --you: #aa9ee6;
+      --off: #8a9791;
+      --code: #0f1614;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #111816;
+    --surface: #182220;
+    --ink: #e1eae5;
+    --muted: #97a79f;
+    --line: #2b3834;
+    --accent: #62b3bd;
+    --accent-ink: #0d1614;
+    --pass: #85c27b;
+    --fail: #e57b63;
+    --wait: #d8a646;
+    --you: #aa9ee6;
+    --off: #8a9791;
+    --code: #0f1614;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 15px/1.55 var(--body);
+    padding-inline: 16px;
+    padding-block: 28px 56px;
+  }
+  main { max-width: 860px; margin: 0 auto; display: grid; gap: 28px; }
+  h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(26px, 5vw, 36px); letter-spacing: -0.01em; font-weight: 700; }
+  h2 { font-size: 19px; font-weight: 700; display: flex; gap: 10px; align-items: baseline; }
+  h2 .n { font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 500; }
+  p { margin: 0; max-width: 65ch; }
+  .lede { color: var(--muted); }
+  header { display: grid; gap: 12px; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 4px 0 0; }
+  .chip {
+    display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: var(--surface);
+    border-radius: 999px; padding: 5px 12px 5px 10px; font-size: 13px;
+  }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--off); flex: none; }
+  .chip .state { font: 500 12px var(--mono); color: var(--muted); }
+  [data-state="run"]::before { background: var(--wait); animation: pulse 1s ease-in-out infinite; }
+  [data-state="wait"]::before { background: var(--wait); }
+  [data-state="pass"]::before { background: var(--pass); }
+  [data-state="fail"]::before { background: var(--fail); }
+  [data-state="you"]::before { background: var(--you); }
+  [data-state="pass"] .state { color: var(--pass); }
+  [data-state="fail"] .state { color: var(--fail); }
+  [data-state="you"] .state { color: var(--you); }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { [data-state="run"]::before { animation: none; } }
+  section { display: grid; gap: 12px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button, .file {
+    font: 600 14px var(--body); border-radius: 6px; padding: 8px 14px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+  }
+  button.quiet, .file { background: transparent; color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button:focus-visible, .file:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .file input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .file { position: relative; display: inline-block; }
+  .drop {
+    border: 1.5px dashed var(--line); border-radius: 8px; padding: 14px 16px; color: var(--muted);
+    display: grid; gap: 10px;
+  }
+  .drop[data-over] { border-color: var(--accent); color: var(--ink); }
+  pre {
+    margin: 0; font: 13px/1.5 var(--mono); background: var(--code); border: 1px solid var(--line);
+    border-radius: 6px; padding: 12px 14px; white-space: pre-wrap; word-break: break-word; overflow-x: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .note { font-size: 13px; color: var(--muted); }
+  .tools { font: 12px var(--mono); color: var(--muted); min-height: 1.2em; }
+  .results pre { max-height: 360px; overflow: auto; }
+  code { font: 13px var(--mono); }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">Delivery spike · M3</span>
+    <h1>Can the map editor ship as a Claude artifact?</h1>
+    <p class="lede">Each check runs the real Dam Good Maps code the way the artifact edition would. Green means it works here. Violet means it is waiting for you to press its button.</p>
+    <ul class="chips" aria-label="Check status">
+      <li class="chip" data-chip="worker" data-state="wait">Blob worker <span class="state">Waiting</span></li>
+      <li class="chip" data-chip="open" data-state="you">Open a .timber <span class="state">Needs you</span></li>
+      <li class="chip" data-chip="zip" data-state="wait">Save a .zip <span class="state">Waiting</span></li>
+      <li class="chip" data-chip="quick" data-state="wait">Claude, quick tier <span class="state">Waiting</span></li>
+      <li class="chip" data-chip="default" data-state="wait">Claude, default tier <span class="state">Waiting</span></li>
+    </ul>
+  </header>
+
+  <section aria-labelledby="h-worker">
+    <h2 id="h-worker"><span class="n">1</span>Generate a map in a blob worker</h2>
+    <p>The page starts a Web Worker from a <code>blob:</code> URL and runs the whole generator in it: River Valley, 96×96, seed 4242. This runs by itself.</p>
+    <pre data-out="worker">Starting…</pre>
+  </section>
+
+  <section aria-labelledby="h-open">
+    <h2 id="h-open"><span class="n">2</span>Open a .timber from your computer</h2>
+    <p>Pick any map from <code>Documents\Timberborn\Maps</code>. The page reads it with FileReader, then the worker parses it with the real reader and normalizes it the way the editor imports maps.</p>
+    <div class="drop" id="drop">
+      <div class="actions">
+        <label class="file">Choose a .timber<input type="file" id="timber-file" accept=".timber"></label>
+        <button type="button" class="quiet" id="use-generated" disabled>Use the generated map instead</button>
+      </div>
+      <span class="note">Or drop a .timber file here.</span>
+    </div>
+    <pre data-out="open">No map opened yet.</pre>
+  </section>
+
+  <section aria-labelledby="h-zip">
+    <h2 id="h-zip"><span class="n">3</span>Save the map as a .zip</h2>
+    <p>Artifacts cannot start downloads themselves, and <code>.timber</code> is not on the save list, so the editor offers a <code>.zip</code> with the map inside. Claude asks you to confirm the save.</p>
+    <div class="actions">
+      <button type="button" id="save-zip" disabled>Save the .zip</button>
+      <button type="button" class="quiet" id="save-bare" disabled>Try a bare .timber</button>
+    </div>
+    <pre data-out="zip">Waiting for the worker.</pre>
+    <p class="note" id="bare-out">The second button offers the .timber directly, to record how the viewer answers.</p>
+  </section>
+
+  <section aria-labelledby="h-claude">
+    <h2 id="h-claude"><span class="n">4</span>Claude calls the page's own functions</h2>
+    <p>Claude gets three page functions (<code>map_facts</code>, <code>find_start</code>, <code>height_at</code>) and must use them to report the map's size, the height at the start and the number of Pine trees. Your plan pays for each call, and the first call asks you to allow it. The page times each run.</p>
+    <div class="actions">
+      <button type="button" data-ask="quick" disabled>Ask on the quick tier</button>
+      <button type="button" data-ask="default" disabled>Ask on the default tier</button>
+      <button type="button" class="quiet" id="stop" disabled>Stop</button>
+    </div>
+    <div class="tools" id="tool-log" aria-live="polite"></div>
+    <pre data-out="quick">Quick tier: not run yet.</pre>
+    <pre data-out="default">Default tier: not run yet.</pre>
+  </section>
+
+  <section aria-labelledby="h-env">
+    <h2 id="h-env"><span class="n">5</span>What this page can reach</h2>
+    <p>Storage, the Claude runtime, and whether the page can call the Messages API directly (the artifact's rules say it cannot).</p>
+    <pre id="env-out">Checking…</pre>
+  </section>
+
+  <section class="results" aria-labelledby="h-results">
+    <h2 id="h-results">Results</h2>
+    <p>Everything the checks measured. Copy it and paste it into the spike report.</p>
+    <div class="actions">
+      <button type="button" id="copy">Copy results</button>
+      <span class="note" id="copy-note" aria-live="polite"></span>
+    </div>
+    <pre id="results-json"></pre>
+  </section>
+</main>
+<!--SPIKE_SCRIPT-->
