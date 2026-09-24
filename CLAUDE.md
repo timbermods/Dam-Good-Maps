@@ -25,3 +25,17 @@ text.
 - **Check every fact against the code** before writing it; plans and changelogs lag.
 - **Keep, briefly:** credits, the unofficial line, the status, and safety facts.
 - **Reread as a new player before publishing.** Every step works as written, and nothing is said twice.
+
+## Deploying
+
+- Work happens on `dev`. The site is GitHub Pages, deployed from `main`: https://timbermods.github.io/dam-good-maps/
+- A release merges a tag into `main`, never dev's tip, and always as a merge commit. After a milestone is tagged
+  `mN-done` and its full check passed, merge that tag into `main` through a PR.
+- After every deploy, the live check (`.github/workflows/live-check.yml`) must pass. It runs after each deploy and
+  daily; `gh workflow run live-check.yml --ref main` runs it by hand. If it fails, revert the release merge on
+  `main`, confirm the old site is back, and report.
+- The site stays noindex and unannounced until launch. Launch needs versioned deploys (M13) and Kyler's go-ahead;
+  then set the repository variable `DGM_PUBLIC` to `true`.
+- When dev changes `deploy.yml`, keep its noindex step.
+- Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
+- Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.
