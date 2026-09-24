@@ -17,7 +17,16 @@ import type { MapObjectKind, RiverFeature } from "../../src/core/features/schema
 import { generate } from "../../src/core/gen/generate";
 import { decodeSpecFragment, makeSpec, type ThemeId } from "../../src/core/spec/mapspec";
 import { validateFile } from "../../src/core/validate/checks";
-import { components } from "../../src/core/analysis/regions";
+import { components, walkRegions } from "../../src/core/analysis/regions";
+import type { BuildResult } from "../../src/core/features/build";
+import { entityTiles } from "../../src/core/features/edits";
+import { pathField } from "../../src/core/features/geometry";
+import { objectTiles } from "../../src/core/features/objects";
+import { obstacleTiles, type ObstaclePlan } from "../../src/core/features/setpieces/obstaclePayoff";
+import { pumpableWithin, type DistrictPlan } from "../../src/core/features/setpieces/secondDistrict";
+import { slopeHighSide } from "../../src/core/format/footprints";
+import { levelRegions } from "../../src/core/math/grid";
+import { WALK_BLOCKERS } from "../../src/core/validate/playability";
 
 const uuid = (k: number) => `0b8e9a64-${String(1000 + k)}-4c2d-9e1f-2a3b4c5d6e7f`;
 
@@ -271,5 +280,110 @@ describe("generated maps: every new object passes the placement emulation (ROADM
     const templates = new Set(r.built.entities.map((e) => e.template));
     for (const t of ["UndergroundRuins", "GeothermalField", "UnstableCore", "Thorns"]) expect(templates.has(t), t).toBe(true);
     expect(["SmallRelic", "MediumRelic", "LargeRelic"].some((t) => templates.has(t))).toBe(true);
+  });
+});
+
+/** Walk regions from the start: same level, the built slopes, round the objects that block walking. */
+function walkFromStart(b: BuildResult): { labels: Int32Array; root: number } {
+  const { W, H } = b;
+  const blocked = new Uint8Array(W * H);
+  const links: [number, number][] = [];
+  for (const e of b.entities) {
+    if (WALK_BLOCKERS.has(e.template)) for (const [x, y] of entityTiles(e)) blocked[y * W + x] = 1;
+    if (e.template !== "Slope") continue;
+    const [dx, dy] = slopeHighSide(e.orientation);
+    links.push([e.y * W + e.x, (e.y + dy) * W + e.x + dx]);
+  }
+  const labels = walkRegions(b.heights, W, H, blocked, links);
+  return { labels, root: labels[b.start!.y * W + b.start!.x] };
+}
+
+describe("the generator's M7 set pieces keep their rules (ROADMAP M7)", () => {
+  it("a second district's site: 60–120 tiles out, 600+ tiles of level land, its own water, joined by slopes, with trees and bushes", () => {
+    let sites = 0;
+    for (const [theme, seed] of [["delta", 1], ["delta", 2], ["lakeBasin", 1], ["riverValley", 1]] as [ThemeId, number][]) {
+      const r = generate(makeSpec({ seed, size: { x: 128, y: 128 }, theme }));
+      expect(r.report.passed).toBe(true);
+      const f = r.features.find((g) => g.kind === "setPiece" && g.params.kind === "secondDistrict");
+      if (!f || f.kind !== "setPiece") continue;
+      sites++;
+      const b = r.built;
+      const p = f.params.plan as unknown as DistrictPlan;
+      const st = b.start!;
+      const d = Math.sqrt((p.x - st.x) * (p.x - st.x) + (p.y - st.y) * (p.y - st.y));
+      expect(d, `${theme} ${seed}`).toBeGreaterThanOrEqual(60);
+      expect(d).toBeLessThanOrEqual(120);
+      const reg = levelRegions(b.heights, b.W, b.H);
+      expect(reg.size[reg.labels[p.y * b.W + p.x]]).toBeGreaterThanOrEqual(600);
+      expect(pumpableWithin({ W: b.W, H: b.H, heights: b.heights, water: b.water, contamination: b.contamination }, p.x, p.y, b.heights[p.y * b.W + p.x], 16)).toBeLessThanOrEqual(16);
+      const walk = walkFromStart(b);
+      expect(walk.labels[p.y * b.W + p.x], `${theme} ${seed}: the site is joined to the start`).toBe(walk.root);
+      let trees = 0;
+      let bushes = 0;
+      for (const e of b.entities) {
+        if ((e.x - p.x) * (e.x - p.x) + (e.y - p.y) * (e.y - p.y) > 400 || "LivingNaturalResource" in e.components) continue;
+        if (["Pine", "Birch", "Oak", "Succulent"].includes(e.template)) trees++;
+        if (e.template === "BlueberryBush") bushes++;
+      }
+      expect(trees, `${theme} ${seed}: living trees within 20 of the site`).toBeGreaterThanOrEqual(40);
+      expect(bushes, `${theme} ${seed}: living bushes within 20 of the site`).toBeGreaterThanOrEqual(20);
+    }
+    expect(sites).toBeGreaterThanOrEqual(3);
+  });
+
+  it("ruins on a plateau: out of reach without stairs, and one flight of stairs reaches them", () => {
+    let seen = 0;
+    for (const seed of [1, 3, 4]) {
+      const r = generate(makeSpec({ seed, size: { x: 128, y: 128 }, theme: "riverValley" }));
+      const f = r.features.find((g) => g.kind === "setPiece" && g.params.kind === "obstaclePayoff");
+      if (!f || f.kind !== "setPiece") continue;
+      seen++;
+      const b = r.built;
+      const p = f.params.plan as unknown as ObstaclePlan;
+      const disc = new Set(obstacleTiles(p, b.W, b.H));
+      const walk = walkFromStart(b);
+      expect([...disc].some((i) => walk.labels[i] === walk.root), `seed ${seed}: the plateau is reached without stairs`).toBe(false);
+      // a tile the colony walks on beside the plateau, two levels below its top: one flight of stairs
+      let stair = false;
+      for (const i of disc) {
+        const x = i % b.W;
+        const y = (i - x) / b.W;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const j = (y + dy) * b.W + x + dx;
+          if (!disc.has(j) && walk.labels[j] === walk.root && b.heights[j] === p.top - 2) stair = true;
+        }
+      }
+      expect(stair, `seed ${seed}: one flight of stairs reaches the plateau`).toBe(true);
+      expect(b.entities.some((e) => e.template.startsWith("RuinColumn") && disc.has(e.y * b.W + e.x))).toBe(true);
+    }
+    expect(seen).toBeGreaterThanOrEqual(2);
+  });
+
+  it("a generated weir holds its river about 0.65 above the bed, inside the channel", () => {
+    let seen = 0;
+    for (const [theme, seed] of [["lakeBasin", 1], ["lakeBasin", 2], ["lakeBasin", 3], ["lakeBasin", 4], ["highlands", 1], ["highlands", 2], ["highlands", 3]] as [ThemeId, number][]) {
+      const r = generate(makeSpec({ seed, size: { x: 96, y: 96 }, theme }));
+      const w = r.features.find((g) => g.kind === "mapObject" && g.params.kind === "weir");
+      if (!w || w.kind !== "mapObject") continue;
+      seen++;
+      const b = r.built;
+      const tiles = objectTiles(w, b.W, b.H).map(([x, y]) => y * b.W + x);
+      const river = r.features
+        .filter((g) => g.kind === "river")
+        .map((g) => ({ g, field: pathField((g.params as { path: [number, number][] }).path, b.W, b.H) }))
+        .reduce((a, c) => (tiles.reduce((t, i) => t + c.field.d[i], 0) < tiles.reduce((t, i) => t + a.field.d[i], 0) ? c : a));
+      const at = tiles.reduce((t, i) => t + river.field.s[i], 0) / tiles.length;
+      let depth = 0;
+      let n = 0;
+      for (let i = 0; i < b.W * b.H; i++) {
+        if (!b.channel[i] || river.field.s[i] < at - 3 || river.field.s[i] > at - 1 || tiles.includes(i)) continue;
+        depth += b.water[i];
+        n++;
+      }
+      expect(n).toBeGreaterThan(0);
+      expect(depth / n, `${theme} ${seed}: water just upstream of the weir`).toBeGreaterThan(0.6);
+      for (const id of ["entities.placement", "water.settles"]) expect(r.report.checks.find((c) => c.id === id)!.ok, id).toBe(true);
+    }
+    expect(seen).toBeGreaterThanOrEqual(1);
   });
 });

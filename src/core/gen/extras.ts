@@ -282,9 +282,6 @@ export function districtCandidates(b: BuildResult, features: readonly Feature[],
   const { W, H } = b;
   const N = W * H;
   if (!b.start) return [];
-  const startMask = new Uint8Array(N);
-  for (let y = b.start.y - 1; y <= b.start.y + 1; y++) for (let x = b.start.x - 1; x <= b.start.x + 1; x++) if (x >= 0 && y >= 0 && x < W && y < H) startMask[y * W + x] = 1;
-  const sd = distanceFrom(startMask, W, H);
   const h = b.heights;
   const regions = levelRegions(h, W, H);
   // distance to pumpable water for a site at each level: clean, 0.3+ deep, its surface 0–2 below
@@ -316,13 +313,15 @@ export function districtCandidates(b: BuildResult, features: readonly Feature[],
   for (let y = r; y < H - r; y += 2)
     for (let x = r; x < W - r; x += 2) {
       const i = y * W + x;
-      if (sd[i] < 60 || sd[i] > 120 || b.water[i] > 0.05 || b.occupied[i] || b.channel[i] || lakes[i] || avoid?.[i] || b.cache.terrain.protect[i]) continue;
+      // (60–120 tiles from the start's middle, as the site's plan measures it)
+      const e = Math.sqrt((x - b.start.x) * (x - b.start.x) + (y - b.start.y) * (y - b.start.y));
+      if (e < 60 || e > 120 || b.water[i] > 0.05 || b.occupied[i] || b.channel[i] || lakes[i] || avoid?.[i] || b.cache.terrain.protect[i]) continue;
       if (regions.size[regions.labels[i]] < DISTRICT_LAND) continue;
       const p = pumpFor(h[i]);
       if (!p || p[i] > DISTRICT_WATER - 1) continue;
       let m = 0;
       for (let yy = y - 12; yy <= y + 12; yy += 2) for (let xx = x - 12; xx <= x + 12; xx += 2) if (xx >= 0 && yy >= 0 && xx < W && yy < H && moist[yy * W + xx]) m++;
-      scored.push([m - Math.abs(sd[i] - 85) * 0.5, i]);
+      scored.push([m - Math.abs(e - 85) * 0.5, i]);
     }
   scored.sort((a, c) => c[0] - a[0] || a[1] - c[1]);
   const out: [number, number][] = [];

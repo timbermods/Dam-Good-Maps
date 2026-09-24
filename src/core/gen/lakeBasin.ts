@@ -470,19 +470,23 @@ export function planLakeBasin(spec: MapSpec, attempt: number, candidate = 0, set
       break;
     }
 
-    // a pre-built weir (PLAN §5.7) across the first inflow, 8 tiles above its mouth, on half the
-    // maps: it holds a pool in the river's bed, where it cuts no way the colony walks
-    const inflow0 = layout.find((f): f is RiverFeature => f.kind === "river" && f.role === "river/inflow/0");
-    if (inflow0 && stream(seed, "weir", candidate, attempt).float() < 0.5) {
-      const len = pathLen(inflow0.params.path);
-      const w = weirOn(ground, inflow0, round(len - 8, 2), inflow0.params.flow, id, "mapObject/weir/inflow");
-      if (w) {
-        const now = startLand(W, H, seed, [...layout, ...others], lakeMask, sx, sy);
-        const withIt = [...layout, ...others];
-        withIt.splice(layout.indexOf(start), 0, w);
-        if (startLand(W, H, seed, withIt, lakeMask, sx, sy) >= now - 60) {
+    // a pre-built weir (PLAN §5.7) across an inflow, 8 tiles above its mouth (then 14), on half the
+    // maps: it holds a pool in the river's bed, where it cuts no way the colony walks. The first
+    // inflow whose water per tile it can hold takes it (D72).
+    if (stream(seed, "weir", candidate, attempt).float() < 0.5) {
+      const now = startLand(W, H, seed, [...layout, ...others], lakeMask, sx, sy);
+      tries: for (const inflow of layout.filter((f): f is RiverFeature => f.kind === "river" && !!f.role?.startsWith("river/inflow/") && !f.params.badwater)) {
+        const len = pathLen(inflow.params.path);
+        for (const back of [8, 14]) {
+          if (len - back < 6) continue;
+          const w = weirOn(ground, inflow, round(len - back, 2), inflow.params.flow, id, "mapObject/weir/inflow");
+          if (!w) continue;
+          const withIt = [...layout, ...others];
+          withIt.splice(layout.indexOf(start), 0, w);
+          if (startLand(W, H, seed, withIt, lakeMask, sx, sy) < now - 60) continue;
           layout.splice(layout.indexOf(start), 0, w);
           ground = groundOf(W, H, seed, [...layout, ...others]);
+          break tries;
         }
       }
     }

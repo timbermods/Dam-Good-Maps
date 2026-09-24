@@ -497,14 +497,19 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     // ponds may lie near the start (drinking water and storage), off its zone
     const pondsAvoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 2, band);
 
-    // the pre-built weir (PLAN §5.7, §9.1 variants): on half the maps a NaturalDam line across the
-    // channel at the dam site holds the river 0.65 above its bed upstream (not in a canyon's
-    // narrows, where the water it holds back floods the canyon floor)
-    if (!A.narrows && stream(seed, "weir", candidate, attempt).float() < 0.5) {
+    // the pre-built weir (PLAN §5.7, §9.1 variants; D72): on half the maps a NaturalDam line across
+    // the channel at the dam site holds the river 0.65 above its bed upstream (not in a canyon's
+    // narrows, where the water it holds back floods the canyon floor). Where the main river carries
+    // too much water per tile for it (its water would top the banks), a smaller river takes it,
+    // below (after the Highlands' stream is planned).
+    const wantWeir = !A.narrows && stream(seed, "weir", candidate, attempt).float() < 0.5;
+    let hasWeir = false;
+    if (wantWeir) {
       const w = weirAt(ground, river, damSite, t.rivers, id);
       if (w) {
         layout.splice(layout.indexOf(start), 0, w);
         ground = groundOf(W, H, seed, [...layout, ...others]);
+        hasWeir = true;
       }
     }
 
@@ -624,6 +629,17 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     });
     if (ponds.length) layout.splice(layout.indexOf(start), 0, ...ponds);
 
+    // the weir on a smaller river (a tributary, Highlands' stream), 8 tiles above its mouth, where
+    // its water per tile is small enough (not a delta's channel: the head pool would send its water
+    // down the others, and the weir would only stop it)
+    if (wantWeir && !hasWeir) {
+      const w = smallRiverWeir(ground, layout, id);
+      if (w) {
+        layout.splice(layout.indexOf(start), 0, w);
+        ground = groundOf(W, H, seed, [...layout, ...others]);
+      }
+    }
+
     // ------------------------------------------------------------------ objects and resources on the settled water
     const resources = objectsAndResources(spec, layout, others, context, candidate, attempt, settleCache, band, A.obstacle);
     return [...layout, ...resources];
@@ -652,13 +668,13 @@ export function objectsAndResources(
   const seed = spec.seed;
   const buildWith = (fs: readonly Feature[]) => buildMap({ W, H, seed, features: [...fs, ...others], locked: context?.locked }, { stopBeforeResources: true, settleCache });
   let base = buildWith(layout);
-  // a weir whose water spills out of the channel onto the valley floor round the reservoir site
-  // is left out (the estimate in weirAt missed it)
+  // a weir whose water spills out of the channel onto the floodplain upstream of it is left out
+  // (the estimate in weirOn missed it)
   const weir = layout.findIndex((f) => f.kind === "mapObject" && f.role === "mapObject/weir/primary");
-  const main = layout.find((f): f is RiverFeature => f.kind === "river" && f.role === "river/main");
-  if (weir >= 0 && main) {
+  const on = weir >= 0 ? weirRiver(layout[weir] as MapObjectFeature, layout, W, H) : null;
+  if (weir >= 0 && on) {
+    const { river: wr, field, at } = on;
     // the river over its banks: wet tiles beside its channel, off every lake and pond
-    const field = pathField(main.params.path, W, H);
     const lakes = new Uint8Array(W * H);
     for (const f of layout) {
       if (f.kind !== "lake" || f.params.planned) continue;
@@ -666,13 +682,12 @@ export function objectsAndResources(
       for (let i = 0; i < m.length; i++) if (m[i]) lakes[i] = 1;
     }
     // (the floodplain upstream of the weir, one level above the river's bed there)
-    const at = Number((layout.find((f) => f.kind === "setPiece" && f.params.kind === "damSite") as SetPieceFeature | undefined)?.params.plan.at ?? 0);
     let flooded = false;
     for (let i = 0; i < W * H && !flooded; i++) {
-      if (base.channel[i] || lakes[i] || !(base.water[i] > 0.05) || field.d[i] > main.params.width / 2 + 6) continue;
+      if (base.channel[i] || lakes[i] || !(base.water[i] > 0.05) || field.d[i] > wr.params.width / 2 + 6) continue;
       const s = field.s[i];
       if (s < at - 60 || s >= at) continue;
-      if (base.heights[i] === bedAt(main.params.bedProfile, s) + 1) flooded = true;
+      if (base.heights[i] === bedAt(wr.params.bedProfile, s) + 1) flooded = true;
     }
     // the weir blocks walking too: it may not cut the colony's way along the river's bed
     const land = (fs: readonly Feature[]) => startWalkable(buildMap({ W, H, seed, features: [...fs, ...others], locked: context?.locked }, { stopBeforeWater: true }));
@@ -800,9 +815,57 @@ export function weirAt(g: PlanGround, river: RiverFeature, damSite: SetPieceFeat
   return weirOn(g, river, Number(damSite.params.plan.at), river.params.flow * (1 + 0.25 * Math.max(0, flows - 1)), id, "mapObject/weir/primary");
 }
 
+/** A weir on a smaller river: a tributary or Highlands' stream, 8 tiles above its mouth (then 14),
+ *  the first that fits. */
+function smallRiverWeir(g: Pick<PlanGround, "W" | "H" | "channel">, layout: readonly Feature[], id: (kind: Feature["kind"], role: string) => string): MapObjectFeature | null {
+  for (const f of layout) {
+    if (f.kind !== "river" || f.params.badwater || !f.role || !/^river\/(tributary|stream)\//.test(f.role)) continue;
+    const len = pathLength(f.params.path);
+    for (const back of [8, 14]) {
+      if (len - back < 6) continue;
+      const w = weirOn(g, f, round(len - back, 2), f.params.flow, id, "mapObject/weir/primary");
+      if (w) return w;
+    }
+  }
+  return null;
+}
+
+/** The river a weir stands across, its field, and the weir's arc position on it. */
+function weirRiver(w: MapObjectFeature, layout: readonly Feature[], W: number, H: number): { river: RiverFeature; field: ReturnType<typeof pathField>; at: number } | null {
+  const tiles = objectTiles(w, W, H).filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < H);
+  if (!tiles.length) return null;
+  let best: { river: RiverFeature; field: ReturnType<typeof pathField>; at: number } | null = null;
+  let bd = Infinity;
+  for (const f of layout) {
+    if (f.kind !== "river") continue;
+    const field = pathField(f.params.path, W, H);
+    let d = 0;
+    let s = 0;
+    for (const [x, y] of tiles) {
+      d += field.d[y * W + x];
+      s += field.s[y * W + x];
+    }
+    if (d < bd) {
+      bd = d;
+      best = { river: f, field, at: s / tiles.length };
+    }
+  }
+  return best;
+}
+
+function pathLength(path: readonly Point[]): number {
+  let len = 0;
+  for (let k = 1; k < path.length; k++) {
+    const dx = path[k][0] - path[k - 1][0];
+    const dy = path[k][1] - path[k - 1][1];
+    len += Math.sqrt(dx * dx + dy * dy);
+  }
+  return len;
+}
+
 /** A weir across a river's channel at arc position `at`, carrying `flow`, or null when it would not
  *  fit (see weirAt). */
-export function weirOn(g: PlanGround, river: RiverFeature, at: number, flow: number, id: (kind: Feature["kind"], role: string) => string, role: string): MapObjectFeature | null {
+export function weirOn(g: Pick<PlanGround, "W" | "H" | "channel">, river: RiverFeature, at: number, flow: number, id: (kind: Feature["kind"], role: string) => string, role: string): MapObjectFeature | null {
   const { W, H } = g;
   const field = pathField(river.params.path, W, H);
   const half = river.params.width / 2;

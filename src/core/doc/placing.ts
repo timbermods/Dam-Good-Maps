@@ -297,7 +297,21 @@ export function planArea(s: MapSession, req: AreaRequest, id: string, origin: Fe
       continue;
     }
     tiles = punchHoles(rng, tiles, W, RUINS.holeShare);
-    if (tiles.length < 10) {
+    // a field fills its box about as the official ones do (0.56 median): a blob squeezed along a
+    // narrow ledge is no field
+    let x0 = W;
+    let y0 = H;
+    let x1 = 0;
+    let y1 = 0;
+    for (const i of tiles) {
+      const x = i % W;
+      const y = (i - x) / W;
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    if (tiles.length < 10 || tiles.length < 0.3 * (x1 - x0 + 1) * (y1 - y0 + 1)) {
       left[seedTile] = 0;
       continue;
     }
