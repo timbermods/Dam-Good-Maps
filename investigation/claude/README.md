@@ -10,7 +10,7 @@ engine. Nothing here changes `src/` or `tests/`; it imports them read-only.
 
 | Path | What it is |
 |---|---|
-| `requests.json` | The request corpus: 125 requests with their map setups, goals, expectations, feasibility, what the report must say, pass criteria and a reference solution. Written by `bin/corpus.ts`. |
+| `requests.json` | The request corpus: 120 requests in 13 kinds, with their map setups, goals, expectations, feasibility, what the report must say, pass criteria and a reference solution. Written by `bin/corpus.ts`. |
 | `lib/flow.ts` | River courses read from the actual flow (water surface, then bed), and the river network (tributaries, lakes). |
 | `lib/places.ts` | The place resolver: compass, places relative to features, flow-relative places; phrases or structured places. |
 | `lib/words.ts` | The judgement-word table (harsher, lush, dangerous, …) and the size words. |
@@ -25,7 +25,7 @@ engine. Nothing here changes `src/` or `tests/`; it imports them read-only.
 | `bin/reference.ts` | Runs every reference solution through `MapSession` with the real validators. Results in `out/`. |
 | `bin/cli.ts` | The in-app Claude's view as a command line (summary and tools only), for the pilot. |
 | `bin/add-workshop-requests.ts` | Fills the corpus's workshop slot from a catalogue. |
-| `pilot/` | The self-played pilot: `PILOT.md` and the transcripts. |
+| `pilot/` | The self-played pilot: `PILOT.md`, the transcripts and each request's call log. |
 | `harness/` | The M12 suite runner: Messages API bridge, loop, prompts, grader. Not run here (no key). |
 | `tests/` | Vitest tests for the place resolver and the words. |
 
@@ -39,7 +39,7 @@ npx tsx investigation/claude/bin/reference.ts               # every reference so
 npx tsx investigation/claude/bin/reference.ts --only M01    # one request
 npx vitest run -c investigation/claude/vitest.config.ts     # resolver and word tests
 npx tsc --noEmit -p investigation/claude/tsconfig.json      # typecheck
-npx tsx investigation/claude/bin/cli.ts start M01           # play a request through the tools only
+npx tsx investigation/claude/bin/cli.ts start M01           # play a request through the tools only (then call, summary, end)
 npx tsx investigation/claude/harness/run-suite.ts --scripted   # the harness, replaying the references
 ```
 

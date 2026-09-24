@@ -98,7 +98,7 @@ in this environment.
 - Its Claude panels are built in the design flow's update mode, from the DESIGN.md and
   MEANING.md the design pass leaves behind.
 - The step schema (EDITOR_PLAN §7 "Steps") and how each step becomes operations; a feature-level
-  map summary (at most about 16 KB; about 5–7 KB measured).
+  map summary (at most about 16 KB; 3–7 KB measured).
 - The tools: `resolve_region`, `find_sites`, `measure`, `list_features`, `limits`, `dry_run`,
   `propose`. Each checks its own arguments and returns at most 32 KB. `find_sites` plans every
   candidate with the real builders and checks it with a real build.
@@ -356,7 +356,13 @@ The investigation made none of these. Each worked around the gap under `investig
 7. **Flow axes (D67).** Every theme flows west to east today. The resolver never assumes it, and
    the tests draw rivers in every direction. M9's flow axes need no change here.
 8. **`regenerateRegion` (M11)** for regional judgement words (P5).
-9. **Performance at 256².** `find_sites` for a dam site takes about 3.7 s at 256², and the
+9. **Map objects in the way (dev, M7).** Generated maps on dev carry mine sites, relics,
+   geothermal fields, thorn belts, weirs and plugs. A drawn river or a set piece can undercut or
+   flood one ("UndergroundRuins at (91,82,16): floating"), and the guards refuse the proposal, as
+   they should. The planners should keep off map objects' footprints, as they keep off the start:
+   `planRiver` should route round them, and each builder's `plan` should refuse a site on one with
+   the reason. `find_sites` already tries sites near map objects last.
+10. **Performance at 256².** `find_sites` for a dam site takes about 3.7 s at 256², and the
    compound reference M10 (three goals at 256²) about 24 s, most of it verifying candidates with
    real builds. A cached settle per candidate or a cheaper pre-filter is needed before the
    artifact route, where each call blocks the page.
