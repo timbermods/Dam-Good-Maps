@@ -376,6 +376,22 @@ spillway plug releases the water.
 
 **Effort:** high.
 
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.5.0). Every acceptance criterion
+passes:
+- resource areas: a drawn forest plants trees only where its preview showed them alive (moist,
+  clean soil), bushes only on moist ground, and ruin areas become fields of one level, 10+ columns,
+  in the official shape (`tests/contract/objects.test.ts`, `tests/e2e/objects.spec.ts`);
+- invalid placements: the footprint under the pointer is red with the game's reason, and the same
+  rule refuses the click, the tools and `placeEntity` (contract and browser tests);
+- placement emulation: `entities.placement` and `extras.placement` pass on every generated map of
+  the six themes and on the editor's objects; the oracle shows 0 disagreements between the TS and
+  Python validators on 50 generated and 19 official maps;
+- 100 seeds per theme at 96², 128², 192² and 256² pass 100% final (River Valley, Canyon,
+  Highlands, Lake Basin, Delta, Islands); Easy and Hard at 128² pass 100% too.
+
+The in-game check is skipped for now (D11): the file is in `out/m7/`, and checks D1–D5 are pending
+in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–D83.
+
 ---
 
 ## M8. Water preview and background validation in the editor
