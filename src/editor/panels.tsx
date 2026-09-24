@@ -6,15 +6,16 @@ import type { Remote } from "comlink";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { OpParams } from "../core/doc/ops";
 import type { Orientation } from "../core/format/footprints";
-import type { Feature, SetPieceFeature } from "../core/features/schema";
+import type { Feature, MapObjectFeature, SetPieceFeature } from "../core/features/schema";
+import { isLine, OBJECT_NAMES } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
 import { saveFile } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, DamSiteView, ExportCheck, SessionInfo, ToolPlan, ToolRequest } from "../worker/session";
+import type { CheckItem, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
 import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
-import { LAND_TOOLS, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
+import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
 
 // ------------------------------------------------------------------------------------- the tabs
 
@@ -42,9 +43,13 @@ export interface TabPanelProps {
   onOptions(o: ToolOptions): void;
   damSites: DamSiteView[] | null;
   onDamSites(show: boolean): void;
+  /** Advanced mode (EDITOR_PLAN §4): objects placed by hand, unstable cores, numeric fields. */
+  advanced: boolean;
+  onAdvanced(on: boolean): void;
 }
 
 export function TabPanel(p: TabPanelProps) {
+  const tools = [...TOOLS_OF[p.tab], ...(p.advanced && p.tab === "resources" ? ADVANCED_TOOLS : [])];
   const listRef = useRef<HTMLDivElement>(null);
   // the player's own features first, then what the generator made
   const inTab = p.info.features.filter((f) => tabOf(f) === p.tab);
@@ -81,19 +86,24 @@ export function TabPanel(p: TabPanelProps) {
         ))}
       </div>
       <div class="tabpanel" id="tabpanel" role="tabpanel" aria-labelledby={`tab-${p.tab}`}>
-        {TOOLS_OF[p.tab].length ? (
+        {tools.length ? (
           <section class="tools" aria-label="Add">
             <h2>Add</h2>
             <div class="tool-buttons">
-              {TOOLS_OF[p.tab].map((t) => (
+              {tools.map((t) => (
                 <button type="button" key={t} class={p.tool === t ? "primary" : "ghost"} aria-pressed={p.tool === t} onClick={() => p.onTool(p.tool === t ? null : t)}>
                   {TOOL_NAMES[t]}
                 </button>
               ))}
             </div>
-            {p.tool && TOOLS_OF[p.tab].includes(p.tool) ? <ToolOptionsForm tool={p.tool} options={p.options} onOptions={p.onOptions} /> : null}
+            {p.tool && tools.includes(p.tool) ? <ToolOptionsForm tool={p.tool} options={p.options} onOptions={p.onOptions} /> : null}
           </section>
         ) : null}
+        <label class="check advanced-toggle">
+          <input type="checkbox" checked={p.advanced} onChange={() => p.onAdvanced(!p.advanced)} />
+          Advanced
+        </label>
+        {p.advanced ? <p class="note">Click the map to see the objects on a tile and change them.</p> : null}
         {p.tab === "water" ? <DamSiteToggle sites={p.damSites} onToggle={p.onDamSites} /> : null}
         <TabNote tab={p.tab} info={p.info} />
         <div class="feature-list" ref={listRef}>
@@ -184,6 +194,12 @@ function Pick<T extends string>(p: { label: string; value: T; choices: [T, strin
   );
 }
 
+const TURN_CHOICES: [Orientation, string][] = [
+  ["Cw0", "Turned 0°"],
+  ["Cw90", "Turned 90°"],
+  ["Cw180", "Turned 180°"],
+  ["Cw270", "Turned 270°"],
+];
 const FACING_CHOICES: [Facing, string][] = [
   ["north", "North"],
   ["east", "East"],
@@ -280,6 +296,38 @@ function ToolOptionsForm({ tool, options: o, onOptions }: { tool: ToolKind; opti
         </>
       ) : null}
       {tool === "badwater" ? <Num label="Strength (water/s)" value={o.strength} min={1} max={3} step={0.5} onChange={(strength) => set({ strength })} /> : null}
+      {tool === "relic" ? (
+        <Pick
+          label="Size"
+          value={o.relic}
+          choices={[
+            ["small", "Small (200 science)"],
+            ["medium", "Medium (800 science)"],
+            ["large", "Large (3,000 science)"],
+          ]}
+          onChange={(relic) => set({ relic })}
+        />
+      ) : null}
+      {tool === "object" ? <Pick label="Object" value={o.template} choices={PLACE_TEMPLATES} onChange={(template) => set({ template })} /> : null}
+      {tool === "mineSite" || tool === "relic" || tool === "geothermal" || tool === "core" || tool === "object" ? <Pick label="Facing" value={o.turn} choices={TURN_CHOICES} onChange={(turn) => set({ turn })} /> : null}
+      {tool === "core" ? (
+        <>
+          <Num label="Explosion radius" value={o.coreRadius} min={0} max={5} onChange={(coreRadius) => set({ coreRadius })} />
+          <Num label="Countdown starts in cycle" value={o.coreCycles} min={1} max={99} onChange={(coreCycles) => set({ coreCycles })} />
+        </>
+      ) : null}
+      {tool === "thornBelt" ? (
+        <label>
+          Thorns: {Math.round(o.density * 100)}% of the area
+          <input type="range" min="10" max="100" step="10" value={Math.round(o.density * 100)} onInput={(e) => set({ density: Number((e.target as HTMLInputElement).value) / 100 })} />
+        </label>
+      ) : null}
+      {tool === "forest" ? (
+        <label class="check">
+          <input type="checkbox" checked={o.life === "alive"} onChange={() => set({ life: o.life === "alive" ? "auto" : "alive" })} />
+          Only where trees live
+        </label>
+      ) : null}
       {tool === "forest" ? (
         <label>
           Trees
@@ -381,6 +429,8 @@ export interface InspectorProps {
   /** Plan the feature again with a changed request (a tool's request for rivers, lakes,
    *  landforms and set pieces), then apply it. */
   onReplan(req: ToolRequest): void;
+  /** Plan a change and show it first, with its warnings (a river turned to badwater). */
+  onPlan(req: ToolRequest): void;
 }
 
 export function Inspector(p: InspectorProps) {
@@ -405,6 +455,7 @@ export function Inspector(p: InspectorProps) {
   if (f.kind === "river") facts.push(`${f.params.flow} water/s`);
   if (f.kind === "lake") facts.push(`water level ${f.params.outlet.sill}`);
   if (f.kind === "start") facts.push(`door faces ${FACING[f.params.orientation]}`);
+  if (f.kind === "mapObject" && isLine(f.params.kind)) facts.push(`${objects} ${f.params.kind === "thornBelt" ? "thorns" : "tiles"}`);
   return (
     <aside class="inspector" aria-label={`${name}, selected`}>
       <header>
@@ -431,9 +482,10 @@ export function Inspector(p: InspectorProps) {
         </label>
       )}
       {f.kind === "landform" && f.params.outline && f.params.height !== undefined ? <LandformControls f={f} name={name} onPatch={p.onPatch} onReplan={p.onReplan} /> : null}
-      {f.kind === "river" ? <RiverControls f={f} onPatch={p.onPatch} onReplan={p.onReplan} /> : null}
+      {f.kind === "river" ? <RiverControls f={f} onPatch={p.onPatch} onReplan={p.onReplan} onPlan={p.onPlan} /> : null}
       {f.kind === "lake" && !f.params.planned && f.params.outlet.path ? <LakeControls f={f} onReplan={p.onReplan} /> : null}
       {f.kind === "setPiece" ? <PieceControls f={f} onReplan={p.onReplan} /> : null}
+      {f.kind === "mapObject" ? <ObjectControls f={f} onReplan={p.onReplan} /> : null}
       {f.kind === "start" ? (
         <button type="button" class="ghost" onClick={() => p.onPatch({ params: { orientation: TURN[f.params.orientation] } }, "Turn the start")}>
           Turn
@@ -473,7 +525,29 @@ function LandformControls({ f, name, onPatch, onReplan }: { f: Extract<Feature, 
   );
 }
 
-function RiverControls({ f, onPatch, onReplan }: { f: Extract<Feature, { kind: "river" }>; onPatch: InspectorProps["onPatch"]; onReplan: InspectorProps["onReplan"] }) {
+function ObjectControls({ f, onReplan }: { f: MapObjectFeature; onReplan: InspectorProps["onReplan"] }) {
+  const pr = f.params;
+  if (!("x" in pr.placement)) return null;
+  const pl = pr.placement;
+  const replan = (patch: { orientation?: Orientation; core?: { radius: number; cycles: number } }) =>
+    onReplan({ tool: "object", kind: pr.kind, at: [pl.x, pl.y], orientation: patch.orientation ?? pl.orientation, ...(pr.core || patch.core ? { core: patch.core ?? pr.core } : {}) });
+  return (
+    <>
+      <button type="button" class="ghost" onClick={() => replan({ orientation: TURN[pl.orientation] })}>
+        Turn
+      </button>
+      {pr.kind === "unstableCore" && pr.core ? (
+        <>
+          <Num label="Explosion radius" value={pr.core.radius} min={0} max={5} onChange={(radius) => replan({ core: { ...pr.core!, radius } })} />
+          <Num label="Countdown starts in cycle" value={pr.core.cycles} min={1} max={99} onChange={(cycles) => replan({ core: { ...pr.core!, cycles } })} />
+        </>
+      ) : null}
+      <p class="note">{OBJECT_NAMES[pr.kind]}s can stand only on level, dry ground, away from rivers and the start.</p>
+    </>
+  );
+}
+
+function RiverControls({ f, onPatch, onReplan, onPlan }: { f: Extract<Feature, { kind: "river" }>; onPatch: InspectorProps["onPatch"]; onReplan: InspectorProps["onReplan"]; onPlan: InspectorProps["onPlan"] }) {
   const pr = f.params;
   const drawn = pr.banks === true;
   const word: FlowWord | "exact" = pr.flow === 1 ? "gentle" : pr.flow === 2 ? "steady" : pr.flow === 4 ? "strong" : "exact";
@@ -499,7 +573,10 @@ function RiverControls({ f, onPatch, onReplan }: { f: Extract<Feature, { kind: "
           </select>
         </label>
       ) : null}
-      <p class="note">Moist soil reaches {MOIST[pr.bedDepth] ?? "a few tiles"} from its banks. Drag its handle to move it.</p>
+      <button type="button" class="ghost" onClick={() => onPlan({ tool: "riverBadwater", river: f.id, on: !pr.badwater })}>
+        {pr.badwater ? "Make it clean" : "Make it badwater"}
+      </button>
+      <p class="note">{pr.badwater ? "Its water is badwater: nothing grows on the soil along it, and beavers can't drink it." : `Moist soil reaches ${MOIST[pr.bedDepth] ?? "a few tiles"} from its banks. Drag its handle to move it.`}</p>
     </>
   );
 }
@@ -580,6 +657,111 @@ function PieceControls({ f, onReplan }: { f: SetPieceFeature; onReplan: Inspecto
         </details>
       ) : null}
     </>
+  );
+}
+
+// ------------------------------------------------------------------------------ objects (advanced)
+
+export interface EntityChange {
+  /** Merge patch on the entity's components (setEntityProps). */
+  props?: Record<string, unknown>;
+  /** A move by one tile, or a turn (moveEntity). */
+  move?: { dx: number; dy: number; turn: boolean };
+  remove?: boolean;
+}
+
+/** The objects on a clicked tile (advanced mode): each with its numbers, a turn, a nudge and delete.
+ *  Water sources take a strength and a delay ("turns on at cycle N"); unstable cores a radius and a
+ *  countdown. */
+export function EntityInspector({ list, onChange, onClose }: { list: EntityInfo[]; onChange(e: EntityInfo, c: EntityChange): void; onClose(): void }) {
+  const [k, setK] = useState(0);
+  const e = list[Math.min(k, list.length - 1)];
+  if (!e) return null;
+  const name = (t: string) => PLACE_TEMPLATES.find(([v]) => v === t)?.[1] ?? t.replace(/([a-z])([A-Z])/g, "$1 $2");
+  const c = e.components as Record<string, Record<string, unknown> | undefined>;
+  const ws = c.WaterSource;
+  const ta = c.TimeActivatedComponent;
+  const core = c.UnstableCore;
+  const delayed = ta?.IsEnabled === true;
+  const strength = Number(ws?.SpecifiedStrength ?? 0);
+  return (
+    <aside class="inspector entity-inspector" aria-label={`${name(e.template)}, selected`}>
+      <header>
+        <h2>{name(e.template)}</h2>
+        <button type="button" class="linkish" aria-label="Close" onClick={onClose}>
+          ×
+        </button>
+      </header>
+      {list.length > 1 ? (
+        <label>
+          On this tile
+          <select value={String(k)} onChange={(ev) => setK(Number((ev.target as HTMLSelectElement).value))}>
+            {list.map((x, j) => (
+              <option value={String(j)} key={x.id}>
+                {name(x.template)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      <p class="muted">
+        ({e.x}, {e.y}), level {e.z} · {e.from}
+      </p>
+      {ws ? (
+        <>
+          <Num label="Strength (water/s)" value={strength} min={0} max={e.template === "BadwaterSource" ? 72 : 8} step={0.25} onChange={(v) => onChange(e, { props: { WaterSource: { SpecifiedStrength: v, CurrentStrength: delayed ? 0 : v } } })} />
+          <label class="check">
+            <input
+              type="checkbox"
+              checked={delayed}
+              onChange={() =>
+                onChange(e, {
+                  props: {
+                    // official maps' delayed sources start 10.5 days into their cycle
+                    TimeActivatedComponent: { IsEnabled: !delayed, CyclesUntilCountdownActivation: Number(ta?.CyclesUntilCountdownActivation ?? 5), DaysUntilActivation: delayed ? Number(ta?.DaysUntilActivation ?? 10) : 10.5, DaysPassed: 0 },
+                    WaterSource: { CurrentStrength: !delayed ? 0 : strength },
+                  },
+                })
+              }
+            />
+            Turns on later
+          </label>
+          {delayed ? (
+            <>
+              <Num label="In cycle" value={Number(ta?.CyclesUntilCountdownActivation ?? 5)} min={1} max={99} onChange={(v) => onChange(e, { props: { TimeActivatedComponent: { CyclesUntilCountdownActivation: v } } })} />
+              <Num label="After days" value={Number(ta?.DaysUntilActivation ?? 10.5)} min={0} max={30} step={0.5} onChange={(v) => onChange(e, { props: { TimeActivatedComponent: { DaysUntilActivation: v } } })} />
+              <p class="note">It stays off until then: the map's water is settled without it.</p>
+            </>
+          ) : null}
+        </>
+      ) : null}
+      {core ? (
+        <>
+          <Num label="Explosion radius" value={Number(core.ExplosionRadius ?? 2)} min={0} max={5} onChange={(v) => onChange(e, { props: { UnstableCore: { ExplosionRadius: v } } })} />
+          <Num label="Countdown starts in cycle" value={Number(ta?.CyclesUntilCountdownActivation ?? 5)} min={1} max={99} onChange={(v) => onChange(e, { props: { TimeActivatedComponent: { CyclesUntilCountdownActivation: v } } })} />
+        </>
+      ) : null}
+      <div class="row nudge" role="group" aria-label="Move by one tile">
+        <button type="button" class="ghost" aria-label="Move west" onClick={() => onChange(e, { move: { dx: -1, dy: 0, turn: false } })}>
+          ←
+        </button>
+        <button type="button" class="ghost" aria-label="Move north" onClick={() => onChange(e, { move: { dx: 0, dy: 1, turn: false } })}>
+          ↑
+        </button>
+        <button type="button" class="ghost" aria-label="Move south" onClick={() => onChange(e, { move: { dx: 0, dy: -1, turn: false } })}>
+          ↓
+        </button>
+        <button type="button" class="ghost" aria-label="Move east" onClick={() => onChange(e, { move: { dx: 1, dy: 0, turn: false } })}>
+          →
+        </button>
+        <button type="button" class="ghost" onClick={() => onChange(e, { move: { dx: 0, dy: 0, turn: true } })}>
+          Turn
+        </button>
+      </div>
+      <button type="button" class="ghost danger" onClick={() => onChange(e, { remove: true })}>
+        Delete
+      </button>
+    </aside>
   );
 }
 

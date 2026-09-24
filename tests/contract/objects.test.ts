@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { MapSession } from "../../src/core/doc/session";
-import { acrossRiver, entityProblem, objectGround, planArea, planEntity, planObject, planRiverBadwater } from "../../src/core/doc/placing";
+import { acrossRiver, entityProblem, footprintCheck, objectGround, planArea, planEntity, planObject, planRiverBadwater } from "../../src/core/doc/placing";
 import { planPiece } from "../../src/core/doc/tools";
 import { footprintAt, fitProblems } from "../../src/core/features/objects";
 import type { MapObjectKind, RiverFeature } from "../../src/core/features/schema";
@@ -88,6 +88,26 @@ describe("map objects placed in the editor (ROADMAP M7)", () => {
     const refused = s.apply({ op: "placeEntity", params: { id: "33333333-2222-4333-8444-555555555555", template: "LargeRelic", x: uneven![0], y: uneven![1], orientation: "Cw0" } });
     expect(refused.ok).toBe(false);
     expect(refused.errors.join(" ")).toMatch(/can't stand there/);
+  });
+
+  it("previews the footprint under the pointer: red with the reason where the click would be refused", () => {
+    const river = s.features.find((f): f is RiverFeature => f.kind === "river")!;
+    const [px, py] = river.params.path[8];
+    const at: [number, number] = [Math.round(px) - 1, Math.round(py) - 1];
+    const red = footprintCheck(s, { tool: "object", kind: "geothermal", at, orientation: "Cw0" });
+    expect(red.tiles.length).toBe(9);
+    expect(red.problem).toMatch(/river|water/);
+    const refused = planObject(s, { kind: "geothermal", at, orientation: "Cw0" }, uuid(60));
+    expect(refused.ok ? null : refused.errors[0]).toBe(red.problem);
+    const ok = spotFor(s, "geothermal");
+    const green = footprintCheck(s, { tool: "object", kind: "geothermal", at: ok, orientation: "Cw0" });
+    expect(green.problem).toBeNull();
+    expect(new Set(green.tiles)).toEqual(new Set(footprintAt("geothermal", ok[0], ok[1], "Cw0").map(([x, y]) => y * W + x)));
+    // an entity by hand: the loader's reason, the same one placeEntity refuses with
+    const slope = s.built.entities.find((e) => e.template === "Slope")!;
+    const e = footprintCheck(s, { tool: "entity", template: "Blockage", x: slope.x, y: slope.y, orientation: "Cw0" });
+    expect(e.tiles).toEqual([slope.y * W + slope.x]);
+    expect(e.problem).toMatch(/slope/);
   });
 
   it("a weir and a plug close a river's channel wall to wall and hold its water", () => {
@@ -223,6 +243,8 @@ describe("spillways and badwater rivers in the editor (ROADMAP M7)", () => {
     expect(p.ok, JSON.stringify(p)).toBe(true);
     if (!p.ok) return;
     expect(p.report.join(" ")).toMatch(/trees and bushes there die/);
+    // the start drinks from its main river: a warning before the change is made
+    expect(p.report.join(" ")).toMatch(/start is beside this river/);
     s.applyAll(p.ops, "user", p.label);
     expect(s.built.entities.some((e) => e.template === "BadwaterSource" && e.owner === river.id)).toBe(true);
     const W = 128;

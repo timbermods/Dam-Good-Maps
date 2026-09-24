@@ -408,6 +408,9 @@ export function planRiverBadwater(s: MapSession, riverId: string, on: boolean): 
     }
     report.push("its water turns to badwater: beavers can't drink it");
     report.push("the soil along it gets contaminated, and the trees and bushes there die");
+    // the start drinks from the water near it
+    const st = planContextOf(s).start;
+    if (st && field.d[st.y * W + st.x] <= 24) report.push("the start is beside this river: its beavers will need clean water from another river or a lake");
   } else report.push("its water runs clean again");
   const ops: EditOp[] = [{ op: "updateFeature", params: { id: riverId, patch: { params: { badwater: on } } } }];
   return { ok: true, ops, feature: f, report, label: on ? "Make the river badwater" : "Make the river clean", tiles: [] };
@@ -437,3 +440,23 @@ export function lakeAt(s: MapSession, x: number, y: number): string | null {
 }
 
 export { distanceFrom, runsToTiles };
+
+// ------------------------------------------------------------------------------ hover preview
+
+/** Where an object or an entity would stand, and why the game would refuse it there (null when it
+ *  may): the editor paints the footprint green or red under the pointer before the click. */
+export function footprintCheck(s: MapSession, req: ({ tool: "object" } & ObjectRequest) | ({ tool: "entity" } & EntityRequest)): { tiles: number[]; problem: string | null } {
+  const { x: W, y: H } = s.size;
+  const inMap = (t: readonly (readonly [number, number])[]) => t.filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < H).map(([x, y]) => y * W + x);
+  if (req.tool === "entity") {
+    const fp = FOOTPRINTS[req.template];
+    if (!fp) return { tiles: [], problem: `${req.template} can't be placed` };
+    const tiles = inMap(worldBlocks(fp, { ...req, z: 0, flipped: !!req.flipped }).map((b) => [b.x, b.y] as const));
+    return { tiles: [...new Set(tiles)], problem: entityProblem(s, req) };
+  }
+  if (isLine(req.kind) || !req.at) return { tiles: [], problem: null };
+  const { tool: _t, ...r } = req;
+  const tiles = inMap(footprintAt(req.kind, req.at[0], req.at[1], req.orientation ?? "Cw0"));
+  const p = planObject(s, r, "hover");
+  return { tiles, problem: p.ok ? null : p.errors[0] };
+}

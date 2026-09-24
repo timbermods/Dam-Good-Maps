@@ -1,21 +1,30 @@
 // The editor's drawing tools (EDITOR_PLAN §4). Land: hills, plateaus, ridges, canyons, valleys and
 // islands drawn by their outline, with a height and an edge style, and terraced cliffs. Water:
 // rivers drawn point by point from source to outlet, lakes by their basin, waterfalls, dam sites,
-// gorges and badwater springs. Resources (roadmap M7 brings their own tools): forests, berry
-// patches and ruin fields as rectangles.
+// gorges, badwater springs, weirs, plugs and plugged spillways. Resources: forests, berry patches
+// and ruin fields drawn as areas (the worker shows where plants live and how ruins cluster), mine
+// sites, relics and geothermal fields. Land: thorn belts. Advanced mode: unstable cores and any
+// object placed by hand, with the game's footprint rules.
 //
 // An outline is dragged as a rectangle or clicked point by point; a river is clicked point by
 // point; the rest are placed with one click. The worker plans the result on the map (the shared
-// builders), the editor shows it with its report, and Place applies it as one step.
+// builders), the editor shows it with its report, and Place applies it as one step. Objects show
+// their footprint green or red under the pointer before the click.
 
-import type { Feature, LandformFeature, Point } from "../core/features/schema";
+import type { Feature, LandformFeature, MapObjectKind, Point } from "../core/features/schema";
+import { polygonMask } from "../core/features/geometry";
+import { FOOTPRINTS, type Orientation } from "../core/format/footprints";
+import { rotatedSize } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
 import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../core/gen/calibrated";
 import type { ToolRequest } from "../worker/session";
 import { newId, rectOutline, rectRuns } from "./features";
 
 export type LandKind = LandformFeature["params"]["kind"];
-export type ToolKind = "hill" | "plateau" | "ridge" | "canyon" | "valley" | "island" | "terracedCliffs" | "slope" | "river" | "lake" | "waterfall" | "damSite" | "gorge" | "badwater" | "forest" | "berryPatch" | "ruinField";
+export type ToolKind =
+  | "hill" | "plateau" | "ridge" | "canyon" | "valley" | "island" | "terracedCliffs" | "slope" | "thornBelt"
+  | "river" | "lake" | "waterfall" | "damSite" | "gorge" | "badwater" | "weir" | "plug" | "spillway"
+  | "forest" | "berryPatch" | "ruinField" | "mineSite" | "relic" | "geothermal" | "core" | "object";
 
 export const TOOL_NAMES: Record<ToolKind, string> = {
   hill: "Hill",
@@ -35,6 +44,15 @@ export const TOOL_NAMES: Record<ToolKind, string> = {
   forest: "Forest",
   berryPatch: "Berry patch",
   ruinField: "Ruin field",
+  thornBelt: "Thorn belt",
+  weir: "Weir",
+  plug: "Plug",
+  spillway: "Plugged spillway",
+  mineSite: "Mine site",
+  relic: "Relic",
+  geothermal: "Geothermal field",
+  core: "Unstable core",
+  object: "Object",
 };
 
 const OUTLINE_HINT = "Drag a rectangle, or click its corners and double-click to finish.";
@@ -54,21 +72,99 @@ export const TOOL_HINTS: Record<ToolKind, string> = {
   damSite: "Click a river where the dam should go. A rock ridge closes the valley so one short dam holds a reservoir.",
   gorge: "Click a river where the gorge starts. It narrows the river between high walls downstream.",
   badwater: "Click where the badwater spring goes, away from the start. Its water leaves through one outlet you can dam.",
-  forest: "Drag a rectangle on the map to plant a forest. Trees grow alive where the soil stays moist.",
-  berryPatch: "Drag a rectangle on the map to plant blueberry bushes.",
-  ruinField: "Drag a rectangle on the map to place a field of ruin columns (scrap metal).",
+  forest: `Draw the forest. ${OUTLINE_HINT} Green shows where trees live.`,
+  berryPatch: `Draw the berry patch. ${OUTLINE_HINT} Bushes grow on moist ground, beside water.`,
+  ruinField: `Draw the area. ${OUTLINE_HINT} Ruin columns grow in fields on level ground (scrap metal).`,
+  thornBelt: `Draw the belt. ${OUTLINE_HINT} Thorns block walking; builders clear them.`,
+  weir: "Click a river. A natural dam across it holds the water 0.65 deep upstream.",
+  plug: "Click a river. A line of blockage closes it; demolish it later to let the water through.",
+  spillway: "Click a lake's shore. A channel runs to lower ground, closed by a plug at the lake.",
+  mineSite: "Click level, dry ground. The scrap mine is built on it late in the game.",
+  relic: "Click level, dry ground. Demolishing a relic gives science: the farther out, the more.",
+  geothermal: "Click level, dry ground. A geothermal engine on it makes power for free.",
+  core: "Click level, dry ground far from the start. It explodes in the cycle you set and can't be removed.",
+  object: "Pick an object, then click where it goes. Green: the game keeps it there. Red: it would be deleted.",
 };
 
-export const LAND_TOOLS: ToolKind[] = ["hill", "plateau", "ridge", "canyon", "valley", "island", "terracedCliffs", "slope"];
-export const WATER_TOOLS: ToolKind[] = ["river", "lake", "waterfall", "damSite", "gorge", "badwater"];
-export const RESOURCE_TOOLS: ToolKind[] = ["forest", "berryPatch", "ruinField"];
+export const LAND_TOOLS: ToolKind[] = ["hill", "plateau", "ridge", "canyon", "valley", "island", "terracedCliffs", "slope", "thornBelt"];
+export const WATER_TOOLS: ToolKind[] = ["river", "lake", "waterfall", "damSite", "gorge", "badwater", "weir", "plug", "spillway"];
+export const RESOURCE_TOOLS: ToolKind[] = ["forest", "berryPatch", "ruinField", "mineSite", "relic", "geothermal"];
+/** Tools advanced mode adds (on the Resources tab). */
+export const ADVANCED_TOOLS: ToolKind[] = ["core", "object"];
 
 /** How a tool takes its shape from the map. */
 export function gestureOf(t: ToolKind): "outline" | "path" | "point" | "rect" {
   if (t === "river") return "path";
-  if (t === "forest" || t === "berryPatch" || t === "ruinField") return "rect";
   if (t === "terracedCliffs" || t === "waterfall" || t === "damSite" || t === "gorge" || t === "badwater" || t === "slope") return "point";
+  if (t === "weir" || t === "plug" || t === "spillway" || t === "mineSite" || t === "relic" || t === "geothermal" || t === "core" || t === "object") return "point";
   return "outline";
+}
+
+/** The map object a tool places, when it places one with a footprint. */
+export function objectKindOf(t: ToolKind, o: ToolOptions): MapObjectKind | null {
+  switch (t) {
+    case "mineSite":
+      return "mineSite";
+    case "geothermal":
+      return "geothermal";
+    case "core":
+      return "unstableCore";
+    case "relic":
+      return o.relic === "large" ? "relicLarge" : o.relic === "medium" ? "relicMedium" : "relicSmall";
+    default:
+      return null;
+  }
+}
+
+/** Templates advanced mode places by hand (the common set: they load for both factions). */
+export const PLACE_TEMPLATES: [string, string][] = [
+  ["Pine", "Pine"],
+  ["Birch", "Birch"],
+  ["Oak", "Oak"],
+  ["Succulent", "Succulent"],
+  ["BlueberryBush", "Blueberry bush"],
+  ["RuinColumnH1", "Ruin column, 1 high"],
+  ["RuinColumnH3", "Ruin column, 3 high"],
+  ["RuinColumnH5", "Ruin column, 5 high"],
+  ["RuinColumnH8", "Ruin column, 8 high"],
+  ["WaterSource", "Water source"],
+  ["BadwaterSource", "Badwater source"],
+  ["Slope", "Slope"],
+  ["Thorns", "Thorns"],
+  ["NaturalDam", "Natural dam"],
+  ["Blockage", "Blockage"],
+  ["SmallRelic", "Small relic"],
+  ["MediumRelic", "Medium relic"],
+  ["LargeRelic", "Large relic"],
+  ["GeothermalField", "Geothermal field"],
+  ["UndergroundRuins", "Underground ruins (mine site)"],
+];
+
+/** The footprint's south-west corner that centres an object on the tile clicked. */
+export function cornerAt(kind: MapObjectKind, x: number, y: number, o: Orientation): [number, number] {
+  const [a, b] = rotatedSize(kind, o);
+  return [x - Math.floor((a - 1) / 2), y - Math.floor((b - 1) / 2)];
+}
+
+/** The Coordinates that centre a template's rotated footprint on the tile clicked. */
+export function coordinatesAt(template: string, x: number, y: number, o: Orientation): [number, number] {
+  const fp = FOOTPRINTS[template];
+  if (!fp) return [x, y];
+  const [sx, sy] = fp.size;
+  const a = o === "Cw90" || o === "Cw270" ? sy : sx;
+  const b = o === "Cw90" || o === "Cw270" ? sx : sy;
+  const mx = x - Math.floor((a - 1) / 2);
+  const my = y - Math.floor((b - 1) / 2);
+  switch (o) {
+    case "Cw0":
+      return [mx, my];
+    case "Cw90":
+      return [mx, my + sx - 1];
+    case "Cw180":
+      return [mx + sx - 1, my + sy - 1];
+    case "Cw270":
+      return [mx + sy - 1, my];
+  }
 }
 
 export type Species = "Pine" | "Birch" | "Oak" | "mixed";
@@ -100,6 +196,15 @@ export interface ToolOptions {
   bandDepth: number;
   cliffWidth: number;
   strength: number;
+  /** Map objects and entities placed by hand: their facing, a relic's size, a core's countdown. */
+  turn: Orientation;
+  relic: "small" | "medium" | "large";
+  coreRadius: number;
+  coreCycles: number;
+  /** A forest: only where trees live, or dead ones on dry ground too. */
+  life: "alive" | "auto";
+  /** The object advanced mode places. */
+  template: string;
 }
 
 export const DEFAULT_OPTIONS: ToolOptions = {
@@ -122,6 +227,12 @@ export const DEFAULT_OPTIONS: ToolOptions = {
   bandDepth: 8,
   cliffWidth: 16,
   strength: 1.5,
+  turn: "Cw0",
+  relic: "small",
+  coreRadius: 2,
+  coreCycles: 6,
+  life: "alive",
+  template: "Blockage",
 };
 
 /** Defaults that change with the tool: a plateau keeps the cliff edges it always had. */
@@ -140,8 +251,38 @@ export interface Rect {
 const FLOW = { gentle: 1, steady: 2, strong: 4 } as const;
 
 /** What the worker plans for a tool's gesture: an outline, a path, a point or a rectangle. */
-export function toolRequest(t: ToolKind, o: ToolOptions, g: { points?: Point[]; at?: [number, number]; river?: { id: string; at: number } | null }): ToolRequest | null {
+export function toolRequest(t: ToolKind, o: ToolOptions, g: { points?: Point[]; at?: [number, number]; river?: { id: string; at: number } | null; W?: number; H?: number }): ToolRequest | null {
   switch (t) {
+    case "forest":
+    case "berryPatch":
+    case "ruinField":
+      if (!g.points || g.points.length < 3) return null;
+      return { tool: "area", kind: t, outline: g.points, density: t === "ruinField" ? 1 : o.density, ...(t === "forest" ? { species: o.species, life: o.life } : {}) };
+    case "thornBelt": {
+      if (!g.points || g.points.length < 3 || !g.W || !g.H) return null;
+      const m = polygonMask(g.points, g.W, g.H);
+      const tiles: number[] = [];
+      for (let i = 0; i < m.length; i++) if (m[i]) tiles.push(i);
+      return { tool: "object", kind: "thornBelt", tiles, density: o.density };
+    }
+    case "weir":
+    case "plug":
+      return g.river ? { tool: "object", kind: t, river: g.river } : null;
+    case "spillway":
+      return g.at ? { tool: "spillway", at: g.at } : null;
+    case "mineSite":
+    case "relic":
+    case "geothermal":
+    case "core": {
+      if (!g.at) return null;
+      const kind = objectKindOf(t, o)!;
+      return { tool: "object", kind, at: cornerAt(kind, g.at[0], g.at[1], o.turn), orientation: o.turn, ...(t === "core" ? { core: { radius: o.coreRadius, cycles: o.coreCycles } } : {}) };
+    }
+    case "object": {
+      if (!g.at) return null;
+      const [x, y] = coordinatesAt(o.template, g.at[0], g.at[1], o.turn);
+      return { tool: "entity", template: o.template, x, y, orientation: o.turn };
+    }
     case "hill":
     case "plateau":
     case "ridge":
@@ -212,6 +353,9 @@ export const DRAWING: Rgba = [150, 235, 120, 140];
 export const PREVIEW: Rgba = [90, 170, 255, 150];
 export const GOOD: Rgba = [80, 200, 90, 170];
 export const BAD: Rgba = [230, 60, 50, 180];
+/** A resource area's preview: plants that would stand dead, and tiles nothing is placed on. */
+export const DEAD: Rgba = [185, 130, 60, 170];
+export const BARE: Rgba = [140, 140, 140, 110];
 export const DAM: Rgba = [255, 140, 20, 200];
 export const PROBLEM: Rgba = [230, 60, 50, 150];
 

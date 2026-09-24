@@ -7,7 +7,9 @@
 // A tool's gesture (an outline, a river's points, a click) is planned by the worker on the current
 // map, shown as a preview with its report, and placed with one click (EDITOR_PLAN §1: see it before
 // you commit). After every edit the instant checks come back with it; the problems it made are
-// shown at once with their fixes.
+// shown at once with their fixes. Objects show their footprint under the pointer, green where the
+// game keeps them and red (with the reason) where it would delete them; advanced mode opens the
+// objects on a clicked tile with their numbers.
 
 import type { Remote } from "comlink";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -23,12 +25,14 @@ import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type Su
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, DamSiteView, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest } from "../worker/session";
+import type { CheckItem, DamSiteView, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest } from "../worker/session";
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
-import { ExportDialog, HistoryPanel, Inspector, InstantProblems, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type ItemActions } from "./panels";
+import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions } from "./panels";
 import {
   BAD,
+  BARE,
   DAM,
+  DEAD,
   DEFAULT_OPTIONS,
   DRAWING,
   featureFromRect,
@@ -36,6 +40,7 @@ import {
   GOOD,
   lineTiles,
   MOVING,
+  objectKindOf,
   optionsFor,
   paintOverlay,
   PREVIEW,
@@ -84,6 +89,8 @@ declare global {
       plan(): ToolPlan | null;
       /** The problems the last edit made. */
       instant(): CheckItem[];
+      /** The footprint under the pointer (object tools): its tiles, and why the game would refuse it. */
+      fit(): { tiles: number[]; problem: string | null } | null;
     };
   }
 }
@@ -128,6 +135,10 @@ export default function Editor(props: EditorProps) {
   const [exporting, setExporting] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(true);
   const [viewTick, setViewTick] = useState(0);
+  const [advanced, setAdvanced] = useState(false);
+  // the footprint under the pointer (object tools) and the objects on a clicked tile (advanced)
+  const [fit, setFit] = useState<{ tiles: number[]; problem: string | null } | null>(null);
+  const [picked, setPicked] = useState<{ x: number; y: number; list: EntityInfo[] } | null>(null);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const index = useMemo(() => new FeatureIndex(info.W, info.H), [info.W, info.H, view]);
   const indexed = useMemo(() => {
@@ -267,12 +278,18 @@ export default function Editor(props: EditorProps) {
       const pts = hoverTile ? [...draft, hoverTile] : draft;
       layers.push({ tiles: lineTiles(pts, info.W, info.H, !!tool && gestureOf(tool) === "outline"), color: DRAWING });
     }
-    if (plan?.ok) layers.push({ tiles: plan.tiles, color: PREVIEW });
+    if (plan?.ok && plan.area) {
+      layers.push({ tiles: plan.area.bare, color: BARE });
+      layers.push({ tiles: plan.area.dead, color: DEAD });
+      layers.push({ tiles: plan.area.alive, color: GOOD });
+    } else if (plan?.ok) layers.push({ tiles: plan.tiles, color: PREVIEW });
+    if (fit && !plan && !planning) layers.push({ tiles: fit.tiles, color: fit.problem ? BAD : GOOD });
+    if (picked) layers.push({ tiles: [picked.y * info.W + picked.x], color: SELECTED });
     if (startDrag) layers.push({ tiles: [...startDrag.check.tiles, startDrag.check.door], color: startDrag.check.problem ? BAD : GOOD });
     for (const c of instant) for (const [x, y] of c.where?.tiles ?? []) layers.push({ tiles: [y * info.W + x], color: PROBLEM });
     paintOverlay(data, info.W, info.H, layers);
     r.commitOverlay();
-  }, [feature, drag, drawing, draft, hoverTile, plan, startDrag, damSites, instant, indexed, ready]);
+  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready]);
 
   // ------------------------------------------------------------------------------ the tools
 
@@ -289,7 +306,7 @@ export default function Editor(props: EditorProps) {
   function finishDraft(points: Point[]) {
     if (!tool) return;
     setDraft([]);
-    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { points });
+    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { points, W: info.W, H: info.H });
     if (!req) return setMessage({ kind: "error", text: gestureOf(tool) === "path" ? "Click at least two points for a river." : "Click at least three corners." });
     planRequest(req);
   }
@@ -298,9 +315,72 @@ export default function Editor(props: EditorProps) {
     if (!tool) return;
     if (tool === "slope") return slopeAt(x, y);
     const river = riverAt(indexedRef.current, x, y);
-    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { at: [x, y], river });
+    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { at: [x, y], river, W: info.W, H: info.H });
     if (!req) return setMessage({ kind: "error", text: "Click on a river." });
+    setFit(null);
     planRequest(req);
+  }
+
+  // the footprint under the pointer: one check in flight, then the latest tile
+  const fitWant = useRef<string | null>(null);
+  const fitBusy = useRef(false);
+  function hoverFit(x: number, y: number) {
+    const t = toolRef.current;
+    if (!t || (!objectKindOf(t, optionsRef.current) && t !== "object") || planRef.current) {
+      fitWant.current = null;
+      return setFit(null);
+    }
+    const req = toolRequest(t, optionsFor(t, optionsRef.current), { at: [x, y], W: info.W, H: info.H });
+    if (!req) return;
+    const key = JSON.stringify(req);
+    if (fitWant.current === key) return;
+    fitWant.current = key;
+    if (fitBusy.current) return;
+    const next = (r: ToolRequest, k: string) => {
+      fitBusy.current = true;
+      void api
+        .footprintCheck(r)
+        .then((f) => {
+          if (fitWant.current === k) setFit(f);
+        })
+        .catch(() => setFit(null))
+        .finally(() => {
+          fitBusy.current = false;
+          const want = fitWant.current;
+          if (want && want !== k) next(JSON.parse(want) as ToolRequest, want);
+        });
+    };
+    next(req, key);
+  }
+  useEffect(() => {
+    fitWant.current = null;
+    setFit(null);
+  }, [tool, options, info.version]);
+
+  // advanced mode: the objects on a clicked tile, with their numbers
+  function pickTile(x: number, y: number) {
+    void enqueue(() => api.entitiesAt(x, y)).then((list) => {
+      setPicked(list.length ? { x, y, list } : null);
+      if (!list.length) setMessage({ kind: "info", text: `No objects on the tile at (${x}, ${y}).` });
+    });
+  }
+  function changeEntity(e: EntityInfo, c: EntityChange) {
+    if (!picked) return;
+    let at: [number, number] = [picked.x, picked.y];
+    let op: EditOp;
+    if (c.remove) op = { op: "deleteEntities", params: { entities: [e.id] } };
+    else if (c.move) {
+      const turn = c.move.turn ? TURN_NEXT[e.orientation] : e.orientation;
+      op = { op: "moveEntity", params: { id: e.id, x: e.x + c.move.dx, y: e.y + c.move.dy, ...(c.move.turn ? { orientation: turn } : {}) } };
+      at = [picked.x + c.move.dx, picked.y + c.move.dy];
+    } else op = { op: "setEntityProps", params: { id: e.id, components: c.props ?? {} } };
+    const label = c.remove ? "Delete an object" : c.move ? (c.move.turn ? "Turn an object" : "Move an object") : "Change an object";
+    void run(
+      () => api.apply(op, "user", label),
+      (u) => {
+        if (u.ok) pickTile(at[0], at[1]);
+      },
+    );
   }
 
   /** The slope tool: remove the slope on a tile, or pin one on the low tile of a 1-level step,
@@ -341,6 +421,8 @@ export default function Editor(props: EditorProps) {
     setPlan(null);
     setDraft([]);
     setDrawing(null);
+    setFit(null);
+    fitWant.current = null;
   }
 
   // the drawing tool takes left clicks and drags on the map
@@ -423,6 +505,10 @@ export default function Editor(props: EditorProps) {
     renderer.current = r;
     setReady(r);
     r.onClick = (hit) => {
+      if (advancedRef.current && hit) {
+        setSelected(null);
+        return pickTile(hit.x, hit.y);
+      }
       if (!hit) return setSelected(null);
       const list = indexedRef.current.candidatesAt(hit.x, hit.y);
       if (!list.length) return setSelected(null);
@@ -448,6 +534,10 @@ export default function Editor(props: EditorProps) {
   indexedRef.current = indexed;
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
+  const advancedRef = useRef(advanced);
+  advancedRef.current = advanced;
+  const toolRef = useRef(tool);
+  toolRef.current = tool;
 
   /** Fly the camera to a tile (a problem's "Show"). */
   function showTile(x: number, y: number) {
@@ -634,6 +724,7 @@ export default function Editor(props: EditorProps) {
       idle: () => queue.current.then(() => undefined),
       plan: () => planRef.current,
       instant: () => instantRef.current,
+      fit: () => fitRef.current,
     };
     return () => {
       delete window.dgmEditor;
@@ -641,6 +732,8 @@ export default function Editor(props: EditorProps) {
   }, []);
   const instantRef = useRef(instant);
   instantRef.current = instant;
+  const fitRef = useRef(fit);
+  fitRef.current = fit;
 
   // ------------------------------------------------------------------------------ export
 
@@ -737,6 +830,15 @@ export default function Editor(props: EditorProps) {
           onOptions={setOptions}
           damSites={damSites}
           onDamSites={(show) => setDamSites(show ? [] : null)}
+          advanced={advanced}
+          onAdvanced={(on) => {
+            setAdvanced(on);
+            setPicked(null);
+            if (!on && (tool === "core" || tool === "object")) {
+              setTool(null);
+              cancelTool();
+            }
+          }}
         />
         <section class="editor-map" aria-label="Map">
           <View3D
@@ -747,8 +849,13 @@ export default function Editor(props: EditorProps) {
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
               if (draftRef.current.length) setHoverTile(hit ? [hit.x, hit.y] : null);
+              if (hit) hoverFit(hit.x, hit.y);
+              else {
+                fitWant.current = null;
+                setFit(null);
+              }
             }}
-            hoverText={hover}
+            hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
             {hint ? (
               <div class="tool-hint" role="status">
@@ -829,6 +936,7 @@ export default function Editor(props: EditorProps) {
               </button>
             </div>
           ) : null}
+          {picked && !feature ? <EntityInspector key={`${picked.x},${picked.y}`} list={picked.list} onChange={changeEntity} onClose={() => setPicked(null)} /> : null}
           {feature ? (
             <Inspector
               feature={feature}
@@ -841,6 +949,7 @@ export default function Editor(props: EditorProps) {
               onDelete={() => deleteFeature(feature)}
               onPatch={(patch, label) => void apply({ op: "updateFeature", params: { id: feature.id, patch } }, label)}
               onReplan={(req) => void run(() => api.applyTool(req, feature.id))}
+              onPlan={(req) => planRequest(req)}
             />
           ) : null}
         </section>
@@ -851,6 +960,8 @@ export default function Editor(props: EditorProps) {
     </div>
   );
 }
+
+const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
 
 /** The middle tile of a StartingLocation at Coordinates (x, y) facing o. */
 function cornerToCentre(x: number, y: number, o: Orientation): [number, number] {

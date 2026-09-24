@@ -33,7 +33,11 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   // the player's own features: a forest (Resources) and a plateau (Land), drawn on the map
   await page.getByRole("tab", { name: "Resources" }).click();
   await page.getByRole("button", { name: "Forest", exact: true }).click();
+  // trees on dry ground too (they stand dead there); the forest is planned and shown first
+  await page.getByLabel("Only where trees live").uncheck();
   await drag(page, [6, 82], [14, 90]);
+  await page.getByRole("complementary", { name: "Preview" }).getByRole("button", { name: "Place" }).click();
+  await page.evaluate(() => window.dgmEditor!.idle());
   await page.getByRole("tab", { name: "Land" }).click();
   await page.getByRole("button", { name: "Plateau", exact: true }).click();
   await drag(page, [80, 8], [88, 14]);

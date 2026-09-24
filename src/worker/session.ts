@@ -31,7 +31,7 @@ import {
   type RiverRequest,
 } from "../core/doc/tools";
 import type { PlanRecord } from "../core/features/setpieces";
-import { lakeAt, moveObject, planArea, planEntity, planObject, planRiverBadwater, type AreaPreview, type AreaRequest, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
+import { footprintCheck as checkFootprint, lakeAt, moveObject, planArea, planEntity, planObject, planRiverBadwater, type AreaPreview, type AreaRequest, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
 import type { SetPieceKind } from "../core/features/schema";
 import { distanceFrom } from "../core/math/grid";
 import { toTimberFile } from "../core/gen/pack";
@@ -690,6 +690,13 @@ export function entitiesAt(x: number, y: number): EntityInfo[] {
     out.push({ id: e.id, template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, flipped: e.flipped, from, components: plainJson(rest) as Record<string, unknown> });
   }
   return out;
+}
+
+/** The hover preview of a single object or an entity: its tiles, and why it can't stand there. */
+export function footprintCheck(req: ToolRequest): { tiles: number[]; problem: string | null } {
+  const s = need();
+  if (req.tool !== "object" && req.tool !== "entity") return { tiles: [], problem: null };
+  return checkFootprint(s, req);
 }
 
 // ------------------------------------------------------------------------------ the dam-site layer
