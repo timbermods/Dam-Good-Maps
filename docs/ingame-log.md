@@ -200,9 +200,47 @@ What the files should show (from `checks.txt`):
 
 ## M7: resources, map objects, themes II
 
+Check D: the 1.0 objects load, and a spillway's plug releases its water. The files are in
+[out/m7/](../out/m7/), made with generator 0.5.0: the Lake Basin map for seed 4242 at 128 × 128,
+designed for Normal, with two edits made with the M7 editor tools (a weir and a thorn belt). Remake
+them with `npx tsx tools/ingame-files.ts --milestone m7`; [out/m7/checks.txt](../out/m7/checks.txt)
+lists their sha256 and every coordinate below.
+
+- **`Lake Basin (4242) D objects.timber`:** the generated map already has a plugged spillway, two
+  mine sites, two geothermal fields, a small relic and a medium relic. The Weir tool added a
+  natural dam across the north-west inflow river; the Thorn belt tool added a belt of thorns east
+  of the start.
+- **`Lake Basin (4242) D objects.png`** (north up, 5 pixels per tile, grid every 16 tiles): water
+  blue, badwater brown, start white with its door red, Blockage (the plug) magenta, NaturalDam (the
+  weir) cyan, Thorns dark red, relics yellow, geothermal fields orange, mine sites purple, the
+  spillway's channel dark blue dots.
+
+What the file should show (from `checks.txt`):
+- StartingLocation at (68, 97), level 10, door (69, 96).
+- Blockage, the spillway's plug: 3 tiles at (54, 33), (55, 33) and (56, 34), on the lake's south
+  shore. The lake's sill is at level 9. The spillway is 3 wide, its bed at level 8, and runs 35 tiles
+  to the south edge.
+- NaturalDam, the weir: 5 tiles at (10, 87), (11, 88), (12, 89), (12, 90) and (13, 90), across the
+  north-west inflow river. It holds the water about 0.65 above the river bed upstream.
+- Thorns: 32 in a belt within (92, 96)–(102, 100).
+- Small relic at (96, 107)–(96, 108). Medium relic at (121, 110)–(123, 111).
+- Geothermal fields at (34, 5)–(36, 7) and (8, 16)–(10, 18).
+- Mine sites (UndergroundRuins) at (21, 9)–(25, 13) and (114, 3)–(118, 7).
+
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| D | Load a map with NaturalDam, Blockage, Thorns, relics, a geothermal field and a mine site, then demolish the spillway plug. | There are no loading issues, and the plug releases the water as its card says. | set by M7 | pending |
+| D1 | Load the map (Folktails, Normal). Look at each object on the PNG. | There is no "Loading issues" panel. Every object listed above is there, and none is missing. | `Lake Basin (4242) D objects.timber`, `.png` | pending |
+| D2 | Watch the weir at (10, 87)–(13, 90) for a day. | Water stands about 0.65 deeper upstream of it, and flows over it. | `Lake Basin (4242) D objects.timber` | pending |
+| D3 | Send a beaver to walk through the thorn belt at (92, 96)–(102, 100), then mark the thorns for removal. | The beaver walks round the thorns. Builders clear them. | `Lake Basin (4242) D objects.timber` | pending |
+| D4 | Demolish the relics, and build a geothermal engine on a geothermal field. Check that the mine sites take the scrap mine. | The relics give science when demolished. The engine and the mine can be placed on their sites. | `Lake Basin (4242) D objects.timber` | pending |
+| D5 | Demolish the 3 Blockage tiles of the plug at (54, 33)–(56, 34). Watch the lake for a few days. | The lake drains down the spillway to the south edge. It falls about one level, to about level 8, losing about 3,290 water, then keeps that level. | `Lake Basin (4242) D objects.timber` | pending |
+
+**Automated stand-ins used meanwhile (all green at M7):**
+- `entities.placement` (the loader's rules, in TypeScript and in `prototype/validate.py`) passes on
+  this file and on every generated map of the six themes;
+- `extras.placement` (level, dry, away from floods, in the distance bands) passes on this file;
+- the contract tests: a weir and a plug close a river's channel wall to wall; a plugged spillway
+  drains its lake only over its plug.
 
 ## M8: water preview and background validation in the editor
 

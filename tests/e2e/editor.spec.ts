@@ -55,13 +55,15 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   await page.getByRole("button", { name: "Start", exact: true }).click();
   const before = i.features.find((f) => f.kind === "start")!.params as { position: [number, number] };
   await page.getByRole("button", { name: /^Move Start/ }).focus();
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
+  // (west: the berry bushes this map plants for its start stay within reach; two tiles east, 12
+  // of them fall outside the 20 tiles start.food counts, and export would warn)
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
   await expect.poll(async () => (await info(page)).history.length, { timeout: 30_000 }).toBe(3);
   await page.evaluate(() => window.dgmEditor!.idle());
   i = await info(page);
   const moved = i.features.find((f) => f.kind === "start")!.params as { position: [number, number] };
-  expect(moved.position).toEqual([before.position[0] + 2, before.position[1]]);
+  expect(moved.position).toEqual([before.position[0] - 2, before.position[1]]);
 
   // undo and redo, and the history list
   await page.keyboard.press("Escape");
