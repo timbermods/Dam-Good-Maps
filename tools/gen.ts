@@ -52,7 +52,7 @@ for (const size of sizes) {
     }
     const name = fileName(r.spec);
     writeFileSync(join(dir, name), r.bytes);
-    if (withProject) writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(toDocument(r.spec, r.features, r.built)));
+    if (withProject) writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(toDocument(r.spec, r.features, r.built, r.file)));
     const sha = createHash("sha256").update(r.bytes).digest("hex");
     const row = `${size}\t${seed}\t${ms} ms\tattempts ${r.attempts}\tentities ${r.built.entities.length}\t${sha}`;
     rows.push(row);

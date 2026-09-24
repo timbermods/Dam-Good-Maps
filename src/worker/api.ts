@@ -78,7 +78,7 @@ export async function runGenerate(spec: MapSpec): Promise<GenerateResponse> {
   const r = generate(spec);
   const ms = Math.round(performance.now() - t0);
   last = r;
-  const project = encodeProject(toDocument(r.spec, r.features, r.built));
+  const project = encodeProject(toDocument(r.spec, r.features, r.built, r.file));
   const b = r.built;
   const a = r.analysis;
   const N = b.W * b.H;

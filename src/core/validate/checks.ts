@@ -30,7 +30,8 @@ const COMMON = new Set([
   "RuinColumnH6", "RuinColumnH7", "RuinColumnH8", "UndergroundRuins", "StartingLocation", "AncientAquiferDrill", "Aquifer",
   "BadtideDrain", "BadwaterSeep", "BadwaterSource", "WaterSeep", "WaterSource",
 ]);
-const REQUIRED: Record<string, string[]> = {
+/** Components whose absence crashes the load (FORMAT.md §5). */
+export const REQUIRED: Record<string, string[]> = {
   WaterSource: ["WaterSource"], BadwaterSource: ["WaterSource"], Aquifer: ["WaterSource"], BadtideDrain: ["WaterSource"],
   WaterSeep: ["WaterSource", "WaterDepthStrengthModifier"], BadwaterSeep: ["WaterSource", "WaterDepthStrengthModifier"],
   UnstableCore: ["UnstableCore"], ReservePile: ["FixedStockpile"], ReserveTank: ["FixedStockpile"], ReserveWarehouse: ["FixedStockpile"],
@@ -204,6 +205,8 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
   const ids = new Set<string>();
   let badIds = 0;
   const unknown = new Set<string>();
+  const unknownIds: string[] = [];
+  const placementIds: string[] = [];
   const badEnum: string[] = [];
   const missingComp = new Set<string>();
   const placements: Placement[] = [];
@@ -214,6 +217,7 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
     const t = String(e.Template);
     if (!COMMON.has(t) || !FOOTPRINTS[t]) {
       unknown.add(t);
+      unknownIds.push(id);
       continue;
     }
     const p = placementOf(e);
@@ -224,8 +228,15 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
     const comps = e.Components as JsonObject;
     for (const r of REQUIRED[t] ?? []) if (!(r in comps)) missingComp.add(`${t}.${r}`);
     placements.push(p);
+    placementIds.push(id);
   }
-  c.add({ id: "entities.templates", class: "load", ok: unknown.size === 0, message: unknown.size ? `unknown or faction-only templates: ${[...unknown].join(", ")}` : "every template is in the common collections" });
+  c.add({
+    id: "entities.templates",
+    class: "load",
+    ok: unknown.size === 0,
+    message: unknown.size ? `unknown or faction-only templates: ${[...unknown].join(", ")}` : "every template is in the common collections",
+    ...(unknownIds.length ? { where: { entities: unknownIds }, fix: [{ op: "deleteEntities" as const, label: "Remove the objects the game cannot load", params: { entities: unknownIds } }] } : {}),
+  });
   c.add({ id: "entities.enums", class: "load", ok: badEnum.length === 0, message: badEnum.length ? `bad orientation on ${badEnum.slice(0, 5).join(", ")}` : "every orientation is a valid enum name" });
   c.add({ id: "entities.components", class: "load", ok: missingComp.size === 0, message: missingComp.size ? `missing ${[...missingComp].slice(0, 6).join(", ")}` : "required components present" });
   c.add({ id: "entities.ids", class: "load", ok: badIds === 0, value: badIds, limit: 0, message: `${badIds} duplicate or malformed ids` });
@@ -238,7 +249,8 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
   const startCells: number[] = [];
   const problems: string[] = [];
   const key = (x: number, y: number, z: number) => z * plane + y * X + x;
-  for (const [p] of order) {
+  const rejected: string[] = [];
+  for (const [p, k] of order) {
     const fp = FOOTPRINTS[p.template];
     const cells = worldBlocks(fp, p);
     let why = "";
@@ -258,6 +270,7 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
     }
     if (why) {
       problems.push(`${p.template} at (${p.x},${p.y},${p.z}): ${why}`);
+      rejected.push(placementIds[k]);
       continue;
     }
     for (const b of cells) {
@@ -278,6 +291,8 @@ function checkEntities(file: TimberFile, c: Collector, surface: Uint8Array): Ent
     value: problems.length,
     limit: 0,
     message: problems.length ? problems.slice(0, 6).join("; ") + (problems.length > 6 ? ` (+${problems.length - 6} more)` : "") : "every object would load",
+    // the game deletes these on load; the fix removes them first, so the map loads without issues
+    ...(rejected.length ? { where: { entities: rejected }, fix: [{ op: "deleteEntities" as const, label: "Remove the objects the game would delete", params: { entities: rejected } }] } : {}),
   });
   const overlap = startCells.filter((k) => occupied.has(k)).length;
   c.add({ id: "start.clear", class: "load", ok: overlap === 0, value: overlap, limit: 0, message: overlap ? `${overlap} start cells covered by objects (the start would be deleted)` : "nothing overlaps the start" });

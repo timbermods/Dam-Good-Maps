@@ -1,19 +1,16 @@
 // The validation report (PLAN §11.6, §19.5): every check yields {id, class, severity, ok, value,
 // limit, message, where?, fix?}. `where` names the tiles, feature or entities involved; `fix` is a
-// list of edit operations the editor can offer as a one-click fix (EDITOR_PLAN §6; the operations
-// engine arrives in M3, which applies them).
+// list of edit operations the editor offers as a one-click fix (EDITOR_PLAN §6), in the envelope
+// the operations engine takes (core/doc/ops.ts), applied as one step with `MapSession.applyAll`.
+
+import type { EditOp } from "../doc/ops";
 
 export type CheckClass = "load" | "playability" | "design";
 export type Severity = "error" | "warning" | "info";
 export type Profile = "generate" | "export" | "import";
 
-/** One edit operation proposed as a fix, in the shape the operations engine (M3) will take. */
-export interface FixOp {
-  op: "deleteEntities" | "moveStart" | "addSlope" | "regenerate";
-  /** Plain-language label for the button. */
-  label: string;
-  params: Record<string, unknown>;
-}
+/** One edit operation proposed as a fix, with a plain-language label for its button. */
+export type FixOp = EditOp & { label: string };
 
 export interface CheckResult {
   id: string;

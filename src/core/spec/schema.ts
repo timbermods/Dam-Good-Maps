@@ -1,4 +1,4 @@
-// A small JSON Schema checker for the keywords our schemas use (type, enum, const, minimum,
+// A small JSON Schema checker for the keywords our schemas use (type or a list of types, enum, const, minimum,
 // maximum, pattern, required, properties, additionalProperties, items, minItems, maxItems, $ref to
 // #/$defs, if/then). It never evaluates code, so it also runs inside a Claude artifact. The tests
 // cross-check it against Ajv on the same schema.
@@ -40,9 +40,12 @@ export function checkSchema(root: Schema, value: unknown): SchemaError[] {
     const s = resolve(s0);
     if ("const" in s && v !== s.const) out.push({ path, message: `must be ${JSON.stringify(s.const)}` });
     if (s.enum && !(s.enum as unknown[]).includes(v)) out.push({ path, message: `must be one of ${(s.enum as unknown[]).join(", ")}` });
-    if (s.type && !typeOk(s.type as string, v)) {
-      out.push({ path, message: `must be ${s.type}` });
-      return;
+    if (s.type) {
+      const types = (Array.isArray(s.type) ? s.type : [s.type]) as string[];
+      if (!types.some((t) => typeOk(t, v))) {
+        out.push({ path, message: `must be ${types.join(" or ")}` });
+        return;
+      }
     }
     if (typeof v === "number") {
       if (typeof s.minimum === "number" && v < s.minimum) out.push({ path, message: `must be >= ${s.minimum}` });

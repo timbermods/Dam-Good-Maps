@@ -1,0 +1,99 @@
+// E1 property tests (EDITOR_PLAN §9 and §10, ROADMAP M3 acceptance), on a generated map of every
+// size preset: random operations, where after every step the incremental rebuild equals a full
+// rebuild, byte for byte in the exported file; undo and redo along the way; then export, re-import
+// and compare; the project file round trip; and undoing everything returns the exact starting map.
+
+import { createHash } from "node:crypto";
+import { describe, expect, it } from "vitest";
+import { decodeProject } from "../../src/core/doc/document";
+import { MapSession } from "../../src/core/doc/session";
+import type { BuildResult } from "../../src/core/features/build";
+import { entityJson } from "../../src/core/format/entities";
+import { stringify } from "../../src/core/format/json";
+import { writeTimber } from "../../src/core/format/timber";
+import { generate } from "../../src/core/gen/generate";
+import { stream } from "../../src/core/math/rng";
+import { makeSpec, SIZE_PRESETS } from "../../src/core/spec/mapspec";
+import { randomOp } from "./randomOps";
+
+const sha = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
+
+/** Everything a build writes into a file, compared exactly. */
+function expectSameBuild(a: BuildResult, b: BuildResult, what: string): void {
+  expect(Buffer.from(a.heights).equals(Buffer.from(b.heights)), `${what}: heights`).toBe(true);
+  for (const key of ["water", "contamination", "moisture", "soilContamination"] as const) {
+    let diff = -1;
+    for (let i = 0; i < a[key].length && diff < 0; i++) if (a[key][i] !== b[key][i]) diff = i;
+    expect(diff, `${what}: ${key} differs at tile ${diff}`).toBe(-1);
+  }
+  expect(stringify(a.entities.map(entityJson)), `${what}: entities`).toBe(stringify(b.entities.map(entityJson)));
+  expect(a.orphans, `${what}: orphans`).toEqual(b.orphans);
+  expect(a.notes, `${what}: notes`).toEqual(b.notes);
+}
+
+const OPS: Record<number, number> = { 96: 40, 128: 32, 192: 20, 256: 16 };
+
+describe.each(Object.entries(SIZE_PRESETS).map(([name, side], k) => [name, side, 301 + k] as const))("the %s preset (%i²), seed %i", (_name, side, seed) => {
+  const r = generate(makeSpec({ seed, size: { x: side, y: side } }));
+
+  it("random operations: the incremental rebuild equals a full rebuild after every step, undo and redo included; export, re-import and compare; undo all", () => {
+    expect(r.report.passed).toBe(true);
+    const s = MapSession.fromGenerated(r);
+    const rng = stream(seed, "e1-property-test");
+    let applied = 0;
+    let rejected = 0;
+    for (let step = 0; step < OPS[side]; step++) {
+      const op = randomOp(s, rng);
+      if (!op) continue;
+      const before = s.document.edits.length;
+      const res = s.apply(op);
+      if (!res.ok) {
+        // a rejection is clean: a reason, and nothing changed
+        rejected++;
+        expect(res.errors.length, JSON.stringify(op)).toBeGreaterThan(0);
+        expect(s.document.edits.length).toBe(before);
+        continue;
+      }
+      applied++;
+      expectSameBuild(s.built, s.fullBuild(), `after ${op.op} (step ${step})`);
+      if (rng.float() < 0.25 && s.canUndo) {
+        // step back and forth: the snapshots and the undo data give the same maps
+        const n = 1 + rng.int(0, Math.min(3, s.history().filter((h) => h.applied).length));
+        const bytes = sha(s.exportTimber().bytes);
+        for (let k = 0; k < n; k++) s.undo();
+        expectSameBuild(s.built, s.fullBuild(), `after ${n} undos (step ${step})`);
+        for (let k = 0; k < n; k++) s.redo();
+        expectSameBuild(s.built, s.fullBuild(), `after ${n} redos (step ${step})`);
+        expect(sha(s.exportTimber().bytes)).toBe(bytes);
+      }
+    }
+    expect(applied).toBeGreaterThanOrEqual(OPS[side] * 0.6);
+    expect(rejected).toBeGreaterThanOrEqual(0);
+    // the incremental and the full build export the same file
+    const exported = s.exportTimber().bytes;
+    expect(sha(writeTimber(s.exportFile(s.fullBuild())))).toBe(sha(exported));
+
+    // export, re-import and compare: our own file needs no normalization, and exports unchanged
+    const again = MapSession.importMap(exported, "edited.timber");
+    expect(again.meta.source!.report.changes).toEqual([]);
+    expect(Buffer.from(again.built.heights).equals(Buffer.from(s.built.heights))).toBe(true);
+    const ents = (b: BuildResult) => b.entities.map((e) => `${e.id} ${e.template} ${e.x},${e.y},${e.z} ${e.orientation}`).sort();
+    expect(ents(again.built)).toEqual(ents(s.built));
+    expect(sha(again.exportTimber().bytes)).toBe(sha(exported));
+    // the load checks give the same verdicts on the edited map and on its re-import
+    const load = (v: ReturnType<MapSession["validate"]>) => v.report.checks.filter((c) => c.class === "load").map((c) => `${c.id} ${c.ok}`);
+    expect(load(again.validate("export"))).toEqual(load(s.validate("export")));
+
+    // the project file opens to the same map
+    const reopened = MapSession.open(decodeProject(s.project()));
+    expect(sha(reopened.exportTimber().bytes)).toBe(sha(exported));
+    expect(reopened.orphans()).toEqual(s.orphans());
+
+    // undoing everything returns the exact starting map
+    while (s.undo());
+    expect(s.document.edits).toEqual([]);
+    expect(s.features).toEqual(r.features);
+    expectSameBuild(s.built, s.fullBuild(), "after undoing everything");
+    expect(sha(s.exportTimber().bytes)).toBe(sha(r.bytes));
+  });
+});

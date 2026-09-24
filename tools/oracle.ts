@@ -91,7 +91,7 @@ for (const size of sizes) {
     }
     const p = join(dir, fileName(r.spec));
     writeFileSync(p, r.bytes);
-    writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(toDocument(r.spec, r.features, r.built)));
+    writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(toDocument(r.spec, r.features, r.built, r.file)));
     paths.push(p);
     written.set(`${seed}/${size}`, p);
   }

@@ -9,9 +9,9 @@ import { AVAILABLE_THEMES, type MapSpec } from "../spec/mapspec";
 import { validateMap, type Validation } from "../validate/checks";
 import { blocks, type ValidationReport } from "../validate/report";
 import type { PlayabilityAnalysis } from "../validate/playability";
-import { writeTimber } from "../format/timber";
+import { writeTimber, type TimberFile } from "../format/timber";
 import { toTimberFile } from "./pack";
-import { planRiverValley } from "./riverValley";
+import { planRiverValley, type PlanContext } from "./riverValley";
 
 export const MAX_ATTEMPTS = 12;
 
@@ -23,6 +23,8 @@ export interface GenerateResult {
   /** What the playability checks measured (reach, dam sites, distances) for the map card. */
   analysis: PlayabilityAnalysis | null;
   bytes: Uint8Array;
+  /** The file `bytes` was written from (for the project file's stored base). */
+  file: TimberFile;
   attempts: number;
   failures: { attempt: number; failed: string[] }[];
 }
@@ -32,12 +34,13 @@ export interface GenerateOptions {
   onProgress?: (p: { attempt: number; stage: string }) => void;
 }
 
-export function planFeatures(spec: MapSpec, attempt: number, candidate = 0, settleCache?: SettleCache): Feature[] {
+/** Plan a candidate's features. `context` carries the regeneration constraints (PLAN §7.0). */
+export function planFeatures(spec: MapSpec, attempt: number, candidate = 0, settleCache?: SettleCache, context?: PlanContext): Feature[] {
   if (!AVAILABLE_THEMES.includes(spec.theme)) throw new Error(`the ${spec.theme} theme is not available yet`);
   if (spec.colonies.count !== 1 || spec.colonies.mod !== "none") {
     throw new Error("multi-colony (Timber Together) maps are not built yet (PLAN §20, D5)");
   }
-  return planRiverValley(spec, attempt, candidate, settleCache);
+  return planRiverValley(spec, attempt, candidate, settleCache, context);
 }
 
 /** Validate a built map in the generate profile, on the build's own canonical settle. */
@@ -61,7 +64,7 @@ export function generate(specIn: MapSpec, opts: GenerateOptions = {}): GenerateR
     const file = toTimberFile(spec, built);
     const { report, analysis } = validateBuilt(spec, features, built, file);
     const bytes = report.passed ? writeTimber(file) : new Uint8Array();
-    last = { spec, features, built, report, analysis, bytes, attempts: attempt + 1, failures };
+    last = { spec, features, built, report, analysis, bytes, file, attempts: attempt + 1, failures };
     if (report.passed) return last;
     failures.push({ attempt, failed: report.checks.filter((c) => blocks("generate", c)).map((c) => c.id) });
   }
