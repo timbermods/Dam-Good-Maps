@@ -11,7 +11,8 @@ import { blocks, type ValidationReport } from "../validate/report";
 import type { PlayabilityAnalysis } from "../validate/playability";
 import { writeTimber, type TimberFile } from "../format/timber";
 import { toTimberFile } from "./pack";
-import { planRiverValley, type PlanContext } from "./riverValley";
+import { planLakeBasin } from "./lakeBasin";
+import { planValley, type PlanContext } from "./valley";
 
 export const MAX_ATTEMPTS = 12;
 
@@ -40,7 +41,15 @@ export function planFeatures(spec: MapSpec, attempt: number, candidate = 0, sett
   if (spec.colonies.count !== 1 || spec.colonies.mod !== "none") {
     throw new Error("multi-colony (Timber Together) maps are not built yet (PLAN §20, D5)");
   }
-  return planRiverValley(spec, attempt, candidate, settleCache, context);
+  switch (spec.archetype) {
+    case "riverValley":
+    case "canyon":
+      return planValley(spec.archetype, spec, attempt, candidate, settleCache, context);
+    case "lakeBasin":
+      return planLakeBasin(spec, attempt, candidate, settleCache, context);
+    default:
+      throw new Error(`the ${spec.archetype} layout is not available yet`);
+  }
 }
 
 /** Validate a built map in the generate profile, on the build's own canonical settle. */

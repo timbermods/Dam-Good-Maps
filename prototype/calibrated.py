@@ -44,6 +44,7 @@ DENSITY = {
     "bushes_per_10k": (265, 92, 40, 38),
     "water_strength_per_10k": (5.0, 2.2, 1.2, 1.1),   # official 8.5/1.5/1.0/1.1; floor of ~2 on small maps keeps rivers visible
     "ruin_field_columns": (21, 31, 40, 41),
+    "basins_ge20": (1.5, 4, 15.5, 15),                 # natural basins of 20+ tiles per map (Lakes and basins)
 }
 
 

@@ -24,12 +24,27 @@ export function fileName(spec: MapSpec): string {
 
 export function description(spec: MapSpec): string {
   const size = `${spec.size.x}×${spec.size.y}`;
-  const marsh = spec.settings.hazards.badwater !== "off" ? ", past a badwater marsh," : "";
-  return (
-    `${THEME_NAMES[spec.theme]}, ${size}, designed for ${spec.designedFor}. A river enters from the west, ` +
-    `drops over a cascade into a basin that a rock ridge pinches into a gorge (one short dam there holds a ` +
-    `reservoir), then over falls${marsh} and out to the east. Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`
-  );
+  const w = spec.settings.water;
+  const falls = w.waterfalls !== "off";
+  let body: string;
+  switch (spec.archetype) {
+    case "canyon":
+      body =
+        `A river runs deep in a canyon${falls ? ", over falls," : ""} through a narrows where one short dam holds a reservoir. ` +
+        "A flight of steps climbs the canyon wall beside the start.";
+      break;
+    case "lakeBasin":
+      body =
+        `${w.rivers > 1 ? "Rivers run into" : w.rivers === 1 ? "A river runs into" : "A spring fills"} a lake at the heart of the map. ` +
+        "Its one outlet runs through a narrow gap, where a short dam raises the whole lake.";
+      break;
+    default:
+      body =
+        `A river crosses the valley${falls ? " and drops over a cascade" : ""} into a basin that a rock ridge pinches into a gorge ` +
+        `(one short dam there holds a reservoir), then flows on${falls ? " over falls" : ""} and out.`;
+  }
+  const bad = spec.settings.hazards.badwater !== "off" ? " Badwater rises in side basins; a levee on a basin's outlet holds it back." : "";
+  return `${THEME_NAMES[spec.theme]}, ${size}, designed for ${spec.designedFor}. ${body}${bad} Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`;
 }
 
 export interface PackOptions {

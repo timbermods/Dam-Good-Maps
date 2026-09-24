@@ -10,6 +10,7 @@ import { toTimberFile } from "../../src/core/gen/pack";
 import { mapObjects, waterModel, type MapObject } from "../../src/core/sim/model";
 import { makeSpec } from "../../src/core/spec/mapspec";
 import { validateMap } from "../../src/core/validate/checks";
+import { basinLeak } from "../../src/core/validate/playability";
 import { blocks, type CheckResult } from "../../src/core/validate/report";
 import type { JsonObject } from "../../src/core/format/json";
 
@@ -77,9 +78,44 @@ describe("validation profiles (PLAN §19.5)", () => {
     const adv = r.report.checks.find((c) => c.id === "plants.drought")!;
     expect(adv.advisory).toBe(true);
     for (const p of ["generate", "export", "import"] as const) expect(blocks(p, { ...adv, ok: false })).toBe(false);
-    const na = r.report.checks.find((c) => c.id === "water.badwater_contained")!;
+    // the map objects' placement check is not applicable until M7 places relics and mine sites
+    const na = r.report.checks.find((c) => c.id === "extras.placement")!;
     expect(na.applicable).toBe(false);
     expect(na.ok).toBe(true);
+    for (const p of ["generate", "export", "import"] as const) expect(blocks(p, na)).toBe(false);
+    // a map with its badwater off has no basin: the containment check is not applicable there
+    const dry = generate({ ...makeSpec({ seed: 4242, size: { x: 96, y: 96 } }), settings: { ...spec.settings, hazards: { ...spec.settings.hazards, badwater: "off" } } });
+    const nb = dry.report.checks.find((c) => c.id === "water.badwater_contained")!;
+    expect(nb.applicable).toBe(false);
+    expect(nb.ok).toBe(true);
+  });
+
+  it("water.badwater_contained: a levee on the outlet holds each planned basin; a cut rim leaks (PLAN §9.5, D57)", () => {
+    const basins = r.features.filter((f) => f.kind === "setPiece" && f.params.kind === "badwaterBasin");
+    expect(basins.length).toBeGreaterThan(0);
+    const c = r.report.checks.find((x) => x.id === "water.badwater_contained")!;
+    expect(c.applicable).not.toBe(false);
+    expect(c.ok).toBe(true);
+    // cut a notch through one basin's rim, away from its outlet: the water rising in the basin
+    // leaves by it, and the check fails
+    const p = (basins[0].params as { plan: unknown }).plan as { x: number; y: number; floor: number; outlet: number[]; outletLevels: number[]; outletWidth: number };
+    const W = r.built.W;
+    const h = r.built.heights.slice();
+    const out = new Set<number>();
+    for (let k = 0; k + 1 < p.outlet.length; k += 2) out.add(p.outlet[k + 1] * W + p.outlet[k]);
+    const cx = p.x + 1;
+    const cy = p.y + 1;
+    let cut = false;
+    for (const [dx, dy] of [[0, 4], [0, -4], [4, 0], [-4, 0]]) {
+      const a = (cy + dy) * W + cx + dx;
+      const b = (cy + 2 * Math.sign(dy) + dy) * W + cx + dx + 2 * Math.sign(dx);
+      if (cut || out.has(a) || out.has(b)) continue;
+      for (let k = 4; k <= 6; k++) h[(cy + Math.sign(dy) * k) * W + cx + Math.sign(dx) * k] = p.floor;
+      cut = true;
+    }
+    expect(cut).toBe(true);
+    expect(basinLeak(p, r.built.heights, W, r.built.H)).toBeNull();
+    expect(basinLeak(p, h, W, r.built.H)).not.toBeNull();
   });
 
   it("imports have no features: water.outflow is not applicable", () => {

@@ -13,8 +13,9 @@ import { damSites, type DamSite } from "../analysis/damsites";
 import { components, walkRegions } from "../analysis/regions";
 import { footprintTiles, slopeHighSide, worldBlocks, FOOTPRINTS } from "../format/footprints";
 import { polygonMask } from "../features/geometry";
+import { channelTiles } from "../features/route";
 import type { Feature } from "../features/schema";
-import { density, DROUGHT, REACH_MIN, reservoirNeeded } from "../gen/calibrated";
+import { density, DROUGHT, REACH_MIN, RESERVE, reservoirNeeded } from "../gen/calibrated";
 import { distanceFrom } from "../math/grid";
 import { soilContamination } from "../sim/contamination";
 import { droughtStorage } from "../sim/drought";
@@ -37,7 +38,6 @@ export const TREES = ["Pine", "Birch", "Oak"] as const;
 export const WALK_BLOCKERS = new Set([
   "Thorns", "Blockage", "NaturalDam", "UnstableCore", "GeothermalField", "UndergroundRuins", "SmallRelic", "MediumRelic", "LargeRelic",
 ]);
-const RESERVE = { scarce: 1, normal: 1.5, plenty: 3 } as const;
 const START_AREA = { small: 0.6, normal: 1, large: 1.8 } as const;
 
 /** Thresholds for one map: from its spec, or the difficulty's defaults for an imported map. */
@@ -52,6 +52,9 @@ export interface Rules {
   droughtDays: number;
   /** Stored water needed near the start: the colony's drought need × the drought reserve. */
   reservoirNeed: number;
+  /** The least mean depth a dam site's reservoir must have (Hard: 3, PLAN §11.4; else 0), and the
+   *  dam heights sampled (crests of 4 only when a depth is asked). */
+  reservoirDepth: number;
   maxWaterShare: number;
   multipliers: { scrap: number; trees: number; bushes: number };
 }
@@ -66,11 +69,13 @@ export function rulesFor(spec: MapSpec | null, designedFor: Difficulty = "normal
     waterWithin: r.waterWithin,
     treesWithin20: r.treesWithin20,
     bushesWithin20: r.bushesWithin20,
-    badwaterWithin: s ? s.hazards.badwaterDistance : r.badwaterWithin,
+    // the Badwater distance setting and the start rule say the same thing: the stricter counts
+    badwaterWithin: s ? Math.max(s.hazards.badwaterDistance, s.start.rules.badwaterWithin) : r.badwaterWithin,
     ruinsWithin: r.ruinsWithin,
     reachMin: REACH_MIN[s?.terrain.buildableLand ?? "normal"] * START_AREA[s?.start.area ?? "normal"],
     droughtDays: DROUGHT[difficulty].days,
     reservoirNeed: reservoirNeeded(difficulty) * RESERVE[s?.water.droughtReserve ?? "normal"],
+    reservoirDepth: difficulty === "hard" ? 3 : 0,
     maxWaterShare: spec && (spec.theme === "lakeBasin" || spec.theme === "islands") ? 0.55 : 0.35,
     multipliers: s
       ? { scrap: s.resources.ruins / 100, trees: s.resources.forestDensity / 100, bushes: s.resources.berryBushes / 100 }
@@ -181,11 +186,7 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     limit: 40,
     message: `the largest body of clean water badwater never reaches has ${largest} tiles (at least 40)`,
   });
-  const planned = inp.features?.some((f) => f.kind === "setPiece" && f.params.kind === "badwaterBasin" && (f.params.plan as { outlet?: unknown }).outlet);
-  // a source never stops, so a blocked outlet only holds the badwater while the basin fills: the
-  // proof of §9.5 comes with the badwater settings that place basins (roadmap M6, D51)
-  if (planned) c.notApplicable("water.badwater_contained", "playability", "the containment rule comes with the badwater settings (roadmap M6)");
-  else c.notApplicable("water.badwater_contained", "playability", "no badwater basin with a planned outlet on this map");
+  checkContained(inp, c);
 
   const M = moisture(h, D, C, W, H, barrier);
   const SC = soilContamination(h, D, C, W, H, barrier);
@@ -208,6 +209,82 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
   }
   checkStart(inp, c, starts[0][0], { M, SC, wet, clean, blocked, barrier }, analysis, id);
   return analysis;
+}
+
+/** `water.badwater_contained` (PLAN §9.5, D57): with a levee on its outlet (the outlet channel's
+ *  tiles blocked), every planned badwater basin holds its water below its rim. The water that rises
+ *  in it cannot leave the basin (its floor and its two-tile rim) or reach a map edge below the rim's
+ *  level. A source never stops, so the levee holds the badwater until the basin is full; what this
+ *  proves is that the outlet is the basin's only way out, so the levee is the counterplay. */
+function checkContained(inp: PlayabilityInput, c: Collector): void {
+  const { W, H, surface: h, features } = inp;
+  if (!features) {
+    c.notApplicable("water.badwater_contained", "playability", "needs the map's planned badwater basins (imported maps have none)");
+    return;
+  }
+  const basins = features.filter((f) => f.kind === "setPiece" && f.params.kind === "badwaterBasin" && f.params.plan.mode === "basin" && Array.isArray(f.params.plan.outlet));
+  if (!basins.length) {
+    c.notApplicable("water.badwater_contained", "playability", "no badwater basin with a planned outlet on this map");
+    return;
+  }
+  const leaks: [number, number][] = [];
+  for (const f of basins) {
+    if (f.kind !== "setPiece") continue;
+    const leak = basinLeak(f.params.plan as unknown as ContainedPlan, h, W, H);
+    if (leak) leaks.push(leak);
+  }
+  c.add({
+    id: "water.badwater_contained",
+    class: "playability",
+    ok: leaks.length === 0,
+    value: leaks.length,
+    limit: 0,
+    message: leaks.length
+      ? `${leaks.length} of ${basins.length} badwater basins leak below their rim: a levee on the outlet would not hold the badwater`
+      : `a levee on the outlet keeps the badwater in its basin (${basins.length} basin${basins.length > 1 ? "s" : ""})`,
+    ...(leaks.length ? { where: { tiles: leaks } } : {}),
+  });
+}
+
+interface ContainedPlan {
+  x: number;
+  y: number;
+  floor: number;
+  outlet: number[];
+  outletLevels: number[];
+  outletWidth: number;
+}
+
+/** Where water rising in a basin with its outlet blocked would leave it below its rim, or null. */
+export function basinLeak(p: ContainedPlan, h: Uint8Array, W: number, H: number): [number, number] | null {
+  const rim = p.floor + 2;
+  const cx = p.x + 1;
+  const cy = p.y + 1;
+  const blocked = channelTiles({ tiles: p.outlet, levels: p.outletLevels, width: p.outletWidth, to: "" }, W, H).bed;
+  const seen = new Uint8Array(W * H);
+  const queue: number[] = [];
+  for (let y = p.y; y < p.y + 3; y++)
+    for (let x = p.x; x < p.x + 3; x++) {
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      seen[y * W + x] = 1;
+      queue.push(y * W + x);
+    }
+  for (let q = 0; q < queue.length; q++) {
+    const i = queue[q];
+    const x = i % W;
+    const y = (i - x) / W;
+    for (const [dx, dy] of N4) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) return [x, y];
+      const n = ny * W + nx;
+      if (seen[n] || blocked.has(n) || h[n] >= rim) continue;
+      if (Math.abs(nx - cx) > 5 || Math.abs(ny - cy) > 5) return [nx, ny];
+      seen[n] = 1;
+      queue.push(n);
+    }
+  }
+  return null;
 }
 
 /** The checks that need the start, in report order. */
@@ -532,7 +609,8 @@ function checkStart(
   for (let i = 0; i < N; i++) if (sd[i] <= RESERVOIR_RADIUS) natural += kept[i];
   const surf = new Float64Array(N);
   for (let i = 0; i < N; i++) surf[i] = h[i] + D[i];
-  const sites = damSites(h, clean, surf, W, H, sd);
+  const deep = rules.reservoirDepth;
+  const sites = damSites(h, clean, surf, W, H, sd, 60, deep > 0 ? [1, 2, 3, 4] : [1, 2, 3], 2, 30, deep);
   analysis.damSites = sites;
   analysis.naturalStorage = natural;
   let best: DamSite | null = null;
@@ -548,7 +626,7 @@ function checkStart(
     value: Math.round(held),
     limit: Math.round(need),
     ...(best ? { where: { tiles: [[best.x, best.y]] as [number, number][] } } : {}),
-    message: `the best dam site within ${RESERVOIR_RADIUS} tiles holds ${Math.round(best ? best.volume : 0)} and natural pools keep ${Math.round(natural)}; ${Math.round(need)} carries ${colony} beavers through a ${rules.droughtDays}-day drought`,
+    message: `the best dam site within ${RESERVOIR_RADIUS} tiles${deep > 0 ? `, at least ${deep} deep on average,` : ""} holds ${Math.round(best ? best.volume : 0)} and natural pools keep ${Math.round(natural)}; ${Math.round(need)} carries ${colony} beavers through a ${rules.droughtDays}-day drought`,
   });
 
   // resource totals: at least half the official median for this map size (about the official p10)

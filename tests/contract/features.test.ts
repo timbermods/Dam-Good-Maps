@@ -3,6 +3,7 @@
 // removing one ruin field leaves every other feature and entity id unchanged; the same spec gives
 // the same bytes; generated maps pass the generate profile.
 
+import { layoutTargets } from "../../src/core/gen/layout";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { decodeProject, encodeProject, toDocument } from "../../src/core/doc/document";
@@ -38,7 +39,9 @@ describe.each([
     const ids = r.features.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     const setPieces = r.features.filter((f) => f.kind === "setPiece").map((f) => (f.params as { kind: string }).kind).sort();
-    expect(setPieces).toEqual(["badwaterBasin", "damSite", "waterfall", "waterfall"]);
+    // the badwater setting's strength in basins of 1–3 each (0.65 × 7.2 at 256² makes two)
+    const basins = Math.ceil(layoutTargets(r.spec).badwater / 3);
+    expect(setPieces).toEqual([...Array(basins).fill("badwaterBasin"), "damSite", "waterfall", "waterfall"]);
   });
 
   it("every entity records its owning feature", () => {

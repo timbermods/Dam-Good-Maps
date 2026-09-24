@@ -5,6 +5,10 @@
 // The plan takes the middle tile of the front (the water side), the way the front faces, the number
 // of bands, their depth and the width along the front. The front band sits one level above the
 // ground in front of it; the bands rise away from the water. The top stays at 16 or below.
+//
+// A `stair` is the narrow kind: steps 1–5 deep, 2–8 of them, a slope on each, climbing a cliff to
+// the ground above it (Canyon's flight up the wall beside the start, PLAN §8). Steps 1 deep make a
+// chain of slopes, each standing on the one below it.
 
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
@@ -22,6 +26,8 @@ export interface TerracedCliffsPlan {
   base: number;
   /** The end the slope chain climbs (v across the front, relative to `at`). */
   chainV: number;
+  /** A stair: its chain starts on the ground in front of it. */
+  stair?: boolean;
 }
 
 function span(width: number): [number, number] {
@@ -41,6 +47,15 @@ function stairTiles(p: TerracedCliffsPlan, W: number, H: number): [number, numbe
   return out;
 }
 
+/** The positions across the front, starting at the chain's end. */
+function acrossFrom(p: TerracedCliffsPlan): number[] {
+  const [v0, v1] = span(p.width);
+  const out: number[] = [];
+  const step = p.chainV === v0 ? 1 : -1;
+  for (let v = p.chainV; v >= v0 && v <= v1; v += step) out.push(v);
+  return out;
+}
+
 export const terracedCliffs: SetPieceBuilder = {
   kind: "terracedCliffs",
   request: {
@@ -52,10 +67,12 @@ export const terracedCliffs: SetPieceBuilder = {
       bands: { type: "integer", minimum: 1, maximum: 16 },
       depth: { type: "integer", minimum: 1, maximum: 64 },
       width: { type: "integer", minimum: 1, maximum: 256 },
+      stair: { type: "boolean" },
     },
   },
   limits(ctx: PlanContext, req?: PlanRecord) {
     const side = sideAcross((req?.facing as Facing) ?? "north", ctx.W, ctx.H);
+    if (req?.stair === true) return { bands: { min: 2, max: 8 }, depth: { min: 1, max: 5 }, width: { min: 1, max: 12, typical: [1, 4] } };
     return { bands: { min: 3, max: 6 }, depth: { min: 6, max: 12 }, width: { min: 6, max: Math.max(6, side - 4), typical: [12, 30] } };
   },
   plan(req: PlanRecord, ctx: PlanContext): PlanOutcome {
@@ -66,8 +83,9 @@ export const terracedCliffs: SetPieceBuilder = {
     if (ctx.heights.length !== W * H) return { ok: false, errors: ["terraced cliffs are planned on a map's terrain"] };
     const report: string[] = [];
     const lim = terracedCliffs.limits(ctx, req);
-    let bands = clampReported("Bands", Math.round(Number(req.bands ?? 4)), lim.bands, report, "terraced cliffs have (PLAN §9.3)");
-    const depth = clampReported("Band depth", Math.round(Number(req.depth ?? 8)), lim.depth, report, "terraced cliffs have (PLAN §9.3)");
+    const what = req.stair === true ? "a stair has" : "terraced cliffs have (PLAN §9.3)";
+    let bands = clampReported(req.stair === true ? "Steps" : "Bands", Math.round(Number(req.bands ?? 4)), lim.bands, report, what);
+    const depth = clampReported(req.stair === true ? "Step depth" : "Band depth", Math.round(Number(req.depth ?? 8)), lim.depth, report, what);
     const width = clampReported("Width", Math.round(Number(req.width ?? 16)), lim.width, report, "fits along this side of the map");
     // fit on the map
     const [v0, v1] = span(width);
@@ -103,7 +121,7 @@ export const terracedCliffs: SetPieceBuilder = {
       const dz = Math.abs(z[0] - ctx.start.x) + Math.abs(z[1] - ctx.start.y);
       if (dz < da) chainV = v1;
     }
-    const plan: TerracedCliffsPlan = { at: [cx, cy], facing, bands, depth, width, base, chainV };
+    const plan: TerracedCliffsPlan = { at: [cx, cy], facing, bands, depth, width, base, chainV, ...(req.stair === true ? { stair: true } : {}) };
     const tiles = stairTiles(plan, W, H);
     const set = new Set<number>();
     for (const [i] of tiles) {
@@ -114,7 +132,7 @@ export const terracedCliffs: SetPieceBuilder = {
       if (ctx.channel?.[i]) return { ok: false, errors: ["it would bury a river: place its front beside the water"] };
       set.add(i);
     }
-    report.push(`${bands} bands ${depth} deep, from level ${base + 1} to ${base + bands}, with a slope chain at one end`);
+    report.push(req.stair === true ? `a stair of ${bands} steps ${depth} deep, from level ${base + 1} to ${base + bands}, a slope on each` : `${bands} bands ${depth} deep, from level ${base + 1} to ${base + bands}, with a slope chain at one end`);
     const cleared = clearsText(ctx, set);
     if (cleared) report.push(`clears ${cleared}`);
     return { ok: true, request: req, plan: plan as unknown as PlanRecord, report };
@@ -124,7 +142,7 @@ export const terracedCliffs: SetPieceBuilder = {
     const at = pointOf(plan.at);
     if (!at || !inMap(W, H, at[0], at[1]) || !FACINGS.includes(p.facing)) return ["terraced cliffs need their front tile on the map and a facing"];
     if (!Number.isInteger(p.bands) || p.bands < 1 || !Number.isInteger(p.base) || p.base < 0 || p.base + p.bands > 16) return ["the bands stay between level 1 and 16"];
-    if (!Number.isInteger(p.depth) || p.depth < 2 || p.depth > 64) return ["a band is 2–64 tiles deep"];
+    if (!Number.isInteger(p.depth) || p.depth < (p.stair ? 1 : 2) || p.depth > 64) return ["a band is 2–64 tiles deep (a stair's step 1 or more)"];
     if (!Number.isInteger(p.width) || p.width < 1 || p.width > 256) return ["the terraces are 1–256 tiles wide"];
     return [];
   },
@@ -147,13 +165,23 @@ export const terracedCliffs: SetPieceBuilder = {
     const [bx, by] = STEP[p.facing];
     const high: [number, number] = [-bx, -by];
     const out: SetPieceSlope[] = [];
-    // on the last row of each band, at the chain's end, the high side toward the next band
-    for (let j = 1; j < p.bands; j++) {
-      const [x, y] = local(p.at[0], p.at[1], p.facing, -(j * p.depth - 1), p.chainV);
-      const [hx, hy] = [x + high[0], y + high[1]];
-      if (!inMap(W, H, x, y) || !inMap(W, H, hx, hy)) continue;
-      if (heights[hy * W + hx] !== heights[y * W + x] + 1) continue;
-      out.push({ x, y, high });
+    // on the last row of each band, at the chain's end, the high side toward the next band (a
+    // stair's chain starts on the ground in front of it)
+    for (let j = p.stair ? 0 : 1; j < p.bands; j++) {
+      // the slope stands on the band's last row, and the row behind its low side is the same band;
+      // in front of a stair, the first spot across its width where the ground is flat two deep
+      const vs = j === 0 ? acrossFrom(p) : [p.chainV];
+      for (const v of vs) {
+        const [x, y] = local(p.at[0], p.at[1], p.facing, -(j * p.depth - 1), v);
+        const [hx, hy] = [x + high[0], y + high[1]];
+        const [lx, ly] = [x - high[0], y - high[1]];
+        if (!inMap(W, H, x, y) || !inMap(W, H, hx, hy) || !inMap(W, H, lx, ly)) continue;
+        // a slope's low side is ground at its level, or the slope below it in a chain (steps 1 deep)
+        const chained = p.depth === 1 && j > 0 && heights[ly * W + lx] === heights[y * W + x] - 1;
+        if (heights[hy * W + hx] !== heights[y * W + x] + 1 || (heights[ly * W + lx] !== heights[y * W + x] && !chained)) continue;
+        out.push({ x, y, high });
+        break;
+      }
     }
     return out;
   },

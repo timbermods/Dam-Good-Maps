@@ -103,7 +103,8 @@ export function maxFloodFor(W: number, H: number): number {
 
 /** The best dam per sampled channel tile (every `stride`-th channel tile in index order, only those
  *  within `maxDist` of the start by `startDist`), sorted by volume per dam tile, keeping only sites
- *  at least 8 tiles apart. */
+ *  at least 8 tiles apart. With `minDepth`, only reservoirs at least that deep on average count
+ *  (Hard: 3, PLAN §11.4). */
 export function damSites(
   h: Uint8Array,
   channel: Uint8Array,
@@ -115,6 +116,7 @@ export function damSites(
   heights: readonly number[] = [1, 2, 3],
   stride = 2,
   minRatio = 30,
+  minDepth = 0,
 ): DamSite[] {
   const N = W * H;
   const stamp = { seen: new Int32Array(N), mark: 0, queue: new Int32Array(N) };
@@ -133,7 +135,7 @@ export function damSites(
     for (const hh of heights) {
       for (const [dy, dx] of DAM_DIRS) {
         const c = damCandidate(h, surface, W, H, x, y, dy, dx, hh, stamp, 10, maxFlood);
-        if (c && (!best || c.ratio > best.ratio)) best = c;
+        if (c && (minDepth <= 0 || c.volume / c.area >= minDepth) && (!best || c.ratio > best.ratio)) best = c;
       }
     }
     if (best && best.ratio >= minRatio) found.push(best);

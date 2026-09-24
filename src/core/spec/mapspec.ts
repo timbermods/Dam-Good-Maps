@@ -1,9 +1,7 @@
 // MapSpec v1 (PLAN §19.1): everything that determines a generated map. The settings panel, the
 // URL codec, the editor's SpecPatch and Claude all produce one. Complete, never a diff.
 
-import { hash32 } from "../math/hash";
-
-export const GENERATOR_VERSION = "0.3.0";
+export const GENERATOR_VERSION = "0.4.0";
 export const SPEC_VERSION = 1;
 
 export type ThemeId = "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
@@ -12,8 +10,8 @@ export type Difficulty = "easy" | "normal" | "hard";
 export type SizePreset = "small" | "medium" | "large" | "max";
 
 export const THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
-/** Themes the generator can build today (M1: River Valley only). */
-export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley"];
+/** Themes the generator can build today (M6: River Valley, Canyon and Lake Basin; the rest in M7). */
+export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "lakeBasin"];
 export const THEME_NAMES: Record<ThemeId, string> = {
   riverValley: "River Valley",
   canyon: "Canyon",
@@ -200,57 +198,6 @@ export function makeSpec(opts: {
   };
 }
 
-/** Seeds may be typed as text; anything that is not a plain uint32 is hashed (PLAN §5.1). */
-export function seedFromText(text: string): number {
-  const t = text.trim();
-  if (/^\d+$/.test(t)) {
-    const n = Number(t);
-    if (n <= 0xffffffff) return n;
-  }
-  return hash32("seed", t);
-}
+// ---------------------------------------------------------------------------- URL codec
 
-// ---------------------------------------------------------------------------- URL codec (PLAN §14.5)
-
-const DIFFS: Record<string, Difficulty> = { e: "easy", n: "normal", h: "hard" };
-
-/** `v=<generatorVersion>&s=<seed>&t=<theme>&z=<size>&d=<difficulty>`. M1 encodes these basics;
- *  settings that differ from the theme preset are added with the full settings panel (M6). */
-export function encodeSpecFragment(spec: MapSpec): string {
-  const z = spec.size.x === spec.size.y ? String(spec.size.x) : `${spec.size.x}x${spec.size.y}`;
-  const params = new URLSearchParams();
-  params.set("v", spec.generatorVersion);
-  params.set("s", String(spec.seed));
-  params.set("t", spec.theme);
-  params.set("z", z);
-  params.set("d", spec.designedFor[0]);
-  return params.toString();
-}
-
-export interface DecodedFragment {
-  spec: MapSpec;
-  version: string;
-  problems: string[];
-}
-
-export function decodeSpecFragment(fragment: string): DecodedFragment | null {
-  const params = new URLSearchParams(fragment.replace(/^#/, ""));
-  if (!params.has("s")) return null;
-  const problems: string[] = [];
-  const seed = seedFromText(params.get("s") ?? "0");
-  const t = params.get("t") ?? "riverValley";
-  let theme: ThemeId = "riverValley";
-  if ((THEMES as readonly string[]).includes(t)) theme = t as ThemeId;
-  else problems.push(`unknown theme "${t}"`);
-  const d = DIFFS[params.get("d") ?? "n"] ?? "normal";
-  let size = { x: 128, y: 128 };
-  const z = params.get("z") ?? "128";
-  const m = /^(\d+)(?:x(\d+))?$/.exec(z);
-  if (m) {
-    const x = Number(m[1]);
-    const y = Number(m[2] ?? m[1]);
-    if (x >= MIN_SIDE && x <= MAX_SIDE && y >= MIN_SIDE && y <= MAX_SIDE) size = { x, y };
-    else problems.push(`size ${z} is outside ${MIN_SIDE}–${MAX_SIDE}`);
-  } else problems.push(`bad size "${z}"`);
-  return { spec: makeSpec({ seed, size, theme, designedFor: d }), version: params.get("v") ?? GENERATOR_VERSION, problems };
-}
+export { decodeSpecFragment, encodeSpecFragment, seedFromText, shareLink, type DecodedFragment } from "./codec";

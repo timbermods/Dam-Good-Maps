@@ -381,10 +381,11 @@ def max_flood_for(W: int, H: int) -> int:
 
 
 def dam_sites(h, channel_mask, water_surface=None, heights=(1, 2, 3), stride=3, min_ratio=30.0,
-              start_dist=None, max_dist=60):
+              start_dist=None, max_dist=60, min_depth=0.0):
     """Best dam per channel tile sample (every stride-th channel tile in index order; with
     start_dist, only samples within max_dist of the start). Returns sites sorted by volume per dam
-    tile, keeping only sites at least 8 tiles apart."""
+    tile, keeping only sites at least 8 tiles apart. With min_depth, only reservoirs at least that
+    deep on average count (Hard: 3, PLAN §11.4)."""
     if water_surface is None:
         water_surface = h.astype(float)
     ys, xs = np.nonzero(channel_mask)
@@ -399,7 +400,7 @@ def dam_sites(h, channel_mask, water_surface=None, heights=(1, 2, 3), stride=3, 
         for H in heights:
             for dy, dx in DAM_DIRS:
                 c = dam_candidate(h, water_surface, y, x, dy, dx, H, max_flood=max_flood)
-                if c and (best is None or c["ratio"] > best["ratio"]):
+                if c and (min_depth <= 0 or c["volume"] / c["area"] >= min_depth) and (best is None or c["ratio"] > best["ratio"]):
                     best = c
         if best and best["ratio"] >= min_ratio:
             found.append(best)

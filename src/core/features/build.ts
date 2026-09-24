@@ -235,6 +235,13 @@ export function buildMap(input: BuildInput, opts: BuildOptions = {}): BuildResul
   return run(input, null, opts);
 }
 
+/** Build steps 1–7 only: the terrain of a full build, with its protected tiles and river channel
+ *  (the planners measure and place on it before anything stands there). */
+export function buildTerrain(input: BuildInput): { heights: Uint8Array; channel: Uint8Array; protect: Uint8Array } {
+  const { terrain } = terrainStage(input, null, new Map());
+  return { heights: terrain.heights, channel: terrain.channel, protect: terrain.protect };
+}
+
 /** An incremental build from `prev`, equal to a full build of `input` (PLAN §19.7). */
 export function rebuild(prev: BuildResult, input: BuildInput): BuildResult {
   if (prev.W !== input.W || prev.H !== input.H || prev.seed !== input.seed) return run(input, null, {});

@@ -9,6 +9,9 @@ export const DENSITY = {
   bushes_per_10k: [265, 92, 40, 38],
   water_strength_per_10k: [5.0, 2.2, 1.2, 1.1],
   ruin_field_columns: [21, 31, 40, 41],
+  /** Natural basins of 20+ tiles per map (analyze_maps.py `basins.count_ge20`; PLAN §5.3 Lakes and
+   *  basins): the official size-class medians. */
+  basins_ge20: [1.5, 4, 15.5, 15],
 } as const;
 export type DensityKey = keyof typeof DENSITY;
 
@@ -79,6 +82,11 @@ export const RIVER_FLOW_MULTIPLIER = { trickle: 0.6, normal: 1, strong: 2, lush:
 
 /** Badwater-to-clean strength ratio by the Badwater setting (PLAN §5.4; official median 0.65). */
 export const BADWATER_RATIO = { off: 0, low: 0.3, normal: 0.65, high: 1.2 } as const;
+
+/** Drought reserve multipliers (PLAN §5.3). */
+export const RESERVE = { scarce: 1, normal: 1.5, plenty: 3 } as const;
+/** Lakes and basins: multipliers on the official natural-basin median for the size (PLAN §5.3). */
+export const LAKES = { none: 0, few: 0.5, some: 1, many: 2 } as const;
 
 /** Stored water a colony needs through the worst drought (PLAN §11.4). */
 export const DROUGHT = {

@@ -59,6 +59,75 @@ describe("URL codec (PLAN §14.5)", () => {
     expect(decodeSpecFragment(encodeSpecFragment(wide))!.spec.size).toEqual({ x: 256, y: 150 });
   });
 
+  it("writes only the settings that differ from the theme preset", () => {
+    for (const theme of ["riverValley", "canyon", "lakeBasin"] as const) {
+      const spec = makeSpec({ seed: 7, theme, designedFor: "easy" });
+      expect(encodeSpecFragment(spec)).toBe(`v=${spec.generatorVersion}&s=7&t=${theme}&z=128&d=e`);
+    }
+    const spec = makeSpec({ seed: 7 });
+    spec.settings.terrain.relief = 70;
+    spec.settings.water.riverFlow = "strong";
+    spec.settings.resources.speciesMix = { pine: 10, birch: 20, oak: 30, succulent: 40 };
+    expect(encodeSpecFragment(spec)).toBe(`v=${spec.generatorVersion}&s=7&t=riverValley&z=128&d=n&rl=70&fl=s&sm=ChQeKA`);
+  });
+
+  it("round-trips every setting, and the rest of the spec (PLAN §19.1)", () => {
+    const rng = (() => {
+      let x = 12345;
+      return () => {
+        x = (Math.imul(x, 1103515245) + 12345) >>> 0;
+        return x / 4294967296;
+      };
+    })();
+    const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(rng() * xs.length)];
+    const int = (lo: number, hi: number) => lo + Math.floor(rng() * (hi - lo + 1));
+    for (let k = 0; k < 200; k++) {
+      const spec = makeSpec({ seed: int(0, 4294967295), theme: pick(THEMES), designedFor: pick(["easy", "normal", "hard"] as const), size: { x: int(48, 256), y: int(48, 256) } });
+      const st = spec.settings;
+      st.terrain = { relief: int(0, 100), highestTerrain: int(10, 16), terracing: int(0, 100), buildableLand: pick(["tight", "normal", "generous"] as const) };
+      st.water = {
+        rivers: int(0, 3),
+        riverStyle: pick(["straight", "meandering", "braided"] as const),
+        riverFlow: pick(["trickle", "normal", "strong", "lush"] as const),
+        droughtReserve: pick(["scarce", "normal", "plenty"] as const),
+        lakes: pick(["none", "few", "some", "many"] as const),
+        waterfalls: pick(["off", "few", "many"] as const),
+      };
+      st.hazards = { badwater: pick(["off", "low", "normal", "high"] as const), badwaterDistance: int(12, 60), thornBelts: pick(["off", "some"] as const), unstableCores: pick(["off", "on"] as const) };
+      st.resources = {
+        forestDensity: int(50, 200),
+        groveSize: pick(["scattered", "normal", "bigWoods"] as const),
+        speciesMix: { pine: int(0, 100), birch: int(0, 100), oak: int(0, 100), succulent: int(0, 100) },
+        berriesNearStart: int(20, 100),
+        berryBushes: int(50, 300),
+        ruins: int(25, 300),
+        relics: pick(["off", "some"] as const),
+        geothermal: pick(["off", "some"] as const),
+        mineSites: int(0, 4),
+      };
+      st.start = {
+        area: pick(["small", "normal", "large"] as const),
+        rules: { waterWithin: int(4, 40), treesWithin20: int(0, 400), bushesWithin20: int(0, 200), badwaterWithin: int(12, 60), ruinsWithin: int(0, 60) },
+      };
+      if (rng() < 0.3) spec.archetype = pick(THEMES);
+      if (rng() < 0.2) spec.premise = "gorge-dammed basin";
+      if (rng() < 0.2) spec.colonies = { count: pick([2, 3, 4] as const), mod: "timberTogether" };
+      if (rng() < 0.2) spec.setPieces = [{ kind: "waterfall", params: { mode: "standalone", lip: [40, 90], facing: "north", width: 20, drop: 6 } }];
+      if (rng() < 0.2) spec.constraints = { locks: [{ runs: [[3, 4, 9]] }], keepOut: [], keep: ["f-abc"] };
+      expect(both(spec), JSON.stringify(spec)).toEqual([true, true]);
+      const back = decodeSpecFragment("#" + encodeSpecFragment(spec))!;
+      expect(back.problems).toEqual([]);
+      expect(back.spec).toEqual(spec);
+    }
+  });
+
+  it("keeps the preset's value for anything it cannot use, and says so", () => {
+    const d = decodeSpecFragment("#v=0.4.0&s=5&t=canyon&z=96&d=h&rl=500&fl=x&zz=1&sm=!!&c=9t")!;
+    expect(d.spec).toEqual(makeSpec({ seed: 5, theme: "canyon", size: { x: 96, y: 96 }, designedFor: "hard" }));
+    expect(d.problems.length).toBe(5);
+    expect(decodeSpecFragment("#t=canyon")).toBeNull();
+  });
+
   it("hashes text seeds", () => {
     expect(seedFromText("4242")).toBe(4242);
     expect(seedFromText("beaver")).toBe(seedFromText(" beaver "));

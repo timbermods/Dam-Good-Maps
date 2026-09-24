@@ -2,14 +2,16 @@
 // first attempt ≥ 60%). Generates each seed with the retry loop and reports first-attempt and
 // final pass rates, which checks failed and how often, attempts used, and timings.
 //
-//   npx tsx tools/batch.ts [--seeds 1-100] [--size 128] [--difficulty normal] [--report file.md]
-//                          [--min-final 0.98] [--min-first 0.6]
+//   npx tsx tools/batch.ts [--seeds 1-100] [--size 128] [--difficulty normal] [--theme riverValley]
+//                          [--set rl=80&wf=m] [--report file.md] [--min-final 0.98] [--min-first 0.6]
+//
+// --set takes settings in the share link's short keys (src/core/spec/codec.ts).
 //
 // Exits non-zero when a rate is below its gate.
 
 import { writeFileSync } from "node:fs";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
-import { makeSpec, type Difficulty } from "../src/core/spec/mapspec";
+import { decodeSpecFragment, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -29,6 +31,8 @@ function parseSeeds(s: string): number[] {
 const seeds = parseSeeds(arg("seeds", "1-100"));
 const size = Number(arg("size", "128"));
 const difficulty = arg("difficulty", "normal") as Difficulty;
+const theme = arg("theme", "riverValley") as ThemeId;
+const extra = arg("set", "");
 const minFinal = Number(arg("min-final", "0.98"));
 const minFirst = Number(arg("min-first", "0.6"));
 const report = arg("report", "");
@@ -47,7 +51,9 @@ const log = (s: string) => {
 
 for (const seed of seeds) {
   const t0 = performance.now();
-  const r = generate(makeSpec({ seed, size: { x: size, y: size }, designedFor: difficulty }));
+  const d = decodeSpecFragment(`s=${seed}&t=${theme}&z=${size}&d=${difficulty[0]}${extra ? "&" + extra : ""}`)!;
+  if (d.problems.length) throw new Error(d.problems.join("; "));
+  const r = generate(d.spec);
   const ms = performance.now() - t0;
   times.push(ms);
   attempts.push(r.attempts);
@@ -65,7 +71,7 @@ const n = seeds.length;
 const sorted = times.slice().sort((a, b) => a - b);
 const pct = (k: number) => `${((100 * k) / n).toFixed(1)}%`;
 log("");
-log(`${n} seeds at ${size}×${size}, designed for ${difficulty}, at most ${MAX_ATTEMPTS} attempts:`);
+log(`${n} seeds of ${theme} at ${size}×${size}, designed for ${difficulty}${extra ? ` with ${extra}` : ""}, at most ${MAX_ATTEMPTS} attempts:`);
 log(`- first attempt: ${first}/${n} = ${pct(first)} (gate ${Math.round(minFirst * 100)}%)`);
 log(`- final: ${final}/${n} = ${pct(final)} (gate ${Math.round(minFinal * 100)}%)`);
 log(`- attempts: mean ${(attempts.reduce((a, b) => a + b, 0) / n).toFixed(2)}, max ${attempts.reduce((a, b) => Math.max(a, b), 0)}`);

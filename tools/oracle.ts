@@ -1,12 +1,13 @@
 // The Python oracle (ROADMAP M1 and M2 acceptance): generate maps with the TypeScript core, then
 // check them with the independent Python implementation.
 //
-//   npx tsx tools/oracle.ts --seeds 1-50 --sizes 96,128,256 [--out .scratch/oracle] [--report file.md]
-//                           [--parity-seeds 1-50] [--no-official]
+//   npx tsx tools/oracle.ts --seeds 1-50 --sizes 96,128,256 [--themes riverValley,canyon,lakeBasin]
+//                           [--out .scratch/oracle] [--report file.md] [--parity-seeds 1-50] [--no-official]
 //
 // 1. Load and round trip (M1): every map must pass `prototype/validate.py --load-only` (the load
 //    class: format, entity placement emulation, terrain support, slopes, start) and
 //    `prototype/roundtrip_test.py` (read → write → read byte for byte, plus a terrain edit).
+//    Seed k is generated in theme themes[⌊(k − 1) / 3⌋ mod m], so every theme meets every size.
 // 2. Validator parity (M2): for the --parity-seeds (default: the --seeds), the map of seed k at
 //    size sizes[k mod n] is validated in full by both validators, the TypeScript one re-reading the
 //    written file and its project file (as the Python one does), and their verdicts must agree
@@ -24,7 +25,7 @@ import { encodeProject, projectFileName, toDocument } from "../src/core/doc/docu
 import { readTimber } from "../src/core/format/timber";
 import { generate } from "../src/core/gen/generate";
 import { fileName } from "../src/core/gen/pack";
-import { makeSpec, type Difficulty } from "../src/core/spec/mapspec";
+import { makeSpec, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 import { validateMap } from "../src/core/validate/checks";
 import type { CheckResult } from "../src/core/validate/report";
 
@@ -48,6 +49,8 @@ const sizes = arg("sizes", "96,128,256").split(",").map(Number);
 const paritySeeds = parseSeeds(arg("parity-seeds", arg("seeds", "1-50")));
 const outDir = arg("out", ".scratch/oracle");
 const difficulty = arg("difficulty", "normal") as Difficulty;
+const themes = arg("themes", "riverValley,canyon,lakeBasin").split(",") as ThemeId[];
+const themeOf = (seed: number): ThemeId => themes[Math.floor((seed - 1) / 3) % themes.length];
 const report = arg("report", "");
 const python = process.env.PYTHON ?? "python";
 const OFFICIAL = "investigation/raw/builtin";
@@ -80,7 +83,7 @@ for (const size of sizes) {
   const times: number[] = [];
   for (const seed of seeds) {
     total++;
-    const spec = makeSpec({ seed, size: { x: size, y: size }, designedFor: difficulty });
+    const spec = makeSpec({ seed, size: { x: size, y: size }, designedFor: difficulty, theme: themeOf(seed) });
     const t0 = performance.now();
     const r = generate(spec);
     times.push(performance.now() - t0);
@@ -220,7 +223,7 @@ if (official) {
 
 const ok = genFail === 0 && loadFail === 0 && rtFail === 0 && disagreements === 0 && officialDisagreements === 0;
 log(
-  `${ok ? "PASS" : "FAIL"}: ${total} maps (${seeds.length} seeds × ${sizes.length} sizes), ${genFail} generation failures, ${loadFail} load failures, ` +
+  `${ok ? "PASS" : "FAIL"}: ${total} maps (${seeds.length} seeds × ${sizes.length} sizes; themes ${themes.join(", ")}), ${genFail} generation failures, ${loadFail} load failures, ` +
     `${rtFail} round-trip failures; parity on ${parityMaps} generated and ${officialMaps} official maps, ${disagreements + officialDisagreements} disagreements`,
 );
 if (report) writeFileSync(report, lines.join("\n") + "\n");

@@ -28,6 +28,14 @@
 //       one .png per map                             where to look (see checks.txt for the colours)
 //       checks.txt                                   sha256, coordinates and what should happen
 //
+//   npx tsx tools/ingame-files.ts --milestone m6 [--seed 4242] [--size 128] [--out out/m6]
+//     M6-1 (the new themes load, and their dam sites hold), two generated maps:
+//       Canyon (4242).timber        a Canyon map: its dam site in the narrows, the stair up its wall
+//       Lake Basin (4242).timber    a Lake Basin map: its dam site on the lake's outlet
+//       one .png per map            the dam line orange, the start white (door red), the stair's
+//                                   slopes orange with their high side brown, badwater sources magenta
+//       checks.txt                  sha256, coordinates and what should happen
+//
 // Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
 
 import { createHash } from "node:crypto";
@@ -46,7 +54,7 @@ import { rotate, slopeHighSide, startEntranceTile, type Orientation } from "../s
 import { writeTimber } from "../src/core/format/timber";
 import { runsToTiles } from "../src/core/math/grid";
 import { shadeTiles } from "../src/core/render/shade";
-import { makeSpec } from "../src/core/spec/mapspec";
+import { GENERATOR_VERSION, makeSpec } from "../src/core/spec/mapspec";
 import { validateFile } from "../src/core/validate/checks";
 import { rulesFor } from "../src/core/validate/playability";
 import { encodePng } from "./png";
@@ -164,6 +172,8 @@ if (milestone === "m1") {
   );
 } else if (milestone === "m5") {
   m5();
+} else if (milestone === "m6") {
+  m6();
 } else {
   // ---- B: pre-filled water, tree survival, the empty-water A/B file, badwater downstream
   const emptyBytes = writeTimber(toTimberFile(r.spec, b, { emptyWater: true }));
@@ -354,7 +364,7 @@ function m5(): void {
   const need = Math.round(rulesFor(r.spec).reservoirNeed);
   lines.push(
     `sha256 ${sha(outC.bytes)}  ${base} C1 dam site.timber`,
-    `C1 dam site: a rock ridge (top level ${dp.topLevel}) across the river's lower reach. Build a dam ${dp.crest} high on its ${held.line.length} gap tiles (orange): ${held.line.map(([x, y]) => `(${x}, ${y})`).join(" ")}. The river bed there is at level ${held.bed}, so the crest is at level ${held.bed + dp.crest}.`,
+    `C1 dam site: a rock ridge (top level ${dp.topLevel}) across the river's lower reach. Build levees ${dp.crest} high (${dp.crest === 1 ? "one levee" : `${dp.crest} levees stacked`}) on its ${held.line.length} gap tiles (orange): ${held.line.map(([x, y]) => `(${x}, ${y})`).join(" ")}. The river bed there is at level ${held.bed}, so the crest is at level ${held.bed + dp.crest}.`,
     `  The basin behind it should fill to about level ${held.bed + dp.crest}: ${held.area} tiles, about ${Math.round(held.volume)} blocks of water, and none of it should leak round the ridge's ends.`,
     `  C3 (first drought on Normal): the colony needs about ${need} blocks stored; this reservoir holds ${Math.round(held.volume)}. Export warnings: ${outC.warnings.join("; ") || "none"}.`,
     "",
@@ -424,4 +434,63 @@ function m5(): void {
     "  Beavers should walk down the notch to the landing and back up, and a water pump on the landing should reach the water.",
     `  ${gD.params.report.join("; ")}. Export warnings: ${outD.warnings.join("; ") || "none"}.`,
   );
+}
+
+function m6(): void {
+  lines.length = 0;
+  lines.push(
+    `Generator ${GENERATOR_VERSION}; ${size}×${size}, seed ${seed}, designed for Normal, every setting at its theme's preset.`,
+    "",
+    "Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.",
+    "PNGs: north up, 5 px per tile, dotted grid every 16 tiles; water blue (badwater brown); start white (door red); the dam line orange; the stair's slopes orange with their high side brown; badwater sources magenta.",
+    "",
+  );
+  for (const theme of ["canyon", "lakeBasin"] as const) {
+    const g = generate(makeSpec({ seed, size: { x: size, y: size }, theme }));
+    if (!g.report.passed) throw new Error(`${theme} ${seed} failed: ${g.report.checks.filter((c) => !c.ok && !c.advisory).map((c) => c.id).join(", ")}`);
+    const name = fileName(g.spec).replace(/\.timber$/, "");
+    writeFileSync(join(outDir, `${name}.timber`), g.bytes);
+    const gb = g.built;
+    const dam = g.features.find((f): f is SetPieceFeature => f.kind === "setPiece" && f.params.kind === "damSite")!;
+    const dp = dam.params.plan as unknown as DamSitePlan;
+    const river = g.features.find((f): f is RiverFeature => f.kind === "river" && f.id === dp.river)!;
+    const held = reservoirOf(dp, river, { W: gb.W, H: gb.H, seed, features: g.features, heights: gb.heights }, dam.id);
+    if (!held) throw new Error(`${theme}: the dam site holds no reservoir`);
+    const marks = startMarks(gb);
+    for (const [x, y] of held.line) marks.push({ x, y, rgb: [255, 140, 20] });
+    const stairs = g.features.find((f) => f.role === "setpiece/terracedCliffs/stairs");
+    const stairSlopes = stairs ? gb.entities.filter((e) => e.owner === stairs.id && e.template === "Slope") : [];
+    for (const e of stairSlopes) {
+      marks.push({ x: e.x, y: e.y, rgb: [245, 150, 20] });
+      const [hx, hy] = slopeHighSide(e.orientation as Orientation);
+      marks.push({ x: e.x + hx, y: e.y + hy, rgb: [150, 80, 0], inset: 1 });
+    }
+    const bad = gb.entities.filter((e) => e.template === "BadwaterSource");
+    for (const e of bad) for (let dx = 0; dx < 3; dx++) for (let dy = 0; dy < 3; dy++) marks.push({ x: e.x + dx, y: e.y + dy, rgb: [230, 0, 200], inset: 1 });
+    writeFileSync(join(outDir, `${name}.png`), preview(gb, marks, true));
+    const st = gb.entities.find((e) => e.template === "StartingLocation")!;
+    const dr = startEntranceTile(st.x, st.y, st.orientation as Orientation);
+    const need = Math.round(rulesFor(g.spec).reservoirNeed);
+    const crestLevel = held.bed + dp.crest;
+    lines.push(`sha256 ${sha(g.bytes)}  ${name}.timber`);
+    lines.push(`${name}: StartingLocation at (${st.x}, ${st.y}), z ${st.z}, ${st.orientation}; door tile (${dr.join(", ")}). Generated in ${g.attempts} attempt${g.attempts > 1 ? "s" : ""}; ${g.report.checks.filter((c) => c.ok || c.advisory).length} of ${g.report.checks.length} checks pass (the advisory plants.drought may warn).`);
+    if (theme === "canyon") {
+      lines.push(
+        `  The dam site is a rock ridge (top level ${dp.topLevel}) across the canyon's narrows. Build levees ${dp.crest} high (${dp.crest === 1 ? "one levee" : `${dp.crest} levees stacked`}) on its ${held.line.length} gap tiles (orange): ${held.line.map(([x, y]) => `(${x}, ${y})`).join(" ")}. The river bed there is at level ${held.bed}, so the crest is at level ${crestLevel}.`,
+        `  The canyon floor behind it should fill to about level ${crestLevel}: ${held.area} tiles, about ${Math.round(held.volume)} blocks of water, held between the canyon walls; none of it should leak round the ridge.`,
+        `  The stair: ${stairSlopes.length} slopes climb the canyon wall beside the start, one level each: ${stairSlopes.map((e) => `(${e.x}, ${e.y}) z${e.z}`).join("; ")}. Beavers should walk up it to the rim and back.`,
+      );
+    } else {
+      const lake = g.features.find((f) => f.kind === "lake" && f.role === "lake/central");
+      const sill = lake && lake.kind === "lake" ? lake.params.outlet.sill : held.bed;
+      lines.push(
+        `  The lake's water stands at about level ${sill} (its outlet's sill), a little higher while the rivers run. The dam site is a rock ridge (top level ${dp.topLevel}) across the outlet's narrow gap. Build levees ${dp.crest} high (${dp.crest === 1 ? "one levee" : `${dp.crest} levees stacked`}) on its ${held.line.length} gap tiles (orange): ${held.line.map(([x, y]) => `(${x}, ${y})`).join(" ")}.`,
+        `  The whole lake should rise to about level ${crestLevel}: ${held.area} tiles, about ${Math.round(held.volume)} blocks of water behind the dam; none of it should leak round the ridge, and the start's bench (level ${st.z}) should stay dry.`,
+      );
+    }
+    lines.push(
+      `  Badwater: ${bad.length ? bad.map((e) => `a source at (${e.x}, ${e.y})–(${e.x + 2}, ${e.y + 2})`).join("; ") + " in a basin with one outlet" : "none"}. The colony needs about ${need} water stored through the first Normal drought.`,
+      "",
+    );
+  }
 }

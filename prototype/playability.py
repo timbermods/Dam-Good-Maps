@@ -142,12 +142,14 @@ def rules_for(spec, difficulty):
         "water_within": r["waterWithin"] if r else base["water_dist"],
         "trees_within": r["treesWithin20"] if r else base["trees_r20"],
         "bushes_within": r["bushesWithin20"] if r else base["bushes_r20"],
-        "badwater_within": s["hazards"]["badwaterDistance"] if s else base["badwater_min"],
+        # the Badwater distance setting and the start rule say the same thing: the stricter counts
+        "badwater_within": max(s["hazards"]["badwaterDistance"], r["badwaterWithin"]) if s else base["badwater_min"],
         "ruins_within": r["ruinsWithin"] if r else base["ruin_min"],
         "reach_min": cal.START["reach_by_buildable_land"][s["terrain"]["buildableLand"] if s else "normal"]
         * START_AREA[s["start"]["area"] if s else "normal"],
         "drought_days": DROUGHT_DAYS[d],
         "reservoir_need": cal.reservoir_needed(d) * RESERVE[s["water"]["droughtReserve"] if s else "normal"],
+        "reservoir_depth": 3 if d == "hard" else 0,
         "max_share": 0.55 if spec and spec["theme"] in ("lakeBasin", "islands") else cal.WATER["max_water_share"],
         "mult": ({"scrap": s["resources"]["ruins"] / 100, "trees": s["resources"]["forestDensity"] / 100,
                   "bushes": s["resources"]["berryBushes"] / 100} if s else {"scrap": 1, "trees": 1, "bushes": 1}),
@@ -193,7 +195,7 @@ def check_playability(m, rep, fps, difficulty="normal", spec=None, features=None
     _, sizes = components(clean, connectivity=((1, 0), (-1, 0), (0, 1), (0, -1)))
     largest = max(sizes, default=0)
     rep.add("water.clean_reach", largest >= 40, f"largest clean water body {largest} tiles", largest, 40)
-    rep.add("water.badwater_contained", True, "no badwater basin with a planned outlet on this map", na=True)
+    _contained(rep, h, features, X, Y)
     M = moisture(h, D, C, sim.sat(), barrier)
     SC = contamination(h, D, C, barrier)
     if water is not None:
@@ -303,7 +305,9 @@ def check_playability(m, rep, fps, difficulty="normal", spec=None, features=None
     # ---- drought: a reservoir site near the start that holds a colony through the worst drought
     kept = drought_storage(floor, D, rules["drought_days"], sources, dam)
     natural = seq_sum(kept[sd <= RESERVOIR_RADIUS])
-    sites = dam_sites(h, clean, h + D, stride=2, start_dist=sd)
+    deep = rules["reservoir_depth"]
+    sites = dam_sites(h, clean, h + D, heights=(1, 2, 3, 4) if deep > 0 else (1, 2, 3), stride=2, start_dist=sd,
+                      min_depth=deep)
     near_sites = [s for s in sites if sd[s["y"], s["x"]] <= RESERVOIR_RADIUS]
     best = max([s["volume"] for s in near_sites], default=0.0)
     need = rules["reservoir_need"]
@@ -339,6 +343,72 @@ def check_playability(m, rep, fps, difficulty="normal", spec=None, features=None
         rep.add("ruins.fields", True, "no ruins on this map", na=True)
         rep.add("ruins.access", True, "no ruins on this map", na=True)
     rep.add("extras.placement", True, "no relics, geothermal fields or mine sites are checked yet", na=True)
+
+
+def channel_tiles(tiles, levels, width, X, Y):
+    """Bed tiles of a carved channel (src/core/features/route.ts channelTiles): a square of side
+    `width` round every route tile, at that tile's level (the lowest where squares overlap)."""
+    r = (width - 1) >> 1
+    bed = {}
+    for k in range(len(levels)):
+        x, y, lv = tiles[2 * k], tiles[2 * k + 1], levels[k]
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < X and 0 <= ny < Y:
+                    i = ny * X + nx
+                    if i not in bed or lv < bed[i]:
+                        bed[i] = lv
+    return bed
+
+
+def basin_leak(p, h, X, Y):
+    """Where water rising in a badwater basin with its outlet blocked leaves it below its rim, or
+    None (src/core/validate/playability.ts basinLeak)."""
+    rim = p["floor"] + 2
+    cx, cy = p["x"] + 1, p["y"] + 1
+    blocked = channel_tiles(p["outlet"], p["outletLevels"], p["outletWidth"], X, Y)
+    seen = set()
+    queue = []
+    for y in range(p["y"], p["y"] + 3):
+        for x in range(p["x"], p["x"] + 3):
+            if 0 <= x < X and 0 <= y < Y:
+                seen.add(y * X + x)
+                queue.append((x, y))
+    q = 0
+    while q < len(queue):
+        x, y = queue[q]
+        q += 1
+        for dx, dy in ((0, -1), (-1, 0), (0, 1), (1, 0)):
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < X and 0 <= ny < Y):
+                return (x, y)
+            n = ny * X + nx
+            if n in seen or n in blocked or h[ny, nx] >= rim:
+                continue
+            if abs(nx - cx) > 5 or abs(ny - cy) > 5:
+                return (nx, ny)
+            seen.add(n)
+            queue.append((nx, ny))
+    return None
+
+
+def _contained(rep, h, features, X, Y):
+    """water.badwater_contained (PLAN §9.5, D57): with its outlet blocked, every planned badwater
+    basin holds its water below its rim."""
+    if features is None:
+        rep.add("water.badwater_contained", True, "needs the map's planned badwater basins (imported maps have none)",
+                na=True)
+        return
+    basins = [f["params"]["plan"] for f in features
+              if f["kind"] == "setPiece" and f["params"]["kind"] == "badwaterBasin"
+              and f["params"]["plan"].get("mode") == "basin" and isinstance(f["params"]["plan"].get("outlet"), list)]
+    if not basins:
+        rep.add("water.badwater_contained", True, "no badwater basin with a planned outlet on this map", na=True)
+        return
+    leaks = [l for l in (basin_leak(p, h, X, Y) for p in basins) if l]
+    rep.add("water.badwater_contained", not leaks, f"{len(leaks)} of {len(basins)} badwater basins leak below their rim",
+            len(leaks), 0)
 
 
 def _outflow(rep, D, sources, features, X, Y):
