@@ -7,7 +7,10 @@ The website is not built yet. This repository currently holds:
 
 | Path | What it is |
 |---|---|
-| [PLAN.md](PLAN.md) | The implementation plan for the website: architecture, settings, generation pipeline, validation rules, scoring, tests and milestones. |
+| [PLAN.md](PLAN.md) | The implementation plan for the website: architecture, settings, generation pipeline, validation rules, scoring, tests, and (§19) the foundations shared with the editor. |
+| [EDITOR_PLAN.md](EDITOR_PLAN.md) | The plan for the in-browser map editor and the Claude integration. |
+| [ROADMAP.md](ROADMAP.md) | One milestone order for both plans. |
+| [AUDIT.md](AUDIT.md) | The audit that reconciled both plans with the investigation, with the decisions still open. |
 | [FORMAT.md](FORMAT.md) | The `.timber` map format as the game writes it in 1.1. |
 | [investigation/REPORT.md](investigation/REPORT.md) | What the game's code, data and maps say about map rules and design, with the numbers behind every threshold. |
 | [investigation/calibration.json](investigation/calibration.json) | Measurements of the 19 official maps and 9 workshop maps. |
