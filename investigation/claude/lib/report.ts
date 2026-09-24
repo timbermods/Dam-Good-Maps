@@ -14,9 +14,22 @@ const TEMPLATES = {
   notDone: (goal: string, why: string) => `Not done: ${goal}. ${cap(why)}.`,
   offer: (alt: string) => `Nearest I can do: ${alt}. Say "yes" to build that instead.`,
   tradeoff: (text: string) => `Trade-off: ${cap(text)}.`,
+  also: (text: string) => `Also: ${text.replace(/^[A-Z]/, (c) => c.toLowerCase()).replace(/\.$/, "")}.`,
   assumption: (text: string) => `Assumption: ${text}.`,
   startOk: (list: string) => `Every start rule still holds (${list}).`,
   startBroken: (list: string) => `Warning: ${list}.`,
+};
+
+/** The start rules in words, for the report (ids the validator adds later fall back to the id). */
+const RULE_WORDS: Record<string, (v: string, l: string) => string> = {
+  "start.water": (v, l) => (v === "none" ? `no clean water in reach (needed within ${l} tiles)` : `clean water ${v} tiles away (at most ${l})`),
+  "start.badwater": (v, l) => `badwater ${v} tiles away (at least ${l})`,
+  "start.reach": (v, l) => `${v} walkable tiles (at least ${l})`,
+  "start.reach_water": () => "water reachable without slopes",
+  "start.food": (v, l) => `${v} berry bushes nearby (at least ${l})`,
+  "start.wood": (v, l) => `${v} trees nearby (at least ${l})`,
+  "start.ruins_clear": (v, l) => `${v} ruins in the start area (${l} allowed)`,
+  "start.dry": () => "a dry start",
 };
 
 function cap(s: string): string {
@@ -26,8 +39,10 @@ function cap(s: string): string {
 function facts(m: Record<string, unknown>): string {
   const out: string[] = [];
   if (m.where) out.push(`in the ${String(m.where)}`);
-  const c = m.course as { river: string; frac: number; bank: string } | undefined;
-  if (c) out.push(`${Math.round(c.frac * 100)}% of the way down ${c.river}${c.bank && c.bank !== "on the river" ? `, on the ${c.bank}` : ""}`);
+  const c = m.course as { river: string; frac: number; bank: string; fromRiver?: number } | undefined;
+  // a place far off the river is not "n% of the way down" it in any sense a player would use
+  if (c && (c.fromRiver ?? 0) <= 25) out.push(`${Math.round(c.frac * 100)}% of the way down ${c.river}${c.bank && c.bank !== "on the river" ? `, on the ${c.bank}` : ""}`);
+  else if (c) out.push(`${c.fromRiver} tiles from ${c.river}, on the ${c.bank}`);
   if (m.lipWidth !== undefined) out.push(`${m.lipWidth} tiles of falling water, a ${m.drop}-level drop, ${m.flow} blocks/s`);
   const res = m.reservoir as { volume: number; area: number; damLength: number } | null | undefined;
   if (res) out.push(`a dam ${res.damLength} tiles long would hold ${res.volume} blocks over ${res.area} tiles`);
@@ -71,7 +86,9 @@ export function writeReport(r: ProposalResult, p: Proposal, after: Measured): st
       continue;
     }
     if (st.op === "moveStart") {
-      lines.push(`Moved the start to (${(st.resolved.to as number[]).join(", ")}).`);
+      const to = st.resolved.to as number[];
+      const w = st.resolved.where as string | undefined;
+      lines.push(`Moved the start to ${w ? `the ${w}, ` : ""}(${to.join(", ")}).`);
       continue;
     }
     for (const m of st.made) {
@@ -81,20 +98,32 @@ export function writeReport(r: ProposalResult, p: Proposal, after: Measured): st
     }
     if (st.op === "deleteFeature") lines.push(`Removed the ${String(st.resolved.kind ?? "feature")}.`);
     if (st.op === "undoLast") lines.push(`Undid the last change (${st.report.join("; ")}).`);
-    if (st.op === "changeSetPiece") lines.push(`Changed the ${String(st.resolved.target)}: ${st.report.slice(0, 2).join("; ")}.`);
+    if (st.op === "changeSetPiece" || st.op === "changeFeature" || st.op === "moveFeature") {
+      const meas = r.measured.find((x) => (x as { id?: string }).id === st.resolved.target) as Record<string, unknown> | undefined;
+      const what = NAMES[String(meas?.kind ?? "")]?.replace(/^an? /, "the ") ?? "the feature";
+      lines.push(`${st.op === "moveFeature" ? "Moved" : "Changed"} ${what}${meas ? `: now ${facts(meas)}` : ""}.`);
+    }
   }
-  for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(TEMPLATES.tradeoff(t.text));
+  // side effects (what a step cleared or planted) are reported, but they are not trade-offs
+  for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(t.kind === "cleared" || t.kind === "start-moved" ? TEMPLATES.also(t.text) : TEMPLATES.tradeoff(t.text));
   for (const n of r.notMet) {
     lines.push(TEMPLATES.notDone(n.text, n.why));
     if (n.alternative) lines.push(TEMPLATES.offer(n.alternative));
   }
   const assumptions = new Set<string>();
   for (const st of r.steps) for (const a of (st.resolved.assumptions as string[] | undefined) ?? []) assumptions.add(a);
-  for (const a of assumptions) lines.push(TEMPLATES.assumption(a));
+  // the player reads no ids: an assumption names its feature in words, and its id in brackets for Claude
+  const noIds = (t: string) => t.replace(/\s*\((?:f-[a-z0-9]+|[0-9a-f]{8}-[0-9a-f-]{27})\)/g, "");
+  for (const a of assumptions) lines.push(TEMPLATES.assumption(noIds(a)));
   const start = r.guards.startRequirements.filter((g) => !["start.clear", "start.count", "start.flat", "start.entrance"].includes(g.id));
-  const broken = start.filter((g) => !g.ok);
-  if (broken.length) lines.push(TEMPLATES.startBroken(broken.map((g) => `${g.id} is ${String(g.value)} (the rule is ${String(g.limit)})`).join("; ")));
-  else if (start.length) lines.push(TEMPLATES.startOk(start.filter((g) => g.value !== undefined).map((g) => `${g.id.replace("start.", "")} ${String(g.value)}${g.limit !== undefined ? ` of ${String(g.limit)}` : ""}`).join(", ")));
+  const rule = (g: { id: string; value?: number | string; limit?: number | string }) =>
+    RULE_WORDS[g.id]?.(String(g.value ?? "?"), String(g.limit ?? "?")) ?? `${g.id.replace("start.", "")}${g.value !== undefined ? ` ${String(g.value)}` : ""}${g.limit !== undefined ? ` (rule ${String(g.limit)})` : ""}`;
+  const broken = start.filter((g) => !g.ok && !g.failedBefore);
+  const already = start.filter((g) => !g.ok && g.failedBefore);
+  if (broken.length) lines.push(TEMPLATES.startBroken(broken.map(rule).join("; ")));
+  if (already.length) lines.push(`These start rules already failed before this change and still fail: ${already.map(rule).join("; ")}.`);
+  if (!broken.length && !already.length && start.length) lines.push(TEMPLATES.startOk(start.filter((g) => g.value !== undefined).map(rule).join(", ")));
+  else if (!broken.length && already.length) lines.push("Every other start rule still holds.");
   void p;
   void after;
   return lines.join("\n");

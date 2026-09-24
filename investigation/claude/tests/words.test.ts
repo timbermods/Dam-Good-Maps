@@ -47,8 +47,10 @@ describe("words in requests", () => {
     expect(sizeTarget("waterfall", "huge", { W: 48, H: 48, designedFor: "normal" })).toMatchObject({ max: 19 });
     // "roughly 20" is 20 ±3
     expect(sizeTarget("waterfall", 20, { W: 128, H: 128, designedFor: "normal" })).toMatchObject({ approx: 20, tol: 3 });
-    // a huge dam site holds 6× the colony's drought need
-    expect(sizeTarget("damSite", "huge", { W: 128, H: 128, designedFor: "normal" })?.min).toBe(1518);
-    expect(sizeTarget("damSite", "large", { W: 128, H: 128, designedFor: "hard" })?.min).toBeGreaterThan(3000);
+    // a huge dam site holds 4× the drought need the validator uses (380 blocks on a normal map)
+    expect(sizeTarget("damSite", "huge", { W: 128, H: 128, designedFor: "normal", need: 380 })?.min).toBe(1520);
+    expect(sizeTarget("damSite", "large", { W: 128, H: 128, designedFor: "normal", need: 380 })?.min).toBe(950);
+    // a harder map needs more water, so every size word asks for more
+    expect(sizeTarget("damSite", "large", { W: 128, H: 128, designedFor: "hard" })!.min!).toBeGreaterThan(sizeTarget("damSite", "large", { W: 128, H: 128, designedFor: "normal" })!.min!);
   });
 });

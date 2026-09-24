@@ -345,6 +345,7 @@ export class ClaudeTools {
       kind: r.kind,
       region: { tiles: r.region.tiles, reading: r.region.reading, assumptions: r.region.assumptions, ...(r.region.ignored.length ? { ignoredWords: r.region.ignored } : {}) },
       ...(r.target ? { sizeTarget: r.target } : {}),
+      ...(r.constraint ? { constraint: r.constraint } : {}),
       searched: r.searched,
       sites: r.sites.map((x) => ({ rank: x.rank, at: x.at, where: x.where, ...(x.course ? { course: x.course } : {}), measured: x.measured, step: x.step, report: x.report.slice(0, 4) })),
       ...(r.reason ? { reason: r.reason } : {}),

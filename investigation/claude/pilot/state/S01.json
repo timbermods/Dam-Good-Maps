@@ -1,0 +1,67 @@
+{
+ "id": "S01",
+ "text": "add a giant waterfall in the north part of the map that is roughly 20 blocks wide",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "waterfall",
+    "where": "the north part of the map",
+    "size": 20
+   },
+   "bytes": 1394,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add a giant waterfall in the north part of the map that is roughly 20 blocks wide",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a waterfall about 20 wide in the north"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "waterfall",
+      "request": {
+       "mode": "standalone",
+       "lip": [
+        78,
+        108
+       ],
+       "facing": "south",
+       "width": 20,
+       "drop": 6,
+       "flow": "steady"
+      },
+      "handle": "falls"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "falls",
+      "metric": "lipWidth",
+      "approx": 20,
+      "tol": 3
+     },
+     {
+      "goal": "g1",
+      "subject": "falls",
+      "metric": "at",
+      "in": "the north part of the map"
+     }
+    ],
+    "report": "Added a waterfall in the north third, about 30 tiles east of the start: its lip is 20 tiles wide with a 6-level drop, fed by springs, and it drains into the small lake below it. It clears 55 trees. Assumption: I read \"giant\" and \"roughly 20\" together as 20 wide (20 ±3). Every start rule still holds."
+   },
+   "bytes": 1782,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a waterfall in the north third, about 30 tiles east of the start: its lip is 20 tiles wide, the water drops 6 levels at 2 blocks/s, fed by springs, and it drains into the small lake below. It clears 55 trees there. I read \"giant\" and \"roughly 20\" together as 20 wide (20 ±3). Every start rule still holds."
+}

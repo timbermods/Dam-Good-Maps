@@ -20,7 +20,7 @@ import { tilesToRuns } from "../../../src/core/math/grid";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { newHandle, newId, refContext, type Conversation } from "./conversation";
 import { anchorOf } from "./metrics";
-import { resolve, resolveRef, type Place } from "./places";
+import { compassWords, resolve, resolveRef, type Place } from "./places";
 import { findSites, resourceArea, setVerifier, type SiteKind, type SitesResult } from "./sites";
 import { guardsOf } from "./metrics";
 import { newConversation } from "./conversation";
@@ -43,7 +43,7 @@ export type Step =
   | { op: "addLandform"; kind: LandformFeature["params"]["kind"]; outline?: Point[]; where?: Where; size?: SizeWord; height?: number; edgeStyle?: LandformFeature["params"]["edgeStyle"]; handle?: string }
   | { op: "addResource"; kind: "forest" | "berryPatch" | "ruinField"; where: Where; amount?: number; size?: SizeWord; at?: [number, number]; handle?: string }
   | { op: "removeResources"; kind: "trees" | "bushes" | "ruins"; where: Where }
-  | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] }
+  | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] | Where }
   | { op: "moveStart"; to: [number, number] | Where; bringFood?: boolean }
   | { op: "deleteFeature"; target: string }
   | { op: "setRiverBadwater"; target: string; badwater: boolean }
@@ -190,9 +190,9 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
     case "moveFeature":
       if (!str(s.target, 80)) return ["target names the feature"];
       if (s.by !== undefined && !(Array.isArray(s.by) && s.by.length === 2 && num(s.by[0], -W, W) && num(s.by[1], -H, H))) return ["by is [dx, dy] in tiles"];
-      if (s.to !== undefined && !(Array.isArray(s.to) && s.to.length === 2 && num(s.to[0], 0, W - 1) && num(s.to[1], 0, H - 1))) return ["to is a tile [x, y] on the map"];
       if (s.by === undefined && s.to === undefined) return ["moveFeature needs by or to"];
-      return [];
+      if (Array.isArray(s.to)) return s.to.length === 2 && num(s.to[0], 0, W - 1) && num(s.to[1], 0, H - 1) ? [] : ["to is a tile [x, y] on the map, or a place"];
+      return checkPlace(s.to, "to", W, H);
     case "moveStart":
       if (Array.isArray(s.to)) return s.to.length === 2 && num(s.to[0], 0, W - 1) && num(s.to[1], 0, H - 1) ? [] : ["to is a tile [x, y] on the map, or a place"];
       return checkPlace(s.to, "to", W, H);
@@ -409,8 +409,25 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
       if (f.kind === "start") return expandStep(s, conv, { op: "moveStart", to: step.to ?? [anchorOf(v, f)[0] + step.by![0], anchorOf(v, f)[1] + step.by![1]] });
+      // a set piece moved to a place: the app picks a site there with the piece's own builder
+      // values (a spring keeps its strength, a fall its width and drop), checked like any site,
+      // and rebuilds the piece there under the same id
+      if (step.to !== undefined && !Array.isArray(step.to) && f.kind === "setPiece") {
+        const kind = f.params.kind;
+        const siteKind: SiteKind | undefined = kind === "waterfall" ? (f.params.plan.mode === "on-river" ? "riverFall" : "waterfall") : SITE_OF[kind];
+        if (!siteKind) return fail(step, [`a ${kind} cannot be moved to a place yet: give to as a tile [x, y] or by [dx, dy]`]);
+        const keep: PlanRecord = { ...f.params.request };
+        for (const k of ["at", "lip", "centre", "center", "position"]) delete keep[k];
+        const r = findSites(s, { kind: siteKind, where: step.to, request: keep, limit: 1, replaces: f.id }, refs);
+        const resolved = siteSummary(r);
+        if (!r.ok) return fail(step, [r.reason ?? "no site fits"], alternativeOf(r), resolved);
+        const planned = planPiece(s, kind, { ...keep, ...(r.sites[0].step.request as PlanRecord) }, f.id, f.origin);
+        if (!planned.ok) return fail(step, planned.errors, undefined, resolved);
+        return { ok: true, step, ops: planned.ops, made: [], report: planned.report, resolved: { ...resolved, target: f.id, to: r.sites[0].at }, errors: [], tiles: planned.tiles.length };
+      }
+      if (step.to !== undefined && !Array.isArray(step.to)) return fail(step, ["only a set piece moves to a place; give to as a tile [x, y] or by [dx, dy]"]);
       const a = anchorOf(v, f);
-      const [dx, dy] = step.by ?? [step.to![0] - a[0], step.to![1] - a[1]];
+      const [dx, dy] = step.by ?? [(step.to as [number, number])[0] - a[0], (step.to as [number, number])[1] - a[1]];
       const r = moveEdit(s, f.id, Math.round(dx), Math.round(dy));
       if (!r.ok) return fail(step, r.errors);
       return { ok: true, step, ops: r.ops, made: [], report: r.report, resolved: { target: f.id, by: [Math.round(dx), Math.round(dy)] }, errors: [], tiles: r.tiles.length };
@@ -505,7 +522,7 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
     if (needB > 0) add("berryPatch", needB);
     if (needT > 0) add("forest", needT);
   }
-  return { ok: true, step, ops, made, report, resolved: { ...resolved, to }, errors: [], tiles: 0 };
+  return { ok: true, step, ops, made, report, resolved: { ...resolved, to, where: compassWords(v, to[0], to[1]) }, errors: [], tiles: 0 };
 }
 
 // ---------------------------------------------------------------------------- site verification
@@ -531,7 +548,14 @@ setVerifier((s, raw) => {
   }
   const scratch = newConversation(idHint?.seed ?? 7);
   scratch.counter = idHint?.counter ?? 0;
-  const ex = expandStep(s, scratch, step);
+  // a site for moving a piece is checked as the piece rebuilt there, under its own id
+  const replaces = typeof raw.replaces === "string" ? s.features.find((f): f is SetPieceFeature => f.kind === "setPiece" && f.id === raw.replaces) : undefined;
+  const ex: Pick<Expanded, "ok" | "ops" | "errors"> = replaces
+    ? (() => {
+        const r = planPiece(s, replaces.params.kind, raw.request as PlanRecord, replaces.id, replaces.origin);
+        return r.ok ? { ok: true, ops: r.ops, errors: [] } : { ok: false, ops: [], errors: r.errors };
+      })()
+    : expandStep(s, scratch, step);
   if (!ex.ok) return { broken: [], error: ex.errors[0] ?? "it cannot be built" };
   if (!ex.ops.length) return { broken: [] };
   const r = ex.ops[0].op === "specPatch" ? s.apply(ex.ops[0], "claude") : s.applyAll(ex.ops, "claude");

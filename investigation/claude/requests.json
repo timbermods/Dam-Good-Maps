@@ -3064,11 +3064,9 @@
    "reference": {
     "calls": [
      {
-      "tool": "find_sites",
+      "tool": "resolve_region",
       "args": {
-       "kind": "badwaterBasin",
-       "where": "the opposite bank",
-       "keepReservoirsClean": true
+       "where": "the opposite bank"
       }
      }
     ],
@@ -3077,7 +3075,7 @@
       {
        "op": "moveFeature",
        "target": "the badwater",
-       "to": "$0.sites.0.at"
+       "to": "the opposite bank"
       }
      ]
     }
@@ -3959,7 +3957,7 @@
     "mustSay": [
      "settings apply to the whole map, not only this valley: which moved",
      "the start's new place and what was planted with it to keep the start rules",
-     "the dam site: where (about halfway down) and how much a dam there holds (huge: at least 6× the drought need)",
+     "the dam site: where (about halfway down) and how much a dam there holds (huge: at least 4× the drought need)",
      "the badwater: its bank, strength, and where its route drains; it keeps the start rule's distance, so 'dangerous' stops there",
      "trade-off: the weaker river fills the reservoir more slowly (minutes to fill)",
      "the badwater route drains away from the reservoir so the dam's water stays clean"

@@ -394,6 +394,9 @@ export interface SizeContext {
   designedFor: Difficulty;
   /** The side along a waterfall's lip (W for a fall facing north or south). */
   side?: number;
+  /** The drought need the validator uses on this map (rulesFor(...).reservoirNeed): the same number
+   *  the summary and the water.reservoir check show. Without it, the difficulty's bare need. */
+  need?: number;
 }
 
 /** What a size word (or a number) means for a set piece or feature on this map. */
@@ -401,6 +404,7 @@ export function sizeTarget(kind: string, size: SizeWord | number, ctx: SizeConte
   const side = ctx.side ?? Math.min(ctx.W, ctx.H);
   const area = ctx.W * ctx.H;
   if (typeof size === "number") {
+    if (kind === "badwaterBasin") return size >= 0.5 && size <= 4 ? { metric: "strength", approx: size, tol: 0.25, unit: "blocks/s", basis: "the strength asked for (a badwater source is 1–3 blocks/s, PLAN §5.4)" } : null;
     const tol = Math.max(3, Math.round(0.15 * size));
     const metric = kind === "waterfall" ? "lipWidth" : kind === "lake" ? "area" : kind === "damSite" ? "reservoir" : kind === "forest" ? "trees" : kind === "ruinField" ? "scrap" : "size";
     return { metric, approx: size, tol, unit: kind === "damSite" ? "blocks" : "tiles", basis: `the number asked for, ±${tol} (EDITOR_PLAN §7: "roughly 20" is 20 ±3)` };
@@ -418,10 +422,10 @@ export function sizeTarget(kind: string, size: SizeWord | number, ctx: SizeConte
       return { metric: "drop", min, max, unit: "levels", basis: "drops: typical 3–8, practical 12, hard maximum 15 (PLAN §9.2)" };
     }
     case "damSite": {
-      const need = reservoirNeeded(ctx.designedFor);
-      const k: Record<string, number> = { tiny: 0.5, small: 1, medium: 1.5, large: 3, huge: 6 };
+      const need = ctx.need ?? reservoirNeeded(ctx.designedFor);
+      const k: Record<string, number> = { tiny: 0.5, small: 1, medium: 1.5, large: 2.5, huge: 4 };
       const min = Math.round(need * k[size]);
-      return { metric: "reservoir", min, unit: "blocks", basis: `${k[size]}× the ${ctx.designedFor} colony's drought need of ${Math.round(need)} blocks (PLAN §11.4; a large site holds the Plenty reserve, a huge one twice that); the basin stays under 15% of the map (${Math.floor(0.15 * area)} tiles)` };
+      return { metric: "reservoir", min, unit: "blocks", basis: `${k[size]}× the drought need of ${Math.round(need)} blocks near the start (the validator's water.reservoir rule for a ${ctx.designedFor} map; a large site ${k.large}×, a huge one ${k.huge}×); the basin stays under 15% of the map (${Math.floor(0.15 * area)} tiles)` };
     }
     case "lake": {
       const f: Record<string, [number, number]> = { tiny: [0.001, 0.003], small: [0.003, 0.006], medium: [0.006, 0.012], large: [0.012, 0.03], huge: [0.03, 0.06] };

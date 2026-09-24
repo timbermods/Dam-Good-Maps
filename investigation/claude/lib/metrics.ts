@@ -11,7 +11,7 @@
 import { measure as measureMap, type MapMetrics } from "../../../src/core/analysis/metrics";
 import type { MapSession } from "../../../src/core/doc/session";
 import { planContextOf } from "../../../src/core/doc/tools";
-import { pointAtArc } from "../../../src/core/features/geometry";
+import { pathField, pointAtArc } from "../../../src/core/features/geometry";
 import { reservoirOf, type DamSitePlan } from "../../../src/core/features/setpieces/damSite";
 import { measureLip } from "../../../src/core/features/setpieces/waterfall";
 import type { Feature, RiverFeature, SetPieceFeature } from "../../../src/core/features/schema";
@@ -133,7 +133,7 @@ export interface FeatureMeasure {
   where: string;
   /** Along the valley's river: its name, the fraction from the source, and the bank relative to
    *  the start ("start's bank", "opposite bank", "on the river"). */
-  course?: { river: string; frac: number; bank: string };
+  course?: { river: string; frac: number; bank: string; fromRiver?: number };
   distanceToStart?: number;
   [k: string]: unknown;
 }
@@ -151,7 +151,7 @@ export function measureFeature(s: MapSession, f: Feature): FeatureMeasure {
       const st = v.start ? locate(net, v.W, v.start.x, v.start.y, l.course) : null;
       bank = st ? (st.side === l.side ? "start's bank" : "opposite bank") : l.side > 0 ? "left bank" : "right bank";
     }
-    out.course = { river: l.course.name, frac: round2(l.frac), bank };
+    out.course = { river: l.course.name, frac: round2(l.frac), bank, ...(l.d >= l.course.width / 2 ? { fromRiver: Math.round(l.d) } : {}) };
   }
   if (v.start) out.distanceToStart = round1(Math.hypot(at[0] - v.start.x, at[1] - v.start.y));
   if (f.kind === "setPiece") Object.assign(out, measurePiece(s, v, f));
@@ -201,7 +201,7 @@ function measurePiece(s: MapSession, v: MapView, f: SetPieceFeature): Record<str
     case "waterfall": {
       if (p.mode === "standalone") {
         const lip = measureLip(f, v.W, v.heights, v.water);
-        return { mode: "standalone", plannedWidth: p.width, lipWidth: lip?.width ?? 0, lipDepth: round2(lip?.depth ?? 0), drop: p.drop, surfaceDrop: round1(lip?.drop ?? 0), flow: p.flow, facing: p.facing, outflowTo: p.outflowTo };
+        return { mode: "standalone", plannedWidth: p.width, lipWidth: lip?.width ?? 0, lipDepth: round2(lip?.depth ?? 0), drop: p.drop, surfaceDrop: round1(lip?.drop ?? 0), flow: p.flow, facing: p.facing, outflowTo: waterName(s, viewOf(s), p.outflowTo) };
       }
       return { mode: "on-river", river: p.river, drop: p.drop, arc: p.at };
     }
@@ -288,4 +288,67 @@ export function anchorOf(v: MapView, f: Feature): [number, number] {
     if (c) return r(pointAtArc(c.path, c.length / 2).p);
   }
   return [v.W >> 1, v.H >> 1];
+}
+
+/** Where a set piece's water goes, in words: "map edge", a river's name, "the lake in the …". */
+export function waterName(s: MapSession, v: MapView, to: unknown): string {
+  if (to === "edge" || to === undefined || to === null) return "map edge";
+  const net = network(v);
+  const c = net.byId.get(String(to));
+  return c ? c.name : outletName(s, v, String(to));
+}
+
+/** A badwater outlet's water body in words (never its id). */
+function outletName(s: MapSession, v: MapView, id: string): string {
+  const f = s.features.find((g) => g.id === id);
+  if (!f) return "another water body";
+  const at = anchorOf(v, f);
+  return `the ${f.kind === "lake" ? "lake" : f.kind === "setPiece" ? String(f.params.kind) : f.kind}${at ? ` in the ${compassWords(v, at[0], at[1])}` : ""}`;
+}
+
+/** The tiles a dam site's reservoir would flood: from the channel just above the dam, every tile
+ *  below the crest joined to it, with the dam's own line as the wall (reservoirOf's area). */
+export function reservoirTiles(s: MapSession, d: Feature): Set<number> {
+  const out = new Set<number>();
+  if (d.kind !== "setPiece" || d.params.kind !== "damSite") return out;
+  const v = viewOf(s);
+  const p = d.params.plan;
+  const river = v.features.find((g): g is RiverFeature => g.kind === "river" && g.id === p.river);
+  if (!river) return out;
+  const held = reservoirOf(p as unknown as DamSitePlan, river, planContextOf(s), d.id);
+  if (!held) return out;
+  const field = pathField(river.params.path, v.W, v.H);
+  const at = Number(p.at);
+  const crest = held.bed + Number(p.crest);
+  const wall = new Set(held.line.map(([x, y]) => y * v.W + x));
+  // the seed: the channel tile 2–4 tiles upstream of the dam
+  let seed = -1;
+  let best = Infinity;
+  for (let i = 0; i < v.W * v.H; i++) {
+    if (field.d[i] > river.params.width / 2 + 0.5) continue;
+    const k = Math.abs(field.s[i] - (at - 3));
+    if (k < best && field.s[i] < at) {
+      best = k;
+      seed = i;
+    }
+  }
+  if (seed < 0) return out;
+  const cap = Math.max(held.area * 1.5, 50);
+  const queue = [seed];
+  out.add(seed);
+  while (queue.length && out.size < cap) {
+    const i = queue.shift()!;
+    const x = i % v.W;
+    const y = (i - x) / v.W;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= v.W || yy >= v.H) continue;
+      const j = yy * v.W + xx;
+      if (out.has(j) || wall.has(j) || v.heights[j] >= crest) continue;
+      out.add(j);
+      queue.push(j);
+    }
+  }
+  return out;
 }

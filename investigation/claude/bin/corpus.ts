@@ -454,8 +454,8 @@ R("W09", "flow-relative", "put the badwater on the opposite bank", "rv128", {
   report: { mustSay: ["the opposite bank read against the start's side of the river", "its outlet does not poison a reservoir"] },
   pass: [VALID, START_RULES_HOLD, "the badwater spring is on the far bank from the start"],
   reference: {
-    calls: [call("find_sites", { kind: "badwaterBasin", where: "the opposite bank", keepReservoirsClean: true })],
-    proposal: { steps: [{ op: "moveFeature", target: "the badwater", to: "$0.sites.0.at" as unknown as [number, number] }] },
+    calls: [call("resolve_region", { where: "the opposite bank" })],
+    proposal: { steps: [{ op: "moveFeature", target: "the badwater", to: "the opposite bank" }] },
   },
 });
 R("W10", "flow-relative", "add a lake on the start's bank, downstream of the start", "rv128", {
@@ -538,7 +538,7 @@ R("M01", "compound", HEADLINE, "rv128", {
     mustSay: [
       "settings apply to the whole map, not only this valley: which moved",
       "the start's new place and what was planted with it to keep the start rules",
-      "the dam site: where (about halfway down) and how much a dam there holds (huge: at least 6× the drought need)",
+      "the dam site: where (about halfway down) and how much a dam there holds (huge: at least 4× the drought need)",
       "the badwater: its bank, strength, and where its route drains; it keeps the start rule's distance, so 'dangerous' stops there",
       "trade-off: the weaker river fills the reservoir more slowly (minutes to fill)",
       "the badwater route drains away from the reservoir so the dam's water stays clean",

@@ -1,0 +1,66 @@
+{
+ "id": "P06",
+ "text": "put a gorge downstream of the start",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "gorge",
+    "where": "downstream of the start"
+   },
+   "bytes": 1270,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "put a gorge downstream of the start",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a gorge on the river below the start"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "gorge",
+      "request": {
+       "river": "f-jkzktiegdlqfw",
+       "from": 106,
+       "length": 16,
+       "width": 5,
+       "wallHeight": 3
+      },
+      "handle": "gorge"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "gorge",
+      "metric": "course.frac",
+      "min": {
+       "of": "start",
+       "metric": "course.frac"
+      }
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1478,
+   "error": false,
+   "accepted": true
+  },
+  {
+   "tool": "list_features",
+   "args": {
+    "kind": "waterfall"
+   },
+   "bytes": 653,
+   "error": false
+  }
+ ],
+ "ended": "Added a gorge on the main river below the start, in the centre of the map, about two thirds of the way down: 16 tiles long and 5 wide, with walls 3 levels above the river bed. It is 42 tiles from the start. Note: the river's existing small falls (a 2-level drop) now sits inside the gorge. Every start rule still holds."
+}

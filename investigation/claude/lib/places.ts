@@ -250,7 +250,11 @@ export function resolveRef(v: MapView, ref: Ref, ctx: RefContext = {}, assumptio
     const start = v.start;
     const score = (f: Feature) => (made.has(f.id) ? 0 : f.origin !== "generated" ? 1 : 2) * 1e6 + (start ? Math.hypot(featureAnchor(v, f)[0] - start.x, featureAnchor(v, f)[1] - start.y) : 0);
     all.sort((a, b) => score(a) - score(b));
-    if (all.length > 1) assumptions.push(`"${ref}" read as ${all[0].id}, ${made.has(all[0].id) ? "the one made in this conversation" : "the one nearest the start"} (of ${all.length})`);
+    if (all.length > 1) {
+      const a = featureAnchor(v, all[0]);
+      const d = start ? Math.round(Math.hypot(a[0] - start.x, a[1] - start.y)) : null;
+      assumptions.push(`"${ref}" read as the one in the ${compassWords(v, a[0], a[1])}${d !== null ? `, ${d} tiles from the start` : ""} (${all[0].id}): ${made.has(all[0].id) ? "the one made in this conversation" : "the one nearest the start"}, of ${all.length}`);
+    }
     const f = all[0];
     if (ctx.aliases && !/start/.test(word)) ctx.aliases[word.replace(/^the /, "")] = f.id;
     if (f.kind === "river") {
@@ -316,7 +320,12 @@ function courseFor(v: MapView, net: Network, river: Ref | undefined, at: RefTarg
 function valleyCourse(v: MapView, net: Network, ctx: RefContext, assumptions: string[]): Course | string {
   if (ctx.selected) {
     const f = v.features.find((g) => g.id === ctx.selected);
-    if (f?.kind === "river") return net.byId.get(f.id) ?? "the selected river is gone";
+    if (f?.kind === "river") {
+      const c = net.byId.get(f.id);
+      if (!c) return "the selected river is gone";
+      assumptions.push(`"this valley" read as the valley of ${c.name}, the selected river (it flows ${c.heading})`);
+      return c;
+    }
     if (f) {
       const a = featureAnchor(v, f);
       const l = locate(net, v.W, a[0], a[1]);
@@ -327,6 +336,7 @@ function valleyCourse(v: MapView, net: Network, ctx: RefContext, assumptions: st
     }
   }
   if (!net.main) return "this map has no river the app knows (imported maps have no features yet)";
+  if (net.courses.length > 1) assumptions.push(`read along ${net.main.name} (it flows ${net.main.heading}), the map's main river`);
   return net.main;
 }
 
@@ -614,6 +624,20 @@ function refOf(word: string): Ref {
   return w;
 }
 
+/** A stretch of a river's course, of the main river or of a named one: "halfway down the north
+ *  tributary", "near the mouth of the inflow from the east", "a third of the way down this valley". */
+const COURSE_OF = "(?: (?:of|down|along|up|on))?(?: (?:the|this|that))? ((?:north|south|east|west) (?:tributary|inflow|creek|river|stream)|main river|river|valley|course|stream|creek)";
+function courseRule(head: RegExp, band: [number, number]): Rule {
+  return {
+    re: new RegExp(`${head.source}(?:${COURSE_OF})?`),
+    make: (m) => {
+      const w = m[1];
+      if (!w || /^(river|valley|course|stream|creek)$/.test(w)) return { course: band };
+      return { course: band, river: w === "main river" ? w : w.replace(/ (creek|river|stream)$/, " tributary") };
+    },
+  };
+}
+
 const RULES: Rule[] = [
   { re: new RegExp(`between ${REF} and ${REF}`), make: (m) => ({ between: [refOf(m[1]), refOf(m[2])] }) },
   { re: new RegExp(`(just |right |a (?:little|bit) |far |well )?(upstream|downstream|upriver|downriver|up river|down river)(?: (?:of|from) ${REF})?`), make: (m) => {
@@ -627,12 +651,12 @@ const RULES: Rule[] = [
       const reach = m[1] ? "just" : "any";
       return m[2] === "above" ? { upstream: refOf(m[3]), reach } : { downstream: refOf(m[3]), reach };
     } },
-  { re: /(?:half ?way|midway|mid-way|in the middle of the (?:river|valley|course))(?: (?:down|along|up))?(?: (?:the|this) (?:river|valley|course|stream))?/, make: () => ({ course: [0.4, 0.6] }) },
-  { re: /(?:a|one) third of the way(?: (?:down|along))?(?: (?:the|this) (?:river|valley))?/, make: () => ({ course: [0.25, 0.42] }) },
-  { re: /two[- ]thirds of the way(?: (?:down|along))?(?: (?:the|this) (?:river|valley))?/, make: () => ({ course: [0.58, 0.75] }) },
-  { re: /(?:near |at |by )?(?:the )?(?:source|headwaters|head of the (?:valley|river)|upper (?:reaches|valley|river|end)|top of the (?:valley|river))/, make: () => ({ course: [0, 0.25] }) },
-  { re: /(?:near |at |by )?(?:the )?(?:mouth|lower (?:reaches|valley|river|end)|bottom of the (?:valley|river)|end of the (?:river|valley)|where the river leaves)/, make: () => ({ course: [0.75, 1] }) },
-  { re: /(?:the )?middle reaches/, make: () => ({ course: [0.33, 0.67] }) },
+  courseRule(/(?:half ?way|midway|mid-way|in the middle of the (?:river|valley|course))(?: (?:down|along|up))?/, [0.4, 0.6]),
+  courseRule(/(?:a|one) third of the way(?: (?:down|along))?/, [0.25, 0.42]),
+  courseRule(/two[- ]thirds of the way(?: (?:down|along))?/, [0.58, 0.75]),
+  courseRule(/(?:near |at |by )?(?:the )?(?:source|headwaters|head of the (?:valley|river)|upper (?:reaches|valley|river|end)|top of the (?:valley|river))/, [0, 0.25]),
+  courseRule(/(?:near |at |by )?(?:the )?(?:mouth|lower (?:reaches|valley|river|end)|bottom of the (?:valley|river)|end of the (?:river|valley)|where the river leaves)/, [0.75, 1]),
+  courseRule(/(?:the )?middle reaches/, [0.33, 0.67]),
   { re: new RegExp(`(?:on |along )?(?:the )?(?:opposite|other|far) (?:bank|side)(?: of the (?:river|valley|stream))?(?: from ${REF})?`), make: (m) => ({ bank: "opposite", ...(m[1] ? { of: refOf(m[1]) } : {}) }) },
   { re: new RegExp(`across the (?:river|stream|water)(?: from ${REF})?`), make: (m) => ({ bank: "opposite", ...(m[1] ? { of: refOf(m[1]) } : {}) }) },
   { re: new RegExp(`(?:on )?(?:the )?(?:same|this|near|home) (?:bank|side)(?: (?:as|of) ${REF})?`), make: (m) => ({ bank: "same", ...(m[1] ? { of: refOf(m[1]) } : {}) }) },

@@ -1,0 +1,86 @@
+{
+ "id": "M08",
+ "text": "Make it harsher but keep a big reservoir near the start.",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "dry_run",
+   "args": {
+    "request": "Make it harsher but keep a big reservoir near the start.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a harsher map"
+     },
+     {
+      "id": "g2",
+      "text": "a big reservoir near the start, kept"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSettings",
+      "word": "harsher"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "cleanStrength",
+      "change": "down"
+     },
+     {
+      "goal": "g2",
+      "subject": "map",
+      "metric": "storedNearStart",
+      "min": 1000
+     }
+    ]
+   },
+   "bytes": 2170,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "Make it harsher but keep a big reservoir near the start.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a harsher map"
+     },
+     {
+      "id": "g2",
+      "text": "a big reservoir near the start, kept"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSettings",
+      "word": "harsher"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "cleanStrength",
+      "change": "down"
+     },
+     {
+      "goal": "g2",
+      "subject": "map",
+      "metric": "storedNearStart",
+      "min": 1000
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 2214,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Made the whole map harsher: the river is a trickle (2.2 blocks/s, was 3.6), droughts leave less water, there is more badwater, and there are fewer trees and berries. The big reservoir near the start stays: the dam site in the north third, 13 tiles from the start, now holds 1,199 blocks (was 1,434). That is still three times what a drought needs (380). In all, 1,799 blocks can be stored near the start. Trade-offs: the weaker river fills that reservoir more slowly, and the new land around it holds a little less. Every start rule still holds."
+}

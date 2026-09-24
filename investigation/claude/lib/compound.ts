@@ -16,9 +16,10 @@
 // breaks one is not accepted, and the check names the step that broke it.
 
 import type { MapSession } from "../../../src/core/doc/session";
+import type { Feature } from "../../../src/core/features/schema";
 import type { Conversation } from "./conversation";
 import { checkExpectations, valuesBefore, type Checked, type Expectation } from "./intent";
-import { guardsOf, measureFeature, measureSession, type Guard, type Measured } from "./metrics";
+import { guardsOf, measureFeature, measureSession, reservoirTiles, type Guard, type Measured } from "./metrics";
 import { locate, network } from "./flow";
 import { writeReport } from "./report";
 import { checkStep, expandStep, MAX_AREA_SHARE, MAX_STEPS, type Expanded, type Step } from "./steps";
@@ -68,7 +69,7 @@ export interface ProposalResult {
   reordered: boolean;
   steps: StepResult[];
   expectations: Checked[];
-  guards: { broken: (Guard & { causedBy: number | null })[]; startRequirements: { id: string; ok: boolean; value?: number | string; limit?: number | string }[] };
+  guards: { broken: (Guard & { causedBy: number | null })[]; startRequirements: { id: string; ok: boolean; value?: number | string; limit?: number | string; failedBefore?: boolean }[] };
   tradeoffs: Tradeoff[];
   notMet: { goal: string; text: string; why: string; alternative?: string }[];
   made: { handle: string; id: string; kind: string }[];
@@ -129,6 +130,9 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
   if (errors.length) return base;
   const work = mode === "dry_run" ? cloneConv(conv) : conv;
   const before = measureSession(s);
+  // the reservoirs of the dam sites already on the map, to see whether this proposal shrinks one
+  const damsBefore = new Map<string, number>();
+  for (const f of s.features) if (f.kind === "setPiece" && f.params.kind === "damSite") damsBefore.set(f.id, Number((measureFeature(s, f).reservoir as { volume?: number } | undefined)?.volume ?? 0));
   const was = valuesBefore(s, work, before, p.expectations ?? []);
   const ordered = orderSteps(p.steps);
   const reordered = ordered.some((o, k) => o.index !== k);
@@ -207,11 +211,19 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
   const broken = after.guards
     .filter((g) => !g.ok && g.applicable && beforeOk.get(g.id) !== false)
     .map((g) => ({ ...g, causedBy: results.find((r) => r.broke.includes(g.id))?.index ?? null }));
-  const tradeoffs = interference(s, work, p, before, after, results, reordered);
+  const tradeoffs = interference(s, work, p, before, after, results, reordered, damsBefore);
   const measured = made.map((m) => {
     const f = s.features.find((g) => g.id === m.id);
     return f ? { handle: m.handle, ...measureFeature(s, f) } : { handle: m.handle, gone: true };
   });
+  // features a step changed or moved are measured too, under their handle when they have one
+  const handleOf = (id: string) => Object.entries(work.handles).find(([, v]) => v === id)?.[0];
+  for (const r of results) {
+    const id = r.ok && (r.op === "changeSetPiece" || r.op === "changeFeature" || r.op === "moveFeature") ? r.resolved.target : undefined;
+    if (typeof id !== "string" || measured.some((m) => (m as { id?: string }).id === id)) continue;
+    const f = s.features.find((g) => g.id === id);
+    if (f) measured.push({ handle: handleOf(id) ?? "", changed: true, ...measureFeature(s, f) } as (typeof measured)[number]);
+  }
   const notMet = unmetGoals(p, results, expectations);
   const allSteps = results.every((r) => r.ok);
   const accepted = mode === "propose" && allSteps && broken.length === 0 && (applied > 0 || undone > 0);
@@ -224,7 +236,7 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
     reordered,
     steps: results,
     expectations,
-    guards: { broken, startRequirements: after.guards.filter((g) => g.start).map((g) => ({ id: g.id, ok: g.ok, value: g.value, limit: g.limit })) },
+    guards: { broken, startRequirements: after.guards.filter((g) => g.start).map((g) => ({ id: g.id, ok: g.ok, value: g.value, limit: g.limit, ...(!g.ok && beforeOk.get(g.id) === false ? { failedBefore: true } : {}) })) },
     tradeoffs,
     notMet,
     made,
@@ -265,6 +277,9 @@ function unmetGoals(p: Proposal, results: StepResult[], checks: Checked[]): Prop
   for (const g of p.goals ?? []) {
     const failing = checks.filter((c) => c.goal === g.id && !c.pass);
     if (failing.length) out.push({ goal: g.id, text: g.text, why: failing.map((c) => `${c.subject} ${c.metric}: ${c.why}`).join("; "), alternative: results.find((r) => !r.ok && r.alternative)?.alternative?.note });
+    // a goal the player asked for that no expectation checks: left out, or unmeasured; either way
+    // the report must say what became of it
+    else if (!checks.some((c) => c.goal === g.id)) out.push({ goal: g.id, text: g.text, why: "no expectation checks this goal: if no step does it, say why it was left out and what you offer instead" });
   }
   for (const r of results) {
     if (r.ok) continue;
@@ -288,7 +303,17 @@ const GUARD_WORDS: Record<string, string> = {
   "plants.survive": "some plants stand where they die",
 };
 
-function interference(s: MapSession, conv: Conversation, p: Proposal, before: Measured, after: Measured, results: StepResult[], reordered: boolean): Tradeoff[] {
+/** Where a badwater basin's spring and outlet channel lie, as tile indices on a W-wide map. */
+export function basinFootprint(b: Feature, W: number): { spring: number | null; outlet: number[] } {
+  if (b.kind !== "setPiece") return { spring: null, outlet: [] };
+  const at = (b.params.request.at ?? b.params.plan.at) as number[] | undefined;
+  const flat = (b.params.plan.outlet as number[] | undefined) ?? [];
+  const outlet: number[] = [];
+  for (let k = 0; k + 1 < flat.length; k += 2) outlet.push(Math.round(flat[k + 1]) * W + Math.round(flat[k]));
+  return { spring: at ? Math.round(at[1]) * W + Math.round(at[0]) : null, outlet };
+}
+
+function interference(s: MapSession, conv: Conversation, p: Proposal, before: Measured, after: Measured, results: StepResult[], reordered: boolean, damsBefore: Map<string, number>): Tradeoff[] {
   const out: Tradeoff[] = [];
   const v = viewOf(s);
   const net = network(v);
@@ -299,6 +324,15 @@ function interference(s: MapSession, conv: Conversation, p: Proposal, before: Me
   const dams = s.features.filter((f) => f.kind === "setPiece" && f.params.kind === "damSite");
   for (const b of basins) {
     if (b.kind !== "setPiece") continue;
+    // a basin inside a dam site's reservoir: the water rises over it when the dam is built
+    for (const d of dams) {
+      if (d.kind !== "setPiece" || (!newIds.has(b.id) && !newIds.has(d.id))) continue;
+      const res = reservoirTiles(s, d);
+      const where = basinFootprint(b, v.W);
+      const spring = where.spring !== null && res.has(where.spring);
+      const channel = where.outlet.some((i) => res.has(i));
+      if (spring || channel) out.push({ kind: "badwater-poisons-reservoir", text: spring ? `the badwater spring ${nameOf(b.id)} lies inside the reservoir the dam site ${nameOf(d.id)} would hold: a dam there floods it and the water turns to badwater` : `the badwater spring ${nameOf(b.id)} drains to the map edge by a channel that runs through the reservoir of the dam site ${nameOf(d.id)}: its water would be badwater` });
+    }
     const to = b.params.plan.outletTo;
     const tiles = b.params.plan.outlet as number[];
     if (typeof to !== "string" || to === "edge" || !tiles?.length) continue;
@@ -330,6 +364,24 @@ function interference(s: MapSession, conv: Conversation, p: Proposal, before: Me
       if ((c.outlet.joinsAt ?? 0) < flowAt) out.push({ kind: "badwater-poisons-reservoir", text: `${c.name} carries badwater into ${t.name} above the dam site ${nameOf(d.id)}: its reservoir would hold badwater` });
     }
   }
+  // a dam site already on the map that holds less now (a gorge or a fall built in its basin, a
+  // lake or landform in the way); a settings change is reported as less-flow instead
+  const regenerated = results.some((r) => r.op === "changeSettings" && r.applied);
+  for (const d of dams) {
+    const was = damsBefore.get(d.id);
+    if (!was || d.kind !== "setPiece") continue;
+    const now = Number((measureFeature(s, d).reservoir as { volume?: number } | undefined)?.volume ?? 0);
+    if (now < was * 0.97) out.push({ kind: "reduced", text: `the dam site ${Math.round(((d.params.plan.at as number) / Math.max(1, net.byId.get(String(d.params.plan.river))?.length ?? 1)) * 100)}% down ${net.byId.get(String(d.params.plan.river))?.name ?? "the river"} now holds ${now} blocks instead of ${was}: ${regenerated ? "the new settings reshaped the land around it" : "the new work sits in its basin"}` });
+  }
+  // trees and berries near the start that the builders took without saying so
+  const tb = before.map.treesNearStart;
+  const ta = after.map.treesNearStart;
+  const bb = before.map.bushesNearStart;
+  const ba = after.map.bushesNearStart;
+  const said = results.some((r) => r.report.some((l) => /^clears /.test(l)));
+  if (!said && !regenerated && Number.isFinite(tb) && Number.isFinite(ta) && (ta < tb - 5 || ba < bb - 3)) {
+    out.push({ kind: "cleared", text: `near the start there are now ${ta} trees (was ${tb}) and ${ba} berry bushes (was ${bb})` });
+  }
   // less flow: reservoirs fill more slowly
   const settings = results.find((r) => r.op === "changeSettings" && r.applied);
   if (settings && after.map.cleanStrength < before.map.cleanStrength - 0.01) {
@@ -353,7 +405,7 @@ function interference(s: MapSession, conv: Conversation, p: Proposal, before: Me
   // what the builders reduced or cleared
   for (const r of results) {
     for (const line of r.report) {
-      if (/reduced to|raised to|widened|moved \d+ tile/.test(line)) out.push({ kind: "reduced", text: line, steps: [r.index] });
+      if (/reduced to|raised to|widened|moved \d+ tile|asked for \d/.test(line)) out.push({ kind: "reduced", text: line, steps: [r.index] });
       else if (/^clears /.test(line)) out.push({ kind: "cleared", text: line, steps: [r.index] });
       else if (/plants (a berry patch|a grove)/.test(line)) out.push({ kind: "start-moved", text: line, steps: [r.index] });
     }

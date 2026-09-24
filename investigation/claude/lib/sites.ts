@@ -13,7 +13,7 @@ import type { LandformFeature, Point, RiverFeature, SetPieceKind } from "../../.
 import { distanceFrom } from "../../../src/core/math/grid";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { locate, network, type Course } from "./flow";
-import { reservoirIsClean } from "./metrics";
+import { reservoirIsClean, reservoirTiles, waterName } from "./metrics";
 import { compassWords, extent, resolve, type Place, type RefContext } from "./places";
 import { sizeTarget, type SizeTarget, type SizeWord } from "./words";
 import { round1, round2, viewOf, type MapView } from "./view";
@@ -64,6 +64,8 @@ export interface SiteQuery {
   limit?: number;
   /** Check each offered site against the guards with a real build (default true). */
   verify?: boolean;
+  /** Sites for moving this set piece: each is checked as the piece rebuilt there. */
+  replaces?: string;
 }
 
 export interface Site {
@@ -93,6 +95,8 @@ export interface SitesResult {
   rejected?: string;
   /** When the size fails here: where the full size would fit instead (null: nowhere on this map). */
   alsoPossible?: { kind: "place"; note: string; site: Site } | null;
+  /** A rule that bent the place: sites were kept out of part of it (the start's badwater rule). */
+  constraint?: string;
 }
 
 const TMP = "00000000-0000-4000-8000-00000000c1a0";
@@ -152,6 +156,7 @@ export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, 
   const found = search(s, v, q, r.mask);
   base.target = found.target;
   base.searched = found.searched;
+  if (found.constraint) base.constraint = found.constraint;
   // every offered site is checked with a real build: a site that breaks a guard (a start rule,
   // the reservoir, the water's way out) is not offered, and why is kept
   const rejected: string[] = [];
@@ -166,7 +171,7 @@ export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, 
         continue;
       }
       tries++;
-      const res = verifier(s, x.step);
+      const res = verifier(s, q.replaces ? { ...x.step, replaces: q.replaces } : x.step);
       if (res.error || res.broken.length) {
         rejected.push(res.error ?? `breaks ${res.broken.join(", ")}`);
         continue;
@@ -258,6 +263,7 @@ interface Found {
   searched: number;
   target?: SizeTarget;
   why?: string;
+  constraint?: string;
 }
 
 function search(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean }, mask: Uint8Array): Found {
@@ -265,7 +271,7 @@ function search(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean }
   const size = q.size;
   switch (q.kind) {
     case "damSite":
-      return damSites(s, v, q, mask, size !== undefined ? sizeTarget("damSite", size, { W: v.W, H: v.H, designedFor }) ?? undefined : undefined);
+      return damSites(s, v, q, mask, size !== undefined ? sizeTarget("damSite", size, { W: v.W, H: v.H, designedFor, need: rulesFor(s.spec, s.meta.designedFor).reservoirNeed }) ?? undefined : undefined);
     case "waterfall":
       return standaloneFalls(s, v, q, mask);
     case "riverFall":
@@ -274,8 +280,13 @@ function search(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean }
       return gorges(s, v, q, mask);
     case "terracedCliffs":
       return cliffs(s, v, q, mask);
-    case "badwaterBasin":
-      return badwater(s, v, q, mask);
+    case "badwaterBasin": {
+      // a size word sets the spring's strength ("huge" 3 blocks/s) unless the request gives one
+      const t = size !== undefined ? sizeTarget("badwaterBasin", size, { W: v.W, H: v.H, designedFor }) ?? undefined : undefined;
+      const strength = q.request?.strength ?? t?.approx;
+      const found = badwater(s, v, strength !== undefined ? { ...q, request: { ...q.request, strength } } : q, mask);
+      return t ? { ...found, target: t } : found;
+    }
     case "start":
       return starts(s, v, q, mask);
     case "lake":
@@ -390,6 +401,16 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
 }
 
 /** Keep sites at least `d` tiles apart. */
+/** What a builder's "clears …" line would take away: trees 1, berry bushes and ruin columns 2. */
+function clearedCost(report: string[]): number {
+  let n = 0;
+  for (const line of report) {
+    if (!/^clears /.test(line)) continue;
+    for (const m of line.matchAll(/(\d+) (trees?|berry bushes|ruin columns?)/g)) n += Number(m[1]) * (/tree/.test(m[2]) ? 1 : 2);
+  }
+  return n;
+}
+
 function spaced(sites: Site[], d: number): Site[] {
   const out: Site[] = [];
   for (const x of sites) if (out.every((y) => Math.hypot(x.at[0] - y.at[0], x.at[1] - y.at[1]) >= d)) out.push(x);
@@ -434,9 +455,24 @@ function gorges(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Foun
     const p = pointAtArc(s.features.find((f): f is RiverFeature => f.kind === "river" && f.id === c.id)!.params.path, at).p;
     const x = Math.round(p[0]);
     const y = Math.round(p[1]);
-    sites.push({ rank: 0, kind: "gorge", at: [x, y], where: compassWords(v, x, y), course: courseInfo(v, x, y), step: { op: "addSetPiece", kind: "gorge", request: req }, measured: { width: r.feature.params.plan.width, length: round1(Number(r.feature.params.plan.to) - Number(r.feature.params.plan.from)), wallHeight: r.feature.params.plan.wallHeight }, meetsSize: true, report: r.feature.params.report });
+    // other pieces on the same stretch of river (a fall's step, a dam site's ridge) end up inside
+    // the gorge: allowed, but offered last and said
+    const from = Number(r.feature.params.plan.from);
+    const to = Number(r.feature.params.plan.to);
+    const inside = s.features.filter((f) => f.kind === "setPiece" && f.params.plan.river === c.id && (() => {
+      const a = Number(f.params.plan.at ?? f.params.plan.from);
+      return a >= from - 3 && a <= to + 3;
+    })());
+    const encloses = inside.map((f) => {
+      const a = Number(f.kind === "setPiece" ? f.params.plan.at ?? f.params.plan.from : 0);
+      const frac = c.reversed ? 1 - a / c.length : a / c.length;
+      return `the ${f.kind === "setPiece" && f.params.kind === "damSite" ? "dam site" : f.kind === "setPiece" ? String(f.params.kind) : f.kind} ${Math.round(frac * 100)}% down ${c.name} (${f.id})`;
+    });
+    sites.push({ rank: 0, kind: "gorge", at: [x, y], where: compassWords(v, x, y), course: courseInfo(v, x, y), step: { op: "addSetPiece", kind: "gorge", request: req }, measured: { width: r.feature.params.plan.width, length: round1(to - from), wallHeight: r.feature.params.plan.wallHeight, ...(encloses.length ? { encloses } : {}) }, meetsSize: true, report: r.feature.params.report });
   }
-  return { sites: spaced(sites, 20), searched: arcs.length, why: sites.length ? undefined : why ?? "no river runs through this place" };
+  const clear = (x: Site) => !(x.measured as { encloses?: string[] }).encloses;
+  const ordered = [...sites.filter(clear), ...sites.filter((x) => !clear(x))];
+  return { sites: spaced(ordered, 20), searched: arcs.length, why: sites.length ? undefined : why ?? "no river runs through this place" };
 }
 
 // ------------------------------------------------------------------------------ standalone pieces
@@ -501,15 +537,17 @@ function standaloneFalls(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Arr
         where: compassWords(v, x, y),
         course: courseInfo(v, x, y),
         step: { op: "addSetPiece", kind: "waterfall", request: req },
-        measured: { width: w, drop: p.drop, lipLevel: p.lipLevel, flow: p.flow, facing, outflowTiles: outflow, outflowTo: p.outflowTo, lipDepth: round2((0.3 * Number(p.flow)) / w) },
+        measured: { width: w, drop: p.drop, lipLevel: p.lipLevel, flow: p.flow, facing, outflowTiles: outflow, outflowTo: waterName(s, v, p.outflowTo), lipDepth: round2((0.3 * Number(p.flow)) / w) },
         meetsSize: meets(t ?? undefined, w),
         report: r.feature.params.report,
       });
       break;
     }
   }
-  // short outflows and falls that suit the ground first
-  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || Number(a.measured.outflowTiles) - Number(b.measured.outflowTiles));
+  // the size first, then what the fall would clear (ruins and berries weigh more than trees),
+  // then short outflows
+  const cost = (x: Site) => Math.round(clearedCost(x.report) / 20);
+  sites.sort((a, b) => Number(b.meetsSize) - Number(a.meetsSize) || cost(a) - cost(b) || Number(a.measured.outflowTiles) - Number(b.measured.outflowTiles));
   return { sites: spaced(sites, 10), searched, target, why: sites.length ? undefined : why ?? "no spot here fits the fall without moving it" };
 }
 
@@ -548,6 +586,13 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean
   // beyond the start rule, plus the basin's own half-width
   const minD = rules.badwaterWithin + 12;
   const cands = gridTiles(v, mask, 200, 6).filter((i) => !v.channel[i] && !(v.water[i] > 0.05) && (!sd || sd[i] >= minD));
+  let inside = 0;
+  let tooNear = 0;
+  if (sd) for (let i = 0; i < mask.length; i++) if (mask[i]) {
+    inside++;
+    if (sd[i] < minD) tooNear++;
+  }
+  const constraint = inside && tooNear / inside > 0.25 ? `the start rule keeps badwater ${rules.badwaterWithin} tiles from the start, and its soil spreads about 7 more: ${Math.round((100 * tooNear) / inside)}% of this place is nearer than ${minD} tiles, so sites are only in the rest` : undefined;
   // as near the start as the rules allow ("dangerous"); in a named place, nearest its middle;
   // otherwise as far from the start as the map allows
   const ex = q.where !== undefined && !q.farFirst ? extent(v, mask) : null;
@@ -560,8 +605,19 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean
   let why: string | undefined = cands.length ? undefined : `every spot here is within ${minD} tiles of the start (the start rule keeps badwater ${rules.badwaterWithin} tiles away, and its soil spreads about 7 more)`;
   let searched = 0;
   const strength = Number(q.request?.strength ?? (q.nearStart ? 2.5 : 1.5));
+  // an outlet that joins a river above the start, or just below it (contamination spreads through
+  // the water both ways), carries badwater past it and start.badwater breaks on the verifying
+  // build: such sites are kept but tried last
+  const startOn = new Map<string, number>();
+  if (v.start) for (const c of net.courses) {
+    const l = locate(net, v.W, v.start.x, v.start.y, c);
+    if (l && l.d < 30) startOn.set(c.name, l.s + minD);
+  }
+  const nearStartJoin = (river?: string, arc?: number) => river !== undefined && arc !== undefined && startOn.has(river) && arc < startOn.get(river)!;
+  let below = 0;
+  let flooded: { d: (typeof damPieces)[number]; tiles: Set<number> }[] | undefined;
   for (const i of cands) {
-    if (sites.length >= 8 || searched >= 60) break;
+    if (below >= 8 || sites.length >= 24 || searched >= 60) break;
     const x = i % v.W;
     const y = (i - x) / v.W;
     const req: PlanRecord = { mode: "basin", at: [x, y], strength };
@@ -594,6 +650,19 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean
         }
       }
     }
+
+    // a basin the reservoir would rise over, or whose channel to the edge runs through it,
+    // poisons it whatever river its outlet joins
+    if (q.keepReservoirsClean && damPieces.length) {
+      flooded ??= damPieces.map((d) => ({ d, tiles: reservoirTiles(s, d) }));
+      const route: number[] = [];
+      for (let k = 0; k + 1 < tiles.length; k += 2) route.push(Math.round(tiles[k + 1]) * v.W + Math.round(tiles[k]));
+      const under = flooded.find((r) => r.tiles.has(i) || route.some((t) => r.tiles.has(t)));
+      if (under) {
+        why = `the reservoir of the dam site ${under.d.id} would take in a spring here (the spring or its channel lies in it)`;
+        continue;
+      }
+    }
     if (q.keepReservoirsClean && poisons.length) {
       why ??= `its outlet would join the river above the dam site ${poisons[0]}, and the reservoir would fill with badwater`;
       continue;
@@ -605,12 +674,16 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean
       where: compassWords(v, x, y),
       course: courseInfo(v, x, y),
       step: { op: "addSetPiece", kind: "badwaterBasin", request: req },
-      measured: { strength: p.strength, distanceToStart: sd ? round1(sd[i]) : null, outletTo: p.outletTo === "edge" ? "map edge" : join.river ?? p.outletTo, joinsAt: join.frac, routeTiles: (p.outletLevels as number[]).length, poisonsDamSites: poisons },
+      measured: { strength: p.strength, distanceToStart: sd ? round1(sd[i]) : null, outletTo: p.outletTo === "edge" ? "map edge" : join.river ?? waterName(s, v, p.outletTo), joinsAt: join.frac, routeTiles: (p.outletLevels as number[]).length, poisonsDamSites: poisons },
       meetsSize: true,
       report: r.feature.params.report,
     });
+    if (!nearStartJoin(join.river, join.arc)) below++;
+    else (sites[sites.length - 1] as Site & { joinsNearStart?: boolean }).joinsNearStart = true;
   }
-  return { sites: spaced(sites, 10), searched, why: sites.length ? undefined : why };
+  const above = (x: Site) => (x as Site & { joinsNearStart?: boolean }).joinsNearStart === true;
+  const ordered = [...sites.filter((x) => !above(x)), ...sites.filter(above)];
+  return { sites: spaced(ordered, 10), searched, why: sites.length ? undefined : why, ...(constraint ? { constraint } : {}) };
 }
 
 // ---------------------------------------------------------------------------------- the start

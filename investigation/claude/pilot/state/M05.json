@@ -1,0 +1,138 @@
+{
+ "id": "M05",
+ "text": "Put a gorge halfway down with a small waterfall just below it.",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "dry_run",
+   "args": {
+    "request": "Put a gorge halfway down with a small waterfall just below it.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a gorge halfway down the river"
+     },
+     {
+      "id": "g2",
+      "text": "a small waterfall just below the gorge"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "gorge",
+      "where": "halfway down the river",
+      "handle": "gorge"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "waterfall",
+      "request": {
+       "mode": "on-river",
+       "drop": 2
+      },
+      "where": "just below the gorge",
+      "handle": "falls"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "gorge",
+      "metric": "course.frac",
+      "approx": 0.5,
+      "tol": 0.12
+     },
+     {
+      "goal": "g2",
+      "subject": "falls",
+      "metric": "course.frac",
+      "min": {
+       "of": "gorge",
+       "metric": "course.frac"
+      }
+     },
+     {
+      "goal": "g2",
+      "subject": "falls",
+      "metric": "distanceTo:gorge",
+      "max": 25
+     }
+    ]
+   },
+   "bytes": 2713,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "Put a gorge halfway down with a small waterfall just below it.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a gorge halfway down the river"
+     },
+     {
+      "id": "g2",
+      "text": "a small waterfall just below the gorge"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "gorge",
+      "where": "halfway down the river",
+      "handle": "gorge"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "waterfall",
+      "request": {
+       "mode": "on-river",
+       "drop": 2
+      },
+      "where": "just below the gorge",
+      "handle": "falls"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "gorge",
+      "metric": "course.frac",
+      "approx": 0.5,
+      "tol": 0.12
+     },
+     {
+      "goal": "g2",
+      "subject": "falls",
+      "metric": "course.frac",
+      "min": {
+       "of": "gorge",
+       "metric": "course.frac"
+      }
+     },
+     {
+      "goal": "g2",
+      "subject": "falls",
+      "metric": "distanceTo:gorge",
+      "max": 25
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 2729,
+   "error": false,
+   "accepted": true
+  },
+  {
+   "tool": "measure",
+   "args": {
+    "subject": "f-pkhv5lmb4ngsy"
+   },
+   "bytes": 309,
+   "error": false
+  }
+ ],
+ "ended": "Added a gorge halfway down the main river, in the centre of the map: 16 tiles long and 5 wide, with walls 3 levels above the river bed, 18 tiles from the start. Just below it (15 tiles past its end, 54% of the way down) the river now drops 2 levels over a small waterfall. Trade-offs: the gorge sits in the basin of the existing dam site downstream, so a dam there now holds 1,337 blocks instead of 1,434. The gorge also took 22 trees near the start (118 left; the rule needs 50). Every start rule still holds."
+}

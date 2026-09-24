@@ -3,6 +3,7 @@
 // whoever plays the in-app Claude sees only what this prints.
 //
 //   npx tsx investigation/claude/bin/cli.ts start <requestId>         the request and the map summary
+//   npx tsx investigation/claude/bin/cli.ts summary                   the map summary as it stands now
 //   npx tsx investigation/claude/bin/cli.ts tools                     the tool definitions
 //   npx tsx investigation/claude/bin/cli.ts call <tool> '<json args>' one tool call on the open request
 //   npx tsx investigation/claude/bin/cli.ts status                    rounds and tool calls used
@@ -73,6 +74,8 @@ switch (cmd) {
     const id = rest[0];
     const r = corpus.requests.find((x) => x.id === id);
     if (!r) throw new Error(`no request ${id}`);
+    // starting again would wipe the request's calls: only with --again
+    if (existsSync(join(stateDir, `${id}.json`)) && !rest.includes("--again")) throw new Error(`${id} was already played (pilot/state/${id}.json): use \`summary\`, or \`start ${id} --again\` to replay it`);
     const s: State = { id, text: r.text, setup: r.setup, calls: [] };
     save(s);
     const t = reopen(s);
@@ -85,6 +88,9 @@ switch (cmd) {
     console.log(text);
     break;
   }
+  case "summary":
+    console.log(reopen(load()).summary());
+    break;
   case "tools":
     for (const d of TOOL_DEFS) console.log(`## ${d.name} (${JSON.stringify(d).length} bytes)\n${d.description}\n${JSON.stringify(d.input_schema)}\n`);
     break;

@@ -1,0 +1,50 @@
+{
+ "id": "S06",
+ "text": "move the start closer to the lake",
+ "setup": "rv128b",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "start",
+    "where": "closer to the lake"
+   },
+   "bytes": 1035,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "move the start closer to the lake",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "the start nearer the lake than now"
+     }
+    ],
+    "steps": [
+     {
+      "op": "moveStart",
+      "to": [
+       39,
+       81
+      ]
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "start",
+      "metric": "distanceTo:the lake",
+      "max": 32
+     }
+    ],
+    "report": "Moved the start closer to the lake."
+   },
+   "bytes": 1035,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Moved the start to the west third, about 17 tiles south of where it was, beside the river. It is now 24 tiles from the lake (was 35). I read \"the lake\" as the small lake north of the map's centre, the nearest real lake to the start; the big basin just west of the new start is where a dam's reservoir would go. Say if you meant that one. Clean water is 2 tiles away, and every start rule still holds."
+}
