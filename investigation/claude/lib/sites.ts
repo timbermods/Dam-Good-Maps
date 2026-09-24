@@ -10,7 +10,7 @@ import { planSetPiece, type PlanContext, type PlanRecord } from "../../../src/co
 import { reservoirOf, type DamSitePlan } from "../../../src/core/features/setpieces/damSite";
 import { FACINGS, STEP, type Facing } from "../../../src/core/features/setpieces/common";
 import type { LandformFeature, Point, RiverFeature, SetPieceKind } from "../../../src/core/features/schema";
-import { distanceFrom } from "../../../src/core/math/grid";
+import { distanceFrom, runsToTiles, type Runs } from "../../../src/core/math/grid";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { locate, network, type Course } from "./flow";
 import { reservoirIsClean, reservoirTiles, waterName } from "./metrics";
@@ -189,6 +189,14 @@ export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, 
       const near = (x: Site) => Math.hypot(x.at[0] - v.start!.x, x.at[1] - v.start!.y) < 18;
       found.sites = [...found.sites.filter((x) => !near(x)), ...found.sites.filter(near)];
     }
+  }
+  // map objects (M7: mine sites, relics, geothermal fields, …) stand on ground a piece must not
+  // carve or flood (entities.placement): sites near one are tried last. The build check is still
+  // the final word; this only keeps it from spending its tries there. None exist before M7.
+  const objects = mapObjectSpots(s);
+  if (objects.length) {
+    const nearObject = (x: Site) => objects.some(([ox, oy]) => Math.hypot(x.at[0] - ox, x.at[1] - oy) < 12);
+    found.sites = [...found.sites.filter((x) => !nearObject(x)), ...found.sites.filter(nearObject)];
   }
   const good = verified(found.sites.filter((x) => x.meetsSize), limit);
   if (good.length) return { ...base, ok: true, sites: good.map((x, k) => ({ ...x, rank: k + 1 })), ...(rejected.length ? { rejected: summarize(rejected) } : {}) };
@@ -401,6 +409,21 @@ function damSites(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array, tar
 }
 
 /** Keep sites at least `d` tiles apart. */
+/** Where the map's single map objects stand (M7's mapObject features with an x, y placement). Typed
+ *  loosely: the feature kind only exists from M7 on. */
+function mapObjectSpots(s: MapSession): [number, number][] {
+  const out: [number, number][] = [];
+  const W = s.size.x;
+  for (const f of s.features as unknown as { kind: string; params?: { placement?: { x?: number; y?: number; area?: Runs } } }[]) {
+    const p = f.kind === "mapObject" ? f.params?.placement : undefined;
+    if (!p) continue;
+    if (typeof p.x === "number" && typeof p.y === "number") out.push([p.x, p.y]);
+    // a belt or a line (thorns, a weir, a plug): every fourth of its tiles
+    else if (p.area) runsToTiles(p.area, W).forEach((i, k) => k % 4 === 0 && out.push([i % W, Math.floor(i / W)]));
+  }
+  return out;
+}
+
 /** What a builder's "clears …" line would take away: trees 1, berry bushes and ruin columns 2. */
 function clearedCost(report: string[]): number {
   let n = 0;

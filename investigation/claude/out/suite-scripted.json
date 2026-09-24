@@ -1,0 +1,122 @@
+{
+ "ran": "2026-09-24T23:32:33.930Z",
+ "scripted": true,
+ "passed": 2,
+ "total": 2,
+ "byKind": {
+  "suite": [
+   1,
+   1
+  ],
+  "compound": [
+   1,
+   1
+  ]
+ },
+ "results": [
+  {
+   "id": "S01",
+   "kind": "suite",
+   "pass": true,
+   "failures": [],
+   "loop": {
+    "stop": "answered",
+    "report": "Built a waterfall: in the north third, 33 tiles from the main river, on the start's bank, 20 tiles of falling water, a 6-level drop, 2 blocks/s, 24.2 tiles from the start.\nAlso: clears 7 trees and 25 ruin columns.\nEvery start rule still holds (clean water 9 tiles away (at most 16), badwater 31 tiles away (at least 30), 8468 walkable tiles (at least 1300), 48 berry bushes nearby (at least 40), 140 trees nearby (at least 50), 0 ruins in the start area (0 allowed)).",
+    "proposals": [
+     {
+      "accepted": true
+     }
+    ],
+    "toolCalls": [
+     {
+      "name": "limits",
+      "bytes": 1913,
+      "error": false,
+      "overBudget": false
+     },
+     {
+      "name": "find_sites",
+      "bytes": 1410,
+      "error": false,
+      "overBudget": false
+     },
+     {
+      "name": "propose",
+      "bytes": 1990,
+      "error": false,
+      "overBudget": false
+     }
+    ],
+    "rounds": 1,
+    "goalsDeclared": 1,
+    "budget": {
+     "rounds": 3,
+     "calls": 10
+    },
+    "turns": 4,
+    "inputBytesMax": 25654,
+    "usage": {
+     "input": 0,
+     "output": 0,
+     "cacheRead": 0,
+     "cacheWrite": 0
+    }
+   }
+  },
+  {
+   "id": "M01",
+   "kind": "compound",
+   "pass": true,
+   "failures": [],
+   "loop": {
+    "stop": "answered",
+    "report": "Changed the map's settings to make it harsher: water.riverFlow: normal → trickle; water.droughtReserve: normal → scarce; hazards.badwater: normal → high; resources.forestDensity: 100 → 75; resources.berryBushes: 100 → 70.\nMoved the start to the west third, (24, 52).\nBuilt a dam site: in the center, 57% of the way down the main river, a dam 4 tiles long would hold 1614 blocks over 1510 tiles, 53.5 tiles from the start.\nBuilt a badwater spring: in the center, 64% of the way down the main river, on the opposite bank, 2.5 blocks/s of badwater, draining into the main river 61% of the way down, 42 tiles from the start.\nTrade-off: The dam site 49% down the main river now holds 1199 blocks instead of 1434: the new settings reshaped the land around it.\nTrade-off: The river now brings 2.16 blocks/s instead of 3.60: the reservoir at dam takes about 12.5 minutes to fill, 1.7× as long as it would have.\nAlso: plants a berry patch of 9 bushes near the new start, for the start rules (40 within 20 tiles).\nAlso: plants a grove of 21 trees near the new start, for the start rules (50 within 20 tiles).\nAlso: clears 13 trees.\nTrade-off: Settings apply to the whole map, not one valley: the change reaches every part of it.\nAssumption: \"upstream\" read as the upper third of the main river's course (it flows west to east, read from its water surface).\nAssumption: the bank opposite the start of the main river.\nEvery start rule still holds (clean water 2.4 tiles away (at most 16), badwater 36 tiles away (at least 30), 7432 walkable tiles (at least 1300), 57 berry bushes nearby (at least 40), 94 trees nearby (at least 50), 0 ruins in the start area (0 allowed)).",
+    "proposals": [
+     {
+      "accepted": true
+     }
+    ],
+    "toolCalls": [
+     {
+      "name": "resolve_region",
+      "bytes": 592,
+      "error": false,
+      "overBudget": false
+     },
+     {
+      "name": "find_sites",
+      "bytes": 789,
+      "error": false,
+      "overBudget": false
+     },
+     {
+      "name": "dry_run",
+      "bytes": 6537,
+      "error": false,
+      "overBudget": false
+     },
+     {
+      "name": "propose",
+      "bytes": 7494,
+      "error": false,
+      "overBudget": false
+     }
+    ],
+    "rounds": 2,
+    "goalsDeclared": 4,
+    "budget": {
+     "rounds": 5,
+     "calls": 19
+    },
+    "turns": 5,
+    "inputBytesMax": 38071,
+    "usage": {
+     "input": 0,
+     "output": 0,
+     "cacheRead": 0,
+     "cacheWrite": 0
+    }
+   }
+  }
+ ]
+}

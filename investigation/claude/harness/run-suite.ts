@@ -22,7 +22,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type Anthropic from "@anthropic-ai/sdk";
 import { openSetup } from "../lib/fixtures";
-import { checkExpectations } from "../lib/intent";
+import { checkExpectations, valuesBefore } from "../lib/intent";
 import { measureSession } from "../lib/metrics";
 import { ClaudeTools } from "../lib/tools";
 import { substitute, type Corpus, type RequestCase } from "../lib/corpus";
@@ -90,6 +90,9 @@ async function grade(r: RequestCase, bridgeFor: () => ClaudeBridge, opts: { arti
   const failures: string[] = [];
   const o = openSetup(corpus.setups, r.setup);
   const before = measureSession(o.session);
+  // the values "change" expectations compare with, read before Claude touches the map (on a copy
+  // of the conversation, so reading "the lake" leaves no alias behind)
+  const wasByGoal = new Map(r.goals.map((g) => [g.id, valuesBefore(o.session, structuredClone(o.conv), before, g.expect)]));
   const tools = new ClaudeTools(o.session, o.conv);
   const loop = await runLoop(bridgeFor(), tools, r.text, { artifactLimits: opts.artifactLimits, selected: o.conv.selected });
   if (loop.stop !== "answered") failures.push(`the loop stopped: ${loop.stop}${loop.error ? ` (${loop.error})` : ""}`);
@@ -104,7 +107,7 @@ async function grade(r: RequestCase, bridgeFor: () => ClaudeBridge, opts: { arti
   if (wantAccepted) {
     for (const g of r.goals) {
       if (!g.expect.length || unmet.has(g.id)) continue;
-      const checks = checkExpectations(o.session, o.conv, before, after, g.expect, made);
+      const checks = checkExpectations(o.session, o.conv, before, after, g.expect, made, wasByGoal.get(g.id));
       for (const c of checks) if (!c.pass) failures.push(`goal ${g.id} (${g.text}): ${c.subject} ${c.metric} ${c.why}`);
     }
   }
