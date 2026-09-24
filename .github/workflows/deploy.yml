@@ -33,6 +33,27 @@ jobs:
         run: npm run build
         env:
           DGM_BASE: /dam-good-maps/
+      # The site is not public yet: search engines are asked not to index it until the repository
+      # variable DGM_PUBLIC is "true" (at launch). Keep this step when changing this workflow.
+      - name: Mark every page noindex (not public yet)
+        if: vars.DGM_PUBLIC != 'true'
+        run: |
+          node --input-type=module - <<'EOF'
+          import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+          import { join } from "node:path";
+          const tag = '<meta name="robots" content="noindex">';
+          const files = readdirSync("dist", { recursive: true }).filter((f) => f.endsWith(".html"));
+          if (!files.length) throw new Error("no HTML files in dist");
+          for (const f of files) {
+            const path = join("dist", f);
+            const html = readFileSync(path, "utf8");
+            if (html.includes(tag)) continue;
+            const out = html.replace(/<head[^>]*>/i, (m) => `${m}\n    ${tag}`);
+            if (out === html) throw new Error(`${path} has no <head>`);
+            writeFileSync(path, out);
+            console.log(`noindex: ${path}`);
+          }
+          EOF
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
