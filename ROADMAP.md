@@ -14,15 +14,17 @@ differently, this file wins.
 - **Editor-ready from the first milestone.** M1 already generates maps *from* parametric features
   and offers them as a project file, so the editor, when it arrives, opens maps whose rivers,
   plateaus and ruin fields are grabbable. No generator code is retrofitted later.
-- **Every milestone ends with its acceptance criteria met and its tests green.** Milestones marked
-  **in-game check** stop until Kyler has played the listed files (checklist in PLAN.md §18). The
-  game is the final judge.
+- **Every milestone ends with its acceptance criteria met and its tests green.**
+- **In-game checks are deferred** (PLAN §20, D11). Kyler is skipping them for now. A milestone
+  marked **in-game check** does not stop or wait: it lists the checks it would have needed in
+  [docs/ingame-log.md](docs/ingame-log.md) as *pending*, with the files to play, and relies on the
+  automated validation and tests. The game stays the final judge once the checks are played.
 - **Effort** is the recommended Claude effort level for building the milestone: **xhigh** for
   architecture-setting or algorithm-heavy work, **high** for the rest.
 
 ## Overview
 
-| # | Milestone | From | In-game check | Effort |
+| # | Milestone | From | In-game check (logged as pending, D11) | Effort |
 |---|---|---|---|---|
 | M1 | Shared core and end-to-end slice | PLAN §2–4, §5.1, §7, §11.1–11.2, §14.1, §14.4, §19 · EDITOR §11 | yes (A, F2) | xhigh |
 | M2 | Water, playability and validation profiles | PLAN §10, §11.3–11.6, §14.2–14.3, §19.5, §19.7 | yes (B) | xhigh |
@@ -95,7 +97,8 @@ shared core, so its maps are editor-ready.
   green.
 
 **In-game check:** A (PLAN §18): load, start, walk test, open in the in-game editor, an Iron
-Teeth start. Add F2: sealed river mouth.
+Teeth start. Add F2: sealed river mouth. Deferred (D11): logged as pending in
+[docs/ingame-log.md](docs/ingame-log.md) with the files to play.
 
 **Effort:** xhigh.
 

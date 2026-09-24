@@ -79,7 +79,7 @@ A fully client-side static site. There is no server; everything runs in the play
 | Zip | fflate `zipSync` with a fixed `mtime` | Small, fast and synchronous in the worker. A fixed mtime makes the zip byte-reproducible. |
 | JPEG thumbnail | `jpeg-js` encoder in the worker | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
 | Tests | Vitest (unit, golden files), Playwright (end-to-end and cross-browser determinism), plus the Python prototype as an oracle in CI | See §15. |
-| Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/Dam-Good-Maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
+| Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/dam-good-maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
 | Second build target | A single-file build for publishing as a Claude artifact (EDITOR_PLAN.md §7) | The same code with platform adapters swapped (§19.9). Keep it possible from the start: data is bundled, not fetched at runtime; workers can be inlined; libraries come from npm, since the artifact can load scripts only from cdnjs/jsDelivr/unpkg. |
 | Visual design | The org's Impeccable site flow and the timbermods design system (walnut lodge palette, `DESIGN.md`) | Keeps it part of the family; done as its own milestone once the tool works. |
 
@@ -136,7 +136,7 @@ and the preview switches to the best one with a short notice. The map card says 
 A **GitHub issue form, pre-filled from the page**.
 
 - "Rate this map" opens
-  `github.com/timbermods/Dam-Good-Maps/issues/new?template=map-rating.yml&…` in a new tab. The seed,
+  `github.com/timbermods/dam-good-maps/issues/new?template=map-rating.yml&…` in a new tab. The seed,
   settings, share URL, generator version and score are already filled in.
 - The player picks one of *fun / too easy / boring terrain / frustrating / broken* and can add a
   comment.
@@ -164,7 +164,7 @@ same button without touching the generator.
 ## 3. Project structure
 
 ```
-Dam-Good-Maps/
+dam-good-maps/
 ├─ PLAN.md  FORMAT.md  README.md  LICENSE
 ├─ package.json  vite.config.ts  tsconfig.json  vitest.config.ts  playwright.config.ts
 ├─ index.html
@@ -1161,7 +1161,7 @@ downloaded maps are remembered in localStorage.
 | **Golden maps** | 12 pinned seeds (2 per theme; 96² and 256²): sha256 of the `.timber` plus key metrics (score, check values). Any change must be intentional: `npm run golden:update`, and the diff shows the metric changes. | every push |
 | **Batch pass rates** | `tools/batch.ts`: 100 seeds per theme per size at Normal, plus 30 at Easy and Hard. Report first-attempt and final pass rates, failing checks, score distribution and timings, with generated metrics beside the official ranges. Gates: final pass rate ≥ 98% within 12 attempts, first attempt ≥ 60%, median 256² time ≤ 8 s. | nightly and before release |
 | **End-to-end** (Playwright) | Generate → preview → download on 128²; share link round trip; layer toggles; worker cancel. | every push |
-| **In-game** | §18, once per milestone that changes the file format or the generator's physical rules, recorded in `docs/ingame-log.md`. | per milestone |
+| **In-game** | §18, once per milestone that changes the file format or the generator's physical rules, recorded in `docs/ingame-log.md`. **Deferred (D11):** Kyler skips in-game checks for now. Each milestone lists its checks in the log as *pending* and does not wait for them; the automated validation and tests above carry the gate until the checks are played. | per milestone (pending) |
 
 ---
 
@@ -1203,11 +1203,12 @@ milestone and says where it went. Effort: S under a day, M 1–3 days, L 3–7 d
 | Thin waterfall lips may not read as falls in game. | Claude's "giant waterfall" looks like a wet cliff. | In-game check F1; the waterfall builder reports lip depth; flow policy (§9.2). |
 | Imported pre-1.0 maps lack `WaterSimulationMigrator`. | Re-exported maps would run at double strength. | Halve strengths and outflows at import, as the game does on load (§19.6). |
 
-Open questions for you:
-1. Is `timbermods.github.io/Dam-Good-Maps/` the address you want, or a custom domain?
-2. Should maps offer an optional in-game difficulty *warning* only, or also refuse to generate
-   Hard-designed maps with Scarce reserves (currently allowed with a warning)?
-3. Are GitHub issue ratings acceptable, or do you prefer a no-account form from the start?
+Kyler answered the open questions on 2026-09-24 (§20, D12–D14):
+1. The address is the `dam-good-maps` repository in the timbermods organization:
+   `timbermods.github.io/dam-good-maps/`.
+2. Hard maps are warned, never refused: a Hard-designed map with a Scarce reserve generates, and
+   the map card says so ("that's part of the fun").
+3. GitHub issue ratings are fine.
 
 ---
 
@@ -1215,6 +1216,11 @@ Open questions for you:
 
 Short, and needs you. Each item names the file to use from `out/` (or the milestone's batch
 output), what to do, and what should happen. Record the result in `docs/ingame-log.md`.
+
+**Deferred (D11).** Kyler is skipping in-game checks for now. Milestones do not stop or wait for
+them: each milestone lists the checks it would have needed in
+[docs/ingame-log.md](docs/ingame-log.md) as *pending*, names the files to play, and relies on the
+automated validation and tests in §15. The checks below stay the definition of each one.
 
 **A. Load and start** (roadmap M1; now with `out/Dam Good Maps - River Valley 4242.timber`)
 1. Copy the file to `Documents\Timberborn\Maps`. It appears under New game with its thumbnail and
@@ -1290,6 +1296,10 @@ interface MapSpec {
   premise?: PremiseId;                // rolled from the seed when absent; recorded after generation
   designedFor: "easy" | "normal" | "hard";
   settings: Settings;                 // every §5 value, complete, never a diff
+  colonies: {                         // room for Timber Together (D5); M1 accepts only {count: 1, mod: "none"}
+    count: 1 | 2 | 3 | 4;             // colonies on one map; 2+ requires mod "timberTogether"
+    mod: "none" | "timberTogether";   // "none" = vanilla: exactly one StartingLocation
+  };
   setPieces: SetPieceRequest[];       // added by the player or Claude: {kind, params, region?}
   constraints: {
     locks: Region[];                  // regeneration never changes these tiles
@@ -1306,6 +1316,13 @@ interface MapSpec {
   replaced whole. The patched spec is checked against the schema again. A patch that fails is
   rejected, never clamped.
 - `accepted` lets a document reproduce its map without running the retry loop again.
+- `colonies` reserves room for fair multi-colony maps for Timber Together (D5). With
+  `mod: "timberTogether"` and `count` N, a later milestone will plan N `start` features
+  (`player` 0..N−1), write each as a `StartingLocation` with a `StartingLocationPlayer
+  {PlayerIndex}` component and `MaxPlayers: N` in `map_metadata.json`, and add fairness checks
+  (each start's water, wood, food and reachable land within a tolerance of the others, and a
+  minimum separation). Until then the schema accepts only `{count: 1, mod: "none"}`, and nothing
+  may assume a map has one start in a way that would block this.
 - Imported maps have no spec (`spec: null` in the document). Their difficulty comes from the
   document's `meta.designedFor`.
 
@@ -1327,7 +1344,7 @@ planner emits features, the build pipeline (§19.8) rasterizes them, and the edi
 | `berryPatch` | area, density, ripe share | As forests (BlueberryBush). |
 | `ruinField` | area, scrap target, height mix | One level. Each column needs an 8-neighbour at its level. `RuinModels.VariantId` A–E. |
 | `mapObject` | kind (mineSite / relic small, medium, large / geothermal / thornBelt / weir, a NaturalDam line / plug, a Blockage line / bridge, a NaturalOverhang pair / unstableCore), placement | Footprints, OccupyAllBelow and first-column rules (§11.2). |
-| `start` | position (centre tile), orientation, bench radius | A flat 3×3 with 5 free layers, and the entrance tile free at the same level. Exactly one. |
+| `start` | position (centre tile), orientation, bench radius, player (0–3, default 0) | A flat 3×3 with 5 free layers, and the entrance tile free at the same level. Exactly one per map in vanilla. `player` is reserved for Timber Together maps (D5): one start per colony, numbered from 0. |
 
 - **Derived layers** are rebuilt every time and never edited as features: slopes (pinned or
   removed slopes are stored as edits), water, soil moisture and soil contamination.
@@ -1503,13 +1520,17 @@ list, and implementation adds to it.
 | D1 | The shared foundations are defined once, in §19. EDITOR_PLAN.md §11 points to it. | Each contract item must have one definition. | Audit |
 | D2 | Features first: the generator emits parametric features and builds the map from them. | The editor must edit what the generator made. | Audit |
 | D3 | Validation classes and profiles (§19.5). Generated maps pass every check except the advisory `plants.drought`; edited maps are blocked only by load problems. | Resolves "every check passes" (PLAN) against "errors block, warnings warn" (EDITOR_PLAN). | Audit |
-| D4 | Terrain stays at 16 or below in generated maps and editor tools. Imported maps with terrain up to 22 are preserved. | 16 is the in-game editor's limit; 17–22 is untested (§18 E1). | Audit default; Kyler may revisit |
-| D5 | Symmetry is a creative tool, not multiplayer support. A map has exactly one start. | Only one StartingLocation survives a load, and 1.1 has no multiplayer starts. | Audit |
-| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. An exact flow set in advanced mode may exceed the cap, with a warning. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default; in-game check F1 |
-| D7 | Share links carry the spec only. Edited maps are shared as project files. | An edit list does not fit reliably in a URL. | Audit default |
-| D8 | Claude: build the bridge against the Messages API first. It runs the request suite in Node and powers bring-your-own-key. The artifact edition follows, once the M3 spike confirms workers, file open, downloads and sharing. | EDITOR_PLAN.md §7. | Audit default; Kyler to confirm |
-| D9 | `prototype/calibrated.py` is aligned to §5.2 and §5.6 in M1. | The two tables disagree today (§4). | Audit |
-| D10 | The artifact edition downloads a `.zip` that contains the `.timber`. | `.timber` is not on the artifact downloads allowlist. | Audit default; the spike confirms |
+| D4 | Terrain stays at 16 or below in generated maps and editor tools. Imported maps with terrain up to 22 are preserved. | 16 is the in-game editor's limit; 17–22 is untested (§18 E1). | Audit default, accepted by Kyler |
+| D5 | **Revised by Kyler, 2026-09-24.** Vanilla maps have exactly one start, and symmetry is a creative tool. Dam Good Maps will *later* make fair maps for Kyler's Timber Together mod (separate colonies on one shared map). The spec and feature schema keep room for it now (`MapSpec.colonies`, §19.1; `start.player`, §19.2), and nothing multi-colony is built until a milestone schedules it. | Vanilla 1.1 keeps one StartingLocation. The mod (BeaverBuddies lineage) reads extra starts as `StartingLocation` entities with a `StartingLocationPlayer {PlayerIndex}` component, plus `MaxPlayers` in `map_metadata.json`. | Kyler |
+| D6 | Waterfall flow policy (§9.2): a fall takes the flow of the river it sits on. A standalone fall adds at most 100% of the map's flow budget; beyond that it builds a thinner sheet and says so. An exact flow set in advanced mode may exceed the cap, with a warning. | An official-looking 20-wide fall needs about 8 blocks/s. | Audit default, accepted by Kyler; in-game check F1 pending |
+| D7 | Share links carry the spec only. Edited maps are shared as project files. | An edit list does not fit reliably in a URL. | Audit default, accepted by Kyler |
+| D8 | Claude: build the bridge against the Messages API first. It runs the request suite in Node and powers bring-your-own-key. The artifact edition follows, once the M3 spike confirms workers, file open, downloads and sharing. | EDITOR_PLAN.md §7. | Audit default, accepted by Kyler |
+| D9 | `prototype/calibrated.py` is aligned to §5.2 and §5.6 in M1. | The two tables disagree today (§4). | Audit, accepted by Kyler |
+| D10 | The artifact edition downloads a `.zip` that contains the `.timber`. | `.timber` is not on the artifact downloads allowlist. | Audit default, accepted by Kyler; the spike confirms |
+| D11 | In-game checks are deferred. Milestones list the checks they would have needed in `docs/ingame-log.md` as *pending*, never stop or wait for them, and rely on the automated validation and tests (§15). | Kyler, 2026-09-24: "I'm skipping in-game checks for now." | Kyler |
+| D12 | The site lives in the `dam-good-maps` repository of the timbermods organization, served at `timbermods.github.io/dam-good-maps/`. The repository was renamed from `Dam-Good-Maps`; GitHub redirects the old name. | Kyler's answer to §17 question 1. | Kyler |
+| D13 | Difficulty mismatches are warned, never refused. A Hard-designed map with a Scarce reserve generates, with a warning on the map card. | Kyler: "hard maps are warned (that's part of the fun)". | Kyler |
+| D14 | Ratings use the pre-filled GitHub issue form (§2.3). | Kyler's answer to §17 question 3. | Kyler |
 
 ---
 

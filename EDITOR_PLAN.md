@@ -26,7 +26,7 @@ If any of these is missing, stop and tell me.
 
 **Working rules.**
 - Build one milestone at a time. Each ends with its acceptance criteria met, tests passing, and a short summary of what changed.
-- Stop at milestones marked **IN-GAME CHECK** and wait for my results before continuing.
+- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate.
 - The editor must never be able to export a file that breaks the game. Load problems block export. Playability and design problems warn. The classes are defined in `PLAN.md` §19.5.
 - Everything works without Claude. Claude features are an add-on.
 
@@ -65,7 +65,7 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
   - The tools edit surface height only.
   - Design the data model so voxel editing can be added later.
 - Terrain above 16. It is the in-game editor's limit, and every tool keeps to it. Imported maps with terrain up to 22 are preserved.
-- Multiplayer starts. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts.
+- Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
 - Matching the game's exact visuals. The game's assets can't be included, so the editor uses its own clear, stylized look. The game remains the reference for final appearance and exact water behaviour.
 
@@ -366,7 +366,7 @@ Record the results in "Editor decisions".
   5. Make the map mirror-symmetric while keeping one valid start.
   6. Export the map and fix any warnings first.
   7. The full journey: generate a map from settings, refine it with at least one manual edit and one Claude request, export it and load it in Timberborn, in under 10 minutes.
-- **In-game checklist** for the IN-GAME CHECK milestones: the map loads, water settles as the preview showed, the district center places, beavers survive the first drought, and edited features behave as intended. Add the audit's checks in `PLAN.md` §18 F (waterfall visibility, sealed river mouths, halved pre-1.0 imports, roofed water in imported maps).
+- **In-game checklist** for the IN-GAME CHECK milestones (deferred, logged as pending in `docs/ingame-log.md`, D11): the map loads, water settles as the preview showed, the district center places, beavers survive the first drought, and edited features behave as intended. Add the audit's checks in `PLAN.md` §18 F (waterfall visibility, sealed river mouths, halved pre-1.0 imports, roofed water in imported maps).
 
 ## 10. Milestones
 
