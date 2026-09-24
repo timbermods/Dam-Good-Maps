@@ -26,7 +26,7 @@ function northFall(s: MapSession, request: PlanRecord, southOf?: number): { ops:
     for (let dx = 0; dx <= W / 2; dx += 4)
       for (const x of dx ? [Math.floor(W / 2) + dx, Math.floor(W / 2) - dx] : [Math.floor(W / 2)]) {
         const r = planPiece(s, "waterfall", { mode: "standalone", facing: "north", ...request, lip: [x, y] }, `11111111-2222-4333-8444-${String(x * 1000 + y).padStart(12, "0")}`);
-        if (r.ok && !r.report.some((l) => l.startsWith("moved"))) return { ops: r.ops, feature: r.feature as SetPieceFeature };
+        if (r.ok && !r.report.some((l: string) => l.startsWith("moved"))) return { ops: r.ops, feature: r.feature as SetPieceFeature };
       }
   throw new Error("no place for the fall");
 }

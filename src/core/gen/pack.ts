@@ -35,6 +35,8 @@ export function description(spec: MapSpec): string {
 export interface PackOptions {
   /** Write no water, moisture or contamination: the game fills the rivers in about a day. */
   emptyWater?: boolean;
+  /** Use this thumbnail instead of drawing one (checks that only read its size). */
+  thumbnail?: Uint8Array;
 }
 
 export function toWorld(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): WorldModel {
@@ -63,7 +65,7 @@ export function toWorld(spec: MapSpec, built: BuildResult, opts: PackOptions = {
 export function toTimberFile(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): TimberFile {
   return {
     metadata: mapMetadata(built.W, built.H, description(spec) + (opts.emptyWater ? " This copy starts without water." : "")),
-    thumbnail: thumbnailJpeg(built.heights, built.W, built.H, built.water),
+    thumbnail: opts.thumbnail ?? thumbnailJpeg(built.heights, built.W, built.H, built.water),
     versionTxt: GAME_VERSION + "\r\n",
     world: toWorld(spec, built, opts),
     extraFiles: [],

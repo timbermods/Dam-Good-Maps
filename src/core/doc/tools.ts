@@ -24,11 +24,11 @@ import { clone } from "../spec/mergepatch";
 import { dependentsOf, type EditOp, type OpParams } from "./ops";
 import type { MapSession } from "./session";
 
-export type PlannedEdit =
-  | { ok: true; ops: EditOp[]; feature: Feature; report: string[]; label: string; tiles: number[] }
+export type PlannedEdit<F extends Feature = Feature> =
+  | { ok: true; ops: EditOp[]; feature: F; report: string[]; label: string; tiles: number[] }
   | { ok: false; errors: string[] };
 
-const fail = (...errors: string[]): PlannedEdit => ({ ok: false, errors });
+const fail = (...errors: string[]): { ok: false; errors: string[] } => ({ ok: false, errors });
 
 // ---------------------------------------------------------------------------------- the context
 
@@ -93,9 +93,11 @@ export interface RiverRequest {
 
 const EDGE_SNAP = 2.5;
 
-/** The channel width a drawn river gets for its flow: its water stays about 0.3·S/w deep. */
+/** The channel width a drawn river gets for its flow: its water, about 0.3·S/w deep, stays deeper
+ *  than a thin sheet (0.1, which spreads and flickers) and well inside its banks. A width of 1.5
+ *  is one tile across (two on a slant, so the channel stays joined side to side). */
 export function riverWidthFor(flow: number): number {
-  return flow <= 2 ? 3 : flow <= 4 ? 5 : Math.min(9, Math.ceil(flow) + 1);
+  return flow <= 1.25 ? 1.5 : flow <= 2 ? 3 : flow <= 4 ? 5 : Math.min(9, Math.ceil(flow) + 1);
 }
 
 function nearestEdge(p: Point, W: number, H: number): { edge: Edge; d: number } {
@@ -135,8 +137,6 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
   if (pts.length < 2) return fail("a river needs at least two points, a tile or more apart");
   const flow = r2(req.flow);
   if (!(flow > 0 && flow <= 64)) return fail("a river's flow is more than 0 and at most 64 blocks per second");
-  const width = Math.min(9, Math.max(1, req.width ?? riverWidthFor(flow)));
-  const bedDepth = Math.min(4, Math.max(1, Math.round(req.bedDepth ?? 1)));
   const report: string[] = [];
   // where it starts: the map edge (a sealed mouth) or a spring
   const first = nearestEdge(pts[0], W, H);
@@ -144,6 +144,13 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
   if (first.d <= EDGE_SNAP) {
     pts[0] = snapTo(pts[0], first.edge, W, H);
     entry = { edge: first.edge };
+    // a mouth beside another river where it meets the edge would share its water with it
+    const [mx, my] = pts[0];
+    for (let d = -8; d <= 8; d++) {
+      const x = first.edge === "west" || first.edge === "east" ? mx : Math.round(mx) + d;
+      const y = first.edge === "west" || first.edge === "east" ? Math.round(my) + d : my;
+      if (x >= 0 && y >= 0 && x < W && y < H && ctx.channel?.[y * W + x]) return fail("the river would start beside another river on the map edge: start it a few tiles away");
+    }
   } else entry = { spring: [pts[0][0], pts[0][1]] };
   // where it ends: the map edge, another river or a lake
   const lastP = pts[pts.length - 1];
@@ -175,35 +182,119 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
   if (!exit) return fail("end the river at the map edge, in another river or in a lake, so its water drains");
   const length = arcLength(pts);
   if (length < 4) return fail("the river is too short: draw it at least 4 tiles long");
-  // the bed: the lowest ground along the channel (its banks included), never rising downstream
-  const half = width / 2;
-  const reach = half + 1.5;
+  // a river that comes back on itself would dam its own lower course with its upper one
+  const clearance = Math.min(9, Math.max(1.5, req.width ?? riverWidthFor(flow))) + 3;
+  for (let i = 0; i + 1 < pts.length; i++)
+    for (let j = i + 1; j + 1 < pts.length; j++) {
+      if (j === i + 1) {
+        // a bend sharper than 120 degrees folds the river back along itself
+        const ux = pts[i + 1][0] - pts[i][0];
+        const uy = pts[i + 1][1] - pts[i][1];
+        const vx = pts[j + 1][0] - pts[j][0];
+        const vy = pts[j + 1][1] - pts[j][1];
+        if (ux * vx + uy * vy < -0.5 * Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy))) return fail("the river turns back on itself: draw it without hairpin turns");
+        continue;
+      }
+      if (segmentSegment(pts[i], pts[i + 1], pts[j], pts[j + 1]) < clearance) return fail("the river comes back too close to itself: draw it without loops");
+    }
   const exitLake = "lake" in exit ? ctx.features.find((f) => f.id === (exit as { lake: string }).lake) : undefined;
   const lakeMask = exitLake?.kind === "lake" ? polygonMask(exitLake.params.outline, W, H) : null;
-  const samples: number[] = [];
-  let bed = 16 - bedDepth;
-  const steps: { at: number; drop: number }[] = [];
-  let start = -1;
-  for (let s = 0; s <= length + 1e-9; s += 0.5) {
-    const p = pointAtArc(pts, s).p;
-    let g = Infinity;
-    for (let y = Math.max(0, Math.floor(p[1] - reach)); y <= Math.min(H - 1, Math.ceil(p[1] + reach)); y++)
-      for (let x = Math.max(0, Math.floor(p[0] - reach)); x <= Math.min(W - 1, Math.ceil(p[0] + reach)); x++) {
-        if ((x - p[0]) ** 2 + (y - p[1]) ** 2 > reach * reach) continue;
-        const i = y * W + x;
-        if (ctx.channel?.[i] || lakeMask?.[i]) continue;
-        if (ctx.heights[i] < g) g = ctx.heights[i];
+  const exitRiver = "river" in exit ? exit.river : null;
+  let bedDepth = Math.min(4, Math.max(1, Math.round(req.bedDepth ?? 1)));
+  // the bed: the lowest ground along the channel (its banks included), never rising downstream.
+  // The rivers it crosses on the way pour into it where its bed is lower than theirs.
+  const profile = (width: number) => {
+    const reach = width / 2 + 1.5;
+    let bed = 16 - bedDepth;
+    const steps: { at: number; drop: number }[] = [];
+    let start = -1;
+    const crossed = new Set<string>();
+    let reachStart = 0;
+    let longest = 0;
+    for (let s = 0; s <= length + 1e-9; s += 0.5) {
+      const p = pointAtArc(pts, s).p;
+      let g = Infinity;
+      // a river it crosses: its bed goes one below theirs there, so their water pours into it
+      // and never back
+      let under = Infinity;
+      for (let y = Math.max(0, Math.floor(p[1] - reach)); y <= Math.min(H - 1, Math.ceil(p[1] + reach)); y++)
+        for (let x = Math.max(0, Math.floor(p[0] - reach)); x <= Math.min(W - 1, Math.ceil(p[0] + reach)); x++) {
+          if ((x - p[0]) ** 2 + (y - p[1]) ** 2 > reach * reach) continue;
+          const i = y * W + x;
+          if (ctx.channel?.[i]) {
+            for (const f of ctx.features) if (f.kind === "river" && f.id !== id && f.id !== exitRiver && !crossed.has(f.id) && nearPath(f.params.path, x, y) < f.params.width / 2 + 0.5) crossed.add(f.id);
+            if (!exitRiver || s < length - reach - 2) under = Math.min(under, ctx.heights[i] - 1);
+            continue;
+          }
+          if (lakeMask?.[i]) continue;
+          if (ctx.heights[i] < g) g = ctx.heights[i];
+        }
+      const want = Math.max(0, Math.min(g === Infinity ? bed : g - bedDepth, under));
+      if (start < 0) {
+        bed = Math.min(bed, want);
+        start = bed;
+      } else if (want < bed) {
+        steps.push({ at: r2(s), drop: bed - want });
+        bed = want;
+        longest = Math.max(longest, s - reachStart);
+        reachStart = s;
       }
-    const want = g === Infinity ? bed : Math.max(0, g - bedDepth);
-    if (start < 0) {
-      bed = Math.min(bed, want);
-      start = bed;
-    } else if (want < bed) {
-      steps.push({ at: r2(s), drop: bed - want });
-      bed = want;
     }
-    samples.push(bed);
+    longest = Math.max(longest, length - reachStart);
+    let taken = flow;
+    for (const f of ctx.features) if (f.kind === "river" && crossed.has(f.id)) taken += f.params.flow;
+    return { start, steps, bed, longest, taken };
+  };
+  // the width that keeps its water inside its banks: the water over a flat reach of L tiles is
+  // about 0.3·q + 0.0015·q·L deep (q the flow per tile of width, PLAN §9.2, D26)
+  const needWidth = (q: number, L: number, depth: number) => (q * (0.3 + 0.0015 * L)) / (depth - 0.35);
+  let width = Math.min(9, Math.max(1.5, req.width ?? riverWidthFor(flow)));
+  let pr = profile(width);
+  for (let pass = 0; pass < 3; pass++) {
+    let need = needWidth(pr.taken, pr.longest, bedDepth);
+    while (need > 9 && bedDepth < 4) {
+      bedDepth++;
+      need = needWidth(pr.taken, pr.longest, bedDepth);
+    }
+    const w = Math.min(9, Math.max(1.5, Math.ceil(need * 2) / 2));
+    if (w <= width) break;
+    width = w;
+    pr = profile(width);
   }
+  if (req.width !== undefined && width > req.width) report.push(`widened from ${req.width} to ${width} tiles so its water stays inside its banks`);
+  if (req.bedDepth !== undefined && bedDepth > req.bedDepth) report.push(`its bed sits ${bedDepth} below its banks to hold its water`);
+  if (pr.taken > flow) report.push(`it takes in the water of the rivers it crosses, ${r2(pr.taken - flow)} blocks/s more`);
+  const { start, steps, bed } = pr;
+  // the water must flow into what it joins: a river's bed there, a lake's water level
+  const endTiles: number[] = [];
+  {
+    const [ex, ey] = pts[pts.length - 1];
+    const rr = width / 2 + 2;
+    for (let y = Math.max(0, Math.floor(ey - rr)); y <= Math.min(H - 1, Math.ceil(ey + rr)); y++)
+      for (let x = Math.max(0, Math.floor(ex - rr)); x <= Math.min(W - 1, Math.ceil(ex + rr)); x++) if ((x - ex) ** 2 + (y - ey) ** 2 <= rr * rr) endTiles.push(y * W + x);
+  }
+  const extra: EditOp[] = [];
+  if (exitRiver) {
+    const target = ctx.features.find((f): f is RiverFeature => f.kind === "river" && f.id === exitRiver)!;
+    let tb = Infinity;
+    for (const i of endTiles) if (ctx.channel?.[i] && nearPath(target.params.path, i % W, Math.floor(i / W)) < target.params.width / 2 + 0.5) tb = Math.min(tb, ctx.heights[i]);
+    if (tb !== Infinity && bed < tb) return fail("the river would reach the river it joins below that river's bed, so its water could not flow in: end it farther down that river, or at the map edge");
+  }
+  if (exitLake?.kind === "lake" && !exitLake.params.planned) {
+    const sill = exitLake.params.outlet.sill;
+    if (bed + bedDepth <= sill) return fail("the river would reach the lake below its water level, and the lake would flood its banks: end it at a lower lake, or draw it where the ground stays above the lake");
+    // the lake's outlet now carries this river too: plan it again for the water it takes in
+    if (exitLake.params.outlet.path) {
+      const others = ctx.features.filter((f): f is RiverFeature => f.kind === "river" && f.id !== id && "lake" in f.params.exit && f.params.exit.lake === exitLake.id);
+      const through = pr.taken + others.reduce((a, f) => a + f.params.flow, 0);
+      const spring = "spring" in exitLake.params.inflow ? exitLake.params.inflow.spring : 0;
+      const lake = planLake({ outline: exitLake.params.outline, level: sill, floorDepth: exitLake.params.floorDepth, spring, outletFlow: through }, { ...ctx, features: ctx.features.filter((f) => f.id !== exitLake.id) }, exitLake.id, exitLake.origin);
+      if (!lake.ok) return fail(`the lake it flows into could not carry its water away: ${lake.errors[0]}`);
+      extra.push({ op: "updateFeature", params: { id: exitLake.id, patch: { params: replacePatch(exitLake.params, lake.feature.params) as Record<string, unknown> } } });
+      if (lake.feature.kind === "lake" && lake.feature.params.outlet.width !== exitLake.params.outlet.width) report.push(`the lake's outlet widens to ${lake.feature.params.outlet.width} tiles to carry its water`);
+    }
+  }
+  const half = width / 2;
   // the channel must not run along another map edge (edges drain), nor through the start's zone
   const field = pathField(pts, W, H);
   for (let i = 0; i < W * H; i++) {
@@ -243,12 +334,35 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
   report.push("edge" in entry ? `a sealed mouth on the ${entry.edge} edge feeds it` : "a spring feeds it");
   const tiles: number[] = [];
   for (let i = 0; i < W * H; i++) if (field.d[i] < half) tiles.push(i);
-  return { ok: true, ops: [{ op: "addFeature", params: { feature } }], feature, report, label: "Add river", tiles };
+  return { ok: true, ops: [{ op: "addFeature", params: { feature } }, ...extra], feature, report, label: "Add river", tiles };
 }
 
 function flowWord(flow: number): string {
   const name = (Object.keys(FLOW_PRESETS) as (keyof typeof FLOW_PRESETS)[]).find((k) => FLOW_PRESETS[k] === flow);
   return name ? `a ${name} flow (${flow} blocks/s)` : `${flow} blocks/s`;
+}
+
+function pointSegment(p: Point, a: Point, b: Point): number {
+  const vx = b[0] - a[0];
+  const vy = b[1] - a[1];
+  const l2 = vx * vx + vy * vy;
+  let t = l2 > 0 ? ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / l2 : 0;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const dx = a[0] + t * vx - p[0];
+  const dy = a[1] + t * vy - p[1];
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+/** The least distance between two segments (0 when they cross). */
+function segmentSegment(a: Point, b: Point, c: Point, d: Point): number {
+  const cross = (o: Point, p: Point, q: Point) => (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+  const d1 = cross(c, d, a);
+  const d2 = cross(c, d, b);
+  const d3 = cross(a, b, c);
+  const d4 = cross(a, b, d);
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return 0;
+  return Math.min(pointSegment(a, c, d), pointSegment(b, c, d), pointSegment(c, a, b), pointSegment(d, a, b));
 }
 
 function nearPath(path: readonly Point[], x: number, y: number): number {
@@ -278,6 +392,8 @@ export interface LakeRequest {
   floorDepth?: number;
   /** The spring that keeps it full, blocks per second (default 0.5). */
   spring?: number;
+  /** Water the outlet carries besides the spring's: the rivers that flow into the lake. */
+  outletFlow?: number;
 }
 
 export function planLake(req: LakeRequest, ctx: PlanContext, id: string, origin: Feature["origin"] = "user"): PlannedEdit {
@@ -330,7 +446,7 @@ export function planLake(req: LakeRequest, ctx: PlanContext, id: string, origin:
   }
   if (ctx.locked) for (let i = 0; i < W * H; i++) if (ctx.locked[i]) blocked[i] = 1;
   if (ctx.protect) for (let i = 0; i < W * H; i++) if (ctx.protect[i] && !mask[i]) blocked[i] = 1;
-  const route = routeChannel({ W, H, heights: ctx.heights, features: ctx.features, channel: ctx.channel, occupied: ctx.occupied }, tiles, sill, channelWidth(spring), blocked, id);
+  const route = routeChannel({ W, H, heights: ctx.heights, features: ctx.features, channel: ctx.channel, occupied: ctx.occupied }, tiles, sill, channelWidth(spring + (req.outletFlow ?? 0)), blocked, id);
   if (!route) return fail("the lake's water has no way out to a map edge, a river or another lake from here");
   const to: LakeFeature["params"]["outlet"]["to"] = route.to === "edge" ? "edge" : ctx.features.find((f) => f.id === route.to)?.kind === "lake" ? "lake" : "river";
   const feature: LakeFeature = {
@@ -408,7 +524,7 @@ export function planLandform(req: LandformRequest, ctx: PlanContext, id: string,
 
 /** Plan a new set piece, or plan an existing one again (`id` of a feature on the map). An on-river
  *  fall also puts its step into its river's bed profile. */
-export function planPiece(s: MapSession, kind: SetPieceKind, request: PlanRecord, id: string, origin: Feature["origin"] = "user"): PlannedEdit {
+export function planPiece(s: MapSession, kind: SetPieceKind, request: PlanRecord, id: string, origin: Feature["origin"] = "user"): PlannedEdit<SetPieceFeature> {
   const existing = s.features.find((f): f is SetPieceFeature => f.id === id && f.kind === "setPiece");
   if (existing && existing.params.kind !== kind) return fail("a set piece keeps its kind");
   const ctx = planContextOf(s, existing ? id : null);
@@ -496,14 +612,14 @@ export function moveEdit(s: MapSession, id: string, dx: number, dy: number): Pla
     const points = f.params.path.map(([x, y]) => [onEdge(x, W - 1) ? x : x + dx, onEdge(y, H - 1) ? y : y + dy] as Point);
     const r = planRiver({ points, flow: f.params.flow, width: f.params.width, bedDepth: f.params.bedDepth }, planContextOf(s, id), id, f.origin);
     if (!r.ok) return r;
-    return { ...r, ops: [{ op: "updateFeature", params: { id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }], label };
+    return { ...r, ops: [{ op: "updateFeature", params: { id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)], label };
   }
   if (f.kind === "lake" && !f.params.river && f.params.outlet.path) {
     const outline = f.params.outline.map(([x, y]) => [x + dx, y + dy] as Point);
     const spring = "spring" in f.params.inflow ? f.params.inflow.spring : 0;
     const r = planLake({ outline, level: f.params.outlet.sill, floorDepth: f.params.floorDepth, spring }, planContextOf(s, id), id, f.origin);
     if (!r.ok) return r;
-    return { ...r, ops: [{ op: "updateFeature", params: { id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }], label };
+    return { ...r, ops: [{ op: "updateFeature", params: { id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)], label };
   }
   if (f.kind === "setPiece") {
     const req = movedRequest(s, f, dx, dy);

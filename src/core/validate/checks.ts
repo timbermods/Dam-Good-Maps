@@ -314,6 +314,7 @@ function checkSlopes(file: TimberFile, c: Collector, surface: Uint8Array, scan: 
   const at = new Map<number, Placement>();
   for (const s of slopes) at.set(s.y * X + s.x, s);
   const bad: string[] = [];
+  const badTiles: [number, number][] = [];
   for (const s of slopes) {
     const [dx, dy] = slopeHighSide(s.orientation);
     const hx = s.x + dx;
@@ -324,7 +325,10 @@ function checkSlopes(file: TimberFile, c: Collector, surface: Uint8Array, scan: 
     const highOk = inb(hx, hy) && surface[hy * X + hx] === s.z + 1;
     const chained = at.get(ly * X + lx);
     const lowOk = inb(lx, ly) && (surface[ly * X + lx] === s.z || (!!chained && chained.z === s.z - 1));
-    if (!highOk || !lowOk) bad.push(`(${s.x},${s.y},${s.z}) ${s.orientation}`);
+    if (!highOk || !lowOk) {
+      bad.push(`(${s.x},${s.y},${s.z}) ${s.orientation}`);
+      if (inb(s.x, s.y)) badTiles.push([s.x, s.y]);
+    }
   }
   c.add({
     id: "slopes.connect",
@@ -333,6 +337,10 @@ function checkSlopes(file: TimberFile, c: Collector, surface: Uint8Array, scan: 
     value: bad.length,
     limit: 0,
     message: bad.length ? `slopes that do not join a 1-level step: ${bad.slice(0, 5).join(", ")}` : `${slopes.length} slopes join level z to z+1`,
+    // the game keeps a slope that joins nothing as a ramp to nowhere; the fix removes them
+    ...(badTiles.length
+      ? { where: { tiles: badTiles }, fix: badTiles.map(([x, y], k) => ({ op: "removeSlope" as const, label: k === 0 ? "Remove the slopes that join nothing" : "", params: { x, y } })) }
+      : {}),
   });
 }
 

@@ -13,7 +13,7 @@ function responseBuffers(r: GenerateResponse): Transferable[] {
   return [r.heights, r.water, r.contamination, r.moisture, r.soilContamination, r.reach, r.timber, r.project].map((a) => a.buffer) as Transferable[];
 }
 
-function sendUpdate(u: ed.SessionUpdate): ed.SessionUpdate {
+function sendUpdate<T extends ed.SessionUpdate>(u: T): T {
   return transfer(u, viewBuffers(u.view) as Transferable[]);
 }
 
@@ -45,6 +45,13 @@ const api = {
   undo: () => sendUpdate(ed.undo()),
   redo: () => sendUpdate(ed.redo()),
   jump: (index: number) => sendUpdate(ed.jump(index)),
+  // the tools: plan (a preview), then apply; move and delete with planning again
+  planTool: (req: ed.ToolRequest, id: string) => ed.planTool(req, id),
+  applyTool: (req: ed.ToolRequest, id: string) => sendUpdate(ed.applyTool(req, id)),
+  moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
+  deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),
+  damSites: () => ed.damSiteLayer(),
+  instantCheck: () => ed.instantCheck(),
   async settingsResponse(): Promise<GenerateResponse> {
     const r = await ed.settingsResponse();
     return transfer(r, responseBuffers(r));
