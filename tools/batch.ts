@@ -1,0 +1,76 @@
+// Batch pass rates (PLAN §15; ROADMAP M2 acceptance: 100 seeds at 128² Normal, final pass ≥ 98%,
+// first attempt ≥ 60%). Generates each seed with the retry loop and reports first-attempt and
+// final pass rates, which checks failed and how often, attempts used, and timings.
+//
+//   npx tsx tools/batch.ts [--seeds 1-100] [--size 128] [--difficulty normal] [--report file.md]
+//                          [--min-final 0.98] [--min-first 0.6]
+//
+// Exits non-zero when a rate is below its gate.
+
+import { writeFileSync } from "node:fs";
+import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
+import { makeSpec, type Difficulty } from "../src/core/spec/mapspec";
+
+function arg(name: string, fallback: string): string {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+
+function parseSeeds(s: string): number[] {
+  const out: number[] = [];
+  for (const part of s.split(",")) {
+    const m = /^(\d+)-(\d+)$/.exec(part);
+    if (m) for (let k = Number(m[1]); k <= Number(m[2]); k++) out.push(k);
+    else out.push(Number(part));
+  }
+  return out;
+}
+
+const seeds = parseSeeds(arg("seeds", "1-100"));
+const size = Number(arg("size", "128"));
+const difficulty = arg("difficulty", "normal") as Difficulty;
+const minFinal = Number(arg("min-final", "0.98"));
+const minFirst = Number(arg("min-first", "0.6"));
+const report = arg("report", "");
+
+let first = 0;
+let final = 0;
+const attempts: number[] = [];
+const times: number[] = [];
+const failedChecks = new Map<string, number>(); // every failed attempt's blocking checks
+const advisory = new Map<string, number>();
+const lines: string[] = [];
+const log = (s: string) => {
+  lines.push(s);
+  console.log(s);
+};
+
+for (const seed of seeds) {
+  const t0 = performance.now();
+  const r = generate(makeSpec({ seed, size: { x: size, y: size }, designedFor: difficulty }));
+  const ms = performance.now() - t0;
+  times.push(ms);
+  attempts.push(r.attempts);
+  if (r.report.passed) {
+    final++;
+    if (r.attempts === 1) first++;
+  }
+  for (const f of r.failures) for (const id of f.failed) failedChecks.set(id, (failedChecks.get(id) ?? 0) + 1);
+  for (const c of r.report.checks) if (c.advisory && !c.ok) advisory.set(c.id, (advisory.get(c.id) ?? 0) + 1);
+  const status = r.report.passed ? (r.attempts === 1 ? "pass" : `pass after ${r.attempts}`) : `FAIL after ${r.attempts}`;
+  log(`seed ${seed}: ${status}, ${Math.round(ms)} ms${r.failures.length ? `  (${r.failures.map((f) => f.failed.join(",")).join(" | ")})` : ""}`);
+}
+
+const n = seeds.length;
+const sorted = times.slice().sort((a, b) => a - b);
+const pct = (k: number) => `${((100 * k) / n).toFixed(1)}%`;
+log("");
+log(`${n} seeds at ${size}×${size}, designed for ${difficulty}, at most ${MAX_ATTEMPTS} attempts:`);
+log(`- first attempt: ${first}/${n} = ${pct(first)} (gate ${Math.round(minFirst * 100)}%)`);
+log(`- final: ${final}/${n} = ${pct(final)} (gate ${Math.round(minFinal * 100)}%)`);
+log(`- attempts: mean ${(attempts.reduce((a, b) => a + b, 0) / n).toFixed(2)}, max ${attempts.reduce((a, b) => Math.max(a, b), 0)}`);
+log(`- time per map: median ${Math.round(sorted[n >> 1])} ms, p90 ${Math.round(sorted[Math.floor(n * 0.9)])} ms, max ${Math.round(sorted[n - 1])} ms`);
+log(`- checks that failed an attempt: ${[...failedChecks].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ") || "none"}`);
+log(`- advisory warnings on the accepted maps: ${[...advisory].map(([k, v]) => `${k} ${v}/${n}`).join(", ") || "none"}`);
+if (report) writeFileSync(report, lines.join("\n") + "\n");
+process.exit(final / n >= minFinal && first / n >= minFirst ? 0 : 1);

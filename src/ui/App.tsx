@@ -24,6 +24,16 @@ import { MapCard } from "./MapCard";
 
 const generator = createGenerator();
 
+const LAYER_NAMES: Record<keyof Layers, string> = {
+  water: "Water",
+  moisture: "Moist soil",
+  contamination: "Contaminated soil",
+  reach: "Walkable from start",
+  dam: "Dam site",
+  entities: "Objects",
+  features: "Feature outlines",
+};
+
 declare global {
   interface Window {
     /** Test hook: generate a map from a URL fragment and return its sha256 (tests/e2e). */
@@ -64,7 +74,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | undefined>(init.note);
-  const [layers, setLayers] = useState<Layers>({ water: true, entities: true, features: true });
+  const [layers, setLayers] = useState<Layers>({ water: true, moisture: false, contamination: false, reach: false, dam: true, entities: true, features: false });
   const [downloaded, setDownloaded] = useState(false);
 
   const spec = useMemo(
@@ -157,18 +167,19 @@ export function App() {
           <details class="more">
             <summary>What's in this version</summary>
             <p>
-              One theme, River Valley. Terrain, slopes, river sources, forests, berry patches and ruin fields are
-              generated and checked against the game's loading rules. Rivers fill from their sources during the first
-              in-game day. More settings, themes and a water preview follow.
+              One theme, River Valley. The water is simulated with the game's own rules and shipped settled, so rivers
+              run from the first tick; trees live where that water keeps the soil moist. Every map is checked against
+              the game's loading rules and for a colony's survival: clean water in pump reach, food, wood, land to
+              build on, and a dam site that holds a drought's water. More settings and themes follow.
             </p>
           </details>
         </section>
         <section class="view" aria-label="Map">
           <div class="layers" role="group" aria-label="Preview layers">
-            {(["water", "entities", "features"] as (keyof Layers)[]).map((k) => (
+            {(Object.keys(LAYER_NAMES) as (keyof Layers)[]).map((k) => (
               <label class="check" key={k}>
                 <input type="checkbox" checked={layers[k]} onChange={() => setLayers({ ...layers, [k]: !layers[k] })} />
-                {k === "water" ? "Planned water" : k === "entities" ? "Objects" : "Feature outlines"}
+                {LAYER_NAMES[k]}
               </label>
             ))}
           </div>
@@ -191,6 +202,18 @@ export function App() {
                 </button>
                 <button type="button" class="ghost" onClick={() => saveFile(result.project, result.projectName, "application/gzip")}>
                   Download project file
+                </button>
+                <button
+                  type="button"
+                  class="ghost"
+                  disabled={!result.passed}
+                  title="The same map with no water in the file: the game fills the rivers during the first day (for comparing in game)"
+                  onClick={async () => {
+                    const f = await generator.emptyWater();
+                    if (f) saveFile(f.bytes, f.name);
+                  }}
+                >
+                  Without pre-filled water
                 </button>
               </div>
               <div class={downloaded ? "install open" : "install"}>

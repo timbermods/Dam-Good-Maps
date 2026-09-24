@@ -19,8 +19,8 @@ export interface Outline {
 export interface PreviewModel {
   W: number;
   H: number;
+  /** Shaded terrain without water. */
   rgb: Uint8Array;
-  rgbWater: Uint8Array;
   /** For each tile, indices into `features` of the area features covering it (-1 = none). */
   areaOwner: Int32Array;
   riverFields: Map<string, PathField>;
@@ -34,7 +34,6 @@ const AREA_COLORS: Record<string, string> = { forest: "#2f6b2f", berryPatch: "#7
 export function buildPreviewModel(r: GenerateResponse): PreviewModel {
   const { W, H, features } = r;
   const rgb = shadeTiles(r.heights, W, H, null);
-  const rgbWater = shadeTiles(r.heights, W, H, r.water);
   const areaOwner = new Int32Array(W * H).fill(-1);
   const outlines: Outline[] = [];
   const riverFields = new Map<string, PathField>();
@@ -92,13 +91,54 @@ export function buildPreviewModel(r: GenerateResponse): PreviewModel {
       outlines.push({ kind: "marker", color: "#ffffff", points: [[p[0] + 0.5, p[1] + 0.5]], label: `Falls, ${(f.params.plan as { drop: number }).drop} levels`, featureId: f.id });
     }
   }
-  return { W, H, rgb, rgbWater, areaOwner, riverFields, lakeMasks, outlines, features };
+  return { W, H, rgb, areaOwner, riverFields, lakeMasks, outlines, features };
+}
+
+export interface LayerSet {
+  water: boolean;
+  moisture: boolean;
+  contamination: boolean;
+  reach: boolean;
+}
+
+const CLEAN = [52, 112, 214];
+const BADWATER = [128, 84, 38];
+const MOIST = [60, 150, 40];
+const POISON = [150, 60, 170];
+const REACH = [255, 248, 215];
+
+function mix(c: number[], k: number, into: Uint8Array, o: number): void {
+  into[o] = Math.round(into[o] * (1 - k) + c[0] * k);
+  into[o + 1] = Math.round(into[o + 1] * (1 - k) + c[1] * k);
+  into[o + 2] = Math.round(into[o + 2] * (1 - k) + c[2] * k);
+}
+
+/** Tile colours for the chosen layers, row-major (3 bytes per tile). */
+export function composeLayers(m: PreviewModel, r: GenerateResponse, layers: LayerSet): Uint8Array {
+  const out = m.rgb.slice();
+  const N = m.W * m.H;
+  for (let i = 0; i < N; i++) {
+    const o = i * 3;
+    const d = r.water[i];
+    const wet = d > 0.001;
+    if (layers.moisture && !wet && r.moisture[i] > 0) mix(MOIST, 0.15 + 0.4 * Math.min(1, r.moisture[i] / 16), out, o);
+    if (layers.contamination && r.soilContamination[i] > 0) mix(POISON, 0.25 + 0.4 * Math.min(1, r.soilContamination[i]), out, o);
+    if (layers.reach && r.reach[i] && !wet) mix(REACH, 0.35, out, o);
+    if (layers.water && wet) mix(r.contamination[i] >= 0.05 ? BADWATER : CLEAN, 0.35 + 0.5 * Math.min(1, d / 1.2), out, o);
+  }
+  return out;
 }
 
 /** Plain-language description of a tile for the hover label. */
 export function describeTile(m: PreviewModel, r: GenerateResponse, x: number, y: number): string[] {
   const i = y * m.W + x;
   const lines = [`Tile ${x}, ${y} · level ${r.heights[i]}`];
+  const d = r.water[i];
+  if (d > 0.001) lines.push(`${r.contamination[i] >= 0.05 ? `Badwater (${Math.round(r.contamination[i] * 100)}%)` : "Water"} ${d.toFixed(2)} deep`);
+  if (r.moisture[i] > 0) lines.push(`Moist soil (${r.moisture[i].toFixed(1)})${r.soilContamination[i] > 0 ? ", contaminated" : ""}`);
+  else if (r.soilContamination[i] > 0) lines.push("Contaminated soil");
+  else if (d <= 0.001) lines.push("Dry soil");
+  if (r.reach[i]) lines.push("Walkable from the start");
   const k = m.areaOwner[i];
   if (k >= 0) {
     const f = m.features[k];

@@ -24,7 +24,7 @@ test("Node and Chromium produce identical .timber bytes for 10 seeds", async ({ 
 });
 
 test("the page generates a map and offers both downloads", async ({ page }) => {
-  await page.goto("./#s=4242&z=128&d=n&t=riverValley&v=0.1.0");
+  await page.goto("./#s=4242&z=128&d=n&t=riverValley&v=0.2.0");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("button", { name: /\.timber/ })).toBeEnabled();
   await expect(page.getByRole("button", { name: "Download project file" })).toBeEnabled();

@@ -7,7 +7,7 @@ import type { Feature } from "../features/schema";
 import { assertSpec } from "../spec/schema";
 import { AVAILABLE_THEMES, type MapSpec } from "../spec/mapspec";
 import { validateMap, type Validation } from "../validate/checks";
-import type { ValidationReport } from "../validate/report";
+import { blocks, type ValidationReport } from "../validate/report";
 import type { PlayabilityAnalysis } from "../validate/playability";
 import { writeTimber } from "../format/timber";
 import { toTimberFile } from "./pack";
@@ -63,7 +63,7 @@ export function generate(specIn: MapSpec, opts: GenerateOptions = {}): GenerateR
     const bytes = report.passed ? writeTimber(file) : new Uint8Array();
     last = { spec, features, built, report, analysis, bytes, attempts: attempt + 1, failures };
     if (report.passed) return last;
-    failures.push({ attempt, failed: report.checks.filter((c) => !c.ok).map((c) => c.id) });
+    failures.push({ attempt, failed: report.checks.filter((c) => blocks("generate", c)).map((c) => c.id) });
   }
   return last!;
 }

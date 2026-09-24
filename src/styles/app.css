@@ -11,6 +11,7 @@
   --accent-ink: #ffffff;
   --bad: #9a2b1b;
   --ok: #2c6536;
+  --warn: #9a6a10;
   --code: rgba(42, 33, 24, 0.08);
   color-scheme: light;
 }
@@ -26,6 +27,7 @@
     --accent-ink: #13200f;
     --bad: #f0a08a;
     --ok: #9fd49a;
+    --warn: #f0c86a;
     --code: rgba(236, 227, 207, 0.09);
     color-scheme: dark;
   }
@@ -280,6 +282,29 @@ summary:focus-visible {
 .report li.bad::before {
   content: "✗ ";
   color: var(--bad);
+}
+
+.report li.warn::before {
+  content: "! ";
+  color: var(--warn);
+  font-weight: 700;
+}
+
+.report li.na {
+  color: var(--muted);
+}
+
+.report li.na::before {
+  content: "– ";
+}
+
+.report .group {
+  margin-top: 8px;
+}
+
+.report .group summary {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 code {

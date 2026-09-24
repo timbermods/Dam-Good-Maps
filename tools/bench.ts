@@ -1,8 +1,17 @@
-// Generation time (ROADMAP M1 acceptance: 128² in under 3 s).
+// Benchmarks.
 //
 //   npx tsx tools/bench.ts [--size 128] [--seeds 1-10] [--budget 3000]
+//     Generation time (ROADMAP M1 acceptance: 128² in under 3 s): every map's max must be under
+//     the budget.
+//
+//   npx tsx tools/bench.ts --water [--size 256] [--seeds 1-10] [--budget 3000]
+//     The canonical water settle alone (ROADMAP M2: the budget of PLAN §10, ≤ 3 s at 256² and
+//     ≤ 0.6 s at 128²): the water model of each generated map, pre-filled and settled from scratch.
+//     The median must be under the budget; the max is reported.
 
-import { generate } from "../src/core/gen/generate";
+import { build, SettleCache } from "../src/core/features/build";
+import { generate, planFeatures } from "../src/core/gen/generate";
+import { canonicalSettle } from "../src/core/sim/prefill";
 import { makeSpec } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
@@ -10,23 +19,42 @@ function arg(name: string, fallback: string): string {
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 }
 
-const size = Number(arg("size", "128"));
+const water = process.argv.includes("--water");
+const size = Number(arg("size", water ? "256" : "128"));
 const [a, b] = arg("seeds", "1-10").split("-").map(Number);
-const budget = Number(arg("budget", "3000"));
+const budget = Number(arg("budget", water ? (size >= 256 ? "3000" : "600") : "3000"));
+const spec = (seed: number) => makeSpec({ seed, size: { x: size, y: size } });
 
-generate(makeSpec({ seed: 0, size: { x: size, y: size } })); // warm up the JIT
 const times: number[] = [];
-for (let seed = a; seed <= (b ?? a); seed++) {
-  const t0 = performance.now();
-  const r = generate(makeSpec({ seed, size: { x: size, y: size } }));
-  const ms = performance.now() - t0;
-  times.push(ms);
-  if (!r.report.passed) {
-    console.log(`seed ${seed}: generation failed`);
-    process.exit(1);
+const ticks: number[] = [];
+if (water) {
+  // warm up the JIT on a map of the same size
+  canonicalSettle(build(spec(0), planFeatures({ ...spec(0), accepted: { attempt: 0, candidate: 0 } }, 0, 0, new SettleCache())).waterModel);
+  for (let seed = a; seed <= (b ?? a); seed++) {
+    const s = { ...spec(seed), accepted: { attempt: 0, candidate: 0 } };
+    const model = build(s, planFeatures(s, 0, 0, new SettleCache()), { stopBeforeResources: true }).waterModel;
+    const t0 = performance.now();
+    const w = canonicalSettle(model);
+    times.push(performance.now() - t0);
+    ticks.push(w.ticks);
+    if (!w.settled) console.log(`seed ${seed}: did not settle in 4 days`);
+  }
+} else {
+  generate(spec(0)); // warm up the JIT
+  for (let seed = a; seed <= (b ?? a); seed++) {
+    const t0 = performance.now();
+    const r = generate(spec(seed));
+    times.push(performance.now() - t0);
+    if (!r.report.passed) {
+      console.log(`seed ${seed}: generation failed`);
+      process.exit(1);
+    }
   }
 }
-times.sort((x, y) => x - y);
-const max = times[times.length - 1];
-console.log(`${size}×${size}, ${times.length} seeds: median ${Math.round(times[times.length >> 1])} ms, max ${Math.round(max)} ms (budget ${budget} ms)`);
-process.exit(max < budget ? 0 : 1);
+const order = times.map((t, k) => [t, k] as const).sort((x, y) => x[0] - y[0]);
+const median = order[order.length >> 1][0];
+const max = order[order.length - 1][0];
+const what = water ? "canonical water settle" : "generation";
+const tickText = water ? `, ${Math.min(...ticks)}–${Math.max(...ticks)} ticks (median ${ticks.slice().sort((x, y) => x - y)[ticks.length >> 1]})` : "";
+console.log(`${what}, ${size}×${size}, ${times.length} seeds: median ${Math.round(median)} ms, max ${Math.round(max)} ms${tickText} (budget ${budget} ms)`);
+process.exit((water ? median : max) < budget ? 0 : 1);

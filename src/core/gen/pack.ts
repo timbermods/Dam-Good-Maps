@@ -24,10 +24,11 @@ export function fileName(spec: MapSpec): string {
 
 export function description(spec: MapSpec): string {
   const size = `${spec.size.x}×${spec.size.y}`;
+  const marsh = spec.settings.hazards.badwater !== "off" ? ", past a badwater marsh," : "";
   return (
     `${THEME_NAMES[spec.theme]}, ${size}, designed for ${spec.designedFor}. A river enters from the west, ` +
     `drops over a cascade into a basin that a rock ridge pinches into a gorge (one short dam there holds a ` +
-    `reservoir), then over falls and out to the east. Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`
+    `reservoir), then over falls${marsh} and out to the east. Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`
   );
 }
 

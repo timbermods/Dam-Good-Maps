@@ -3,12 +3,18 @@
 
 import { expose, transfer } from "comlink";
 import type { MapSpec } from "../core/spec/mapspec";
-import { runGenerate, type GenerateResponse } from "./api";
+import { emptyWaterFile, runGenerate, type GenerateResponse } from "./api";
 
 const api = {
   async generate(spec: MapSpec): Promise<GenerateResponse> {
     const r = await runGenerate(spec);
-    return transfer(r, [r.heights.buffer, r.water.buffer, r.moisture.buffer, r.timber.buffer, r.project.buffer] as Transferable[]);
+    const buffers = [r.heights, r.water, r.contamination, r.moisture, r.soilContamination, r.reach, r.timber, r.project].map((a) => a.buffer);
+    return transfer(r, buffers as Transferable[]);
+  },
+  /** The last generated map without pre-filled water, or null. */
+  emptyWater(): { bytes: Uint8Array; name: string } | null {
+    const f = emptyWaterFile();
+    return f ? transfer(f, [f.bytes.buffer as Transferable]) : null;
   },
 };
 

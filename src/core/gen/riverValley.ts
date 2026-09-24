@@ -278,17 +278,20 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
 
   // ------------------------------------------------------------------ the badwater marsh (PLAN §9.5, D24)
   // a BadwaterSource 3×3 on flat floodplain beside the river below the falls, as far from the start
-  // as possible (the prototype's rule); its water joins the river downstream of the start
+  // as possible (the prototype's rule, with its offset from the channel scaled to the channel's
+  // width); its water joins the river downstream of the start
   const ratio = BADWATER_RATIO[spec.settings.hazards.badwater];
   if (ratio > 0) {
     const ground = build(spec, layout, { stopBeforeWater: true });
     const strength = Math.min(3, Math.max(1, round(flow * ratio, 2)));
     let best = -1;
-    let site: { x: number; y: number; level: number } | null = null;
+    let site: { x: number; y: number; level: number; sgn: number } | null = null;
+    // the nearest offset from the channel that has a site (the prototype's 4 tiles on a 5-wide river)
+    for (let off = Math.ceil(riverW / 2) + 1; off <= Math.ceil(riverW / 2) + 4 && !site; off++)
     for (let x = fallsX + 3; x < W - 4; x++) {
       const level = floorAt(river.params, arcAtX(path, x), 1);
       for (const sgn of [1, -1]) {
-        const y = Math.round(centre(x) + sgn * 4);
+        const y = Math.round(centre(x) + sgn * off - (sgn < 0 ? 2 : 0));
         if (y < 1 || y >= H - 3) continue;
         let flat = true;
         for (let yy = y; yy < y + 3 && flat; yy++)
@@ -300,11 +303,15 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
         const d2 = (x + 1 - sx) * (x + 1 - sx) + (y + 1 - sy) * (y + 1 - sy);
         if (d2 > best) {
           best = d2;
-          site = { x, y, level };
+          site = { x, y, level, sgn };
         }
       }
     }
     if (site) {
+      // the ditch: from the pit's middle column toward the river until it meets the channel
+      const ditch: number[] = [];
+      const dx = site.x + 1;
+      for (let y = site.sgn > 0 ? site.y - 1 : site.y + 3; y >= 0 && y < H && distToPath(path, dx, y) >= riverW / 2; y -= site.sgn) ditch.push(dx, y);
       layout.splice(layout.length - 1, 0, {
         id: id("setPiece", "setpiece/badwaterBasin/marsh"),
         kind: "setPiece",
@@ -314,7 +321,7 @@ export function planRiverValley(spec: MapSpec, attempt: number, candidate = 0, s
         params: {
           kind: "badwaterBasin",
           request: { mode: "marsh", badwater: spec.settings.hazards.badwater },
-          plan: { mode: "marsh", x: site.x, y: site.y, level: site.level, strength },
+          plan: { mode: "marsh", x: site.x, y: site.y, level: site.level - 1, strength, ditch },
           report: [],
         },
       });

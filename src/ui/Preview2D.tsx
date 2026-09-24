@@ -1,12 +1,14 @@
-// 2D top-down preview (PLAN §14.2): shaded terrain, planned water, entities, the start, and the
-// outlines of the features the map was built from, with a hover label. North is up.
+// 2D top-down preview (PLAN §14.2): shaded terrain with the settled water (badwater brown), and
+// layers for soil moisture, soil contamination, the land walkable from the start and the best dam
+// site; entities, the start, and the outlines of the features the map was built from, with a hover
+// label. North is up.
 
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { GenerateResponse } from "../worker/api";
-import { buildPreviewModel, describeTile, type PreviewModel } from "./previewModel";
+import { buildPreviewModel, composeLayers, describeTile, type LayerSet, type PreviewModel } from "./previewModel";
 
-export interface Layers {
-  water: boolean;
+export interface Layers extends LayerSet {
+  dam: boolean;
   entities: boolean;
   features: boolean;
 }
@@ -29,7 +31,7 @@ function draw(canvas: HTMLCanvasElement, m: PreviewModel, r: GenerateResponse, l
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // terrain (one pixel per tile, flipped so north is up), scaled without smoothing
   const img = new ImageData(W, H);
-  const src = layers.water ? m.rgbWater : m.rgb;
+  const src = composeLayers(m, r, layers);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const s = (y * W + x) * 3;
@@ -95,6 +97,28 @@ function draw(canvas: HTMLCanvasElement, m: PreviewModel, r: GenerateResponse, l
       ctx.lineTo(X(cx + 0.5 + dir[0] * 3), Y(cy + 0.5 + dir[1] * 3));
       ctx.stroke();
     }
+  }
+
+  if (layers.dam && r.facts.bestDam) {
+    // the best dam site: its line across the channel and the reservoir it would hold
+    const d = r.facts.bestDam;
+    const half = (d.length - 1) / 2;
+    const [dy, dx] = d.dir;
+    ctx.save();
+    ctx.strokeStyle = "#ff8a1f";
+    ctx.lineWidth = Math.max(2, scale * 0.6);
+    ctx.beginPath();
+    ctx.moveTo(X(d.x + 0.5 - dx * (half + 0.5)), Y(d.y + 0.5 - dy * (half + 0.5)));
+    ctx.lineTo(X(d.x + 0.5 + dx * (half + 0.5)), Y(d.y + 0.5 + dy * (half + 0.5)));
+    ctx.stroke();
+    const label = `Dam here: holds ${d.volume.toLocaleString()} water`;
+    ctx.font = "600 12px system-ui, sans-serif";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.7)";
+    ctx.strokeText(label, X(d.x) + 8, Y(d.y) - 8);
+    ctx.fillStyle = "#ffd9a8";
+    ctx.fillText(label, X(d.x) + 8, Y(d.y) - 8);
+    ctx.restore();
   }
 
   if (layers.features) {
