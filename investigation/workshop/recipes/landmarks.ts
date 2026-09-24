@@ -19,6 +19,7 @@ import {
   groundUnder,
   newId,
   RecipeFailure,
+  makeRoom,
   spotScaled,
   startOf,
   type Recipe,
@@ -75,10 +76,11 @@ export const volcano: Recipe = {
     const st = startOf(ctx);
     const rule = ctx.spec.settings.hazards.badwaterDistance;
     const blocked = forbidden(ctx, 10);
-    const fit = spotScaled(ctx, R0 + 1, blocked, (x, y, k) => (dist([x, y], st) < rule + R0 * k + 16 ? -1e6 : 0) - dist([x, y], oldAt) - 2 * spread(ctx, circle(x, y, R0 * k)));
+    // the badwater rule counts the crater (and its 7-tile soil contamination), not the flanks
+    const fit = spotScaled(ctx, R0 + 1, blocked, (x, y, k) => (dist([x, y], st) < rule + 14 ? -1e6 : 0) - dist([x, y], oldAt) - 2 * spread(ctx, circle(x, y, R0 * k)));
     const R = fit ? (R0 + 1) * fit.k - 1 : R0;
     const spot = fit?.at;
-    if (!spot || dist(spot, st) < rule + R + 16) throw new RecipeFailure("no room for a volcano far enough from the start");
+    if (!spot || dist(spot, st) < rule + 14) throw new RecipeFailure("no room for a volcano far enough from the start");
     const [cx, cy] = spot;
     const cone = circle(cx, cy, R, 36, 0.1, ctx.rand);
     clearResources(ctx, cone, 2);
@@ -133,16 +135,16 @@ export const mesaField: Recipe = {
     const Rr = 20 * s * fit.k;
     const region = fit.at;
     const placed: [number, number, number][] = [];
-    for (let tries = 0; tries < 200 && placed.length < 9; tries++) {
+    for (let tries = 0; tries < 400 && placed.length < 9; tries++) {
       const a = ctx.rand() * 2 * Math.PI;
       const d = Math.sqrt(ctx.rand()) * (Rr - 5 * s);
-      const r = (3.5 + 3 * ctx.rand()) * s;
+      const r = Math.max(3, (3.5 + 3 * ctx.rand()) * s * (placed.length > 3 ? 0.8 : 1));
       const x = region[0] + d * Math.cos(a);
       const y = region[1] + d * Math.sin(a);
       if (placed.some(([px, py, pr]) => Math.hypot(px - x, py - y) < pr + r + 2)) continue;
       placed.push([x, y, r]);
     }
-    if (placed.length < 5) throw new RecipeFailure("too few mesas fit");
+    if (placed.length < 4) throw new RecipeFailure("too few mesas fit");
     clearResources(ctx, circle(region[0], region[1], Rr, 28), 1);
     const mesas: Point[][] = [];
     for (const [x, y, r] of placed) {
@@ -192,6 +194,9 @@ export const twinFalls: Recipe = {
       const drop = Math.max(4, Math.min(9, Math.round((5 + 4 * ctx.rand()) * Math.max(0.8, s))));
       let first = false;
       try {
+        // the falls reshape the ground: optional pieces and objects near them go first
+        const span = 2 * width + gap + 16;
+        makeRoom(ctx, circle(t.lip[0] + gap / 2, t.lip[1], span / 2, 16), 4);
         addPiece(ctx, "waterfall", { mode: "standalone", lip: t.lip, facing: t.facing, width, drop, flow: 1 }, "the first fall");
         first = true;
         addPiece(ctx, "waterfall", { mode: "standalone", lip: [t.lip[0] + gap, t.lip[1]], facing: t.facing, width, drop: drop + (ctx.rand() < 0.5 ? 1 : -1), flow: 1 }, "the second fall");

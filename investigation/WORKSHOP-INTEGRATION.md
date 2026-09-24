@@ -141,10 +141,18 @@ Add to **Delivers**:
 >   report "approximate" with the reason, in both validators, and the preview shows the file's water
 >   there (the roofed-water rule already does this for caves).
 
+> - Set pieces and lakes that reshape the ground clear the map objects standing on it, as they clear
+>   trees, ruins and bushes (`clears`), or the objects move to the new ground and are checked again.
+>   The recipes found it: a standalone waterfall or a lake drawn beside a relic, a geothermal field or
+>   a mine site left the object floating (`entities.placement`, `extras.placement`) in 16 attempts
+>   over 46 runs of the twin-falls and oxbow recipes, before the recipes cleared the ground themselves.
+
 Add to **Acceptance**:
 
 > - Hollows, Pressure, Oasis, Nomads and Beaverome report their water checks as approximate with a
 >   reason; the other 14 official maps are unchanged.
+> - A property test places standalone waterfalls, lakes and landforms beside every kind of map object
+>   on generated maps: no object is left floating.
 
 Decision W6. Uses: the rule as written in `investigation/workshop/lib/measures.ts` (`mechanics`) and
 `lib/table.ts` (`waterReliable`). Risk: a map flagged approximate hides a real flood; the reason is
@@ -216,9 +224,15 @@ Add to **Acceptance**:
 > - Every built theme has at least 3 premises.
 > - In 100 seeds of each valley theme, all 8 flow directions appear and none exceeds 25%.
 > - Variety (investigation/workshop/lib/variety.ts, scale in variety-scale.json), seeds 1–30 at 128²,
->   default settings: each theme's set variety ≥ 0.60 of the workshop's (today 0.15–0.36); all themes
->   together ≥ 0.90 (today 0.56); at Variety 100 each theme ≥ 0.80. No two seeds of a theme are closer
->   than the workshop maps' p10 distance to their nearest peer.
+>   default settings, as shares of the workshop's:
+>   - the shape and numbers alone (V2): each theme ≥ 0.45 (today 0.15–0.36), all themes together
+>     ≥ 0.80 (today 0.56);
+>   - with landmarks counted (V3, the premise and landmarks the generator built, `patternP0` in the
+>     scale file): each theme ≥ 0.60 at default Variety and ≥ 0.80 at Variety 100 (River Valley today
+>     0.20; with the eleven recipes mixed in as premises, 0.53).
+> - No clones: within a theme, every seed's nearest other seed is ≥ 0.25 away and the median ≥ 0.40
+>   (today the nearest is 0.06–0.19 and the median 0.08–0.26; workshop maps sit 0.59 (p10) and 0.67
+>   (median) from their nearest peer).
 > - The score: the recommended official maps land in the top third (it holds with the default
 >   parameters: 3rd, 6th, 7th of 19); the generated median at default settings reaches the official
 >   median (today 40 against 52).
@@ -233,6 +247,12 @@ feature or the premise (§13's templates grow with these): *island in a moat*, *
 *concentric rings*. Examples: "Moat Isle", "Caldera Rest", "Spiral Quarry", "Twin Falls", "Mesa
 Reach". Descriptions add a trade-off clause when Reservoir help is None: "No ready reservoir:
 the river is yours to tame."
+
+Why both targets: the recipes (§5) put a landmark on an unchanged River Valley base, and each adds at
+most 0.02 to the theme's V2 (the north–south valley, a new skeleton, 0.075). Counted as landmarks
+they lift V3 from 0.20 to 0.53. Maps diverge when the premise changes the skeleton too: the flow
+axis, where the valley runs, the relief, the water budget. Variety's other levers do that, and V2
+checks they did.
 
 Depends on: builders #11 for the spiral, the volcano's cone and the mesa field (the recipes build them
 from landforms today, laboriously); the layout frame for directions. Risk: variety bought with broken
@@ -386,7 +406,99 @@ Setting changes (each with its evidence in the file):
 
 ## 5. Recipes: what they proved
 
-<!-- RECIPES -->
+Eleven recipes, each a premise built on a generated River Valley base with today's operations only
+(a `MapSession`: landforms, lakes, rivers, set pieces, pinned slopes), then checked by the real
+validators in the `generate` profile. Each ran on seeds 1–10 at 96² and 128² and seeds 1–3 at 256².
+A failed attempt draws the recipe's placement again on the same base, up to 3 times, as the
+generator's retry loop would. Code: `investigation/workshop/recipes/`; runner `run-recipes.ts`;
+these tables `recipe-table.ts`. Six are whimsical (✦). The north–south valley's river runs north to
+south on 11 maps and south to north on 12.
+
+| Recipe | Pattern | ✦ | 96² | 128² | 256² | Final | First try | Gain to River Valley's variety | Novelty |
+|---|---|---|---|---|---|---|---|---|---|
+| Island in a moat | ring-moat | ✦ | 10/10 | 10/10 | 3/3 | 100% | 87% | +0.017 | 0.29 |
+| Crater lake with an island | crater-lake | ✦ | 10/10 | 10/10 | 3/3 | 100% | 100% | +0.011 | 0.27 |
+| Spiral mountain or spiral quarry | spiral | ✦ | 10/10 | 10/10 | 3/3 | 100% | 96% | -0.004 | 0.24 |
+| Heart lake | shape-silhouette | ✦ | 10/10 | 10/10 | 3/3 | 100% | 96% | +0.019 | 0.27 |
+| Badwater volcano | volcano | ✦ | 10/10 | 10/10 | 3/3 | 100% | 100% | +0.002 | 0.24 |
+| Hanging lake on a mesa | sky-tower | ✦ | 10/10 | 10/10 | 3/3 | 100% | 100% | +0.003 | 0.25 |
+| Mesa field with ruins on top | mesa-field |  | 10/10 | 10/10 | 3/3 | 100% | 100% | +0.002 | 0.23 |
+| Twin waterfalls | landmark-falls |  | 10/10 | 10/10 | 3/3 | 100% | 100% | +0.000 | 0.22 |
+| Oxbow lake | meander-loop |  | 10/10 | 10/10 | 3/3 | 100% | 96% | -0.004 | 0.23 |
+| Valley running north to south | river-direction |  | 10/10 | 10/10 | 3/3 | 100% | 96% | +0.075 | 0.32 |
+| Dam narrows between two hillside spurs | natural-narrows |  | 9/10 | 10/10 | 3/3 | 96% | 96% | -0.001 | 0.24 |
+
+*Gain*: what the recipe's ten 128² maps add to the set variety (V2) of River Valley's 30 seeds
+(0.305). *Novelty*: the median distance from a recipe map to its nearest generated map of any theme.
+Today's seeds sit 0.08–0.26 from their nearest sibling; workshop maps sit 0.59 (p10) from their
+nearest peer.
+
+| Recipe | Straight steps (8+) | Ridge crest std | Height range | Tallest fall | Holding dam ≤ 5 tiles near the start |
+|---|---|---|---|---|---|
+| River Valley base (seeds 1–30, 128²) | 0.109 | 0 | 11 | 1.9 | 77% |
+| Island in a moat | 0.117 | 0 | 11 | 1.88 | 78% |
+| Crater lake with an island | 0.124 | 0 | 11 | 7.99 | 74% |
+| Spiral mountain or spiral quarry | 0.114 | 0 | 11 | 1.88 | 70% |
+| Heart lake | 0.129 | 0 | 11 | 1.86 | 70% |
+| Badwater volcano | 0.118 | 0 | 11 | 7.03 | 83% |
+| Hanging lake on a mesa | 0.129 | 0 | 11 | 4.99 | 74% |
+| Mesa field with ruins on top | 0.114 | 0 | 11 | 1.88 | 70% |
+| Twin waterfalls | 0.128 | 0 | 11 | 1.83 | 70% |
+| Oxbow lake | 0.119 | 0 | 11 | 1.86 | 74% |
+| Valley running north to south | 0.219 | 0 | 11 | 2.85 | 70% |
+| Dam narrows between two hillside spurs | 0.137 | 0 | 11 | 1.89 | 35% |
+
+Medians over the passing maps. The last column is the obviousness measure (`obviousness.ts`): the share
+of maps where a straight dam of 5 tiles or fewer within 40 tiles of the start holds a Normal
+drought's water (380 blocks).
+
+What failed on the way (first attempts; every one passed on a retry except one narrows seed):
+
+- `start.badwater` (moat 1, heart 2, oxbow 1): badwater or contaminated soil ended 19–27 tiles from
+  the start after the change. A premise that adds water near the badwater basin must re-check the
+  distance rule; the builders' `check` should.
+- `extras.placement` (moat 2): a relic, mine site or geothermal field ended within 2 tiles of the new
+  water. A lake builder must keep clear of map objects or move them; the recipes clear them by hand.
+- `water.settles` (moat 1): a lake whose outlet kept moving after 4 game days.
+- Spiral: "no place for the slope at step N" on one 128² base; the `spiral` builder should plan the
+  ramp and its slopes together.
+- North–south (96² seed 9): `start.water` 21 tiles from pumpable water, then `resources.scrap` short.
+  Moving the start and rebuilding the valley is laborious; the layout frame (M9) does it properly.
+- Spur narrows (96² seed 7): the spurs held 151 blocks against 380 on all three attempts. At 96² the
+  valley is too shallow for spurs of this size; the builder's limits must scale with the ground.
+
+What each proved, and what it needs:
+
+| Recipe | Proved | Needs |
+|---|---|---|
+| Island in a moat | A lake with an island (lake `islands`) builds a moat anywhere; ruins on the island make it a goal. | nothing new; a stamp |
+| Crater lake with an island | A gentle skirt, a cliff wall and a lake with an island read as a caldera. The lake stands high (level 15), so its outlet makes the map's tallest fall: 8 levels (median). | nothing new; a stamp |
+| Spiral mountain or quarry | A ramp of overlapping stepped landforms with pinned slopes, winding up (low ground) or down into a quarry (high ground). | `spiral` (a landform and a slope per step today) |
+| Heart lake | Any outline works for a lake, a heart included. | nothing new; outline shapes as stamps |
+| Badwater volcano | A cone with a badwater basin at its top replaces the base's basin, 14 tiles beyond the distance rule. Tallest fall 7 levels (median). | `cone` for a real crater and a spill down the flank |
+| Hanging lake on a mesa | A mesa with a tarn at level 15 whose outlet is routed down to the river: a 5-level fall (median). | nothing new, but the outlet routing is laborious |
+| Mesa field | 4–9 mesas of different heights, ruins on the two largest. | `mesaField` (spacing, tops big enough for ruins, the stair rule) |
+| Twin waterfalls | Two standalone falls side by side. Found that map objects are left floating beside new terrain. | the M8 clearing fix |
+| Oxbow lake | A crescent lake beside the river, spring-fed. | a real oxbow needs the river to loop (`switchback`, meanders) |
+| Valley running north to south | A valley, terraces, an upstream cascade, a dam site and falls along a north–south river, with today's builders. | the layout frame for 8 directions (M9) |
+| Dam narrows between two spurs | Two tapered, bent spurs make the dam site: the reservoir holds, and the obvious short dam goes. | `damSite` spurs mode (refinement) |
+
+Findings:
+
+1. **Premises pass.** Ten of eleven pass every seed; the narrows 96%. First try 87–100%. Nothing
+   here blocks M9's gate (≥ 98% over 100 seeds at four sizes); the builders' own limits and checks
+   should lift first-try rates.
+2. **Landmarks alone do not make maps diverge.** Each landmark adds at most 0.02 to River Valley's
+   V2; the north–south valley, which changes the skeleton, adds 0.075. All eleven mixed in lift the
+   theme from 0.29 to 0.33 of the workshop's V2, and from 0.20 to 0.53 of its V3 (landmarks counted).
+   M9's variety targets ask for both (M9 above).
+3. **Tall falls, not taller maps.** The crater, volcano and hanging lake add falls of 5–8 levels
+   (base median 1.9), but the height range stays 11. Taller premises need Relief raised (W7).
+4. **Flat-topped landforms.** Every ridge crest still sits at one level, and straight steps rise a
+   little (0.109 → 0.114–0.137; the north–south valley 0.219, from terraces along a straight river).
+   The new builders should vary crest heights and bend their edges, to the naturalness targets.
+5. **Obviousness changes only where the dam site does.** The spurs cut the ready short dam from 77%
+   to 35% of maps; every other recipe keeps the base's dam site. Reservoir help (W1) is its own change.
 
 ## 6. Kyler's ratings
 
@@ -398,4 +510,38 @@ map's own rating. Until the file exists, the default target in `score-params.jso
 
 ## 7. Message for the milestone session
 
-<!-- MESSAGE -->
+Paste this into the milestone session when M7 has closed (or at the next milestone boundary):
+
+> **Adopt the workshop study's integration plan at this milestone boundary.**
+>
+> Branch `investigation/workshop` (its PR into `dev`) holds a study of 130 Steam Workshop maps
+> against the official maps and our generator: `investigation/WORKSHOP.md` (findings),
+> `investigation/WORKSHOP-INTEGRATION.md` (the plan), `investigation/workshop.json` (numbers only)
+> and `investigation/workshop/` (tools, recipes, `score-params.json`, `settings-bands.json`,
+> `variety-scale.json`). It changes nothing in `src/` or `tests/`.
+>
+> Kyler's direction from the study (2026-09-24): maps should diverge sharply, never look like clones
+> (high entropy is a desirable setting), value variety, novelty and verticality, and leave reservoirs
+> to the player's engineering; an accessible water source stays a requirement.
+>
+> 1. Before the start-rules change, read `WORKSHOP-INTEGRATION.md` §2 and §3. Copy decisions W1–W8
+>    into `docs/decisions-pending.md` with their defaults, numbered after your own, and note the PLAN
+>    §20 decisions each one touches (D25, D30, D58, D59, D62, D4).
+> 2. Add the plan's text blocks to `ROADMAP.md` and `PLAN.md` where §3 says, milestone by milestone:
+>    the start-rule thresholds (start of M8), the approximate-water rule for imports (M8), the
+>    naturalness targets (Map look), M9's premises, flow directions, Variety (`vy`), Reservoir help
+>    (`rh`), score, names and variety target with their acceptance, the builders (M9, M11,
+>    refinement), the stamps (M11), the natural-containment targets (refinement), the Claude
+>    vocabulary (M12) and the ratings shape (M13). Keep the roadmap's order.
+> 3. When M9 builds the score, copy `investigation/workshop/score-fitted.json` if it exists, else
+>    `score-params.json`, into the app's data. Re-run `npx tsx investigation/workshop/fit-score.ts`
+>    whenever `C:\dgm-workshop\ratings.json` changes, and commit the new `score-fitted.json` with
+>    the change that uses it.
+> 4. Port only what a milestone needs, into `src/` or `tools/`, with tests: `lib/measures.ts`
+>    (mechanics flags, start quantities, score inputs), `lib/naturalness.ts`, `lib/variety.ts`,
+>    `lib/score.ts`, `obviousness.ts`. The recipes are reference implementations for the premises,
+>    builders and stamps, not code to ship as they are.
+> 5. Other creators' maps, renders and per-map numbers stay in `C:\dgm-workshop`; never commit
+>    them. Only aggregates and credited links are in the branch.
+> 6. Record what you adopt, change or reject in PLAN §20 as usual, and tell Kyler which W decisions
+>    are waiting for him.

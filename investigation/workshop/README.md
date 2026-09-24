@@ -15,6 +15,7 @@ python investigation/workshop/fetch_meta.py          # Workshop metadata → met
 npx tsx investigation/workshop/probe.ts              # version, era, size, templates, skip reasons → probe.json
 npx tsx investigation/workshop/measure.ts            # every map → measured\<key>.json and settled\<key>.f32
 python investigation/workshop/analyze_py.py          # the first investigation's analyze_maps.py on our settled water
+npx tsx investigation/workshop/measure-generated.ts  # the generator's seeds 1–30 per theme at 128², measured the same way
 ```
 
 `measure.ts` imports each map with the app's importer (`importDocument`), validates it with the app's
@@ -40,6 +41,10 @@ compared under the 8 rotations and mirrors, so a rotated copy is not new) and ha
 size-free numbers), each scaled so a typical pair of workshop maps is 1 apart. A set's variety is
 the mean distance over its pairs. The scale the product can reuse is in `variety-scale.json`.
 
+With `--extra`, it also reports what each recipe adds to River Valley's seeds, and V3: the same with a
+third term, the Jaccard distance between the maps' pattern sets (the catalogue's tags; a recipe's
+pattern), scaled by `patternP0`.
+
 ## Naturalness
 
 `lib/naturalness.ts` `naturalness(heights, W, H, depth, damSites, maxFlood)`: the longest straight
@@ -47,6 +52,10 @@ run of a height step and the share of steps in runs of 8+; ridges (thin raised b
 their thickness and crest height vary; the rims round natural basins and dam-site reservoirs, their
 thickness and height; the narrows' shoulders; shoreline straightness; ditches. All in tiles and
 levels, so any map size compares.
+
+```
+npx tsx investigation/workshop/narrows.ts     # the validator's dam site near the start: its shoulders and crests
+```
 
 ## Reservoir obviousness
 
@@ -83,12 +92,26 @@ editor's planners (`core/doc/tools.ts`), set pieces through the shared builders,
 edits. Up to 3 attempts per seed; the result is validated in the `generate` profile and measured like
 the workshop maps. `--only` reruns merge into the saved results.
 
+```
+npx tsx investigation/workshop/recipe-table.ts      # pass rates, variety gain, naturalness, obviousness (markdown)
+python investigation/workshop/sheets.py --recipes   # C:\dgm-workshop\sheets\recipes.png: one map per recipe
+```
+
 ## Renders, sheets, rating page, aggregate
 
 ```
 npx tsx investigation/workshop/render.ts            # top-down and 3D renders of every map (local)
 python investigation/workshop/sheets.py             # contact sheets for browsing
 npx tsx investigation/workshop/catalogue.ts         # pattern counts and credited examples
+npx tsx investigation/workshop/settings-bands.ts    # settings-bands.json: density rows and setting proposals
 npx tsx investigation/workshop/rating-page.ts       # C:\dgm-workshop\rate\index.html (never published)
 npx tsx investigation/workshop/aggregate.ts         # investigation/workshop.json (numbers only)
 ```
+
+## Rating maps
+
+1. Open `C:\dgm-workshop\rate\index.html` in a browser.
+2. Rate each of the 40 maps for **Fun** and **Unique** (1–5); a note is optional. Answers stay in the
+   browser as you go.
+3. Press **Save ratings.json** and save the file as `C:\dgm-workshop\ratings.json`.
+4. Run `npx tsx investigation/workshop/fit-score.ts`, and commit the `score-fitted.json` it writes.

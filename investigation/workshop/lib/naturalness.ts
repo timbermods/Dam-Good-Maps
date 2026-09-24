@@ -189,7 +189,7 @@ function ridgeStats(h: Uint8Array, W: number, H: number): { ridges: number; cv: 
 }
 
 /** Thickness and height of the ring round a set of tiles held at `level`. */
-function rimOf(h: Uint8Array, W: number, H: number, inside: Uint8Array, level: number, exclude?: Set<number>): { thick: number[]; high: number[]; tiles: number[] } {
+export function rimOf(h: Uint8Array, W: number, H: number, inside: Uint8Array, level: number, exclude?: Set<number>): { thick: number[]; high: number[]; tiles: number[] } {
   const N = W * H;
   const low = new Uint8Array(N);
   let any = false;
@@ -378,4 +378,28 @@ export function naturalness(h: Uint8Array, W: number, H: number, depth: ArrayLik
     shoreStraightShare8: shore,
     ditchShare: ditch,
   };
+}
+
+/** The narrows of one dam site: its dam line's length, the shoulders (rim tiles within 8 tiles of the
+ *  dam line: thickness CV and height std) and the ridge crests within 12 tiles of the line (crest
+ *  height std and band-width CV). Null when the site's reservoir cannot be flooded again. */
+export function narrowsOf(h: Uint8Array, W: number, H: number, s: DamSite, maxFlood: number): { length: number; shoulderCV: number; shoulderStd: number; crestStd: number | null; crestCV: number | null } | null {
+  const res = damReservoir(h, W, H, s, maxFlood);
+  if (!res) return null;
+  const r = rimOf(h, W, H, res.tiles, res.crest, res.line);
+  const line = [...res.line];
+  const nearLine = (t: number, d: number) => {
+    const x = t % W;
+    const y = (t - x) / W;
+    return line.some((l) => Math.max(Math.abs((l % W) - x), Math.abs(Math.floor(l / W) - y)) <= d);
+  };
+  const sh = r.tiles.map((t, k) => [t, k] as const).filter(([t]) => nearLine(t, 8));
+  if (sh.length < 4) return null;
+  const [m, sd] = meanStd(sh.map(([, k]) => r.thick[k]));
+  const cw = crestWidths(h, W, H);
+  const crest: number[] = [];
+  for (let i = 0; i < W * H; i++) if (cw[i] && nearLine(i, 12)) crest.push(i);
+  const cs = crest.length >= 5 ? meanStd(crest.map((i) => h[i]))[1] : null;
+  const cc = crest.length >= 5 ? (() => { const [cm, cd] = meanStd(crest.map((i) => cw[i])); return cm ? cd / cm : 0; })() : null;
+  return { length: line.length, shoulderCV: m ? sd / m : 0, shoulderStd: meanStd(sh.map(([, k]) => r.high[k]))[1], crestStd: cs, crestCV: cc };
 }

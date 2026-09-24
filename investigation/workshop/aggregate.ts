@@ -233,7 +233,10 @@ function popularity(): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [name, f] of HINT_FEATURES) {
     const vals = withMeta.map(f);
-    out[name] = { subscribersForAge: hint(vals, resid), withinAuthor: hint(vals, within), favouriteRate: hint(vals, fav), favouriteRateWithinAuthor: hint(vals, favWithin) };
+    // star ratings, where Steam shows them (items with enough votes)
+    const starred = withMeta.map((r, i) => [i, r.meta!.stars] as const).filter(([, st]) => typeof st === "number");
+    const stars = starred.length >= 20 ? hint(starred.map(([i]) => vals[i]), starred.map(([, st]) => st as number)) : null;
+    out[name] = { subscribersForAge: hint(vals, resid), withinAuthor: hint(vals, within), favouriteRate: hint(vals, fav), favouriteRateWithinAuthor: hint(vals, favWithin), stars };
   }
   // catalogue tags as features
   const tagNames = [...new Set(workshop.flatMap((r) => r.tags))].sort();
@@ -246,7 +249,7 @@ function popularity(): Record<string, unknown> {
   }
   const authors = [...byAuthor.values()].map((v) => v.length).sort((p, q) => q - p);
   return {
-    note: "Hints, never proof: Spearman rank correlations over workshop maps. 'subscribersForAge' is log lifetime subscribers after a fit on log age; 'withinAuthor' takes each prolific author's (3+ maps) own mean out; 'favouriteRate' is log favourites per lifetime subscriber, and 'favouriteRateWithinAuthor' the same with each prolific author's mean taken out. ci90 is a bootstrap interval; one that spans 0 is noise.",
+    note: "Hints, never proof: Spearman rank correlations over workshop maps. 'subscribersForAge' is log lifetime subscribers after a fit on log age; 'withinAuthor' takes each prolific author's (3+ maps) own mean out; 'favouriteRate' is log favourites per lifetime subscriber, and 'favouriteRateWithinAuthor' the same with each prolific author's mean taken out. 'stars' is Steam's 1-5 star rating, where an item has enough votes to show one. ci90 is a bootstrap interval; one that spans 0 is noise.",
     maps: withMeta.length,
     ageFit: { intercept: Math.round(a * 100) / 100, slopePerLogDay: Math.round(b * 100) / 100 },
     authors: { distinct: byAuthor.size, largestShares: authors.slice(0, 3) },
@@ -356,6 +359,7 @@ const out = {
   popularity: popularity(),
   reservoirs: reservoirs(),
   verticality: verticality(),
+  analyzeMaps: optional("analyze_py-aggregate.json"),
   catalogue: optional("catalogue-aggregate.json"),
   variety: optional("variety.json"),
   score: optional("score.json"),

@@ -391,3 +391,28 @@ export function topUpBushes(ctx: RecipeContext): void {
   const feature = { id: newId(ctx), kind: "berryPatch", origin: "user", locked: false, params: { area: tilesToRuns(pick, W), density: 0.6, ripeShare: 0.55 } } as Feature;
   apply(ctx, [{ op: "addFeature", params: { feature } }], "berries to make up for the cleared ones");
 }
+
+/** Put back the start's food a premise cleared or dried out: when the living berry bushes within 20
+ *  tiles of the start fall below 1.2× the difficulty's rule (start.food), add a patch on moist, dry
+ *  ground 5–14 tiles from the start. */
+export function topUpStartFood(ctx: RecipeContext): void {
+  const { W, H } = ctx;
+  const b = ctx.session.built;
+  const st = startOf(ctx);
+  const want = 1.2 * ctx.spec.settings.start.rules.bushesWithin20;
+  const near = b.entities.filter((e) => e.template === "BlueberryBush" && Math.hypot(e.x - st[0], e.y - st[1]) <= 20 && !(e.components.LivingNaturalResource as { IsDead?: boolean } | undefined)?.IsDead).length;
+  if (near >= want) return;
+  const pc = planContextOf(ctx.session);
+  const tiles: number[] = [];
+  for (let y = Math.max(0, st[1] - 14); y <= Math.min(H - 1, st[1] + 14); y++) {
+    for (let x = Math.max(0, st[0] - 14); x <= Math.min(W - 1, st[0] + 14); x++) {
+      const i = y * W + x;
+      const d = Math.hypot(x - st[0], y - st[1]);
+      if (d < 5 || d > 14 || pc.occupied?.[i] || pc.channel?.[i] || b.water[i] >= 0.05 || !(b.moisture[i] > 0)) continue;
+      tiles.push(i);
+    }
+  }
+  if (tiles.length < 10) return;
+  const feature = { id: newId(ctx), kind: "berryPatch", origin: "user", locked: false, params: { area: tilesToRuns(tiles, W), density: 0.5, ripeShare: 1 } } as Feature;
+  apply(ctx, [{ op: "addFeature", params: { feature } }], "berries near the start");
+}

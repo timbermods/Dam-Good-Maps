@@ -19,14 +19,14 @@ const pct = (x: number) => `${Math.round(100 * x)}%`;
 const gen = readGenerated().filter((r) => r.theme === "riverValley");
 const med = (v: (number | null)[]) => stat(v, 3).median;
 
-console.log("| Recipe | Pattern | ✦ | 96² | 128² | 256² | Final | First try | Variety gain | Novelty |");
+console.log("| Recipe | Pattern | ✦ | 96² | 128² | 256² | Final | First try | Gain to River Valley's variety | Novelty |");
 console.log("|---|---|---|---|---|---|---|---|---|---|");
 for (const r of RECIPES) {
   const a = agg[r.id];
   if (!a) continue;
   const s = (z: number) => (a.bySize[z] ? `${a.bySize[z].final}/${a.bySize[z].runs}` : "–");
   const v = variety.recipes?.[r.id];
-  console.log(`| ${a.name} | ${r.pattern} | ${r.whimsical ? "✦" : ""} | ${s(96)} | ${s(128)} | ${s(256)} | ${pct(a.finalPass)} | ${pct(a.firstPass)} | ${v ? `+${v.gain.toFixed(3)}` : "–"} | ${v ? v.nearestGeneratedMedian.toFixed(2) : "–"} |`);
+  console.log(`| ${a.name} | ${r.pattern} | ${r.whimsical ? "✦" : ""} | ${s(96)} | ${s(128)} | ${s(256)} | ${pct(a.finalPass)} | ${pct(a.firstPass)} | ${v ? `${v.themeGain >= 0 ? "+" : ""}${v.themeGain.toFixed(3)}` : "–"} | ${v ? v.nearestGeneratedMedian.toFixed(2) : "–"} |`);
 }
 console.log("");
 console.log("| Recipe | Straight steps (8+) | Ridge crest std | Height range | Tallest fall | Holding dam ≤ 5 tiles near the start |");

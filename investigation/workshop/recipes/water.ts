@@ -6,7 +6,7 @@ import { RUIN_HEIGHT_SHARES } from "../../../src/core/gen/calibrated";
 import { tilesToRuns } from "../../../src/core/math/grid";
 import type { EditOp } from "../../../src/core/doc/ops";
 import type { Feature, LandformFeature, Point, RiverFeature, StartFeature } from "../../../src/core/features/schema";
-import { addLake, addPiece, addRiver, apply, band, circle, findSpot, forbidden, newId, RecipeFailure, type Recipe, type RecipeContext } from "./lib";
+import { addLake, addPiece, addRiver, apply, band, circle, clearResources, findSpot, forbidden, newId, RecipeFailure, type Recipe, type RecipeContext } from "./lib";
 
 const scaleOf = (ctx: RecipeContext) => Math.min(ctx.W, ctx.H) / 128;
 
@@ -53,6 +53,7 @@ export const oxbowLake: Recipe = {
       for (let i = 0; i < mask.length && ok; i++) if (mask[i] && blocked[i]) ok = false;
       if (!ok) continue;
       try {
+        clearResources(ctx, outline, 3);
         addLake(ctx, { outline, floorDepth: 2, spring: 0.25 }, "oxbow lake");
         return;
       } catch (e) {
@@ -183,7 +184,7 @@ export const northSouth: Recipe = {
     ];
     apply(ctx, ops, "berries and groves near the start");
     const blocked = forbidden(ctx, 30);
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 6; k++) {
       const spot = findSpot(ctx, 6 * s + 2, blocked, (x, y) => field.d[y * W + x]);
       if (!spot) break;
       const disc = circle(spot[0], spot[1], 6 * s + 1, 16);

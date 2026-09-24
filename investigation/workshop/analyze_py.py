@@ -87,6 +87,34 @@ def main():
         done += 1
         print(f"{key:24s} {time.time() - t0:6.1f}s {'ERROR ' + r['error'] if 'error' in r else ''}", flush=True)
     print(f"analyzed {done}")
+    write_aggregate()
+
+
+def write_aggregate():
+    """Group statistics with analyze_maps.aggregate (the first investigation's own summary), for
+    official, workshop, and workshop by era: numbers only, copied into investigation/workshop.json."""
+    rows = []
+    for name in sorted(os.listdir(OUT)):
+        with open(os.path.join(OUT, name), encoding="utf-8") as f:
+            r = json.load(f)
+        if "error" in r:
+            continue
+        with open(os.path.join(ROOT, "measured", name), encoding="utf-8") as f:
+            m = json.load(f)
+        r["_era"] = m.get("era")
+        rows.append(r)
+    groups = {
+        "official": [r for r in rows if r["source"] == "official"],
+        "workshop": [r for r in rows if r["source"] == "workshop"],
+        "workshop_pre10": [r for r in rows if r["source"] == "workshop" and r["_era"] == "pre-1.0"],
+        "workshop_10": [r for r in rows if r["source"] == "workshop" and r["_era"] == "1.0+"],
+    }
+    out = {"note": "investigation/analyze_maps.py aggregate() over each group, on our canonical settle's water (analyze_py.py)",
+           "errors": sum(1 for n in os.listdir(OUT) if "error" in json.load(open(os.path.join(OUT, n), encoding="utf-8"))),
+           "groups": {k: {kk: vv for kk, vv in am.aggregate(v).items() if kk != "maps"} | {"n": len(v)} for k, v in groups.items() if v}}
+    with open(os.path.join(ROOT, "analyze_py-aggregate.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f, indent=1, default=lambda o: o.tolist() if hasattr(o, "tolist") else str(o))
+    print("wrote analyze_py-aggregate.json")
 
 
 if __name__ == "__main__":
