@@ -1,9 +1,46 @@
 # Progress
 
-Overnight run of 2026-09-24: M1 check, then M2, M3 and M4 on branch `dev`. Each milestone is
+Overnight runs of 2026-09-24 on branch `dev`: run 1 checked M1 and built M2–M4; run 2 builds M5–M11. Each milestone is
 tagged `m<N>-done` when all of its acceptance criteria pass.
 
-<!-- RUN SUMMARY: written at the end of the run -->
+## Run summary
+
+**Run 1 (M1 check, then M2–M4) finished on 2026-09-24. Every milestone passed.**
+
+| Milestone | Tag | Result |
+|---|---|---|
+| M1 Shared core and end-to-end slice | `m1-done` | All criteria pass |
+| M2 Water, playability and validation profiles | `m2-done` | All criteria pass |
+| M3 Map document and operations engine, delivery spike | `m3-done` | All criteria pass; spike questions 4–5 need you (below) |
+| M4 Shared 3D view and editor shell | `m4-done` | All criteria pass |
+
+Before tagging each milestone, the run re-checked it: typecheck, all unit and contract tests, all
+browser tests, and the full oracle. The oracle is 150 maps, with 0 disagreements between the
+Python and TypeScript validators on 50 generated and 19 official maps. CI is green on `dev`.
+
+- **Where it stopped:** after M4, as planned. No criterion failed. The queued second run
+  (M5–M11) continues on `dev`.
+- **What you need to do:** see "What Kyler needs to do" at the end of this file.
+  1. Turn on Pages from Actions.
+  2. Play the pending in-game checks: A and F2 (`out/m1/`), and B (`out/m2/`).
+  3. Run the M3 spike page signed in. The live `sample` call and public sharing need your
+     account and consent.
+  4. Answer the pending decisions.
+- **Pending decisions:** 10, in [decisions-pending.md](decisions-pending.md). The run went ahead
+  with each default.
+  1. Hard's 3-deep reservoir rule is deferred to M6.
+  2. The advisory `plants.drought` warns on every River Valley map.
+  3. Imports get approximate survival checks.
+  4. The badwater sits far east.
+  5. Multi-colony export follows the vanilla rule (superseded by #8).
+  6. What a lock keeps.
+  7. Imports are stamped 1.1.2.4.
+  8. An import's own problems never block its export.
+  9. Import water checks wait for M8.
+  10. Autosave keeps one map.
+- **Note:** another session added `CLAUDE.md` (the writing rule and "never launch Timberborn")
+  to `main` in PR #1. `dev` does not include it, and doesn't touch that file either, so merging
+  `dev` into `main` brings both together without conflict. The run followed both rules.
 
 ## M1: shared core and end-to-end slice (tag `m1-done`)
 
