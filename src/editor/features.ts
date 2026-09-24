@@ -38,7 +38,7 @@ function speciesList(mix: Record<string, number | undefined>): string {
     .filter(([, v]) => (v ?? 0) > 0)
     .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
     .map(([k]) => SPECIES[k] ?? k.toLowerCase());
-  return names.length > 2 ? `${names.slice(0, 2).join(", ")} and more` : names.join(" and ");
+  return names.length > 2 ? "mixed" : names.join(" and ");
 }
 
 /** A feature's plain name ("Plateau", "Pine forest", "River"). */

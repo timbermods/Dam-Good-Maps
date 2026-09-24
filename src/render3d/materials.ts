@@ -73,7 +73,7 @@ export function terrainMaterial(W: number, H: number, lo: number, hi: number, ov
         float f = fract(v);
         float d = min(f, 1.0 - f);
         float w = fwidth(v);
-        float fade = 1.0 - smoothstep(0.12, 0.35, w);
+        float fade = 1.0 - smoothstep(0.05, 0.14, w);
         return (1.0 - smoothstep(width, width + w * 1.5, d)) * fade;
       }
       void main() {

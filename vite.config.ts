@@ -10,5 +10,7 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: true,
+    // the 3D view's chunk (three.js) is about 570 KB; it loads only when a player opens 3D
+    chunkSizeWarningLimit: 700,
   },
 });
