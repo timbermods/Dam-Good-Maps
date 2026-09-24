@@ -1,0 +1,99 @@
+# Progress
+
+Overnight run of 2026-09-24: M1 check, then M2, M3 and M4 on branch `dev`. Each milestone is
+tagged `m<N>-done` when all of its acceptance criteria pass.
+
+<!-- RUN SUMMARY: written at the end of the run -->
+
+## M1: shared core and end-to-end slice (tag `m1-done`)
+
+**Built** (branch `m1-core`, from `main` at b6f2e21):
+- **Project.** Vite 8, TypeScript 5.9, Preact, a Comlink worker, fflate, Vitest and Playwright.
+  The site builds to `dist/` with base `/dam-good-maps/`.
+- **Deterministic core** (`src/core/math`):
+  - sfc32/splitmix32 RNG streams and murmur3 hashing, for feature ids and entity GUIDs;
+  - `sin`, `exp` and `ln` from basic operations (D15);
+  - integer-hash value noise, and grid helpers.
+- **Format** (`src/core/format`):
+  - a C#-compatible float formatter and JSON parser;
+  - `world.json` encode and decode (voxels, the legacy 0.6 `Heights`, the 1.1 singletons with
+    `WaterSimulationMigrator`);
+  - a `.timber` reader and writer with fixed zip mtimes;
+  - the footprint transform for every map template;
+  - entity builders;
+  - the vendored jpeg-js thumbnail (D20).
+- **Spec** (`src/core/spec`): MapSpec v1, its JSON Schema, defaults and presets, and the URL
+  codec. `colonies` is reserved for Timber Together (D5).
+- **Features** (`src/core/features`):
+  - the feature schema v1: river, lake, landform, setPiece (damSite, on-river waterfall), forest,
+    berryPatch, ruinField, start (with `player`);
+  - stable ids;
+  - the build pipeline, steps 1–5, 7–9, 11–12 and 14;
+  - derived slopes;
+  - sealed-mouth sources;
+  - moisture from planned water (a priority flood).
+- **River Valley** (`src/core/gen/riverValley.ts`): the prototype's layout, ported as a feature
+  planner. Ruin fields, berry patches and groves are placed with the calibrated size-aware
+  densities.
+- **Validation** (`src/core/validate`): the load class (file, terrain, entities with the
+  placement emulation, slopes, start) and the design checks `terrain.max_height` and
+  `terrain.single_floor`, in the `generate` profile.
+- **Project file** (`.damgoodmaps.json`, gzip): the spec, the features and the built base.
+  Rebuilding from it reproduces the `.timber`.
+- **Website:**
+  - settings (seed, size, theme, designed-for);
+  - a 2D preview with layers, feature outlines and hover labels;
+  - a map card with the validation report;
+  - downloads of the `.timber` and of the project file;
+  - install help;
+  - the spec in the URL hash.
+- **Tools:**
+  - `tools/gen.ts` (batch generation);
+  - `tools/oracle.ts` (the Python oracle);
+  - `tools/bench.ts`;
+  - `tools/ingame-files.ts` (writes the in-game check files);
+  - `prototype/calibrated.py` aligned (D9).
+- **CI** (`.github/workflows/ci.yml`, every push) and the **Pages deploy**
+  (`.github/workflows/deploy.yml`, from `main`).
+
+**Acceptance:**
+
+| Criterion | Result |
+|---|---|
+| 50 seeds × 3 sizes pass `validate.py` load checks and `roundtrip_test.py` | **pass**: 150/150 maps (96², 128², 256²), 0 load failures, 0 round-trip failures (`npm run oracle`) |
+| Identical sha256 in Node and Chromium for 10 seeds | **pass**: 10 seeds over 96², 128² and 256², through the page's worker (`tests/e2e/determinism.spec.ts`, local Chrome) |
+| Rebuilding from the downloaded project file reproduces the `.timber` byte for byte | **pass**: `tests/contract/features.test.ts` (3 maps) |
+| Removing one ruin field leaves every other feature and entity id unchanged | **pass**: `tests/contract/features.test.ts` |
+| 128² generates in < 3 s | **pass**: 85 ms median, 131 ms max, Node (`npm run bench`); about 250 ms in the browser |
+| The PLAN §15 contract tests that apply are green | **pass**: 66 unit and contract tests (schema vs Ajv, feature round trip, build equality, determinism) |
+
+**Deviations** (the plan is updated to match): PLAN §20 D15–D23.
+- D15: the deterministic sine is a Taylor polynomial through x¹⁷, not a 7th-order minimax fit.
+- D16: an eval-free runtime schema checker; Ajv runs in the tests only.
+- D17: entity `localIndex` is the tile index.
+- D18: the project file's base holds heights only in M1.
+- D19: River Valley is the prototype layout (a west-to-east river, no badwater or map objects
+  yet).
+- D20: jpeg-js is vendored.
+- D21: slopes use the prototype's reach rule. M2 revisits it with §7.5.
+- D22: Playwright uses the local Chrome, and CI runs a 5-seed oracle subset.
+- D23: Pages deploys from `main` only.
+
+**Look at:**
+- The in-game checks A1–A5 and F2 are pending ([ingame-log.md](ingame-log.md)). The files are
+  in `out/m1/`.
+- Pages is not enabled yet. See "What Kyler needs to do" below.
+
+---
+
+## What Kyler needs to do
+
+Things the run can't do itself. Each has the exact steps.
+
+1. **Turn on GitHub Pages from Actions.** Pages is a repository setting, so the run leaves it to
+   you. On <https://github.com/timbermods/dam-good-maps/settings/pages>, under **Build and
+   deployment → Source**, choose **GitHub Actions**. Then either merge `dev` into `main` or
+   start the workflow by hand: Actions → "Deploy to GitHub Pages" → Run workflow → branch
+   `main`. The site appears at <https://timbermods.github.io/dam-good-maps/>. The workflow only
+   deploys `main` (D23).
+2. **Play the pending in-game checks** when you're ready. See [ingame-log.md](ingame-log.md).
