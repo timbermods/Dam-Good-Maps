@@ -183,7 +183,9 @@ export function encodeWorld(w: WorldModel): string {
   return stringify({ GameVersion: w.gameVersion, Timestamp: w.timestamp, Singletons: singletons, Entities: w.entities });
 }
 
-export function decodeWorld(text: string): WorldModel {
+/** Decode world.json. `terrain` supplies the voxels instead of TerrainMap (the project file stores
+ *  a map's terrain as heights plus its multi-run columns, and its world.json without the array). */
+export function decodeWorld(text: string, tv?: { voxels: Uint8Array; layers: number }): WorldModel {
   const root = parse(text);
   if (!isObject(root)) throw new Error("world.json is not an object");
   const s = root.Singletons;
@@ -197,7 +199,10 @@ export function decodeWorld(text: string): WorldModel {
   let voxels: Uint8Array;
   let layers: number;
   let legacy = false;
-  if (isObject(terrain) && isObject(terrain.Voxels)) {
+  if (tv) {
+    voxels = tv.voxels;
+    layers = tv.layers;
+  } else if (isObject(terrain) && isObject(terrain.Voxels)) {
     voxels = decodeVoxels(String(terrain.Voxels.Array));
     if (voxels.length % (sizeX * sizeY)) throw new Error(`voxel count ${voxels.length} is not a multiple of ${sizeX}x${sizeY}`);
     layers = voxels.length / (sizeX * sizeY);
