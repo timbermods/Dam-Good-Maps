@@ -17,9 +17,10 @@ Each preview PNG is drawn north up at 5 pixels per tile, with a dotted white gri
 
 ## M1: shared core and end-to-end slice
 
-The files are in [out/m1/](../out/m1/). Remake them with `npx tsx tools/ingame-files.ts`: the
-bytes are deterministic, and [out/m1/checks.txt](../out/m1/checks.txt) lists their sha256, the
-start, every slope and every source.
+The files are in [out/m1/](../out/m1/), made with generator 0.1.0 (tag `m1-done`). Remake them
+from that tag with `npx tsx tools/ingame-files.ts`: the bytes are deterministic, and
+[out/m1/checks.txt](../out/m1/checks.txt) lists their sha256, the start, every slope and every
+source. (Generator 0.2.0 changes every map; `--milestone m1` writes the same set with it.)
 
 - **`River Valley (4242).timber`:** 128 × 128, seed 4242, Normal, generator 0.1.0.
 - **`River Valley (4242).png`:** a preview of that map:
@@ -53,15 +54,58 @@ its sources during the first minutes of play.
 
 ## M2: water, playability and validation profiles
 
-Checks B1–B4 of PLAN §18: pre-filled water, tree survival, and the A/B file with empty water.
-M2 adds its files here.
+Checks B1–B4 of PLAN §18: pre-filled water, tree survival, the A/B file with empty water, and
+badwater staying downstream. The files are in [out/m2/](../out/m2/), made with generator 0.2.0.
+Remake them with `npx tsx tools/ingame-files.ts --milestone m2`; [out/m2/checks.txt](../out/m2/checks.txt)
+lists their sha256 and every coordinate below.
+
+- **`River Valley (4242).timber`:** 128 × 128, seed 4242, Normal. Water, soil moisture and soil
+  contamination are pre-filled with the canonical settle (PLAN §19.7), as official maps ship.
+- **`River Valley (4242) (empty water).timber`:** the same map with no water, moisture or
+  contamination in the file. The website offers it as "Without pre-filled water".
+- **`River Valley (4242).png`:** north up, 5 pixels per tile, grid every 16 tiles:
+  - water blue, badwater brown;
+  - start white, door red;
+  - living trees green, dead trees grey-brown;
+  - living berry bushes within 20 tiles of the start purple;
+  - the badwater source (3 × 3) and its ditch magenta;
+  - the best dam site orange;
+  - the river depth samples and the nearest pumpable water cyan.
+
+What the files should show (from `checks.txt`):
+- The start: StartingLocation at (47, 30), door (46, 31). The nearest pumpable clean water is
+  (42, 38), 0.49 deep, 9.2 tiles away.
+- River depths after the settle, west to east:
+  - (2, 78) 0.49;
+  - (32, 45) 0.42;
+  - (58, 53) 0.46;
+  - (83, 64) 0.42;
+  - (109, 89) 0.75, badwater 81%;
+  - (125, 67) 0.68, badwater 40%.
+- 77 living berry bushes within 20 tiles of the start, for example (37, 33)–(40, 33).
+- Living groves: 139 Pine around (34, 27), 70 Birch around (58, 63), 64 Pine around (22, 86)
+  and 49 Oak around (71, 64). Dead stands: 98 Pine around (56, 121), 53 Pine around (120, 2),
+  32 Oak around (10, 115) and 31 Birch around (72, 2).
+- The badwater source at (107, 93)–(109, 95), strength 2.34, in a pit whose 2-tile ditch runs
+  into the river near the east edge. The nearest badwater or contaminated soil is 81 tiles from
+  the start.
+- The map has no natural lake (the basin behind the gorge stays dry until the player dams it), so
+  B1's "lake levels" means the river's pools between the falls.
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| B1 | Start the pre-filled file. | The rivers flow on day 1 without a visible surge or drain. The lake levels stay put over the first day. The berry bushes near the start are not flagged dry. | set by M2 | pending |
-| B2 | Start the `(empty water)` file. | The rivers fill within about a day, and the same trees survive. | set by M2 | pending |
-| B3 | Play 15 days. | The living groves near the river are alive. The dead stands are still dead, with logs. | set by M2 | pending |
-| B4 | Watch the badwater marsh. | It stays downstream, and the start's water stays clean. | set by M2 | pending |
+| B1 | Start Folktails on Normal with the pre-filled file and watch the first day. Compare the river with the PNG and the depth samples. | The river runs from the first tick, with no surge from the sources and no drain toward the edges. The pools between the cascade, the gorge and the falls keep their level through the day. The depths at the sample tiles are close to the listed values. No berry bush within 20 tiles of the start is flagged dry. | `River Valley (4242).timber`, `.png` | pending |
+| B2 | Start the `(empty water)` file the same way. | The river fills from the west edge within about a day and then looks like the pre-filled file. The same trees and bushes survive (a dry timer that starts before the water arrives resets). | `River Valley (4242) (empty water).timber` | pending |
+| B3 | Play either file for 15 days. | The living groves listed above are alive, and so are the berry bushes near the start. The dead stands are still dead and can be cut for logs. The first drought, if it comes in these days, is short and nothing near the river dies. | `River Valley (4242).timber` | pending |
+| B4 | Watch the badwater source at (107, 93) and the river below it. | The badwater stays in its pit, the ditch and the river downstream of it, and leaves off the east edge. The water at the start (42, 38) stays clean. | `River Valley (4242).timber` | pending |
+
+**Automated stand-ins used meanwhile (all green at M2):**
+- the water port against the game's own save: 975 ticks from empty reproduce its water within
+  0.001, with the same 470 wet tiles (`tests/unit/water.test.ts`, local only);
+- the golden fixtures against the Python reference, bit for bit after 50, 200 and 975 ticks;
+- the `generate` profile, now with every playability check (PLAN §11.3–11.4);
+- the Python oracle: both validators agree check by check on 50 generated maps and the 19 official
+  maps (`npm run oracle`).
 
 ## M5: set pieces, land and water tools, slopes, fixes
 

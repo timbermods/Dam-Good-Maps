@@ -14,7 +14,10 @@
     "test:e2e": "playwright test",
     "gen": "tsx tools/gen.ts",
     "oracle": "tsx tools/oracle.ts",
-    "bench": "tsx tools/bench.ts"
+    "bench": "tsx tools/bench.ts",
+    "bench:water": "tsx tools/bench.ts --water",
+    "batch": "tsx tools/batch.ts",
+    "fixtures": "python tools/export-fixtures.py"
   },
   "dependencies": {
     "@preact/signals": "^2.11.2",

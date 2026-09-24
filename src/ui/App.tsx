@@ -37,7 +37,7 @@ const LAYER_NAMES: Record<keyof Layers, string> = {
 declare global {
   interface Window {
     /** Test hook: generate a map from a URL fragment and return its sha256 (tests/e2e). */
-    dgm?: { generate(fragment: string): Promise<{ sha256: string; bytes: number; passed: boolean }> };
+    dgm?: { generate(fragment: string): Promise<{ sha256: string; bytes: number; passed: boolean; ms: number; ticks: number }> };
   }
 }
 window.dgm = {
@@ -45,7 +45,7 @@ window.dgm = {
     const d = decodeSpecFragment(fragment);
     if (!d) throw new Error("bad fragment");
     const r = await generator.generate(d.spec);
-    return { sha256: r.sha256, bytes: r.timber.length, passed: r.passed };
+    return { sha256: r.sha256, bytes: r.timber.length, passed: r.passed, ms: r.ms, ticks: r.facts.settle.ticks };
   },
 };
 
