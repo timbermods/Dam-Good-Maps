@@ -5,7 +5,7 @@
 //
 // The ridge is a straight band square to the valley's axis (the line from the river's source to its
 // outlet), as in the prototype, so a river that runs along the axis crosses it exactly once. Each
-// end runs on until it has gone SEAL tiles into ground at least one level above the useful crest
+// end runs on until it has gone SEAL tiles into ground at least as high as the useful crest
 // (terrain from build step 2), so the reservoir cannot leak round it (PLAN §20, D25). A band that
 // followed the river's arc position (M1) broke up on the inside of bends.
 
@@ -59,7 +59,7 @@ export const damSite: SetPieceBuilder = {
     const ty = ay / al;
     const nx = -ty; // across it
     const ny = tx;
-    const high = bedAt(river.params.bedProfile, p.at) + p.crest + 1;
+    const high = bedAt(river.params.bedProfile, p.at) + p.crest; // ground at the crest holds the water
     const half = p.thickness / 2 + p.wobble;
     // how far the ridge reaches on each side: SEAL tiles into high ground, at most halfSpan
     const reach = [0, 0];
