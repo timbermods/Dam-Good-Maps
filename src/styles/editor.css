@@ -1,0 +1,752 @@
+/* M4: the 3D view, the editor shell and their dialogs. Same palette as app.css; the full design
+   pass comes in roadmap M13. */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+label.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  position: relative;
+}
+
+label.button:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.settings label.button {
+  display: flex;
+  margin: 12px 0 0;
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+button.linkish {
+  border: none;
+  padding: 0 2px;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.danger {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.banner span {
+  flex: 1 1 260px;
+}
+
+.view-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.view-bar .layers {
+  margin: 0;
+}
+
+.segmented {
+  display: inline-flex;
+}
+
+.segmented button {
+  border-radius: 0;
+  padding: 5px 14px;
+}
+
+.segmented button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.segmented button:last-child {
+  border-radius: 0 6px 6px 0;
+  margin-left: -1px;
+}
+
+/* the 3D view */
+
+.view3d {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--map-bg);
+}
+
+.view3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.view3d canvas:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.preview3d {
+  height: min(72vh, 760px);
+  min-height: 360px;
+}
+
+.view3d-controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.view3d-controls button,
+.handles button,
+.tool-hint,
+.readout,
+.working {
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+}
+
+.view3d-controls button {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+}
+
+.view3d-controls button[aria-pressed="true"] {
+  background: var(--accent);
+}
+
+.compass {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+}
+
+.compass .needle {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.compass .needle span {
+  margin-top: 2px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--bad);
+}
+
+.compass .needle::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 13px solid var(--bad);
+}
+
+.readout {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.view3d-error {
+  position: absolute;
+  inset: 40% 10% auto;
+  text-align: center;
+  color: var(--bad);
+  font-weight: 600;
+}
+
+/* the editor */
+
+.editor {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  background: var(--bg);
+}
+
+.editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.editor-title {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.editor-title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pill {
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pill.ok {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.pill.warn {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.pill.bad {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.pill.wait {
+  color: var(--muted);
+}
+
+.editor-main {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  border-right: 1px solid var(--rule);
+  background: var(--panel);
+  min-height: 0;
+}
+
+.tablist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 6px;
+  border-right: 1px solid var(--rule);
+}
+
+.tablist button {
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.tablist button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.tabpanel {
+  padding: 12px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.tabpanel h2 {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+.tools {
+  margin-bottom: 14px;
+}
+
+.tool-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tool-options label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.tool-options select,
+.tool-options input[type="range"],
+.tool-options input[type="number"],
+.inspector input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.tool-options select,
+.tool-options input[type="number"],
+.inspector input[type="number"] {
+  padding: 5px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.feature-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list li {
+  padding: 2px 0;
+}
+
+.feature-list button {
+  text-align: left;
+}
+
+.feature-list button[aria-current="true"] {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.tag-user {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.editor-map {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editor-view {
+  position: absolute;
+  inset: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.handles {
+  position: absolute;
+  display: flex;
+  gap: 6px;
+  transform: translate(-50%, -115%);
+}
+
+.handles .handle {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.handle.move {
+  cursor: grab;
+}
+
+.handle.move.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.handle.delete {
+  color: var(--bad);
+}
+
+.tool-hint,
+.working {
+  position: absolute;
+  top: 54px;
+  left: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.working {
+  left: auto;
+  right: 64px;
+  top: 16px;
+}
+
+.inspector {
+  position: absolute;
+  top: 64px;
+  right: 10px;
+  width: 250px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+}
+
+.inspector header,
+.history header,
+.dialog header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspector h2,
+.history h2,
+.dialog h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.inspector label {
+  display: block;
+  margin: 8px 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.inspector p {
+  margin: 6px 0;
+}
+
+.editor-message,
+.editor-notices {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(640px, 90%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+}
+
+.editor-message {
+  bottom: 52px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.editor-message.error {
+  color: var(--bad);
+  border-color: var(--bad);
+  font-weight: 600;
+}
+
+.editor-notices {
+  top: 64px;
+  font-size: 0.9rem;
+}
+
+.editor-notices p,
+.editor-notices ul {
+  margin: 0 0 6px;
+}
+
+.history {
+  width: 290px;
+  padding: 12px;
+  border-left: 1px solid var(--rule);
+  background: var(--panel);
+  overflow-y: auto;
+}
+
+.history ol,
+.history ul {
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.history li {
+  margin: 3px 0;
+}
+
+.history li.undone button {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.history button[aria-current="true"] {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.orphan {
+  margin: 2px 0;
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+
+/* M5: the tool preview, the problems an edit made, the start's indicators, map layers */
+
+.preview-card,
+.instant {
+  position: absolute;
+  left: 10px;
+  bottom: 52px;
+  width: min(360px, 80%);
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.preview-card h2,
+.instant h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.preview-card ul,
+.instant ul,
+.inspector .report {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.preview-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.instant {
+  left: auto;
+  right: 10px;
+  bottom: 52px;
+  border-color: var(--bad);
+}
+
+.instant header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.instant h2 {
+  color: var(--bad);
+}
+
+.start-indicators {
+  position: absolute;
+  left: 10px;
+  top: 96px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.start-indicators p {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.start-indicators .ok {
+  color: var(--ok);
+}
+
+.start-indicators .bad,
+.start-indicators .low {
+  color: var(--bad);
+}
+
+.start-indicators ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.layer-toggle {
+  margin: 0 0 12px;
+}
+
+.inspector select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+.inspector details {
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+
+.tool-options .check,
+.inspector .check {
+  font-weight: 400;
+}
+
+/* dialogs */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 16, 10, 0.45);
+}
+
+.dialog {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.dialog h3 {
+  margin: 12px 0 4px;
+  font-size: 0.95rem;
+}
+
+.dialog ul {
+  margin: 4px 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.checks.bad h3 {
+  color: var(--bad);
+}
+
+.checks.warn h3 {
+  color: var(--warn);
+}
+
+.ok-line {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.error.floating {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  background: var(--panel);
+  padding: 8px 14px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 900px) {
+  .editor {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .editor-main {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .editor-map {
+    height: 70vh;
+  }
+
+  .history {
+    width: auto;
+    border-left: none;
+    border-top: 1px solid var(--rule);
+  }
+}

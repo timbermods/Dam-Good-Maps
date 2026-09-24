@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://timbermods.github.io/dam-good-maps/schema/mapspec-v1.json",
+  "title": "Dam Good Maps MapSpec v1",
+  "description": "Everything that determines a generated map (PLAN.md §19.1). Hard bounds are the ranges in PLAN.md §5.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specVersion", "generatorVersion", "seed", "size", "theme", "archetype", "designedFor", "settings", "colonies", "setPieces", "constraints"],
+  "properties": {
+    "specVersion": { "const": 1 },
+    "generatorVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 48, "maximum": 256 },
+        "y": { "type": "integer", "minimum": 48, "maximum": 256 }
+      }
+    },
+    "theme": { "enum": ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"] },
+    "archetype": { "enum": ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"] },
+    "premise": { "type": "string" },
+    "designedFor": { "enum": ["easy", "normal", "hard"] },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terrain", "water", "hazards", "resources", "start"],
+      "properties": {
+        "terrain": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["relief", "highestTerrain", "terracing", "buildableLand"],
+          "properties": {
+            "relief": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "highestTerrain": { "type": "integer", "minimum": 10, "maximum": 16 },
+            "terracing": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "buildableLand": { "enum": ["tight", "normal", "generous"] }
+          }
+        },
+        "water": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rivers", "riverStyle", "riverFlow", "droughtReserve", "lakes", "waterfalls"],
+          "properties": {
+            "rivers": { "type": "integer", "minimum": 0, "maximum": 3 },
+            "riverStyle": { "enum": ["straight", "meandering", "braided"] },
+            "riverFlow": { "enum": ["trickle", "normal", "strong", "lush"] },
+            "droughtReserve": { "enum": ["scarce", "normal", "plenty"] },
+            "lakes": { "enum": ["none", "few", "some", "many"] },
+            "waterfalls": { "enum": ["off", "few", "many"] }
+          }
+        },
+        "hazards": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["badwater", "badwaterDistance", "thornBelts", "unstableCores"],
+          "properties": {
+            "badwater": { "enum": ["off", "low", "normal", "high"] },
+            "badwaterDistance": { "type": "integer", "minimum": 12, "maximum": 60 },
+            "thornBelts": { "enum": ["off", "some"] },
+            "unstableCores": { "enum": ["off", "on"] }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["forestDensity", "groveSize", "speciesMix", "berriesNearStart", "berryBushes", "ruins", "relics", "geothermal", "mineSites"],
+          "properties": {
+            "forestDensity": { "type": "integer", "minimum": 50, "maximum": 200 },
+            "groveSize": { "enum": ["scattered", "normal", "bigWoods"] },
+            "speciesMix": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["pine", "birch", "oak", "succulent"],
+              "properties": {
+                "pine": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "birch": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "oak": { "type": "integer", "minimum": 0, "maximum": 100 },
+                "succulent": { "type": "integer", "minimum": 0, "maximum": 100 }
+              }
+            },
+            "berriesNearStart": { "type": "integer", "minimum": 20, "maximum": 100 },
+            "berryBushes": { "type": "integer", "minimum": 50, "maximum": 300 },
+            "ruins": { "type": "integer", "minimum": 25, "maximum": 300 },
+            "relics": { "enum": ["off", "some"] },
+            "geothermal": { "enum": ["off", "some"] },
+            "mineSites": { "type": "integer", "minimum": 0, "maximum": 4 }
+          }
+        },
+        "start": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["area", "rules"],
+          "properties": {
+            "area": { "enum": ["small", "normal", "large"] },
+            "rules": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["waterWithin", "treesWithin20", "bushesWithin20", "badwaterWithin", "ruinsWithin"],
+              "properties": {
+                "waterWithin": { "type": "integer", "minimum": 4, "maximum": 40 },
+                "treesWithin20": { "type": "integer", "minimum": 0, "maximum": 400 },
+                "bushesWithin20": { "type": "integer", "minimum": 0, "maximum": 200 },
+                "badwaterWithin": { "type": "integer", "minimum": 12, "maximum": 60 },
+                "ruinsWithin": { "type": "integer", "minimum": 0, "maximum": 60 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "colonies": {
+      "description": "Room for Timber Together multi-colony maps (PLAN.md §20, D5). Two or more colonies require the mod.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "mod"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "mod": { "enum": ["none", "timberTogether"] }
+      },
+      "if": { "properties": { "count": { "minimum": 2 } } },
+      "then": { "properties": { "mod": { "const": "timberTogether" } } }
+    },
+    "setPieces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "params"],
+        "properties": {
+          "kind": { "enum": ["waterfall", "damSite", "gorge", "terracedCliffs", "badwaterBasin", "plugSpillway", "obstaclePayoff", "secondDistrict"] },
+          "params": { "type": "object" },
+          "region": { "$ref": "#/$defs/region" }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locks", "keepOut", "keep"],
+      "properties": {
+        "locks": { "type": "array", "items": { "$ref": "#/$defs/region" } },
+        "keepOut": { "type": "array", "items": { "$ref": "#/$defs/region" } },
+        "keep": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "accepted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt", "candidate"],
+      "properties": {
+        "attempt": { "type": "integer", "minimum": 0 },
+        "candidate": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runs"],
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 0, "maximum": 255 } }
+        }
+      }
+    }
+  }
+}

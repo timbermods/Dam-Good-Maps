@@ -1,0 +1,519 @@
+{
+  "ranAt": "2026-09-24T11:24:05.899Z",
+  "csp": "default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net/npm/ https://cdn.tailwindcss.com https://code.jquery.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data: blob:; connect-src 'self'; worker-src blob:",
+  "nodeSha256": "450f0299bfd6a3c91c40eb14bd468fc2707c50dd02755d8c838d4b7fed04f181",
+  "page": {
+    "worker": {
+      "ok": true,
+      "source": "blob: URL",
+      "pingMs": 45,
+      "crypto": true,
+      "generate": {
+        "name": "River Valley (4242).timber",
+        "size": "96×96",
+        "ms": 203,
+        "passed": true,
+        "entities": 1536,
+        "sha256": "450f0299bfd6a3c91c40eb14bd468fc2707c50dd02755d8c838d4b7fed04f181"
+      }
+    },
+    "environment": {
+      "origin": "https://spike.dam-good-maps.test",
+      "framed": false,
+      "crossOriginIsolated": false,
+      "worker": true,
+      "fileReader": true,
+      "localStorage": true,
+      "indexedDB": true,
+      "messagesApi": "blocked (TypeError after 1 ms)",
+      "claudeRuntime": false
+    },
+    "capabilities": {
+      "downloads": null,
+      "sample": null
+    },
+    "opened": {
+      "generated": {
+        "ok": true,
+        "via": "file input",
+        "readMs": 2,
+        "name": "River Valley (4242).timber",
+        "bytes": 86131,
+        "ms": 36,
+        "size": "96×96",
+        "version": "1.1.2.4-52e959e-sw",
+        "layers": 23,
+        "entities": 1536,
+        "starts": 1,
+        "topTemplates": [
+          [
+            "Pine",
+            513
+          ],
+          [
+            "Birch",
+            377
+          ],
+          [
+            "Oak",
+            269
+          ],
+          [
+            "BlueberryBush",
+            160
+          ],
+          [
+            "Succulent",
+            53
+          ],
+          [
+            "RuinColumnH2",
+            39
+          ]
+        ],
+        "caves": 0,
+        "changes": [],
+        "flags": [],
+        "loadChecks": {
+          "passed": 21,
+          "failed": []
+        }
+      },
+      "official": {
+        "ok": true,
+        "via": "file input",
+        "readMs": 1,
+        "name": "Diorama.timber",
+        "bytes": 149325,
+        "ms": 20,
+        "size": "50×50",
+        "version": "1.1.2.1-0b9feec-xsw",
+        "layers": 23,
+        "entities": 638,
+        "starts": 1,
+        "topTemplates": [
+          [
+            "Pine",
+            232
+          ],
+          [
+            "Birch",
+            175
+          ],
+          [
+            "BlueberryBush",
+            83
+          ],
+          [
+            "Oak",
+            72
+          ],
+          [
+            "Succulent",
+            18
+          ],
+          [
+            "RuinColumnH2",
+            13
+          ]
+        ],
+        "caves": 3,
+        "changes": [
+          "Stamped as a Timberborn 1.1.2.4-52e959e-sw map (it was 1.1.2.1-0b9feec-xsw): no loader reads the version, and the file is now in the 1.1 format."
+        ],
+        "flags": [],
+        "loadChecks": {
+          "passed": 20,
+          "failed": [
+            "terrain.single_floor"
+          ]
+        }
+      },
+      "pre1_0": {
+        "ok": true,
+        "via": "file input",
+        "readMs": 1,
+        "name": "Cozy Secret Valley.timber",
+        "bytes": 453030,
+        "ms": 63,
+        "size": "128×128",
+        "version": "0.7.10.2-5762fd5-sw",
+        "layers": 23,
+        "entities": 2585,
+        "starts": 1,
+        "topTemplates": [
+          [
+            "Birch",
+            801
+          ],
+          [
+            "Pine",
+            759
+          ],
+          [
+            "Oak",
+            467
+          ],
+          [
+            "BlueberryBush",
+            261
+          ],
+          [
+            "RuinColumnH1",
+            44
+          ],
+          [
+            "RuinColumnH4",
+            35
+          ]
+        ],
+        "caves": 817,
+        "changes": [
+          "Gave 3230 water columns the 1.1 OldWaterDepth field (equal to their depth), as the game does on load.",
+          "Made before Timberborn 1.0: halved the strength of 6 water sources and 3197 saved water flows, as the game does when it loads the map, and marked the water as migrated. Without this the exported map would run at double strength.",
+          "Added the metadata fields IsUnconventional with their defaults.",
+          "Stamped as a Timberborn 1.1.2.4-52e959e-sw map (it was 0.7.10.2-5762fd5-sw): no loader reads the version, and the file is now in the 1.1 format."
+        ],
+        "flags": [],
+        "loadChecks": {
+          "passed": 19,
+          "failed": [
+            "terrain.single_floor",
+            "slopes.connect"
+          ]
+        }
+      },
+      "heightmap0_6": {
+        "ok": true,
+        "via": "file input",
+        "readMs": 1,
+        "name": "Meander Multiplayer (1-3 players).timber",
+        "bytes": 453177,
+        "ms": 61,
+        "size": "128×128",
+        "version": "0.6.9.2-8993f96-sw",
+        "layers": 23,
+        "entities": 2165,
+        "starts": 3,
+        "topTemplates": [
+          [
+            "Pine",
+            740
+          ],
+          [
+            "Birch",
+            692
+          ],
+          [
+            "BlueberryBush",
+            223
+          ],
+          [
+            "Oak",
+            157
+          ],
+          [
+            "RuinColumnH1",
+            54
+          ],
+          [
+            "RuinColumnH2",
+            53
+          ]
+        ],
+        "caves": 0,
+        "changes": [
+          "Converted the 0.6 heightmap terrain to voxels, as the game does on load.",
+          "Gave 2304 water columns the 1.1 OldWaterDepth field (equal to their depth), as the game does on load.",
+          "Made before Timberborn 1.0: halved the strength of 11 water sources and 2304 saved water flows, as the game does when it loads the map, and marked the water as migrated. Without this the exported map would run at double strength.",
+          "Wrote 2 default size fields the game assumes when they are missing.",
+          "Rewrote 274 orientations from the old {\"Value\": …} form.",
+          "Rewrote 1812 old CoordinatesOffseter components as CoordinatesOffsetter, as the game does.",
+          "Renamed 1812 DryingProgress fields to DyingProgress, as the game does.",
+          "Dropped 1453 DryObject components, which Timberborn 1.1 never reads.",
+          "Dropped 1812 NaturalResourceModelRandomizer components, which Timberborn 1.1 never reads.",
+          "Rewrote 2791 goods from the old {\"Id\": …} form.",
+          "Dropped 20 ContaminatedObject components, which Timberborn 1.1 never reads.",
+          "Added the metadata fields IsUnconventional with their defaults.",
+          "Stamped as a Timberborn 1.1.2.4-52e959e-sw map (it was 0.6.9.2-8993f96-sw): no loader reads the version, and the file is now in the 1.1 format."
+        ],
+        "flags": [],
+        "loadChecks": {
+          "passed": 17,
+          "failed": [
+            "file.arrays",
+            "start.count"
+          ]
+        }
+      },
+      "viaButton": {
+        "ok": true,
+        "via": "generated map",
+        "readMs": 4,
+        "name": "River Valley (4242).timber",
+        "bytes": 86131,
+        "ms": 21,
+        "size": "96×96",
+        "version": "1.1.2.4-52e959e-sw",
+        "layers": 23,
+        "entities": 1536,
+        "starts": 1,
+        "topTemplates": [
+          [
+            "Pine",
+            513
+          ],
+          [
+            "Birch",
+            377
+          ],
+          [
+            "Oak",
+            269
+          ],
+          [
+            "BlueberryBush",
+            160
+          ],
+          [
+            "Succulent",
+            53
+          ],
+          [
+            "RuinColumnH2",
+            39
+          ]
+        ],
+        "caves": 0,
+        "changes": [],
+        "flags": [],
+        "loadChecks": {
+          "passed": 21,
+          "failed": []
+        }
+      }
+    },
+    "cspViolations": [
+      "Connecting to 'https://api.anthropic.com/v1/messages' violates the following Content Security Policy directive: \"connect-src 'self'\". The action has been blocked.",
+      "Fetch API cannot load https://api.anthropic.com/v1/messages. Refused to connect because it violates the document's Content Security Policy."
+    ],
+    "chips": [
+      "worker: pass",
+      "open: pass",
+      "zip: off",
+      "quick: off",
+      "default: off"
+    ]
+  },
+  "withRuntimeStandIn": {
+    "zip": {
+      "ok": true,
+      "filename": "River Valley (4242).zip",
+      "bytes": 85097,
+      "sha256": "033965a49efddd50b2c2bb79b42cade3c034a95701d5d0a826d3aff4784567a1",
+      "status": "saved",
+      "confirmMs": 2
+    },
+    "zipEntries": [
+      "River Valley (4242).timber"
+    ],
+    "timberInZipEqualsNodeBytes": true,
+    "browserGeneratedEqualsNode": true,
+    "bareTimber": {
+      "accepted": false,
+      "code": "rejected_extension",
+      "message": "River Valley (4242).timber: extension not on the downloads allowlist"
+    },
+    "sample_quick": {
+      "ok": true,
+      "tierAsked": "quick",
+      "tierApplied": "quick",
+      "firstTextMs": 6,
+      "totalMs": 6,
+      "toolCalls": [
+        {
+          "name": "map_facts",
+          "ms": 0
+        },
+        {
+          "name": "find_start",
+          "ms": 0
+        },
+        {
+          "name": "height_at",
+          "ms": 0
+        }
+      ],
+      "truncated": false,
+      "answer": {
+        "size": "96x96",
+        "startHeight": 10,
+        "pines": 513
+      },
+      "expected": {
+        "size": "96x96",
+        "startHeight": 10,
+        "pines": 513
+      },
+      "correct": true
+    },
+    "sample_default": {
+      "ok": true,
+      "tierAsked": "default",
+      "tierApplied": "default",
+      "firstTextMs": 7,
+      "totalMs": 7,
+      "toolCalls": [
+        {
+          "name": "map_facts",
+          "ms": 0
+        },
+        {
+          "name": "find_start",
+          "ms": 0
+        },
+        {
+          "name": "height_at",
+          "ms": 0
+        }
+      ],
+      "truncated": false,
+      "answer": {
+        "size": "96x96",
+        "startHeight": 10,
+        "pines": 513
+      },
+      "expected": {
+        "size": "96x96",
+        "startHeight": 10,
+        "pines": 513
+      },
+      "correct": true
+    }
+  },
+  "cors": {
+    "page": {
+      "origin": "http://cors.dam-good-maps.test",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+      "at": "2026-09-24T11:24:09.114Z",
+      "withHeader": {
+        "label": "with anthropic-dangerous-direct-browser-access",
+        "withHeader": true,
+        "readable": true,
+        "status": 401,
+        "ms": 519,
+        "body": {
+          "type": "error",
+          "error": {
+            "type": "authentication_error",
+            "message": "API key is invalid."
+          },
+          "request_id": null
+        },
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*",
+          "content-type": "application/json"
+        }
+      },
+      "withoutHeader": {
+        "label": "without the header",
+        "withHeader": false,
+        "readable": false,
+        "error": "TypeError: Failed to fetch",
+        "ms": 125
+      },
+      "verdict": "CORS works: the browser let the page read the API's 401 answer to a request with the direct-browser-access header."
+    },
+    "network": [
+      {
+        "event": "browser response",
+        "type": "Preflight",
+        "method": "OPTIONS",
+        "status": 204,
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-headers": "anthropic-dangerous-direct-browser-access,anthropic-version,content-type,x-api-key",
+          "access-control-allow-methods": "POST",
+          "access-control-allow-origin": "http://cors.dam-good-maps.test"
+        }
+      },
+      {
+        "event": "request",
+        "method": "POST",
+        "headers": [
+          "accept",
+          "anthropic-dangerous-direct-browser-access",
+          "anthropic-version",
+          "content-type",
+          "origin",
+          "referer",
+          "sec-ch-ua",
+          "sec-ch-ua-mobile",
+          "sec-ch-ua-platform",
+          "user-agent",
+          "x-api-key"
+        ]
+      },
+      {
+        "event": "browser response",
+        "type": "Fetch",
+        "method": "POST",
+        "status": 401,
+        "headers": {
+          "access-control-expose-headers": "*",
+          "access-control-allow-origin": "*"
+        }
+      },
+      {
+        "event": "response",
+        "method": "POST",
+        "status": 401,
+        "headers": {
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "*"
+        }
+      },
+      {
+        "event": "browser response",
+        "type": "Preflight",
+        "method": "OPTIONS",
+        "status": 204,
+        "headers": {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-headers": "anthropic-version,content-type,x-api-key",
+          "access-control-allow-methods": "POST",
+          "access-control-allow-origin": "http://cors.dam-good-maps.test"
+        }
+      },
+      {
+        "event": "request",
+        "method": "POST",
+        "headers": [
+          "accept",
+          "anthropic-version",
+          "content-type",
+          "origin",
+          "referer",
+          "sec-ch-ua",
+          "sec-ch-ua-mobile",
+          "sec-ch-ua-platform",
+          "user-agent",
+          "x-api-key"
+        ]
+      },
+      {
+        "event": "failed",
+        "method": "POST",
+        "error": "net::ERR_FAILED"
+      },
+      {
+        "event": "browser failure",
+        "type": "Fetch",
+        "method": "POST",
+        "error": "net::ERR_FAILED",
+        "cors": "MissingAllowOriginHeader"
+      }
+    ]
+  }
+}

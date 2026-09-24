@@ -238,7 +238,8 @@ Nothing checks slope direction, water in cells, or reachability. The generator m
 | `SteamWorkshopMapDataService` | workshop uploads | workshop uploads | workshop uploads | not in official maps (editor only) |
 | Orientation | `{"Value":"Cw90"}` | `"Cw90"` | `"Cw90"` | `"Cw90"` (old form still accepted) |
 | Tree offset component | `CoordinatesOffseter{CoordinatesOffset}` | both | `CoordinatesOffsetter{Random}` | `CoordinatesOffsetter{Random}` |
-| Obsolete components | `BlockObjectState`, `DryObject`, `ContaminatedObject`, `LivingWaterNaturalResource`, `WateredNaturalResource`, `NaturalResourceModelRandomizer`, `StartingLocationPlayer` | some | – | ignored if present; do not write |
+| Components 1.1 never reads | `DryObject`, `ContaminatedObject`, `NaturalResourceModelRandomizer`, `StartingLocationPlayer` (Timber Together reads it) | some | – | ignored if present; do not write |
+| Old components 1.1 still reads | `BlockObjectState`, `WateredNaturalResource` (`DryingProgress` becomes `DyingProgress`), `LivingWaterNaturalResource`, `ContaminatedNaturalResource`, `CoordinatesOffseter` (becomes `Random` when its offset is not zero) | some | – | read and migrated on load |
 | Map templates added | – | – | Thorns, NaturalDam, UnstableCore, BadtideDrain, GeothermalField, WaterSeep, BadwaterSeep, Aquifer, relics | Succulent, ReservePile/Tank/Warehouse, AncientAquiferDrill |
 
 A 1.0-format file loads in 1.1 with one migration: 4-field water columns get

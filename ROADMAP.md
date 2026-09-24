@@ -14,15 +14,17 @@ differently, this file wins.
 - **Editor-ready from the first milestone.** M1 already generates maps *from* parametric features
   and offers them as a project file, so the editor, when it arrives, opens maps whose rivers,
   plateaus and ruin fields are grabbable. No generator code is retrofitted later.
-- **Every milestone ends with its acceptance criteria met and its tests green.** Milestones marked
-  **in-game check** stop until Kyler has played the listed files (checklist in PLAN.md §18). The
-  game is the final judge.
+- **Every milestone ends with its acceptance criteria met and its tests green.**
+- **In-game checks are deferred** (PLAN §20, D11). Kyler is skipping them for now. A milestone
+  marked **in-game check** does not stop or wait: it lists the checks it would have needed in
+  [docs/ingame-log.md](docs/ingame-log.md) as *pending*, with the files to play, and relies on the
+  automated validation and tests. The game stays the final judge once the checks are played.
 - **Effort** is the recommended Claude effort level for building the milestone: **xhigh** for
   architecture-setting or algorithm-heavy work, **high** for the rest.
 
 ## Overview
 
-| # | Milestone | From | In-game check | Effort |
+| # | Milestone | From | In-game check (logged as pending, D11) | Effort |
 |---|---|---|---|---|
 | M1 | Shared core and end-to-end slice | PLAN §2–4, §5.1, §7, §11.1–11.2, §14.1, §14.4, §19 · EDITOR §11 | yes (A, F2) | xhigh |
 | M2 | Water, playability and validation profiles | PLAN §10, §11.3–11.6, §14.2–14.3, §19.5, §19.7 | yes (B) | xhigh |
@@ -95,9 +97,19 @@ shared core, so its maps are editor-ready.
   green.
 
 **In-game check:** A (PLAN §18): load, start, walk test, open in the in-game editor, an Iron
-Teeth start. Add F2: sealed river mouth.
+Teeth start. Add F2: sealed river mouth. Deferred (D11): logged as pending in
+[docs/ingame-log.md](docs/ingame-log.md) with the files to play.
 
 **Effort:** xhigh.
+
+**Status:** done, 2026-09-24, on branch `m1-core`. Every acceptance criterion passes:
+- the Python oracle: 150/150 maps;
+- Node = Chromium on 10 seeds;
+- the project rebuild and the id stability tests;
+- 128² in 85 ms median;
+- the contract tests.
+
+The deviations are PLAN §20 D15–D23. In-game checks A1–A5 and F2 are pending.
 
 ---
 
@@ -128,6 +140,16 @@ Teeth start. Add F2: sealed river mouth.
 **In-game check:** B (PLAN §18): pre-filled water, tree survival, the empty-water A/B file.
 
 **Effort:** xhigh.
+
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.2.0). Every acceptance criterion passes:
+- golden vectors: the port matches the Python reference bit for bit on 12 fixtures, and 975 ticks
+  from empty reproduce the game's own save within 0.001 (0.00096, the same 470 wet tiles);
+- validator parity: 0 disagreements on 50 generated maps and on all 19 official maps;
+- batch at 128² Normal: 96% on the first attempt, 100% final (100 seeds);
+- the canonical settle: a median of 0.39 s at 256² and 0.07 s at 128²; the budget (≤ 3 s at 256²,
+  ≤ 0.6 s at 128²) is in PLAN §10 and D33.
+
+The deviations are PLAN §20 D24–D34. In-game checks B1–B4 are pending.
 
 ---
 
@@ -172,6 +194,21 @@ Teeth start. Add F2: sealed river mouth.
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `dev` (the generator stays 0.2.0). Every acceptance
+criterion passes:
+- the E1 property tests on 96², 128², 192² and 256², covering all 12 kinds of edit:
+  - the incremental rebuild equals a full rebuild after every step, undo and redo included;
+  - export, re-import and export again gives the same bytes;
+  - undoing everything gives back the generator's own file;
+- all 30 voxel-format investigation maps re-export their normalized world byte for byte, and the
+  two 0.6 maps import;
+- regeneration keeps the player's features and flags every edit that no longer applies, with
+  its reason;
+- the spike report answers the open questions with evidence.
+
+Two spike questions need Kyler's own run of the published page: `sample`'s latency with tools,
+and who can open the artifact. The deviations are PLAN §20 D35–D41, and D8 and D10 are updated.
+
 ---
 
 ## M4. Shared 3D view and editor shell
@@ -203,6 +240,19 @@ Teeth start. Add F2: sealed river mouth.
 **In-game check:** no.
 
 **Effort:** high.
+
+**Status:** done, 2026-09-24, on branch `dev` (the generator stays 0.2.0). Every acceptance
+criterion passes:
+- all 32 investigation maps open through the page, draw in the 3D view and export unchanged,
+  byte for byte;
+- the 3D view builds a 256² map in at most 445 ms and orbits at the display's rate, with 0 of
+  46,631 frames longer than 1/60 s. This machine is a high-end desktop, not a mid-range laptop, so
+  the budget was judged on its integrated GPU with the CPU slowed 4× on a laptop-sized screen
+  (D46);
+- generate → refine → back to settings → regenerate → refine keeps the player's edits, tested
+  through the page.
+
+The deviations are PLAN §20 D42–D46.
 
 ---
 
@@ -250,6 +300,20 @@ alike. This takes the set-piece half of old PLAN milestone 3 and all of E3.
 
 **Effort:** xhigh.
 
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.3.0). Every acceptance criterion
+passes:
+- the feature property tests pass on all four size presets with the new tools among the random
+  edits, and rivers drawn in random directions on 96², 128² and 256² maps all drain, carry water
+  along their whole course and keep their mouths sealed;
+- a 20-wide waterfall keeps all 20 lip tiles wet on 96², 128² and 256², 0.03 deep at 2 water/s;
+  on 48² it is reduced to 19, with a report; drops above 15 are reduced to 15; the lip width is
+  measured as PLAN §9.2 defines it;
+- River Valley's batches stay at 100% final with the builders: 100 seeds each at 96², 128², 192²
+  and 256².
+
+The in-game checks C and F1 are skipped for now (D11): the files are in `out/m5/`, and the checks
+are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D47–D56.
+
 ---
 
 ## M6. Full settings, sharing, themes I
@@ -269,6 +333,19 @@ alike. This takes the set-piece half of old PLAN milestone 3 and all of E3.
 **In-game check:** short. One Canyon and one Lake Basin map load, and their dam site holds.
 
 **Effort:** high.
+
+**Status:** done, 2026-09-24, on branch `dev` (generator 0.4.0). Every acceptance criterion
+passes:
+- each of the 27 settings experiments moves its measured target (`tests/contract/settings.test.ts`,
+  and `tools/settings-batch.ts` on 20 seeds at 96² and 10 at 128²); at 192² all but Buildable
+  land's flat share do (it moves 0.029, walkable land moves 15,606 tiles);
+- share links reproduce the same bytes in Node and through the page in Chromium, in all three
+  themes;
+- 100 seeds per theme at 96², 128², 192² and 256² pass 100% final (River Valley, Canyon, Lake
+  Basin); Easy and Hard at 128² pass 100% too.
+
+The in-game check is skipped for now (D11): the files are in `out/m6/`, and checks M6-1a to M6-1c
+are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D57–D68.
 
 ---
 

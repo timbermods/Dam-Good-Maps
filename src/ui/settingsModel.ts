@@ -1,0 +1,152 @@
+// What the settings panel shows (PLAN §5, §14.1): each setting's label, its choices, its reference
+// band from the official maps (investigation/calibration.json, official aggregates), and the
+// feasibility guards (PLAN §5.3). The share text for "Copy seed + settings" is built here too.
+
+import { density, LAKES, RESERVE, reservoirNeeded, RIVER_FLOW_MULTIPLIER } from "../core/gen/calibrated";
+import { flowBudget } from "../core/features/setpieces/common";
+import { THEME_NAMES, type Difficulty, type MapSpec, type Settings } from "../core/spec/mapspec";
+
+export type Choice<T extends string> = { value: T; label: string; disabled?: string };
+
+export const BUILDABLE: Choice<Settings["terrain"]["buildableLand"]>[] = [
+  { value: "tight", label: "Tight" },
+  { value: "normal", label: "Normal" },
+  { value: "generous", label: "Generous" },
+];
+export const STYLES: Choice<Settings["water"]["riverStyle"]>[] = [
+  { value: "straight", label: "Straight" },
+  { value: "meandering", label: "Meandering" },
+  { value: "braided", label: "Braided", disabled: "comes with the Delta theme" },
+];
+export const FLOWS: Choice<Settings["water"]["riverFlow"]>[] = [
+  { value: "trickle", label: "Trickle" },
+  { value: "normal", label: "Normal" },
+  { value: "strong", label: "Strong" },
+  { value: "lush", label: "Lush" },
+];
+export const RESERVES: Choice<Settings["water"]["droughtReserve"]>[] = [
+  { value: "scarce", label: "Scarce" },
+  { value: "normal", label: "Normal" },
+  { value: "plenty", label: "Plenty" },
+];
+export const LAKE_CHOICES: Choice<Settings["water"]["lakes"]>[] = [
+  { value: "none", label: "None" },
+  { value: "few", label: "Few" },
+  { value: "some", label: "Some" },
+  { value: "many", label: "Many" },
+];
+export const FALLS: Choice<Settings["water"]["waterfalls"]>[] = [
+  { value: "off", label: "Off" },
+  { value: "few", label: "Few" },
+  { value: "many", label: "Many" },
+];
+export const BADWATER: Choice<Settings["hazards"]["badwater"]>[] = [
+  { value: "off", label: "Off" },
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+];
+export const GROVES: Choice<Settings["resources"]["groveSize"]>[] = [
+  { value: "scattered", label: "Scattered" },
+  { value: "normal", label: "Normal" },
+  { value: "bigWoods", label: "Big woods" },
+];
+export const AREAS: Choice<Settings["start"]["area"]>[] = [
+  { value: "small", label: "Small" },
+  { value: "normal", label: "Normal" },
+  { value: "large", label: "Large" },
+];
+
+/** Blocks of water a reservoir holds per tile: 2 deep, 3 on Hard (PLAN §5.3, §11.4). */
+function depthFor(d: Difficulty): number {
+  return d === "hard" ? 3 : 2;
+}
+
+/** Tiles a reservoir needs for this difficulty and reserve. */
+export function reservoirTiles(d: Difficulty, r: Settings["water"]["droughtReserve"]): number {
+  return Math.ceil((reservoirNeeded(d) * RESERVE[r]) / depthFor(d));
+}
+
+/** The drought-reserve guard (PLAN §5.3): a reserve whose reservoir would cover more than 15% of the
+ *  map does not fit, and says why; Hard with a Scarce reserve is allowed, with a warning (D13). */
+export function reserveGuard(d: Difficulty, r: Settings["water"]["droughtReserve"], W: number, H: number): { fits: boolean; note: string } {
+  const tiles = reservoirTiles(d, r);
+  const cap = Math.floor(0.15 * W * H);
+  if (tiles > cap) return { fits: false, note: `needs a reservoir of about ${tiles.toLocaleString()} tiles; this map allows ${cap.toLocaleString()}` };
+  if (d === "hard" && r === "scarce") return { fits: true, note: "Hard with a scarce reserve: the first long drought will hurt" };
+  return { fits: true, note: "" };
+}
+
+/** Falls of 2 levels that fit under the highest terrain on the main river (the planner's rule). */
+export function fallsRoom(top: number): number {
+  return Math.max(0, Math.floor((top - 3) / 2));
+}
+
+/** One line per reference band (official maps), keyed by setting. */
+export function band(key: string, spec: MapSpec): string {
+  const s = spec.settings;
+  const area = spec.size.x * spec.size.y;
+  switch (key) {
+    case "relief":
+      return `Height range about ${Math.round(7 + 0.08 * s.terrain.relief)} levels. Official maps: 9–15, most 13.`;
+    case "highestTerrain":
+      return "Official maps all top out at 16, the map editor's limit.";
+    case "terracing":
+      return `About ${Math.round((0.86 - 0.0059 * s.terrain.terracing) * 100)}% of steps are one level. Official maps: 27–86%.`;
+    case "buildableLand":
+      return "Land you can walk to from the start. Official maps: 765–6,022 tiles, most about 1,300.";
+    case "rivers":
+      return s.water.rivers === 0 ? "No river enters from the edge: springs feed the water." : "Rivers that enter from the map edge.";
+    case "riverFlow":
+      return `About ${(flowBudget(spec.size.x, spec.size.y) * RIVER_FLOW_MULTIPLIER[s.water.riverFlow]).toFixed(1)} water/s. Official maps: 0.5–12 per 10,000 tiles.`;
+    case "droughtReserve":
+      return `Keep about ${Math.round(reservoirNeeded(spec.designedFor) * RESERVE[s.water.droughtReserve]).toLocaleString()} water near the start through the worst drought.`;
+    case "lakes":
+      return `About ${Math.round(LAKES[s.water.lakes] * density("basins_ge20", area))} natural basins on this map. Official maps: 0–25.`;
+    case "waterfalls":
+      return "Falls of 2+ levels on the rivers. Official maps: 0–41, most 4.";
+    case "badwater":
+      return "Badwater strength against the rivers'. Official maps: 0.18–2.2, most 0.65.";
+    case "badwaterDistance":
+      return "Official maps: 3–79 tiles, most 30.";
+    case "forestDensity":
+      return `About ${Math.round(((density("trees_per_10k", area) * area) / 1e4) * (s.resources.forestDensity / 100)).toLocaleString()} trees on this map.`;
+    case "groveSize":
+      return "Official groves: most 10 trees.";
+    case "berriesNearStart":
+      return "Official maps: most 47 within 20 tiles.";
+    case "berryBushes":
+      return `About ${Math.round(((density("bushes_per_10k", area) * area) / 1e4) * (s.resources.berryBushes / 100)).toLocaleString()} bushes on this map.`;
+    case "ruins":
+      return `About ${Math.round(((density("scrap_per_1k_tiles", area) * area) / 1e3) * (s.resources.ruins / 100)).toLocaleString()} scrap on this map.`;
+    case "waterWithin":
+      return "Official maps: 1–24 tiles, most 14.";
+    case "treesWithin20":
+      return "Official maps: 41–186, most 117.";
+    case "bushesWithin20":
+      return "Official maps: 0–84, most 47.";
+    case "ruinsWithin":
+      return "Official maps: 10–97 tiles, most 45.";
+    default:
+      return "";
+  }
+}
+
+/** What set pieces this map size allows (PLAN §9.10), for the Limits note. */
+export function limitsText(W: number, H: number): string[] {
+  const side = Math.min(W, H);
+  return [
+    // PLAN §9.10: 40% of the side along the lip; a drop of at most 15 on editor-safe terrain
+    `Waterfalls: up to ${Math.floor(0.4 * Math.max(W, H))} tiles wide, up to 15 levels high.`,
+    `Water budget: ${flowBudget(W, H)} water/s at Normal flow.`,
+    `Dam basins: up to ${Math.floor(0.15 * W * H).toLocaleString()} tiles.`,
+    ...(side < 96 ? ["Small maps fit fewer set pieces: some settings are reduced."] : []),
+  ];
+}
+
+const DIFF_NAME: Record<Difficulty, string> = { easy: "Easy", normal: "Normal", hard: "Hard" };
+
+/** "Copy seed + settings": the map in one line of plain words, then the link. */
+export function shareText(spec: MapSpec, link: string): string {
+  return `Dam Good Maps ${spec.generatorVersion}: ${THEME_NAMES[spec.theme]}, seed ${spec.seed}, ${spec.size.x}×${spec.size.y}, designed for ${DIFF_NAME[spec.designedFor]}.\n${link}`;
+}

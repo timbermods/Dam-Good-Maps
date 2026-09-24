@@ -1,0 +1,19 @@
+// Stable ids (PLAN §19.4). Generated features: "f-" + base32(hash64(seed, kind, roleKey)), where
+// roleKey names the feature's role in the plan and never its position in a list. Entities:
+// guid(hash128(ownerFeatureId, template, localIndex)), so an entity keeps its Id (and, in game, its
+// look) through edits elsewhere. localIndex is the entity's tile index (y·W + x): one entity per
+// tile per feature, stable when neighbouring tiles change.
+
+import { guidFrom, hash64Base32 } from "../math/hash";
+import type { FeatureKind } from "./schema";
+
+export function featureId(seed: number, kind: FeatureKind, roleKey: string): string {
+  return "f-" + hash64Base32(seed, kind, roleKey);
+}
+
+export function entityId(ownerFeatureId: string, template: string, localIndex: number): string {
+  return guidFrom(ownerFeatureId, template, localIndex);
+}
+
+/** Owner id for derived layers (slopes are rebuilt every time, never edited as features). */
+export const DERIVED_SLOPES = "derived:slopes";

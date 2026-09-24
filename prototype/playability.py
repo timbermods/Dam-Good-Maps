@@ -1,182 +1,433 @@
-"""Playability checks: re-simulate the map's own water with the game's rules and check that a
-colony can survive and grow from the start. Thresholds come from calibrated.py (official-map
-medians and the survival budget in notes/navigation_ruins_entities.md, section 11)."""
+"""Playability checks (PLAN.md §11.3-11.5): settle the map's own water with the game's rules (the
+canonical settle of watersim.py), then check that a colony can survive and grow from the start.
+Thresholds come from the map's spec when a project file is given, otherwise from calibrated.py
+for the difficulty (PLAN §19.5: imported maps use the defaults).
+
+This is the oracle the TypeScript validator (src/core/validate/playability.ts) is compared with,
+check by check (tools/oracle.ts): the same ids, rules, thresholds and "not applicable" cases.
+Emitters and walking blockers are taken through their footprints (PLAN §11.5): a BadwaterSource
+emits on its rotated 3x3, seeps stop at 0.8 deep, aquifers and badtide drains are off, and
+multi-tile objects block walking on every tile."""
 from __future__ import annotations
 
 import numpy as np
 
 import calibrated as cal
-from analysis import (N4, dam_sites, distance_from, is_dead, placement, point_clusters,
-                      walk_regions)
-from watersim import WaterSim, contamination, drought_storage, moisture
+from analysis import components, dam_sites, distance_from, is_dead, placement, point_clusters, walk_regions
+from watersim import (TICKS_PER_DAY, canonical_settle, cluster_saturation, contamination, drought_storage,
+                      moisture, seq_sum)
 
+WET = 0.05                   # water deeper than this is a water tile
+BAD = 0.05                   # water this contaminated is badwater to a beaver
+NEAR = 20                    # gatherers, lumberjacks and scavengers work within 20 steps
+RESERVOIR_RADIUS = 40
+BLUEBERRY_DAYS_TO_DIE_DRY = 9
 TREES = ("Pine", "Birch", "Oak")
+WALK_BLOCKERS = ("Thorns", "Blockage", "NaturalDam", "UnstableCore", "GeothermalField", "UndergroundRuins",
+                 "SmallRelic", "MediumRelic", "LargeRelic")
+RESERVE = {"scarce": 1.0, "normal": 1.5, "plenty": 3.0}      # PLAN §5.3 drought reserve
+START_AREA = {"small": 0.6, "normal": 1.0, "large": 1.8}      # PLAN §5.6 start area
+DROUGHT_DAYS = {"easy": 4, "normal": 9, "hard": 30}
+COLONY = {"easy": 40, "normal": 50, "hard": 50}
+START_CHECKS = ("start.dry", "start.water", "start.badwater", "start.reach", "start.reach_water", "start.food",
+                "start.wood", "start.ruins_clear", "plants.survive", "plants.drought", "water.reservoir",
+                "resources.scrap", "resources.trees", "resources.bushes", "ruins.fields", "ruins.access",
+                "extras.placement")
+
+# emitters: local tiles, contamination, running at map start, seep (sim/model.ts)
+SQ2 = [(x, y) for x in range(2) for y in range(2)]
+SQ3 = [(x, y) for x in range(3) for y in range(3)]
+EMITTERS = {
+    "WaterSource": ([(0, 0)], 0.0, True, False),
+    "BadwaterSource": (SQ3, 1.0, True, False),
+    "WaterSeep": (SQ2, 0.0, True, True),
+    "BadwaterSeep": (SQ2, 1.0, True, True),
+    "Aquifer": ([(1, 1)], 0.0, False, False),
+    "BadtideDrain": ([(0, 1)], 1.0, False, False),
+}
+ROT = {"Cw0": lambda x, y: (x, y), "Cw90": lambda x, y: (y, -x),
+       "Cw180": lambda x, y: (-x, -y), "Cw270": lambda x, y: (-y, x)}
+SLOPE_HIGH = {"Cw0": (0, -1), "Cw90": (-1, 0), "Cw180": (0, 1), "Cw270": (1, 0)}      # (dx, dy)
 
 
-def map_sources(m, ents):
-    """Water emitters active at the start (delayed sources and badtide drains stay off)."""
+def object_tile(fps, p, lx, ly):
+    fp = fps.get(p.template)
+    if p.flipped and fp and fp["flippable"]:
+        lx = fp["size"][0] - 1 - lx
+    dx, dy = ROT[p.orientation](lx, ly)
+    return p.x + dx, p.y + dy
+
+
+def footprint_tiles(fps, p):
+    """2-D tiles an object covers (every block with occupation flags, projected)."""
+    fp = fps[p.template]
     out = []
-    for t, cont, n in (("WaterSource", 0.0, 1), ("BadwaterSource", 1.0, 3)):
-        for e in ents.get(t, []):
-            ta = e["Components"].get("TimeActivatedComponent", {})
-            if ta.get("IsEnabled"):
-                continue
-            p = placement(e)
-            tiles = [(p.y + j, p.x + i) for i in range(n) for j in range(n)] if n == 3 else [(p.y, p.x)]
-            out.append({"tiles": tiles, "strength": float(e["Components"]["WaterSource"]["SpecifiedStrength"]),
-                        "contamination": cont})
+    for x, y, z, below, flags, oab, stack in fp["blocks"]:
+        if flags == 0:
+            continue
+        t = object_tile(fps, p, x, y)
+        if t not in out:
+            out.append(t)
     return out
 
 
-def check_playability(m, rep, ents, start, difficulty, occupied, water=None):
-    diff = cal.DIFFICULTY[difficulty]
+def water_model(m, fps, surface):
+    """(floor, sources, dam) for the simulation, from the map's objects in file order."""
+    Y, X = surface.shape
+    floor = surface.astype(float).copy()
+    dam = None
+    sources = []
+    for e in m.entities:
+        if "BlockObject" not in e.get("Components", {}):
+            continue
+        p = placement(e)
+        rule = EMITTERS.get(p.template)
+        if rule:
+            tiles, cont, runs, seep = rule
+            cells = [(ty, tx) for tx, ty in (object_tile(fps, p, lx, ly) for lx, ly in tiles) if 0 <= tx < X and 0 <= ty < Y]
+            if cells:
+                comps = e["Components"]
+                delayed = comps.get("TimeActivatedComponent", {}).get("IsEnabled") is True
+                s = float(comps.get("WaterSource", {}).get("SpecifiedStrength", 0.0)) if runs and not delayed else 0.0
+                s = min(s, 8 * len(tiles))
+                if not s > 0:
+                    s = 0.0
+                src = {"tiles": cells, "strength": s, "contamination": cont}
+                if seep:
+                    src["depth_limit"] = (cells[0], 0.8, 0.72)
+                sources.append(src)
+        if p.template in ("Blockage", "BadtideDrain"):
+            x, y = object_tile(fps, p, 0, 0)
+            if 0 <= x < X and 0 <= y < Y and floor[y, x] < p.z + 1:
+                floor[y, x] = p.z + 1
+        elif p.template == "NaturalDam":
+            x, y = object_tile(fps, p, 0, 0)
+            if 0 <= x < X and 0 <= y < Y:
+                if dam is None:
+                    dam = np.full((Y, X), -1.0)
+                dam[y, x] = 0.65
+    return floor, sources, dam
+
+
+def polygon_mask(poly, W, H):
+    """Tiles whose centre lies inside a polygon (even-odd rule); src/core/features/geometry.ts."""
+    mask = np.zeros((H, W), bool)
+    ys = [p[1] for p in poly]
+    y0, y1 = max(0, int(np.ceil(min(ys)))), min(H - 1, int(np.floor(max(ys))))
+    for y in range(y0, y1 + 1):
+        xs = []
+        j = len(poly) - 1
+        for i in range(len(poly)):
+            xi, yi = poly[i]
+            xj, yj = poly[j]
+            if (yi > y) != (yj > y):
+                xs.append(xi + ((y - yi) / (yj - yi)) * (xj - xi))
+            j = i
+        xs.sort()
+        for k in range(0, len(xs) - 1, 2):
+            xa, xb = max(0, int(np.ceil(xs[k]))), min(W - 1, int(np.floor(xs[k + 1])))
+            if xb >= xa:
+                mask[y, xa:xb + 1] = True
+    return mask
+
+
+def rules_for(spec, difficulty):
+    """Thresholds (validate/playability.ts rulesFor): the spec's settings, or the defaults."""
+    d = spec["designedFor"] if spec else difficulty
+    base = cal.DIFFICULTY[d]
+    s = spec["settings"] if spec else None
+    r = s["start"]["rules"] if s else None
+    return {
+        "difficulty": d,
+        "water_within": r["waterWithin"] if r else base["water_dist"],
+        "trees_within": r["treesWithin20"] if r else base["trees_r20"],
+        "bushes_within": r["bushesWithin20"] if r else base["bushes_r20"],
+        # the Badwater distance setting and the start rule say the same thing: the stricter counts
+        "badwater_within": max(s["hazards"]["badwaterDistance"], r["badwaterWithin"]) if s else base["badwater_min"],
+        "ruins_within": r["ruinsWithin"] if r else base["ruin_min"],
+        "reach_min": cal.START["reach_by_buildable_land"][s["terrain"]["buildableLand"] if s else "normal"]
+        * START_AREA[s["start"]["area"] if s else "normal"],
+        "drought_days": DROUGHT_DAYS[d],
+        "reservoir_need": cal.reservoir_needed(d) * RESERVE[s["water"]["droughtReserve"] if s else "normal"],
+        "reservoir_depth": 3 if d == "hard" else 0,
+        "max_share": 0.55 if spec and spec["theme"] in ("lakeBasin", "islands") else cal.WATER["max_water_share"],
+        "mult": ({"scrap": s["resources"]["ruins"] / 100, "trees": s["resources"]["forestDensity"] / 100,
+                  "bushes": s["resources"]["berryBushes"] / 100} if s else {"scrap": 1, "trees": 1, "bushes": 1}),
+    }
+
+
+def check_playability(m, rep, fps, difficulty="normal", spec=None, features=None, water=None):
     h = m.surface()
     X, Y = m.size_x, m.size_y
-    if not m.is_simple():
-        rep.add("water.model", False, "caves or overhangs: the heightfield water model does not apply")
-        return
+    N = X * Y
+    rules = rules_for(spec, difficulty)
 
-    # ---- water: settle the map's own sources with the game's rules
-    sim = WaterSim(h, map_sources(m, ents))
-    settled = sim.settle(max_days=4)
+    # ---- blockers by footprint: walking, and moisture/contamination (Thorns)
+    blocked = np.zeros((Y, X), bool)
+    thorns = np.zeros((Y, X), bool)
+    for e in m.entities:
+        if "BlockObject" not in e.get("Components", {}) or e["Template"] not in WALK_BLOCKERS or e["Template"] not in fps:
+            continue
+        p = placement(e)
+        for x, y in footprint_tiles(fps, p):
+            if 0 <= x < X and 0 <= y < Y:
+                blocked[y, x] = True
+        if p.template == "Thorns":
+            x, y = object_tile(fps, p, 0, 0)
+            if 0 <= x < X and 0 <= y < Y:
+                thorns[y, x] = True
+    barrier = thorns if thorns.any() else None
+
+    # ---- water: the canonical settle of the map's own sources
+    floor, sources, dam = water_model(m, fps, h)
+    sim, settled = canonical_settle(floor, sources, dam)
     D, C = sim.D, sim.C
-    wet = D > 0.05
-    rep.add("water.settles", settled, f"steady after {sim.ticks} ticks ({sim.ticks / 768:.1f} days)")
-    share = float(wet.mean())
-    rep.add("water.no_flood", share <= cal.WATER["max_water_share"],
-            f"{share:.0%} of the map under water (official p90 40%)", round(share, 3), cal.WATER["max_water_share"])
-    clean = wet & (C < 0.05)
-    rep.add("water.clean_exists", clean.sum() >= 0.02 * X * Y,
-            f"{clean.sum()} tiles of clean water", int(clean.sum()), int(0.02 * X * Y))
-    M = moisture(h, D, C, sim.sat())
-    SC = contamination(h, D, C)
-    if start is None:
-        return
-    sx, sy, sz = start
+    wet = D > WET
+    clean = wet & (C < BAD)
+    rep.add("water.settles", settled, f"steady after {sim.ticks} ticks ({sim.ticks / TICKS_PER_DAY:.1f} days)",
+            sim.ticks, 4 * TICKS_PER_DAY)
+    share = float(np.count_nonzero(wet)) / N
+    rep.add("water.no_flood", share <= rules["max_share"], f"{share:.0%} of the map under water (official p90 40%)",
+            round(share, 3), rules["max_share"])
+    n_clean = int(np.count_nonzero(clean))
+    rep.add("water.clean_exists", n_clean >= 0.02 * N, f"{n_clean} tiles of clean water", n_clean, int(0.02 * N))
+    _outflow(rep, D, sources, features, X, Y)
+    _, sizes = components(clean, connectivity=((1, 0), (-1, 0), (0, 1), (0, -1)))
+    largest = max(sizes, default=0)
+    rep.add("water.clean_reach", largest >= 40, f"largest clean water body {largest} tiles", largest, 40)
+    _contained(rep, h, features, X, Y)
+    M = moisture(h, D, C, sim.sat(), barrier)
+    SC = contamination(h, D, C, barrier)
+    if water is not None:
+        water.update({"D": D, "C": C, "M": M, "SC": SC, "ticks": sim.ticks, "settled": settled})
 
-    # ---- start: dry, near pumpable clean water, clear of badwater
+    # ---- the start (vanilla: exactly one; start.count reports anything else)
+    starts = [e for e in m.entities if e["Template"] == "StartingLocation" and "BlockObject" in e.get("Components", {})]
+    if len(starts) != 1:
+        for cid in START_CHECKS:
+            rep.add(cid, True, f"needs exactly one start (the map has {len(starts)})", na=True,
+                    advisory=cid == "plants.drought")
+        return
+    p = placement(starts[0])
+    cells = [object_tile(fps, p, lx, ly) for lx in range(3) for ly in range(3)]
+    sx = int(round(sum(c[0] for c in cells) / 9))
+    sy = int(round(sum(c[1] for c in cells) / 9))
+    sz = p.z
     yy, xx = np.mgrid[0:Y, 0:X]
     cheb = np.maximum(np.abs(yy - sy), np.abs(xx - sx))
+    sd = distance_from(cheb <= 1)
     rep.add("start.dry", not wet[cheb <= 2].any(), "district center and its ring stay dry after water settles")
     surface = h + D
     pumpable = clean & (D >= 0.3) & (surface >= sz - cal.PUMP_REACH) & (surface <= sz + 0.01)
-    start_mask = cheb <= 1
-    sd = distance_from(start_mask)
     dw = float(sd[pumpable].min()) if pumpable.any() else float("inf")
-    rep.add("start.water", dw <= diff["water_dist"],
-            f"clean water within pump reach (<= {cal.PUMP_REACH} below the start) {dw:.1f} tiles away; "
-            f"Normal starts with no water and beavers die from ~day 6", round(dw, 1), diff["water_dist"])
-    bad_soil = (SC > 0) | (wet & (C >= 0.05))
+    rep.add("start.water", dw <= rules["water_within"], f"clean pumpable water {dw:.1f} tiles away",
+            round(dw, 1), rules["water_within"])
+    bad_soil = (SC > 0) | (wet & (C >= BAD))
     db = float(sd[bad_soil].min()) if bad_soil.any() else float("inf")
-    rep.add("start.badwater", db >= diff["badwater_min"], f"nearest badwater or contaminated soil {db:.0f} tiles",
-            round(db, 1), diff["badwater_min"])
+    rep.add("start.badwater", db >= rules["badwater_within"], f"nearest badwater or contaminated soil {db:.0f} tiles",
+            round(db, 1), rules["badwater_within"])
 
     # ---- reach: same-level land joined by slopes (beavers cannot climb a 1-voxel step)
     links = []
-    for e in ents.get("Slope", []):
-        p = placement(e)
-        dx, dy = {"Cw0": (0, -1), "Cw90": (-1, 0), "Cw180": (0, 1), "Cw270": (1, 0)}[p.orientation]
-        if 0 <= p.x + dx < X and 0 <= p.y + dy < Y:
-            links.append(((p.y, p.x), (p.y + dy, p.x + dx)))
-    blocked = np.zeros((Y, X), bool)
-    for t in ("Thorns", "Blockage", "NaturalDam", "UnstableCore", "GeothermalField", "UndergroundRuins",
-              "SmallRelic", "MediumRelic", "LargeRelic"):
-        for e in ents.get(t, []):
-            p = placement(e)
-            blocked[p.y, p.x] = True
-    labels, sizes = walk_regions(h, 0, blocked, links)
-    reach = labels == labels[sy, sx]
-    dry_reach = int((reach & ~wet).sum())
-    rep.add("start.reach", dry_reach >= cal.START["reach_min_tiles"],
-            f"{dry_reach} dry tiles walkable from the start through slopes (official p10 1007, min 765)",
-            dry_reach, cal.START["reach_min_tiles"])
-    rep.add("start.reach_water", bool((reach & pumpable).any() or _adjacent(reach, pumpable)),
-            "the pumpable water borders land the colony can walk to")
+    for e in m.entities:
+        if e["Template"] != "Slope":
+            continue
+        q = placement(e)
+        dx, dy = SLOPE_HIGH[q.orientation]
+        if 0 <= q.x < X and 0 <= q.y < Y and 0 <= q.x + dx < X and 0 <= q.y + dy < Y:
+            links.append(((q.y, q.x), (q.y + dy, q.x + dx)))
+    labels, _ = walk_regions(h, 0, blocked, links)
+    root = labels[sy, sx]
+    reach = (labels == root) if root >= 0 else np.zeros((Y, X), bool)
+    dry_reach = int(np.count_nonzero(reach & ~wet))
+    rep.add("start.reach", dry_reach >= rules["reach_min"], f"{dry_reach} dry tiles walkable from the start",
+            dry_reach, rules["reach_min"])
+    near_reach = reach.copy()
+    for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        shifted = np.zeros_like(reach)
+        shifted[max(0, dy):Y + min(0, dy), max(0, dx):X + min(0, dx)] = \
+            reach[max(0, -dy):Y - max(0, dy), max(0, -dx):X - max(0, dx)]
+        near_reach |= shifted
+    rep.add("start.reach_water", bool((pumpable & near_reach).any()), "the pumpable water borders land the colony can walk to")
 
-    # ---- food and wood within 20 of the start (walk-reachable ones only)
-    def near(templates, pred=lambda e: True, r=20):
-        n = 0
-        for t in templates:
-            for e in ents.get(t, []):
-                p = placement(e)
-                if pred(e) and sd[p.y, p.x] <= r and (reach[p.y, p.x] or _touches(reach, p.y, p.x)):
-                    n += 1
-        return n
-    bushes = near(("BlueberryBush",), lambda e: not is_dead(e))
-    rep.add("start.food", bushes >= diff["bushes_r20"],
-            f"{bushes} living berry bushes within 20 tiles (Normal food lasts ~4 days)", bushes, diff["bushes_r20"])
-    trees = near(TREES)
-    rep.add("start.wood", trees >= diff["trees_r20"], f"{trees} trees within 20 tiles", trees, diff["trees_r20"])
-    ruins_near = [e for e in m.entities if e["Template"].startswith("RuinColumnH")
-                  and sd[placement(e).y, placement(e).x] < diff["ruin_min"]]
-    rep.add("start.ruins_clear", not ruins_near, f"{len(ruins_near)} ruin columns within {diff['ruin_min']} tiles")
+    def reachable(q):
+        return 0 <= q.x < X and 0 <= q.y < Y and sd[q.y, q.x] <= NEAR and near_reach[q.y, q.x]
+
+    bushes = trees = 0
+    for e in m.entities:
+        if "BlockObject" not in e.get("Components", {}):
+            continue
+        q = placement(e)
+        if q.template == "BlueberryBush" and not is_dead(e) and reachable(q):
+            bushes += 1
+        elif q.template in TREES and reachable(q):
+            trees += 1
+    rep.add("start.food", bushes >= rules["bushes_within"], f"{bushes} living berry bushes within 20 tiles",
+            bushes, rules["bushes_within"])
+    rep.add("start.wood", trees >= rules["trees_within"], f"{trees} trees within 20 tiles", trees, rules["trees_within"])
+    ruins = [e for e in m.entities if e["Template"].startswith("RuinColumnH") and "BlockObject" in e.get("Components", {})]
+    near_ruins = sum(1 for e in ruins if 0 <= placement(e).x < X and 0 <= placement(e).y < Y
+                     and sd[placement(e).y, placement(e).x] < rules["ruins_within"])
+    rep.add("start.ruins_clear", near_ruins == 0, f"{near_ruins} ruin columns within {rules['ruins_within']} tiles",
+            near_ruins, 0)
 
     # ---- plants survive: living ones on moist, dry-footed, clean soil; succulents on dry soil
-    wrong = []
-    for t in TREES + ("BlueberryBush",):
-        for e in ents.get(t, []):
-            p = placement(e)
-            if not is_dead(e) and (M[p.y, p.x] <= 0 or D[p.y, p.x] > 0 or SC[p.y, p.x] > 0):
-                wrong.append(t)
-    for e in ents.get("Succulent", []):
-        p = placement(e)
-        if not is_dead(e) and M[p.y, p.x] > 0:
-            wrong.append("Succulent")
-    rep.add("plants.survive", not wrong, f"{len(wrong)} living plants on soil that kills them" if wrong
-            else "every living plant is on soil where it survives")
+    wrong = 0
+    for e in m.entities:
+        if "BlockObject" not in e.get("Components", {}) or is_dead(e):
+            continue
+        q = placement(e)
+        if not (0 <= q.x < X and 0 <= q.y < Y):
+            continue
+        if q.template in TREES or q.template == "BlueberryBush":
+            wrong += bool(M[q.y, q.x] <= 0 or D[q.y, q.x] > 0 or SC[q.y, q.x] > 0)
+        elif q.template == "Succulent":
+            wrong += bool(M[q.y, q.x] > 0)
+    rep.add("plants.survive", wrong == 0, f"{wrong} living plants on soil that kills them", wrong, 0)
+
+    # ---- advisory: berry bushes near the start that lose their moisture in a long drought
+    if rules["drought_days"] <= 0.9 * BLUEBERRY_DAYS_TO_DIE_DRY:
+        rep.add("plants.drought", True, "droughts are shorter than a berry bush survives dry", 0, 0, advisory=True)
+    else:
+        kept = drought_storage(floor, D, rules["drought_days"], sources, dam)
+        Cd = np.where(kept > 0, C, 0.0)
+        Md = moisture(h, kept, Cd, cluster_saturation(kept > 0), barrier)
+        thirsty = 0
+        for e in m.entities:
+            if e["Template"] != "BlueberryBush" or "BlockObject" not in e.get("Components", {}) or is_dead(e):
+                continue
+            q = placement(e)
+            if 0 <= q.x < X and 0 <= q.y < Y and sd[q.y, q.x] <= NEAR and not Md[q.y, q.x] > 0:
+                thirsty += 1
+        rep.add("plants.drought", thirsty == 0, f"{thirsty} berry bushes near the start dry out in the drought",
+                thirsty, 0, advisory=True)
 
     # ---- drought: a reservoir site near the start that holds a colony through the worst drought
-    need = cal.reservoir_needed(difficulty)
-    kept = drought_storage(h, D, diff["drought_days"])
-    natural = float(kept[sd <= 40].sum())
-    sites = dam_sites(h, wet & (C < 0.05), h + D, stride=2)
-    near_sites = [s for s in sites if sd[s["y"], s["x"]] <= 40]
+    kept = drought_storage(floor, D, rules["drought_days"], sources, dam)
+    natural = seq_sum(kept[sd <= RESERVOIR_RADIUS])
+    deep = rules["reservoir_depth"]
+    sites = dam_sites(h, clean, h + D, heights=(1, 2, 3, 4) if deep > 0 else (1, 2, 3), stride=2, start_dist=sd,
+                      min_depth=deep)
+    near_sites = [s for s in sites if sd[s["y"], s["x"]] <= RESERVOIR_RADIUS]
     best = max([s["volume"] for s in near_sites], default=0.0)
+    need = rules["reservoir_need"]
     rep.add("water.reservoir", max(natural, best) >= need,
-            f"best dam site within 40 tiles holds {best:.0f}, natural pools {natural:.0f}; "
-            f"{need:.0f} carries {diff['colony']} beavers through a {diff['drought_days']}-day drought",
-            round(max(natural, best)), need)
+            f"best dam site within 40 tiles holds {best:.0f}, natural pools {natural:.0f}; need {need:.0f} "
+            f"for {COLONY[rules['difficulty']]} beavers", round(max(natural, best)), round(need))
+    if water is not None:
+        water.update({"reach": reach, "sites": sites})
 
     # ---- resource totals: at least half the official median for this map size (about the official p10)
-    area = X * Y
-    ruins = [e for e in m.entities if e["Template"].startswith("RuinColumnH")]
+    area = N
     scrap = sum(15 * int(e["Template"][11:]) for e in ruins)
-    for key, have, per in (("scrap", scrap, 1e3), ("trees", sum(len(ents.get(t, [])) for t in TREES + ("Succulent",)), 1e4),
-                           ("bushes", len(ents.get("BlueberryBush", [])), 1e4)):
-        dkey = {"scrap": "scrap_per_1k_tiles", "trees": "trees_per_10k", "bushes": "bushes_per_10k"}[key]
-        need = 0.5 * cal.density(dkey, area) * area / per
-        rep.add(f"resources.{key}", have >= need, f"{have} {key} (at least {need:.0f}: half the official median for this size)",
-                have, round(need))
+    n_trees = sum(1 for e in m.entities if e["Template"] in TREES + ("Succulent",) and "BlockObject" in e.get("Components", {}))
+    n_bushes = sum(1 for e in m.entities if e["Template"] == "BlueberryBush" and "BlockObject" in e.get("Components", {}))
+    for key, have, dkey, per in (("scrap", scrap, "scrap_per_1k_tiles", 1e3), ("trees", n_trees, "trees_per_10k", 1e4),
+                                 ("bushes", n_bushes, "bushes_per_10k", 1e4)):
+        need_k = 0.5 * cal.density(dkey, area) * area / per * rules["mult"][key]
+        rep.add(f"resources.{key}", have >= need_k, f"{have} {key} (at least {need_k:.0f})", have, round(need_k))
 
     # ---- ruins: fields of touching columns, each scavengeable from its own level
     if ruins:
         pts = [(placement(e).x, placement(e).y) for e in ruins]
         in_fields = sum(len(c) for c in point_clusters(pts, 1) if len(c) >= 10) / len(ruins)
-        rep.add("ruins.fields", in_fields >= 0.8, f"{in_fields:.0%} of columns in fields of 10+ (official median 97%)",
-                round(in_fields, 2), 0.8)
-        # scavengers stand on an 8-neighbour on ground at the ruin's level; ruins and plants do
-        # not block the navmesh, so neighbouring columns still count (4,961 of 4,964 official)
-        blocked_access = 0
+        rep.add("ruins.fields", in_fields >= 0.8, f"{in_fields:.0%} of columns in fields of 10+", round(in_fields, 2), 0.8)
+        no_access = 0
         for e, (x, y) in zip(ruins, pts):
             z = placement(e).z
             if not any(0 <= x + dx < X and 0 <= y + dy < Y and h[y + dy, x + dx] == z and not blocked[y + dy, x + dx]
                        for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy):
-                blocked_access += 1
-        rep.add("ruins.access", blocked_access == 0, f"{blocked_access} columns with no neighbour at their level")
-    if water is not None:
-        water.update({"D": D, "C": C, "M": M, "SC": SC, "reach": reach, "sites": sites})
+                no_access += 1
+        rep.add("ruins.access", no_access == 0, f"{no_access} columns with no neighbour at their level", no_access, 0)
+    else:
+        rep.add("ruins.fields", True, "no ruins on this map", na=True)
+        rep.add("ruins.access", True, "no ruins on this map", na=True)
+    rep.add("extras.placement", True, "no relics, geothermal fields or mine sites are checked yet", na=True)
 
 
-def _adjacent(a, b):
-    Y, X = a.shape
-    for dy, dx in N4:
-        s = np.zeros_like(b)
-        s[max(0, dy):Y + min(0, dy), max(0, dx):X + min(0, dx)] = b[max(0, -dy):Y - max(0, dy), max(0, -dx):X - max(0, dx)]
-        if (a & s).any():
-            return True
-    return False
+def channel_tiles(tiles, levels, width, X, Y):
+    """Bed tiles of a carved channel (src/core/features/route.ts channelTiles): a square of side
+    `width` round every route tile, at that tile's level (the lowest where squares overlap)."""
+    r = (width - 1) >> 1
+    bed = {}
+    for k in range(len(levels)):
+        x, y, lv = tiles[2 * k], tiles[2 * k + 1], levels[k]
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < X and 0 <= ny < Y:
+                    i = ny * X + nx
+                    if i not in bed or lv < bed[i]:
+                        bed[i] = lv
+    return bed
 
 
-def _touches(mask, y, x):
-    Y, X = mask.shape
-    return any(0 <= y + dy < Y and 0 <= x + dx < X and mask[y + dy, x + dx] for dy, dx in N4)
+def basin_leak(p, h, X, Y):
+    """Where water rising in a badwater basin with its outlet blocked leaves it below its rim, or
+    None (src/core/validate/playability.ts basinLeak)."""
+    rim = p["floor"] + 2
+    cx, cy = p["x"] + 1, p["y"] + 1
+    blocked = channel_tiles(p["outlet"], p["outletLevels"], p["outletWidth"], X, Y)
+    seen = set()
+    queue = []
+    for y in range(p["y"], p["y"] + 3):
+        for x in range(p["x"], p["x"] + 3):
+            if 0 <= x < X and 0 <= y < Y:
+                seen.add(y * X + x)
+                queue.append((x, y))
+    q = 0
+    while q < len(queue):
+        x, y = queue[q]
+        q += 1
+        for dx, dy in ((0, -1), (-1, 0), (0, 1), (1, 0)):
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < X and 0 <= ny < Y):
+                return (x, y)
+            n = ny * X + nx
+            if n in seen or n in blocked or h[ny, nx] >= rim:
+                continue
+            if abs(nx - cx) > 5 or abs(ny - cy) > 5:
+                return (nx, ny)
+            seen.add(n)
+            queue.append((nx, ny))
+    return None
+
+
+def _contained(rep, h, features, X, Y):
+    """water.badwater_contained (PLAN §9.5, D57): with its outlet blocked, every planned badwater
+    basin holds its water below its rim."""
+    if features is None:
+        rep.add("water.badwater_contained", True, "needs the map's planned badwater basins (imported maps have none)",
+                na=True)
+        return
+    basins = [f["params"]["plan"] for f in features
+              if f["kind"] == "setPiece" and f["params"]["kind"] == "badwaterBasin"
+              and f["params"]["plan"].get("mode") == "basin" and isinstance(f["params"]["plan"].get("outlet"), list)]
+    if not basins:
+        rep.add("water.badwater_contained", True, "no badwater basin with a planned outlet on this map", na=True)
+        return
+    leaks = [l for l in (basin_leak(p, h, X, Y) for p in basins) if l]
+    rep.add("water.badwater_contained", not leaks, f"{len(leaks)} of {len(basins)} badwater basins leak below their rim",
+            len(leaks), 0)
+
+
+def _outflow(rep, D, sources, features, X, Y):
+    """Every source's water reaches a map edge that drains, or a planned lake (needs the features)."""
+    if features is None:
+        rep.add("water.outflow", True, "needs the map's planned lakes (imported maps have none)", na=True)
+        return
+    labels, _ = components(D > 0, connectivity=((1, 0), (-1, 0), (0, 1), (0, -1)))
+    emitting = np.zeros((Y, X), bool)
+    for s in sources:
+        for (y, x) in s["tiles"]:
+            emitting[y, x] = True
+    border = np.zeros((Y, X), bool)
+    border[0, :] = border[-1, :] = border[:, 0] = border[:, -1] = True
+    drains = set(int(v) for v in labels[border & ~emitting & (labels >= 0)])
+    for f in features:
+        if f["kind"] == "lake":
+            mask = polygon_mask(f["params"]["outline"], X, Y)
+            drains |= set(int(v) for v in labels[mask & (labels >= 0)])
+    bad = [s for s in sources if s["strength"] > 0 and labels[s["tiles"][0]] >= 0 and int(labels[s["tiles"][0]]) not in drains]
+    rep.add("water.outflow", not bad, f"{len(bad)} sources whose water reaches neither an edge nor a planned lake",
+            len(bad), 0)
