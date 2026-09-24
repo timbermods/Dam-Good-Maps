@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import opsSchema from "../../src/core/doc/ops.schema.json" with { type: "json" };
 import { checkSchema } from "../../src/core/spec/schema";
 import { MapSession } from "../../src/core/doc/session";
+import { entityProblem } from "../../src/core/doc/placing";
 import type { EditOp } from "../../src/core/doc/ops";
 import type { ForestFeature, SetPieceFeature } from "../../src/core/features/schema";
 import { generate } from "../../src/core/gen/generate";
@@ -161,18 +162,20 @@ describe("invalid operations are rejected with a reason and change nothing", () 
 describe("operations and the validation report share one shape", () => {
   it("a fix from the report applies as one step and clears its check", () => {
     const s = fresh();
-    // a large relic across a terrace edge: part of it stands in the terrain, so the game would
-    // delete it on load
-    const h = r.built.heights;
+    // a large relic on level ground, then the ground under part of it raised: that part stands in
+    // the terrain, so the game would delete it on load (placing it there directly is refused)
     let at = -1;
     for (let i = W * 5 + 5; i < W * (W - 5) && at < 0; i++) {
       const x = i % W;
       const y = (i - x) / W;
       if (x > W - 5) continue;
-      if (h[i] < h[i + 1] && h[i + 1] === h[i + 2] && h[(y + 1) * W + x] === h[i] && h[(y + 2) * W + x] === h[i]) at = i;
+      if (entityProblem(s, { template: "LargeRelic", x, y, orientation: "Cw0" }) === null) at = i;
     }
     expect(at).toBeGreaterThan(0);
-    expect(s.apply({ op: "placeEntity", params: { id: "22222222-2222-4333-8444-555555555555", template: "LargeRelic", x: at % W, y: Math.floor(at / W), orientation: "Cw0" } }).ok).toBe(true);
+    const [ax, ay] = [at % W, Math.floor(at / W)];
+    expect(s.apply({ op: "placeEntity", params: { id: "22222222-2222-4333-8444-555555555555", template: "LargeRelic", x: ax, y: ay, orientation: "Cw0" } }).ok).toBe(true);
+    // (two tiles: a single raised tile is a spike the integrity pass removes)
+    expect(s.apply({ op: "sculpt", params: { mode: "raise", cells: [[ay + 1, ax + 1, ax + 2]], amount: 1 } }).ok).toBe(true);
     const failing = s.validate("export").report.checks.find((c) => c.id === "entities.placement")!;
     expect(failing.ok).toBe(false);
     expect(failing.fix![0].params).toEqual({ entities: ["22222222-2222-4333-8444-555555555555"] });
