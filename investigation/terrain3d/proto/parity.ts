@@ -26,6 +26,8 @@ const seeds = arg("seeds", "1,2").split(",").map(Number);
 const ticks = Number(arg("ticks", "1536"));
 const themes = arg("themes", "riverValley,canyon,lakeBasin,highlands,delta,islands").split(",");
 const tmp = arg("tmp", process.env.TEMP ?? ".");
+/** --mode game: measure how far the game's edge rules move today's heightfield water (not parity) */
+const mode = arg("mode", "port") as "port" | "game";
 mkdirSync(tmp, { recursive: true });
 
 const rows: string[] = [];
@@ -43,7 +45,7 @@ for (const theme of themes) {
     const start = prefill(hm);
     const a = new WaterSim(hm, start);
     const lm = loadMap(path);
-    const b = new StackSim(lm.model, "port");
+    const b = new StackSim(lm.model, mode);
     // columns: a heightfield has one column per tile, [surface (raised by blockages), 34)
     let multi = 0;
     for (let i = 0; i < lm.cols.N; i++) if (lm.cols.count[i] !== 1) multi++;
@@ -60,19 +62,25 @@ for (const theme of themes) {
     const t3 = process.cpuUsage(t2);
     let diff = 0;
     let maxd = 0;
+    let wetDiff = 0, wetA = 0, volA = 0, volB = 0;
     for (let i = 0; i < lm.cols.N; i++) {
       if (a.D[i] !== b.D[i] || a.C[i] !== b.C[i]) diff++;
       const d = Math.abs(a.D[i] - b.D[i]);
       if (d > maxd) maxd = d;
+      if ((a.D[i] > 0.05) !== (b.D[i] > 0.05)) wetDiff++;
+      if (a.D[i] > 0.05) wetA++;
+      volA += a.D[i];
+      volB += b.D[i];
     }
-    if (diff) fails++;
+    if (diff && mode === "port") fails++;
     const row = `${theme}\t${seed}\t${size}\tmulti-column tiles ${multi}\tticks ${ticks}\ttiles differing ${diff}\tmax |dD| ${maxd.toExponential(2)}\tCPU port ${((t1.user + t1.system) / 1000).toFixed(0)} ms, stacked ${((t3.user + t3.system) / 1000).toFixed(0)} ms`;
     rows.push(row);
-    json.push({ theme, seed, size, ticks, multiColumnTiles: multi, prefillTilesDiffering: pdiff, tilesDiffering: diff, maxDepthDiff: maxd, cpuMsPort: Math.round((t1.user + t1.system) / 1000), cpuMsStacked: Math.round((t3.user + t3.system) / 1000) });
+    json.push({ theme, seed, size, ticks, mode, multiColumnTiles: multi, prefillTilesDiffering: pdiff, tilesDiffering: diff, maxDepthDiff: maxd, wetTilesDiffering: wetDiff, wetTiles: wetA, volumeChange: (volB - volA) / Math.max(1e-9, volA), cpuMsPort: Math.round((t1.user + t1.system) / 1000), cpuMsStacked: Math.round((t3.user + t3.system) / 1000) });
     console.log(row);
   }
 }
-console.log(fails ? `PARITY FAILED on ${fails} maps` : `parity: bit-identical on ${rows.length} maps`);
+if (mode === "port") console.log(fails ? `PARITY FAILED on ${fails} maps` : `parity: bit-identical on ${rows.length} maps`);
+else console.log(`game mode against today's port on ${rows.length} maps (pre-fill ${fails ? "differs" : "identical"})`);
 const outPath = arg("out", "");
 if (outPath) writeFileSync(outPath, JSON.stringify({ bitIdentical: !fails, maps: json }, null, 1) + "\n");
 process.exit(fails ? 1 : 0);
