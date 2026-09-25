@@ -1,25 +1,51 @@
-// Map look's third round (PLAN §20 D115): clean water sits between dry and moist ground in
-// lightness; each water top shows its own tile's badwater share (so water partly bad never looks
-// pure); a slope's arrow is level and floats above the slope, pointing uphill, so it reads from
+// Map look's third round (PLAN §20 D115) and Kyler's clean look: badwater stays clearly darker
+// than clean water, and clean water keeps its shore foam, glints and see-through shallows so it
+// reads apart from ground (it may be as dark as dry ground, as in the game); each water top shows
+// its own tile's badwater share (so water partly bad never looks pure); a slope's arrow is level and floats above the slope, pointing uphill, so it reads from
 // any camera angle; ruins stand apart from contaminated ground; and the light look (software
 // rendering) draws each model once, however many objects use it.
 
 import { describe, expect, it } from "vitest";
-import { ShaderMaterial } from "three";
+import { DataTexture, ShaderMaterial } from "three";
 import { buildEntities, SLOPE_ARROW_HEIGHT } from "../../src/render3d/entities3d";
+import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
 import { entityView, surfaceWater, waterFromDepth } from "../../src/render3d/model";
-import { GROUND, RUIN, WATER } from "../../src/render3d/palette";
+import { GROUND, RUIN, WATER_SURFACE, waterBody, waterOpacity } from "../../src/render3d/palette";
 import { lowerByTile, meshWaterChunk } from "../../src/render3d/waterMesh";
 
 const lum = (c: readonly number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+/** CIE L* of a display colour (sRGB). */
+const lightness = (c: readonly number[]) => {
+  const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const y = 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+  return y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y;
+};
 
 type Mesh = { name: string; count: number; geometry: { getAttribute(n: string): { array: ArrayLike<number>; count: number } } };
 
 describe("water", () => {
-  it("is lighter than dry ground at any depth, and darker than moist ground", () => {
-    expect(lum(WATER.deep)).toBeGreaterThan(lum(GROUND.dry) + 0.05);
-    expect(lum(WATER.shallow)).toBeGreaterThan(lum(WATER.deep));
-    expect(lum(WATER.shallow)).toBeLessThan(lum(GROUND.moistLow));
+  it("keeps badwater clearly darker than clean water, which has shore foam, glints and see-through shallows", () => {
+    const depths = Array.from({ length: 100 }, (_, k) => 0.05 + k * 0.05);
+    // badwater's body at least 6 L* darker than clean water's at any depth, open or by a bank
+    // (7.7 at the least, in deep water; the lit views show about 18)
+    for (const d of depths) for (const fromBank of [0, 0.2, 1]) expect(lightness(waterBody(d, false, fromBank)) - lightness(waterBody(d, true)), `${d} deep`).toBeGreaterThan(6);
+    // foam along the shore and just off it, and glints, in the water shader
+    expect(WATER_SURFACE.shoreFoam).toBeGreaterThan(0.3);
+    expect(WATER_SURFACE.brokenFoam).toBeGreaterThan(0.3);
+    expect(WATER_SURFACE.glints).toBeGreaterThan(0.3);
+    const t = () => new DataTexture(new Uint8Array(4), 1, 1);
+    const shader = waterMaterial(sceneUniforms(1, 1, t(), t(), t(), t())).fragmentShader;
+    const num = (v: number) => (Number.isInteger(v) ? `${v}.0` : String(v));
+    expect(shader).toContain(`mix(${num(WATER_SURFACE.shoreFoam)}, 0.45, bad)`);
+    expect(shader).toContain(`* ${num(WATER_SURFACE.brokenFoam)} * (1.0 - bad)`);
+    expect(shader).toContain(`glints * ${num(WATER_SURFACE.glints)}`);
+    // see-through: never opaque, clearer toward the banks, and at a bank of water a level deep
+    // or shallower the bed shows through
+    for (const d of depths) {
+      expect(waterOpacity(d, 0)).toBeLessThan(1);
+      expect(waterOpacity(d, 0)).toBeLessThanOrEqual(waterOpacity(d, 1));
+    }
+    for (const d of [0.1, 0.25, 0.5, 1]) expect(waterOpacity(d, 0)).toBeLessThan(0.8);
   });
 
   it("shows each tile's own badwater share on its top", () => {

@@ -281,11 +281,27 @@ export default function Editor(props: EditorProps) {
     };
   }, [layer, info.version, waterTick, check?.version]);
 
+  // the Dam site tool shows the dam sites while it is out, and puts them away after unless the
+  // player had them on
+  const damsByTool = useRef(false);
+  useEffect(() => {
+    if (tool === "damSite") {
+      if (damSites === null) {
+        damsByTool.current = true;
+        setDamSites([]);
+      }
+    } else if (damsByTool.current) {
+      damsByTool.current = false;
+      setDamSites(null);
+    }
+  }, [tool]);
+
   // the dam-site layer, measured again after each change while it is shown
   const showDams = damSites !== null;
   useEffect(() => {
     if (!showDams) return;
-    void enqueue(() => api.damSites()).then((d) => setDamSites(d.sites));
+    // (a layer put away before its sites arrive stays away)
+    void enqueue(() => api.damSites()).then((d) => setDamSites((shown) => (shown === null ? null : d.sites)));
   }, [showDams, info.version]);
 
   useEffect(() => props.onChange(info), []);
@@ -891,7 +907,10 @@ export default function Editor(props: EditorProps) {
           options={options}
           onOptions={setOptions}
           damSites={damSites}
-          onDamSites={(show) => setDamSites(show ? [] : null)}
+          onDamSites={(show) => {
+            damsByTool.current = false;
+            setDamSites(show ? [] : null);
+          }}
           layer={layer}
           onLayer={setLayer}
           roofed={!!waterLayers?.roofed.length}
@@ -911,7 +930,8 @@ export default function Editor(props: EditorProps) {
             class="editor-view"
             label={`3D view of ${info.name}. Click a feature to select it. Drag to turn, right-drag to move, wheel to zoom.`}
             onReady={onReady}
-            legendExtra={damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites" }] : []}
+            legendExtra={damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites", markers: true }] : []}
+            markersWanted={damSites !== null || tool === "damSite" || tool === "slope"}
             legendOpen={false}
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
