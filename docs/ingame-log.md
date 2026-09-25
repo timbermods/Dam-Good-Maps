@@ -311,7 +311,7 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. | any map with terrain 17–22 | pending |
+| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. The game's side is the probe batch P-V16 (below). | any map with terrain 17–22 | pending |
 | E2 | Walk a beaver into a ruin column. | Beavers walk through ruin columns, as the code says. | `River Valley (4242).timber`: the website preview of seed 4242 outlines its ruin fields | pending |
 | E3 | Run an aquifer with a powered drill during a drought. | Record whether it yields water. | any map with an aquifer | pending |
 | E4 | Start a new game on a map with no StartingLocation. | Record what happens, for the error message. | needs a hand-made file | pending |
@@ -324,3 +324,15 @@ still a draft.
 | Batch | Step | What it must show | Status |
 |---|---|---|---|
 | P-M9a | M9a's gate (D116) | M9a's maps load, their pre-filled water holds, their objects load, and droughts and badtides behave as the models predict, within tolerances stated before the run; the probe's review of its screenshots finds nothing visibly broken. | pending (M9a) |
+| P-V16 | M9a, Verticality above 16 (D132; E1 below) | Maps with terrain above 16 load, and keep their terrain, water and objects (the Probe's T6). M9a offers heights above 16 only after it passes. | pending (M9a) |
+| P-ML | Map look (D135) | The DGM Probe's in-game shots of the Map look maps from the 3D view's poses, for Kyler to judge the clean look beside them. Kept local, never committed. | pending (when the probe exists) |
+| P-RP | Real places (D136), optional | A few of the real-terrain maps load in the game. Only if Kyler approves a batch. | optional |
+| P-3Db | 3D-b (D127) | T1–T4 and T6 agree with the model within the tolerances stated before the run (investigation/terrain3d/DESIGN.md §8). | pending (3D-b) |
+| P-3Dc | 3D-c (D127) | T5, and T2 on edited maps. | pending (3D-c) |
+| P-WV | Weather view (D133) | The weather model's calibration: droughts and badtides in the game against the model on the same maps. | pending (Weather view) |
+
+## 3D-b: Kyler's play test
+
+| Check | What to do | What should happen | File | Status |
+|---|---|---|---|---|
+| T7 | Play two high-verticality maps before 3D-b's public release (D127; investigation/terrain3d/DESIGN.md §8). | They play: the start works, the heights are reachable as planned, the caves and overhangs hold. | set by 3D-b | pending |

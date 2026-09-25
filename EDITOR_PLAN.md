@@ -64,7 +64,7 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
   - Until then, imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
   - Until then, the tools edit surface height only.
   - The data model stores terrain as runs per tile from project format 3 (D119), so voxel editing needs no format change.
-- Terrain above 16. It is the in-game editor's limit, and every tool keeps to it. Imported maps with terrain up to 22 are preserved.
+- Terrain above 16, except on maps at high Verticality (`PLAN.md` §5.9, D132). 16 is the in-game editor's limit, and the tools keep to the map's own limit (D123). Imported maps with terrain up to 22 are preserved.
 - Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
 - Matching the game's exact visuals. The game's assets can't be included, so the editor uses its own clear, stylized look. The game remains the reference for final appearance and exact water behaviour.
@@ -259,7 +259,7 @@ Playability checks are guards, never traded away to meet a word: every check tha
 | dangerous (safe) badwater | badwater-to-clean strength up; badwater's distance from the start down (safe: the reverse) | Badwater, Badwater distance; a badwater basin's strength (1–3) and place | ratio as above; distance 12 / 30.5 / 54 | Never nearer the start than the badwater rule; the start's water stays clean. |
 | lush (dry) | trees per 10k tiles up; bushes per 10k tiles up; clean flow strength up; natural basins up | Forest density, Berry bushes elsewhere, River flow, Lakes and basins | trees per 10k 402 / 606 / 1,196; bushes per 10k 17 / 44 / 148 | Dry keeps the start's trees, bushes and water within the start rules. |
 | wetter (less water) | water share up; clean flow strength up; natural basins of 20+ tiles up | River flow, Lakes and basins, Drought reserve | water share 0.07 / 0.12 / 0.40; basins 2.8 / 12 / 21 | The water share stays under `water.no_flood`'s cap. |
-| rugged (flatter) | height range up; cliff share up (flatter: both down) | Relief, Terracing, Waterfalls | height range 10.8 / 13 / 15; cliff share 0.09 / 0.16 / 0.19 | Terrain stays within 0–16. |
+| rugged (flatter) | height range up; cliff share up (flatter: both down) | Relief, Terracing, Waterfalls | height range 10.8 / 13 / 15; cliff share 0.09 / 0.16 / 0.19 | Terrain stays within the map's limit: 16, or 22 at high Verticality (`PLAN.md` §5.9). |
 | richer (poorer) | scrap per 1k tiles up; trees per 10k tiles up | Ruins and scrap, Forest density | scrap per 1k 152 / 281 / 724 | Ruins stay the ruin rule's distance from the start. |
 | roomier (cramped) | land walkable from the start up; flat share up | Buildable land, Relief | walkable land 1,007 / 1,296 / 4,523; flat share 0.36 / 0.52 / 0.60 | Cramped never goes below the buildable-land rule. |
 

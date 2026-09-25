@@ -48,9 +48,12 @@ text.
 - Steps outside the milestones are released the same way:
   - the design pass (after M11 and the refinement phase, before M12) is tagged `design-done` once Kyler has
     approved and merged it on `dev`;
-  - Map look (after M8, before M9) is tagged `map-look-done`, or ships inside the M9 release;
+  - Map look (after M8, before M9) is tagged `map-look-done` once Kyler approves the look, or ships inside the M9
+    release;
+  - Real places (right after Map look) is tagged `real-places-done`;
   - the Frame pass (after the M9 build, before the 3D stages) is tagged `frame-pass-done`;
-  - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`.
+  - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
+  - the Weather view (after the 3D stages, before M10) is tagged `weather-view-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
 - Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
 - Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.

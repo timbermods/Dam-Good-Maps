@@ -24,6 +24,16 @@ differently, this file wins.
   Standing rules). A step whose gate is a probe batch waits for it.
 - **Effort** is the recommended Claude effort level for building the milestone: **xhigh** for
   architecture-setting or algorithm-heavy work, **high** for the rest.
+- **Keep M12 ready as we go** (Kyler, 2026-09-25; PLAN §20 D134). Every step before M12 that adds
+  or changes a way to edit or understand maps (M9a–c, the 3D stages, the Weather view, M10, M11,
+  the refinement phase) also: (1) exposes that capability to M12's Claude layer as a bounded,
+  validated operation or query tool entry, in the shape of the Claude groundwork's tools
+  (`investigation/claude/`), with its limits and its refusal reasons; (2) adds requests for it to
+  the Claude request suite (`investigation/claude/requests.json`), with measurable expectations
+  and reference solutions; (3) re-runs every reference solution against the step's code, and
+  fixes or re-tunes any that broke, so the suite stays green. No model or API key is needed; the
+  harness waits for M12. Each step's progress entry records the suite's pass count. Each of those
+  steps below has a **Keep M12 ready** line naming its capabilities.
 
 ## Overview
 
@@ -37,12 +47,14 @@ differently, this file wins.
 | M6 | Full settings, sharing, themes I | PLAN §5, §6, §8 (Canyon, Lake Basin), §9.5, §14.5 | yes (short) | high |
 | M7 | Resources, map objects, themes II | PLAN §5.7, §8 (Highlands, Delta, Islands), §9.4, §9.6–9.8 · EDITOR §4, E4 | yes (D) | high |
 | M8 | Water preview and background validation in the editor; start requirements first | EDITOR §6, E5 · PLAN §5.6, §10, §11.4, §19.7 | yes (preview vs game, F3, F4) | xhigh |
-| Look | Map look, after M8, before M9 | Kyler's plan (PLAN §20, D86) · EDITOR §8 · PLAN §14.2 (3D) | no (Kyler's reference screenshot) | high |
+| Look | Map look, after M8, before M9 | Kyler's plan (PLAN §20, D86, D135) · EDITOR §8 · PLAN §14.2 (3D) | no (Kyler approves the look from captures) | high |
+| Places | Real places, right after Map look is released | the landscape survey (investigation/landscapes/) · PLAN §20 D136 | optional (a probe batch, if Kyler approves one) | high |
 | M9 | Interestingness, names, candidates, premises and variety (staged M9a–M9c) | PLAN §7.1, §7.9, §8, §12, §13 · the workshop study (D87) · EDITOR §7 words (D84) · the M9 design (D112) | a probe batch for M9a (D116) | xhigh |
 | Frame | Frame pass, after the M9 build, before the 3D stages | the impeccable-app-flow skill · PLAN §20 D113 | no | high |
 | 3D-a | Terrain above terrain: model, water and checks | investigation/terrain3d/DESIGN.md §2–4, §9 · PLAN §10, §11, §19.6, §19.8 · D118–D122 | no (the Probe's test maps are written) | xhigh |
 | 3D-b | Terrain above terrain: generation and Verticality | DESIGN.md §5 · PLAN §5.9 · D123, D132 | a probe batch (T1–T4, T6), and Kyler plays T7 | xhigh |
 | 3D-c | Terrain above terrain: the editor and the view | DESIGN.md §6–7 · EDITOR §4–6, §8 · D125, D126 | a probe batch (T5, T2 on edited maps) | xhigh |
+| Weather | Weather view, with live water, after the 3D stages, before M10 | investigation/cycles/, investigation/mechanics/ · PLAN §20 D133 | a probe batch (calibration) | xhigh |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
 | Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
@@ -55,19 +67,23 @@ differently, this file wins.
 - after M2: a public generator beta (River Valley, validated water);
 - after M6–M7: all themes;
 - after M8: the editor, with the new start requirements;
-- Map look: inside the M9 release, or tagged `map-look-done` and released like a milestone;
+- Map look: inside the M9 release, or tagged `map-look-done` and released like a milestone, once
+  Kyler approves the clean look (D135);
+- Real places: tagged `real-places-done`, right after Map look;
 - M9's stages: tagged `m9a-done`, `m9b-done` and `m9c-done`; M9a goes public only after its probe
   batch passes (D116);
 - the Frame pass: tagged `frame-pass-done`;
 - 3D-a: no visible change (tagged `3d-a-done`); 3D-b: Verticality's 3D forms (tagged `3d-b-done`,
   after Kyler's play test of two high-verticality maps, T7); 3D-c: 3D editing (tagged
   `3d-c-done`);
+- the Weather view: tagged `weather-view-done`;
 - the refinement phase and the design pass: tagged `design-done`;
 - after M12: Claude.
 
 M9 depends only on M2 and can run alongside M8. The 3D stages follow the M9 build and the Frame
-pass. M10 and M11 follow 3D-c, so their tools are built on runs from the start; they can swap
-places.
+pass, and the Weather view follows them. M10 and M11 follow the Weather view, so their tools are
+built on runs from the start; they can swap places. The refinement phase stays before the design
+pass, M12 and M13.
 
 **Investigations adopted after M7.** Their items are built in the milestones below, each marked
 with its source:
@@ -600,15 +616,19 @@ Timberborn in game, while every map meaning stays readable. It changes no map fi
 `src/core/render/shade.ts` (the 2D preview and the thumbnail) stays exactly as it is, and every
 sha256 stays equal.
 
+**Appeal matters as much as readability** (Kyler, 2026-09-25; PLAN §20 D135). The default view is
+a clean look as close to the game as possible, in which the core meanings still read. An
+information layer, off by default, carries the marks and the enlarged objects.
+
 **Why:** Kyler's screenshot of the current 3D view is hard to read. The ground is coloured by
 height, while the game colours it by moisture. There are no shadows or ambient occlusion. Water is
 flat: badwater in its open ditch looks like a brown dirt ramp. Ruins are grey pillars, and the
 district center is a small box.
 
 **Delivers**
-1. Ground tops coloured by moisture as in game: moist ground green; dry ground cracked earth, a warm
-   grey-brown with a faint violet cast in shadow and visible cracks, not sandy (Kyler's correction
-   from his in-game reference screenshots, D110); contaminated soil with its own look. A toggle
+1. Ground tops coloured by moisture as in game: moist ground green; dry ground cracked earth, the
+   cool grey-brown of Kyler's reference, not reddish brown (D135; it replaces D110's warm
+   grey-brown); contaminated soil with its own look. A toggle
    switches back to height colours. This changes the 3D view's colour meaning from height to
    moisture (approved by Kyler, D86).
 2. Height shown on the block walls: layered bands per level, so levels can be counted.
@@ -620,24 +640,33 @@ district center is a small box.
    clearly dead; berry bushes; scrap-heap ruins instead of pillars; a recognisable district
    center of our own design.
 7. A default camera angle closer to the game's.
+8. **A clean default look** (D135): slopes drawn as ramps; dead trees as pale bare trunks at their
+   true size; no hazard tape, no arrows, no inflated objects.
+9. **An information layer** (D135), off by default, turned on by a toggle or by a tool that needs
+   it: the dam-site marks, the slope arrows, and objects enlarged from afar (D114, D115).
 
 **Rules**
 - None of the game's models, textures or art. Everything is our own, and any textures are
   generated in the shader, so the artifact edition needs no image files.
-- The M4 budgets hold (`npm run bench:3d`): build under 1.5 s at 256², and 60 fps on the
-  integrated GPU with the CPU slowed 4×, including Beavertopia (D46).
-- Every map meaning stays readable, and is checked in greyscale and under colour-blindness
-  simulation: water and badwater, moist and dry and contaminated ground, living and dead trees,
-  the start, slopes and their direction, dam sites.
+- The M4 budgets (`npm run bench:3d`: build under 1.5 s at 256², and 60 fps on the integrated GPU
+  with the CPU slowed 4×, including Beavertopia, D46) are information (D115).
+- In the clean view the core meanings read in colour, in greyscale and under colour-blindness
+  simulation: water and badwater, badwater meeting clean water, moist, dry and contaminated
+  ground, living and dead trees, the start. The strict readability rules (slopes and their
+  direction, dam sites, objects far off) apply to the information layer.
 - The 2D preview keeps its height colours, and the 3D view's legend and hover text say what the
   colours mean.
 - The 3D chunk stays lazy-loaded, and its size is reported.
 
-**Acceptance**
-- Before and after captures of the same maps (seed 4242 in every theme, one 256² map and
-  Beavertopia) from the same camera angles.
-- A reviewer can tell each meaning above apart in the after captures.
-- The budgets pass, and every existing test passes unchanged.
+**Acceptance** (Kyler's one rule, D115; the gate of D135)
+- Blocking:
+  - no map file changes: every sha256 stays equal, and every existing test passes unchanged;
+  - **Kyler approves the appeal** from the clean view's captures of the same maps (seed 4242 in
+    every theme, one 256² map and Beavertopia), beside Kyler's reference screenshots
+    (`C:\dgm-reference\`, local only) and, once they exist, beside the DGM Probe's in-game shots
+    of the same maps. No blind review. `map-look-done` waits for that approval.
+- Information: the captures' greyscale and colour-blind versions and the information layer's
+  captures, for Kyler; the 3D budgets.
 
 **Reference:** Kyler's in-game screenshots ([docs/ingame-log.md](docs/ingame-log.md), ML-1) arrived
 on 2026-09-25 and tuned the colours, lighting, water and models. They stay on Kyler's machine:
@@ -652,7 +681,7 @@ steps, shorelines, ridge crests). Map look changes no map file, so they go to th
 **Effort:** high.
 
 **Release:** inside the M9 release, or tagged `map-look-done` and released like a milestone
-(CLAUDE.md, Deploying).
+(CLAUDE.md, Deploying), once Kyler approves the clean look (D135).
 
 **Status:** built, 2026-09-25, on branch `dev` (the generator stays 0.6.0; no map file changes).
 Tuned to Kyler's in-game reference (ML-1), which corrected Delivers 1. The first independent review
@@ -668,6 +697,40 @@ benchmark is information only:
   machine pushes over for the second round's code too; every sha256 stays equal.
 
 The deviations are PLAN §20 D110, D114 and D115; decisions-pending #49 (the default camera).
+
+**The clean-look round** (D135) is being built on branch `look/clean`: the clean default view and
+the information layer. Kyler approves the look from its captures; `map-look-done` waits for it.
+
+---
+
+## Real places
+
+A small step right after Map look is released (Kyler, 2026-09-25; PLAN §20 D136).
+
+**Why:** the landscape survey (`investigation/landscapes/`, PR #16) turned 88 real terrains into
+playable, validated maps. Players can play them as they are, or refine one in the editor.
+
+**Delivers**
+1. A gallery of the survey's 88 playable real-terrain maps (`investigation/landscapes/library/`).
+   Each card shows our own render, its name ("Near Yosemite Valley"), its landform family, size
+   and scale, and a short plain line about how it plays, from the existing analysis.
+2. Download the `.timber` (with pre-filled water), or open it in the editor to refine it.
+3. Every map is built through the existing pipeline (build, settle, validate, write), so its file
+   is always the same bytes.
+4. Attribution per `investigation/landscapes/ATTRIBUTION.md`, on the gallery page and in each
+   map's in-game description: derived from public elevation data, not an exact copy of the place.
+5. Kept separate from the generator: real places are content, never templates (the product
+   principle, D108).
+
+**Acceptance:** only that every map passes the validators and exports, and that the page works on
+desktop and on a phone.
+
+**In-game check:** optional. When the probe is available, Kyler may approve a batch that loads a
+few of them in the game (D117).
+
+**Effort:** high.
+
+**Release:** tagged `real-places-done` and released like a milestone (CLAUDE.md, Deploying).
 
 ---
 
@@ -730,6 +793,10 @@ a little noise, and two maps must play differently, not only look different.
    `investigation/generative`) comes first. Version 2 folds in the three Codex investigations
    (`investigation/cycles`, `investigation/landscapes`, `investigation/mechanics`) when their PRs
    are ready, with new prototypes, measures and briefs. **Kyler approves version 2, not version 1.**
+   Version 2 also measures Verticality (D132), at the default and at high Verticality: relief
+   range, levels used, share of land above 16, tallest fall, cliff share and vertical reach (land
+   reachable on foot against land reachable only with stairs), against the official and workshop
+   maps.
 
 M9, M10 and M11 wait for that approval.
 
@@ -760,6 +827,19 @@ the stages replace its order, and its premises become recipes inside the system 
     `WaterSimulationMigrator.IsMigrated` as the TypeScript one does, with the mutated file in the
     parity checks; the writer derives ZIP entry times without local-time normalization, so a
     DST-gap timestamp writes the same bytes in every time zone.
+  - **Verticality** (`vt`, 0–100, beside Variety; D132, PLAN §5.9): its default gives ordinary maps
+    at design version 2's relief (tall parts up to 16), higher values crazy vertical landscapes.
+    The vertical parts and processes (spires and hoodoo stacks, escarpments with hanging valleys,
+    stepped canyons and deep gorges, mesas with summit lakes, cascades with plunge pools,
+    cliff-bench terraces) emerge more as it rises; never stamped. Traversable at any value: the
+    start and its first resources on reachable land, natural ramps where the land needs them;
+    stairs-only heights allowed as rewards. Terrain above 16, up to 22 with layer 22 empty, only
+    at high Verticality (70+), and only after a DGM Probe batch confirms such maps load and keep
+    their terrain, water and objects (asked under D117). The vertical-reach measure joins the
+    batch tools.
+  - **Keep M12 ready** (D134): generating from the processes, and "make it more vertical"
+    (Verticality), as tool entries with their limits and refusal reasons; the read-back features
+    as a query ("what's on this map?"); suite requests for them; every reference solution re-run.
   - **The techniques playbook as proposals** (D131; investigation/techniques/): independent
     spatial controls, protected contours and channels before snapping, starts chosen by
     guarantees and opportunity vectors, catchments and spill levels kept. Each is tried against
@@ -794,12 +874,17 @@ the stages replace its order, and its premises become recipes inside the system 
     8 flow directions (all appear in 100 seeds of each theme, none over 25%), river-network variety
     (splits, deltas, meanders and oxbows), no clones (K candidates ranked against reference
     signatures), the openings with the weather-cycle signature and the strategy axes (design
-    version 2), and the measures as permanent checks.
+    version 2), and the measures as permanent checks. Surprise me and high Variety may reach high
+    Verticality now and then; most maps never do (D132).
+  - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
+    direction as tool entries; suite requests for them; every reference solution re-run.
   - Acceptance: the design's measures M1–M6 on 200 seeds per theme at 128² meet their targets.
 - **M9c: score, names and candidates** (tag `m9c-done`).
   - Delivers: the 12-component score, fitted to Kyler's ratings when they exist; K = 3 candidates
     with progressive preview; names and descriptions from the read-back features and the opening
     ("how it plays"); the place resolver and judgement words (D84, D88); the settings bands.
+  - **Keep M12 ready** (D134): "describe this map" and "how does it play?" (names, descriptions,
+    the opening) as query tool entries; suite requests for them; every reference solution re-run.
   - Acceptance: the rest of M9's acceptance below that the stages do not cover.
 
 
@@ -1013,6 +1098,8 @@ while water settles). Budgets and measures are information.
 6. Imports: roofed water simulated (D100's exception retires); the cave cause of approximate
    water retires (D98). Caves stay locked to the tools until 3D-c.
 7. The Probe's test maps T1–T6 (DESIGN.md §8), written, not played.
+8. **Keep M12 ready** (D134): "which levels can I reach without stairs?" and "where does water
+   stand under a roof?" as query tool entries; suite requests; every reference solution re-run.
 
 **Acceptance**
 - Blocking:
@@ -1055,6 +1142,8 @@ while water settles). Budgets and measures are information.
    Probe's T6 passes.
 5. NaturalOverhang bridges and badtide drains in cliff notches (from Later).
 6. The 3D measures in the batch and the M9 measure suite.
+7. **Keep M12 ready** (D134): "make it more vertical" with 3D forms, and "add caves" through
+   Verticality, as tool entries; suite requests; every reference solution re-run.
 
 **Acceptance**
 - Blocking:
@@ -1087,6 +1176,9 @@ while water settles). Budgets and measures are information.
    support rule would drop (D125).
 4. Undo, generate-keeping-edits and 3D locks. Imported caves become editable (D40 retires).
 5. Claude's 3D feature kinds and places (the words land with M12).
+6. **Keep M12 ready** (D134): "carve a tunnel", "cut an arch here", "fill this cave" and "lock this
+   cave" as bounded operations with their limits and refusal reasons (the support rule's); suite
+   requests; every reference solution re-run.
 
 **Acceptance**
 - Blocking:
@@ -1107,6 +1199,79 @@ while water settles). Budgets and measures are information.
 
 ---
 
+## Weather view
+
+After the 3D stages and before M10 (Kyler, 2026-09-25; PLAN §20 D133). The refinement phase stays
+before the design pass, M12 and M13.
+
+**Why:** players should see how a map behaves through droughts and badtides before playing it, and
+what that means for their colony. The exact cycle model (`investigation/cycles/`, merged from PR
+#15) proves it's possible, and its INTEGRATION.md has the proposals. The verified mechanics
+catalogue (`investigation/mechanics/`: CATALOGUE.md, VERIFIED.md, AXES.md; PR #11) turns the weather
+into play consequences.
+
+**Delivers**
+1. A Weather view in the generator's preview and in the editor: **Normal**, **Drought** and
+   **Badtide**, a day slider and a play button, a legend that says what each colour means in words,
+   and a plain-language summary.
+2. The summary explains what the weather means for play, not only where the water goes:
+   - the day the start's shore leaves a pump's reach (storage against access);
+   - how much fertile land stays moist, and when it dries;
+   - how much a water wheel loses as flow drops, by the game's wheel rule;
+   - whether a badtide reaches farmland or the water supply;
+   - aquifers and drills, where the map has them.
+
+   For example: "In a 7-day drought the river dries below the falls by day 3. The start's pumps
+   lose their water on day 4, but the lake upstream keeps most of its water. Farmland by the river
+   dries by day 5."
+3. The map card says, in one or two lines, how the map fares in its first drought and badtide.
+4. Every claim traces to the model and a verified rule. It says "can't tell from the map" where
+   that's the truth, and never promises colony survival (the catalogue's limit: economic timing is
+   unverified).
+5. The weather behaviour feeds the strategy axes, so M9's play-variety measure counts how maps
+   behave through droughts and badtides.
+6. Speed: an instant estimate first (the analytic drought, D101), then the full timeline in a
+   cancellable background worker, streaming key days, using the simulation speedups where adopted
+   (D130).
+7. Cave water: stacked-layer water from the 3D stages (D120), so caves and overhangs behave
+   correctly.
+8. Calibrated against the real game with a DGM Probe batch (asked under D117).
+9. Every meaning readable, as Map look requires: words as well as colour, greyscale and
+   colour-blind checks.
+10. **Live water** (Kyler's addition). When the water settles (after generating, after an edit in
+    the editor, or when a weather phase starts), the 3D view shows it flowing as it happens: water
+    spreading down channels, filling basins, spilling over falls. The simulation streams
+    intermediate states from its worker to the view at a steady frame rate, instead of only showing
+    the finished result.
+    - The final water is exactly the same as today: live display only, never a different settle or
+      a change to map bytes.
+    - It can be skipped: a **show result** option, and reduced motion, jump straight to the settled
+      water.
+    - It stays within the 3D budgets, and the editor stays responsive; a new edit cancels the live
+      display and starts again.
+11. **Keep M12 ready** (D134): "what happens in a drought?" and "when does the start lose its
+    water?" as query tool entries with their limits and refusal reasons; suite requests; every
+    reference solution re-run.
+
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - the summary's claims match the model and the verified rules, and never promise survival
+    (Kyler's honesty principle);
+  - no map file changes;
+  - the final water is identical with live display on and off;
+  - the first key days appear quickly, and it never feels stalled (this replaces the 256² timeline
+    budget);
+  - the editor stays responsive.
+- Kyler approves the look from captures, live water included.
+- Information: the probe batch's timing comparison with the model (unless it reveals breakage); the
+  3D budgets.
+
+**In-game check:** a probe batch for the calibration (D117). **Effort:** xhigh.
+
+**Release:** tagged `weather-view-done` and released like a milestone (CLAUDE.md, Deploying).
+
+---
+
 ## M10. Sculpting, naturalize, symmetry
 
 **Delivers:** E6.
@@ -1117,6 +1282,10 @@ while water settles). Budgets and measures are information.
   - one start kept.
 
 Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps).
+
+- **Keep M12 ready** (D134): "naturalize this area", "raise this hill by two" and "make it
+  symmetric" as bounded operations with their limits and refusal reasons; suite requests; every
+  reference solution re-run.
 
 **Acceptance**
 - The performance budgets of EDITOR §9 are met.
@@ -1154,6 +1323,9 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
     `investigation/workshop/recipes/` are their reference.
   - The water builders `riverFork`, lake `outlets` and river `switchback` (PLAN §9.11).
 - Locks, stamps and regenerate-area on 3D regions (tiles and a z range); stamps carry runs (D118).
+- **Keep M12 ready** (D134): "lock this area", "regenerate the east third" and "put a spiral
+  mountain here" (a stamp) as bounded operations with their limits and refusal reasons; suite
+  requests; every reference solution re-run.
 
 **Acceptance**
 - Hand edits survive regeneration per the conflict rules.
@@ -1232,6 +1404,9 @@ both ends. Change only the shapes.
 5. Canyon's narrows: a rock-like outline, not rectangles.
 6. The editor's drawn-river banks: blend them into the ground beside them.
 7. Notes 1–6 and 8–9 above, each closed with Kyler's answer (or its default) and a test.
+8. **Keep M12 ready** (D134): the changed checks and shapes in the tools' answers ("why does this
+   fail validation?", the dam-site tool if it stays); suite requests; every reference solution
+   re-run.
 
 **Rules**
 - Every check keeps passing, including the reservoir rules and Hard's 3-deep rule.
@@ -1484,6 +1659,8 @@ The workshop study's numbers for these (D87):
 - **Caves, overhangs and tunnels** moved into 3D-a–3D-c (investigation/terrain3d; D118). Within the
   35 workshop maps made for 1.0 or later, 29 (83%) have cave or overhang columns; 46 of all 130
   are built round caves. NaturalOverhang bridges and badtide drains moved into 3D-b.
+- **Terrain 17–22** moved into M9a, at high Verticality only, once a probe batch confirms it (D132).
+  19 of 130 workshop maps (7 of the 35) reach above 16; no official map does.
 - **1.0 objects are common in the workshop.** Within the 35: relics 91%, geothermal 86%, plugs
   94%, thorns 74%, seeps 74%, weirs 69%, aquifers 66%, unstable cores 63%, badtide drains 60%
   (official: 47%, 37%, 79%, 42%, 42%, 32%, 11%, 16%, 37%).
