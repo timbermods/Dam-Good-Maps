@@ -67,6 +67,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
+- **Real places** (85 real-terrain maps, PR #23) is merged into `dev`; `real-places-done` is being
+  released.
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
