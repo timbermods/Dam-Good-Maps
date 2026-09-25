@@ -5,6 +5,8 @@
 // Coordinates: tile (x, y) with x east and y north, as in the game. The renderer's world space is
 // X = x, Y = height, Z = −y, so north is −Z and the top-down view has north up.
 
+import { contaminationByte, moistureByte } from "./palette";
+
 export const LAYERS = 23;
 export const ORIENTATION_NAMES = ["Cw0", "Cw90", "Cw180", "Cw270"] as const;
 
@@ -41,6 +43,13 @@ export interface WaterView {
   contamination: Float32Array;
 }
 
+/** Soil per tile, as bytes (palette.ts `moistureByte`, `contaminationByte`): moisture above 0
+ *  where living plants grow, contamination above 0 where badwater spoils the soil. */
+export interface SoilView {
+  moisture: Uint8Array;
+  contamination: Uint8Array;
+}
+
 export interface MapView {
   W: number;
   H: number;
@@ -50,6 +59,20 @@ export interface MapView {
   columns: { tiles: Int32Array; voxels: Uint8Array };
   water: WaterView;
   entities: EntityView;
+  /** The soil the ground's colour shows (Map look, D86). Without it the ground reads as dry. */
+  soil?: SoilView;
+}
+
+/** Soil moisture (the game's levels) and soil contamination (0–1) per tile as a soil view. */
+export function soilView(moisture: ArrayLike<number>, contamination: ArrayLike<number>): SoilView {
+  const n = moisture.length;
+  const m = new Uint8Array(n);
+  const c = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    m[i] = moistureByte(moisture[i]);
+    c[i] = contaminationByte(contamination[i] ?? 0);
+  }
+  return { moisture: m, contamination: c };
 }
 
 /** Wetter than this counts as water (the 2D preview's threshold). */
@@ -189,6 +212,7 @@ export function viewBuffers(v: Partial<MapView>): ArrayBuffer[] {
     add(v.columns.voxels);
   }
   if (v.water) for (const a of [v.water.tile, v.water.floor, v.water.depth, v.water.contamination]) add(a);
+  if (v.soil) for (const a of [v.soil.moisture, v.soil.contamination]) add(a);
   if (v.entities) for (const a of [v.entities.template, v.entities.x, v.entities.y, v.entities.z, v.entities.orientation, v.entities.flags, v.entities.owner]) add(a);
   return out;
 }

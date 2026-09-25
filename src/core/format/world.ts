@@ -264,6 +264,24 @@ export function decodeWorld(text: string, tv?: { voxels: Uint8Array; layers: num
   };
 }
 
+/** The soil a map stores (SoilMoistureSimulator, SoilContaminationSimulator) on each tile's top: the
+ *  slot of its top column (`topSlot`, 0 on a tile of one column). Zeros where a singleton is
+ *  missing or its array does not fit the map. For the 3D view's ground colours (Map look, D86). */
+export function storedSoil(singletons: JsonObject, W: number, H: number, topSlot: (tile: number) => number = () => 0): { moisture: Float32Array; contamination: Float32Array } {
+  const plane = W * H;
+  const read = (name: string, key: string): Float32Array => {
+    const out = new Float32Array(plane);
+    const s = singletons[name];
+    if (!isObject(s) || !isObject(s[key])) return out;
+    const t = String((s[key] as JsonObject).Array).split(" ");
+    if (!t.length || t.length % plane) return out;
+    const slots = t.length / plane;
+    for (let i = 0; i < plane; i++) out[i] = Number(t[Math.min(slots - 1, topSlot(i)) * plane + i]) || 0;
+    return out;
+  };
+  return { moisture: read("SoilMoistureSimulator", "MoistureLevels"), contamination: read("SoilContaminationSimulator", "ContaminationLevels") };
+}
+
 /** The water a map stores (WaterMapNew, every level): one entry per wet column, with its floor
  *  (the token's fourth field; -1 when an old 3-field token has none), depth and badwater share.
  *  Empty when the singleton is missing or its array does not fit the map. */

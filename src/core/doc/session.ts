@@ -22,7 +22,7 @@ import { entityJson, placementOf, rawEntity } from "../format/entities";
 import { fromBase64, toBase64 } from "../format/base64";
 import { parse, stringify, type JsonObject } from "../format/json";
 import { writeTimber, type TimberFile } from "../format/timber";
-import { mixedSimulationSingletons, settledSimulationSingletons, storedWater, type WorldModel } from "../format/world";
+import { mixedSimulationSingletons, settledSimulationSingletons, storedSoil, storedWater, type WorldModel } from "../format/world";
 import type { Feature } from "../features/schema";
 import { MAX_ATTEMPTS, planFeatures, type GenerateResult } from "../gen/generate";
 import { description, fileName as timberFileName, mapName, toTimberFile } from "../gen/pack";
@@ -285,6 +285,22 @@ export class MapSession {
     const b = this.baseStuff();
     if (this.storedWaterCache?.key !== this.gen.base) this.storedWaterCache = { key: this.gen.base, water: storedWater(b.file.world.singletons, this.gen.base.sizeX, this.gen.base.sizeY) };
     return this.storedWaterCache.water;
+  }
+
+  /** The soil the base file stores on each tile's top (moisture and contamination), for the 3D
+   *  view's ground colours (Map look, D86). */
+  storedSoil(): ReturnType<typeof storedSoil> {
+    const b = this.baseStuff();
+    const cols = b.terrain.columns;
+    // a tile's top column is its last run of solid voxels
+    const topSlot = (i: number): number => {
+      const c = cols.get(i);
+      if (!c) return 0;
+      let runs = 0;
+      for (let z = 0; z < c.length; z++) if (c[z] && (z === 0 || !c[z - 1])) runs++;
+      return Math.max(0, runs - 1);
+    };
+    return storedSoil(b.file.world.singletons, this.gen.base.sizeX, this.gen.base.sizeY, topSlot);
   }
 
   /** The document as it stands, for the project file and autosave. */

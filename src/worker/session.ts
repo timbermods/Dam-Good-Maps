@@ -55,7 +55,7 @@ import type { WaterModel } from "../core/sim/water";
 import { surfaceOf } from "../core/format/world";
 import { blocks, type CheckClass, type CheckResult, type FixOp } from "../core/validate/report";
 import { changedRect } from "../render3d/mesh";
-import { emptyColumns, entityView, LAYERS, waterFromDepth, type EntityView, type MapView, type WaterView } from "../render3d/model";
+import { emptyColumns, entityView, LAYERS, soilView, waterFromDepth, type EntityView, type MapView, type SoilView, type WaterView } from "../render3d/model";
 import { lastGenerated, lifeOf, responseOf, type GenerateResponse } from "./api";
 
 export interface SessionInfo {
@@ -89,6 +89,8 @@ export interface ViewUpdate {
   terrainRect?: { x0: number; y0: number; x1: number; y1: number } | null;
   water?: WaterView;
   entities?: EntityView;
+  /** The soil the ground's colours show; it follows the water (Map look, D86). */
+  soil?: SoilView;
 }
 
 export interface SessionUpdate {
@@ -150,7 +152,7 @@ export interface ExportCheck {
 let session: MapSession | null = null;
 let version = 0;
 /** What the page last received, to send only what changed. */
-let sent: { heights: Uint8Array; water: unknown; stored: boolean; entities: unknown } | null = null;
+let sent: { heights: Uint8Array; water: unknown; stored: boolean; entities: unknown; soil: unknown } | null = null;
 /** The imported map as it was opened, with every check (the problems it had already, D43). */
 let originalFull: Validation | null = null;
 let lastCheck: ExportCheck | null = null;
@@ -232,6 +234,28 @@ function waterOf(s: MapSession): WaterView {
   return out;
 }
 
+/** The soil the view shows: the map's settled soil, or the file's own where the view shows the
+ *  file's water (an unedited import everywhere, an edited one under its roofs). */
+function soilOf(s: MapSession): SoilView {
+  const b = s.built;
+  const roofed = s.roofedTiles;
+  if (!s.showsStoredWater && !roofed.size) return soilView(b.moisture, b.soilContamination);
+  const file = s.storedSoil();
+  if (s.showsStoredWater) return soilView(file.moisture, file.contamination);
+  const moisture = Float32Array.from(b.moisture);
+  const contamination = Float32Array.from(b.soilContamination);
+  for (const i of roofed) {
+    moisture[i] = file.moisture[i];
+    contamination[i] = file.contamination[i];
+  }
+  return soilView(moisture, contamination);
+}
+
+/** What the sent soil depends on: the settled soil arrays, or the file's. */
+function soilKey(s: MapSession): unknown {
+  return s.showsStoredWater ? "stored" : s.built.moisture;
+}
+
 function columnsOf(s: MapSession): MapView["columns"] {
   const cols = s.columns;
   if (!cols.size) return emptyColumns();
@@ -248,7 +272,7 @@ function columnsOf(s: MapSession): MapView["columns"] {
 
 function markSent(s: MapSession): void {
   const b = s.built;
-  sent = { heights: b.heights, water: s.showsStoredWater ? "stored" : b.water, stored: s.showsStoredWater, entities: b.entities };
+  sent = { heights: b.heights, water: s.showsStoredWater ? "stored" : b.water, stored: s.showsStoredWater, entities: b.entities, soil: soilKey(s) };
 }
 
 /** The whole map view (opening a map, or after a regeneration). */
@@ -256,7 +280,7 @@ export function sessionView(): SessionOpen {
   const t0 = performance.now();
   const s = need();
   const b = s.built;
-  const view: MapView = { W: b.W, H: b.H, heights: b.heights.slice(), columns: columnsOf(s), water: waterOf(s), entities: entityView(entityInputs(b.entities)) };
+  const view: MapView = { W: b.W, H: b.H, heights: b.heights.slice(), columns: columnsOf(s), water: waterOf(s), entities: entityView(entityInputs(b.entities)), soil: soilOf(s) };
   markSent(s);
   return { info: sessionInfo(s), view, ms: Math.round(performance.now() - t0) };
 }
@@ -265,7 +289,7 @@ function viewUpdate(s: MapSession): ViewUpdate {
   const b = s.built;
   const out: ViewUpdate = {};
   const prev = sent;
-  if (!prev || prev.heights.length !== b.heights.length) return { heights: b.heights.slice(), terrainRect: null, water: waterOf(s), entities: entityView(entityInputs(b.entities)) };
+  if (!prev || prev.heights.length !== b.heights.length) return { heights: b.heights.slice(), terrainRect: null, water: waterOf(s), entities: entityView(entityInputs(b.entities)), soil: soilOf(s) };
   if (prev.heights !== b.heights) {
     const rect = changedRect(b.W, b.H, prev.heights, b.heights);
     if (rect) {
@@ -275,6 +299,7 @@ function viewUpdate(s: MapSession): ViewUpdate {
   }
   const water = s.showsStoredWater ? "stored" : b.water;
   if (water !== prev.water) out.water = waterOf(s);
+  if (water !== prev.water || soilKey(s) !== prev.soil) out.soil = soilOf(s);
   if (b.entities !== prev.entities) out.entities = entityView(entityInputs(b.entities));
   markSent(s);
   return out;

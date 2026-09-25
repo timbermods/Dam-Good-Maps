@@ -22,7 +22,7 @@ import type { FixOp } from "../core/validate/report";
 import { bankFor } from "../core/features/raster/terrain";
 import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
-import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SurfaceWater } from "../render3d/model";
+import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater } from "../render3d/model";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
@@ -74,6 +74,7 @@ interface Mirror {
   water: SurfaceWater;
   entities: EntityView;
   entitiesAt: Map<number, number[]>;
+  soil?: SoilView;
 }
 
 type Drag = { id: string; dx: number; dy: number } | null;
@@ -224,6 +225,12 @@ export default function Editor(props: EditorProps) {
       m.water = surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
       r?.updateWater(v.water);
     }
+    // the soil follows the water (the preview's, then the exact settle's): the ground's colours,
+    // and the ivy on ruins, so it comes before the objects
+    if (v.soil) {
+      m.soil = v.soil;
+      r?.updateSoil(v.soil);
+    }
     if (v.entities) {
       m.entities = v.entities;
       m.entitiesAt = entitiesByTile(v.entities, infoRef.current.W);
@@ -284,7 +291,7 @@ export default function Editor(props: EditorProps) {
 
   // ------------------------------------------------------------------------------- the view
 
-  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: mirror.current.entitiesAt, index: indexed });
+  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: mirror.current.entitiesAt, index: indexed, soil: mirror.current.soil });
 
   // where the start is: its feature, or an imported map's own StartingLocation
   const startHere = useMemo((): StartHere | null => {
@@ -562,7 +569,8 @@ export default function Editor(props: EditorProps) {
     let pending = false;
     r.onView = (v: ViewState) => {
       onView?.(v);
-      if (pending) return;
+      // the handles follow the view; with none on the map, the page need not redraw
+      if (pending || !handleRef.current) return;
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
@@ -607,6 +615,8 @@ export default function Editor(props: EditorProps) {
   const importStart = !feature && tab === "start" && startHere && !startHere.feature ? startHere : null;
   const anchor = feature ? anchorOf(indexed, feature) : importStart ? ([importStart.x, importStart.y] as [number, number]) : null;
   const handleId = feature?.id ?? (importStart ? "import-start" : null);
+  const handleRef = useRef(handleId);
+  handleRef.current = handleId;
   const handlePos = useMemo(() => {
     const r = renderer.current;
     if (!r || !anchor) return null;
@@ -1066,7 +1076,7 @@ function cornerToCentre(x: number, y: number, o: Orientation): [number, number] 
 }
 
 function mirrorOf(v: MapView): Mirror {
-  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), entities: v.entities, entitiesAt: entitiesByTile(v.entities, v.W) };
+  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), entities: v.entities, entitiesAt: entitiesByTile(v.entities, v.W), soil: v.soil };
 }
 
 /** Dropping a .timber or project file on the editor opens it. */
