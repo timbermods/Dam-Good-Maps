@@ -69,7 +69,9 @@ differently, this file wins.
 | Look | Map look, after M8, before M9 | Kyler's plan (PLAN §20, D86, D135) · EDITOR §8 · PLAN §14.2 (3D) | no (Kyler approves the look from captures) | high |
 | Places | Real places, right after Map look is released | the landscape survey (investigation/landscapes/) · PLAN §20 D136 | optional (a probe batch, if Kyler approves one) | high |
 | M9 | Interestingness, names, candidates, premises and variety (staged M9a–M9c) | PLAN §7.1, §7.9, §8, §12, §13 · the workshop study (D87) · EDITOR §7 words (D84) · the M9 design (D112) | a probe batch for M9a (D116) | xhigh |
-| Frame | Frame pass, after the M9 build, before the 3D stages | the impeccable-app-flow skill · PLAN §20 D113 | no | high |
+| Quality | Map quality checkpoint, after the M9 build: contact sheets, a probe batch, tuning rounds until Kyler says go | PLAN §20 D146 | yes (a probe batch, asked first) | high |
+| Look 2 | Map look 2: high fidelity (High / Standard / Light quality), after the checkpoint | PLAN §20 D147 | no | high |
+| Frame | Frame pass, after Map look 2, before the 3D stages | the impeccable-app-flow skill · PLAN §20 D113 | no | high |
 | 3D-a | Terrain above terrain: model, water and checks | investigation/terrain3d/DESIGN.md §2–4, §9 · PLAN §10, §11, §19.6, §19.8 · D118–D122 | no (the Probe's test maps are written) | xhigh |
 | 3D-b | Terrain above terrain: generation and Verticality | DESIGN.md §5 · PLAN §5.9 · D123, D132 | a probe batch (T1–T4, T6, T7; D145) | xhigh |
 | 3D-c | Terrain above terrain: the editor and the view | DESIGN.md §6–7 · EDITOR §4–6, §8 · D125, D126 | a probe batch (T5, T2 on edited maps) | xhigh |
@@ -1113,9 +1115,56 @@ Information:
 
 ---
 
+## Map quality checkpoint
+
+After the M9 build (M9a–c) and before Map look 2 and the Frame pass (Kyler, 2026-09-25; PLAN §20
+D146).
+
+1. **Prepare what Kyler needs to judge the maps:**
+   - contact sheets for every theme at a few Variety and Verticality settings;
+   - a DGM Probe batch of generated maps in the real game (ask Kyler before launching, D117);
+   - the measures, as information;
+   - a short list of the weakest patterns (samey, flat, dull or broken maps), each with examples
+     and a likely cause.
+2. **Tuning rounds:** fix the weakest patterns in the generator, regenerate, and show Kyler
+   again. Repeat until Kyler says go. Only breakage and Kyler's decided principles block.
+3. **Kyler looks, and may play a few maps.** The next step starts only after Kyler says go.
+
+---
+
+## Map look 2: high fidelity
+
+After the Map quality checkpoint and before the Frame pass (Kyler, 2026-09-25; PLAN §20 D147).
+
+**Delivers**
+- A graphics quality setting: **High** (chosen automatically on capable GPUs), **Standard**
+  (today's clean look) and **Light** (the existing software-rendering look).
+- High adds:
+  - a real water shader: ripples catching the light, clear shallows, colour by depth,
+    reflections by angle, shore foam;
+    Kyler's direction (2026-09-25): fewer, subtler sparkle flecks on the water than the clean
+    look, and more depth and transparency;
+  - real-time soft shadows, ambient occlusion and a warm colour grade;
+  - higher-resolution procedural grass, earth and cobbles with surface detail;
+  - softened block edges and grass lips;
+  - full-resolution rendering and anti-aliasing;
+  - more detailed tree, bush and ruin models of our own.
+
+**Rules:** still our own art only, generated or modelled by us; never game assets. No map file
+changes.
+
+**Acceptance:** judged by eye against Kyler's reference screenshots: captures are shown to Kyler
+and he decides. Speed numbers are information only, but no mode may feel sluggish on the machines
+it's chosen for (blocking: what a player feels).
+
+**Release:** tag `map-look-2-done` and release it like a milestone.
+
+---
+
 ## Frame pass
 
-After the M9 build (all its stages) and before M10 (Kyler, 2026-09-25; PLAN §20 D113). It follows
+After the M9 build (all its stages), the Map quality checkpoint and Map look 2, and before the
+3D stages and M10 (Kyler, 2026-09-25; PLAN §20 D113, D146, D147). It follows
 the impeccable-app-flow skill (timbermods/.github, `claude-skills/impeccable-app-flow/`) in
 redesign mode, scoped to the frame zone. This overrides the flow's gate, which waits for M11. The
 full design pass after M11 stays, and continues in update mode from the records this step creates.

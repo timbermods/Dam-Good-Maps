@@ -3,9 +3,9 @@
 // rest at the theme's preset, and measures the target the setting maps to (PLAN §5) the way the
 // official maps were measured (src/core/analysis/metrics.ts).
 //
-// CI runs 4 seeds at 96² per value; `npx tsx tools/settings-batch.ts --seeds 1-20` runs the same
-// experiments on more seeds and prints the table in docs/progress.md. DGM_SETTINGS_SEEDS sets the
-// seeds here (for example "1-12").
+// CI runs 4 seeds at 96² per value, nightly (vitest's "heavy" project, vitest.config.ts);
+// `npx tsx tools/settings-batch.ts --seeds 1-20` runs the same experiments on more seeds and prints
+// the table in docs/progress.md. DGM_SETTINGS_SEEDS sets the seeds here (for example "1-12").
 
 import { describe, expect, it } from "vitest";
 import { EXPERIMENTS, runExperiment } from "../../tools/settings-suite";

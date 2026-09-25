@@ -1,0 +1,53 @@
+# Investigations
+
+The studies behind the plans (PLAN.md, ROADMAP.md): each folder holds a report, its measurements
+and often prototype code. This page lists every one, what became of it, and where its adopted
+pieces live now.
+
+## Not for import by product code
+
+Nothing under `src/` imports from `investigation/`; `tests/unit/boundaries.test.ts` fails if
+anything does. The prototype code here (claude, cycles, generative, landscapes, simspeed,
+techniques, terrain3d, workshop, the audit's repros, and the Python scripts) runs on its own and
+may lag the product. A piece that is adopted is ported or moved into `src/` or `tools/`, with a
+comment naming its source. Tools and tests may still read data files here at run time:
+`notes/footprints.json`, and the local-only `raw/` maps.
+
+## Status
+
+- **Adopted**: built into the product.
+- **Partly adopted**: some of it is built; the rest waits for a later milestone.
+- **In progress**: taken into the plan, or proposed for it, for a step not built yet. Nothing is in
+  the product yet.
+- **Archived**: finished, kept for reference.
+- **Open PR**: not merged into dev yet.
+
+## Index
+
+| Investigation | What it is | Status | PR | In the product |
+| --- | --- | --- | --- | --- |
+| [REPORT.md](REPORT.md), [notes/](notes/), [calibration.json](calibration.json), `analyze_maps.py` | The first investigation (2026-09-23): what the game's code, blueprints and maps say about valid, playable maps, and the official maps measured. | Adopted | None (commit bcb04bd) | FORMAT.md and PLAN.md rest on it. Water and soil rules: `src/core/sim/` (water, model, moisture, prefill, contamination). Load rules: `src/core/validate/checks.ts`, `src/core/format/` (normalize, entities, footprints). Footprints: `tools/export-footprints.ts` writes `src/core/data/footprints.json`. Measures: `src/core/analysis/metrics.ts` (from `analyze_maps.py`). Targets: `src/core/gen/calibrated.ts`, `src/ui/settingsModel.ts` (from `calibration.json`). |
+| `decompile_all.sh`, `extract_builtin_maps.py`, `summarize_blueprints.py`, `figures/` | The first investigation's collecting tools: they decompile the game into `decompiled/`, copy its built-in maps into `raw/builtin/` and summarize its blueprints; and one early render. | Archived | None (commit bcb04bd) | None. The local-only readers of `raw/builtin` (`tools/oracle.ts`, the import and maps tests) use what they copied. |
+| [workshop/](workshop/), [WORKSHOP.md](WORKSHOP.md), [WORKSHOP-INTEGRATION.md](WORKSHOP-INTEGRATION.md), `workshop.json` | 130 workshop maps and the 19 official ones measured against the generator: variety, rivers, reservoirs, naturalness, settings bands. | Partly adopted (D87; the ratings dropped, D137) | [#4](https://github.com/timbermods/dam-good-maps/pull/4) | `src/core/analysis/walk.ts` (its walk distance), `src/core/analysis/mechanics.ts` (approximate water on imports, D98), `withObjectsOnNewGround` in `src/core/doc/tools.ts` (D102), the start thresholds in `src/core/validate/playability.ts` (D85). The score, variety, naturalness and recipes wait for M9. |
+| [claude/](claude/) | Groundwork for M12: 120 player requests, a place resolver, judgement words, seven tools, a harness and a self-played pilot. | In progress (D88–D96, D134) | [#5](https://github.com/timbermods/dam-good-maps/pull/5) | None yet. M9 moves `lib/view.ts`, `lib/flow.ts`, `lib/places.ts` and `lib/words.ts` into `src/core/`; M12 moves the rest. |
+| [audit/](audit/) | A first-pass audit of beta risks: four findings (A1–A4), each with a repro. | In progress: A1 and A2 in M9a, A3 and A4 on the Refinement list (D129) | [#13](https://github.com/timbermods/dam-good-maps/pull/13) | None yet. |
+| [cycles/](cycles/) | A weather-cycle simulator and viewer: how a generated map behaves through droughts and badtides, with the game's timings. | In progress: an M9 design input, and the Weather view (D133) | [#10](https://github.com/timbermods/dam-good-maps/pull/10), [#15](https://github.com/timbermods/dam-good-maps/pull/15) | None yet. The product's drought is the analytic one (`src/core/sim/drought.ts`). |
+| [generative/](generative/) | M9 design version 1: a prototype generator that invents maps (genome, uplift, erosion, drainage), its measures, and ten briefs with their maps. | In progress: design version 2 comes next (D112) | [#14](https://github.com/timbermods/dam-good-maps/pull/14) | None yet. |
+| [landscapes/](landscapes/) | 4,050 real terrain patches turned into game heightmaps and measured, and a library of 88 validated maps. | In progress: an M9 design input; the library becomes Real places (D136) | [#16](https://github.com/timbermods/dam-good-maps/pull/16) | None yet. |
+| [simspeed/](simspeed/) | Exact speedups for the water simulation, M9's pipeline budgets, and water in stacked layers. | In progress: proposals for M9a's build plan (D130) | [#17](https://github.com/timbermods/dam-good-maps/pull/17) | None yet. |
+| [techniques/](techniques/) | A cited terrain-technique playbook and two experiments on the M9 prototype. | In progress: proposals for M9 and the 3D stages (D131) | [#19](https://github.com/timbermods/dam-good-maps/pull/19) | None yet. |
+| [terrain3d/](terrain3d/) | Real 3D terrain (caves, overhangs, tunnels, arches): the game's rules, prototypes and a staged design. | In progress: adopted as D118–D127, built in the 3D stages 3D-a to 3D-c | [#20](https://github.com/timbermods/dam-good-maps/pull/20) | None yet. |
+| `mechanics/` (not on dev yet) | The game's map mechanics, verified against its code, and each map's place on eight strategy axes. | Open PR | [#11](https://github.com/timbermods/dam-good-maps/pull/11) (replaces [#9](https://github.com/timbermods/dam-good-maps/pull/9)) | None yet. An input to the M9 design and the Weather view (D133). |
+| `names/` (not on dev yet) | Map names and descriptions drawn from each map's features. | Open PR | [#12](https://github.com/timbermods/dam-good-maps/pull/12) | None yet. |
+| `probe/` (not on dev yet) | DGM Probe: a mod and a runner that play maps in the game unattended and record what happens. | Open PR (draft); M9a's in-game gate (D116, D117) | [#18](https://github.com/timbermods/dam-good-maps/pull/18) | None yet. |
+
+`raw/` and `decompiled/` stay local (gitignored): copies of the game's files, official and
+workshop maps and saves, which are not ours to redistribute, and decompiled game code, for
+answering questions only.
+
+## Running a prototype
+
+Each folder's README or REPORT says how. Some have their own `package.json` (audit, cycles,
+landscapes, simspeed, claude/harness), installed in that folder, for example
+`npm ci --prefix investigation/cycles`. The rest use the root's packages and run from the root,
+for example `npx tsx investigation/generative/batch.ts`.

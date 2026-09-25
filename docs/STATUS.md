@@ -62,25 +62,34 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **D145** Kyler's answers to the eight flags, folded into the lines above. Also: M9a, M9b and M9c
   are approved as M9's stages; what goes into each waits for design version 2.
 - **Design version 2** is built on `investigation/generative-v2` (not started).
+- D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
+- D147: **Map look 2: high fidelity** after the checkpoint and before the Frame pass: High / Standard / Light quality; High adds a real water shader, soft shadows, AO, finer procedural detail, softened edges, anti-aliasing and richer models; our own art; judged by eye; `map-look-2-done`.
 
 ## Done and released
 
 - **M1–M8** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
-- **Map look** is built on `dev`, not released. It waits for Kyler's approval of the clean look.
-- Merged investigations: workshop (#4), Claude groundwork (#5), cycles (#10, #15), audit (#13), M9
-  design version 1 (#14), landscapes (#16), simspeed (#17), techniques (#19), terrain 3D (#20).
+- **Map look** is built. Its clean look (default view, plus a **Markers** layer that is off by
+  default) is on branch `look/clean`, ready for Kyler's approval. It is not released.
+- Merged investigations: workshop (#4), Claude groundwork (#5), cycles (#10, #15), mechanics,
+  verified (#11), names (#12), audit (#13), M9 design version 1 (#14), landscapes (#16), simspeed
+  (#17), techniques (#19), terrain 3D (#20).
+- Repo improvements (#21): PR checks fail only on breakage, timings are reported, heavy suites
+  run nightly, an investigation index with an import guard, Dependabot and CodeQL.
 
 ## Running
 
-- **Map look's clean-look round**, on branch `look/clean`.
-- **PRs #11** (mechanics, verified) **and #12** (map names), being merged into `dev`.
-- **PR #18**, the DGM Probe, is a draft. It is merged at a boundary when ready.
-- **`chore/repo-hygiene`** turns CI's timing tests into reported numbers (D145).
+- **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
+  not merged).
+- **PR #18**, the DGM Probe, is a draft. It is merged at a boundary when it's marked ready.
 
 ## Waiting on Kyler
 
-1. Approve Map look's clean look from its captures (then `map-look-done`, then Real places).
+1. **Approve Map look's clean look.** Open `C:\dgm-workshop\look\compare.html` (local only):
+   each of Kyler's reference screenshots beside the clean view of a comparable scene, with the
+   third round's look in a third column. The committed captures are in
+   [map-look/clean/](map-look/clean/), with [CLEAN.md](map-look/CLEAN.md). On approval:
+   `look/clean` merges into `dev`, `map-look-done` is tagged and released, then Real places.
 2. Kyler's own one-sentence intentions, for design version 2.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
