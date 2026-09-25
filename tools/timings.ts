@@ -1,8 +1,9 @@
-// Timings against their budgets, as information. Kyler's rule (2026-09-25): measures and numeric
-// budgets are information only; breakage, decided principles and what a player feels block. A test
-// or benchmark that times something records it here instead of failing on it: the time is printed,
-// and when DGM_TIMINGS names a file (CI), appended to it as a JSON line. tools/ci-timings.ts turns
-// that file into the job summary, with a warning for each time over its budget.
+// Timings against their budgets, as information. Kyler's one rule (PLAN §20 D115, D145): measures
+// and numeric budgets are information only; breakage, decided principles and what a player feels
+// block, and CI's timing tests are reported numbers that never fail a build. A test or benchmark
+// that times something records it here instead of failing on it: the time is printed, and when
+// DGM_TIMINGS names a file (CI), appended to it as a JSON line. tools/ci-timings.ts turns that file
+// into the job summary, with a warning for each time over its budget.
 
 import { appendFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
