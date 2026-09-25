@@ -5,9 +5,9 @@
 import { fbm } from "../../math/noise";
 import { hash32 } from "../../math/hash";
 import type { Runs } from "../../math/grid";
-import { bedAt, floorAt, polygonMask } from "../geometry";
+import { bedAt, floorAt, polygonMask, round as round2, segmentDistance2 } from "../geometry";
 import { carveChannel, channelBounds, type ChannelPlan } from "../route";
-import type { Edge, Feature, LakeFeature, LandformFeature, RiverFeature, StartFeature } from "../schema";
+import type { Edge, Feature, LakeFeature, LandformFeature, Point, RiverFeature, StartFeature } from "../schema";
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 
 export const MAX_TERRAIN = 16; // PLAN §20, D4
@@ -250,12 +250,75 @@ export function lakeSpringTile(f: LakeFeature, W: number, H: number): number | n
 
 // ----------------------------------------------------------------------------------------- start
 
-/** The start bench (step 5). It never fills the river channel, which it would dam. */
-export function rasterizeBench(f: StartFeature, t: BuildTarget): void {
+/** Half the width of the strip a bench runs to its bank along (PLAN §5.6, D97): a strip about 3
+ *  tiles wide. */
+export const BANK_HALF_WIDTH = 1.5;
+
+/** Whether tile (x, y) is part of the start's bench: the disc of its radius round the start, and
+ *  the strip from the start to its bank (a point on a river's course), when it has one. */
+export function inBench(f: StartFeature, x: number, y: number): boolean {
   const [cx, cy] = f.params.position;
   const r = f.params.benchRadius;
+  if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r) return true;
+  const bank = f.params.bank;
+  return !!bank && segmentDistance2(x, y, f.params.position, bank) <= BANK_HALF_WIDTH * BANK_HALF_WIDTH;
+}
+
+/** How far past its disc a bench may run to its bank. */
+export const BANK_REACH = 10;
+
+/** Where a start's bench runs to the water (D97): the nearest point of a clean river's course,
+ *  within the bench's radius + 10 tiles, where that river's bed lies 1 or 2 levels below the bench
+ *  (its water, about half a level deep, is then within a pump's reach of the start's level). The
+ *  course is sampled every half tile, so a bed step beside the start is passed by; a strip that
+ *  would pass a reach whose water stands at the bench's level or higher (above a fall) is not taken,
+ *  since that water would spill onto the bench. */
+export function bankFor(features: readonly Feature[], x: number, y: number, benchLevel: number, benchRadius: number): Point | undefined {
+  const rivers = features.filter((f): f is RiverFeature => f.kind === "river" && !f.params.badwater);
+  // every river's course, sampled every half tile, with its bed and half-width
+  const samples: { x: number; y: number; bed: number; half: number }[] = [];
+  const reach = benchRadius + BANK_REACH + 12;
+  for (const f of rivers) {
+    const path = f.params.path;
+    let arc = 0;
+    for (let k = 0; k + 1 < path.length; k++) {
+      const [ax, ay] = path[k];
+      const vx = path[k + 1][0] - ax;
+      const vy = path[k + 1][1] - ay;
+      const len = Math.sqrt(vx * vx + vy * vy);
+      const n = Math.max(1, Math.ceil(len * 2));
+      for (let j = 0; j <= n; j++) {
+        const u = j / n;
+        const px = ax + u * vx;
+        const py = ay + u * vy;
+        if (Math.abs(px - x) <= reach && Math.abs(py - y) <= reach) samples.push({ x: px, y: py, bed: bedAt(f.params.bedProfile, arc + u * len), half: f.params.width / 2 });
+      }
+      arc += len;
+    }
+  }
+  const high = samples.filter((q) => q.bed >= benchLevel);
+  const clear = (px: number, py: number) => {
+    // the strip from the start to (px, py) keeps off water at the bench's level or above
+    const m = BANK_HALF_WIDTH + 1.5;
+    for (const q of high) if (segmentDistance2(q.x, q.y, [x, y], [px, py]) <= (q.half + m) * (q.half + m)) return false;
+    return true;
+  };
+  let best: Point | undefined;
+  let bd = (benchRadius + BANK_REACH) * (benchRadius + BANK_REACH);
+  for (const q of samples) {
+    const d = (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y);
+    if (!(d < bd) || q.bed < benchLevel - 2 || q.bed > benchLevel - 1 || !clear(q.x, q.y)) continue;
+    bd = d;
+    best = [round2(q.x, 2), round2(q.y, 2)];
+  }
+  return best;
+}
+
+/** The start bench (step 5): its disc, and the strip that runs it to the bank, so the start's own
+ *  level reaches the water (D85, D97). It never fills the river channel, which it would dam. */
+export function rasterizeBench(f: StartFeature, t: BuildTarget): void {
   t.forEach((i, x, y) => {
-    if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r && !t.channel[i] && t.writable(i, f)) {
+    if (inBench(f, x, y) && !t.channel[i] && t.writable(i, f)) {
       t.heights[i] = f.params.benchLevel;
       t.protect(i);
     }
@@ -411,7 +474,16 @@ export function terrainFootprint(f: Feature, t: Pick<BuildTarget, "W" | "H" | "r
     case "start": {
       const [x, y] = f.params.position;
       const r = f.params.benchRadius + 1;
-      return clipRect({ x0: x - r, y0: y - r, x1: x + r, y1: y + r }, W, H);
+      const rect = { x0: x - r, y0: y - r, x1: x + r, y1: y + r };
+      const bank = f.params.bank;
+      if (bank) {
+        const m = BANK_HALF_WIDTH + 1;
+        rect.x0 = Math.min(rect.x0, Math.floor(bank[0] - m));
+        rect.y0 = Math.min(rect.y0, Math.floor(bank[1] - m));
+        rect.x1 = Math.max(rect.x1, Math.ceil(bank[0] + m));
+        rect.y1 = Math.max(rect.y1, Math.ceil(bank[1] + m));
+      }
+      return clipRect(rect, W, H);
     }
     default:
       return null;

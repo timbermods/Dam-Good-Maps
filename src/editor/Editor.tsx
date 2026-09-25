@@ -11,7 +11,7 @@
 // game keeps them and red (with the reason) where it would delete them; advanced mode opens the
 // objects on a clicked tile with their numbers.
 
-import type { Remote } from "comlink";
+import { proxy, type Remote } from "comlink";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { EditOp } from "../core/doc/ops";
 import { cornerFor } from "../core/doc/tools";
@@ -19,15 +19,16 @@ import { orientationForHigh } from "../core/features/setpieces";
 import { startEntranceTile, type Orientation } from "../core/format/footprints";
 import type { Feature, Point } from "../core/features/schema";
 import type { FixOp } from "../core/validate/report";
-import { DIFFICULTY_RULES } from "../core/spec/mapspec";
+import { bankFor } from "../core/features/raster/terrain";
+import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
 import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SurfaceWater } from "../render3d/model";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, DamSiteView, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest } from "../worker/session";
+import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
-import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions } from "./panels";
+import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import {
   BAD,
   BARE,
@@ -91,6 +92,10 @@ declare global {
       instant(): CheckItem[];
       /** The footprint under the pointer (object tools): its tiles, and why the game would refuse it. */
       fit(): { tiles: number[]; problem: string | null } | null;
+      /** The start's check while it moves (its footprint and the three start requirements). */
+      startCheck(): StartCheck | null;
+      /** The worker, for timing its answers (tests/e2e/preview.spec.ts). */
+      worker: Remote<GeneratorApi>;
     };
   }
 }
@@ -130,6 +135,11 @@ export default function Editor(props: EditorProps) {
   const [hover, setHover] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [check, setCheck] = useState<ExportCheck | null>(null);
+  // the background check's progress (the canonical settle, then the checks), and the water layer
+  const [progress, setProgress] = useState<CheckProgress | null>(null);
+  const [layer, setLayer] = useState<LayerKind>("none");
+  const [waterLayers, setLayers] = useState<WaterLayers | null>(null);
+  const [waterTick, setWaterTick] = useState(0);
   const [instant, setInstant] = useState<CheckItem[]>([]);
   const [damSites, setDamSites] = useState<DamSiteView[] | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -156,6 +166,11 @@ export default function Editor(props: EditorProps) {
   optionsRef.current = options;
 
   const feature = selected ? (info.features.find((f) => f.id === selected) ?? null) : null;
+  // the start requirements and targets of this map: its settings, or its difficulty's defaults
+  const needs = useMemo(() => {
+    const r = rulesFor(info.spec, info.designedFor);
+    return { rules: r, reachMin: r.reachMin };
+  }, [info.spec, info.designedFor]);
   useEffect(() => {
     if (selected && !feature) setSelected(null);
   }, [feature, selected]);
@@ -190,26 +205,31 @@ export default function Editor(props: EditorProps) {
   }
 
   function applyUpdate(u: SessionUpdate): void {
+    applyView(u.view);
+    // the instant checks: the problems this edit made, in the region it changed
+    if (u.instant) setInstant(u.instant.items.filter((c) => c.here && c.class === "load"));
+    setInfo(u.info);
+    props.onChange(u.info);
+  }
+
+  /** Apply what changed on the map to the mirror and the renderer. */
+  function applyView(v: ViewUpdate): void {
     const r = renderer.current;
     const m = mirror.current;
-    const v = u.view;
     if (v.heights) {
       m.heights = v.heights;
       r?.updateTerrain(v.heights);
     }
     if (v.water) {
-      m.water = surfaceWater(u.info.W, u.info.H, v.water);
+      m.water = surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
       r?.updateWater(v.water);
     }
     if (v.entities) {
       m.entities = v.entities;
-      m.entitiesAt = entitiesByTile(v.entities, u.info.W);
+      m.entitiesAt = entitiesByTile(v.entities, infoRef.current.W);
       r?.updateEntities(v.entities);
     }
-    // the instant checks: the problems this edit made, in the region it changed
-    if (u.instant) setInstant(u.instant.items.filter((c) => c.here && c.class === "load"));
-    setInfo(u.info);
-    props.onChange(u.info);
+    if (v.water || v.entities) setWaterTick((t) => t + 1);
   }
 
   const apply = (op: EditOp, label?: string) => run(() => api.apply(op, "user", label));
@@ -217,21 +237,41 @@ export default function Editor(props: EditorProps) {
   const redo = () => run(() => api.redo());
   const applyFix = (fix: FixOp[]) => run(() => api.applyAll(fix.map(({ label: _l, ...op }) => op as EditOp), fix[0]?.label || "Fix", "fix"));
 
-  // the map's health (export profile), checked a moment after each change
+  // the map's health (export profile), checked in the background a moment after each change
+  // (EDITOR_PLAN §6): the canonical settle runs in slices and replaces the preview's water, then
+  // every check runs; a newer edit drops it. It is not queued, so edits never wait for it.
   useEffect(() => {
     setCheck((c) => (c && c.version === info.version ? c : null));
+    setProgress(null);
+    let live = true;
     const t = setTimeout(() => {
-      queue.current = queue.current.then(async () => {
-        if (infoRef.current.version !== info.version) return;
-        try {
-          setCheck(await api.exportCheck());
-        } catch {
+      void api
+        .backgroundCheck(proxy((p: CheckProgress) => live && setProgress(p)))
+        .then((r) => {
+          if (!live || !r || r.check.version !== infoRef.current.version) return;
+          applyView(r.view);
+          setCheck(r.check);
+          setProgress(null);
+        })
+        .catch(() => {
           // the check is advisory here: export runs it again
-        }
-      });
+        });
     }, 700);
-    return () => clearTimeout(t);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
   }, [info.version]);
+
+  // the water layer on show: fetched again after every change of the map or its water
+  useEffect(() => {
+    if (layer === "none") return setLayers(null);
+    let live = true;
+    void enqueue(() => api.waterLayers()).then((l) => live && setLayers(l));
+    return () => {
+      live = false;
+    };
+  }, [layer, info.version, waterTick, check?.version]);
 
   // the dam-site layer, measured again after each change while it is shown
   const showDams = damSites !== null;
@@ -267,6 +307,7 @@ export default function Editor(props: EditorProps) {
     const data = r?.overlayData();
     if (!r || !data) return;
     const layers: OverlayLayer[] = [];
+    if (waterLayers && layer !== "none") layers.push(...layerOverlay(waterLayers, layer));
     if (damSites) for (const d of damSites) layers.push({ tiles: d.tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < info.W && y < info.H).map(([x, y]) => y * info.W + x), color: DAM });
     if (feature) {
       const tiles = indexed.tilesOf(feature);
@@ -285,11 +326,11 @@ export default function Editor(props: EditorProps) {
     } else if (plan?.ok) layers.push({ tiles: plan.tiles, color: PREVIEW });
     if (fit && !plan && !planning) layers.push({ tiles: fit.tiles, color: fit.problem ? BAD : GOOD });
     if (picked) layers.push({ tiles: [picked.y * info.W + picked.x], color: SELECTED });
-    if (startDrag) layers.push({ tiles: [...startDrag.check.tiles, startDrag.check.door], color: startDrag.check.problem ? BAD : GOOD });
+    if (startDrag) layers.push({ tiles: [...startDrag.check.tiles, startDrag.check.door], color: startDrag.check.problem || !startDrag.check.meets ? BAD : GOOD });
     for (const c of instant) for (const [x, y] of c.where?.tiles ?? []) layers.push({ tiles: [y * info.W + x], color: PROBLEM });
     paintOverlay(data, info.W, info.H, layers);
     r.commitOverlay();
-  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready]);
+  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready, waterLayers, layer]);
 
   // ------------------------------------------------------------------------------ the tools
 
@@ -589,8 +630,15 @@ export default function Editor(props: EditorProps) {
     const y = s.y + dy;
     const [cx, cy] = cornerFor(x, y, s.orientation);
     const door = startEntranceTile(cx, cy, s.orientation);
-    const level = s.feature ? mirror.current.heights[y * info.W + x] : null;
-    return { x, y, check: checkStartAt(ctx(), x, y, door, level, s.owner) };
+    const f = s.feature ? info.features.find((g) => g.id === s.feature) : undefined;
+    let bench: { level: number; radius: number; bank?: Point } | null = null;
+    if (f && f.kind === "start") {
+      // a generated start's bench takes the ground's level there and runs to a river's bank (D97)
+      const level = Math.max(1, mirror.current.heights[y * info.W + x]);
+      const bank = bankFor(info.features, x, y, level, f.params.benchRadius);
+      bench = { level, radius: f.params.benchRadius, ...(bank ? { bank } : {}) };
+    }
+    return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs) };
   }
 
   function commitMove(dx: number, dy: number) {
@@ -725,6 +773,8 @@ export default function Editor(props: EditorProps) {
       plan: () => planRef.current,
       instant: () => instantRef.current,
       fit: () => fitRef.current,
+      startCheck: () => startDragRef.current?.check ?? null,
+      worker: api,
     };
     return () => {
       delete window.dgmEditor;
@@ -734,6 +784,8 @@ export default function Editor(props: EditorProps) {
   instantRef.current = instant;
   const fitRef = useRef(fit);
   fitRef.current = fit;
+  const startDragRef = useRef(startDrag);
+  startDragRef.current = startDrag;
 
   // ------------------------------------------------------------------------------ export
 
@@ -745,7 +797,6 @@ export default function Editor(props: EditorProps) {
   const notices = [...info.notices, ...(info.importReport?.changes.filter((c) => c.level === "warning").map((c) => c.message) ?? [])];
   const flags = info.importReport?.flags ?? [];
   const importChanges = info.importReport?.changes.length ?? 0;
-  const rules = DIFFICULTY_RULES[info.spec?.designedFor ?? "normal"];
   const hint = tool
     ? gestureOf(tool) === "path"
       ? `${TOOL_NAMES[tool]}: click from the source to the outlet, then double-click or press Enter.`
@@ -781,7 +832,7 @@ export default function Editor(props: EditorProps) {
           <button type="button" class="ghost" aria-expanded={showHistory} onClick={() => setShowHistory(!showHistory)}>
             History{info.orphans.length ? ` (${info.orphans.length} to review)` : ""}
           </button>
-          <StatusPill check={check} busy={busy > 0} onOpen={() => setExporting(true)} />
+          <StatusPill check={check} busy={busy > 0} progress={progress} onOpen={() => setExporting(true)} />
           <label class="button ghost">
             Open
             <input
@@ -830,6 +881,9 @@ export default function Editor(props: EditorProps) {
           onOptions={setOptions}
           damSites={damSites}
           onDamSites={(show) => setDamSites(show ? [] : null)}
+          layer={layer}
+          onLayer={setLayer}
+          roofed={!!waterLayers?.roofed.length}
           advanced={advanced}
           onAdvanced={(on) => {
             setAdvanced(on);
@@ -893,13 +947,14 @@ export default function Editor(props: EditorProps) {
                 ) : null}
               </div>
             ) : null}
-            {startDrag ? <StartIndicators check={startDrag.check} needs={{ water: rules.waterWithin, trees: rules.treesWithin20, bushes: rules.bushesWithin20 }} /> : null}
+            {startDrag ? <StartIndicators check={startDrag.check} rules={needs.rules} /> : null}
             {busy > 0 ? (
               <div class="working" role="status">
                 Working…
               </div>
             ) : null}
           </View3D>
+          {layer !== "none" && waterLayers ? <LayerLegend kind={layer} layers={waterLayers} /> : null}
           <PreviewCard plan={plan} pending={planning} onPlace={place} onCancel={cancelTool} />
           <InstantProblems items={instant} actions={actions} onClose={() => setInstant([])} />
           {message ? (
@@ -962,6 +1017,39 @@ export default function Editor(props: EditorProps) {
 }
 
 const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
+
+/** The overlay of a water layer: moisture in three greens, badwater brown and the soil it spoils
+ *  lighter, the drought's kept water blue and the water that dries up orange, the tiles under
+ *  roofs violet. */
+function layerOverlay(l: WaterLayers, kind: LayerKind): OverlayLayer[] {
+  const pick = (codes: Uint8Array, code: number) => {
+    const out: number[] = [];
+    for (let i = 0; i < codes.length; i++) if (codes[i] === code) out.push(i);
+    return out;
+  };
+  switch (kind) {
+    case "moisture":
+      return [
+        { tiles: pick(l.moisture, 1), color: [120, 200, 110, 70] },
+        { tiles: pick(l.moisture, 2), color: [70, 180, 90, 120] },
+        { tiles: pick(l.moisture, 3), color: [30, 150, 70, 165] },
+      ];
+    case "badwater":
+      return [
+        { tiles: pick(l.badwater, 2), color: [190, 140, 70, 120] },
+        { tiles: pick(l.badwater, 1), color: [120, 70, 30, 200] },
+      ];
+    case "drought":
+      return [
+        { tiles: pick(l.drought, 1), color: [50, 110, 235, 170] },
+        { tiles: pick(l.drought, 2), color: [245, 150, 40, 170] },
+      ];
+    case "roofed":
+      return [{ tiles: Array.from(l.roofed), color: [170, 90, 220, 150] }];
+    default:
+      return [];
+  }
+}
 
 /** The middle tile of a StartingLocation at Coordinates (x, y) facing o. */
 function cornerToCentre(x: number, y: number, o: Orientation): [number, number] {

@@ -1,0 +1,69 @@
+{
+ "id": "W03",
+ "text": "put a dam site halfway down the north tributary",
+ "setup": "rv128-tribs",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "damSite",
+    "where": "halfway down the north tributary"
+   },
+   "bytes": 598,
+   "error": false
+  },
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "damSite",
+    "where": {
+     "course": [
+      0.4,
+      0.6
+     ],
+     "river": "the north tributary"
+    }
+   },
+   "bytes": 552,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "put a dam site halfway down the north tributary",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a dam site about halfway down the north tributary"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "request": {
+       "river": "f-nasrloj6iu4ic",
+       "at": 43,
+       "crest": 2
+      },
+      "handle": "dam"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "course.frac",
+      "approx": 0.5,
+      "tol": 0.1
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1626,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a dam site halfway down the north tributary, in the west third (49% of the way down it, 40 tiles from the start). A dam 4 tiles long and 2 high there would hold about 54 blocks of clean water over 42 tiles. That is small: the tributary is narrow, and a drought needs about 380 blocks near the start. The main river's existing dam site in the centre holds 1,390. Every start rule still holds."
+}

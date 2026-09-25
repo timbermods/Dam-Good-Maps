@@ -65,6 +65,7 @@ class Check:
     limit: object = None
     na: bool = False
     advisory: bool = False
+    approx: str = ""        # why the result is only approximate (the water a steady state cannot show)
 
 
 @dataclass
@@ -421,7 +422,7 @@ def main():
             continue
         print(f"{'PASS' if rep.passed else 'FAIL'}  {path}")
         for c in rep.checks:
-            mark = "na " if c.na else "ok " if c.ok else "adv" if c.advisory else "BAD"
+            mark = "na " if c.na else "~  " if c.approx else "ok " if c.ok else "adv" if c.advisory else "BAD"
             print(f"   {mark} {c.id:28s} {c.detail}")
     sys.exit(0 if all_ok else 1)
 

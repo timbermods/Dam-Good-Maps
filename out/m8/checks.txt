@@ -1,0 +1,27 @@
+M8-1a, River Valley (4242) M8 preview: generator 0.6.0; 128×128, seed 4242, River Valley, designed for Normal; three edits with the M8 editor: a lake, ground lowered beside the river, and a weir across the river.
+
+Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
+PNG: north up, 5 px per tile, dotted grid every 16 tiles; the settled water blue (badwater brown); start white (door red); the lake's basin yellow dots; the lowered ground magenta dots; the weir (NaturalDam) cyan.
+
+sha256 0a01e427cb22be42c8c6076177b4398f3d34ed75a3e6fd0a55f7d0c6838923f9  River Valley (4242) M8 preview.timber
+StartingLocation at (44, 54), z 8, Cw0.
+Validation (export profile): every check passes.
+The editor's preview after the last edit ran 384 ticks from the previous water; the exported file has the canonical settle, which differs from that preview by at most 0.016 deep on any tile.
+
+The lake: basin round (63, 65), water level 7, 2 deep, a spring of 0.5 water/s. the water stands at level 7, 2 deep over 81 tiles; a spring of 0.5 blocks/s keeps it full; its outlet drains to the river.
+  (63, 65): ground 5, water 1.51 deep, surface 6.51
+The lowered ground: (20, 29)–(24, 33), one level down beside the river.
+  (22, 31): ground 8, water none
+The weir: 4 NaturalDam tiles: (92, 80) (90, 81) (91, 81) (90, 82). a weir of 4 natural dam tiles holds the water 0.65 above the river's bed upstream.
+  (92, 80): ground 4, water 0.60 deep, surface 4.60
+
+M8-1b, F4: the official map Canyon (128×128), which has water in tunnels under its cliffs.
+  The edit: a lake drawn on dry ground at least 10 tiles from any cave or overhang. Water → Lake, drag from (72, 59) to (80, 67), then Place. the water stands at level 1, 1 deep over 81 tiles; a spring of 0.5 blocks/s keeps it full; its outlet drains to the map edge.
+  Written to out/m8/local/Canyon (M8 edited).timber (local only, never committed); sha256 90f8d2ac0080d6d1c71c0127355612189ea00832f1c65afe9fc6675668495f36.
+  228 columns under roofs keep the map's own water in the export (every slot); the rest of the map has the canonical settle of its heightfield.
+
+M8-1c, F3: the workshop map Cozy Secret Valley (128×128), made before Timberborn 1.0 (the importer halves its 6 water sources' strength).
+  The edit: ground lowered one level beside its river, at least 8 tiles from any cave. Advanced sculpting comes later (M10), so this edit is made by this tool: the 5×5 tiles (12, 10)–(16, 14) lowered one level beside the river.
+  Written to out/m8/local/Cozy Secret Valley (M8 edited).timber (local only, never committed); sha256 db32c025a14706d7739b01644865b51418911af460b37c276a4c65584379c6c8.
+  817 columns under roofs keep the map's own water in the export (every slot); the rest of the map has the canonical settle of its heightfield.
+

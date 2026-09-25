@@ -1,0 +1,88 @@
+{
+ "id": "J11",
+ "text": "add a huge lake in the south third",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "lake",
+    "where": "the south third",
+    "size": "huge"
+   },
+   "bytes": 612,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add a huge lake in the south third",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a huge lake in the south third"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addLake",
+      "outline": [
+       [
+        80.5,
+        31.5
+       ],
+       [
+        71.5,
+        40.5
+       ],
+       [
+        58.5,
+        40.5
+       ],
+       [
+        49.5,
+        31.5
+       ],
+       [
+        49.5,
+        18.5
+       ],
+       [
+        58.5,
+        9.5
+       ],
+       [
+        71.5,
+        9.5
+       ],
+       [
+        80.5,
+        18.5
+       ]
+      ],
+      "handle": "lake"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "lake",
+      "metric": "area",
+      "min": 492
+     },
+     {
+      "goal": "g1",
+      "subject": "lake",
+      "metric": "at",
+      "in": "the south third"
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1558,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a huge lake in the south third: 817 tiles of water 2 deep, at level 9, south of the river on the far bank from the start (75 tiles away). A small spring keeps it full, and its outlet drains to the river. \"Huge\" here means 3–6% of the map (490–980 tiles). Every start rule still holds."
+}

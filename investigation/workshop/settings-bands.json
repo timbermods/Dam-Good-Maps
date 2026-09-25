@@ -1,0 +1,573 @@
+{
+ "note": "Size classes as calibrated.ts SIZE_ANCHORS (small ≤ 12k tiles, medium ≤ 20k, large ≤ 45k, max above). Each array is [small, medium, large, max]. 'workshopMedian' rows are new DENSITY rows in the shape of calibrated.ts; 'settings' are the proposed ranges (PLAN §5), each with its evidence.",
+ "densityRows": {
+  "workshop_trees_per_10k": [
+   1891,
+   1442.1,
+   1148.8,
+   1034.2
+  ],
+  "workshop_bushes_per_10k": [
+   329.9,
+   166.9,
+   208.5,
+   131.8
+  ],
+  "workshop_scrap_per_1k": [
+   896,
+   490.3,
+   392.6,
+   276.9
+  ],
+  "workshop_water_strength_per_10k": [
+   8.8,
+   4.9,
+   3.5,
+   3.2
+  ],
+  "waterfalls_per_map_official": [
+   3,
+   4,
+   6,
+   7.5
+  ],
+  "waterfalls_per_map_workshop": [
+   5,
+   6,
+   7,
+   9.5
+  ],
+  "lakes_per_map_workshop": [
+   2,
+   3,
+   5,
+   10
+  ],
+  "springs_per_map_workshop": [
+   2,
+   3,
+   4,
+   8
+  ],
+  "islands_per_map_workshop": [
+   0,
+   1,
+   1,
+   5
+  ]
+ },
+ "evidence": {
+  "heightRange": {
+   "official": [
+    13.5,
+    13,
+    14.5,
+    12.5
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 10.7,
+     "median": 15,
+     "p90": 20
+    },
+    {
+     "n": 26,
+     "p10": 5.5,
+     "median": 12,
+     "p90": 15.5
+    },
+    {
+     "n": 33,
+     "p10": 10.2,
+     "median": 14,
+     "p90": 19
+    },
+    {
+     "n": 47,
+     "p10": 8.6,
+     "median": 13,
+     "p90": 15
+    }
+   ]
+  },
+  "step1Share": {
+   "official": [
+    0.6,
+    0.6,
+    0.7,
+    0.7
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 0.611,
+     "median": 0.747,
+     "p90": 0.844
+    },
+    {
+     "n": 26,
+     "p10": 0.564,
+     "median": 0.804,
+     "p90": 0.884
+    },
+    {
+     "n": 33,
+     "p10": 0.617,
+     "median": 0.861,
+     "p90": 0.931
+    },
+    {
+     "n": 47,
+     "p10": 0.601,
+     "median": 0.808,
+     "p90": 0.898
+    }
+   ]
+  },
+  "flatShare": {
+   "official": [
+    0.5,
+    0.5,
+    0.4,
+    0.6
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 0.267,
+     "median": 0.455,
+     "p90": 0.522
+    },
+    {
+     "n": 26,
+     "p10": 0.24,
+     "median": 0.418,
+     "p90": 0.567
+    },
+    {
+     "n": 33,
+     "p10": 0.358,
+     "median": 0.44,
+     "p90": 0.522
+    },
+    {
+     "n": 47,
+     "p10": 0.264,
+     "median": 0.443,
+     "p90": 0.633
+    }
+   ]
+  },
+  "startReach": {
+   "official": [
+    1092.5,
+    1294,
+    1425.5,
+    1717.5
+   ],
+   "workshop": [
+    {
+     "n": 8,
+     "p10": 140.1,
+     "median": 1028,
+     "p90": 1231.5
+    },
+    {
+     "n": 13,
+     "p10": 411.2,
+     "median": 979,
+     "p90": 2677.8
+    },
+    {
+     "n": 13,
+     "p10": 882,
+     "median": 1382,
+     "p90": 2339.2
+    },
+    {
+     "n": 32,
+     "p10": 582.1,
+     "median": 1522,
+     "p90": 7457.8
+    }
+   ]
+  },
+  "cleanStrengthPer10k": {
+   "official": [
+    8.5,
+    1.5,
+    0.9,
+    0.9
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 4.408,
+     "median": 8.817,
+     "p90": 28.005
+    },
+    {
+     "n": 26,
+     "p10": 2.337,
+     "median": 4.883,
+     "p90": 9.6
+    },
+    {
+     "n": 33,
+     "p10": 1.869,
+     "median": 3.5,
+     "p90": 10.253
+    },
+    {
+     "n": 47,
+     "p10": 1.312,
+     "median": 3.204,
+     "p90": 7.118
+    }
+   ]
+  },
+  "waterShare": {
+   "official": [
+    0.1,
+    0.1,
+    0.2,
+    0.1
+   ],
+   "workshop": [
+    {
+     "n": 8,
+     "p10": 0.102,
+     "median": 0.214,
+     "p90": 0.401
+    },
+    {
+     "n": 21,
+     "p10": 0.172,
+     "median": 0.276,
+     "p90": 0.801
+    },
+    {
+     "n": 15,
+     "p10": 0.185,
+     "median": 0.264,
+     "p90": 0.336
+    },
+    {
+     "n": 36,
+     "p10": 0.165,
+     "median": 0.281,
+     "p90": 0.644
+    }
+   ]
+  },
+  "waterfalls": {
+   "official": [
+    3,
+    4,
+    6,
+    7.5
+   ],
+   "workshop": [
+    {
+     "n": 8,
+     "p10": 1.7,
+     "median": 5,
+     "p90": 13.9
+    },
+    {
+     "n": 21,
+     "p10": 2,
+     "median": 6,
+     "p90": 16
+    },
+    {
+     "n": 15,
+     "p10": 1.8,
+     "median": 7,
+     "p90": 17
+    },
+    {
+     "n": 36,
+     "p10": 4,
+     "median": 9.5,
+     "p90": 29
+    }
+   ]
+  },
+  "maxFallDrop": {
+   "official": [
+    9.5,
+    4.9,
+    3.9,
+    6
+   ],
+   "workshop": [
+    {
+     "n": 8,
+     "p10": 3.305,
+     "median": 6.26,
+     "p90": 7.864
+    },
+    {
+     "n": 21,
+     "p10": 3,
+     "median": 6.11,
+     "p90": 10
+    },
+    {
+     "n": 15,
+     "p10": 2.4,
+     "median": 4,
+     "p90": 8.642
+    },
+    {
+     "n": 36,
+     "p10": 2.87,
+     "median": 7,
+     "p90": 10.715
+    }
+   ]
+  },
+  "springs": {
+   "official": [
+    0.5,
+    0,
+    4,
+    2.5
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 0,
+     "median": 2,
+     "p90": 4.3
+    },
+    {
+     "n": 26,
+     "p10": 0.5,
+     "median": 3,
+     "p90": 5
+    },
+    {
+     "n": 33,
+     "p10": 1.2,
+     "median": 4,
+     "p90": 8
+    },
+    {
+     "n": 47,
+     "p10": 3,
+     "median": 8,
+     "p90": 23.8
+    }
+   ]
+  },
+  "treesPer10k": {
+   "official": [
+    1715,
+    1061.4,
+    534.3,
+    500.5
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 1163.936,
+     "median": 1891.001,
+     "p90": 3023.495
+    },
+    {
+     "n": 26,
+     "p10": 708.679,
+     "median": 1442.057,
+     "p90": 2685.14
+    },
+    {
+     "n": 33,
+     "p10": 869.864,
+     "median": 1148.817,
+     "p90": 1930.614
+    },
+    {
+     "n": 47,
+     "p10": 487.213,
+     "median": 1034.241,
+     "p90": 1805.725
+    }
+   ]
+  },
+  "bushesPer10k": {
+   "official": [
+    265,
+    92.2,
+    40,
+    38.3
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 135.249,
+     "median": 329.948,
+     "p90": 743.925
+    },
+    {
+     "n": 26,
+     "p10": 77.136,
+     "median": 166.907,
+     "p90": 381.577
+    },
+    {
+     "n": 33,
+     "p10": 105.156,
+     "median": 208.48,
+     "p90": 450.846
+    },
+    {
+     "n": 47,
+     "p10": 57.404,
+     "median": 131.836,
+     "p90": 305.664
+    }
+   ]
+  },
+  "scrapPer1k": {
+   "official": [
+    840,
+    705,
+    235.5,
+    237.4
+   ],
+   "workshop": [
+    {
+     "n": 18,
+     "p10": 448.83,
+     "median": 895.987,
+     "p90": 1750.127
+    },
+    {
+     "n": 26,
+     "p10": 234.14,
+     "median": 490.265,
+     "p90": 1295.929
+    },
+    {
+     "n": 33,
+     "p10": 219.313,
+     "median": 392.565,
+     "p90": 845.628
+    },
+    {
+     "n": 47,
+     "p10": 170.425,
+     "median": 276.947,
+     "p90": 500.427
+    }
+   ]
+  },
+  "generated128": {
+   "heightRange": {
+    "n": 180,
+    "p10": 10,
+    "median": 10,
+    "p90": 13
+   },
+   "step1Share": {
+    "n": 180,
+    "p10": 0.392,
+    "median": 0.582,
+    "p90": 0.739
+   },
+   "flatShare": {
+    "n": 180,
+    "p10": 0.601,
+    "median": 0.688,
+    "p90": 0.772
+   },
+   "waterShare": {
+    "n": 180,
+    "p10": 0.043,
+    "median": 0.083,
+    "p90": 0.336
+   },
+   "waterfalls": {
+    "n": 180,
+    "p10": 0,
+    "median": 2,
+    "p90": 6.1
+   },
+   "maxFallDrop": {
+    "n": 180,
+    "p10": 1.028,
+    "median": 2.445,
+    "p90": 5.824
+   },
+   "springs": {
+    "n": 180,
+    "p10": 0,
+    "median": 0,
+    "p90": 1
+   },
+   "treesPer10k": {
+    "n": 180,
+    "p10": 848.389,
+    "median": 1060.181,
+    "p90": 1272.644
+   },
+   "bushesPer10k": {
+    "n": 180,
+    "p10": 92.773,
+    "median": 98.572,
+    "p90": 114.868
+   },
+   "scrapPer1k": {
+    "n": 180,
+    "p10": 641.602,
+    "median": 781.86,
+    "p90": 942.535
+   }
+  }
+ },
+ "settings": {
+  "terracing": {
+   "change": "one-level step share at Smooth (0) from 0.86 to 0.92; theme defaults toward 25–35",
+   "why": "workshop median 0.81 (p90 0.91), official 0.62; generated at defaults 0.58"
+  },
+  "buildableLand": {
+   "change": "add Rugged below Tight: flat share 0.30, walkable land from the start 500 (Easy 750)",
+   "why": "workshop flat share p10 0.27, median 0.44; generated at defaults 0.69 (flatter than every official median)"
+  },
+  "relief": {
+   "change": "theme defaults +15–20 (River Valley 50 → 70): the range target 12–13 levels",
+   "why": "generated median height range 10; official 13, workshop 14 (p90 18 with terrain above 16)"
+  },
+  "riverFlow": {
+   "change": "none: Lush (4×) already reaches the workshop's p90 at medium",
+   "why": "workshop clean strength per 10k: medium median 4.9, p90 9.6; Lush at 128² is 8.8"
+  },
+  "springs": {
+   "change": "new setting Springs (sg): None / Few (1–3) / Many (4–10): inland springs feeding streams",
+   "why": "workshop median 4 inland spring clusters per map (p90 13); generated 0"
+  },
+  "waterfalls": {
+   "change": "Many from 3–6 to 3–10; add Cascading (c): 10–20; typical drop from 2–3 to 3–7",
+   "why": "workshop median 7 falls per map (p90 21), tallest drop median 6.1; generated 2 falls, tallest 2.4"
+  },
+  "waterShareCap": {
+   "change": "water.no_flood follows the premise's water budget: 0.35 by default, up to 0.70 for water premises (moat, archipelago, lone island, lake world)",
+   "why": "workshop water share median 0.27, p90 0.67 on maps our settle can show; 0.35 blocks a third of them"
+  },
+  "forestDensity": {
+   "change": "range 50–200% to 50–300%",
+   "why": "workshop trees per 10k up to 1.8–3× the official medians by size (carpet forests)"
+  },
+  "berryBushes": {
+   "change": "range 50–300% to 50–500%; default 150%",
+   "why": "workshop bushes per 10k median 2–5× official by size"
+  },
+  "badwaterDistance": {
+   "change": "defaults Easy 40 → 30, Normal 30 → 15, Hard 15 → 8",
+   "why": "official nearest badwater to the start: median 14.8, p25 10; generated 36"
+  }
+ }
+}

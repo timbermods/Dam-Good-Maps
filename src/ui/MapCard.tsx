@@ -1,6 +1,7 @@
-// The map card (PLAN §14.3): name, premise, key facts and the validation report, grouped as File,
-// Terrain and objects, Water, and Start and resources (PLAN §11.6). Failures open their group;
-// advisory warnings (plants.drought) show as warnings and never block the download.
+// The map card (PLAN §14.3): name, premise, key facts, the three start requirements (PLAN §5.6,
+// D85) and the validation report, grouped as File, Terrain and objects, Water, and Start and
+// resources (PLAN §11.6). Failures open their group; advisory warnings (the start targets,
+// water.reservoir, plants.drought) show as warnings and never block the download.
 
 import { groupOf, type CheckGroup, type CheckResult } from "../core/validate/report";
 import type { GenerateResponse } from "../worker/api";
@@ -9,8 +10,39 @@ const GROUPS: CheckGroup[] = ["File", "Terrain and objects", "Water", "Start and
 
 function status(c: CheckResult): "ok" | "bad" | "warn" | "na" {
   if (c.applicable === false) return "na";
+  if (c.approximate) return "warn";
   if (c.ok) return "ok";
   return c.advisory || c.severity !== "error" ? "warn" : "bad";
+}
+
+/** The three start requirements (PLAN §5.6, D85), as the map card lists them. */
+export const REQUIREMENTS: { id: string; name: string; text: (c: CheckResult) => string }[] = [
+  {
+    id: "start.water",
+    name: "Water without stairs",
+    text: (c) => (typeof c.value === "number" ? `${c.value} tiles' walk on the start's level (at most ${c.limit})` : `none on the start's level (at most ${c.limit} tiles' walk)`),
+  },
+  { id: "start.wood", name: "Starting trees", text: (c) => `${c.value} living within 20 tiles' walk (at least ${c.limit})` },
+  { id: "start.food", name: "Starting bushes", text: (c) => `${c.value} living within 20 tiles' walk (at least ${c.limit})` },
+];
+
+/** The start requirements of a report: each met or not, with its numbers. */
+export function StartRequirements({ checks }: { checks: readonly CheckResult[] }) {
+  const rows = REQUIREMENTS.map((r) => ({ r, c: checks.find((c) => c.id === r.id) })).filter((x) => x.c && x.c.applicable !== false);
+  if (!rows.length) return null;
+  return (
+    <section class="requirements" aria-label="Start requirements">
+      <h3>Start requirements</h3>
+      <ul>
+        {rows.map(({ r, c }) => (
+          <li key={r.id} class={status(c!)} data-check={r.id}>
+            <strong>{r.name}:</strong> {c!.approximate ? "approximate, " : ""}
+            {r.text(c!)}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export function MapCard({ result: r }: { result: GenerateResponse }) {
@@ -40,7 +72,7 @@ export function MapCard({ result: r }: { result: GenerateResponse }) {
         <div><dt>River</dt><dd>{f.cleanSources} sources, {f.cleanFlow} water/s</dd></div>
         <div><dt>Badwater</dt><dd>{f.badwaterFlow ? `${f.badwaterFlow} water/s from ${f.badwaterSources} source${f.badwaterSources > 1 ? "s" : ""}` : "none"}</dd></div>
         <div><dt>Under water</dt><dd>{Math.round(f.wetShare * 100)}% of the map</dd></div>
-        <div><dt>Water from the start</dt><dd>{f.waterDistance === null ? "none within pump reach" : `${f.waterDistance} tiles`}</dd></div>
+        <div><dt>Water from the start</dt><dd>{f.waterDistance === null ? "none on the start's level" : `${f.waterDistance} tiles' walk`}</dd></div>
         <div>
           <dt>Best dam site</dt>
           <dd>{f.bestDam ? `${f.bestDam.volume.toLocaleString()} water behind a ${f.bestDam.length}-tile dam` : "none near the start"}</dd>
@@ -52,6 +84,7 @@ export function MapCard({ result: r }: { result: GenerateResponse }) {
         <div><dt>Slopes</dt><dd>{count((t) => t === "Slope")}</dd></div>
         <div><dt>Features</dt><dd>{r.features.length} editable</dd></div>
       </dl>
+      <StartRequirements checks={r.checks} />
       <details class="report" open={blocking.length > 0}>
         <summary>
           {summary}

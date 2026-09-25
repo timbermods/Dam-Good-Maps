@@ -1,7 +1,7 @@
 // MapSpec v1 (PLAN §19.1): everything that determines a generated map. The settings panel, the
 // URL codec, the editor's SpecPatch and Claude all produce one. Complete, never a diff.
 
-export const GENERATOR_VERSION = "0.5.0";
+export const GENERATOR_VERSION = "0.6.0";
 export const SPEC_VERSION = 1;
 
 export type ThemeId = "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
@@ -42,7 +42,7 @@ export interface Settings {
   };
   hazards: {
     badwater: "off" | "low" | "normal" | "high";
-    badwaterDistance: number; // 12–60
+    badwaterDistance: number; // 8–60 (a target, D85)
     thornBelts: "off" | "some";
     unstableCores: "off" | "on";
   };
@@ -50,7 +50,7 @@ export interface Settings {
     forestDensity: number; // 50–200 (%)
     groveSize: "scattered" | "normal" | "bigWoods";
     speciesMix: { pine: number; birch: number; oak: number; succulent: number }; // weights 0–100
-    berriesNearStart: number; // 20–100
+    berriesNearStart: number; // 20–100 (the generator aims at least at Minimum starting bushes)
     berryBushes: number; // 50–300 (%)
     ruins: number; // 25–300 (%)
     relics: "off" | "some";
@@ -59,12 +59,14 @@ export interface Settings {
   };
   start: {
     area: "small" | "normal" | "large";
+    /** The start requirements and targets (PLAN §5.6, D85). The first three reject a map:
+     *  water without stairs, Minimum starting trees and Minimum starting bushes. */
     rules: {
-      waterWithin: number; // tiles to clean pumpable water
-      treesWithin20: number;
-      bushesWithin20: number;
-      badwaterWithin: number; // no badwater within this many tiles
-      ruinsWithin: number; // no ruins within this many tiles
+      waterWithin: number; // water without stairs: tiles' walk on the start's level to clean pumpable water (4–40)
+      treesWithin20: number; // Minimum starting trees: living, within 20 tiles' walk (0–400)
+      bushesWithin20: number; // Minimum starting bushes: living, within 20 tiles' walk (0–200)
+      badwaterWithin: number; // target: no badwater within this many tiles (8–60)
+      ruinsWithin: number; // target: no ruins within this many tiles
     };
   };
 }
@@ -124,11 +126,14 @@ export const THEME_PRESETS: Record<ThemeId, ThemePreset> = {
   islands: { relief: 35, terracing: 30, buildableLand: "normal", rivers: 1, riverStyle: "meandering", riverFlow: "lush", droughtReserve: "plenty", lakes: "none", waterfalls: "off", badwater: "low", thornBelts: "off", forestDensity: 100, ruins: 100 },
 };
 
-/** Start rules by difficulty (PLAN §5.6). */
+/** Start rules by difficulty (PLAN §5.6; D85, Kyler's start requirements): water without stairs
+ *  within 12 / 20 / 28 tiles' walk, Minimum starting trees 60 / 40 / 20, Minimum starting bushes
+ *  40 / 30 / 20, badwater distance 30 / 15 / 8 (a target). Berries near start never aims below
+ *  Minimum starting bushes (Easy's 20 became 40). */
 export const DIFFICULTY_RULES: Record<Difficulty, Settings["start"]["rules"] & { berriesTarget: number }> = {
-  easy: { waterWithin: 10, treesWithin20: 80, bushesWithin20: 20, badwaterWithin: 40, ruinsWithin: 20, berriesTarget: 20 },
-  normal: { waterWithin: 16, treesWithin20: 50, bushesWithin20: 40, badwaterWithin: 30, ruinsWithin: 15, berriesTarget: 48 },
-  hard: { waterWithin: 22, treesWithin20: 40, bushesWithin20: 40, badwaterWithin: 15, ruinsWithin: 12, berriesTarget: 60 },
+  easy: { waterWithin: 12, treesWithin20: 60, bushesWithin20: 40, badwaterWithin: 30, ruinsWithin: 20, berriesTarget: 40 },
+  normal: { waterWithin: 20, treesWithin20: 40, bushesWithin20: 30, badwaterWithin: 15, ruinsWithin: 15, berriesTarget: 48 },
+  hard: { waterWithin: 28, treesWithin20: 20, bushesWithin20: 20, badwaterWithin: 8, ruinsWithin: 12, berriesTarget: 60 },
 };
 
 export function mineSitesForSize(x: number, y: number): number {

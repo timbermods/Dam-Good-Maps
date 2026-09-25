@@ -1,0 +1,24 @@
+{
+ "id": "Q01",
+ "text": "why does this fail validation?",
+ "setup": "rv48",
+ "calls": [
+  {
+   "tool": "measure",
+   "args": {
+    "subject": "start"
+   },
+   "bytes": 209,
+   "error": false
+  },
+  {
+   "tool": "resolve_region",
+   "args": {
+    "where": "near the start"
+   },
+   "bytes": 598,
+   "error": false
+  }
+ ],
+ "ended": "Three start rules fail, all for one reason: the start sits on a small ledge at level 8, and the river below it is about 4 levels lower with no slopes down. 1) Clean water: beavers must reach pumpable clean water within 16 tiles at the start's level, and there is none; the river is 10 tiles away but down a cliff. 2) Walkable land: only 210 tiles can be walked from the start, and the rule wants 1,300. 3) Water reachable without slopes fails for the same cliff. Food, wood and badwater are fine. None of these block export; they are warnings. The simplest fix is to move the start onto the river's own level. Say \"move the start\" and I'll find a spot that passes every rule."
+}

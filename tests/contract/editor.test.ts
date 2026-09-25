@@ -71,7 +71,7 @@ describe("the editor's document in the worker", () => {
     const c = ed.exportCheck();
     expect(c.blocking).toEqual([]);
     expect(c.playability).toBe(true);
-    const out = ed.exportTimber(true);
+    const out = await ed.exportTimber(true);
     expect(out.ok).toBe(true);
     expect(out.fileName).toBe("River Valley (77).timber");
   });
@@ -84,7 +84,7 @@ describe("the editor's document in the worker", () => {
     const c = ed.exportCheck();
     expect(c.blocking).toEqual([]);
     expect(c.warnings).toEqual([]);
-    const out = ed.exportTimber(false);
+    const out = await ed.exportTimber(false);
     expect(out.ok).toBe(true);
     expect(Buffer.from(out.bytes).equals(Buffer.from(r.bytes))).toBe(true);
     // two edits, jump back to the start and forward to the first
@@ -97,7 +97,7 @@ describe("the editor's document in the worker", () => {
     expect(one.view.entities!.count).toBe(r.built.entities.length - 1);
   });
 
-  it("an imported map opens with its own water, and exports unchanged even with its own problems", () => {
+  it("an imported map opens with its own water, and exports unchanged even with its own problems", async () => {
     // a generated file, opened as an import: its water comes from the file
     const r = generate(makeSpec({ seed: 9, size: { x: W, y: W } }));
     const bytes = writeTimber(r.file);
@@ -105,10 +105,14 @@ describe("the editor's document in the worker", () => {
     expect(open.info.kind).toBe("import");
     expect(open.info.timberName).toBe("Mine.timber");
     expect(open.view.water.count).toBe(r.built.water.filter((d) => d > 0.001).length);
+    // since M8 the water and colony checks run on imports too (decisions-pending #9)
     const c = ed.exportCheck();
-    expect(c.playability).toBe(false);
+    expect(c.playability).toBe(true);
     expect(c.blocking).toEqual([]);
-    expect(ed.exportTimber(false).bytes.length).toBeGreaterThan(0);
+    expect(c.warnings).toEqual([]);
+    const out = await ed.exportTimber(false);
+    expect(out.ok).toBe(true);
+    expect(Buffer.from(out.bytes).equals(Buffer.from(bytes))).toBe(true);
     // a project file round trip
     const p = ed.project();
     const reopened = ed.openProject(p.bytes);

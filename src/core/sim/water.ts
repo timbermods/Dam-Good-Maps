@@ -411,6 +411,8 @@ export interface SettleOptions {
   tol?: number;
   /** Ticks between checks (PLAN §11.3: 128). */
   checkEvery?: number;
+  /** Share of tiles that may still move by more than `tol` (PLAN §11.3: 0.005). */
+  movedShare?: number;
 }
 
 export interface SettleResult {
@@ -423,22 +425,80 @@ export interface SettleResult {
  *  `tol`. A strict max-change test never passes: thin sheets at spill thresholds keep flickering
  *  by a few hundredths. */
 export function settle(sim: WaterSim, opts: SettleOptions = {}): SettleResult {
-  const maxDays = opts.maxDays ?? 4;
-  const tol = opts.tol ?? 0.005;
-  const every = opts.checkEvery ?? 128;
-  const checks = Math.floor((maxDays * TICKS_PER_DAY) / every);
-  let prev = sim.D.slice();
-  let prevVol = sim.volume();
-  for (let k = 0; k < checks; k++) {
-    sim.run(every);
-    const vol = sim.volume();
-    const dv = Math.abs(vol - prevVol) / Math.max(vol, 1e-9);
-    let moved = 0;
-    const D = sim.D;
-    for (let i = 0; i < sim.N; i++) if (Math.abs(D[i] - prev[i]) > tol) moved++;
-    if (dv < 0.002 && moved <= 0.005 * sim.N) return { settled: true, ticks: sim.ticks };
-    prev = D.slice();
-    prevVol = vol;
+  const run = new SettleRun(sim, opts);
+  let out: SettleResult | null = null;
+  while (!out) out = run.advance(Infinity);
+  return out;
+}
+
+/** The settle of `settle`, in steps: `advance` runs at most the ticks it is given and stops at the
+ *  check that settles, so the editor's worker can run the canonical settle a slice at a time,
+ *  answer the page between slices, and give up when a newer edit arrives (EDITOR_PLAN §6). The
+ *  ticks and the checks are the same whatever the slices, so the result is too. */
+export class SettleRun {
+  readonly every: number;
+  readonly checks: number;
+  private readonly tol: number;
+  private readonly movedShare: number;
+  private prev: Float64Array;
+  private prevVol: number;
+  private k = 0;
+  private sinceCheck = 0;
+  private result: SettleResult | null = null;
+
+  constructor(
+    readonly sim: WaterSim,
+    opts: SettleOptions = {},
+  ) {
+    const maxDays = opts.maxDays ?? 4;
+    this.tol = opts.tol ?? 0.005;
+    this.movedShare = opts.movedShare ?? 0.005;
+    this.every = opts.checkEvery ?? 128;
+    this.checks = Math.floor((maxDays * TICKS_PER_DAY) / this.every);
+    this.prev = sim.D.slice();
+    this.prevVol = sim.volume();
+    if (this.checks <= 0) this.result = { settled: false, ticks: sim.ticks };
   }
-  return { settled: false, ticks: sim.ticks };
+
+  /** The most ticks the settle can take. */
+  get maxTicks(): number {
+    return this.checks * this.every;
+  }
+
+  /** Ticks run so far, and whether it has finished. */
+  get ticks(): number {
+    return this.k * this.every + this.sinceCheck;
+  }
+
+  get done(): SettleResult | null {
+    return this.result;
+  }
+
+  /** Run at most `ticks` more ticks; the result when the settle has finished, else null. */
+  advance(ticks: number): SettleResult | null {
+    const sim = this.sim;
+    let left = ticks;
+    while (!this.result && left > 0) {
+      const n = Math.min(left, this.every - this.sinceCheck);
+      sim.run(n);
+      this.sinceCheck += n;
+      left -= n;
+      if (this.sinceCheck < this.every) break;
+      this.sinceCheck = 0;
+      const vol = sim.volume();
+      const dv = Math.abs(vol - this.prevVol) / Math.max(vol, 1e-9);
+      let moved = 0;
+      const D = sim.D;
+      const prev = this.prev;
+      for (let i = 0; i < sim.N; i++) if (Math.abs(D[i] - prev[i]) > this.tol) moved++;
+      this.k++;
+      if (dv < 0.002 && moved <= this.movedShare * sim.N) this.result = { settled: true, ticks: sim.ticks };
+      else if (this.k >= this.checks) this.result = { settled: false, ticks: sim.ticks };
+      else {
+        this.prev = D.slice();
+        this.prevVol = vol;
+      }
+    }
+    return this.result;
+  }
 }

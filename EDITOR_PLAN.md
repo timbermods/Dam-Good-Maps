@@ -181,7 +181,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
   - Mark a dam site, draw a gorge, and add a weir (a NaturalDam line) or a plug (a Blockage line).
   - Flow is gentle / steady / strong. Badwater is a toggle on a river or source. Switching it on warns that the river will stop moistening the soil and that forests along it will die.
 - *Resources:* paint forests, berry patches and ruin fields as areas with a density slider. Forests show where they'll survive. Place mine sites (UndergroundRuins), relics and geothermal fields, with their distance rules shown.
-- *Start:* drag the start. The footprint preview shows green or red, including the entrance tile in front of the door, and nearby water, wood and food distances appear as simple indicators.
+- *Start:* drag the start. The footprint preview shows green or red, including the entrance tile in front of the door, and nearby water, wood and food appear as simple indicators. From M8 the indicators and the footprint follow the three start requirements (`PLAN.md` §5.6, D85), using the map's settings: clean water reached without stairs (on the start's own level, within the water-distance rule's walk and pump reach), living trees within 20 tiles' walk against **Minimum starting trees**, and living berry bushes within 20 tiles' walk against **Minimum starting bushes**. The footprint is green only where the start can stand and all three hold; the start targets (badwater and ruin distances, stored water, walkable land) show as warnings.
 - *Everywhere:* symmetry toggle, stamps panel, "regenerate this area," and "Ask Claude" when available.
 
 **Advanced mode adds:** raise, lower, flatten, terrace and smooth brushes with size and strength; placing, moving and deleting individual entities, with the game's footprint rules previewed; exact numeric values, including delayed sources ("turns on at cycle N"); locks; technical overlays (height contours, moisture reach, badwater spread, reachable area from the start, dam site quality, water under roofs where the preview is approximate).
@@ -193,6 +193,8 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 **Built in roadmap M5** (`PLAN.md` §20, D47–D56): the land and water tools. Land: hill, plateau, ridge, canyon, valley and island by outline (drag a rectangle or click the corners) with a height and gentle, terraced or cliff edges; terraced cliffs; a Slope tool that pins a slope on a step or removes one. Water: rivers clicked from source to outlet (a sealed mouth at the map edge or a spring inland; they end at an edge, in a river or in a lake), lakes by their basin (the water level is the outlet's sill), waterfalls (a bed step on a river, a standalone landmark elsewhere), dam sites and gorges on a river, badwater springs, and a layer that shows the best dam sites. Every tool plans its edit on the map with the shared builders and shows it with its report before Place applies it as one step; moving a feature or changing it in the inspector plans it again. Dragging the start shows its footprint in green or red and the water, trees and berries nearby. After every edit the instant checks run, and the problems the edit made show at once with their one-click fixes.
 
 **Built in roadmap M7** (`PLAN.md` §20, D69, D71, D78–D80): the resources and the map objects. Resources: forests, berry patches and ruin fields drawn as areas (drag a rectangle or click the corners); the preview shows where trees and bushes live (green), where trees would stand dead (brown, when **Only where trees live** is off) and what stays bare, and ruin areas become fields of the official shape. Mine sites, relics (small, medium, large) and geothermal fields are placed with a click and a facing, and their report says how far out they are and where the generator puts them. Land gains thorn belts (drawn, with a density); Water gains weirs and plugs (a click on a river closes it wall to wall) and the plugged spillway (a click on a lake's shore). A river turns to badwater from its inspector, with its warnings shown first. Every object shows its footprint under the pointer before the click: green where the game keeps it, red with the reason where it would delete it, and a click there is refused. **Advanced** adds unstable cores (radius and countdown) and any object placed by hand, and opens the objects on a clicked tile: move by a tile, turn, delete, and numeric fields (a water source's strength, and **Turns on later** with its cycle and day). The brushes, locks and overlays of advanced mode come with their milestones.
+
+**Built in roadmap M8** (`PLAN.md` §20, D97–D105): the water preview and the background checks. After an edit the water re-settles from its previous state in about a second on 256²; the exact settle and every check follow in the background, and the health pill shows their progress; export settles exactly first, with progress. Imported maps get their water and colony checks too. **Show** in every tab adds **Soil moisture**, **Badwater**, **Drought** (what the water keeps through the map's drought) and, on imported maps with caves, **Water under roofs** (the file's own water, kept there). The start's indicators and its footprint follow the three start requirements: water on its own level without stairs, and living trees and berry bushes within 20 tiles' walk, with the map's settings; the other start targets show as warnings. Set pieces, lakes, landforms and moves clear or move the objects on the ground they reshape, and say so.
 
 ## 5. Creative features
 
@@ -218,20 +220,50 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 - **One-click fixes** wherever a sensible fix exists: move the start to the nearest valid spot, add an outlet to a lake, pull trees back into moisture reach, remove overlapping entities, add a missing slope. Each fix is a normal edit operation, previewed and undoable.
 - **Water preview:** the settled water of the prototype's port of the game's rules (`PLAN.md` §10).
   - **Exact on heightfield terrain**, which covers every generated map and most edited ones. The port reproduced the game's own save to 0.001 depth, and matched Diorama and Waterfalls exactly.
-  - **Approximate under roofs** (imported caves, tunnels, overhang bridges, badtide drains). There the editor keeps the water the file stores, shows a "preview approximate" overlay, and does not re-simulate unless the user edits nearby.
+  - **Approximate under roofs** (imported caves, tunnels, overhang bridges, badtide drains). There the editor keeps the water the file stores, shows a "preview approximate" overlay, and does not re-simulate unless the user edits nearby. As built (M8, D100): the tiles under roofs keep the file's water in the view and the export, every other tile is simulated, and **Show → Water under roofs** marks them; the roofed columns are never edited (D40), so they are not simulated again.
   - **Steady state in temperate weather.** Delayed sources and badtide drains are off, seeps stop at 0.8 deep, and aquifers run only under a powered drill. Drought is shown analytically: what the basins still hold after N days.
-  - **Speed:** after an edit the preview re-settles from its previous state. The target is ≤ 2 s for a local edit on 256². A full re-settle runs in the background with progress.
+  - **Speed:** after an edit the preview re-settles from its previous state. The target is ≤ 2 s for a local edit on 256². A full re-settle runs in the background with progress. As built (M8, D99): 1.3–1.4 s in Chrome on the slowest themes, at most 1.75 s in Node; the background check is debounced by 0.7 s and dropped when a newer edit arrives.
   - **Export:** the exported file always gets the canonical settle (`PLAN.md` §19.7), with a progress bar, so an export never depends on the preview's history.
 
 ## 7. Claude integration
 
 Claude lets users fine-tune a map in plain language, for example: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide," "make it a bit wider," "move the start closer to the lake," or "put more ruins on the eastern plateau." Requests like these must work reliably, with results that match what was asked.
 
-**Principle.** Claude never edits terrain or voxels directly. It proposes operations from section 3, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
+**Principle.** Claude never edits terrain or voxels directly. It proposes steps (below; `PLAN.md` §20, D89) that the app expands into operations from section 3, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
 
-**Spatial language.** The app, not Claude, resolves places and sizes, so results are consistent:
-- Directions use the editor's compass. "The north part" means the northern third by default; "north edge," "center," "northeast corner," "near the start," "along the river" and "between the lake and the start" each have a defined meaning in a region resolver. Non-square maps use the same fractions of each side.
-- Sizes are in blocks, matching what users see on the map grid. "Giant," "small," "a bit wider" map to defined ranges relative to the map's size and to the achievable ranges the builders publish (`PLAN.md` §9.10), documented in the schema. For example, a giant waterfall is 30–40% of the side along its lip, and a bit wider is +25%.
+**Spatial language.** The app, not Claude, resolves places and sizes, so results are consistent. The resolver returns the area, how it read the words, and every assumption it made:
+- Compass places use the editor's compass (north is up). "The north part" means the northern third by default; "north edge," "center" and "northeast corner" each have a defined area. Non-square maps use the same fractions of each side.
+- Places relative to features: "near the start" (20 tiles), "close to" (12), "next to" (8), "far from" (40 or more), "closer to the lake" (nearer than now by at least 3), "between the lake and the start," "along the river." A reference to a kind ("the lake") picks the one this conversation made, then the player's own, then the one nearest the start, and says so.
+- Places along a river are measured along its flow (`PLAN.md` §20, D84). They are always resolved from the river's actual flow, never from the compass: each river's course in flow order, read from its settled water surface (else its bed), with its tributaries and a name for each ("the main river," "the north tributary," "the river from the east edge"):
+  - "upstream" and "downstream" of something: the part of the river's course above or below it (the upper or lower third when nothing is named; "just upstream" is within max(12, 15% of the river));
+  - a position along the course, measured from the source: "halfway down" is 0.4–0.6 of the course by default ("halfway down the north tributary" is 40–60% of its length, "near the mouth" 75–100%);
+  - banks, relative to the flow: "the start's bank" is the side of the river the start is on, and "the opposite bank" is the other side;
+  - "this valley": the selected feature's valley, otherwise the main river's.
+
+  Every theme flows west to east today (D67), so "upstream = west" would pass every test on a generated map and still be wrong for drawn rivers and for Delta's channels.
+- Sizes are in blocks, matching what users see on the map grid. "Giant," "small," "a bit wider" map to defined ranges relative to the map's size and to the achievable ranges the builders publish (`PLAN.md` §9.10), documented in the schema. For example, a giant waterfall is 30–40% of the side along its lip, "roughly 20" is 20 ±3 (a number means ±max(3, 15%)), and a bit wider is +25% (D96). A dam opportunity's sizes are in the judgement-word table below (decisions-pending #46).
+
+**Judgement words.** Words that judge the map ("harsher," "a huge dam opportunity," "a dangerous badwater route," "lush") map to measured targets, so the same word always does the same thing (`PLAN.md` §20, D84). Each word has:
+- **targets:** metrics the batch tools already measure (`tools/settings-suite.ts`, `src/core/analysis/metrics.ts`), such as reservoir volume, badwater distance, the water stored near the start and the berries near the start;
+- **a direction** for each target;
+- **a size, relative to the map's current value and the official range** (`investigation/calibration.json`, 19 official maps): a target moves a quarter of the way from the map's current value to the far end of the official range (p90 going up, p10 going down). "A bit" is an eighth of the way, "much" half. A map already past that end only has to move in the word's direction, and the report says it was already outside the official range. No target goes past a setting's hard bounds or a builder's limit (`PLAN.md` §9.10);
+- **levers:** the settings (`PLAN.md` §5) or builders that move the targets;
+- **aliases** ("tougher," "greener," "deadly," …), and "a bit" or "much" of each.
+
+Playability checks are guards, never traded away to meet a word: every check that passes now must still pass, the advisory start targets included (D91). When a full step would break a guard, the word backs its levers off, riskiest first, and the report says what was held back. It also says when a word's settings are already at their limits, or when its theme is marked weak for it (roomier on Canyon: the walls fix the floor, so a landform or a moved start is offered instead). Judgement words change the map's settings, which regenerate the whole map; the player's own features stay. A word used about part of the map ("make this valley harsher") is applied map-wide and reported as map-wide (D94; decisions-pending #43).
+
+| Word (opposite) | Targets and direction | Levers | Official range (p10 / median / p90) | Guards and limits |
+|---|---|---|---|---|
+| harsher (easier) | clean flow strength down; badwater-to-clean strength up; water stored near the start down; trees and living bushes near the start down; trees and bushes per 10k tiles down | River flow, Drought reserve, Badwater, Forest density, Berries near start, Berry bushes elsewhere | badwater ratio 0.36 / 0.65 / 1.86; trees within 20 of the start 47 / 117 / 172; bushes within 20 of the start 6 / 47 / 80 | Stored water never below the drought need × reserve (`water.reservoir`); trees, bushes and water near the start never below the start rules. |
+| huge (small) dam opportunity | the best dam site near the start: its reservoir's volume and its volume per dam tile, up (small: a smaller site) | the dam-site builder (`PLAN.md` §9.1), at the place asked for | best dam site's volume per dam tile 65 / 471 / 4,479 | Huge: at least twice the map's current best dam site near the start, and a volume per dam tile at the official median or above. Small: it still holds the drought need × reserve, and less than the current best. The basin stays under 15% of the map and off the map edge. |
+| dangerous (safe) badwater | badwater-to-clean strength up; badwater's distance from the start down (safe: the reverse) | Badwater, Badwater distance; a badwater basin's strength (1–3) and place | ratio as above; distance 12 / 30.5 / 54 | Never nearer the start than the badwater rule; the start's water stays clean. |
+| lush (dry) | trees per 10k tiles up; bushes per 10k tiles up; clean flow strength up; natural basins up | Forest density, Berry bushes elsewhere, River flow, Lakes and basins | trees per 10k 402 / 606 / 1,196; bushes per 10k 17 / 44 / 148 | Dry keeps the start's trees, bushes and water within the start rules. |
+| wetter (less water) | water share up; clean flow strength up; natural basins of 20+ tiles up | River flow, Lakes and basins, Drought reserve | water share 0.07 / 0.12 / 0.40; basins 2.8 / 12 / 21 | The water share stays under `water.no_flood`'s cap. |
+| rugged (flatter) | height range up; cliff share up (flatter: both down) | Relief, Terracing, Waterfalls | height range 10.8 / 13 / 15; cliff share 0.09 / 0.16 / 0.19 | Terrain stays within 0–16. |
+| richer (poorer) | scrap per 1k tiles up; trees per 10k tiles up | Ruins and scrap, Forest density | scrap per 1k 152 / 281 / 724 | Ruins stay the ruin rule's distance from the start. |
+| roomier (cramped) | land walkable from the start up; flat share up | Buildable land, Relief | walkable land 1,007 / 1,296 / 4,523; flat share 0.36 / 0.52 / 0.60 | Cramped never goes below the buildable-land rule. |
+
+Words without a measurable meaning ("more interesting," "nicer") are answered with concrete options.
 
 **Query tools.** Claude asks the app questions before proposing anything. Both delivery routes let Claude call functions the app defines: tool use in the Messages API, and page functions passed as tools to the artifact's `sample` capability. So queries are tools, not a text protocol:
 - `resolve_region` ("north third") returns an area and what's in it;
@@ -240,7 +272,11 @@ Claude lets users fine-tune a map in plain language, for example: "add a giant w
 - `list_features` returns the features with their parameters;
 - `limits` returns the achievable ranges for a set piece here;
 - `dry_run` applies a proposal to a preview copy and returns the validation report and measurements;
-- `propose` submits the final operation list with its expectations.
+- `propose` submits the final step list with its expectations.
+
+`find_sites` plans every candidate with the real builders, checks it with a real build, ranks the candidates, and returns the nearest alternative when none fits.
+
+**Steps.** Claude proposes steps, not raw operations (`PLAN.md` §20, D89; decisions-pending #41). A step names what to build and where, in words or numbers ("addSetPiece damSite halfway down, size huge"), or takes a site `find_sites` returned, ready to use. The app expands it with the editor's own planners, so a step fails with the planner's reason, never with a broken map. There are 15 step kinds (`changeSettings`, `addSetPiece`, `changeSetPiece`, `changeFeature`, `addRiver`, `addLake`, `addLandform`, `addResource`, `removeResources`, `moveFeature`, `moveStart`, `deleteFeature`, `setRiverBadwater`, `sculpt`, `undoLast`), plus `addMapObject` and the M7 set pieces (`ROADMAP.md` M12). A proposal has at most 12 steps and changes at most 30% of the map.
 
 Tool results stay small. The artifact caps a tool result at 32 KB, a tool's input schema at 4 KB and a whole request at 64 KiB. So the map summary Claude starts from is feature-level and at most about 16 KB, and details come through the tools. A text version of the same messages remains as a fallback for a view where tools are unavailable.
 
@@ -250,13 +286,23 @@ Tool results stay small. The artifact caps a tool result at 32 KB, a tool's inpu
 
 A mismatch goes back to Claude to revise, just like a validation failure.
 
-**Loop.** Request → queries → proposal with expectations → the app applies it to a preview, validates and measures → revise if anything fails, up to 3 rounds and about 10 tool calls per request → the user sees the result with a short plain-language report. Each round is a paid request on the user's plan or key, which is why the cap matters. The report says what was built and anything that differs from the request, for example: "Added a waterfall in the north, 20 blocks wide with a 9-block drop, fed by four new springs (2 blocks/s: a thin sheet; a full official-looking fall needs about 8 blocks/s, twice this map's river flow). It drains into the existing river. Cleared 34 trees."
+**Loop.** Request → queries → proposal with expectations → the app applies it to a preview, validates and measures → revise if anything fails → the user sees the result with a short plain-language report. Each round is a paid request on the user's plan or key, which is why the cap matters. A round is a `dry_run` or a `propose`. A request with one goal gets 3 rounds and 10 tool calls; each further goal Claude declares (in its first `dry_run` or `propose`) adds 3 calls, and every second one a round, up to 6 rounds and 20 calls (`PLAN.md` §20, D93; decisions-pending #28). The budget never shrinks, and every tool result carries what is left. The report says what was built, with measured numbers, and anything that differs from the request, for example: "Added a waterfall in the north, 20 blocks wide with a 9-block drop, fed by four new springs (2 blocks/s: a thin sheet; a full official-looking fall needs about 8 blocks/s, twice this map's river flow). It drains into the existing river. Cleared 34 trees."
+
+**Compound requests.** Requests are often compound and vague, for example: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." Claude breaks such a request into bounded operations, and the engine tells it whether each idea is feasible (`PLAN.md` §20, D84). The builders, limits, `dry_run` and intent checks already cover a single request; a compound one adds:
+- **Goals.** Claude splits the request into goals, each with its own measurable expectations (the judgement-word targets, places from the resolver, sizes from the builders' ranges).
+- **Order.** Settings changes and the regeneration they cause come first, then placements. Regeneration keeps Claude's features, as it keeps the player's (section 3, conflict rules). The app applies the steps in its own order, each on the map the previous ones left, and says so when that differs from Claude's: settings, deletions, the start, moves and changes, rivers, lakes and landforms, dam sites and gorges, falls and cliffs, badwater, sculpts, resources (D90).
+- **Combined check.** Every goal's expectations are checked against the combined preview, not one at a time. The app measures them; it never takes Claude's own expectations as the result.
+- **Interference.** The engine detects goals that interfere and names them. For example: badwater joining a river above a dam site poisons the reservoir (through its outlet, its channel, or the reservoir rising over it); less flow shrinks a reservoir, and fills it more slowly; badwater near the start breaks the start rules. It also names a new piece shrinking an existing reservoir, a regenerated map moving the start (D95), a builder's reduction, what a step cleared, and settings being map-wide.
+- **Guards** hold for the whole proposal (D91): a step that breaks one is named.
+- **Feasibility.** When a goal isn't feasible, the tools return the reason and the nearest feasible alternative (a place or a size). Claude offers that alternative in the report and never substitutes it silently. Only a builder's reduction within the goal's tolerance is built, and reported, for example a 20-wide fall reduced to 19 (D92).
+- **Report.** It names every trade-off and every goal that wasn't met.
+- **Budget.** The loop's cap grows with the number of goals, up to a ceiling (Loop, above). The other option, building the goals one after another with a check each, is recorded in `docs/decisions-pending.md` #28.
 
 **Follow-ups.** The conversation keeps track of what Claude created, so "make it wider," "move it a bit east" or "undo the waterfall" refer to the right feature. Users can also select a feature on the map and ask about it ("make this lake deeper").
 
-**Ambiguity.** For normal requests Claude picks a sensible interpretation, does it, and states its assumptions in the report. It asks a question first only when interpretations would lead to very different maps, or when the request conflicts with a lock or would break playability (for example, a waterfall that would flood the start).
+**Ambiguity.** For normal requests Claude picks a sensible interpretation, does it, and states its assumptions in the report. It asks a question first only when interpretations would lead to very different maps, or when the request conflicts with a lock or would break playability (for example, a waterfall that would flood the start). A goal that can't be met without breaking a start rule is not built, as asked or bent: the report offers the nearest version that keeps the rule, or Claude asks when no version does (D84; decisions-pending #42).
 
-**Other uses.** "Explain this map," "why does this fail validation," and "suggest improvements" (answered with proposed operations the user can apply).
+**Other uses.** "Explain this map," "why does this fail validation," and "suggest improvements" (answered with proposed operations the user can apply). A question gets an answer, not a proposal: the summary carries each failing check's message.
 
 **Safety.** Treat Claude's output as untrusted input:
 - schema validation, bounds checks, a cap on operation count and area per proposal, and no code execution;
@@ -329,7 +375,7 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - `render-2d`;
   - `sim-worker` (water preview and background validation);
   - `stamps`;
-  - `claude-bridge` (summary builder, schema, tools, proposal loop);
+  - `claude-bridge` (summary builder, schema, tools, proposal loop): `src/claude/`, with its Messages API adapter in `src/platform/claude/` (`ROADMAP.md` M12);
   - `platform` adapters.
 - The operations engine and feature rasterization are headless and fully testable without the UI.
 - Determinism: the same document always produces a byte-identical `.timber` file (`PLAN.md` §19.7).
@@ -364,8 +410,9 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - the water preview after a local edit ≤ 2 s (warm start);
   - the canonical full settle for export ≤ 3 s as the target. The audit measured 6.5–11 s for an unoptimized JS port from empty (`PLAN.md` §10).
 - **End to end** (e.g. Playwright): generate, edit features, export, re-import, compare.
-- **Claude request suite:** a fixed set of requests, each with measurable expectations, run against several generated maps of different sizes.
-  - It runs in Node through the Messages API adapter (nightly, with a key), with the same prompts and tools the artifact edition uses. It checks expectations against the achievable ranges (`PLAN.md` §9.10).
+- **Claude request suite:** 120 requests (`tests/claude/requests.json`), each with its map, its goals and their expectations, whether it is feasible, what the report must say, and a reference solution (`PLAN.md` §20, D88). The kinds: the requests below word for word, simple, follow-ups, compass, feature-relative, flow-relative, judgement and size words, compound, vague, impossible, conflicting, questions and safety. The maps: generated maps of 48², 96², 128² and 256², rivers drawn in each direction, tributaries, and imports.
+  - The reference solutions run in CI through `MapSession` with the real validators; every one must pass.
+  - With a key, the suite runs nightly in Node through the Messages API adapter, with the same prompts and tools the artifact edition uses and the artifact's limits on (64 KiB input, 32 KB results). It checks expectations against the achievable ranges (`PLAN.md` §9.10).
   - Include at least:
     - "add a giant waterfall in the north part of the map that is roughly 20 blocks wide", on 128² and 256²; on 96² it must fit, and on 48² it must report the reduction to 19;
     - "make it wider";
@@ -373,8 +420,13 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
     - "add a dam site near the start";
     - "put more ruins on the eastern plateau";
     - "keep badwater in the south";
-    - "make the map harder".
-  - A request passes when the result validates, meets its expectations, and the report accurately describes what changed.
+    - "make the map harder";
+    - the compound request, word for word, on 128² and 256²: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side.";
+    - the same request on a map whose river doesn't flow west to east: a drawn river, and a Delta map (M7);
+    - an impossible one: a huge dam opportunity on 48². It passes only if the report says honestly what couldn't be done and offers the nearest alternative;
+    - a conflicting one: "put a badwater spring just upstream of the start". It passes only if the start rules hold, and the report or a question says why;
+    - the workshop catalogue's requests (a spiral mountain or quarry, an island in a moat, a heart-shaped lake, a badwater volcano, twin waterfalls, a hanging lake on a mesa, a mesa field, a river split round an island, a less obvious dam site, a more surprising map), listed with their builders in `ROADMAP.md` M12 (`PLAN.md` §20, D87).
+  - A request passes when the result validates, every feasible goal's expectations hold on the final map (measured by the app, never by Claude's own expectations), no guard broke, and the report accurately describes what changed, naming every goal not met with the nearest alternative offered. A compound request passes when every goal meets its expectations on the combined result, the map validates, and the report accurately names each trade-off. An optional judge model checks the report against the request's must-say list.
   - The artifact edition gets a manual smoke test on the same requests.
 - **Usability tasks,** timed, run by me or testers who haven't seen the editor, each with a target of under 2 minutes and no help:
   1. Add a river from the north edge that passes near the start.

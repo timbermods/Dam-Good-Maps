@@ -311,8 +311,8 @@ export const EXPERIMENTS: Experiment[] = [
     delta: 60,
   },
   {
-    setting: "Start rules: clean water within",
-    target: "distance from the start to pumpable clean water",
+    setting: "Water without stairs",
+    target: "tiles' walk on the start's level, without slopes, to a shore touching clean water a pump reaches (D85)",
     theme: "riverValley",
     values: ["8", "20"],
     apply: (s, v) => (s.settings.start.rules.waterWithin = num(v)),
@@ -322,8 +322,8 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 1,
   },
   {
-    setting: "Start rules: trees within 20",
-    target: "trees within 20 tiles of the start",
+    setting: "Minimum starting trees",
+    target: "living trees within 20 tiles' walk of the start (D85)",
     theme: "riverValley",
     values: ["20", "120"],
     apply: (s, v) => (s.settings.start.rules.treesWithin20 = num(v)),
@@ -332,8 +332,8 @@ export const EXPERIMENTS: Experiment[] = [
     delta: 30,
   },
   {
-    setting: "Start rules: living bushes within 20",
-    target: "living berry bushes within 20 tiles of the start",
+    setting: "Minimum starting bushes",
+    target: "living berry bushes within 20 tiles' walk of the start (D85)",
     theme: "riverValley",
     values: ["10", "80"],
     apply: (s, v) => {

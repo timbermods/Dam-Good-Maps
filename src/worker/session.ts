@@ -23,6 +23,7 @@ import {
   planPiece,
   planRiver,
   replacePatch,
+  withObjectsOnNewGround,
   cornerFor,
   startCentre,
   type LakeRequest,
@@ -43,9 +44,15 @@ import { entityTiles } from "../core/features/edits";
 import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
-import type { MapSpec } from "../core/spec/mapspec";
+import type { Difficulty, MapSpec } from "../core/spec/mapspec";
 import { applyMergePatch } from "../core/spec/mergepatch";
 import { validateMap, type Validation } from "../core/validate/checks";
+import { canonicalRun, canonicalSettle, type CanonicalWater } from "../core/sim/prefill";
+import { droughtStorage } from "../core/sim/drought";
+import { rulesFor } from "../core/validate/playability";
+import { mapObjects, waterModel } from "../core/sim/model";
+import type { WaterModel } from "../core/sim/water";
+import { surfaceOf } from "../core/format/world";
 import { blocks, type CheckClass, type CheckResult, type FixOp } from "../core/validate/report";
 import { changedRect } from "../render3d/mesh";
 import { emptyColumns, entityView, LAYERS, waterFromDepth, type EntityView, type MapView, type WaterView } from "../render3d/model";
@@ -57,6 +64,8 @@ export interface SessionInfo {
   name: string;
   premise: string;
   spec: MapSpec | null;
+  /** The difficulty the map is designed for (an import's comes from its document, default Normal). */
+  designedFor: Difficulty;
   W: number;
   H: number;
   features: Feature[];
@@ -129,8 +138,10 @@ export interface ExportCheck {
   advisory: CheckItem[];
   /** Problems an imported map already had when it was opened: listed, never blamed on edits. */
   existing: CheckItem[];
-  /** False for imported maps: water and colony checks are not run on them yet (roadmap M8). */
+  /** Water and colony checks ran (true since M8, imported maps too). */
   playability: boolean;
+  /** Why the water and start checks are only approximate on this map, or null (PLAN §11, D98). */
+  approximate: string | null;
   checks: number;
   version: number;
   ms: number;
@@ -140,7 +151,8 @@ let session: MapSession | null = null;
 let version = 0;
 /** What the page last received, to send only what changed. */
 let sent: { heights: Uint8Array; water: unknown; stored: boolean; entities: unknown } | null = null;
-let original: Validation | null = null;
+/** The imported map as it was opened, with every check (the problems it had already, D43). */
+let originalFull: Validation | null = null;
 let lastCheck: ExportCheck | null = null;
 
 function need(): MapSession {
@@ -157,6 +169,7 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
     name: s.meta.name,
     premise: s.meta.premise,
     spec: s.spec,
+    designedFor: s.spec?.designedFor ?? s.meta.designedFor ?? "normal",
     W,
     H,
     features: s.features as Feature[],
@@ -187,10 +200,36 @@ function entityInputs(list: readonly EntitySpec[]) {
 
 function waterOf(s: MapSession): WaterView {
   const b = s.built;
-  if (!s.showsStoredWater) return waterFromDepth(b.heights, b.water, b.contamination);
+  const roofed = s.roofedTiles;
+  if (!s.showsStoredWater && !roofed.size) return waterFromDepth(b.heights, b.water, b.contamination);
   const w = s.storedWater();
   const floor = Float32Array.from(w.floor, (f, k) => (f < 0 ? b.heights[w.tile[k]] : f));
-  return { count: w.tile.length, tile: w.tile.slice(), floor, depth: w.depth.slice(), contamination: w.contamination.slice() };
+  if (s.showsStoredWater) return { count: w.tile.length, tile: w.tile.slice(), floor, depth: w.depth.slice(), contamination: w.contamination.slice() };
+  // an edited import with caves: the settled water off the roofs, the file's own under them
+  // (EDITOR_PLAN §6: the preview is approximate there, and the export keeps the file's water)
+  const settled = waterFromDepth(b.heights, b.water, b.contamination);
+  const keep: number[] = [];
+  for (let k = 0; k < settled.count; k++) if (!roofed.has(settled.tile[k])) keep.push(k);
+  const under: number[] = [];
+  for (let k = 0; k < w.tile.length; k++) if (roofed.has(w.tile[k])) under.push(k);
+  const n = keep.length + under.length;
+  const out: WaterView = { count: n, tile: new Int32Array(n), floor: new Float32Array(n), depth: new Float32Array(n), contamination: new Float32Array(n) };
+  let q = 0;
+  for (const k of keep) {
+    out.tile[q] = settled.tile[k];
+    out.floor[q] = settled.floor[k];
+    out.depth[q] = settled.depth[k];
+    out.contamination[q] = settled.contamination[k];
+    q++;
+  }
+  for (const k of under) {
+    out.tile[q] = w.tile[k];
+    out.floor[q] = floor[k];
+    out.depth[q] = w.depth[k];
+    out.contamination[q] = w.contamination[k];
+    q++;
+  }
+  return out;
 }
 
 function columnsOf(s: MapSession): MapView["columns"] {
@@ -299,9 +338,12 @@ function inRegion(where: CheckResult["where"], r: { x0: number; y0: number; x1: 
 // ------------------------------------------------------------------------------------ opening
 
 function opened(s: MapSession): SessionOpen {
+  // the editor previews water from its previous state; the canonical settle follows in the
+  // background, and always before an export (EDITOR_PLAN §6)
+  s.setPreviewWater(true);
   session = s;
   sent = null;
-  original = null;
+  originalFull = null;
   lastCheck = null;
   version++;
   return sessionView();
@@ -328,7 +370,7 @@ export function openProject(bytes: Uint8Array): SessionOpen {
 export function closeSession(): void {
   session = null;
   sent = null;
-  original = null;
+  originalFull = null;
   lastCheck = null;
   version++;
 }
@@ -496,20 +538,38 @@ function existedBefore(c: CheckResult, before: Validation): boolean {
   return now.every((k) => had.has(k));
 }
 
-/** Validate the open map for export (PLAN §19.5). */
+/** Validate the open map for export (PLAN §19.5), in one go: the water settles canonically here
+ *  when the preview's water is showing (the background check does the same in slices). */
 export function exportCheck(): ExportCheck {
   const t0 = performance.now();
   const s = need();
   if (lastCheck && lastCheck.version === version) return lastCheck;
   const imported = s.mode === "import";
-  const v = s.validate("export", { loadOnly: imported });
-  if (imported && !original) original = s.validateOriginal();
-  const out: ExportCheck = { blocking: [], warnings: [], advisory: [], existing: [], playability: !imported, checks: 0, version, ms: 0 };
+  const v = imported ? s.validate("export", { water: settleNow(importModel(s)) }) : s.validate("export");
+  if (imported && !originalFull) originalFull = s.validateOriginal(settleNow(importModel(s, true)));
+  return grouped(s, v, t0);
+}
+
+/** A validation grouped as the export dialog shows it (PLAN §19.5, D43). */
+function grouped(s: MapSession, v: Validation, t0: number): ExportCheck {
+  const imported = s.mode === "import";
+  const before = imported ? originalFull : null;
+  const out: ExportCheck = {
+    blocking: [],
+    warnings: [],
+    advisory: [],
+    existing: [],
+    playability: true,
+    approximate: v.report.checks.find((c) => c.approximate)?.approximate ?? null,
+    checks: 0,
+    version,
+    ms: 0,
+  };
   for (const c of v.report.checks) {
     if (c.applicable === false) continue;
     out.checks++;
     if (c.ok) continue;
-    if (imported && original && existedBefore(c, original)) out.existing.push(itemOf(c, s));
+    if (before && existedBefore(c, before)) out.existing.push(itemOf(c, s));
     else if (c.advisory) out.advisory.push(itemOf(c, s));
     else if (blocks("export", c)) out.blocking.push(itemOf(c, s));
     else out.warnings.push(itemOf(c, s));
@@ -519,11 +579,112 @@ export function exportCheck(): ExportCheck {
   return out;
 }
 
-/** Export the open map. Refused while load problems block it, or while warnings are not
- *  confirmed; confirmed warnings are noted in the map's description. */
-export function exportTimber(confirmWarnings: boolean): { ok: boolean; errors: string[]; bytes: Uint8Array; fileName: string } {
+/** The water model an imported map settles on: its export file's, or (`opened`) the map's as it
+ *  was opened. */
+function importModel(s: MapSession, opened = false): WaterModel {
+  const w = (opened ? s.openedFile() : s.exportFile(s.built, { thumbnail: false })).world;
+  return waterModel(w.sizeX, w.sizeY, surfaceOf(w), mapObjects(w));
+}
+
+function settleNow(model: WaterModel): { model: WaterModel; settled: CanonicalWater } {
+  return { model, settled: canonicalSettle(model) };
+}
+
+// ---------------------------------------------------------------------------- background checks
+
+/** A slice of the canonical settle between answers to the page (about 30 ms on a 256² map). */
+const SLICE_TICKS = 16;
+
+/** Progress of a background check or an export, for the page. */
+export interface CheckProgress {
+  stage: "water" | "checks";
+  /** 0–1 (the settle's share of its longest possible run). */
+  done: number;
+}
+
+export interface BackgroundResult {
+  check: ExportCheck;
+  /** The view after the canonical water replaced the preview's (water, and the plants on it). */
+  view: ViewUpdate;
+  info: SessionInfo;
+}
+
+let bgToken = 0;
+
+/** Let the page's messages in (edits, hover checks) between slices of work. */
+function breathe(): Promise<void> {
+  return new Promise((r) => setTimeout(r, 0));
+}
+
+/** Run a canonical settle a slice at a time; null when `current` turns false (a newer edit). */
+async function settleInSlices(model: WaterModel, current: () => boolean, onProgress?: (p: CheckProgress) => void): Promise<CanonicalWater | null> {
+  const run = canonicalRun(model);
+  for (;;) {
+    const w = run.advance(SLICE_TICKS);
+    if (w) return w;
+    onProgress?.({ stage: "water", done: Math.min(0.99, run.ticks / run.maxTicks) });
+    await breathe();
+    if (!current()) return null;
+  }
+}
+
+/** The full validation in the background (EDITOR_PLAN §6), debounced by the page and dropped when
+ *  a newer edit arrives. The canonical settle runs in slices and replaces the preview's water; then
+ *  every check runs, water and colony checks included, imported maps too (their own problems, D43,
+ *  compare with the map as it was opened, checked the same way). Null when a newer edit made it
+ *  stale. */
+export async function backgroundCheck(onProgress?: (p: CheckProgress) => void): Promise<BackgroundResult | null> {
   const s = need();
-  const c = exportCheck();
+  const v0 = version;
+  const token = ++bgToken;
+  const current = () => session === s && version === v0 && token === bgToken;
+  if (lastCheck && lastCheck.version === version && !s.waterPending) return { check: lastCheck, view: {}, info: sessionInfo(s) };
+  const t0 = performance.now();
+  let view: ViewUpdate = {};
+  if (s.waterPending) {
+    const run = s.canonicalRun();
+    const w = await settleInSlices(run.model, current, onProgress);
+    if (!w) return null;
+    s.adoptWater(run.model, w);
+    view = viewUpdate(s);
+  }
+  onProgress?.({ stage: "checks", done: 1 });
+  let v: Validation;
+  if (s.mode === "import") {
+    const model = importModel(s);
+    const w = await settleInSlices(model, current, onProgress);
+    if (!w) return null;
+    // unedited, the map is the map as it was opened: one settle and one validation serve both
+    if (!originalFull && s.editCount === 0 && !s.waterPending) {
+      originalFull = s.validateOriginal({ model, settled: w });
+      lastWaterOf(originalFull, v0, w, model);
+      return { check: grouped(s, originalFull, t0), view, info: sessionInfo(s) };
+    }
+    if (!originalFull) {
+      const om = importModel(s, true);
+      const ow = await settleInSlices(om, () => session === s, onProgress);
+      if (!ow) return null;
+      originalFull = s.validateOriginal({ model: om, settled: ow });
+      if (!current()) return null;
+    }
+    v = s.validate("export", { water: { model, settled: w } });
+    lastWaterOf(v, v0, w, model);
+  } else {
+    await breathe();
+    if (!current()) return null;
+    v = s.validate("export");
+  }
+  return { check: grouped(s, v, t0), view, info: sessionInfo(s) };
+}
+
+/** Export the open map. Refused while load problems block it, or while warnings are not
+ *  confirmed; confirmed warnings are noted in the map's description. The water settles
+ *  canonically first, in slices with progress (PLAN §19.7: a file never gets the preview's water). */
+export async function exportTimber(confirmWarnings: boolean, onProgress?: (p: CheckProgress) => void): Promise<{ ok: boolean; errors: string[]; bytes: Uint8Array; fileName: string }> {
+  const s = need();
+  const bg = await backgroundCheck(onProgress);
+  if (!bg) return { ok: false, errors: ["the map changed while it was checked: export again"], bytes: new Uint8Array(), fileName: "" };
+  const c = bg.check;
   if (c.blocking.length) return { ok: false, errors: c.blocking.map((b) => b.message), bytes: new Uint8Array(), fileName: "" };
   if (c.warnings.length && !confirmWarnings) return { ok: false, errors: ["confirm the warnings first"], bytes: new Uint8Array(), fileName: "" };
   const { bytes, fileName } = s.exportTimber({ warnings: c.warnings.map((w) => w.message) });
@@ -597,9 +758,11 @@ export function planTool(req: ToolRequest, id: string): ToolPlan {
   const ctx = planContextOf(s, existing ? id : null);
   const origin = existing?.origin ?? "user";
   const r = req.tool === "river" ? planRiver(req, ctx, id, origin) : req.tool === "lake" ? planLake(req, ctx, id, origin) : planLandform(req, ctx, id, origin);
-  if (!r.ok || !existing) return toolPlan(r);
+  if (!r.ok) return toolPlan(r);
+  // the objects on the ground it reshapes move with it, or are cleared (EDITOR_PLAN §3, D87)
+  if (!existing) return toolPlan(withObjectsOnNewGround(s, r, id));
   const patch = { params: replacePatch(existing.params, r.feature.params) as Record<string, unknown> };
-  return toolPlan({ ...r, ops: [{ op: "updateFeature", params: { id, patch } }, ...r.ops.slice(1)], label: `Change ${r.label.replace(/^Add /, "")}` });
+  return toolPlan(withObjectsOnNewGround(s, { ...r, ops: [{ op: "updateFeature", params: { id, patch } }, ...r.ops.slice(1)], label: `Change ${r.label.replace(/^Add /, "")}` }, id));
 }
 
 /** Plan and apply a tool's edit as one undo step. */
@@ -698,6 +861,94 @@ export function footprintCheck(req: ToolRequest): { tiles: number[]; problem: st
   if (req.tool !== "object" && req.tool !== "entity") return { tiles: [], problem: null };
   return checkFootprint(s, req);
 }
+
+// ------------------------------------------------------------------------------ the water layers
+
+/** The editor's water layers (EDITOR_PLAN §4 overlays, §6): soil moisture, badwater and the soil
+ *  it spoils, the analytic drought view, and the tiles under roofs where the preview is
+ *  approximate. Per-tile codes, for the page's overlay texture. */
+export interface WaterLayers {
+  W: number;
+  H: number;
+  /** Soil moisture bands: 0 dry, 1 moist (under 5), 2 wetter (5–9), 3 wettest (10 and up). */
+  moisture: Uint8Array;
+  /** 1 badwater, 2 soil its contamination spoils. */
+  badwater: Uint8Array;
+  /** The drought view: 1 water kept through the map's drought, 2 water that dries up. */
+  drought: Uint8Array;
+  droughtDays: number;
+  /** Water kept through the drought (blocks), and water there now. */
+  droughtKept: number;
+  droughtNow: number;
+  /** Tiles under roofs of an imported map: the preview keeps the file's water there. */
+  roofed: Int32Array;
+  /** Why the water checks are approximate on this map (null: they are not). */
+  approximate: string | null;
+  /** The water these layers show is the preview's (the canonical settle is still running). */
+  preview: boolean;
+  version: number;
+}
+
+/** The water layers of the map as it now stands. An unedited import keeps the file's water and
+ *  has no settle: its moisture and drought come from the background check's canonical settle,
+ *  once it has run (until then they are empty). */
+export function waterLayers(): WaterLayers {
+  const s = need();
+  const b = s.built;
+  const { W, H } = b;
+  const N = W * H;
+  const days = rulesFor(s.spec, s.meta.designedFor).droughtDays;
+  let depth: ArrayLike<number> = b.water;
+  let contamination: ArrayLike<number> = b.contamination;
+  let moist: ArrayLike<number> = b.moisture;
+  let soil: ArrayLike<number> = b.soilContamination;
+  let model = b.waterModel;
+  const fromCheck = b.waterFromFile && lastWater && lastWater.version === version ? lastWater : null;
+  if (fromCheck) ({ depth, contamination, moist, soil, model } = fromCheck);
+  const moisture = new Uint8Array(N);
+  const badwater = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    const m = moist[i];
+    moisture[i] = !(m > 0) ? 0 : m < 5 ? 1 : m < 10 ? 2 : 3;
+    if (depth[i] > 0.05 && contamination[i] >= 0.05) badwater[i] = 1;
+    else if (soil[i] > 0) badwater[i] = 2;
+  }
+  const drought = new Uint8Array(N);
+  let kept = 0;
+  let now = 0;
+  if (!b.waterFromFile || fromCheck) {
+    const left = droughtStorage(model, depth, days);
+    for (let i = 0; i < N; i++) {
+      if (!(depth[i] > 0.05)) continue;
+      now += depth[i];
+      kept += left[i];
+      drought[i] = left[i] > 0.05 ? 1 : 2;
+    }
+  }
+  const roofed = Int32Array.from([...s.roofedTiles].sort((a, c) => a - c));
+  return {
+    W,
+    H,
+    moisture,
+    badwater,
+    drought,
+    droughtDays: days,
+    droughtKept: Math.round(kept),
+    droughtNow: Math.round(now),
+    roofed,
+    approximate: lastCheck && lastCheck.version === version ? lastCheck.approximate : null,
+    preview: s.waterPending,
+    version,
+  };
+}
+
+function lastWaterOf(v: Validation, at: number, w: CanonicalWater, model: WaterModel): void {
+  if (v.analysis) lastWater = { version: at, depth: w.depth, contamination: w.contamination, moist: v.analysis.moisture, soil: v.analysis.soilContamination, model };
+}
+
+/** The canonical water and soil of the last background check of an imported map (the layers of an
+ *  unedited import, whose build keeps the file's water). */
+let lastWater: { version: number; depth: Float64Array; contamination: Float64Array; moist: Float64Array; soil: Float64Array; model: WaterModel } | null = null;
 
 // ------------------------------------------------------------------------------ the dam-site layer
 

@@ -122,8 +122,9 @@ test("the start: its footprint and what is nearby while it moves; a broken start
   // nudge it one tile: the indicators read the spot
   await page.getByRole("button", { name: /^Move Start/ }).focus();
   await page.keyboard.press("ArrowUp");
-  await expect(page.getByRole("status").filter({ hasText: /The district center fits here|Does not fit/ })).toBeVisible();
-  await expect(page.locator(".start-indicators")).toContainText(/Trees nearby: \d+/);
+  // (since M8 the indicators are the three start requirements, D85)
+  await expect(page.getByRole("status").filter({ hasText: /The district center fits here|Fits, but misses a start requirement|Does not fit/ })).toBeVisible();
+  await expect(page.locator(".start-indicators")).toContainText(/Starting trees: \d+/);
   await idle(page);
   await page.waitForTimeout(900);
   await idle(page);

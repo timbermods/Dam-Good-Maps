@@ -256,6 +256,7 @@
         "orientation": { "$ref": "#/$defs/orientation" },
         "benchRadius": { "type": "integer", "minimum": 2, "maximum": 12 },
         "benchLevel": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "bank": { "$ref": "#/$defs/point" },
         "player": { "type": "integer", "minimum": 0, "maximum": 3 }
       }
     }

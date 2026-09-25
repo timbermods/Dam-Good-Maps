@@ -1,0 +1,47 @@
+{
+ "id": "C04",
+ "text": "add ruins along the south edge",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add ruins along the south edge",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a ruin field along the south edge"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addResource",
+      "kind": "ruinField",
+      "where": "along the south edge",
+      "size": "medium",
+      "handle": "ruins"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "ruins",
+      "metric": "at",
+      "in": "along the south edge"
+     },
+     {
+      "goal": "g1",
+      "subject": "ruins",
+      "metric": "exists",
+      "equals": true
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1538,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a ruin field on the south edge, toward the southeast corner: 32 columns holding about 1,185 scrap, far from the start (103 tiles). The south edge already had two ruin fields further west, so ruins now run along most of it. Say if you want more, or a longer strip. Every start rule still holds."
+}

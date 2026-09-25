@@ -629,6 +629,37 @@ button[aria-pressed="true"] {
   color: var(--bad);
 }
 
+.start-indicators .warn {
+  color: var(--warn);
+}
+
+.layer-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  max-width: min(420px, calc(100% - 20px));
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--rule);
+  font-size: 0.85rem;
+}
+
+.layer-legend p {
+  margin: 0;
+}
+
+.layer-legend p + p {
+  margin-top: 4px;
+}
+
+.dialog progress {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+
 .start-indicators ul {
   margin: 0;
   padding-left: 18px;

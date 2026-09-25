@@ -410,8 +410,19 @@ function runsProblems(runs: Runs, W: number, H: number, what: string): string[] 
   return [];
 }
 
+/** How far past each map edge a generated feature's outline may reach (decisions-pending #30):
+ *  one map side. Lake Basin's terrace rings and highlands reach past the map; the rasterizers clip
+ *  them to it, and the editor changes and locks them like any feature. Outlines the player draws
+ *  stay on the map: on its tiles' outer edges at most (a rectangle over the edge tiles reaches
+ *  −0.5 and W − 0.5, as the drawing tools make it). */
+export function outlineBounds(f: Feature, W: number, H: number): { x0: number; y0: number; x1: number; y1: number } {
+  return f.origin === "generated" ? { x0: -W, y0: -H, x1: 2 * W - 1, y1: 2 * H - 1 } : { x0: -0.5, y0: -0.5, x1: W - 0.5, y1: H - 0.5 };
+}
+
 function featureGeometryProblems(f: Feature, W: number, H: number): string[] {
   const inMap = (p: readonly number[]) => p[0] >= 0 && p[0] <= W - 1 && p[1] >= 0 && p[1] <= H - 1;
+  const ob = outlineBounds(f, W, H);
+  const inBounds = (p: readonly number[]) => p[0] >= ob.x0 && p[0] <= ob.x1 && p[1] >= ob.y0 && p[1] <= ob.y1;
   const p = f.params as unknown as Record<string, unknown>;
   switch (f.kind) {
     case "forest":
@@ -421,11 +432,11 @@ function featureGeometryProblems(f: Feature, W: number, H: number): string[] {
     case "start":
       return inMap(f.params.position) ? [] : [`the start at (${f.params.position.join(", ")}) is outside the map`];
     case "landform":
-      if (f.params.outline && !f.params.outline.every(inMap)) return ["the landform's outline leaves the map"];
+      if (f.params.outline && !f.params.outline.every(inBounds)) return [f.origin === "generated" ? "the landform's outline reaches more than a map side past the edge" : "the landform's outline leaves the map"];
       if (!f.params.along && (!f.params.outline || f.params.height === undefined)) return ["a landform needs an outline and a height"];
       return [];
     case "lake": {
-      if (!f.params.outline.every(inMap)) return ["the lake's outline leaves the map"];
+      if (!f.params.outline.every(inBounds)) return [f.origin === "generated" ? "the lake's outline reaches more than a map side past the edge" : "the lake's outline leaves the map"];
       if (!inMap(f.params.outlet.at)) return ["the lake's outlet is off the map"];
       const o = f.params.outlet;
       if (o.path || o.levels || o.width) {
