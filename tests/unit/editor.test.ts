@@ -90,7 +90,8 @@ describe("moving a feature", () => {
     expect(movePatch(forest, 2, -1, W, H, heights)).toEqual({ params: { area: [[2, 4, 7], [3, 4, 7]] } });
     expect((movePatch(plateau, 1, 1, W, H, heights).params as { outline: number[][] }).outline[0]).toEqual([1.5, 1.5]);
     heights[20 * W + 23] = 7;
-    expect(movePatch(start, 3, 0, W, H, heights)).toEqual({ params: { position: [23, 20], benchLevel: 7 } });
+    // with no river near, the bench has no bank to run to (D97): its old one is removed
+    expect(movePatch(start, 3, 0, W, H, heights)).toEqual({ params: { position: [23, 20], benchLevel: 7, bank: null } });
   });
 
   it("keeps a river's mouth on its edge", () => {

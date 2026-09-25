@@ -6,7 +6,9 @@
 
 import type { BerryPatchFeature, Feature, ForestFeature, RuinFieldFeature } from "../features/schema";
 import { featureId } from "../features/ids";
-import { walkRegions } from "../analysis/regions";
+import { reachAt, walkDistance } from "../analysis/walk";
+import { entityTiles } from "../features/edits";
+import { WALK_BLOCKERS } from "../validate/playability";
 import type { EntitySpec } from "../format/entities";
 import { slopeHighSide } from "../format/footprints";
 import { distanceFrom, tilesToRuns } from "../math/grid";
@@ -28,13 +30,16 @@ export interface Ground {
   entities?: readonly EntitySpec[];
 }
 
-/** Tiles the colony can walk to from the start, and the tiles beside them (the playability
- *  checks count food and wood there, PLAN §11.4). */
-function walkableNearStart(g: Ground): Uint8Array | null {
+/** How far the colony walks from the start to each tile (slopes allowed, round the objects that
+ *  block walking): the start requirements count living trees and bushes within 20 tiles' walk
+ *  (PLAN §5.6, D85). Null without a start. */
+function walkFromStart(g: Ground): Float64Array | null {
   if (!g.start || !g.entities) return null;
   const { W, H } = g;
   const links: [number, number][] = [];
+  const blocked = new Uint8Array(W * H);
   for (const e of g.entities) {
+    if (WALK_BLOCKERS.has(e.template)) for (const [x, y] of entityTiles(e)) if (x >= 0 && y >= 0 && x < W && y < H) blocked[y * W + x] = 1;
     if (e.template !== "Slope") continue;
     const [dx, dy] = slopeHighSide(e.orientation);
     const hx = e.x + dx;
@@ -42,17 +47,14 @@ function walkableNearStart(g: Ground): Uint8Array | null {
     if (e.x < 0 || e.y < 0 || e.x >= W || e.y >= H || hx < 0 || hy < 0 || hx >= W || hy >= H) continue;
     links.push([e.y * W + e.x, hy * W + hx]);
   }
-  const labels = walkRegions(g.heights, W, H, null, links);
-  const root = labels[g.start.y * W + g.start.x];
-  const out = new Uint8Array(W * H);
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      const i = y * W + x;
-      if (labels[i] === root) out[i] = 1;
-      else if ((x > 0 && labels[i - 1] === root) || (x + 1 < W && labels[i + 1] === root) || (y > 0 && labels[i - W] === root) || (y + 1 < H && labels[i + W] === root)) out[i] = 1;
-    }
+  const d = walkDistance(g.heights, W, H, blocked, links, g.start);
+  const out = new Float64Array(W * H);
+  for (let i = 0; i < W * H; i++) out[i] = reachAt(d, W, H, i);
   return out;
 }
+
+/** Near the start, food and wood go within this walk (the requirements count 20). */
+const NEAR_WALK = 18;
 
 /** Regeneration constraints (PLAN §7.0): tiles resources keep off, and what locks kept. */
 export interface ResourceConstraints {
@@ -61,7 +63,8 @@ export interface ResourceConstraints {
 }
 
 /** The start rules' targets for what the generator places near the start (PLAN §5.6): a little
- *  above each minimum the validator enforces, so a map meets its rules on the first attempt. */
+ *  above each minimum the validator enforces, so a map meets its requirements on the first
+ *  attempt. The generator never aims below a minimum (D85). */
 export function nearStartTargets(spec: MapSpec): { trees: number; bushes: number; ruinsClear: number } {
   const r = spec.settings.start.rules;
   return {
@@ -101,9 +104,15 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
       for (let x = g.start.x - 1; x <= g.start.x + 1; x++) startMask[y * W + x] = 1;
   }
   const startDist = distanceFrom(startMask, W, H);
-  // near the start, food and wood go where the colony can walk (other tiles only as a fallback)
-  const walk = walkableNearStart(g);
-  const byWalk = (i: number) => (!walk || walk[i] ? 1 : 0.05);
+  // near the start, food and wood go within the colony's walk (other tiles only as a fallback)
+  const walk = walkFromStart(g);
+  const byWalk = (i: number) => (!walk || walk[i] <= NEAR_WALK ? 1 : 0.05);
+  // near-start groves and patches grow only within the walk, so every plant of them counts
+  let nearWalk: Uint8Array | null = null;
+  if (walk) {
+    nearWalk = new Uint8Array(N);
+    for (let i = 0; i < N; i++) if (walk[i] <= NEAR_WALK) nearWalk[i] = 1;
+  }
   const out: Feature[] = [];
   const anchorRole = (prefix: string, tiles: number[]) => `${prefix}/${tiles[0]}`;
 
@@ -183,9 +192,9 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
   const nearWater = (i: number) => waterDist[i] <= 5;
   const bushTotal = Math.floor(((density("bushes_per_10k", area) * area) / 1e4) * (spec.settings.resources.berryBushes / 100));
   let bushCount = 0;
-  const patch = (seedTile: number, size: number, ripeShare: number): number => {
+  const patch = (seedTile: number, size: number, ripeShare: number, within: Uint8Array | null = null): number => {
     const allowed = new Uint8Array(N);
-    for (let i = 0; i < N; i++) allowed[i] = free[i] && moist[i] ? 1 : 0;
+    for (let i = 0; i < N; i++) allowed[i] = free[i] && moist[i] && (!within || within[i]) ? 1 : 0;
     if (!allowed[seedTile]) return 0;
     const tiles = growBlob(vegRng, allowed, W, H, seedTile, size, 1.5);
     for (const i of tiles) free[i] = 0;
@@ -203,22 +212,27 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     return tiles.length;
   };
   if (g.start) {
-    const w = new Float64Array(N);
-    for (let i = 0; i < N; i++) {
-      const x = i % W;
-      const y = (i - x) / W;
-      const dx = x - g.start.x;
-      const dy = y - g.start.y;
-      if (dx * dx + dy * dy <= BUSHES.nearStartRadius * BUSHES.nearStartRadius && free[i] && moist[i]) w[i] = (nearWater(i) ? 2 : 1) * byWalk(i);
-    }
     const want = near.bushes;
     // 2–3 patches as PLAN §7.7 says, more when the target is large or the moist land near the
-    // start is narrow (a canyon floor): patches until the target is met, at most 6
+    // start is narrow (a canyon floor): patches until the target is met, at most 6 a pass. They go
+    // within the colony's walk first (D85 counts 20 tiles' walk), beyond it only when that walk
+    // holds too little moist land.
     const each = Math.max(4, Math.floor(want / Math.max(2, Math.ceil(want / 30))));
     let got = 0;
-    for (const s of pickSeeds(vegRng, w, W, 6, 6)) {
-      got += patch(s, Math.min(each, Math.max(4, want - got)), 1);
+    for (const within of nearWalk ? [nearWalk, null] : [null]) {
       if (got >= want) break;
+      const w = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        const x = i % W;
+        const y = (i - x) / W;
+        const dx = x - g.start.x;
+        const dy = y - g.start.y;
+        if (dx * dx + dy * dy <= BUSHES.nearStartRadius * BUSHES.nearStartRadius && free[i] && moist[i] && (!within || within[i])) w[i] = (nearWater(i) ? 2 : 1) * byWalk(i);
+      }
+      for (const s of pickSeeds(vegRng, w, W, 6, 6)) {
+        got += patch(s, Math.min(each, Math.max(4, want - got)), 1, within);
+        if (got >= want) break;
+      }
     }
   }
   // a second district's berries (PLAN §9.8)
@@ -254,9 +268,9 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
   const speciesW = [mixW.pine, mixW.birch, mixW.oak, mixW.succulent];
   const anySpecies = speciesW.some((w) => w > 0);
   let treeCount = 0;
-  const growGrove = (seedTile: number, size: number, living: boolean): number => {
+  const growGrove = (seedTile: number, size: number, living: boolean, within: Uint8Array | null = null): number => {
     const allowed = new Uint8Array(N);
-    for (let i = 0; i < N; i++) allowed[i] = free[i] && (living ? moist[i] : !moist[i]) ? 1 : 0;
+    for (let i = 0; i < N; i++) allowed[i] = free[i] && (living ? moist[i] : !moist[i]) && (!within || within[i]) ? 1 : 0;
     if (!allowed[seedTile]) return 0;
     const tiles = growBlob(vegRng, allowed, W, H, seedTile, size, 0.8);
     let sp: (typeof species)[number] = species[anySpecies ? vegRng.weighted(speciesW) : 0];
@@ -276,20 +290,24 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     return tiles.length;
   };
   if (g.start) {
-    const w = new Float64Array(N);
     const r = FOREST.nearStart.radius;
-    for (let i = 0; i < N; i++) {
-      const x = i % W;
-      const y = (i - x) / W;
-      const dx = x - g.start.x;
-      const dy = y - g.start.y;
-      if (dx * dx + dy * dy <= r * r && free[i] && moist[i]) w[i] = byWalk(i);
-    }
     let got = 0;
     const each = Math.floor(grove.median * 1.5);
-    for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(near.trees / Math.max(1, each)) + 3), 5)) {
-      got += growGrove(s, each, true);
+    // within the colony's walk first, as the berries
+    for (const within of nearWalk ? [nearWalk, null] : [null]) {
       if (got >= near.trees) break;
+      const w = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        const x = i % W;
+        const y = (i - x) / W;
+        const dx = x - g.start.x;
+        const dy = y - g.start.y;
+        if (dx * dx + dy * dy <= r * r && free[i] && moist[i] && (!within || within[i])) w[i] = byWalk(i);
+      }
+      for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(near.trees / Math.max(1, each)) + 3), 5)) {
+        got += growGrove(s, each, true, within);
+        if (got >= near.trees) break;
+      }
     }
   }
   // a second district's grove (PLAN §9.8)

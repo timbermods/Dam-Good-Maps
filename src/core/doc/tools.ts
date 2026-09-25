@@ -14,6 +14,7 @@
 
 import { buildMap, START_CLEAR_RADIUS, type BuildResult } from "../features/build";
 import { bedAt, pathField, pointAtArc, polygonMask } from "../features/geometry";
+import { bankFor } from "../features/raster/terrain";
 import { channelWidth, routeChannel } from "../features/route";
 import { BUILDERS, planSetPiece, type PlanContext, type PlanRecord } from "../features/setpieces";
 import { FLOW_PRESETS, type Facing } from "../features/setpieces/common";
@@ -21,7 +22,9 @@ import { startEntranceTile, type Orientation } from "../format/footprints";
 import type { Edge, Feature, LakeFeature, LandformFeature, Point, RiverFeature, SetPieceFeature, SetPieceKind, StartFeature } from "../features/schema";
 import { runsToTiles, type Runs } from "../math/grid";
 import { clone } from "../spec/mergepatch";
-import { dependentsOf, type EditOp, type OpParams } from "./ops";
+import { dependentsOf, patchFeature, type EditOp, type OpParams } from "./ops";
+import { entityTiles } from "../features/edits";
+import { isLine, OBJECT_NAMES, objectTiles } from "../features/objects";
 import type { MapSession } from "./session";
 
 export type PlannedEdit<F extends Feature = Feature> =
@@ -546,7 +549,124 @@ export function planPiece(s: MapSession, kind: SetPieceKind, request: PlanRecord
   }
   const { x: W, y: H } = s.size;
   const tiles = BUILDERS[kind]?.area?.(f, W, H, s.features) ?? [];
-  return { ok: true, ops, feature: f, report: f.params.report, label: `${existing ? "Change" : "Add"} ${pieceName(kind)}`, tiles };
+  return withObjectsOnNewGround(s, { ok: true, ops, feature: f, report: [...f.params.report], label: `${existing ? "Change" : "Add"} ${pieceName(kind)}`, tiles }, id);
+}
+
+// ------------------------------------------------------------------ objects on reshaped ground
+
+/** Templates that stand on the ground as objects (not plants, ruins, slopes, sources or the start):
+ *  what an edit that reshapes the ground must move or clear. */
+const GROUND_OBJECTS = new Set([
+  "UndergroundRuins", "SmallRelic", "MediumRelic", "LargeRelic", "GeothermalField", "UnstableCore", "Thorns", "NaturalDam", "Blockage",
+  "NaturalOverhang2x1", "NaturalOverhang3x1", "NaturalOverhang4x1", "ReservePile", "ReserveTank", "ReserveWarehouse", "AncientAquiferDrill",
+]);
+
+/** What an edit that reshapes the ground (a set piece, a lake, a landform, a river) does to the map
+ *  objects standing there (EDITOR_PLAN §3; D87, decisions-pending #47): an object whose ground
+ *  still holds it moves to the new ground (single objects stand on it, so they follow it), and one
+ *  it no longer holds (uneven ground, a river's channel, the new feature's body) is cleared, and the
+ *  report says which. `ops` are the edit's operations; `edited` the features they plan (left alone).
+ *  Returns the operations that clear objects, and the report's lines. */
+export function objectsOnNewGround(s: MapSession, ops: readonly EditOp[], edited: ReadonlySet<string>): { ops: EditOp[]; report: string[] } {
+  const { x: W, y: H } = s.size;
+  const N = W * H;
+  // the features after the edit
+  let feats: Feature[] = clone(s.features as Feature[]);
+  let touched = false;
+  for (const op of ops) {
+    if (op.op === "addFeature") {
+      const i = op.params.index;
+      if (i === undefined || i >= feats.length) feats.push(clone(op.params.feature));
+      else feats.splice(i, 0, clone(op.params.feature));
+      touched = true;
+    } else if (op.op === "updateFeature") {
+      feats = feats.map((f) => (f.id === op.params.id ? patchFeature(f, op.params.patch) : f));
+      touched = true;
+    } else if (op.op === "deleteFeature") {
+      feats = feats.filter((f) => f.id !== op.params.id);
+      touched = true;
+    }
+  }
+  if (!touched) return { ops: [], report: [] };
+  const before = s.built;
+  const after = s.terrainWith(feats);
+  const changed = new Uint8Array(N);
+  let any = false;
+  for (let i = 0; i < N; i++)
+    if (before.heights[i] !== after.heights[i] || (after.channel[i] && !before.channel[i])) {
+      changed[i] = 1;
+      any = true;
+    }
+  // the bodies of the features the edit plans: a set piece's, a lake's basin, a river's channel
+  const body = new Uint8Array(N);
+  for (const f of feats) {
+    if (!edited.has(f.id)) continue;
+    if (f.kind === "setPiece") for (const i of BUILDERS[f.params.kind]?.clears?.(f, W, H, feats) ?? BUILDERS[f.params.kind]?.area?.(f, W, H, feats) ?? []) body[i] = 1;
+    else if (f.kind === "lake") polygonMask(f.params.outline, W, H).forEach((v, i) => v && (body[i] = 1));
+    else if (f.kind === "river") for (let i = 0; i < N; i++) if (after.channel[i]) body[i] = 1;
+  }
+  if (!any) for (let i = 0; i < N && !any; i++) if (body[i]) any = true;
+  if (!any) return { ops: [], report: [] };
+  const out: EditOp[] = [];
+  const report: string[] = [];
+  const hit = (tiles: readonly (readonly [number, number])[]) => tiles.some(([x, y]) => x >= 0 && y >= 0 && x < W && y < H && (changed[y * W + x] || body[y * W + x]));
+  // map object features: their objects stand on the ground wherever it is, so they move with it
+  const objectIds = new Set<string>();
+  for (const f of feats) {
+    if (f.kind !== "mapObject") continue;
+    objectIds.add(f.id);
+    if (edited.has(f.id)) continue;
+    const tiles = objectTiles(f, W, H);
+    if (!hit(tiles)) continue;
+    const kind = f.params.kind;
+    const name = OBJECT_NAMES[kind].toLowerCase();
+    let why = "";
+    let level = -1;
+    for (const [x, y] of tiles) {
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      const i = y * W + x;
+      if (body[i] && kind !== "weir" && kind !== "plug") why = "the new feature covers its ground";
+      else if (after.channel[i] && kind !== "weir" && kind !== "plug") why = "a river runs through its ground";
+      else if (!isLine(kind)) {
+        if (level < 0) level = after.heights[i];
+        else if (after.heights[i] !== level) why = "its ground is no longer level";
+      }
+      if (why) break;
+    }
+    if (why) {
+      out.push({ op: "deleteFeature", params: { id: f.id } });
+      report.push(`clears the ${name}: ${why}`);
+    } else if (tiles.some(([x, y]) => x >= 0 && y >= 0 && x < W && y < H && before.heights[y * W + x] !== after.heights[y * W + x])) {
+      report.push(`the ${name} moves to the new ground`);
+    }
+  }
+  // the imported map's own objects and objects placed by hand: the loader keeps them only on
+  // ground at their level
+  const gone: string[] = [];
+  for (const e of after.entities) {
+    if (!GROUND_OBJECTS.has(e.template) || objectIds.has(e.owner)) continue;
+    const tiles = entityTiles(e);
+    if (!hit(tiles)) continue;
+    if (tiles.some(([x, y]) => x < 0 || y < 0 || x >= W || y >= H || after.heights[y * W + x] !== e.z || body[y * W + x])) gone.push(e.id);
+  }
+  if (gone.length) {
+    const have = new Set(before.entities.map((e) => e.id));
+    const ids = gone.filter((id) => have.has(id));
+    if (ids.length) {
+      out.push({ op: "deleteEntities", params: { entities: ids } });
+      report.push(`clears ${ids.length === 1 ? "an object" : `${ids.length} objects`} left without level ground`);
+    }
+  }
+  return { ops: out, report };
+}
+
+/** A planned edit with the objects on the ground it reshapes moved or cleared (see
+ *  `objectsOnNewGround`). */
+export function withObjectsOnNewGround<F extends Feature>(s: MapSession, r: PlannedEdit<F>, edited: string): PlannedEdit<F> {
+  if (!r.ok) return r;
+  const extra = objectsOnNewGround(s, r.ops, new Set([edited]));
+  if (!extra.ops.length && !extra.report.length) return r;
+  return { ...r, ops: [...r.ops, ...extra.ops], report: [...r.report, ...extra.report] };
 }
 
 export function pieceName(kind: SetPieceKind): string {
@@ -575,8 +695,9 @@ export function replacePatch(from: unknown, to: unknown): unknown {
 
 /** The `updateFeature` patch that moves a feature by (dx, dy) tiles without planning it again. A
  *  river keeps the ends that sit on the map edge on that edge (its sealed mouth stays a mouth); the
- *  start's bench takes the ground level at its new place. */
-export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array): OpParams["updateFeature"]["patch"] {
+ *  start's bench takes the ground level at its new place, and runs to the bank of a river there
+ *  when one is near (`features`, D97). */
+export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array, features: readonly Feature[] = []): OpParams["updateFeature"]["patch"] {
   const shift = (p: Point): Point => [p[0] + dx, p[1] + dy];
   const onEdge = (v: number, max: number) => v <= 0 || v >= max;
   switch (f.kind) {
@@ -586,7 +707,8 @@ export function movePatch(f: Feature, dx: number, dy: number, W: number, H: numb
       return { params: { area: f.params.area.map(([y, a, b]) => [y + dy, a + dx, b + dx]) as Runs } };
     case "start": {
       const [x, y] = shift(f.params.position);
-      return { params: { position: [x, y], benchLevel: Math.max(1, heights[y * W + x]) } };
+      const benchLevel = Math.max(1, heights[y * W + x]);
+      return { params: { position: [x, y], benchLevel, bank: bankFor(features, x, y, benchLevel, f.params.benchRadius) ?? null } };
     }
     case "landform":
       return { params: { outline: (f.params.outline ?? []).map(shift) } };
@@ -603,6 +725,10 @@ export function movePatch(f: Feature, dx: number, dy: number, W: number, H: numb
  *  planned again at their new place (a river's bed and a lake's outlet follow the new ground; an
  *  on-river piece moves along its river). */
 export function moveEdit(s: MapSession, id: string, dx: number, dy: number): PlannedEdit {
+  return withObjectsOnNewGround(s, movePlan(s, id, dx, dy), id);
+}
+
+function movePlan(s: MapSession, id: string, dx: number, dy: number): PlannedEdit {
   const f = s.features.find((g) => g.id === id);
   if (!f) return fail("that feature is gone");
   const { x: W, y: H } = s.size;
@@ -627,7 +753,7 @@ export function moveEdit(s: MapSession, id: string, dx: number, dy: number): Pla
     const r = planPiece(s, f.params.kind, req, id);
     return r.ok ? { ...r, label } : r;
   }
-  const patch = movePatch(f, dx, dy, W, H, s.built.heights);
+  const patch = movePatch(f, dx, dy, W, H, s.built.heights, s.features);
   const moved = { ...f, params: { ...f.params, ...(patch.params as object) } } as Feature;
   return { ok: true, ops: [{ op: "updateFeature", params: { id, patch } }], feature: moved, report: [], label, tiles: [] };
 }
@@ -811,7 +937,9 @@ export function moveStartNear(s: MapSession, fromX: number, fromY: number): Edit
         for (let yy = y - 2; yy <= y + 2 && ok; yy++) for (let xx = x - 2; xx <= x + 2 && ok; xx++) if (b.water[yy * W + xx] > 0.05 || b.channel[yy * W + xx]) ok = false;
         for (let yy = y - rr; yy <= y + rr && ok; yy++) for (let xx = x - rr; xx <= x + rr && ok; xx++) if (pieces[yy * W + xx]) ok = false;
         if (!ok || startProblem(b, x, y, o, false, feat.id, pieces)) continue;
-        return [{ op: "updateFeature", params: { id: feat.id, patch: { params: { position: [x, y], benchLevel: Math.max(1, b.heights[y * W + x]) } } } }];
+        const benchLevel = Math.max(1, b.heights[y * W + x]);
+        const bank = bankFor(s.features, x, y, benchLevel, rr) ?? null;
+        return [{ op: "updateFeature", params: { id: feat.id, patch: { params: { position: [x, y], benchLevel, bank } } } }];
       }
       if (startProblem(b, x, y, o, true, ent!.owner, pieces)) continue;
       const [cx, cy] = cornerFor(x, y, o);

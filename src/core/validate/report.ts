@@ -23,8 +23,13 @@ export interface CheckResult {
   /** Tiles ([x, y]), a feature or entities involved. */
   where?: { tiles?: [number, number][]; feature?: string; entities?: string[] };
   fix?: FixOp[];
-  /** Advisory checks are reported in every profile and never block (today: plants.drought). */
+  /** Advisory checks are reported in every profile and never block: plants.drought, and from M8
+   *  the start targets and water.reservoir (D85). */
   advisory?: boolean;
+  /** Why the result is only approximate (PLAN §11, D87): the map's water is something a steady
+   *  state cannot show (caves, sources that turn on later, aquifers, seeps, a start under a roof).
+   *  An approximate check is reported, passes, and says why, with what it measured. */
+  approximate?: string;
   /** False when the check does not apply to this map (no such feature, no start, ...): it is
    *  reported, passes, and says why. */
   applicable?: boolean;
@@ -51,7 +56,7 @@ export function severityOf(profile: Profile, cls: CheckClass, ok: boolean, advis
 /** Whether a result blocks the profile's action: the download in `generate`, the export in
  *  `export`. Nothing blocks an import: the importer reports, and fixes what the game would. */
 export function blocks(profile: Profile, r: CheckResult): boolean {
-  if (r.ok || r.advisory || r.applicable === false) return false;
+  if (r.ok || r.advisory || r.applicable === false || r.approximate) return false;
   if (profile === "generate") return true;
   if (profile === "export") return r.class === "load";
   return false;
@@ -70,6 +75,16 @@ export class Collector {
   /** A check that does not apply to this map: reported as passing, with the reason. */
   notApplicable(id: string, cls: CheckClass, message: string, advisory = false): void {
     this.add({ id, class: cls, ok: true, applicable: false, message, ...(advisory ? { advisory } : {}) });
+  }
+
+  /** Mark the checks `which` picks as approximate (see `CheckResult.approximate`): they pass, keep
+   *  what they measured, and say why. Checks that do not apply stay as they are. */
+  approximate(which: (id: string) => boolean, reason: string): void {
+    for (let k = 0; k < this.checks.length; k++) {
+      const c = this.checks[k];
+      if (!which(c.id) || c.applicable === false) continue;
+      this.checks[k] = { ...c, ok: true, severity: "info", approximate: reason, message: `approximate (${reason}): ${c.message}` };
+    }
   }
 }
 

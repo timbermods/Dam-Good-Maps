@@ -18,6 +18,7 @@
 import type { Orientation } from "../format/footprints";
 import { arcAtX, bedAt, pathField, pointAtArc, polygonMask, round } from "../features/geometry";
 import { buildMap, START_CLEAR_RADIUS, type BuildResult, type LockedLayer, type SettleCache } from "../features/build";
+import { bankFor, inBench } from "../features/raster/terrain";
 import { featureId } from "../features/ids";
 import { BUILDERS, flowBudget, planSetPiece, type PlanContext as PieceContext, type PlanRecord } from "../features/setpieces";
 import type {
@@ -46,7 +47,7 @@ import { slopeHighSide } from "../format/footprints";
 import { entityTiles } from "../features/edits";
 import { objectTiles } from "../features/objects";
 import { WALK_BLOCKERS } from "../validate/playability";
-import { planResources } from "./resources";
+import { nearStartTargets, planResources } from "./resources";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf, type PlanGround } from "./water";
 
 export type ValleyArchetype = "riverValley" | "canyon" | "highlands" | "delta";
@@ -408,6 +409,9 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
       if (toGorge(sx, side) > 34 && toGorge(sx, -side) < toGorge(sx, side)) side = -side;
       const sy = startY(sx, side);
       const orientation: Orientation = centre(sx) < sy ? "Cw0" : "Cw180";
+      // the bench runs to the bank, so the start's own level reaches the river (D85, D97)
+      const benchLevel = bedAt(river.params.bedProfile, arcAtX(path, sx)) + 2;
+      const bank = bankFor([river], sx, sy, benchLevel, BENCH_RADIUS[spec.settings.start.area]);
       const start: StartFeature = {
         id: id("start", "start/main"),
         kind: "start",
@@ -418,7 +422,8 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
           position: [sx, sy],
           orientation,
           benchRadius: BENCH_RADIUS[spec.settings.start.area],
-          benchLevel: bedAt(river.params.bedProfile, arcAtX(path, sx)) + 2,
+          benchLevel,
+          ...(bank ? { bank } : {}),
           player: 0,
         },
       };
@@ -496,6 +501,8 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const avoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 10, band);
     // ponds may lie near the start (drinking water and storage), off its zone
     const pondsAvoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 2, band);
+    // and off the bench's strip to the bank, with a margin
+    markBench(start, W, H, 3, avoid, pondsAvoid);
 
     // the pre-built weir (PLAN §5.7, §9.1 variants; D72): on half the maps a NaturalDam line across
     // the channel at the dam site holds the river 0.65 above its bed upstream (not in a canyon's
@@ -732,7 +739,7 @@ export function objectsAndResources(
   const extraFeatures: Feature[] = [];
   if (obstacle) {
     const radius = W * H >= 128 * 128 ? 5 : 4;
-    for (const [x, y] of obstacleSpots(base, [...layout, ...others], avoidAll, radius, 3)) {
+    for (const [x, y] of obstacleSpots(base, [...layout, ...others], avoidAll, radius, 3, nearStartTargets(spec).ruinsClear)) {
       const ctx: PieceContext = { W, H, seed, features: [...layout, ...others], heights: base.heights, channel: base.channel, start: base.start ? { x: base.start.x, y: base.start.y, radius: 8 } : null, protect: base.cache.terrain.protect };
       const role = "setpiece/obstaclePayoff/ruins";
       const r = planSetPiece("obstaclePayoff", { at: [x, y], radius, rise: 2 }, ctx, { id: featureId(seed, "setPiece", role), origin: "generated", role }, true);
@@ -1343,6 +1350,29 @@ export function farReach(path: Point[], x: number, y: number, d: number): number
 }
 
 /** Distance from (x, y) to a polyline. */
+/** Mark the start's bench (its disc and its strip to the bank), grown by `margin` tiles. */
+export function markBench(start: StartFeature, W: number, H: number, margin: number, ...masks: Uint8Array[]): void {
+  const [cx, cy] = start.params.position;
+  const bank = start.params.bank ?? start.params.position;
+  const r = start.params.benchRadius + margin + 2;
+  const x0 = Math.max(0, Math.floor(Math.min(cx - r, bank[0] - margin - 2)));
+  const x1 = Math.min(W - 1, Math.ceil(Math.max(cx + r, bank[0] + margin + 2)));
+  const y0 = Math.max(0, Math.floor(Math.min(cy - r, bank[1] - margin - 2)));
+  const y1 = Math.min(H - 1, Math.ceil(Math.max(cy + r, bank[1] + margin + 2)));
+  const bench = new Uint8Array(W * H);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inBench(start, x, y)) bench[y * W + x] = 1;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      if (!bench[y * W + x]) continue;
+      for (let dy = -margin; dy <= margin; dy++)
+        for (let dx = -margin; dx <= margin; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < W && yy < H) for (const m of masks) m[yy * W + xx] = 1;
+        }
+    }
+}
+
 function distToPath(path: Point[], x: number, y: number): number {
   let best = Infinity;
   for (let i = 0; i + 1 < path.length; i++) {

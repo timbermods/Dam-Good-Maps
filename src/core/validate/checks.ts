@@ -7,9 +7,10 @@
 import { FOOTPRINTS, OCC, ORIENTATIONS, slopeHighSide, startEntranceTile, worldBlocks, type Orientation, type Placement } from "../format/footprints";
 import { isObject, num, type JsonObject } from "../format/json";
 import { placementOf } from "../format/entities";
-import { EDITOR_MAX_HEIGHT, floorsOf, GAME_VERSION, MAX_OBJECT_Z, surfaceOf } from "../format/world";
+import { EDITOR_MAX_HEIGHT, floorsOf, GAME_VERSION, MAX_OBJECT_Z, storedWater, surfaceOf } from "../format/world";
 import type { TimberFile } from "../format/timber";
 import type { Feature } from "../features/schema";
+import { approximateId, approximateReason, mechanicsOf, startRing, storedWetMask, type Mechanics } from "../analysis/mechanics";
 import { mapObjects, waterModel, type MapObject } from "../sim/model";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
@@ -376,6 +377,9 @@ export interface ValidateOptions {
   water?: { model: WaterModel; settled: CanonicalWater };
   /** Only the load and design classes (the M1 oracle's --load-only). */
   loadOnly?: boolean;
+  /** The map's own water, as its wet tiles: by default the file's; an edited import passes the
+   *  water of the map as it was opened (the approximate-water rule compares the settle with it). */
+  storedWet?: Uint8Array | null;
 }
 
 export interface Validation {
@@ -384,6 +388,9 @@ export interface Validation {
   analysis: PlayabilityAnalysis | null;
   model: WaterModel | null;
   water: CanonicalWater | null;
+  /** What a steady state leaves out of this map's water (null with loadOnly). When it gives
+   *  reasons, the water and start checks are approximate (PLAN §11, D87). */
+  mechanics: Mechanics | null;
 }
 
 export function validateMap(file: TimberFile, opts: ValidateOptions): Validation {
@@ -397,6 +404,7 @@ export function validateMap(file: TimberFile, opts: ValidateOptions): Validation
   let analysis: PlayabilityAnalysis | null = null;
   let model: WaterModel | null = null;
   let water: CanonicalWater | null = null;
+  let mechanics: Mechanics | null = null;
   if (!opts.loadOnly) {
     // the heightfield water model runs on the top surface; on maps with caves or overhangs
     // (terrain.single_floor) it is an approximation, as the design check says
@@ -418,9 +426,16 @@ export function validateMap(file: TimberFile, opts: ValidateOptions): Validation
       },
       c,
     );
+    // water a steady state cannot show: the water and start checks are approximate
+    mechanics = mechanicsOf(objects, floorsOf(w), surface, w.sizeX, w.sizeY);
+    if (mechanics.reasons.length) {
+      const stored = opts.storedWet !== undefined ? opts.storedWet : storedWetMask(storedWater(w.singletons, w.sizeX, w.sizeY), w.sizeX * w.sizeY);
+      const why = approximateReason(mechanics, water.depth, stored, startRing(objects, w.sizeX, w.sizeY));
+      if (why) c.approximate(approximateId, why);
+    }
   }
   const checks = c.checks;
-  return { report: { profile: opts.profile, checks, passed: !checks.some((r) => blocks(opts.profile, r)) }, analysis, model, water };
+  return { report: { profile: opts.profile, checks, passed: !checks.some((r) => blocks(opts.profile, r)) }, analysis, model, water, mechanics };
 }
 
 export function validateFile(file: TimberFile, opts: ValidateOptions): ValidationReport {

@@ -311,7 +311,8 @@ export function planArea(s: MapSession, req: AreaRequest, id: string, origin: Fe
       x1 = Math.max(x1, x);
       y1 = Math.max(y1, y);
     }
-    if (tiles.length < 10 || tiles.length < 0.3 * (x1 - x0 + 1) * (y1 - y0 + 1)) {
+    // (more than 30% of its box, counted in whole numbers so the bound is exact)
+    if (tiles.length < 10 || 10 * tiles.length <= 3 * (x1 - x0 + 1) * (y1 - y0 + 1)) {
       left[seedTile] = 0;
       continue;
     }
