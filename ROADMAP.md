@@ -33,7 +33,8 @@ differently, this file wins.
 | M5 | Set pieces, land and water tools, slopes, fixes | PLAN §7.3, §7.5, §9.1–9.3, §9.5, §9.9–9.10, §19.3 · EDITOR §3, §4, §6, E3 | yes (C, F1, edited maps) | xhigh |
 | M6 | Full settings, sharing, themes I | PLAN §5, §6, §8 (Canyon, Lake Basin), §9.5, §14.5 | yes (short) | high |
 | M7 | Resources, map objects, themes II | PLAN §5.7, §8 (Highlands, Delta, Islands), §9.4, §9.6–9.8 · EDITOR §4, E4 | yes (D) | high |
-| M8 | Water preview and background validation in the editor | EDITOR §6, E5 · PLAN §10, §19.7 | yes (preview vs game, F3, F4) | xhigh |
+| M8 | Water preview and background validation in the editor; start requirements first | EDITOR §6, E5 · PLAN §5.6, §10, §11.4, §19.7 | yes (preview vs game, F3, F4) | xhigh |
+| Look | Map look, after M8, before M9 | Kyler's plan (PLAN §20, D86) · EDITOR §8 · PLAN §14.2 (3D) | no (Kyler's reference screenshot) | high |
 | M9 | Interestingness, names, candidates | PLAN §7.9, §12, §13 | no | high |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
@@ -46,7 +47,9 @@ differently, this file wins.
 **Release points** (suggested):
 - after M2: a public generator beta (River Valley, validated water);
 - after M6–M7: all themes;
-- after M8: the editor;
+- after M8: the editor, with the new start requirements;
+- Map look: inside the M9 release, or tagged `map-look-done` and released like a milestone;
+- the refinement phase and the design pass: tagged `design-done`;
 - after M12: Claude.
 
 M9 depends only on M2 and can run alongside M8. M10 and M11 can swap places.
@@ -397,6 +400,67 @@ in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–
 
 ## M8. Water preview and background validation in the editor
 
+**Start requirements, built first** (Kyler, 2026-09-24; PLAN §5.6, §11.4, §20 D85). Released with
+`m8-done`.
+
+New start requirements, the same on every difficulty. They replace the start rules as reasons to
+reject a map:
+1. **Water without stairs.** Clean water (depth ≥ 0.3, contamination < 0.05, as now) touches a
+   shore tile at the start's own level, and that shore tile is walkable from the start without
+   any slope: the same level all the way. Rivers, lakes and ponds all count. A pump on that shore
+   must reach the water surface (0–2 levels below), as now, so the colony can actually drink it.
+   No distance limit.
+2. **Starting trees:** at least **Minimum starting trees** living trees within 20 tiles' walk of
+   the start (slopes allowed), counted across any number of groves. Default 50.
+3. **Starting bushes:** at least **Minimum starting bushes** living berry bushes within 20 tiles'
+   walk of the start (slopes allowed), counted across any number of patches. Default 20.
+
+"Living" means the plant survives at steady state, as now.
+
+- **The two minimums are player settings:** the existing Advanced start rules controls for trees
+  within 20 and living bushes within 20, renamed **Minimum starting trees** and **Minimum
+  starting bushes**. They keep their current ranges (0–400, 0–200) and share-link keys (`st`,
+  `sb`), so old links still decode. The defaults are 50 and 20 on every difficulty. Changing
+  **Designed for** no longer resets these two (D66 updated). The generator never aims below
+  either minimum; if a player raises one above a difficulty's target, the target rises with it.
+  Imported maps, which have no settings, use the defaults.
+- **Everything else:** the other start rules stop rejecting maps: the difficulty's water
+  distance, badwater and ruin distances, stored drought water near the start (`water.reservoir`,
+  including Hard's 3-deep rule) and walkable land from the start (`start.reach`). They stay as
+  settings and generation targets: the generator still aims for them, their controls and
+  share-link keys keep working, and the map card shows an advisory warning when a map misses one.
+- **Unchanged:** the load checks the game needs (the start's footprint on flat ground, a free
+  entrance, exactly one start), and the water checks that aren't about the start (settling,
+  outflow, badwater containment).
+- **Build rules:**
+  - Change both validators together (TypeScript and the Python oracle), with 0 disagreements.
+  - A unit test for each requirement: water reachable only by a slope fails; only badwater fails;
+    trees or bushes below the minimum, or too far away, fail; changing either setting moves the
+    result.
+  - Both settings join `tools/settings-suite.ts` with a measured target, like the M6 settings.
+  - The editor's start indicators and its green or red footprint follow the three requirements,
+    using the map's settings. The map card lists them.
+  - This changes which attempt wins: bump the generator version and note that old share links
+    change.
+  - Report batch pass rates per theme at the defaults; first-attempt rates should rise.
+
+Its acceptance:
+- Both validators apply the three requirements and the advisory targets, with 0 disagreements on
+  the full oracle (50 generated and 19 official maps).
+- The unit tests above pass, and both settings move their measured target.
+- Batch per theme ≥ 98% final at the defaults, with the first-attempt rates per theme reported
+  beside M7's.
+- The editor's start indicators, its footprint and the map card follow the requirements (a
+  browser test).
+
+**Also first: editing generated outlines that leave the map** (decisions-pending #30). Generated
+features' outlines may run up to one map side past each edge (the schema's bound since the Lake
+Basin reopen fix); they are clipped to the map when rasterized, and the editor can change and
+lock them. Today `featureGeometryProblems` (`src/core/doc/ops.ts`) refuses them ("the landform's
+outline leaves the map"), so a Lake Basin terrace ring or a highlands landform that reaches past
+the edge can't be edited or locked. Outlines the player draws stay inside the map. Acceptance: such
+a ring can be edited and locked, and an unedited map's bytes don't change.
+
 **Delivers**
 - The worker simulation with warm-start re-settling after edits.
 - Detection of roofed water: the file's water is kept there, with a "preview approximate"
@@ -415,6 +479,63 @@ imported official map with roofed water (F4) and one pre-1.0 workshop map (F3). 
 differences in "Editor decisions".
 
 **Effort:** xhigh.
+
+---
+
+## Map look
+
+After M8 and before M9 (Kyler, 2026-09-24; PLAN §20, D86). The 3D view should look much closer to
+Timberborn in game, while every map meaning stays readable. It changes no map files:
+`src/core/render/shade.ts` (the 2D preview and the thumbnail) stays exactly as it is, and every
+sha256 stays equal.
+
+**Why:** Kyler's screenshot of the current 3D view is hard to read. The ground is coloured by
+height, while the game colours it by moisture. There are no shadows or ambient occlusion. Water is
+flat: badwater in its open ditch looks like a brown dirt ramp. Ruins are grey pillars, and the
+district center is a small box.
+
+**Delivers**
+1. Ground tops coloured by moisture as in game: moist ground green, dry ground sandy, contaminated
+   soil with its own look. A toggle switches back to height colours. This changes the 3D view's
+   colour meaning from height to moisture (approved by Kyler, D86).
+2. Height shown on the block walls: layered bands per level, so levels can be counted.
+3. Baked ambient occlusion and soft sun shadows, computed when the mesh is built.
+4. Warmer colour grading and light depth haze.
+5. Water: colour and opacity by depth; a gently moving surface; foam on waterfalls and at
+   shorelines; badwater as dark murky water, clearly water and clearly not clean.
+6. Models: trees by species (pine, birch with white trunks, oak, succulent), with dead trees
+   clearly dead; berry bushes; scrap-heap ruins instead of pillars; a recognisable district
+   center of our own design.
+7. A default camera angle closer to the game's.
+
+**Rules**
+- None of the game's models, textures or art. Everything is our own, and any textures are
+  generated in the shader, so the artifact edition needs no image files.
+- The M4 budgets hold (`npm run bench:3d`): build under 1.5 s at 256², and 60 fps on the
+  integrated GPU with the CPU slowed 4×, including Beavertopia (D46).
+- Every map meaning stays readable, and is checked in greyscale and under colour-blindness
+  simulation: water and badwater, moist and dry and contaminated ground, living and dead trees,
+  the start, slopes and their direction, dam sites.
+- The 2D preview keeps its height colours, and the 3D view's legend and hover text say what the
+  colours mean.
+- The 3D chunk stays lazy-loaded, and its size is reported.
+
+**Acceptance**
+- Before and after captures of the same maps (seed 4242 in every theme, one 256² map and
+  Beavertopia) from the same camera angles.
+- A reviewer can tell each meaning above apart in the after captures.
+- The budgets pass, and every existing test passes unchanged.
+
+**Reference:** when Kyler plays the first in-game test, they will screenshot the same map in
+Timberborn from the default angle ([docs/ingame-log.md](docs/ingame-log.md), ML-1). Use it to
+compare and tune colours, lighting and water. Never ship game screenshots.
+
+**In-game check:** no; the reference screenshot is Kyler's.
+
+**Effort:** high.
+
+**Release:** inside the M9 release, or tagged `map-look-done` and released like a milestone
+(CLAUDE.md, Deploying).
 
 ---
 

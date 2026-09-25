@@ -250,6 +250,12 @@ What the file should show (from `checks.txt`):
 | F3 | Re-export a pre-1.0 workshop map that has no `WaterSimulationMigrator` (the importer halves its strengths). | Its rivers run at the same level as the original's in game. | set by M8 | pending |
 | F4 | Edit an imported map with roofed water (Canyon or Terraces) away from the tunnels, then export it. | The tunnels keep flowing as in the original. | set by M8 | pending |
 
+## Map look: a reference screenshot
+
+| Check | What to do | What should happen | File | Status |
+|---|---|---|---|---|
+| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | pending |
+
 ## M12: Claude integration
 
 | Check | What to do | What should happen | File | Status |

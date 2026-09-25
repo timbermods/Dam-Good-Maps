@@ -774,6 +774,14 @@ On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
 - **Refinement note** (Kyler): containment should look natural. A new Refinement phase in
   ROADMAP (after M11, before the design pass) lists it with Kyler's other notes: #2, #12, #13,
   #21, the river-pond crossing fix and the load checks. Its targets wait for Kyler (#29).
+- **Part A, start requirements** (Kyler, D85; built at the start of M8, released with `m8-done`):
+  three requirements, the same on every difficulty (clean water on the start's own level without
+  stairs, no distance limit; **Minimum starting trees** 50 and **Minimum starting bushes** 20
+  within 20 tiles' walk); the other start rules become generation targets with advisory warnings.
+  Also at the start of M8: editing generated outlines that leave the map (#30).
+- **Part B, Map look** (Kyler, D86): a new step after M8, before M9. The 3D view moves closer to
+  the game's look, its ground coloured by moisture; no map file changes. Released with M9 or as
+  `map-look-done`.
 
 ---
 
