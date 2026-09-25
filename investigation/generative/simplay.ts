@@ -152,7 +152,7 @@ function summary(): void {
   const baseline: any[] = [];
   try {
     const sig = JSON.parse(git("origin/investigation/cycles:investigation/cycles/results/signatures.json"));
-    const mech = git("origin/investigation/mechanics:investigation/mechanics/results/maps.jsonl").split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.size === 128);
+    const mech = git("origin/investigation/mechanics:investigation/mechanics/results/maps.jsonl").split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.size === 128 || r.size?.x === 128);
     for (const x of sig) {
       const m = mech.find((r) => r.theme === x.theme && r.seed === x.seed);
       if (!m?.metrics) continue;

@@ -128,7 +128,7 @@ for (const z of [96, 128, 192, 256]) {
 if (m.m9Plan) {
   const q = m.m9Plan;
   out.push(`\n### The current M9 plan: River Valley with the study's recipes as premises (${q.maps} maps: 200 seeds and ${q.recipeMaps} recipe maps)\n`);
-  out.push(`- M1: nearest other map min ${f2(q.M1.nearestMin)}, median ${f2(q.M1.nearestMedian)} (${ok(q.M1.pass)}); M2 whole maps: largest cluster ${pc(q.M2a.largestShare)} (${q.M2a.clusters} clusters); M3 openings: largest ${q.M3 ? pc(q.M3.largestShare) : "–"}, spread ${q.M3 ? f2(q.M3.spread) : "–"}; M4: min ${f2(q.M4.nearestMin)} (${ok(q.M4.pass)}); M5: ${pc(q.M5.goodNaturalDam)}; M6: ${q.M6.flagged} of ${q.M6.maps} flagged.`);
+  out.push(`- M1: nearest other map min ${f2(q.M1.nearestMin)}, median ${f2(q.M1.nearestMedian)} (${ok(q.M1.pass)}); M2 whole maps: largest cluster ${pc(q.M2a.largestShare)} (${q.M2a.clusters} cluster${q.M2a.clusters === 1 ? "" : "s"}); M3 openings: largest ${q.M3 ? pc(q.M3.largestShare) : "–"}, spread ${q.M3 ? f2(q.M3.spread) : "–"}; M4: min ${f2(q.M4.nearestMin)} (${ok(q.M4.pass)}); M5: ${pc(q.M5.goodNaturalDam)}; M6: ${q.M6.flagged} of ${q.M6.maps} flagged.`);
 }
 const sim = existsSync(join(HERE, "simplay.json")) ? JSON.parse(readFileSync(join(HERE, "simplay.json"), "utf8")) : null;
 if (sim) {

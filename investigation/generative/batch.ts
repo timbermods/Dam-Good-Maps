@@ -17,13 +17,13 @@ import { AVAILABLE_THEMES, makeSpec, type Difficulty, type ThemeId } from "../..
 import { measureFile } from "../workshop/lib/measures";
 import { arg, lowPriority, mapDir, parseSeeds } from "./lib/paths";
 
-export type Generator = (theme: ThemeId, seed: number, size: number, difficulty: Difficulty) => GenerateResult & { recipe?: string | null; genome?: unknown; storage?: unknown; info?: unknown };
+export type Generator = (theme: ThemeId, seed: number, size: number, difficulty: Difficulty, variety?: number) => GenerateResult & { recipe?: string | null; genome?: unknown; storage?: unknown; info?: unknown };
 
 export async function generatorOf(name: string): Promise<Generator> {
   if (name === "current") return (theme, seed, size, difficulty) => generateCurrent(makeSpec({ seed, theme, size: { x: size, y: size }, designedFor: difficulty }));
   if (name === "proto") {
     const m = await import("./proto/generate");
-    return (theme, seed, size, difficulty) => m.generateProto(theme, seed, size, difficulty);
+    return (theme, seed, size, difficulty, variety) => m.generateProto(theme, seed, size, difficulty, { variety: variety ?? 70 });
   }
   throw new Error(`unknown generator ${name}`);
 }
@@ -36,7 +36,8 @@ async function main(): Promise<void> {
   const themes = arg("themes", AVAILABLE_THEMES.join(",")).split(",") as ThemeId[];
   const difficulty = arg("difficulty", "normal") as Difficulty;
   const files = !process.argv.includes("--no-files");
-  const dir = mapDir(gen === "current" ? "current" : gen, size) + (difficulty === "normal" ? "" : `-${difficulty}`);
+  const variety = Number(arg("variety", "70"));
+  const dir = mapDir(gen === "current" ? "current" : gen, size) + (difficulty === "normal" ? "" : `-${difficulty}`) + (variety === 70 ? "" : `-v${variety}`);
   mkdirSync(dir, { recursive: true });
   const run = await generatorOf(gen);
   for (const theme of themes) {
@@ -45,16 +46,16 @@ async function main(): Promise<void> {
     for (const seed of seeds) {
       if (process.argv.includes("--resume") && existsSync(join(dir, `${theme}-${seed}.json`))) continue;
       const t0 = performance.now();
-      const r = run(theme, seed, size, difficulty);
+      const r = run(theme, seed, size, difficulty, variety);
       const ms = Math.round(performance.now() - t0);
       const key = `${theme}-${seed}`;
       const failed = r.report.checks.filter((c) => blocks("generate", c)).map((c) => c.id);
-      const ok = r.report.passed && (!r.storage || (r.storage as { ok: boolean }).ok);
+      const ok = r.report.passed && (!r.storage || (r.storage as { ok: boolean }).ok) && (r.info as { stage?: string } | undefined)?.stage !== "dam wall";
       if (ok) pass++;
       if (ok && r.attempts === 1) first++;
       const storage = r.storage ? { ok: (r.storage as { ok: boolean }).ok, value: (r.storage as { value?: unknown }).value ?? null, message: (r.storage as { message: string }).message } : null;
       const info = r.info as { start?: unknown; badwater?: unknown; hydro?: unknown; stage?: unknown; ms?: unknown } | undefined;
-      const passed = r.report.passed && (!storage || storage.ok);
+      const passed = r.report.passed && (!storage || storage.ok) && (!info || info.stage !== "dam wall");
       const base = { key, gen, theme, seed, size, difficulty, passed, attempts: r.attempts, failures: r.failures, failed, ms, recipe: r.recipe ?? null, genome: r.genome ?? null, storage, info: info ? { start: info.start, badwater: info.badwater, hydro: info.hydro, stage: info.stage, ms: info.ms } : null };
       if (!passed) {
         writeFileSync(join(dir, `${key}.json`), JSON.stringify(base));

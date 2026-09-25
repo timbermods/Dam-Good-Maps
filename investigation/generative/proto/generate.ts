@@ -34,6 +34,7 @@ import { cleanPitsAndSpikes, fillDryHollows, mergeSmallRegions } from "./levels"
 import { snapLevels } from "./levels";
 import { pickStart, type StartPick } from "./start";
 import { storagePossible } from "./storage";
+import { damWalls } from "../lib/ridge";
 import { shoreWalkFrom } from "./start";
 
 export const PROTO_VERSION = "0.7.0-proto.2";
@@ -87,7 +88,7 @@ export function generateProto(theme: ThemeId, seed: number, size: number, diffic
     a.result.failures = failures;
     last = a;
     if (a.passed) return a.result;
-    failures.push({ attempt, failed: a.result.report.checks.filter((c) => blocks("generate", c)).map((c) => c.id).concat(a.result.storage.ok ? [] : ["water.storage_possible"]).concat(a.result.info.stage !== "built" ? [a.result.info.stage] : []) });
+    failures.push({ attempt, failed: a.result.report.checks.filter((c) => blocks("generate", c)).map((c) => c.id).concat(a.result.storage.ok ? [] : ["water.storage_possible"]).concat(a.result.info.stage !== "built" && a.result.info.stage !== "terrain changed in the build" ? [a.result.info.stage === "dam wall" ? "terrain.dam_wall" : a.result.info.stage] : []) });
   }
   return last!.result;
 }
@@ -225,7 +226,12 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   lap("validate");
   const storage = storagePossible(h, W, H, built, v, spec);
   lap("storage");
-  const passed = v.report.passed && storage.ok;
+  // the dam-wall check (lib/ridge.ts), a design check of the generate profile in M9a: land that
+  // reads as a wall across a valley is rejected like any other failing check, and the seed tries
+  // another genome
+  const walls = v.report.passed && storage.ok ? damWalls(built.heights, W, H, built.water) : [];
+  if (walls.length) info.stage = "dam wall";
+  const passed = v.report.passed && storage.ok && !walls.length;
   if (info.stage === "planned") info.stage = "built";
   const bytes = passed ? writeTimber(file) : new Uint8Array();
   lap("write");

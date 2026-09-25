@@ -122,7 +122,8 @@ function axisRows(sim: any): string {
     .map(([k, [name, unit, top]], i) => {
       const v = sim.axes.values[k];
       const b = sim.axes.bins[i];
-      return `| ${name} | ${v === null ? "none found" : `${Math.round(v * 100) / 100} ${unit}`} | ${b === null ? "–" : `${b} of ${top}`} |`;
+      const shown = v === null ? "none found" : k === "fertilityPersistence" ? `${Math.round(v * 100)}% of the ${unit.replace(/^share of /, "")}` : `${Math.round(v * 100) / 100} ${unit}`;
+      return `| ${name} | ${shown} | ${b === null ? "–" : `${b} of ${top}`} |`;
     })
     .join("\n");
 }
@@ -135,8 +136,8 @@ function cycleRows(sim: any): string {
     // probes start with one normal day before a drought (none before the badtide)
     const offset = id === "first-badtide" ? 0 : 1;
     const lost = x.firstWaterLost === null ? "keeps it throughout" : x.firstWaterLost <= offset ? "none at the start" : `loses it by day ${Math.round(x.firstWaterLost - offset)}`;
-    const rec = x.recoveryDays === null ? "not back within 5 days" : `back in ${Math.round(x.recoveryDays * 10) / 10} days`;
-    const kept = id === "first-badtide" ? `${end.bad} badwater tiles at its end` : `${Math.round(end.kept * 100)}% at its end`;
+    const rec = x.recoveryDays === null ? "not back within 5 days" : x.recoveryDays <= 1 ? "back within a day" : `back in ${Math.round(x.recoveryDays)} days`;
+    const kept = id === "first-badtide" ? `${end.bad.toLocaleString("en-US")} tiles of badwater` : `${Math.round(end.kept * 100)}% of the water left`;
     return `| ${label} (${hz.length} days) | ${kept} | ${lost} | ${rec} |`;
   };
   return [row("first-normal", "First drought, Normal"), row("late-hard", "Later drought, Hard"), row("first-badtide", "First badtide, Normal")].join("\n");
@@ -155,10 +156,9 @@ picked.forEach((c, k) => {
   const objs = mapObjects(r.file.world);
   writeFileSync(join(renderDir, `${nn}-top.jpg`), jpg(topDown(b.heights, b.W, b.H, b.water, b.contamination, objs, 384)));
   writeFileSync(join(renderDir, `${nn}-3d.jpg`), jpg(isometric(b.heights, b.W, b.H, b.water, b.contamination, objs, 640)));
-  const lines = card(c.opening);
   const lh = c.sim.timeline["late-hard"];
   const hardDays = lh.days.filter((d: any) => d.phase !== "normal").length;
-  lines.splice(2, 0, lh.firstWaterLost === null ? `Your water lasts through a ${hardDays}-day Hard drought.` : `In a ${hardDays}-day Hard drought your water is gone by day ${Math.max(1, Math.round(lh.firstWaterLost - 1))}.`);
+  const lines = card(c.opening, { lostDay: lh.firstWaterLost === null ? null : Math.max(0, Math.round(lh.firstWaterLost - 1)), days: hardDays });
   const g = r.genome;
   const info = r.info;
   const m = c.rec;
@@ -187,7 +187,7 @@ ${lines.map((l) => `- ${l}`).join("\n")}
 From the weather-cycle simulator of \`investigation/cycles\` (PR #10, read only), weather seed 1729,
 before anything is built:
 
-| Weather | Water the map keeps | The start's pumpable water | Afterwards |
+| Weather | At its end | The start's pumpable water | Afterwards |
 |---|---|---|---|
 ${cycleRows(c.sim)}
 

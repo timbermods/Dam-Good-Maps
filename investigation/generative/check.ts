@@ -7,6 +7,7 @@
 //    tools/oracle.ts does, and every verdict must agree.
 //
 //   npx tsx investigation/generative/check.ts [--seeds 1-5] [--themes …] [--sizes 128,256]
+//   npx tsx investigation/generative/check.ts --maps canyon:8,delta:12 [--sizes 128]   (these maps only)
 //   npx tsx investigation/generative/check.ts --one <theme> <seed> <size>   (prints a sha256)
 
 import { spawnSync } from "node:child_process";
@@ -38,6 +39,10 @@ lowPriority();
 const seeds = parseSeeds(arg("seeds", "1-5"));
 const themes = arg("themes", AVAILABLE_THEMES.join(",")).split(",") as ThemeId[];
 const sizes = arg("sizes", "128").split(",").map(Number);
+const only = arg("maps", "");
+const jobs: [ThemeId, number][] = only
+  ? only.split(",").map((m) => [m.split(":")[0] as ThemeId, Number(m.split(":")[1])])
+  : themes.flatMap((theme) => seeds.map((seed): [ThemeId, number] => [theme, seed]));
 const out = arg("out", ".scratch/parity");
 const python = process.env.PYTHON ?? "python";
 rmSync(out, { recursive: true, force: true });
@@ -61,8 +66,7 @@ let total = 0;
 const paths: string[] = [];
 const hashes: { theme: string; seed: number; size: number; sha: string; ms: number }[] = [];
 for (const size of sizes)
-  for (const theme of themes)
-    for (const seed of seeds) {
+  for (const [theme, seed] of jobs) {
       const t0 = performance.now();
       const a = generateProto(theme, seed, size);
       const ms = Math.round(performance.now() - t0);
@@ -129,6 +133,6 @@ for (const p of paths) {
   }
 }
 for (const l of `${r.stderr ?? ""}`.split(/\r?\n/).filter((l) => /Error|Traceback/.test(l))) console.log(`PYTHON ${l}`);
-console.log(`parity: ${paths.length} maps, ${compared} checks compared, ${disagree} disagreements; generate profile passed: TypeScript ${tsPass}/${paths.length}`);
-writeFileSync(join(out, "check.json"), JSON.stringify({ audit: auditHits, determinism: { same, total, hashes }, parity: { maps: paths.length, compared, disagree, tsPass } }, null, 1));
+console.log(`parity: ${paths.length} maps, ${compared} checks compared, ${disagree} disagreements; generate profile passed: TypeScript ${tsPass}/${paths.length}, Python ${pyPass}/${paths.length}`);
+writeFileSync(join(out, "check.json"), JSON.stringify({ audit: auditHits, determinism: { same, total, hashes }, parity: { maps: paths.length, compared, disagree, tsPass, pyPass } }, null, 1));
 process.exit(same === total && disagree === 0 && auditHits.length === 0 ? 0 : 1);
