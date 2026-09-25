@@ -111,7 +111,7 @@ Water is deeper than 0.05; pumpable water is at least 0.3 deep, below 5% contami
 
 Regions are fixed connected patches of the initial water, split into below-spill storage and river reaches. Their coordinates name the centroid, not an authored landmark. New water outside those patches is counted separately. Splits count connected descendants, including one-tile pools, at daily snapshots. First-dry and first-bad days are daily upper bounds; a missing event is right-censored at the run's end.
 
-Recovery means at least 95% of initial water and moist area, and badwater area no more than the initial area plus 1% of initial wet tiles. It does not mean every tile is back to its original condition. Dead original plants never revive; surviving mature trees retain potential logs even when dead. New seedlings, growth/yield amounts and player pumping are outside this study.
+Recovery means at least 95% of initial water and moist area, and badwater area no more than the initial area plus 1% of initial wet tiles. It does not mean every tile is back to its original condition. Dead original plants never revive; original trees retain potential logs after dying. New seedlings, growth/yield amounts and player pumping are outside this study.
 
 Soil is an equilibrium spatial target with finite temporal rates, sampled every 16 ticks. On the 96² seed-1 badtide, one-tick and 16-tick updates give identical final soil and moisture, but differ by two plant deaths at day 1. This is an uncertainty check, not a comparison with the real game. Calibration remains necessary.
 
