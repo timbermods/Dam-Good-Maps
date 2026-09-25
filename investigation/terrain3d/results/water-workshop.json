@@ -1,0 +1,127 @@
+{
+ "1.0+": {
+  "maps": 33,
+  "savedWithMigrator": 33,
+  "multiRunTilesMedian": 1150,
+  "emptyStart": {
+   "iou": {
+    "n": 33,
+    "p10": 0.897,
+    "median": 0.994,
+    "p90": 1,
+    "atLeast099": 20
+   },
+   "iouRoofed": {
+    "n": 33,
+    "p10": 0.912,
+    "median": 0.999,
+    "p90": 1,
+    "atLeast099": 21
+   },
+   "tileIou": {
+    "n": 33,
+    "p10": 0.9,
+    "median": 0.994,
+    "p90": 1,
+    "atLeast099": 21
+   },
+   "settledIn6Days": 23
+  },
+  "holdWithMomentum": {
+   "iou": {
+    "n": 33,
+    "p10": 0.975,
+    "median": 1,
+    "p90": 1,
+    "atLeast099": 29
+   },
+   "iouRoofed": {
+    "n": 33,
+    "p10": 0.99,
+    "median": 1,
+    "p90": 1,
+    "atLeast099": 30
+   },
+   "depthAgree": {
+    "n": 33,
+    "p10": 0.549,
+    "median": 0.991,
+    "p90": 1,
+    "atLeast099": 18
+   }
+  },
+  "canonical": {
+   "iou": {
+    "n": 33,
+    "p10": 0.872,
+    "median": 0.986,
+    "p90": 0.999,
+    "atLeast099": 15
+   },
+   "iouRoofed": {
+    "n": 33,
+    "p10": 0.911,
+    "median": 0.991,
+    "p90": 1,
+    "atLeast099": 18
+   },
+   "tileIou": {
+    "n": 33,
+    "p10": 0.878,
+    "median": 0.986,
+    "p90": 0.999,
+    "atLeast099": 16
+   },
+   "settledIn6Days": 19
+  },
+  "heightfieldToday": {
+   "tileIou": {
+    "n": 33,
+    "p10": 0.37,
+    "median": 0.708,
+    "p90": 0.959,
+    "atLeast099": 1
+   }
+  }
+ },
+ "pre-1.0": {
+  "maps": 92,
+  "savedWithMigrator": 0,
+  "multiRunTilesMedian": 0,
+  "emptyStart": {
+   "iou": {
+    "n": 92,
+    "p10": 0.711,
+    "median": 0.982,
+    "p90": 1,
+    "atLeast099": 42
+   },
+   "iouRoofed": {
+    "n": 92,
+    "p10": 0.8,
+    "median": 1,
+    "p90": 1,
+    "atLeast099": 60
+   },
+   "tileIou": {
+    "n": 92,
+    "p10": 0.697,
+    "median": 0.983,
+    "p90": 1,
+    "atLeast099": 42
+   },
+   "settledIn6Days": 61
+  },
+  "holdWithMomentum": null,
+  "canonical": null,
+  "heightfieldToday": {
+   "tileIou": {
+    "n": 92,
+    "p10": 0.297,
+    "median": 0.667,
+    "p90": 0.985,
+    "atLeast099": 7
+   }
+  }
+ }
+}

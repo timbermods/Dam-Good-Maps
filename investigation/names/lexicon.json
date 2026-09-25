@@ -1,0 +1,2028 @@
+{
+  "version": 1,
+  "conditionLanguage": "README.md",
+  "groups": [
+    {
+      "id": "landforms",
+      "words": [
+        {
+          "id": "valley",
+          "word": "valley",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "valley"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "gorge",
+          "word": "gorge",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "setPiece",
+                  "where": {
+                    "params.kind": "gorge"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "featureRole": "premise/narrows"
+              }
+            ]
+          }
+        },
+        {
+          "id": "canyon",
+          "word": "canyon",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "canyon"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "basin",
+          "word": "basin",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "basins20",
+                  "op": ">=",
+                  "value": 1
+                }
+              },
+              {
+                "featureRole": "premise/gorge-basin"
+              }
+            ]
+          }
+        },
+        {
+          "id": "mesa",
+          "word": "mesa",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau",
+                "params.edgeStyle": "cliff"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "spur",
+          "word": "spur",
+          "requires": {
+            "featureRole": "landform/spur"
+          }
+        },
+        {
+          "id": "terrace",
+          "word": "terrace",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "terraces"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.edgeStyle": "terraced"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ridge",
+          "word": "ridge",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "ridge"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "plateau",
+          "word": "plateau",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "scarp",
+          "word": "scarp",
+          "requires": {
+            "featureRole": "premise/great-scarp"
+          }
+        },
+        {
+          "id": "cliff",
+          "word": "cliff",
+          "requires": {
+            "metric": {
+              "path": "cliffShare",
+              "op": ">=",
+              "value": 0.04
+            }
+          }
+        },
+        {
+          "id": "knoll",
+          "word": "knoll",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "hill",
+                "params.height": {
+                  "lte": 3
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "peak",
+          "word": "peak",
+          "requires": {
+            "all": [
+              {
+                "featureRole": "premise/spiral-mountain"
+              },
+              {
+                "metric": {
+                  "path": "heightRange",
+                  "op": ">=",
+                  "value": 10
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "mountain",
+          "word": "mountain",
+          "requires": {
+            "all": [
+              {
+                "featureRole": "premise/spiral-mountain"
+              },
+              {
+                "metric": {
+                  "path": "maxHeight",
+                  "op": ">=",
+                  "value": 12
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "quarry",
+          "word": "quarry",
+          "requires": {
+            "featureRole": "premise/spiral-quarry"
+          }
+        },
+        {
+          "id": "island",
+          "word": "island",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "island"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {
+                    "params.islands.count": {
+                      "gte": 1
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "isle",
+          "word": "isle",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "island"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {
+                    "params.islands.count": {
+                      "gte": 1
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "islet",
+          "word": "islet",
+          "requires": {
+            "featureRole": "landform/islet"
+          }
+        },
+        {
+          "id": "archipelago",
+          "word": "archipelago",
+          "requires": {
+            "feature": {
+              "kind": "lake",
+              "where": {
+                "params.islands.count": {
+                  "gte": 6
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "atoll",
+          "word": "atoll",
+          "requires": {
+            "featureRole": "premise/atoll"
+          }
+        },
+        {
+          "id": "plain",
+          "word": "plain",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "flatShare",
+                  "op": ">=",
+                  "value": 0.58
+                }
+              },
+              {
+                "metric": {
+                  "path": "cliffShare",
+                  "op": "<=",
+                  "value": 0.05
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "lowland",
+          "word": "lowland",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "maxHeight",
+                  "op": "<=",
+                  "value": 8
+                }
+              },
+              {
+                "metric": {
+                  "path": "heightRange",
+                  "op": "<=",
+                  "value": 8
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "highland",
+          "word": "highland",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "maxHeight",
+                  "op": ">=",
+                  "value": 12
+                }
+              },
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "plateau"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "narrows",
+          "word": "narrows",
+          "requires": {
+            "analysis": {
+              "path": "damSites",
+              "where": {
+                "length": {
+                  "lte": 5
+                },
+                "ratio": {
+                  "gte": 1000
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "crater",
+          "word": "crater",
+          "requires": {
+            "featureRole": "premise/crater-lake"
+          }
+        },
+        {
+          "id": "caldera",
+          "word": "caldera",
+          "requires": {
+            "featureRole": "premise/caldera-island"
+          }
+        },
+        {
+          "id": "cone",
+          "word": "cone",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/badwater-volcano"
+              },
+              {
+                "featureRole": "premise/volcano-island"
+              }
+            ]
+          }
+        },
+        {
+          "id": "rift",
+          "word": "rift",
+          "requires": {
+            "featureRole": "premise/branching-rifts"
+          }
+        },
+        {
+          "id": "ring",
+          "word": "ring",
+          "requires": {
+            "featureRole": "premise/concentric-rings"
+          }
+        },
+        {
+          "id": "field",
+          "word": "field",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau"
+              },
+              "count": {
+                "gte": 3
+              }
+            }
+          }
+        },
+        {
+          "id": "steps",
+          "word": "steps",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/staircase"
+              },
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "terraces"
+                  },
+                  "count": {
+                    "gte": 2
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "pass",
+          "word": "pass",
+          "requires": {
+            "featureRole": "landform/pass"
+          }
+        },
+        {
+          "id": "shelf",
+          "word": "shelf",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "plateau"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "terraces"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "bench",
+          "word": "bench",
+          "requires": {
+            "all": [
+              {
+                "feature": {
+                  "kind": "start",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "benchTiles",
+                  "op": ">=",
+                  "value": 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "rim",
+          "word": "rim",
+          "requires": {
+            "featureRole": "premise/rim-settlement"
+          }
+        },
+        {
+          "id": "crown",
+          "word": "crown",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau",
+                "params.edgeStyle": "cliff"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "tableland",
+          "word": "tableland",
+          "requires": {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "meadow",
+          "word": "meadow",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "flatShare",
+                  "op": ">=",
+                  "value": 0.5
+                }
+              },
+              {
+                "metric": {
+                  "path": "cliffShare",
+                  "op": "<=",
+                  "value": 0.05
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge",
+          "word": "edge",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/salt-marsh"
+              },
+              {
+                "metric": {
+                  "path": "edgeExits",
+                  "op": ">=",
+                  "value": 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "stair",
+          "word": "stair",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/staircase"
+              },
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "terraces"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "root",
+          "word": "root",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": ">",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": "<=",
+                  "value": 0.35
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "water",
+      "words": [
+        {
+          "id": "moat",
+          "word": "moat",
+          "requires": {
+            "featureRole": "premise/moat-island"
+          }
+        },
+        {
+          "id": "shore",
+          "word": "shore",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "waterShare",
+                  "op": ">",
+                  "value": 0.01
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "lake",
+          "word": "lake",
+          "requires": {
+            "feature": {
+              "kind": "lake",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "fall",
+          "word": "fall",
+          "requires": {
+            "metric": {
+              "path": "waterfalls",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        },
+        {
+          "id": "falls",
+          "word": "falls",
+          "requires": {
+            "metric": {
+              "path": "waterfalls",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        },
+        {
+          "id": "cascade",
+          "word": "cascade",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "waterfalls",
+                  "op": ">=",
+                  "value": 3
+                }
+              },
+              {
+                "metric": {
+                  "path": "bedDrops2",
+                  "op": ">=",
+                  "value": 3
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "pool",
+          "word": "pool",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "basins20",
+                  "op": ">=",
+                  "value": 1
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "reach",
+          "word": "reach",
+          "requires": {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "bend",
+          "word": "bend",
+          "requires": {
+            "all": [
+              {
+                "feature": {
+                  "kind": "river",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "meander",
+                  "op": ">=",
+                  "value": 0.08
+                }
+              },
+              {
+                "metric": {
+                  "path": "sinuosity",
+                  "op": ">=",
+                  "value": 1.2
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "marsh",
+          "word": "marsh",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/salt-marsh"
+              },
+              {
+                "feature": {
+                  "kind": "setPiece",
+                  "where": {
+                    "params.kind": "badwaterBasin"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "spring",
+          "word": "spring",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "river",
+                  "where": {
+                    "params.entry.spring": {
+                      "$exists": true
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {
+                    "params.inflow.spring": {
+                      "$exists": true
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "channel",
+          "word": "channel",
+          "requires": {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "mouth",
+          "word": "mouth",
+          "requires": {
+            "metric": {
+              "path": "edgeExits",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        },
+        {
+          "id": "delta",
+          "word": "delta",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "edgeExits",
+                  "op": ">=",
+                  "value": 2
+                }
+              },
+              {
+                "feature": {
+                  "kind": "river",
+                  "where": {
+                    "params.style": "braided"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "spillway",
+          "word": "spillway",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {
+                    "params.outlet.path": {
+                      "$exists": true
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "analysis": {
+                  "path": "damSites",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "lagoon",
+          "word": "lagoon",
+          "requires": {
+            "featureRole": "premise/atoll"
+          }
+        },
+        {
+          "id": "stream",
+          "word": "stream",
+          "requires": {
+            "feature": {
+              "kind": "river",
+              "where": {
+                "params.width": {
+                  "lte": 3
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "river",
+          "word": "river",
+          "requires": {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "source",
+          "word": "source",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "cleanStrength",
+                  "op": ">",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "badwaterStrength",
+                  "op": ">",
+                  "value": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "badwater",
+          "word": "badwater",
+          "requires": {
+            "metric": {
+              "path": "badwaterStrength",
+              "op": ">",
+              "value": 0
+            }
+          }
+        },
+        {
+          "id": "saltmarsh",
+          "word": "saltmarsh",
+          "requires": {
+            "featureRole": "premise/salt-marsh"
+          }
+        },
+        {
+          "id": "oxbow",
+          "word": "oxbow",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/oxbow-lake"
+              },
+              {
+                "featureRole": "premise/oxbow-delta"
+              }
+            ]
+          }
+        },
+        {
+          "id": "brook",
+          "word": "brook",
+          "requires": {
+            "feature": {
+              "kind": "river",
+              "where": {
+                "params.width": {
+                  "lte": 2
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "hub",
+          "word": "hub",
+          "requires": {
+            "featureRole": "premise/hub-channels"
+          }
+        }
+      ]
+    },
+    {
+      "id": "modifiers",
+      "words": [
+        {
+          "id": "dry",
+          "word": "dry",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "waterShare",
+                  "op": "<=",
+                  "value": 0.08
+                }
+              },
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": "<=",
+                  "value": 0.35
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "lush",
+          "word": "lush",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": ">=",
+                  "value": 1200
+                }
+              },
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": ">=",
+                  "value": 0.75
+                }
+              },
+              {
+                "metric": {
+                  "path": "bushesPer10k",
+                  "op": ">=",
+                  "value": 100
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "high",
+          "word": "high",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "maxHeight",
+                  "op": ">=",
+                  "value": 12
+                }
+              },
+              {
+                "metric": {
+                  "path": "heightRange",
+                  "op": ">=",
+                  "value": 10
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "low",
+          "word": "low",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "maxHeight",
+                  "op": "<=",
+                  "value": 8
+                }
+              },
+              {
+                "metric": {
+                  "path": "heightRange",
+                  "op": "<=",
+                  "value": 6
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "twisting",
+          "word": "twisting",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "meander",
+                  "op": ">=",
+                  "value": 0.08
+                }
+              },
+              {
+                "metric": {
+                  "path": "sinuosity",
+                  "op": ">=",
+                  "value": 1.2
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "straight",
+          "word": "straight",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "meander",
+                  "op": "<=",
+                  "value": 0.04
+                }
+              },
+              {
+                "metric": {
+                  "path": "sinuosity",
+                  "op": "<=",
+                  "value": 1.06
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "harsh",
+          "word": "harsh",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "badwaterSources",
+                  "op": ">=",
+                  "value": 1
+                }
+              },
+              {
+                "metric": {
+                  "path": "cores",
+                  "op": ">=",
+                  "value": 1
+                }
+              },
+              {
+                "metric": {
+                  "path": "thorns",
+                  "op": ">=",
+                  "value": 2
+                }
+              },
+              {
+                "metric": {
+                  "path": "cliffShare",
+                  "op": ">=",
+                  "value": 0.12
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "gentle",
+          "word": "gentle",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "badwaterSources",
+                  "op": "=",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "cores",
+                  "op": "=",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "thorns",
+                  "op": "=",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "cliffShare",
+                  "op": "<=",
+                  "value": 0.04
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "clean",
+          "word": "clean",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "cleanStrength",
+                  "op": ">",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "waterDistance",
+                  "op": "<=",
+                  "value": 20
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "tainted",
+          "word": "tainted",
+          "requires": {
+            "metric": {
+              "path": "badwaterStrength",
+              "op": ">",
+              "value": 0
+            }
+          }
+        },
+        {
+          "id": "crowded",
+          "word": "crowded",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": ">=",
+                  "value": 1600
+                }
+              },
+              {
+                "metric": {
+                  "path": "treesNearStart",
+                  "op": ">=",
+                  "value": 120
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "open",
+          "word": "open",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "flatShare",
+                  "op": ">=",
+                  "value": 0.58
+                }
+              },
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": "<=",
+                  "value": 700
+                }
+              },
+              {
+                "metric": {
+                  "path": "cliffShare",
+                  "op": "<=",
+                  "value": 0.05
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "wooded",
+          "word": "wooded",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": ">=",
+                  "value": 1200
+                }
+              },
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": ">=",
+                  "value": 0.6
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "narrow",
+          "word": "narrow",
+          "requires": {
+            "analysis": {
+              "path": "damSites",
+              "where": {
+                "length": {
+                  "lte": 5
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "paired",
+          "word": "paired",
+          "requires": {
+            "metric": {
+              "path": "waterfalls",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        },
+        {
+          "id": "outer",
+          "word": "outer",
+          "requires": {
+            "feature": {
+              "kind": "lake",
+              "where": {
+                "params.islands.count": {
+                  "gte": 6
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "rising",
+          "word": "rising",
+          "requires": {
+            "metric": {
+              "path": "bestDamDepth",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        },
+        {
+          "id": "twin",
+          "word": "twin",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "plateau"
+                  },
+                  "count": {
+                    "gte": 2
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "waterfalls",
+                  "op": ">=",
+                  "value": 2
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "branching",
+          "word": "branching",
+          "requires": {
+            "featureRole": "premise/branching-rifts"
+          }
+        },
+        {
+          "id": "volcanic",
+          "word": "volcanic",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/badwater-volcano"
+              },
+              {
+                "featureRole": "premise/volcano-island"
+              }
+            ]
+          }
+        },
+        {
+          "id": "heart-shaped",
+          "word": "heart-shaped",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/heart-lake"
+              },
+              {
+                "featureRole": "premise/heart-islands"
+              }
+            ]
+          }
+        },
+        {
+          "id": "lowwater",
+          "word": "lowwater",
+          "requires": {
+            "all": [
+              {
+                "feature": {
+                  "kind": "river",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "cleanStrength",
+                  "op": "<=",
+                  "value": 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "broad",
+          "word": "broad",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "benchTiles",
+                  "op": ">=",
+                  "value": 800
+                }
+              },
+              {
+                "metric": {
+                  "path": "flatShare",
+                  "op": ">=",
+                  "value": 0.58
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "green",
+          "word": "green",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": ">=",
+                  "value": 0.75
+                }
+              },
+              {
+                "metric": {
+                  "path": "treesPer10k",
+                  "op": ">=",
+                  "value": 1200
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "birchbound",
+          "word": "birchbound",
+          "requires": {
+            "derived": {
+              "path": "dominantTreeSpecies",
+              "equals": "Birch"
+            }
+          }
+        },
+        {
+          "id": "pineward",
+          "word": "pineward",
+          "requires": {
+            "derived": {
+              "path": "dominantTreeSpecies",
+              "equals": "Pine"
+            }
+          }
+        },
+        {
+          "id": "oakshade",
+          "word": "oakshade",
+          "requires": {
+            "all": [
+              {
+                "derived": {
+                  "path": "dominantTreeSpecies",
+                  "equals": "Oak"
+                }
+              },
+              {
+                "metric": {
+                  "path": "livingShare",
+                  "op": ">=",
+                  "value": 0.6
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "scrap-rich",
+          "word": "scrap-rich",
+          "requires": {
+            "metric": {
+              "path": "scrapPer1k",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        },
+        {
+          "id": "salt",
+          "word": "salt",
+          "requires": {
+            "any": [
+              {
+                "featureRole": "premise/salt-marsh"
+              },
+              {
+                "metric": {
+                  "path": "badwaterStrength",
+                  "op": ">",
+                  "value": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "short",
+          "word": "short",
+          "requires": {
+            "analysis": {
+              "path": "damSites",
+              "where": {
+                "length": {
+                  "lte": 5
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "low-flow",
+          "word": "low-flow",
+          "requires": {
+            "all": [
+              {
+                "feature": {
+                  "kind": "river",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "cleanStrength",
+                  "op": "<=",
+                  "value": 1
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "sheltered",
+          "word": "sheltered",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "benchTiles",
+                  "op": ">=",
+                  "value": 800
+                }
+              },
+              {
+                "metric": {
+                  "path": "waterDistance",
+                  "op": "<=",
+                  "value": 20
+                }
+              },
+              {
+                "metric": {
+                  "path": "badwaterDistance",
+                  "op": ">=",
+                  "value": 40
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "beaver",
+      "words": [
+        {
+          "id": "beaver",
+          "word": "beaver",
+          "requires": {
+            "feature": {
+              "kind": "start",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "lodge",
+          "word": "lodge",
+          "requires": {
+            "all": [
+              {
+                "feature": {
+                  "kind": "start",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "metric": {
+                  "path": "benchTiles",
+                  "op": ">=",
+                  "value": 300
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "timber",
+          "word": "timber",
+          "requires": {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">",
+              "value": 0
+            }
+          }
+        },
+        {
+          "id": "gnaw",
+          "word": "gnaw",
+          "requires": {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">",
+              "value": 0
+            }
+          }
+        },
+        {
+          "id": "dam",
+          "word": "dam",
+          "requires": {
+            "analysis": {
+              "path": "damSites",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "woodland",
+          "word": "woodland",
+          "requires": {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">",
+              "value": 0
+            }
+          }
+        },
+        {
+          "id": "boughs",
+          "word": "boughs",
+          "requires": {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">=",
+              "value": 1200
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "whimsy",
+      "words": [
+        {
+          "id": "rest",
+          "word": "rest",
+          "requires": {
+            "all": [
+              {
+                "metric": {
+                  "path": "benchTiles",
+                  "op": ">=",
+                  "value": 800
+                }
+              },
+              {
+                "metric": {
+                  "path": "waterDistance",
+                  "op": "<=",
+                  "value": 20
+                }
+              },
+              {
+                "metric": {
+                  "path": "badwaterDistance",
+                  "op": ">=",
+                  "value": 40
+                }
+              },
+              {
+                "metric": {
+                  "path": "thorns",
+                  "op": "=",
+                  "value": 0
+                }
+              },
+              {
+                "metric": {
+                  "path": "cores",
+                  "op": "=",
+                  "value": 0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "nibble",
+          "word": "nibble",
+          "requires": {
+            "metric": {
+              "path": "bushesNearStart",
+              "op": ">=",
+              "value": 60
+            }
+          }
+        },
+        {
+          "id": "wiggle",
+          "word": "wiggle",
+          "requires": {
+            "metric": {
+              "path": "meander",
+              "op": ">=",
+              "value": 0.08
+            }
+          }
+        },
+        {
+          "id": "nook",
+          "word": "nook",
+          "requires": {
+            "metric": {
+              "path": "basins20",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        },
+        {
+          "id": "hideaway",
+          "word": "hideaway",
+          "requires": {
+            "any": [
+              {
+                "feature": {
+                  "kind": "landform",
+                  "where": {
+                    "params.kind": "island"
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {
+                    "params.islands.count": {
+                      "gte": 1
+                    }
+                  },
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "tadpole",
+          "word": "tadpole",
+          "requires": {
+            "metric": {
+              "path": "waterShare",
+              "op": ">=",
+              "value": 0.15
+            }
+          }
+        },
+        {
+          "id": "bramble",
+          "word": "bramble",
+          "requires": {
+            "metric": {
+              "path": "thorns",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        },
+        {
+          "id": "scrapheap",
+          "word": "scrapheap",
+          "requires": {
+            "metric": {
+              "path": "scrapPer1k",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        },
+        {
+          "id": "poolside",
+          "word": "poolside",
+          "requires": {
+            "any": [
+              {
+                "metric": {
+                  "path": "basins20",
+                  "op": ">=",
+                  "value": 1
+                }
+              },
+              {
+                "feature": {
+                  "kind": "lake",
+                  "where": {},
+                  "count": {
+                    "gte": 1
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+

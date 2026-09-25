@@ -1,0 +1,28 @@
+{
+  "name": "dgm-simspeed-investigation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare:prototypes": "node prototype.mjs",
+    "build": "node bundle.mjs",
+    "typecheck": "node typecheck.mjs",
+    "verify": "node verify.mjs",
+    "profile": "node profile.mjs",
+    "bench": "node bench.mjs",
+    "stages": "node stages.mjs",
+    "browser": "node browser.mjs",
+    "browser:serve": "node browser-server.mjs",
+    "build:exact": "node bundle-exact.mjs",
+    "bench:exact": "node exact-bench.mjs",
+    "build:m9": "node bundle-m9.mjs",
+    "bench:m9": "node m9-bench.mjs",
+    "report": "node summarize.mjs",
+    "report:exact": "node summarize-exact.mjs",
+    "report:m9": "node summarize-m9.mjs"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "playwright": "1.58.2",
+    "typescript": "5.9.3"
+  }
+}

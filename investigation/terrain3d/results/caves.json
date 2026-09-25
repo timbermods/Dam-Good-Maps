@@ -1,0 +1,1093 @@
+{
+ "note": "Spaces of 8+ cells of air under terrain, by kind (see proto/measure-caves.ts). Workshop maps: aggregates only.",
+ "official": {
+  "maps": 19,
+  "withRoofedSpaces": 19,
+  "multiRunShareAtLeast5pc": 3,
+  "multiRunShare": {
+   "n": 19,
+   "median": 0.011,
+   "p90": 0.115,
+   "max": 0.135
+  },
+  "perKind": {
+   "cave": {
+    "mapsWithOne": 8,
+    "perMap": {
+     "n": 8,
+     "median": 1,
+     "p90": 5,
+     "max": 5
+    },
+    "cells": {
+     "n": 16,
+     "median": 178,
+     "p90": 766,
+     "max": 1180
+    },
+    "tiles": {
+     "n": 16,
+     "median": 60,
+     "p90": 141,
+     "max": 171
+    },
+    "height": {
+     "n": 16,
+     "median": 5,
+     "p90": 9,
+     "max": 10
+    },
+    "reach": {
+     "n": 16,
+     "median": 7,
+     "p90": 15,
+     "max": 18
+    },
+    "roof": {
+     "n": 16,
+     "median": 3,
+     "p90": 5,
+     "max": 8
+    },
+    "floorLevel": {
+     "n": 16,
+     "median": 5,
+     "p90": 8,
+     "max": 10
+    },
+    "withWater": 8,
+    "of": 16
+   },
+   "tunnel": {
+    "mapsWithOne": 16,
+    "perMap": {
+     "n": 16,
+     "median": 3,
+     "p90": 15,
+     "max": 27
+    },
+    "cells": {
+     "n": 100,
+     "median": 151,
+     "p90": 1029,
+     "max": 10064
+    },
+    "tiles": {
+     "n": 100,
+     "median": 64,
+     "p90": 294,
+     "max": 1874
+    },
+    "height": {
+     "n": 100,
+     "median": 5,
+     "p90": 10,
+     "max": 12
+    },
+    "reach": {
+     "n": 100,
+     "median": 8,
+     "p90": 27,
+     "max": 131
+    },
+    "roof": {
+     "n": 100,
+     "median": 3,
+     "p90": 7,
+     "max": 14
+    },
+    "floorLevel": {
+     "n": 100,
+     "median": 3,
+     "p90": 8,
+     "max": 11
+    },
+    "withWater": 46,
+    "of": 100
+   },
+   "arch": {
+    "mapsWithOne": 0,
+    "perMap": {
+     "n": 0
+    },
+    "cells": {
+     "n": 0
+    },
+    "tiles": {
+     "n": 0
+    },
+    "height": {
+     "n": 0
+    },
+    "reach": {
+     "n": 0
+    },
+    "roof": {
+     "n": 0
+    },
+    "floorLevel": {
+     "n": 0
+    },
+    "withWater": 0,
+    "of": 0
+   },
+   "shelter": {
+    "mapsWithOne": 17,
+    "perMap": {
+     "n": 17,
+     "median": 7,
+     "p90": 137,
+     "max": 509
+    },
+    "cells": {
+     "n": 786,
+     "median": 12,
+     "p90": 38,
+     "max": 354
+    },
+    "tiles": {
+     "n": 786,
+     "median": 2,
+     "p90": 7,
+     "max": 82
+    },
+    "height": {
+     "n": 786,
+     "median": 8,
+     "p90": 11,
+     "max": 14
+    },
+    "reach": {
+     "n": 786,
+     "median": 0,
+     "p90": 1,
+     "max": 3
+    },
+    "roof": {
+     "n": 786,
+     "median": 6,
+     "p90": 10,
+     "max": 13
+    },
+    "floorLevel": {
+     "n": 786,
+     "median": 0,
+     "p90": 5,
+     "max": 11
+    },
+    "withWater": 551,
+    "of": 786
+   },
+   "sealed": {
+    "mapsWithOne": 2,
+    "perMap": {
+     "n": 2,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "cells": {
+     "n": 2,
+     "median": 92,
+     "p90": 92,
+     "max": 92
+    },
+    "tiles": {
+     "n": 2,
+     "median": 83,
+     "p90": 83,
+     "max": 83
+    },
+    "height": {
+     "n": 2,
+     "median": 7,
+     "p90": 7,
+     "max": 7
+    },
+    "reach": {
+     "n": 2,
+     "median": 0,
+     "p90": 0,
+     "max": 0
+    },
+    "roof": {
+     "n": 2,
+     "median": 7,
+     "p90": 7,
+     "max": 7
+    },
+    "floorLevel": {
+     "n": 2,
+     "median": 0,
+     "p90": 0,
+     "max": 0
+    },
+    "withWater": 1,
+    "of": 2
+   }
+  },
+  "water": {
+   "mapsWithRoofedWater": 18,
+   "roofedWetColumns": {
+    "n": 18,
+    "median": 88,
+    "p90": 2292,
+    "max": 5282
+   },
+   "mapsWithPressure": 3,
+   "sourcesUnderRoofsMaps": 8
+  },
+  "starts": {
+   "underARoof": 0,
+   "within5OfARoof": 6,
+   "measured": 19
+  },
+  "underRoofs": {
+   "mapsWithTrees": 5,
+   "mapsWithBushes": 2,
+   "mapsWithRuins": 2,
+   "mapsWithRelics": 0,
+   "mapsWithSlopes": 2,
+   "walkableFloorTilesPerMap": {
+    "n": 19,
+    "median": 219,
+    "p90": 3296,
+    "max": 4641
+   }
+  },
+  "floatingGround": 11,
+  "above16": 0,
+  "naturalOverhangObjects": 7,
+  "badtideDrains": 7
+ },
+ "officialPerMap": [
+  {
+   "name": "Beaverome",
+   "size": "192x192",
+   "multiRunTiles": 25,
+   "caves": 0,
+   "tunnels": 1,
+   "arches": 0,
+   "shelters": 0,
+   "sealed": 0,
+   "roofedWetColumns": 25,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Canyon",
+   "size": "128x128",
+   "multiRunTiles": 228,
+   "caves": 0,
+   "tunnels": 2,
+   "arches": 0,
+   "shelters": 2,
+   "sealed": 0,
+   "roofedWetColumns": 183,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Cliffside",
+   "size": "100x50",
+   "multiRunTiles": 74,
+   "caves": 0,
+   "tunnels": 0,
+   "arches": 0,
+   "shelters": 7,
+   "sealed": 0,
+   "roofedWetColumns": 24,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Craters",
+   "size": "192x192",
+   "multiRunTiles": 199,
+   "caves": 0,
+   "tunnels": 3,
+   "arches": 0,
+   "shelters": 1,
+   "sealed": 0,
+   "roofedWetColumns": 125,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Diorama",
+   "size": "50x50",
+   "multiRunTiles": 3,
+   "caves": 0,
+   "tunnels": 0,
+   "arches": 0,
+   "shelters": 1,
+   "sealed": 0,
+   "roofedWetColumns": 3,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "HelixMountain",
+   "size": "256x256",
+   "multiRunTiles": 279,
+   "caves": 1,
+   "tunnels": 1,
+   "arches": 0,
+   "shelters": 2,
+   "sealed": 0,
+   "roofedWetColumns": 33,
+   "pressurised": 11,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Hollows",
+   "size": "192x192",
+   "multiRunTiles": 4991,
+   "caves": 5,
+   "tunnels": 15,
+   "arches": 0,
+   "shelters": 137,
+   "sealed": 1,
+   "roofedWetColumns": 988,
+   "pressurised": 23,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Lakes",
+   "size": "256x256",
+   "multiRunTiles": 193,
+   "caves": 1,
+   "tunnels": 2,
+   "arches": 0,
+   "shelters": 5,
+   "sealed": 0,
+   "roofedWetColumns": 88,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Meander",
+   "size": "128x128",
+   "multiRunTiles": 179,
+   "caves": 0,
+   "tunnels": 1,
+   "arches": 0,
+   "shelters": 8,
+   "sealed": 0,
+   "roofedWetColumns": 15,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "MountainRange",
+   "size": "256x150",
+   "multiRunTiles": 236,
+   "caves": 1,
+   "tunnels": 2,
+   "arches": 0,
+   "shelters": 3,
+   "sealed": 0,
+   "roofedWetColumns": 17,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Nomads",
+   "size": "256x256",
+   "multiRunTiles": 1571,
+   "caves": 1,
+   "tunnels": 13,
+   "arches": 0,
+   "shelters": 23,
+   "sealed": 0,
+   "roofedWetColumns": 94,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Oasis",
+   "size": "256x256",
+   "multiRunTiles": 926,
+   "caves": 0,
+   "tunnels": 5,
+   "arches": 0,
+   "shelters": 38,
+   "sealed": 0,
+   "roofedWetColumns": 0,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Pillars",
+   "size": "192x192",
+   "multiRunTiles": 2929,
+   "caves": 0,
+   "tunnels": 14,
+   "arches": 0,
+   "shelters": 509,
+   "sealed": 0,
+   "roofedWetColumns": 2292,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Plains",
+   "size": "256x256",
+   "multiRunTiles": 121,
+   "caves": 1,
+   "tunnels": 0,
+   "arches": 0,
+   "shelters": 8,
+   "sealed": 0,
+   "roofedWetColumns": 58,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Pressure",
+   "size": "256x256",
+   "multiRunTiles": 7559,
+   "caves": 4,
+   "tunnels": 27,
+   "arches": 0,
+   "shelters": 26,
+   "sealed": 1,
+   "roofedWetColumns": 5282,
+   "pressurised": 4610,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Spillage",
+   "size": "256x150",
+   "multiRunTiles": 622,
+   "caves": 0,
+   "tunnels": 5,
+   "arches": 0,
+   "shelters": 8,
+   "sealed": 0,
+   "roofedWetColumns": 108,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Terraces",
+   "size": "256x256",
+   "multiRunTiles": 619,
+   "caves": 2,
+   "tunnels": 5,
+   "arches": 0,
+   "shelters": 0,
+   "sealed": 0,
+   "roofedWetColumns": 473,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "ThousandIslands",
+   "size": "256x256",
+   "multiRunTiles": 65,
+   "caves": 0,
+   "tunnels": 1,
+   "arches": 0,
+   "shelters": 1,
+   "sealed": 0,
+   "roofedWetColumns": 63,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  },
+  {
+   "name": "Waterfalls",
+   "size": "128x128",
+   "multiRunTiles": 220,
+   "caves": 0,
+   "tunnels": 3,
+   "arches": 0,
+   "shelters": 7,
+   "sealed": 0,
+   "roofedWetColumns": 20,
+   "pressurised": 0,
+   "startUnderRoof": false,
+   "maxTop": 16
+  }
+ ],
+ "workshop10plus": {
+  "maps": 35,
+  "withRoofedSpaces": 29,
+  "multiRunShareAtLeast5pc": 14,
+  "multiRunShare": {
+   "n": 29,
+   "median": 0.047,
+   "p90": 0.437,
+   "max": 0.658
+  },
+  "perKind": {
+   "cave": {
+    "mapsWithOne": 24,
+    "perMap": {
+     "n": 24,
+     "median": 4,
+     "p90": 10,
+     "max": 29
+    },
+    "cells": {
+     "n": 130,
+     "median": 103,
+     "p90": 1431,
+     "max": 19195
+    },
+    "tiles": {
+     "n": 130,
+     "median": 39,
+     "p90": 343,
+     "max": 2338
+    },
+    "height": {
+     "n": 130,
+     "median": 4,
+     "p90": 11,
+     "max": 20
+    },
+    "reach": {
+     "n": 130,
+     "median": 8,
+     "p90": 36,
+     "max": 258
+    },
+    "roof": {
+     "n": 130,
+     "median": 2,
+     "p90": 7,
+     "max": 13
+    },
+    "floorLevel": {
+     "n": 130,
+     "median": 4,
+     "p90": 11,
+     "max": 13
+    },
+    "withWater": 83,
+    "of": 130
+   },
+   "tunnel": {
+    "mapsWithOne": 28,
+    "perMap": {
+     "n": 28,
+     "median": 4,
+     "p90": 22,
+     "max": 45
+    },
+    "cells": {
+     "n": 208,
+     "median": 140,
+     "p90": 2929,
+     "max": 172382
+    },
+    "tiles": {
+     "n": 208,
+     "median": 54,
+     "p90": 696,
+     "max": 18898
+    },
+    "height": {
+     "n": 208,
+     "median": 4,
+     "p90": 11,
+     "max": 21
+    },
+    "reach": {
+     "n": 208,
+     "median": 7,
+     "p90": 45,
+     "max": 117
+    },
+    "roof": {
+     "n": 208,
+     "median": 2,
+     "p90": 6,
+     "max": 16
+    },
+    "floorLevel": {
+     "n": 208,
+     "median": 4,
+     "p90": 10,
+     "max": 20
+    },
+    "withWater": 161,
+    "of": 208
+   },
+   "arch": {
+    "mapsWithOne": 2,
+    "perMap": {
+     "n": 2,
+     "median": 2,
+     "p90": 2,
+     "max": 2
+    },
+    "cells": {
+     "n": 3,
+     "median": 22,
+     "p90": 63,
+     "max": 63
+    },
+    "tiles": {
+     "n": 3,
+     "median": 20,
+     "p90": 22,
+     "max": 22
+    },
+    "height": {
+     "n": 3,
+     "median": 3,
+     "p90": 3,
+     "max": 3
+    },
+    "reach": {
+     "n": 3,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "roof": {
+     "n": 3,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "floorLevel": {
+     "n": 3,
+     "median": 5,
+     "p90": 12,
+     "max": 12
+    },
+    "withWater": 2,
+    "of": 3
+   },
+   "shelter": {
+    "mapsWithOne": 20,
+    "perMap": {
+     "n": 20,
+     "median": 17,
+     "p90": 86,
+     "max": 192
+    },
+    "cells": {
+     "n": 625,
+     "median": 16,
+     "p90": 75,
+     "max": 535
+    },
+    "tiles": {
+     "n": 625,
+     "median": 6,
+     "p90": 23,
+     "max": 178
+    },
+    "height": {
+     "n": 625,
+     "median": 5,
+     "p90": 8,
+     "max": 14
+    },
+    "reach": {
+     "n": 625,
+     "median": 1,
+     "p90": 2,
+     "max": 3
+    },
+    "roof": {
+     "n": 625,
+     "median": 1,
+     "p90": 4,
+     "max": 11
+    },
+    "floorLevel": {
+     "n": 625,
+     "median": 4,
+     "p90": 10,
+     "max": 20
+    },
+    "withWater": 361,
+    "of": 625
+   },
+   "sealed": {
+    "mapsWithOne": 14,
+    "perMap": {
+     "n": 14,
+     "median": 4,
+     "p90": 10,
+     "max": 11
+    },
+    "cells": {
+     "n": 61,
+     "median": 27,
+     "p90": 283,
+     "max": 5348
+    },
+    "tiles": {
+     "n": 61,
+     "median": 20,
+     "p90": 130,
+     "max": 1246
+    },
+    "height": {
+     "n": 61,
+     "median": 2,
+     "p90": 8,
+     "max": 14
+    },
+    "reach": {
+     "n": 61,
+     "median": 0,
+     "p90": 0,
+     "max": 0
+    },
+    "roof": {
+     "n": 61,
+     "median": 4,
+     "p90": 14,
+     "max": 18
+    },
+    "floorLevel": {
+     "n": 61,
+     "median": 2,
+     "p90": 8,
+     "max": 12
+    },
+    "withWater": 20,
+    "of": 61
+   }
+  },
+  "water": {
+   "mapsWithRoofedWater": 33,
+   "roofedWetColumns": {
+    "n": 33,
+    "median": 626,
+    "p90": 4033,
+    "max": 8106
+   },
+   "mapsWithPressure": 25,
+   "sourcesUnderRoofsMaps": 29
+  },
+  "starts": {
+   "underARoof": 5,
+   "within5OfARoof": 17,
+   "measured": 35
+  },
+  "underRoofs": {
+   "mapsWithTrees": 20,
+   "mapsWithBushes": 15,
+   "mapsWithRuins": 17,
+   "mapsWithRelics": 16,
+   "mapsWithSlopes": 14,
+   "walkableFloorTilesPerMap": {
+    "n": 29,
+    "median": 1125,
+    "p90": 15111,
+    "max": 27752
+   }
+  },
+  "floatingGround": 22,
+  "above16": 7,
+  "naturalOverhangObjects": 31,
+  "badtideDrains": 21
+ },
+ "workshopPre10": {
+  "maps": 97,
+  "withRoofedSpaces": 37,
+  "multiRunShareAtLeast5pc": 32,
+  "multiRunShare": {
+   "n": 37,
+   "median": 0.358,
+   "p90": 0.642,
+   "max": 0.783
+  },
+  "perKind": {
+   "cave": {
+    "mapsWithOne": 27,
+    "perMap": {
+     "n": 27,
+     "median": 3,
+     "p90": 13,
+     "max": 24
+    },
+    "cells": {
+     "n": 133,
+     "median": 178,
+     "p90": 1932,
+     "max": 17522
+    },
+    "tiles": {
+     "n": 133,
+     "median": 73,
+     "p90": 444,
+     "max": 2234
+    },
+    "height": {
+     "n": 133,
+     "median": 4,
+     "p90": 11,
+     "max": 20
+    },
+    "reach": {
+     "n": 133,
+     "median": 8,
+     "p90": 33,
+     "max": 125
+    },
+    "roof": {
+     "n": 133,
+     "median": 2,
+     "p90": 5,
+     "max": 15
+    },
+    "floorLevel": {
+     "n": 133,
+     "median": 3,
+     "p90": 11,
+     "max": 17
+    },
+    "withWater": 96,
+    "of": 133
+   },
+   "tunnel": {
+    "mapsWithOne": 35,
+    "perMap": {
+     "n": 35,
+     "median": 6,
+     "p90": 21,
+     "max": 48
+    },
+    "cells": {
+     "n": 327,
+     "median": 165,
+     "p90": 11062,
+     "max": 298706
+    },
+    "tiles": {
+     "n": 327,
+     "median": 96,
+     "p90": 2350,
+     "max": 33231
+    },
+    "height": {
+     "n": 327,
+     "median": 4,
+     "p90": 13,
+     "max": 21
+    },
+    "reach": {
+     "n": 327,
+     "median": 13,
+     "p90": 77,
+     "max": 281
+    },
+    "roof": {
+     "n": 327,
+     "median": 3,
+     "p90": 6,
+     "max": 16
+    },
+    "floorLevel": {
+     "n": 327,
+     "median": 3,
+     "p90": 11,
+     "max": 20
+    },
+    "withWater": 266,
+    "of": 327
+   },
+   "arch": {
+    "mapsWithOne": 1,
+    "perMap": {
+     "n": 1,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "cells": {
+     "n": 1,
+     "median": 8,
+     "p90": 8,
+     "max": 8
+    },
+    "tiles": {
+     "n": 1,
+     "median": 7,
+     "p90": 7,
+     "max": 7
+    },
+    "height": {
+     "n": 1,
+     "median": 2,
+     "p90": 2,
+     "max": 2
+    },
+    "reach": {
+     "n": 1,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "roof": {
+     "n": 1,
+     "median": 1,
+     "p90": 1,
+     "max": 1
+    },
+    "floorLevel": {
+     "n": 1,
+     "median": 10,
+     "p90": 10,
+     "max": 10
+    },
+    "withWater": 1,
+    "of": 1
+   },
+   "shelter": {
+    "mapsWithOne": 25,
+    "perMap": {
+     "n": 25,
+     "median": 7,
+     "p90": 42,
+     "max": 100
+    },
+    "cells": {
+     "n": 366,
+     "median": 16,
+     "p90": 109,
+     "max": 1182
+    },
+    "tiles": {
+     "n": 366,
+     "median": 9,
+     "p90": 31,
+     "max": 151
+    },
+    "height": {
+     "n": 366,
+     "median": 3,
+     "p90": 7,
+     "max": 18
+    },
+    "reach": {
+     "n": 366,
+     "median": 1,
+     "p90": 2,
+     "max": 3
+    },
+    "roof": {
+     "n": 366,
+     "median": 1,
+     "p90": 3,
+     "max": 18
+    },
+    "floorLevel": {
+     "n": 366,
+     "median": 5,
+     "p90": 11,
+     "max": 20
+    },
+    "withWater": 156,
+    "of": 366
+   },
+   "sealed": {
+    "mapsWithOne": 15,
+    "perMap": {
+     "n": 15,
+     "median": 1,
+     "p90": 4,
+     "max": 9
+    },
+    "cells": {
+     "n": 33,
+     "median": 65,
+     "p90": 742,
+     "max": 7910
+    },
+    "tiles": {
+     "n": 33,
+     "median": 40,
+     "p90": 214,
+     "max": 1283
+    },
+    "height": {
+     "n": 33,
+     "median": 5,
+     "p90": 8,
+     "max": 12
+    },
+    "reach": {
+     "n": 33,
+     "median": 0,
+     "p90": 0,
+     "max": 0
+    },
+    "roof": {
+     "n": 33,
+     "median": 3,
+     "p90": 8,
+     "max": 15
+    },
+    "floorLevel": {
+     "n": 33,
+     "median": 2,
+     "p90": 10,
+     "max": 14
+    },
+    "withWater": 4,
+    "of": 33
+   }
+  },
+  "water": {
+   "mapsWithRoofedWater": 92,
+   "roofedWetColumns": {
+    "n": 92,
+    "median": 258,
+    "p90": 4120,
+    "max": 13778
+   },
+   "mapsWithPressure": 59,
+   "sourcesUnderRoofsMaps": 37
+  },
+  "starts": {
+   "underARoof": 31,
+   "within5OfARoof": 52,
+   "measured": 97
+  },
+  "underRoofs": {
+   "mapsWithTrees": 34,
+   "mapsWithBushes": 30,
+   "mapsWithRuins": 29,
+   "mapsWithRelics": 0,
+   "mapsWithSlopes": 29,
+   "walkableFloorTilesPerMap": {
+    "n": 37,
+    "median": 4177,
+    "p90": 25194,
+    "max": 84312
+   }
+  },
+  "floatingGround": 34,
+  "above16": 13,
+  "naturalOverhangObjects": 84,
+  "badtideDrains": 0
+ }
+}

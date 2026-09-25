@@ -1,0 +1,12 @@
+{
+  "name": "dgm-mechanics-investigation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "batch": "node batch.mjs",
+    "summarize": "node summarize.mjs",
+    "verify": "node verify.mjs"
+  },
+  "dependencies": { "fflate": "0.8.2" },
+  "engines": { "node": ">=24.13" }
+}

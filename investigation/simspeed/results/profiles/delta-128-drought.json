@@ -1,0 +1,36 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "delta-128-drought",
+  "method": "instrumented-method-wall-v2",
+  "profileBundleSha256": "792f673851c7403abd271d4621e5bd149081d71b7191dd1c525c46af2088aed7",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 2,
+  "workloadMs": 35.83740000000034,
+  "workloadCpuMs": 31,
+  "functions": [
+    {
+      "name": "spillLevels",
+      "calls": 30,
+      "selfUs": 31303.500000000895,
+      "inclusiveUs": 31303.500000000895
+    },
+    {
+      "name": "droughtStorage",
+      "calls": 30,
+      "selfUs": 3520.800000004783,
+      "inclusiveUs": 35816.70000000577
+    },
+    {
+      "name": "clusterSaturation",
+      "calls": 30,
+      "selfUs": 992.4000000000888,
+      "inclusiveUs": 992.4000000000888
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 20.6999999945765,
+      "inclusiveUs": 20.6999999945765
+    }
+  ]
+}

@@ -9,7 +9,7 @@ import { runsToTiles, tilesToRuns, type Runs } from "../core/math/grid";
 import { outlineBounds, type OpParams } from "../core/doc/ops";
 import { movePatch as corePatch } from "../core/doc/tools";
 import { OBJECT_NAMES as OBJECT_KIND_NAMES, objectTiles } from "../core/features/objects";
-import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SurfaceWater } from "../render3d/model";
+import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView, type SurfaceWater } from "../render3d/model";
 import { walkRegions } from "../core/analysis/regions";
 import { reachAt, shoreDistance, walkDistance } from "../core/analysis/walk";
 import { inBench } from "../core/features/raster/terrain";
@@ -268,6 +268,8 @@ export interface TileContext {
   /** Tile index → entity indices on it. */
   entitiesAt: Map<number, number[]>;
   index: FeatureIndex | null;
+  /** The soil the 3D view colours the ground by: the hover says which it is (Map look, D86). */
+  soil?: SoilView;
 }
 
 export function entitiesByTile(v: EntityView, W: number): Map<number, number[]> {
@@ -326,7 +328,9 @@ export function describeTile(c: TileContext, x: number, y: number): string {
   else if (terrain) parts.push(featureName(terrain));
   parts.push(`height ${c.heights[i]}`);
   const d = c.water.depth[i];
-  if (c.water.surface[i] === c.water.surface[i] && d > 0.001) parts.push(`${c.water.contamination[i] >= 0.05 ? "badwater" : "water"} ${d < 0.1 ? d.toFixed(2) : d.toFixed(1)} deep`);
+  const wet = c.water.surface[i] === c.water.surface[i] && d > 0.001;
+  if (wet) parts.push(`${c.water.contamination[i] >= 0.05 ? "badwater" : "water"} ${d < 0.1 ? d.toFixed(2) : d.toFixed(1)} deep`);
+  else if (c.soil) parts.push(c.soil.contamination[i] > 0 ? "contaminated soil" : c.soil.moisture[i] > 0 ? "moist soil" : "dry soil");
   if (area) parts.push(featureName(area).toLowerCase());
   const here = c.entitiesAt.get(i);
   if (here?.length) {

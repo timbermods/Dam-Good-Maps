@@ -1,0 +1,36 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "lakeBasin-256-drought",
+  "method": "instrumented-method-wall-v2",
+  "profileBundleSha256": "792f673851c7403abd271d4621e5bd149081d71b7191dd1c525c46af2088aed7",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 2,
+  "workloadMs": 165.22140000000036,
+  "workloadCpuMs": 156,
+  "functions": [
+    {
+      "name": "spillLevels",
+      "calls": 30,
+      "selfUs": 140530.49999999895,
+      "inclusiveUs": 140530.49999999895
+    },
+    {
+      "name": "droughtStorage",
+      "calls": 30,
+      "selfUs": 17804.999999998472,
+      "inclusiveUs": 165180.99999999686
+    },
+    {
+      "name": "clusterSaturation",
+      "calls": 30,
+      "selfUs": 6845.499999999447,
+      "inclusiveUs": 6845.499999999447
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 40.40000000351574,
+      "inclusiveUs": 40.40000000351574
+    }
+  ]
+}

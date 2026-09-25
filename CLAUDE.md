@@ -4,8 +4,20 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 
 ## Standing rules
 
-- Never launch or drive Timberborn, and never touch installed mods or saves. The maintainer (Kyler) tests in game
-  himself.
+- Claude never launches or drives Timberborn, with one exception: the DGM Probe runner may launch it for an
+  automated probe batch, but only after asking Kyler explicitly and getting Kyler's yes in chat, every time (PLAN
+  §20, D117).
+  - Before each batch, ask in one message: how many maps, which checks, roughly how long it will take, and that it
+    will launch Timberborn. Wait for the yes. Never treat an earlier yes as covering a new batch.
+  - Once Kyler says yes, the batch runs unattended to the end.
+  - Never while Timberborn is already running; never touching Kyler's saves, settings or other mods (probe games
+    never autosave into Kyler's folders, and any file they create is removed afterwards); and only when no other
+    heavy work is running on this machine.
+  - While waiting for the yes, carry on with any work that doesn't need the batch.
+- Never touch installed mods or saves otherwise. The maintainer (Kyler) tests in game himself.
+- At every milestone or step that changes generated maps, commit one small contact-sheet image to
+  `docs/sheets/<step>.png`: seeds 1–30 of every built theme at 128², top-down, each labelled with its seed and
+  theme; our own generated maps only; under 1 MB (PLAN §20, D144). Design version 2's prototypes get one too.
 
 ## Writing README and website text
 
@@ -36,10 +48,16 @@ text.
   `main`, confirm the old site is back, and report.
 - The site stays noindex and unannounced until launch. Launch needs versioned deploys (M13) and Kyler's go-ahead;
   then set the repository variable `DGM_PUBLIC` to `true`.
-- Two steps outside the milestones are released the same way:
+- Steps outside the milestones are released the same way:
   - the design pass (after M11 and the refinement phase, before M12) is tagged `design-done` once Kyler has
     approved and merged it on `dev`;
-  - Map look (after M8, before M9) is tagged `map-look-done`, or ships inside the M9 release.
+  - Map look (after M8, before M9) is tagged `map-look-done` once Kyler approves the look, or ships inside the M9
+    release;
+  - Real places (right after Map look) is tagged `real-places-done`;
+  - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
+  - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
+  - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
+  - the Weather view (after the 3D stages, before M10) is tagged `weather-view-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
 - Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
 - Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.

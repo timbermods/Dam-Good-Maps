@@ -189,7 +189,7 @@ function DamSiteToggle({ sites, onToggle }: { sites: DamSiteView[] | null; onTog
       {sites ? (
         sites.length ? (
           <p class="note">
-            Orange lines mark the best places for a dam. The best holds {sites[0].volume.toLocaleString()} water behind {sites[0].length} tiles of dam, {sites[0].height} high.
+            Striped lines mark the best places for a dam. The best holds {sites[0].volume.toLocaleString()} water behind {sites[0].length} tiles of dam, {sites[0].height} high.
           </p>
         ) : (
           <p class="note">No good dam sites near the start. Add one on a river with the Dam site tool.</p>

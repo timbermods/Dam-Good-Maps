@@ -1,0 +1,33 @@
+{
+  "buildId": "4e375597585d41dbe97331a5ded4d5b91e505a1fd8169938b92fb96fe1968956",
+  "reference": "a9cdb860be859ddd3339800a88b42e9871293597",
+  "nodeCases": 18,
+  "chromiumCases": 18,
+  "expectedCases": 18,
+  "missingNode": [],
+  "missingChrome": [],
+  "status": "complete",
+  "checkpoints": 1696,
+  "simulatedDaysPerRuntime": 1318,
+  "profiledDays": 108,
+  "coreWaterSimCalls": 0,
+  "bySize": {
+    "96": {
+      "nodeMedianCpuMs": 14103,
+      "chromiumMedianWallMs": 14601.600000053644
+    },
+    "128": {
+      "nodeMedianCpuMs": 18574.5,
+      "chromiumMedianWallMs": 18954.999999910593
+    },
+    "256": {
+      "nodeMedianCpuMs": 73020.5,
+      "chromiumMedianWallMs": 78950.84999981523
+    }
+  },
+  "profileShares": {
+    "GameWater.tick": 0.6190510132520252,
+    "GameSoil.step": 0.3552262949533939,
+    "CycleModel.plantsTick": 0.015537727273189406
+  }
+}

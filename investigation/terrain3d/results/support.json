@@ -1,0 +1,272 @@
+{
+ "cases": [
+  {
+   "name": "cantilever 1 long at layer 19",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cantilever 2 long at layer 19",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cantilever 3 long at layer 19",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cantilever 4 long at layer 19",
+   "expectOk": false,
+   "unsupported": 1,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cantilever 5 long at layer 19",
+   "expectOk": false,
+   "unsupported": 2,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cantilever 6 long at layer 19",
+   "expectOk": false,
+   "unsupported": 3,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 1 thick over a 4-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 1 thick over a 5-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 1 thick over a 6-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 1 thick over a 7-wide gap",
+   "expectOk": false,
+   "unsupported": 5,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 1 thick over a 8-wide gap",
+   "expectOk": false,
+   "unsupported": 10,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 3 thick over a 4-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 3 thick over a 5-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 3 thick over a 6-wide gap",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 3 thick over a 7-wide gap",
+   "expectOk": false,
+   "unsupported": 5,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "flat roof 3 thick over a 8-wide gap",
+   "expectOk": false,
+   "unsupported": 10,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "sky bridge over a 6-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "2 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 10-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "3 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 16-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "4 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 24-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "5 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 32-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "7 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 40-wide gorge, deck at 22",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "8 corbel layers under the deck"
+  },
+  {
+   "name": "sky bridge over a 24-wide gorge with corbel steps of 4",
+   "expectOk": false,
+   "unsupported": 36,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "cliff 20 tall leaning 1 per level from layer 8",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "overhang at the top: 12 tiles"
+  },
+  {
+   "name": "cliff 20 tall leaning 2 per level from layer 8",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "overhang at the top: 24 tiles"
+  },
+  {
+   "name": "cliff 20 tall leaning 3 per level from layer 8",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "overhang at the top: 36 tiles"
+  },
+  {
+   "name": "cliff 20 tall leaning 4 per level from layer 8",
+   "expectOk": false,
+   "unsupported": 312,
+   "ok": true,
+   "note": "overhang at the top: 48 tiles"
+  },
+  {
+   "name": "20-level cliff undercut 3 deep, 4 high, along the whole face",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "20-level cliff undercut 4 deep, 4 high, along the whole face",
+   "expectOk": false,
+   "unsupported": 6,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "20-level cliff undercut 4 deep, 4 high, as a 4-wide notch",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "held by the rock on both sides"
+  },
+  {
+   "name": "20-level cliff undercut 6 deep, 4 high, as a 4-wide notch",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "held by the rock on both sides"
+  },
+  {
+   "name": "window arch 5 wide and 6 high through a fin 20 tall",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "90 voxels cut"
+  },
+  {
+   "name": "window arch 11 wide and 8 high through a fin 20 tall",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "234 voxels cut"
+  },
+  {
+   "name": "window arch 17 wide and 10 high through a fin 20 tall",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "426 voxels cut"
+  },
+  {
+   "name": "window arch 25 wide and 15 high through a fin 20 tall",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": "939 voxels cut"
+  },
+  {
+   "name": "floating pillar with air below (a sky island without support)",
+   "expectOk": false,
+   "unsupported": 10,
+   "ok": true,
+   "note": ""
+  },
+  {
+   "name": "stalactite hanging from a 2-long ledge",
+   "expectOk": false,
+   "unsupported": 7,
+   "ok": true,
+   "note": "support never passes downward"
+  },
+  {
+   "name": "a 5-thick slab 3 long out of a wall (every layer a 3-long cantilever)",
+   "expectOk": true,
+   "unsupported": 0,
+   "ok": true,
+   "note": ""
+  }
+ ],
+ "passed": 38,
+ "total": 38
+}

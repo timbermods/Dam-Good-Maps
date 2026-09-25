@@ -1,0 +1,30 @@
+{
+  "fixtures": 12,
+  "settleMaxError": 0,
+  "portFixtures": 11,
+  "portMaxDifference": 9.686695889854491e-15,
+  "drought": [
+    {
+      "fixture": "lake_sill",
+      "analytic": 216.14975999999962,
+      "simulated": 217.726998609722,
+      "relativeError": 0.007296971367085369
+    },
+    {
+      "fixture": "weir",
+      "analytic": 7.560076799999979,
+      "simulated": 7.355219765758565,
+      "relativeError": 0.0270972160284687
+    },
+    {
+      "fixture": "valley_basin",
+      "analytic": 143.24136959999973,
+      "simulated": 143.76176182707044,
+      "relativeError": 0.0036329743880828985
+    }
+  ],
+  "soil": {
+    "incrementalEqualsFull": true,
+    "badtideDay1Deaths": 141
+  }
+}

@@ -19,6 +19,7 @@ import type { Facing } from "../core/features/setpieces/common";
 import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../core/gen/calibrated";
 import type { ToolRequest } from "../worker/session";
 import { newId, rectOutline, rectRuns } from "./features";
+import { DAM_OVERLAY } from "../render3d/palette";
 
 export type LandKind = LandformFeature["params"]["kind"];
 export type ToolKind =
@@ -356,7 +357,9 @@ export const BAD: Rgba = [230, 60, 50, 180];
 /** A resource area's preview: plants that would stand dead, and tiles nothing is placed on. */
 export const DEAD: Rgba = [185, 130, 60, 170];
 export const BARE: Rgba = [140, 140, 140, 110];
-export const DAM: Rgba = [255, 140, 20, 200];
+/** Dam sites: alpha 255 draws them hatched light and dark with a dark rim (the 3D view), so they
+ *  show on any ground or water in any colours (Map look, D114). */
+export const DAM: Rgba = [...DAM_OVERLAY];
 export const PROBLEM: Rgba = [230, 60, 50, 150];
 
 export interface OverlayLayer {

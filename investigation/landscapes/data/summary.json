@@ -1,0 +1,2810 @@
+{
+  "schema": 1,
+  "complete": true,
+  "locations": 450,
+  "patches": 4050,
+  "converted": 16200,
+  "editorSafe": 12150,
+  "passed16": 3232,
+  "comparison22": 4050,
+  "passed22": 0,
+  "waterMetricAudit": {
+    "measurementVersion": 2,
+    "fallPolicy": "Unsettled simulations have no published fall statistics. Other terminal-state diagnostics remain flagged by settled=false; all water targets require settled=true.",
+    "cachedRecordsRechecked": 3314,
+    "cachedReplaysSkippedUnsettled": 1123,
+    "boundaryCorrectionsChangedFalls": 962
+  },
+  "failures16": {
+    "water.settles": 4790,
+    "start.water": 3215,
+    "water.no_flood": 2507,
+    "resources.scrap": 1498,
+    "water.outflow": 1136,
+    "start.wood": 720,
+    "start.count": 364,
+    "start.food": 195,
+    "water.clean_exists": 119,
+    "resources.trees": 106,
+    "water.clean_reach": 71,
+    "resources.bushes": 19,
+    "ruins.access": 12
+  },
+  "families": {
+    "archipelago": {
+      "converted": 540,
+      "passed": 95,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.no_flood": 264,
+        "water.settles": 213,
+        "start.water": 173,
+        "resources.scrap": 102,
+        "start.wood": 55,
+        "water.outflow": 34,
+        "start.count": 23,
+        "start.food": 23,
+        "resources.trees": 11,
+        "water.clean_exists": 3,
+        "water.clean_reach": 3,
+        "resources.bushes": 1
+      }
+    },
+    "badlands": {
+      "converted": 540,
+      "passed": 237,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 162,
+        "start.water": 90,
+        "water.no_flood": 52,
+        "water.outflow": 34,
+        "resources.scrap": 20,
+        "start.wood": 20,
+        "start.food": 2
+      }
+    },
+    "braided": {
+      "converted": 540,
+      "passed": 105,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "start.water": 202,
+        "water.no_flood": 191,
+        "water.settles": 169,
+        "resources.scrap": 142,
+        "water.outflow": 50,
+        "start.wood": 32,
+        "start.count": 31,
+        "resources.trees": 17,
+        "start.food": 12,
+        "water.clean_exists": 5,
+        "water.clean_reach": 2
+      }
+    },
+    "caldera": {
+      "converted": 540,
+      "passed": 96,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 248,
+        "water.no_flood": 204,
+        "start.water": 127,
+        "resources.scrap": 88,
+        "water.outflow": 79,
+        "start.wood": 24,
+        "start.count": 12,
+        "start.food": 5,
+        "water.clean_exists": 4,
+        "water.clean_reach": 3,
+        "resources.trees": 3,
+        "resources.bushes": 2
+      }
+    },
+    "canyon": {
+      "converted": 540,
+      "passed": 229,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 167,
+        "start.water": 153,
+        "water.outflow": 40,
+        "start.wood": 25,
+        "water.no_flood": 16,
+        "water.clean_exists": 12,
+        "resources.scrap": 8,
+        "start.food": 5,
+        "water.clean_reach": 4
+      }
+    },
+    "coast": {
+      "converted": 540,
+      "passed": 89,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.no_flood": 231,
+        "start.water": 200,
+        "water.settles": 195,
+        "resources.scrap": 72,
+        "start.count": 71,
+        "water.clean_exists": 43,
+        "start.wood": 41,
+        "water.clean_reach": 40,
+        "water.outflow": 27,
+        "start.food": 14,
+        "resources.trees": 11,
+        "resources.bushes": 4
+      }
+    },
+    "cone": {
+      "converted": 540,
+      "passed": 114,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "start.water": 291,
+        "water.settles": 153,
+        "water.outflow": 77,
+        "resources.scrap": 70,
+        "water.no_flood": 34,
+        "water.clean_exists": 19,
+        "water.clean_reach": 10,
+        "start.wood": 9
+      }
+    },
+    "confluence": {
+      "converted": 540,
+      "passed": 194,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 162,
+        "start.water": 145,
+        "water.no_flood": 101,
+        "start.wood": 37,
+        "resources.scrap": 36,
+        "water.outflow": 31,
+        "start.food": 11,
+        "ruins.access": 1,
+        "resources.trees": 1
+      }
+    },
+    "delta": {
+      "converted": 540,
+      "passed": 19,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.no_flood": 342,
+        "water.settles": 286,
+        "resources.scrap": 218,
+        "start.water": 155,
+        "start.count": 132,
+        "start.wood": 75,
+        "water.outflow": 44,
+        "start.food": 35,
+        "resources.trees": 27,
+        "ruins.access": 4,
+        "resources.bushes": 3,
+        "water.clean_exists": 1,
+        "water.clean_reach": 1
+      }
+    },
+    "escarpment": {
+      "converted": 540,
+      "passed": 143,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 300,
+        "start.water": 110,
+        "water.outflow": 72,
+        "resources.scrap": 36,
+        "water.no_flood": 29,
+        "start.wood": 11,
+        "water.clean_exists": 6,
+        "resources.trees": 3,
+        "start.food": 2
+      }
+    },
+    "falls": {
+      "converted": 540,
+      "passed": 230,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 176,
+        "water.no_flood": 85,
+        "start.water": 49,
+        "resources.scrap": 42,
+        "water.outflow": 40,
+        "start.wood": 14,
+        "start.count": 3,
+        "resources.trees": 3,
+        "resources.bushes": 2,
+        "start.food": 2
+      }
+    },
+    "fan": {
+      "converted": 540,
+      "passed": 83,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 229,
+        "start.water": 163,
+        "resources.scrap": 146,
+        "water.no_flood": 135,
+        "water.outflow": 94,
+        "start.wood": 39,
+        "start.count": 24,
+        "start.food": 8,
+        "water.clean_exists": 8,
+        "resources.trees": 7,
+        "water.clean_reach": 2,
+        "ruins.access": 1
+      }
+    },
+    "fjord": {
+      "converted": 540,
+      "passed": 122,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "start.water": 258,
+        "water.settles": 148,
+        "start.wood": 54,
+        "water.outflow": 49,
+        "water.no_flood": 48,
+        "resources.scrap": 13,
+        "start.food": 11,
+        "water.clean_exists": 8,
+        "resources.bushes": 4,
+        "water.clean_reach": 3,
+        "resources.trees": 2
+      }
+    },
+    "glacial": {
+      "converted": 540,
+      "passed": 161,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "start.water": 275,
+        "water.settles": 107,
+        "water.outflow": 46,
+        "start.wood": 29,
+        "water.no_flood": 27,
+        "resources.scrap": 8,
+        "water.clean_exists": 2,
+        "start.food": 1
+      }
+    },
+    "gorge": {
+      "converted": 540,
+      "passed": 219,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 175,
+        "start.water": 130,
+        "water.outflow": 46,
+        "start.wood": 23,
+        "water.no_flood": 23,
+        "resources.scrap": 9,
+        "water.clean_exists": 4,
+        "water.clean_reach": 1,
+        "start.food": 1
+      }
+    },
+    "karst": {
+      "converted": 540,
+      "passed": 164,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 292,
+        "start.water": 59,
+        "resources.scrap": 50,
+        "water.outflow": 38,
+        "water.no_flood": 34,
+        "start.wood": 29,
+        "start.food": 10,
+        "ruins.access": 1
+      }
+    },
+    "lakes": {
+      "converted": 540,
+      "passed": 112,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.no_flood": 182,
+        "water.settles": 182,
+        "start.water": 173,
+        "start.wood": 65,
+        "resources.scrap": 60,
+        "water.outflow": 16,
+        "start.food": 15,
+        "start.count": 6,
+        "resources.trees": 4,
+        "resources.bushes": 1
+      }
+    },
+    "meander": {
+      "converted": 540,
+      "passed": 118,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 261,
+        "water.no_flood": 148,
+        "resources.scrap": 93,
+        "start.water": 86,
+        "water.outflow": 47,
+        "start.wood": 42,
+        "start.count": 36,
+        "start.food": 9,
+        "resources.trees": 7,
+        "resources.bushes": 2,
+        "ruins.access": 1
+      }
+    },
+    "mesa": {
+      "converted": 540,
+      "passed": 213,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 222,
+        "start.water": 66,
+        "water.outflow": 54,
+        "water.no_flood": 27,
+        "resources.scrap": 22,
+        "start.wood": 17,
+        "start.food": 5,
+        "water.clean_exists": 1
+      }
+    },
+    "plateau": {
+      "converted": 540,
+      "passed": 160,
+      "locations": 20,
+      "regions": 5,
+      "failures": {
+        "water.settles": 294,
+        "water.no_flood": 67,
+        "water.outflow": 59,
+        "resources.scrap": 59,
+        "start.water": 39,
+        "start.wood": 13,
+        "start.food": 2,
+        "ruins.access": 1,
+        "start.count": 1
+      }
+    },
+    "random": {
+      "converted": 1350,
+      "passed": 329,
+      "locations": 50,
+      "regions": 50,
+      "failures": {
+        "water.settles": 649,
+        "start.water": 271,
+        "water.no_flood": 267,
+        "resources.scrap": 204,
+        "water.outflow": 159,
+        "start.wood": 66,
+        "start.count": 25,
+        "start.food": 22,
+        "resources.trees": 10,
+        "water.clean_exists": 3,
+        "ruins.access": 3,
+        "water.clean_reach": 2
+      }
+    }
+  },
+  "mappings": {
+    "linear-16": {
+      "n": 4050,
+      "passed": 908,
+      "readabilityProxy": 2114,
+      "correlation": {
+        "n": 3942,
+        "p10": 0.5940044470743767,
+        "p50": 0.9263241781266368,
+        "p90": 0.9943856188269391
+      },
+      "occupiedLevels": {
+        "n": 4050,
+        "p10": 2,
+        "p50": 14,
+        "p90": 17
+      }
+    },
+    "compressed-16": {
+      "n": 4050,
+      "passed": 1119,
+      "readabilityProxy": 3940,
+      "correlation": {
+        "n": 4024,
+        "p10": 0.9695481397979574,
+        "p50": 0.9792263183523461,
+        "p90": 0.9844831507107349
+      },
+      "occupiedLevels": {
+        "n": 4050,
+        "p10": 16,
+        "p50": 17,
+        "p90": 17
+      }
+    },
+    "normalised-16": {
+      "n": 4050,
+      "passed": 1205,
+      "readabilityProxy": 3950,
+      "correlation": {
+        "n": 4024,
+        "p10": 0.9877212935612887,
+        "p50": 0.9959158615472754,
+        "p90": 0.9977799264816887
+      },
+      "occupiedLevels": {
+        "n": 4050,
+        "p10": 17,
+        "p50": 17,
+        "p90": 17
+      }
+    },
+    "normalised-22": {
+      "n": 4050,
+      "passed": 0,
+      "readabilityProxy": 3979,
+      "correlation": {
+        "n": 4024,
+        "p10": 0.9934906972072771,
+        "p50": 0.9978361641283413,
+        "p90": 0.9988154397575897
+      },
+      "occupiedLevels": {
+        "n": 4050,
+        "p10": 23,
+        "p50": 23,
+        "p90": 23
+      }
+    }
+  },
+  "generated": {
+    "count": 180,
+    "passed": 180,
+    "defaultCliMatches": 30
+  },
+  "baseline": {
+    "canyon": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 2.44140625,
+            "p50": 3.662109375,
+            "p90": 6.103515625
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.03978593833876869,
+            "p50": 0.05007559815551838,
+            "p90": 0.05772668086177617
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0631824085115875,
+            "p50": 1.0796691275336339,
+            "p90": 1.116312611302876
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 66.80140948635182,
+            "p50": 92.72631099390625,
+            "p90": 119.74488129694224
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 17.82842712474619,
+            "p50": 27.07106781186548,
+            "p90": 40.89949493661166
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2926829268292683,
+            "p50": 0.32803468208092484,
+            "p90": 0.37198795180722893
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2950138504155125,
+            "p50": 0.3328550932568149,
+            "p90": 0.3740685543964232
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 2
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 4,
+            "p90": 5
+          },
+          "valleyWidth2": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 4,
+            "p90": 8
+          },
+          "narrowingRatio": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.10526315789473684,
+            "p50": 0.19047619047619047,
+            "p90": 0.4
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2951096121416526,
+            "p50": 0.36647009267059816,
+            "p90": 0.43043478260869567
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 22,
+            "p50": 31,
+            "p90": 41
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.24266767744215878,
+            "p50": 0.282842712474619,
+            "p90": 0.31999999999999995
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 5,
+            "nRegions": 5,
+            "p10": 0.2505500374400032,
+            "p50": 0.3652959824905861,
+            "p90": 0.40299050146451243
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0.0067,
+            "p90": 0.0093
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 1,
+            "p90": 1
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 4,
+            "p90": 5
+          },
+          "fallDrop": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.8382695503914972,
+            "p50": 1.8586515440711275,
+            "p90": 1.8736797234964198
+          },
+          "fallSpacing": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 13.908989898623126,
+            "p50": 14.108862463005297,
+            "p90": 14.713938969562163
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3.66,
+            "p50": 4.27,
+            "p90": 4.88
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1077,
+            "p50": 2124,
+            "p90": 2919
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 256,
+            "p50": 501.8,
+            "p90": 664.3
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 11,
+            "p90": 16
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0.004457600911458333,
+            0.013311767578125,
+            0.00421142578125,
+            0.016221110026041666,
+            0.011079915364583333,
+            0.042222086588541666,
+            0.01427001953125,
+            0.04343465169270833,
+            0.007122802734375,
+            0.020961507161458334,
+            0.0014241536458333333,
+            0.05963134765625,
+            0.05703328450520833,
+            0.12618611653645834,
+            0.133367919921875,
+            0.13472493489583334,
+            0.31033935546875,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.9349276164698163,
+            0.046330585629921275,
+            0.007134801509186352,
+            0.0021602280183727045,
+            0.002275057414698163,
+            0.0002563156167979003,
+            0.004359416010498689,
+            0.00010252624671916014,
+            0.0010088582677165356,
+            0,
+            0.0011534202755905513,
+            0,
+            0.0002911745406824147,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            2.889245384394965,
+            2.772397451003031,
+            2.492526190966922,
+            2.145638774268192,
+            1.8529857724428698,
+            1.6850971469487734,
+            1.6282826389619802,
+            1.6122564235248713,
+            1.6001265043004473,
+            1.6375672660104834,
+            1.5775267543006857,
+            1.402375818393944,
+            0,
+            0.14344822163564835,
+            0.1814362941503623,
+            0.17475082671984296,
+            0.31905348767393077,
+            0.3799841413227934,
+            0.27234708962383053,
+            0.0839449371571632,
+            -0.11434123137093424,
+            -0.26751833114280393,
+            -0.3893831550911291,
+            -0.4439714521752656,
+            -0.3361589678936108
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.14977933488830064
+    },
+    "delta": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.2724609375,
+            "p50": 6.7138671875,
+            "p90": 8.544921875
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.042690035983040164,
+            "p50": 0.05349549130081729,
+            "p90": 0.06327982759378895
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0823921305667907,
+            "p50": 1.1856854851366823,
+            "p90": 1.2649110640673518
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 85.03025927188969,
+            "p50": 90,
+            "p90": 119.5387822595581
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 21.313708498984763,
+            "p50": 28.414213562373096,
+            "p90": 33.97056274847714
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.44981949458483755,
+            "p50": 0.4964143426294821,
+            "p90": 0.5818181818181818
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.44981949458483755,
+            "p50": 0.495721271393643,
+            "p90": 0.5794466403162055
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 1
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 5,
+            "p50": 6,
+            "p90": 6
+          },
+          "valleyWidth2": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 7,
+            "p90": 10
+          },
+          "narrowingRatio": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.14285714285714285,
+            "p50": 0.25,
+            "p90": 0.4375
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.09808999676270638,
+            "p50": 0.1192214111922141,
+            "p90": 0.16563275434243177
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 24,
+            "p50": 33,
+            "p90": 46
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.30920897969893546,
+            "p50": 0.3378486058160942,
+            "p90": 0.34861406568003983
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.017056066550855405,
+            "p50": 0.1600737430150685,
+            "p90": 0.2795442485180961
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.0533,
+            "p50": 0.0718,
+            "p90": 0.0916
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 2,
+            "p90": 3
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 1
+          },
+          "fallDrop": {
+            "nPatches": 11,
+            "nRegions": 11,
+            "p10": 1.002047374038186,
+            "p50": 1.0214851909787863,
+            "p90": 1.9913682306868485
+          },
+          "fallSpacing": {
+            "nPatches": 3,
+            "nRegions": 3,
+            "p10": 2,
+            "p50": 6.625,
+            "p90": 6.625
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.88,
+            "p50": 5.49,
+            "p90": 6.71
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 730,
+            "p50": 1245,
+            "p90": 2085
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 131,
+            "p50": 206.4,
+            "p90": 317
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 4,
+            "p90": 5
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0,
+            0,
+            0,
+            0.0007263183593750001,
+            0.007521565755208335,
+            0,
+            0.07086181640625001,
+            0.35197143554687504,
+            0.11470743815104169,
+            0.1199198404947917,
+            0.052180989583333344,
+            0.06683756510416668,
+            0.032523600260416674,
+            0.020259602864583337,
+            0.030877685546875006,
+            0.00030517578125000005,
+            0.13130696614583337,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.8989849901574803,
+            0.07018229166666665,
+            0.01659489829396325,
+            0.0071706856955380555,
+            0.0055682004593175845,
+            0.00043061023622047227,
+            0.00013225885826771653,
+            0.0001989009186351705,
+            0.00006766732283464565,
+            0.00025221456692913375,
+            0.00041728182414698143,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            1.836379428117431,
+            1.7694910063554512,
+            1.6686045730183063,
+            1.5385559160667348,
+            1.4721304969769655,
+            1.401584142200581,
+            1.3558098647080352,
+            1.5019718566930984,
+            1.4418857717590567,
+            1.3344599686003293,
+            1.240584858912783,
+            1.0931662904098582,
+            0,
+            0.13941703164699007,
+            0.1662741205802191,
+            0.3023816737053956,
+            0.35889578775220854,
+            0.4455355146862076,
+            0.46213561997786246,
+            0.5586161828541905,
+            0.595742569554145,
+            0.6127720494412843,
+            0.62169013249686,
+            0.6582452721993998,
+            0.6737444449007413
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.3228444022036506
+    },
+    "highlands": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 7.9345703125,
+            "p50": 9.765625,
+            "p90": 11.5966796875
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.05041770767830795,
+            "p50": 0.05792218270307447,
+            "p90": 0.06285915179656759
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0945409092309881,
+            "p50": 1.1768691634876016,
+            "p90": 1.2424755783397163
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 90,
+            "p50": 102.68038349181982,
+            "p90": 131.6335393365702
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 18.313708498984763,
+            "p50": 22.55634918610405,
+            "p90": 27.041630560342625
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.45800865800865803,
+            "p50": 0.497883149872989,
+            "p90": 0.5187713310580204
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.4571686203787196,
+            "p50": 0.4939870490286771,
+            "p90": 0.5205479452054794
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 1
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 1
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 5,
+            "p90": 5
+          },
+          "valleyWidth2": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 5,
+            "p90": 10
+          },
+          "narrowingRatio": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.058823529411764705,
+            "p50": 0.2,
+            "p90": 0.38461538461538464
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.060624806681101144,
+            "p50": 0.09526329716856312,
+            "p90": 0.14266023432115782
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 14,
+            "p50": 21,
+            "p90": 31
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.29869701375174534,
+            "p50": 0.33315364370423906,
+            "p90": 0.34741491097635413
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 29,
+            "nRegions": 29,
+            "p10": 0.11127644771486299,
+            "p50": 0.18446914269961212,
+            "p90": 0.23993380245672435
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0.0173
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 1
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 7,
+            "p50": 10,
+            "p90": 12
+          },
+          "fallDrop": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.7305772924374698,
+            "p50": 1.8249841361288808,
+            "p90": 1.9362229762698626
+          },
+          "fallSpacing": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3.3333333333333286,
+            "p50": 10.816653826391969,
+            "p90": 18.36001845799121
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.88,
+            "p50": 6.71,
+            "p90": 7.93
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 664,
+            "p50": 2583,
+            "p90": 3256
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 166.7,
+            "p50": 478.7,
+            "p90": 637.6
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 3,
+            "p90": 3
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0.0026692708333333334,
+            0.013791910807291667,
+            0.039141845703125,
+            0.027683512369791666,
+            0.042498779296875,
+            0.040423583984375,
+            0.077935791015625,
+            0.0553466796875,
+            0.08881632486979167,
+            0.09069010416666666,
+            0.103070068359375,
+            0.08271280924479167,
+            0.08736979166666667,
+            0.05143025716145833,
+            0.061444091796875,
+            0.03282470703125,
+            0.10215047200520834,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.8959840469160105,
+            0.05222276902887136,
+            0.028499220800524923,
+            0.012397473753280834,
+            0.006076730643044617,
+            0.0018577755905511808,
+            0.0016598999343832017,
+            0.000687951115485564,
+            0.00044188812335957986,
+            0.00011380413385826769,
+            0.000031783136482939625,
+            0.00001127788713910761,
+            0.000010252624671916009,
+            0.000005126312335958004,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            2.3147423776395484,
+            2.2130145759948605,
+            2.1591153949795285,
+            2.0503551947164436,
+            1.988696765156019,
+            1.9124847111704406,
+            1.873082504757742,
+            1.9405451993016343,
+            1.8697028095277732,
+            1.7843942764457972,
+            1.6297113534036316,
+            1.4407772253424653,
+            0,
+            0.2404691521861507,
+            0.27202533350746266,
+            0.4130947198348814,
+            0.5170533065422153,
+            0.5908589740298713,
+            0.5931592237279235,
+            0.5681581644781553,
+            0.5495746120653563,
+            0.5250291816090706,
+            0.4841982446423112,
+            0.48274648120409597,
+            0.5044117270169364
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.367574609089766
+    },
+    "islands": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3.662109375,
+            "p50": 5.4931640625,
+            "p90": 6.7138671875
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.037795263064772724,
+            "p50": 0.04257589672003424,
+            "p90": 0.04934286801429017
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0823117459700458,
+            "p50": 1.1735733957987224,
+            "p90": 1.2730174216474317
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 75.96375653207353,
+            "p50": 90,
+            "p90": 117.34987578006988
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 18,
+            "p50": 27,
+            "p90": 35.242640687119284
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.5995337159253945,
+            "p50": 0.6705352503031353,
+            "p90": 0.6972717733473243
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.5979196556671449,
+            "p50": 0.6693227091633466,
+            "p90": 0.695697796432319
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 4,
+            "p90": 6
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 1
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 5,
+            "p50": 7,
+            "p90": 9
+          },
+          "valleyWidth2": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 9,
+            "p90": 10
+          },
+          "narrowingRatio": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.13636363636363635,
+            "p50": 0.17647058823529413,
+            "p90": 0.25
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.09853099247581512,
+            "p50": 0.14012982054219167,
+            "p90": 0.16518016410988226
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 23,
+            "p50": 27,
+            "p90": 34
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.22479001097300733,
+            "p50": 0.25773771444429583,
+            "p90": 0.30454895006904587
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0.11769994040655513,
+            "p90": 0.2708063750598601
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2902,
+            "p50": 0.319,
+            "p90": 0.3351
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 2,
+            "p90": 4
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 1,
+            "p90": 4
+          },
+          "fallDrop": {
+            "nPatches": 27,
+            "nRegions": 27,
+            "p10": 1.0423691418761623,
+            "p50": 1.8605104614224652,
+            "p90": 3.7578922706704514
+          },
+          "fallSpacing": {
+            "nPatches": 14,
+            "nRegions": 14,
+            "p10": 2.0615528128088303,
+            "p50": 3.443835071544514,
+            "p90": 49.882361612096915
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.27,
+            "p50": 6.1,
+            "p90": 7.32
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 12441,
+            "p50": 13998,
+            "p90": 14784
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4189,
+            "p50": 4786,
+            "p90": 9512
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 9,
+            "p90": 11
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.2795633951822917,
+            0,
+            0.00516357421875,
+            0.041422526041666664,
+            0.23511149088541666,
+            0.038218180338541664,
+            0.039780680338541666,
+            0.024983723958333332,
+            0.03137410481770833,
+            0.020949300130208334,
+            0.28343302408854165,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.9178323900918636,
+            0.041623605643044605,
+            0.010218791010498685,
+            0.007089689960629917,
+            0.013009555446194223,
+            0.0041420603674540675,
+            0.005632791994750655,
+            0.00037217027559055104,
+            0.00007894520997375325,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            3.396337945189538,
+            3.3068350163412608,
+            3.307379533826347,
+            3.2287866244720402,
+            3.195692461165806,
+            3.10039899380713,
+            2.977981787498957,
+            2.8984215166398664,
+            2.7706252843295975,
+            2.593371070055523,
+            2.3488828917415576,
+            1.9621272998947894,
+            0,
+            0.12201221654619304,
+            0.1698119100566268,
+            0.35214053868191797,
+            0.41537733318948694,
+            0.48242988795061004,
+            0.5698528356524492,
+            0.6882561909012227,
+            0.7854804624897844,
+            0.9006524743489417,
+            1.0280722013169594,
+            1.0278894698614696,
+            1.0723711116076393
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.37879097484756974
+    },
+    "lakeBasin": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.8828125,
+            "p50": 7.9345703125,
+            "p90": 12.20703125
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.029810129573272108,
+            "p50": 0.035684314185523036,
+            "p90": 0.04195507318028489
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0737506192132487,
+            "p50": 1.1344025297545284,
+            "p90": 1.1960331113660796
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 75.96375653207353,
+            "p50": 90,
+            "p90": 101.30993247402021
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 10.65685424949238,
+            "p50": 15.242640687119286,
+            "p90": 23.55634918610405
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.469636524822695,
+            "p50": 0.5760922925871379,
+            "p90": 0.679814385150812
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.469636524822695,
+            "p50": 0.5763377515954835,
+            "p90": 0.6794416243654823
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 1
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 4,
+            "p90": 4
+          },
+          "valleyWidth2": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 3,
+            "p90": 3
+          },
+          "narrowingRatio": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2727272727272727,
+            "p50": 0.42857142857142855,
+            "p90": 0.6
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.10856134157105031,
+            "p50": 0.14388145315487572,
+            "p90": 0.18893617021276596
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 19,
+            "p50": 24,
+            "p90": 38
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.25545201491160446,
+            "p50": 0.3299919468941961,
+            "p90": 0.35706628102001214
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0.11321815437767983
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.23600726569799568,
+            "p50": 0.26356873863348385,
+            "p90": 0.31095006111274703
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.2194,
+            "p50": 0.2421,
+            "p90": 0.262
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 2,
+            "p90": 3
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 2,
+            "p90": 4
+          },
+          "fallDrop": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.0850166423904462,
+            "p50": 2.9475025268895774,
+            "p90": 3.8558233669159665
+          },
+          "fallSpacing": {
+            "nPatches": 26,
+            "nRegions": 26,
+            "p10": 2.23606797749979,
+            "p50": 19.235384061671347,
+            "p90": 99.42082276867356
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 5.49,
+            "p50": 6.1,
+            "p90": 7.93
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 9045,
+            "p50": 10182,
+            "p90": 11451
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3015,
+            "p50": 3446,
+            "p90": 3852
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 3,
+            "p90": 9
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.20706583658854166,
+            0.0036458333333333334,
+            0.00633544921875,
+            0.03500162760416667,
+            0.226611328125,
+            0.027683512369791666,
+            0.025535074869791667,
+            0.0440185546875,
+            0.060648600260416664,
+            0.035109456380208334,
+            0.3283447265625,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.9277538549868767,
+            0.03782603346456693,
+            0.012542035761154851,
+            0.009252993766404202,
+            0.009473425196850392,
+            0.0010796013779527558,
+            0.0016650262467191599,
+            0.0002522145669291338,
+            0.0001548146325459318,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            2.6784568938340985,
+            2.5668570499251047,
+            2.4872331954779,
+            2.36281226735233,
+            2.2578785700055146,
+            2.1819271716844377,
+            2.0702108297195045,
+            1.989222565514363,
+            1.8786264171792117,
+            1.7793754077029895,
+            1.5438210663997067,
+            1.377622224259491,
+            0,
+            0.4563690181205557,
+            0.5007835267625497,
+            0.7709323251598479,
+            0.8434017533312822,
+            0.9028390901572261,
+            0.9417286969954811,
+            0.9350829442978884,
+            0.9062276696189595,
+            0.8746918584288822,
+            0.8732452781688871,
+            0.8869958101990504,
+            0.8818190062447575
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.29638303099969
+    },
+    "riverValley": {
+      "n": 30,
+      "passed": 30,
+      "statistics": {
+        "nPatches": 30,
+        "nRegions": 30,
+        "passRate": 1,
+        "scalars": {
+          "branching": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4.2724609375,
+            "p50": 6.7138671875,
+            "p90": 8.544921875
+          },
+          "drainageDensity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.04776717014954859,
+            "p50": 0.05384974182004984,
+            "p90": 0.061794784109799224
+          },
+          "sinuosity": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.087238359322749,
+            "p50": 1.16598944074453,
+            "p90": 1.2451741707874968
+          },
+          "junctionAngle": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 78.69006752597979,
+            "p50": 104.0362434679265,
+            "p90": 123.6900675259798
+          },
+          "segmentLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 17,
+            "p50": 25.55634918610405,
+            "p90": 32.38477631085024
+          },
+          "splitTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.4816326530612245,
+            "p50": 0.5413533834586466,
+            "p90": 0.5960975609756097
+          },
+          "rejoinTileShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.48673469387755103,
+            "p50": 0.5435016111707841,
+            "p90": 0.5941463414634146
+          },
+          "enclosedIslands": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "stepLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1,
+            "p50": 1,
+            "p90": 1
+          },
+          "valleyWidth1": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 4,
+            "p50": 5,
+            "p90": 5
+          },
+          "valleyWidth2": {
+            "nPatches": 29,
+            "nRegions": 29,
+            "p10": 3,
+            "p50": 5,
+            "p90": 10
+          },
+          "narrowingRatio": {
+            "nPatches": 29,
+            "nRegions": 29,
+            "p10": 0.0625,
+            "p50": 0.2857142857142857,
+            "p90": 0.6666666666666666
+          },
+          "straightShare8": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.05995582202587567,
+            "p50": 0.1164763458401305,
+            "p90": 0.16740226986128626
+          },
+          "longestRun": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 19,
+            "p50": 27,
+            "p90": 38
+          },
+          "ridgeThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.31278884278239694,
+            "p50": 0.33092435105115253,
+            "p90": 0.35233301920868054
+          },
+          "ridgeHeightStd": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0,
+            "p90": 0
+          },
+          "basinRimThicknessCV": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0.023912478034953156,
+            "p50": 0.10574760318302961,
+            "p90": 0.17459904386635222
+          },
+          "lakeShare": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 0.0068,
+            "p90": 0.0115
+          },
+          "lakes": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 0,
+            "p50": 1,
+            "p90": 1
+          },
+          "fallCount": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 2,
+            "p50": 2,
+            "p90": 3
+          },
+          "fallDrop": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 1.510492306975933,
+            "p50": 1.7975414199259003,
+            "p90": 1.8653122535104143
+          },
+          "fallSpacing": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 6.041522986797285,
+            "p50": 52.38850594887733,
+            "p90": 59.70971445250764
+          },
+          "damSites": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3.66,
+            "p50": 6.1,
+            "p90": 7.32
+          },
+          "reservoirVolume": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 438,
+            "p50": 1406,
+            "p90": 1768
+          },
+          "reservoirEfficiency": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 146,
+            "p50": 267.8,
+            "p90": 398.2
+          },
+          "damLength": {
+            "nPatches": 30,
+            "nRegions": 30,
+            "p10": 3,
+            "p50": 3,
+            "p90": 3
+          }
+        },
+        "histograms": {
+          "heightHistogram": [
+            0.000050862630208333336,
+            0,
+            0.00311279296875,
+            0.005539957682291667,
+            0.017156982421875,
+            0.12734375,
+            0.027736409505208334,
+            0.16417439778645834,
+            0.05548299153645833,
+            0.22158203125,
+            0.06258341471354166,
+            0.06299845377604167,
+            0.056610107421875,
+            0.054937744140625,
+            0.03331705729166667,
+            0.032179768880208334,
+            0.07519327799479167,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "slopeHistogram": [
+            0.9089946276246719,
+            0.050369094488188985,
+            0.022592683727034126,
+            0.011539329068241469,
+            0.00563586778215223,
+            0.0006192585301837269,
+            0.00022863353018372703,
+            0.000011277887139107613,
+            0.000005126312335958006,
+            0.000004101049868766405,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "valleyCrossSectionMean": [
+            2.1986387322120318,
+            2.1306638287322044,
+            1.9905874428252004,
+            1.89276224561992,
+            1.7964109337230052,
+            1.6691102396476087,
+            1.5828929150770579,
+            1.6512977735568888,
+            1.5717394644220368,
+            1.4672580423404213,
+            1.3638188563305063,
+            1.1741464576358862,
+            0,
+            0.15329192684986026,
+            0.16561335362195093,
+            0.19227370963623314,
+            0.2635763438424496,
+            0.2877220259720724,
+            0.22397845851580875,
+            0.1985861322860193,
+            0.160042095500509,
+            0.14362643941100212,
+            0.10032384765688389,
+            0.09247554516788413,
+            0.08355395562219631
+          ]
+        },
+        "histogramSupport": {
+          "heightHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "slopeHistogram": {
+            "nPatches": 30,
+            "nRegions": 30
+          },
+          "valleyCrossSectionMean": {
+            "nPatches": 30,
+            "nRegions": 30
+          }
+        }
+      },
+      "variety": 0.30807000475958174
+    }
+  },
+  "comparison": {
+    "branching": {
+      "unit": "junctions / 10000 tiles",
+      "real": {
+        "n": 99,
+        "p10": 0.6103515625,
+        "p50": 7.32421875,
+        "p90": 10.3759765625
+      },
+      "generated": {
+        "n": 180,
+        "p10": 3.662109375,
+        "p50": 6.7138671875,
+        "p90": 9.765625
+      },
+      "medianDifference": -0.6103515625,
+      "generatedOutsideRealCentral80": 0.06666666666666667
+    },
+    "drainageDensity": {
+      "unit": "channel tiles / tile²",
+      "real": {
+        "n": 99,
+        "p10": 0.042998496912554515,
+        "p50": 0.058977311477506233,
+        "p90": 0.0762832927570751
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.03669049591002491,
+        "p50": 0.05071959831129362,
+        "p90": 0.06105368696479611
+      },
+      "medianDifference": -0.008257713166212613,
+      "generatedOutsideRealCentral80": 0.3
+    },
+    "sinuosity": {
+      "unit": "path / chord",
+      "real": {
+        "n": 99,
+        "p10": 1.0569963951264663,
+        "p50": 1.2071067811865477,
+        "p90": 1.3327561323230814
+      },
+      "generated": {
+        "n": 180,
+        "p10": 1.0737506192132489,
+        "p50": 1.156655624712083,
+        "p90": 1.248528137423857
+      },
+      "medianDifference": -0.05045115647446474,
+      "generatedOutsideRealCentral80": 0.022222222222222223
+    },
+    "junctionAngle": {
+      "unit": "degrees",
+      "real": {
+        "n": 99,
+        "p10": 33.690067525979785,
+        "p50": 71.56505117707799,
+        "p90": 90
+      },
+      "generated": {
+        "n": 180,
+        "p10": 75.96375653207353,
+        "p50": 93.3664606634298,
+        "p90": 119.74488129694224
+      },
+      "medianDifference": 21.801409486351815,
+      "generatedOutsideRealCentral80": 0.5277777777777778
+    },
+    "segmentLength": {
+      "unit": "tiles",
+      "real": {
+        "n": 99,
+        "p10": 17.313708498984763,
+        "p50": 21.48528137423857,
+        "p90": 30.242640687119287
+      },
+      "generated": {
+        "n": 180,
+        "p10": 15.55634918610405,
+        "p50": 25,
+        "p90": 35.04163056034262
+      },
+      "medianDifference": 3.5147186257614287,
+      "generatedOutsideRealCentral80": 0.3277777777777778
+    },
+    "splitTileShare": {
+      "unit": "fraction of flowing wet cells",
+      "real": {
+        "n": 91,
+        "p10": 0.39258010118043846,
+        "p50": 0.5535572599841312,
+        "p90": 0.6495684340320592
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.33915574963609896,
+        "p50": 0.5112517580872011,
+        "p90": 0.6717920556470803
+      },
+      "medianDifference": -0.04230550189693005,
+      "generatedOutsideRealCentral80": 0.3388888888888889
+    },
+    "rejoinTileShare": {
+      "unit": "rejoining cells / flowing wet cells",
+      "real": {
+        "n": 91,
+        "p10": 0.3700041203131438,
+        "p50": 0.5292479108635098,
+        "p90": 0.6361237950279046
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.3420669577874818,
+        "p50": 0.5135531135531135,
+        "p90": 0.671059857221307
+      },
+      "medianDifference": -0.015694797310396247,
+      "generatedOutsideRealCentral80": 0.3055555555555556
+    },
+    "enclosedIslands": {
+      "unit": "enclosed dry components >=4 tiles",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 0,
+        "p90": 5
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 0,
+        "p90": 4
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0.03333333333333333
+    },
+    "stepLength": {
+      "unit": "tiles",
+      "real": {
+        "n": 99,
+        "p10": 1,
+        "p50": 1,
+        "p90": 1
+      },
+      "generated": {
+        "n": 180,
+        "p10": 1,
+        "p50": 1,
+        "p90": 1
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0.03888888888888889
+    },
+    "valleyWidth1": {
+      "unit": "tiles between sides +1 level",
+      "real": {
+        "n": 98,
+        "p10": 3,
+        "p50": 5,
+        "p90": 7
+      },
+      "generated": {
+        "n": 180,
+        "p10": 4,
+        "p50": 5,
+        "p90": 7
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0.05555555555555555
+    },
+    "valleyWidth2": {
+      "unit": "tiles between sides +2 levels",
+      "real": {
+        "n": 89,
+        "p10": 5,
+        "p50": 9,
+        "p90": 12
+      },
+      "generated": {
+        "n": 179,
+        "p10": 3,
+        "p50": 5,
+        "p90": 10
+      },
+      "medianDifference": -4,
+      "generatedOutsideRealCentral80": 0.43575418994413406
+    },
+    "narrowingRatio": {
+      "unit": "narrowest / widest sampled valley",
+      "real": {
+        "n": 89,
+        "p10": 0.1,
+        "p50": 0.25,
+        "p90": 0.6
+      },
+      "generated": {
+        "n": 179,
+        "p10": 0.10526315789473684,
+        "p50": 0.25,
+        "p90": 0.5
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0.11731843575418995
+    },
+    "straightShare8": {
+      "unit": "fraction of contour edges",
+      "real": {
+        "n": 99,
+        "p10": 0.001421188630490956,
+        "p50": 0.019775333489351742,
+        "p90": 0.05589814999005371
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.08460101414464906,
+        "p50": 0.1394335511982571,
+        "p90": 0.3554183043234138
+      },
+      "medianDifference": 0.11965821770890535,
+      "generatedOutsideRealCentral80": 0.9833333333333333
+    },
+    "longestRun": {
+      "unit": "tiles",
+      "real": {
+        "n": 99,
+        "p10": 9,
+        "p50": 12,
+        "p90": 16
+      },
+      "generated": {
+        "n": 180,
+        "p10": 19,
+        "p50": 28,
+        "p90": 39
+      },
+      "medianDifference": 16,
+      "generatedOutsideRealCentral80": 0.9833333333333333
+    },
+    "ridgeThicknessCV": {
+      "unit": "coefficient of variation",
+      "real": {
+        "n": 99,
+        "p10": 0.3061862178478973,
+        "p50": 0.3534410226019007,
+        "p90": 0.45825756949558394
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.25545201491160446,
+        "p50": 0.3226778315700778,
+        "p90": 0.34759164031046696
+      },
+      "medianDifference": -0.0307631910318229,
+      "generatedOutsideRealCentral80": 0.38333333333333336
+    },
+    "ridgeHeightStd": {
+      "unit": "levels",
+      "real": {
+        "n": 99,
+        "p10": 0,
+        "p50": 0,
+        "p90": 0.5150787536377127
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 0,
+        "p90": 0
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0
+    },
+    "basinRimThicknessCV": {
+      "unit": "coefficient of variation",
+      "real": {
+        "n": 76,
+        "p10": 0.24400005668238536,
+        "p50": 0.4186487409299444,
+        "p90": 0.47451660904553045
+      },
+      "generated": {
+        "n": 154,
+        "p10": 0.017056066550855405,
+        "p50": 0.18446914269961212,
+        "p90": 0.28987691187529924
+      },
+      "medianDifference": -0.2341795982303323,
+      "generatedOutsideRealCentral80": 0.7012987012987013
+    },
+    "lakeShare": {
+      "unit": "fraction of tiles",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 0.0496,
+        "p90": 0.2029
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 0.021,
+        "p90": 0.3156
+      },
+      "medianDifference": -0.028599999999999997,
+      "generatedOutsideRealCentral80": 0.3333333333333333
+    },
+    "lakes": {
+      "unit": "lake components",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 1,
+        "p90": 2
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 1,
+        "p90": 3
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0.18888888888888888
+    },
+    "fallCount": {
+      "unit": "connected lips with surface drop >=1",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 1,
+        "p90": 4
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 3,
+        "p90": 10
+      },
+      "medianDifference": 2,
+      "generatedOutsideRealCentral80": 0.25
+    },
+    "fallDrop": {
+      "unit": "levels",
+      "real": {
+        "n": 85,
+        "p10": 1.0000622413552827,
+        "p50": 1.00898814762434,
+        "p90": 1.731586646954884
+      },
+      "generated": {
+        "n": 158,
+        "p10": 1.0658961210365094,
+        "p50": 1.8561623122886133,
+        "p90": 3.674480807540435
+      },
+      "medianDifference": 0.8471741646642732,
+      "generatedOutsideRealCentral80": 0.7911392405063291
+    },
+    "fallSpacing": {
+      "unit": "tiles to nearest other fall",
+      "real": {
+        "n": 72,
+        "p10": 2.91547594742265,
+        "p50": 15.132745950421555,
+        "p90": 73.08214556237385
+      },
+      "generated": {
+        "n": 133,
+        "p10": 2.91547594742265,
+        "p50": 14.142135623730951,
+        "p90": 59.103722387003685
+      },
+      "medianDifference": -0.9906103266906037,
+      "generatedOutsideRealCentral80": 0.15789473684210525
+    },
+    "damSites": {
+      "unit": "sampled sites / 10000 tiles",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 6.1,
+        "p90": 14.04
+      },
+      "generated": {
+        "n": 180,
+        "p10": 3.66,
+        "p50": 6.1,
+        "p90": 7.32
+      },
+      "medianDifference": 0,
+      "generatedOutsideRealCentral80": 0
+    },
+    "reservoirVolume": {
+      "unit": "tile³",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 1264,
+        "p90": 4478
+      },
+      "generated": {
+        "n": 180,
+        "p10": 826,
+        "p50": 2483,
+        "p90": 13800
+      },
+      "medianDifference": 1219,
+      "generatedOutsideRealCentral80": 0.3333333333333333
+    },
+    "reservoirEfficiency": {
+      "unit": "tile³ / dam tile",
+      "real": {
+        "n": 91,
+        "p10": 0,
+        "p50": 173.3,
+        "p90": 762.7
+      },
+      "generated": {
+        "n": 180,
+        "p10": 174.4,
+        "p50": 501.8,
+        "p90": 4758
+      },
+      "medianDifference": 328.5,
+      "generatedOutsideRealCentral80": 0.3388888888888889
+    },
+    "damLength": {
+      "unit": "tiles",
+      "real": {
+        "n": 86,
+        "p10": 2,
+        "p50": 8,
+        "p90": 13
+      },
+      "generated": {
+        "n": 180,
+        "p10": 3,
+        "p50": 4,
+        "p90": 11
+      },
+      "medianDifference": -4,
+      "generatedOutsideRealCentral80": 0.05555555555555555
+    }
+  },
+  "edgeSensitivity": {
+    "straightShare8": {
+      "originalReal": {
+        "n": 99,
+        "p10": 0.001421188630490956,
+        "p50": 0.019775333489351742,
+        "p90": 0.05589814999005371
+      },
+      "convertedReal": {
+        "n": 99,
+        "p10": 0.04693065158181437,
+        "p50": 0.09441262962389722,
+        "p90": 0.17655592630204556
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.08460101414464906,
+        "p50": 0.1394335511982571,
+        "p90": 0.3554183043234138
+      },
+      "generatedOutsideConvertedRealCentral80": 0.21666666666666667
+    },
+    "longestRun": {
+      "originalReal": {
+        "n": 99,
+        "p10": 9,
+        "p50": 12,
+        "p90": 16
+      },
+      "convertedReal": {
+        "n": 99,
+        "p10": 100,
+        "p50": 124,
+        "p90": 126
+      },
+      "generated": {
+        "n": 180,
+        "p10": 19,
+        "p50": 28,
+        "p90": 39
+      },
+      "generatedOutsideConvertedRealCentral80": 1
+    },
+    "ridgeThicknessCV": {
+      "originalReal": {
+        "n": 99,
+        "p10": 0.3061862178478973,
+        "p50": 0.3534410226019007,
+        "p90": 0.45825756949558394
+      },
+      "convertedReal": {
+        "n": 99,
+        "p10": 0.30026858405951,
+        "p50": 0.353207954858041,
+        "p90": 0.4547418206595805
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0.25545201491160446,
+        "p50": 0.3226778315700778,
+        "p90": 0.34759164031046696
+      },
+      "generatedOutsideConvertedRealCentral80": 0.34444444444444444
+    },
+    "ridgeHeightStd": {
+      "originalReal": {
+        "n": 99,
+        "p10": 0,
+        "p50": 0,
+        "p90": 0.5150787536377127
+      },
+      "convertedReal": {
+        "n": 99,
+        "p10": 0,
+        "p50": 0,
+        "p90": 0.5150787536377127
+      },
+      "generated": {
+        "n": 180,
+        "p10": 0,
+        "p50": 0,
+        "p90": 0
+      },
+      "generatedOutsideConvertedRealCentral80": 0
+    },
+    "basinRimThicknessCV": {
+      "originalReal": {
+        "n": 76,
+        "p10": 0.24400005668238536,
+        "p50": 0.4186487409299444,
+        "p90": 0.47451660904553045
+      },
+      "convertedReal": {
+        "n": 97,
+        "p10": 0.2064721578559761,
+        "p50": 0.38152167861418196,
+        "p90": 0.4572561290784275
+      },
+      "generated": {
+        "n": 154,
+        "p10": 0.017056066550855405,
+        "p50": 0.18446914269961212,
+        "p90": 0.28987691187529924
+      },
+      "generatedOutsideConvertedRealCentral80": 0.5909090909090909
+    }
+  },
+  "variety": {
+    "scale": {
+      "patternP0": 1,
+      "features": [
+        "relief",
+        "cliffShare",
+        "step1Share",
+        "flatShare",
+        "waterShare",
+        "lakeShare",
+        "islands",
+        "waterfalls",
+        "basins",
+        "damSitesPer10k",
+        "treesPer10k",
+        "bushesPer10k",
+        "scrapPer1k",
+        "caveShare"
+      ],
+      "spread": [
+        3.90625,
+        0.06375,
+        0.1287,
+        0.12473,
+        0.15706,
+        0.16918,
+        0.85829,
+        0.67657,
+        0.50622,
+        0.82245,
+        0.52359,
+        0.68759,
+        0.67949,
+        0.25496
+      ],
+      "L0": 0.275,
+      "F0": 1.383,
+      "workshopVariety": 1.037,
+      "maps": 130
+    },
+    "reference": "one anchor centre per named region; 128 tiles, 60 m/tile, normalised 16; unchanged workshop/variety-scale.json calibration",
+    "referenceCount": 99,
+    "referenceVariety": 0.852781190835638,
+    "settledReferenceCount": 60,
+    "settledReferenceVariety": 0.8179166605507188,
+    "generatedVariety": 0.5843348015733397
+  }
+}

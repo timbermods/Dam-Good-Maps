@@ -73,7 +73,7 @@ Further findings:
 
 ## Kyler's run
 
-To fill in after the steps in [progress.md, "What Kyler needs to do"](progress.md#what-kyler-needs-to-do).
+To fill in after the steps in [What Kyler needs to do](progress/kyler-todo.md), item 4.
 Paste the page's **Copy results** JSON below the table.
 
 | Check | Result | Notes |
