@@ -2,6 +2,24 @@ import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 const index = JSON.parse(readFileSync("library/index.json", "utf8"));
+const patches = gunzipSync(readFileSync("data/patch-manifest.jsonl.gz"))
+  .toString()
+  .trim()
+  .split("\n")
+  .map((line) => JSON.parse(line));
+if (patches.length !== 4050 || new Set(patches.map((r) => r.key)).size !== 4050)
+  throw Error("Acquisition coverage or uniqueness failed");
+if (
+  patches.some(
+    (r) =>
+      !Number.isFinite(r.min) ||
+      !Number.isFinite(r.max) ||
+      r.min > r.max ||
+      r.min < -12000 ||
+      r.max > 9000,
+  )
+)
+  throw Error("Acquisition has a gross elevation range problem");
 const rows = gunzipSync(readFileSync("data/converted.jsonl.gz"))
   .toString()
   .trim()
@@ -90,6 +108,13 @@ const result = {
     patches: rows.length / 4,
     locations: locations.length,
     generated: baseline.length,
+  },
+  acquisitionRangeScreen: {
+    patches: patches.length,
+    minimumMetres: Math.min(...patches.map((r) => r.min)),
+    maximumMetres: Math.max(...patches.map((r) => r.max)),
+    plausibilityBoundsMetres: [-12000, 9000],
+    note: "Gross-error screen, not a claim about DEM accuracy.",
   },
   problems,
 };
