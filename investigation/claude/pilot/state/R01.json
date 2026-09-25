@@ -1,0 +1,55 @@
+{
+ "id": "R01",
+ "text": "add berry bushes between the lake and the start",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "resolve_region",
+   "args": {
+    "where": "between the lake and the start"
+   },
+   "bytes": 454,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add berry bushes between the lake and the start",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a berry patch between the lake and the start"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addResource",
+      "kind": "berryPatch",
+      "where": "between the lake and the start",
+      "size": "medium",
+      "handle": "berries"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "berries",
+      "metric": "at",
+      "in": "between the lake and the start"
+     },
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "bushesNearStart",
+      "change": "up"
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1745,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a patch of 52 berry bushes between the start and the small lake to its east (in the north third, 19 tiles from the start). I asked for about 85, but 52 is all the moist ground there holds. Berry bushes near the start went from 48 to 82. Assumption: \"the lake\" is the small lake nearest the start. Every start rule still holds."
+}

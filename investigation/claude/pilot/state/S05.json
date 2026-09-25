@@ -1,0 +1,39 @@
+{
+ "id": "S05",
+ "text": "make it wider",
+ "setup": "rv128-fall",
+ "calls": [
+  {
+   "tool": "propose",
+   "args": {
+    "request": "make it wider",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "the selected waterfall wider"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSetPiece",
+      "target": "waterfall",
+      "change": "wider"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "waterfall",
+      "metric": "lipWidth",
+      "change": "up"
+     }
+    ],
+    "report": "Made the waterfall wider."
+   },
+   "bytes": 1479,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Made the waterfall wider: its lip went from 20 to 25 tiles, still dropping 6 levels. The same springs feed it, so the sheet over the lip is a little thinner. Every start rule still holds."
+}

@@ -1,0 +1,59 @@
+{
+ "id": "X01",
+ "text": "add a badwater spring just upstream of the start",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "badwaterBasin",
+    "where": "just upstream of the start"
+   },
+   "bytes": 1277,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add a badwater spring just upstream of the start",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a badwater spring just upstream of the start"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "badwaterBasin",
+      "request": {
+       "mode": "basin",
+       "at": [
+        8,
+        88
+       ],
+       "strength": 1.5
+      },
+      "handle": "badwater"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "badwater",
+      "metric": "course.frac",
+      "max": {
+       "of": "start",
+       "metric": "course.frac"
+      }
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1729,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a badwater spring upstream of the start, but not right beside it. A start rule keeps badwater and contaminated soil at least 30 tiles from the start, and a spring by the river upstream would carry badwater straight past it. So the spring is in the northwest corner, about 20 tiles upstream along the river and 46 tiles from the start: 1.5 blocks/s in a basin that drains by its own short channel to the map edge, never into the river. Say if you want it stronger, or nearer (as near as the rule allows is about 42 tiles). Every start rule still holds."
+}

@@ -1,0 +1,68 @@
+{
+ "id": "W05",
+ "text": "put a waterfall halfway down this valley",
+ "setup": "rv128-east",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "riverFall",
+    "where": "halfway down this valley"
+   },
+   "bytes": 562,
+   "error": false
+  },
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "waterfall",
+    "where": "halfway down this valley"
+   },
+   "bytes": 1291,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "put a waterfall halfway down this valley",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a waterfall about halfway down the east creek valley"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "waterfall",
+      "request": {
+       "mode": "standalone",
+       "lip": [
+        106,
+        86
+       ],
+       "facing": "south",
+       "width": 8,
+       "drop": 6,
+       "flow": "steady"
+      },
+      "handle": "falls"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "falls",
+      "metric": "at",
+      "in": "halfway down this valley"
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1868,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a waterfall halfway down the creek's valley, in the northeast corner: an 8-tile-wide fall with a 6-level drop, fed by springs, spilling south into the creek 4 tiles below. It clears 4 trees and is 57 tiles from the start. A fall on the creek itself does not fit halfway down (the app keeps falls on one river at least 12 tiles apart); the nearest spot for one is 70% of the way down. Say if you want that instead. Every start rule still holds."
+}

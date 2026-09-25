@@ -1,0 +1,67 @@
+{
+ "id": "S04",
+ "text": "add a giant waterfall in the north part of the map that is roughly 20 blocks wide",
+ "setup": "rv48",
+ "calls": [
+  {
+   "tool": "find_sites",
+   "args": {
+    "kind": "waterfall",
+    "where": "the north part of the map",
+    "size": 20
+   },
+   "bytes": 993,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "add a giant waterfall in the north part of the map that is roughly 20 blocks wide",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a waterfall about 20 wide in the north"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "waterfall",
+      "request": {
+       "mode": "standalone",
+       "lip": [
+        32,
+        34
+       ],
+       "facing": "south",
+       "width": 20,
+       "drop": 6,
+       "flow": "steady"
+      },
+      "handle": "falls"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "falls",
+      "metric": "lipWidth",
+      "approx": 20,
+      "tol": 3
+     },
+     {
+      "goal": "g1",
+      "subject": "falls",
+      "metric": "at",
+      "in": "the north part of the map"
+     }
+    ],
+    "report": "Added a waterfall in the northeast corner: its lip is 19 tiles wide (the most a 48-tile map allows is 40% of its side, so 20 became 19) with a 6-level drop. The map has little water to spare, so the flow is 1.15 blocks/s and the sheet over the lip is thin. It drains into the river 3 tiles below. It clears 83 trees and 14 berry bushes. This map already failed three start rules before the change (no clean water within 16 tiles, too little walkable land, water not reachable without slopes); they still fail. Every other start rule still holds."
+   },
+   "bytes": 2573,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a waterfall in the northeast corner: its lip is 19 tiles wide (a 48-tile map allows at most 40% of its side, so 20 became 19) with a 6-level drop. The map has little water to spare, so it runs at 1.15 blocks/s and the sheet over the lip is thin. It drains into the river 3 tiles below, and it clears 83 trees and 14 berry bushes. This map already failed three start rules before the change: no clean water within 16 tiles, too little walkable land, and no water reachable without slopes. They still fail. Every other start rule still holds."
+}
