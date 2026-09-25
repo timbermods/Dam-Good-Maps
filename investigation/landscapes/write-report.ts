@@ -42,26 +42,6 @@ const biggest = Object.entries(s.failures16)
   .slice(0, 5)
   .map(([k, v]) => `${failureLabels[k] ?? k}: ${v}`)
   .join("; ");
-const measures: Record<string, string> = {
-  straightShare8: "Contour edges in straight runs of 8+ (fraction)",
-  longestRun: "Longest contour run (tiles)",
-  basinRimThicknessCV: "Basin rim thickness variation (CV)",
-  ridgeThicknessCV: "Ridge thickness variation (CV)",
-  drainageDensity: "Drainage length / area (tile⁻¹)",
-  branching: "Drainage junctions / 10,000 tiles",
-  sinuosity: "River segment length / chord",
-  junctionAngle: "Junction angle (degrees)",
-  valleyWidth2: "Valley width at +2 levels (tiles)",
-  lakeShare: "Lake area / map area",
-  fallDrop: "Wet fall drop (levels)",
-  reservoirEfficiency: "Best reservoir volume / dam length (tile²)",
-};
-const table = Object.entries(measures)
-  .map(([k, label]) => {
-    const c = s.comparison[k];
-    return `| ${label} | ${fmt(c.real.p50)} | ${fmt(c.generated.p50)} | ${c.real.n} |`;
-  })
-  .join("\n");
 const maps = Object.entries(s.mappings)
   .map(
     ([k, v]: any) =>
@@ -108,11 +88,9 @@ The clearest geometric difference is straight contours. Generated maps have a me
 
 Generated basin rims vary less in thickness: median CV ${fmt(rims.generated.p50)}, against ${fmt(rims.real.p50)}. Valleys at two levels above the drainage floor are narrower: ${fmt(width.generated.p50)} tiles against ${fmt(width.real.p50)}. These suggest more variation in contours, rims and valley sections. They do not prescribe a process or prove better play.
 
-Medians below compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. Water measures use settled conversions only. Real conversions use twice the calibrated total flow, shared between up to eight inferred sources. This supplies split entries but makes water figures policy-dependent. The generated maps use their native default height range. Check adjacent scales and mappings before adopting a range.
+These figures compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. [Comparison tables](COMPARISON.md) give all 26 measures, their bands, support counts and random-land controls.
 
-| Measure | Real median | Generated median | Real regions measured |
-|---|---|---|---|
-${table}
+Water measures use settled conversions only. Real conversions use twice the calibrated total flow, shared between up to eight inferred sources. This supplies split entries but makes water figures policy-dependent. Generated maps use their native default height range. Check adjacent scales and mappings before adopting a range.
 
 On the repository's published variety calibration, the complete real anchor set scores ${fmt(s.variety.referenceVariety)}, its ${s.variety.settledReferenceCount} settled members ${fmt(s.variety.settledReferenceVariety)}, and all generated maps ${fmt(s.variety.generatedVariety)}. Per-theme results and signatures remain in the data. This measures conversions, including planted resources. It is not a fun score.
 
