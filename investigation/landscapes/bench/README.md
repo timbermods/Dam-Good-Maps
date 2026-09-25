@@ -32,6 +32,8 @@ The default is named regions, 128² where the input is 128², 60 m per tile, rel
 
 Library fixtures also carry `referenceHeights`: the original quantised crop before the artificial edge rim. Terrain measures use those heights. Water and validation use playable `heights`. Ordinary prototypes omit that field. Library entities omit UUIDs to save space; the bench reconstructs deterministic IDs in stored order before validation or export.
 
+If a prototype adds an artificial border wall, supply its earlier terrain as `referenceHeights` for comparison with these targets. Keep the sealed terrain in `heights`. The [edge-sensitivity table](../COMPARISON.md) shows why this choice matters. Report both conventions when border geometry is part of the process being studied.
+
 Read the measurements as separate comparisons. A smaller distance does not prove fun, realism or validity. Water comparisons are withheld when settling fails. Missing values and measures with fewer than five supporting regions remain unscored. Histograms use total variation; mean valley sections use root mean square difference in levels. See [methods](../METHODS.md).
 
 Programmatic use:

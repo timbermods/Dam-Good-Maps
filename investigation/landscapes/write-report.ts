@@ -84,9 +84,11 @@ The screen requires five occupied levels and elevation correlation of 0.9. It is
 
 ## Real against generated
 
-The clearest geometric difference is straight contours. Generated maps have a median ${percent(straight.generated.p50)} of contour edges in runs of eight or more tiles, against ${percent(straight.real.p50)} for real terrain. ${percent(straight.generatedOutsideRealCentral80)} of generated maps lie outside the real p10–p90 band.
+Straight contours show a large, edge-sensitive difference. Generated maps have a median ${percent(straight.generated.p50)} of contour edges in runs of eight or more tiles, against ${percent(straight.real.p50)} for real terrain. ${percent(straight.generatedOutsideRealCentral80)} of generated maps lie outside the real p10–p90 band.
 
-Generated basin rims vary less in thickness: median CV ${fmt(rims.generated.p50)}, against ${fmt(rims.real.p50)}. Valleys at two levels above the drainage floor are narrower: ${fmt(width.generated.p50)} tiles against ${fmt(width.real.p50)}. These suggest more variation in contours, rims and valley sections. They do not prescribe a process or prove better play.
+Sealing the real patches raises their median straight share to ${percent(s.edgeSensitivity.straightShare8.convertedReal.p50)}. Edge treatment explains part of the gap. Longest-run comparisons even reverse after sealing. Use a consistent border convention when tuning; these figures do not isolate the generator's interior processes.
+
+Generated basin rims vary less in thickness: median CV ${fmt(rims.generated.p50)}, against ${fmt(rims.real.p50)}. Valleys at two levels above the drainage floor are narrower: ${fmt(width.generated.p50)} tiles against ${fmt(width.real.p50)}. These suggest investigating rim and valley variation. They do not prescribe a process or prove better play.
 
 These figures compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. [Comparison tables](COMPARISON.md) give all 26 measures, their bands, support counts and random-land controls.
 
@@ -140,6 +142,12 @@ const themeRows = Object.entries(s.baseline)
       `| ${theme} | ${b.passed} / ${b.n} | ${fmt(b.variety)} | ${fmt(b.statistics.scalars.straightShare8.p50)} | ${fmt(b.statistics.scalars.valleyWidth2.p50)} | ${fmt(b.statistics.scalars.lakeShare.p50)} |`,
   )
   .join("\n");
+const edgeRows = Object.entries(s.edgeSensitivity)
+  .map(
+    ([key, x]: any) =>
+      `| ${key} | ${fmt(x.originalReal.p50)} | ${fmt(x.convertedReal.p50)} | ${fmt(x.generated.p50)} | ${percent(x.generatedOutsideConvertedRealCentral80)} |`,
+  )
+  .join("\n");
 writeFileSync(
   "COMPARISON.md",
   `# Comparison tables
@@ -153,6 +161,16 @@ Bands are p10 / median / p90. Each named region gets one vote; each generated se
 | Measure and unit | Real band | Generated band | Real regions / generated maps measured | Generated outside real band |
 |---|---|---|---|---|
 ${comparisonRows}
+
+## Sensitivity to edge sealing
+
+The main terrain reference uses the original quantised crop. The conversion then raises its border, except at selected outlets. Generated maps retain their native designed edges. This is a material difference in treatment. The same naturalness measurements on the sealed real conversions give the medians below. Sealing raises straight-run measures sharply; the longest-run comparison reverses. The remaining differences do not isolate interior generation processes.
+
+| Measure | Real before sealing | Real after sealing | Generated native map | Generated outside sealed real p10–p90 |
+|---|---|---|---|---|
+${edgeRows}
+
+For process tuning, supply the prototype's terrain before an added artificial border as the bench's referenceHeights. Keep playable heights for water and validation. If borders are part of the process being studied, report both conventions explicitly.
 
 ## Generated themes
 

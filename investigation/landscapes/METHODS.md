@@ -47,6 +47,8 @@ Total source strength is the repository's size-aware clean-flow median multiplie
 
 Drainage-selected exits and their neighbouring edge cells retain their elevations. Other border cells rise to the height cap to seal incoming mouths. The interior stays unchanged. No channel is carved and no start pad is flattened. Raised edge-cell counts are recorded. Terrain targets use the original quantised crop, excluding that artificial rim. Water statistics use the sealed conversion.
 
+Generated maps retain their native designed edges. `summary.json` and [the comparison tables](COMPARISON.md) therefore include an edge-sensitivity check: the same naturalness measures on real terrain before and after sealing. Added walls substantially raise straight runs. This comparison does not isolate the generator's interior processes. Use an explicit, consistent border convention when tuning.
+
 The unchanged `canonicalSettle` supplies water and moisture. The unchanged generate-profile validator checks the assembled map. An explicit empty feature list keeps `water.outflow` active. No planned lakes or badwater basins are invented to waive checks.
 
 Real patches use generic Normal rules, including the 35% maximum water-covered area. Their geographic family is not a planned generator theme. Generated baselines retain native theme defaults; islands and lake basins permit 55% water cover. This affects pass-rate comparisons. No tolerance is raised to make a real conversion pass.

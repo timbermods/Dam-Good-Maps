@@ -227,6 +227,30 @@ for (const [name, def] of Object.entries(scalarDefinitions)) {
         : null,
   };
 }
+const edgeSensitivity: any = {};
+for (const [name, def] of Object.entries(scalarDefinitions)) {
+  if (def.group !== "naturalness") continue;
+  const convertedReal = quantiles(
+    regionValues(
+      reference,
+      def.path.replace(/^natural\./, "convertedNatural."),
+    ),
+  );
+  const generatedValues = generated
+    .map((r) => get(r, def.path))
+    .filter((v) => typeof v === "number" && Number.isFinite(v));
+  edgeSensitivity[name] = {
+    originalReal: comparison[name].real,
+    convertedReal,
+    generated: comparison[name].generated,
+    generatedOutsideConvertedRealCentral80:
+      convertedReal.n >= 5
+        ? generatedValues.filter(
+            (v) => v < convertedReal.p10! || v > convertedReal.p90!,
+          ).length / generatedValues.length
+        : null,
+  };
+}
 const summary = {
   schema: 1,
   complete: rows.length === 16200 && generated.length === 180,
@@ -259,6 +283,7 @@ const summary = {
   },
   baseline,
   comparison,
+  edgeSensitivity,
   variety: {
     scale,
     reference:

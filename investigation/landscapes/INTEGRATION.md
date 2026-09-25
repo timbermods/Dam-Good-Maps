@@ -6,6 +6,8 @@ Read [REPORT.md](REPORT.md), then [METHODS.md](METHODS.md). Use `data/targets.js
 
 Run the [bench](bench/README.md) on each prototype in `investigation/generative/`. Compare network, relief, water and naturalness separately. Inspect failures and previews. Keep the existing validators, variety checks, opening diversity, performance budgets and Kyler's blind ratings as separate gates.
 
+Match border conventions. Supply terrain before an added artificial wall as `referenceHeights`, while retaining playable `heights` for water and validation. Report both when border geometry is part of the design. The edge-sensitivity table shows that sealing changes straight runs enough to reverse the longest-run comparison.
+
 Use [FAMILIES.md](FAMILIES.md) to connect process ideas to play. The listed processes are geological explanations, not generator implementations. In particular, branch-and-merge behaviour needs evidence beyond a single-receiver DEM drainage graph.
 
 Use the library for regression tests and to understand quantisation failure. Do not read its height arrays inside a generator. Do not choose the closest real patch as a seed, layout, stencil or generation objective. The bench compares aggregate measures, not map identity.
