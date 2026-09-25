@@ -1215,6 +1215,35 @@ and a frame in SwiftShader on this machine takes 26 ms (25 ms before).
 ruins, near-black badwater, and dead trees, slope arrows and the start drawn larger from afar
 (`npm run dev`, generate a map, **3D**).
 
+### Map look: independent reviews (not tagged yet)
+
+- **First review: FAIL.** Dead trees, dam sites on moist ground (protanopia, greyscale), water vs
+  badwater in greyscale, Beavertopia's listed contamination, slopes in overviews, tall-cliff level
+  bands, the legend, and `captures.md` positions. The fix round addressed all ten findings (D114).
+- **Second review, fresh reviewer: FAIL, narrowly** (2026-09-25). The core meanings read in all
+  five variants (colour, greyscale, protanopia, deuteranopia, tritanopia), and every after capture
+  is easier to read than its before. What fails:
+  1. badwater meeting clean water is in no capture (`captures.md` marks it "not in view" for every
+     pose);
+  2. partly bad water at a low share (24–25%) can't be told from clean water in the Beavertopia
+     overview (ΔE 4, no lightness difference; identical in greyscale), and 39–55% tiles in the
+     River Valley 256² overview look plain blue at the listed points;
+  3. slopes: the three listed slopes in the Beavertopia overview are 2–4 px specks with no arrow;
+     two close-up slopes are slivers with no readable direction (River Valley 128² start (59,58),
+     Highlands badwater (50,86)); arrows facing the camera flatten into a thin V, and some sit
+     under dam-site markers;
+  4. at 18 listed tall-cliff positions no wall is visible (under water, facing away, behind a
+     waterfall); Lake Basin start and Islands falls show no countable tall cliff.
+  Also noted: clean water and dry ground have almost the same lightness in greyscale (gap 0–3);
+  dam-site markers and dead-tree clusters cover water and slope arrows in overviews; the Lake
+  Basin overview's badwater fall reads as a dark tower; waterfalls render as a patchwork; the
+  legend's "drawn larger from afar" note leaves out dam sites; several `captures.md` examples sit
+  under dam-site markers or beside the thing they name. CI's software-rendered orbit test now
+  has a thin margin (5–6 fps against more than 5 frames in 1.5 s) and failed once on PRs #11 and
+  #12.
+- Kyler's rule: one more fix round on these reasons, then a fresh blind review; if that fails
+  too, stop and report.
+
 ## After Map look: Kyler's decisions
 
 - No built dam walls (PLAN §20 D111): the dam-site ridge goes away from M9a on; `water.storage_possible` replaces `water.reservoir`; supersedes D25, D30, D58; settles #31.
