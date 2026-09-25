@@ -424,12 +424,20 @@ differences in "Editor decisions".
 - K = 3 candidates with progressive preview (K = 1 at 256² if the M2 benchmark requires it).
 - Names and premises built from the features.
 - The score on the map card.
+- The words M12 reuses, built here because names and descriptions need them too (D84):
+  - the flow-relative place vocabulary (EDITOR_PLAN §7 "Spatial language"): upstream and
+    downstream, a position along a river's course from its source, the start's bank and the
+    opposite bank, and "this valley", always read from the river's actual flow;
+  - the judgement-word table (EDITOR_PLAN §7 "Judgement words"): each word's measured targets,
+    direction, size and guards.
 
 **Acceptance**
 - The official score distribution is documented, and the recommended official maps land in the
   top third.
 - Names and premises match the features on 30 hand-checked maps.
 - 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
+- The place resolver is tested on rivers flowing in every direction, so "upstream" is never read
+  as "west".
 
 **In-game check:** no.
 
@@ -494,8 +502,12 @@ MEANING.md behind.
 - The operation schema and a feature-level map summary (at most about 16 KB).
 - The tools: `resolve_region`, `find_sites`, `measure`, `list_features`, `limits`, `dry_run`,
   `propose`.
-- The size-word resolver on top of PLAN §9.10.
-- Intent checks, and the loop capped at 3 rounds.
+- The size-word resolver on top of PLAN §9.10, and M9's place resolver and judgement words.
+- Compound requests (EDITOR_PLAN §7, D84): goals with their own expectations, settings and
+  regeneration before placements, every goal checked on the combined preview, interference
+  between goals detected, and the nearest feasible alternative offered, never substituted.
+- Intent checks, and the loop capped at 3 rounds; the cap grows with the goals of a compound
+  request (decisions-pending #28).
 - The Messages API adapter (bring-your-own-key, strict tools, prompt caching, configurable model).
 - The artifact edition: a single-file build declaring `sample` and `downloads` only, and a `.zip`
   download.
@@ -506,6 +518,7 @@ MEANING.md behind.
 - Accepted proposals undo like normal edits.
 - The request suite passes on 96², 128² and 256² maps, including the 20-block waterfall (with the
   reported reduction on 48²).
+- The compound, impossible and conflicting requests of the suite (EDITOR_PLAN §9) pass.
 - Results stay editable by hand, and follow-ups modify the right feature.
 - The artifact edition passes a manual smoke test on the same requests.
 

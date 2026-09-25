@@ -757,6 +757,21 @@ the editor's chunks are 127 KB (42 KB gzipped); the 3D chunk is 560 KB (143 KB g
 - Fixed after M7: Lake Basin and Islands project files reopen (point bounds widened to one map side
   past each edge, −256…512; bytes unchanged; project round trip in every batch).
 
+## After M7: plan updates and merges
+
+On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
+
+- **`main` merged into `dev`** (eb8bac8): CLAUDE.md with the writing and deploying rules, the
+  noindex deploy step and the live check.
+- **PR #4 merged** (`investigation/workshop`): the study of 130 Steam Workshop maps
+  ([WORKSHOP.md](../investigation/WORKSHOP.md)) and its integration plan
+  ([WORKSHOP-INTEGRATION.md](../investigation/WORKSHOP-INTEGRATION.md)).
+- **PR #5 merged** (`investigation/claude`): the Claude groundwork for M12
+  ([REPORT.md](../investigation/claude/REPORT.md)) and its integration plan
+  ([M12-INTEGRATION.md](../investigation/claude/M12-INTEGRATION.md)).
+- **M12 plan update** (Kyler, D84): compound requests, flow-relative places and a judgement-word
+  table (both built in M9), and new suite requests; the loop's budget waits for Kyler (#28).
+
 ---
 
 ## What Kyler needs to do
