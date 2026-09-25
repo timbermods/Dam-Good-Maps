@@ -1,0 +1,590 @@
+{
+  "version": 1,
+  "normalization": "Unicode NFKC; lowercase; remove trailing map-size and upload-version suffixes; replace punctuation with spaces; collapse whitespace.",
+  "collisionPolicy": {
+    "mapTitles": "Reject an exact normalized title match. For multiword titles, also reject the full phrase inside a longer candidate. Single-word generic official titles are exact-match only.",
+    "realPlaces": "Reject a full normalized place-name phrase anywhere in a candidate; do not ban ordinary landform words such as canyon or delta by themselves.",
+    "tie": "Check names after normalization against this file and every other candidate title in the current candidate set. Try the next eligible feature rule; do not invent a random or seed-based suffix."
+  },
+  "coverage": "All 19 official names and nine calibrated Workshop names in investigation/calibration.json, plus the named Steam map titles linked from investigation/WORKSHOP.md. The real-place list is a curated starter list, not a global gazetteer.",
+  "mapTitles": [
+    {
+      "phrase": "Beaverome",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Canyon",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Cliffside",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Craters",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Diorama",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "HelixMountain",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Hollows",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Lakes",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Meander",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "MountainRange",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Nomads",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Oasis",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Pillars",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Plains",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Pressure",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Spillage",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Terraces",
+      "source": "WORKSHOP.md reference",
+      "match": "exact"
+    },
+    {
+      "phrase": "ThousandIslands",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Waterfalls",
+      "source": "official",
+      "match": "exact"
+    },
+    {
+      "phrase": "Beavers Canyons",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Endgame - 256x256",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Rift - 83x83",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavertopia - 256x256",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Cozy Secret Valley",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Lost Underground (Update 7)",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Lost Valley - 151x251",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Meander Multiplayer (1-3 players)",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Tower of Beaverlon - 78x78x100",
+      "source": "workshop calibration",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Legacy of the Tides",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Heart - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Reverse Helix - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Riverworld - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Ancient Waterways",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Caldera Lake",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Bloodflow Ravines",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Starfish - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Great Lakes",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Medicine Lake (256x256)",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers of the Caribbean - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Islands - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Island",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Ribbon World",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mystery River - 89x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Quest - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Wave - 77x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Gentle Rivers",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Wonders - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Lost Hope - 70x70",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Ant Farm V3",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "ENGITOPIA'S PEAK",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Canyons - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Pillars - 128x128",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Tower Challenge - 111x111",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Sky Island Challenge",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Fortitude",
+      "source": "WORKSHOP.md reference",
+      "match": "exact"
+    },
+    {
+      "phrase": "Highway to Heaven",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Breath taking",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "River Wonderland",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Secret Tunnel Canyon",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Cliff River Run",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Start - 192x192",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Riverland - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Greenfold Basin",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Cliffs - 99x99",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Grand rifts (v7)",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Island of Power - 256x256",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Right-Side128x128",
+      "source": "WORKSHOP.md reference",
+      "match": "exact"
+    },
+    {
+      "phrase": "The Forest",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Deep Woods",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers Twist - 77x77",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Beavers New Twist - 123x123",
+      "source": "WORKSHOP.md reference",
+      "match": "phrase"
+    }
+  ],
+  "realPlaces": [
+    {
+      "phrase": "Amazon River",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Andes",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Appalachian Mountains",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Atacama Desert",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Baikal",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Caribbean",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Colorado River",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Congo River",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Danube",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Dead Sea",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Death Valley",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Denali",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Everest",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Galapagos",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Gobi Desert",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Grand Canyon",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Great Barrier Reef",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Great Lakes",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Greenland",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Hawaii",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Himalayas",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Iceland",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Kilimanjaro",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Lake Baikal",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Lake Tahoe",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mackenzie River",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Madagascar",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mekong",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mississippi River",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mount Etna",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mount Fuji",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mount Kilimanjaro",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Mount Vesuvius",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Nile",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Niagara Falls",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Okavango Delta",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Pacific",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Patagonia",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Rocky Mountains",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Sahara",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Serengeti",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Tasmania",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Alps",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Amazon",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Arctic",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Everglades",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Great Rift Valley",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Rockies",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Sahara",
+      "match": "phrase"
+    },
+    {
+      "phrase": "The Yangtze",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Twin Falls",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Uluru",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Victoria Falls",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Yellowstone",
+      "match": "phrase"
+    },
+    {
+      "phrase": "Yosemite",
+      "match": "phrase"
+    }
+  ]
+}
+

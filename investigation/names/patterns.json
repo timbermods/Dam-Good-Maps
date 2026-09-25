@@ -1,0 +1,941 @@
+{
+  "version": 1,
+  "selection": {
+    "order": [
+      "highest priority",
+      "most specific matching rule",
+      "rule id ascending"
+    ],
+    "randomChoice": false,
+    "ifForbidden": "skip the title and try the next eligible rule; never append a seed or an unsupported word",
+    "ifNoRule": "use the deterministic fact-based fallback below"
+  },
+  "rules": [
+    {
+      "id": "moat-isle",
+      "priority": 120,
+      "when": {
+        "featureRole": "premise/moat-island"
+      },
+      "title": "Moat Isle",
+      "titleWords": [
+        "water.moat",
+        "landforms.isle"
+      ],
+      "description": "Water circles a high central island. Settle its shore first, then choose a crossing to reach the outer bank."
+    },
+    {
+      "id": "crater-shore",
+      "priority": 118,
+      "when": {
+        "featureRole": "premise/crater-lake"
+      },
+      "title": "Crater Shore",
+      "titleWords": [
+        "landforms.crater",
+        "water.shore"
+      ],
+      "description": "A raised rim encloses a lake basin with one outlet. Hold the outlet to control storage, then settle the inner shore."
+    },
+    {
+      "id": "caldera-rest",
+      "priority": 116,
+      "when": {
+        "featureRole": "premise/caldera-island"
+      },
+      "title": "Caldera Rest",
+      "titleWords": [
+        "landforms.caldera",
+        "whimsy.rest"
+      ],
+      "description": "A high rim encloses an island and a lake basin. Secure the outlet before raising water toward the inner shore."
+    },
+    {
+      "id": "spiral-peak",
+      "priority": 114,
+      "when": {
+        "featureRole": "premise/spiral-mountain"
+      },
+      "title": "Spiral Peak",
+      "titleWords": [
+        "landforms.ring",
+        "landforms.peak"
+      ],
+      "description": "A ramp winds up the central peak. Claim its upper terraces by building a continuous route from below."
+    },
+    {
+      "id": "spiral-quarry",
+      "priority": 114,
+      "when": {
+        "featureRole": "premise/spiral-quarry"
+      },
+      "title": "Spiral Quarry",
+      "titleWords": [
+        "landforms.ring",
+        "landforms.quarry"
+      ],
+      "description": "A ramp winds down into a central pit. Follow it inward to reach the lowest ground and nearby channels."
+    },
+    {
+      "id": "badwater-cone",
+      "priority": 112,
+      "when": {
+        "featureRole": "premise/badwater-volcano"
+      },
+      "title": "Badwater Cone",
+      "titleWords": [
+        "water.badwater",
+        "landforms.cone"
+      ],
+      "description": "A cone frames a contained badwater basin. Keep colonies on the clean side while you manage its leveed outlet."
+    },
+    {
+      "id": "mesa-crown",
+      "priority": 110,
+      "when": {
+        "featureRole": "premise/hanging-lake"
+      },
+      "title": "Mesa Crown",
+      "titleWords": [
+        "landforms.mesa",
+        "landforms.crown"
+      ],
+      "description": "A lake sits high on a flat-topped mesa. Reach the rim first, then decide when to open its spillway."
+    },
+    {
+      "id": "mesa-field",
+      "priority": 108,
+      "when": {
+        "featureRole": "premise/mesa-field"
+      },
+      "title": "Mesa Field",
+      "titleWords": [
+        "landforms.mesa",
+        "landforms.field"
+      ],
+      "description": "Several flat-topped mesas overlook the lower ground. Choose one shelf to settle, then connect its height to the river."
+    },
+    {
+      "id": "short-gorge",
+      "priority": 108,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/narrows"
+          },
+          {
+            "analysis": {
+              "path": "damSites",
+              "where": {
+                "length": {
+                  "lte": 5
+                },
+                "ratio": {
+                  "gte": 1000
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Short Gorge",
+      "titleWords": [
+        "modifiers.short",
+        "landforms.gorge"
+      ],
+      "description": "A short gorge pinches the river above a broad basin. A compact dam can hold a large reserve, but the ridge limits crossings."
+    },
+    {
+      "id": "rim-bench",
+      "priority": 106,
+      "when": {
+        "featureRole": "premise/rim-settlement"
+      },
+      "title": "Rim Bench",
+      "titleWords": [
+        "landforms.rim",
+        "landforms.bench"
+      ],
+      "description": "The start sits on the canyon rim above the river. Build down the slope chain to reach water and the valley floor."
+    },
+    {
+      "id": "paired-falls",
+      "priority": 106,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/twin-falls"
+          },
+          {
+            "metric": {
+              "path": "waterfalls",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        ]
+      },
+      "title": "Paired Falls",
+      "titleWords": [
+        "modifiers.paired",
+        "water.falls"
+      ],
+      "description": "Two falls break the river into separate levels. Build crossings between them before spreading along both banks."
+    },
+    {
+      "id": "oxbow-basin",
+      "priority": 104,
+      "when": {
+        "featureRole": "premise/oxbow-lake"
+      },
+      "title": "Oxbow Basin",
+      "titleWords": [
+        "water.oxbow",
+        "landforms.basin"
+      ],
+      "description": "The river loops around a cut-off basin. Use the inner bank for a settlement, then choose whether to reopen the old channel."
+    },
+    {
+      "id": "lake-steps",
+      "priority": 104,
+      "when": {
+        "featureRole": "premise/chain-lakes"
+      },
+      "title": "Lake Steps",
+      "titleWords": [
+        "water.lake",
+        "landforms.steps"
+      ],
+      "description": "A chain of lakes descends through short channels. Secure the upper outlets first; each lower basin drains sooner."
+    },
+    {
+      "id": "scarp-gate",
+      "priority": 104,
+      "when": {
+        "featureRole": "premise/great-scarp"
+      },
+      "title": "Scarp Gate",
+      "titleWords": [
+        "landforms.scarp",
+        "landforms.gate"
+      ],
+      "description": "A long scarp divides high ground from the valley. Place slopes along the rim before extending the colony downhill."
+    },
+    {
+      "id": "channel-hub",
+      "priority": 104,
+      "when": {
+        "featureRole": "premise/hub-channels"
+      },
+      "title": "Channel Hub",
+      "titleWords": [
+        "water.channel",
+        "water.hub"
+      ],
+      "description": "Several channels meet at a central pool. Each outlet is a separate dam front, so choose which to hold first."
+    },
+    {
+      "id": "outer-isles",
+      "priority": 102,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/archipelago"
+          },
+          {
+            "feature": {
+              "kind": "lake",
+              "where": {
+                "params.islands.count": {
+                  "gte": 6
+                }
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Outer Isles",
+      "titleWords": [
+        "modifiers.outer",
+        "landforms.isle"
+      ],
+      "description": "Many islands rise across the sea. Secure the largest first, then expand outward across the shoreline and channels."
+    },
+    {
+      "id": "branching-rifts",
+      "priority": 102,
+      "when": {
+        "featureRole": "premise/branching-rifts"
+      },
+      "title": "Branching Rifts",
+      "titleWords": [
+        "modifiers.branching",
+        "landforms.rift"
+      ],
+      "description": "Rifts branch from the main valley. Claim the ridges between them as you open routes outward."
+    },
+    {
+      "id": "ring-terraces",
+      "priority": 102,
+      "when": {
+        "featureRole": "premise/concentric-rings"
+      },
+      "title": "Ring Terraces",
+      "titleWords": [
+        "landforms.ring",
+        "landforms.terrace"
+      ],
+      "description": "Terraces circle the central high ground in nested levels. Settle the inner ring, then build routes to each outer shelf."
+    },
+    {
+      "id": "rising-shore",
+      "priority": 100,
+      "when": {
+        "featureRole": "premise/rising-lake"
+      },
+      "title": "Rising Shore",
+      "titleWords": [
+        "modifiers.rising",
+        "water.shore"
+      ],
+      "description": "A narrow outlet controls a broad lake basin. Raise the water in stages to flood the shore benches and grow the reserve."
+    },
+    {
+      "id": "highland-stair",
+      "priority": 100,
+      "when": {
+        "featureRole": "premise/staircase"
+      },
+      "title": "Highland Stair",
+      "titleWords": [
+        "landforms.highland",
+        "landforms.stair"
+      ],
+      "description": "A stream drops over several high terraces. Follow it down for clean water and connect the shelves with slopes."
+    },
+    {
+      "id": "twin-tablelands",
+      "priority": 100,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/twin-plateaus"
+          },
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau"
+              },
+              "count": {
+                "gte": 2
+              }
+            }
+          }
+        ]
+      },
+      "title": "Twin Tablelands",
+      "titleWords": [
+        "modifiers.twin",
+        "landforms.tableland"
+      ],
+      "description": "Two flat plateaus stand above the river valley. Expand from the start, then choose which plateau to reach first."
+    },
+    {
+      "id": "open-mouths",
+      "priority": 100,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/many-mouths"
+          },
+          {
+            "metric": {
+              "path": "edgeExits",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        ]
+      },
+      "title": "Open Mouths",
+      "titleWords": [
+        "modifiers.open",
+        "water.mouth"
+      ],
+      "description": "The lower river splits into several mouths across the plain. Store water upstream before the channels reach the map edge."
+    },
+    {
+      "id": "saltmarsh-edge",
+      "priority": 100,
+      "when": {
+        "all": [
+          {
+            "featureRole": "premise/salt-marsh"
+          },
+          {
+            "metric": {
+              "path": "badwaterStrength",
+              "op": ">",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "title": "Saltmarsh Edge",
+      "titleWords": [
+        "water.saltmarsh",
+        "landforms.edge"
+      ],
+      "description": "A badwater marsh lies in the lower delta. Its leveed outlet contains the threat while clean channels run above it."
+    },
+    {
+      "id": "lagoon-ring",
+      "priority": 98,
+      "when": {
+        "featureRole": "premise/atoll"
+      },
+      "title": "Lagoon Ring",
+      "titleWords": [
+        "water.lagoon",
+        "landforms.ring"
+      ],
+      "description": "A ring of shore wraps around a lagoon with one controlled outlet. Settle the rim, then manage the water at its opening."
+    },
+    {
+      "id": "volcanic-shore",
+      "priority": 98,
+      "when": {
+        "featureRole": "premise/volcano-island"
+      },
+      "title": "Volcanic Shore",
+      "titleWords": [
+        "modifiers.volcanic",
+        "water.shore"
+      ],
+      "description": "A badwater cone island sits offshore. Keep the start on clean ground and plan around its contained spillway."
+    },
+    {
+      "id": "heart-basin",
+      "priority": 96,
+      "when": {
+        "featureRole": "premise/heart-lake"
+      },
+      "title": "Heart Basin",
+      "titleWords": [
+        "modifiers.heart-shaped",
+        "landforms.basin"
+      ],
+      "description": "A heart-shaped lake rests inside a low rim. Follow the outlet to decide where to store water and build outward."
+    },
+    {
+      "id": "heart-isles",
+      "priority": 96,
+      "when": {
+        "featureRole": "premise/heart-islands"
+      },
+      "title": "Heart Isles",
+      "titleWords": [
+        "modifiers.heart-shaped",
+        "landforms.isle"
+      ],
+      "description": "Islands form a heart-shaped chain across the water. Claim the central shores before connecting the outer islands."
+    },
+    {
+      "id": "oxbow-delta",
+      "priority": 96,
+      "when": {
+        "featureRole": "premise/oxbow-delta"
+      },
+      "title": "Oxbow Delta",
+      "titleWords": [
+        "water.oxbow",
+        "water.delta"
+      ],
+      "description": "A looping river bends through several delta channels. Settle the high banks first and keep a route open to the outer mouths."
+    },
+    {
+      "id": "poolside-valley",
+      "priority": 80,
+      "when": {
+        "all": [
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "valley"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          },
+          {
+            "metric": {
+              "path": "basins20",
+              "op": ">=",
+              "value": 1
+            }
+          },
+          {
+            "metric": {
+              "path": "waterShare",
+              "op": ">",
+              "value": 0.01
+            }
+          }
+        ]
+      },
+      "title": "Poolside Valley",
+      "titleWords": [
+        "whimsy.poolside",
+        "landforms.valley"
+      ],
+      "description": "A natural pool sits beside the river valley. Use its shore to expand while saving enough water for drought."
+    },
+    {
+      "id": "birchbound-steps",
+      "priority": 78,
+      "when": {
+        "all": [
+          {
+            "derived": {
+              "path": "dominantTreeSpecies",
+              "equals": "Birch"
+            }
+          },
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "terraces"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Birchbound Steps",
+      "titleWords": [
+        "modifiers.birchbound",
+        "landforms.steps"
+      ],
+      "description": "Birch woods cover the terraces beside the river. Clear along the slopes and leave a route between each level."
+    },
+    {
+      "id": "pineward-ridge",
+      "priority": 78,
+      "when": {
+        "all": [
+          {
+            "derived": {
+              "path": "dominantTreeSpecies",
+              "equals": "Pine"
+            }
+          },
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "ridge"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Pineward Ridge",
+      "titleWords": [
+        "modifiers.pineward",
+        "landforms.ridge"
+      ],
+      "description": "A pine ridge cuts across the river corridor. Find its lower pass before building routes over the high ground."
+    },
+    {
+      "id": "oakshade-reach",
+      "priority": 78,
+      "when": {
+        "all": [
+          {
+            "derived": {
+              "path": "dominantTreeSpecies",
+              "equals": "Oak"
+            }
+          },
+          {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          },
+          {
+            "metric": {
+              "path": "livingShare",
+              "op": ">=",
+              "value": 0.6
+            }
+          }
+        ]
+      },
+      "title": "Oakshade Reach",
+      "titleWords": [
+        "modifiers.oakshade",
+        "water.reach"
+      ],
+      "description": "Oak stands line a long river reach. Follow the wooded banks and use nearby slopes to reach upper ground."
+    },
+    {
+      "id": "green-shelf",
+      "priority": 76,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "livingShare",
+              "op": ">=",
+              "value": 0.75
+            }
+          },
+          {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">=",
+              "value": 1200
+            }
+          },
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "plateau"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Green Shelf",
+      "titleWords": [
+        "modifiers.green",
+        "landforms.shelf"
+      ],
+      "description": "Living forest covers the flat shelf above the river. Clear the bench you need while keeping the surrounding woods intact."
+    },
+    {
+      "id": "dryroot-basin",
+      "priority": 76,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "waterShare",
+              "op": "<=",
+              "value": 0.08
+            }
+          },
+          {
+            "metric": {
+              "path": "livingShare",
+              "op": "<=",
+              "value": 0.35
+            }
+          },
+          {
+            "metric": {
+              "path": "basins20",
+              "op": ">=",
+              "value": 1
+            }
+          }
+        ]
+      },
+      "title": "Dryroot Basin",
+      "titleWords": [
+        "modifiers.dry",
+        "landforms.root",
+        "landforms.basin"
+      ],
+      "description": "The basin has little standing water and few living trees. Secure a reservoir early before expanding into the drier ground."
+    },
+    {
+      "id": "lushwood-valley",
+      "priority": 76,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">=",
+              "value": 1200
+            }
+          },
+          {
+            "metric": {
+              "path": "livingShare",
+              "op": ">=",
+              "value": 0.75
+            }
+          },
+          {
+            "metric": {
+              "path": "bushesPer10k",
+              "op": ">=",
+              "value": 100
+            }
+          },
+          {
+            "feature": {
+              "kind": "landform",
+              "where": {
+                "params.kind": "valley"
+              },
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Lushwood Valley",
+      "titleWords": [
+        "modifiers.lush",
+        "beaver.woodland",
+        "landforms.valley"
+      ],
+      "description": "The valley has dense living woods and nearby water. Expand along the river while choosing which groves to clear."
+    },
+    {
+      "id": "lowwater-channels",
+      "priority": 74,
+      "when": {
+        "all": [
+          {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          },
+          {
+            "metric": {
+              "path": "cleanStrength",
+              "op": "<=",
+              "value": 1
+            }
+          },
+          {
+            "metric": {
+              "path": "rivers",
+              "op": ">=",
+              "value": 2
+            }
+          }
+        ]
+      },
+      "title": "Lowwater Channels",
+      "titleWords": [
+        "modifiers.lowwater",
+        "water.channel"
+      ],
+      "description": "Several narrow channels carry little flow. Share stored water carefully and avoid relying on every branch at once."
+    },
+    {
+      "id": "broadplain-bench",
+      "priority": 74,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "flatShare",
+              "op": ">=",
+              "value": 0.58
+            }
+          },
+          {
+            "metric": {
+              "path": "benchTiles",
+              "op": ">=",
+              "value": 800
+            }
+          }
+        ]
+      },
+      "title": "Broadplain Bench",
+      "titleWords": [
+        "modifiers.broad",
+        "landforms.plain",
+        "landforms.bench"
+      ],
+      "description": "A broad flat bench gives the start room to grow. Use the open ground for early services before crossing into higher terrain."
+    },
+    {
+      "id": "crowded-boughs",
+      "priority": 74,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "treesPer10k",
+              "op": ">=",
+              "value": 1600
+            }
+          },
+          {
+            "metric": {
+              "path": "treesNearStart",
+              "op": ">=",
+              "value": 120
+            }
+          },
+          {
+            "feature": {
+              "kind": "forest",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Crowded Boughs",
+      "titleWords": [
+        "modifiers.crowded",
+        "beaver.boughs"
+      ],
+      "description": "Dense trees fill the low ground around the start. Clear only the routes you need, then expand through the remaining forest."
+    },
+    {
+      "id": "berry-bend",
+      "priority": 72,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "bushesNearStart",
+              "op": ">=",
+              "value": 60
+            }
+          },
+          {
+            "metric": {
+              "path": "meander",
+              "op": ">=",
+              "value": 0.08
+            }
+          },
+          {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      },
+      "title": "Berry Bend",
+      "titleWords": [
+        "whimsy.nibble",
+        "water.bend"
+      ],
+      "description": "A river bend passes abundant berries near the start. Secure food early, then follow the curve toward the next dam site."
+    },
+    {
+      "id": "scrap-meadow",
+      "priority": 72,
+      "when": {
+        "all": [
+          {
+            "metric": {
+              "path": "scrapPer1k",
+              "op": ">=",
+              "value": 2
+            }
+          },
+          {
+            "metric": {
+              "path": "flatShare",
+              "op": ">=",
+              "value": 0.5
+            }
+          },
+          {
+            "metric": {
+              "path": "ruinsNearest",
+              "op": "<=",
+              "value": 40
+            }
+          }
+        ]
+      },
+      "title": "Scrap Meadow",
+      "titleWords": [
+        "modifiers.scrap-rich",
+        "landforms.meadow"
+      ],
+      "description": "Open ground surrounds a large ruin field. Clear the nearest columns for scrap before pushing toward the next watercourse."
+    }
+  ],
+  "fallback": {
+    "title": "Choose the most specific eligible landform or water noun, then a second eligible word from a different group. Select by measured prominence, then stable word id; never use a random word or a seed.",
+    "description": "The start has clean water within reach. Follow the main river and choose a nearby place to store water before drought.",
+    "descriptionRequires": [
+      {
+        "all": [
+          {
+            "metric": {
+              "path": "cleanStrength",
+              "op": ">",
+              "value": 0
+            }
+          },
+          {
+            "metric": {
+              "path": "waterDistance",
+              "op": "<=",
+              "value": 20
+            }
+          },
+          {
+            "feature": {
+              "kind": "start",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          },
+          {
+            "feature": {
+              "kind": "river",
+              "where": {},
+              "count": {
+                "gte": 1
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+
