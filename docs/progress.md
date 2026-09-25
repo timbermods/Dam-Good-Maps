@@ -754,6 +754,8 @@ the editor's chunks are 127 KB (42 KB gzipped); the 3D chunk is 560 KB (143 KB g
   of the time (`water.reservoir`). Both reach 100% final.
 - `out/m6/` was made with generator 0.4.0. Remaking it now gives different maps; test the
   committed files.
+- Fixed after M7: Lake Basin and Islands project files reopen (point bounds widened to one map side
+  past each edge, −256…512; bytes unchanged; project round trip in every batch).
 
 ---
 
