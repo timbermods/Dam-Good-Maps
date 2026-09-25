@@ -31,9 +31,16 @@ Use combinations: a caldera with an eroded outlet gorge; a glacial floor below h
 Process references: [NPS river systems](https://home.nps.gov/subjects/geology/fluvial-landforms.htm), [braided streams](https://www.nps.gov/articles/braided-stream.htm), [volcanic landforms](https://www.nps.gov/subjects/volcanoes/volcanoes-volcanic-landforms.htm), [calderas](https://home.nps.gov/articles/000/calderas.htm), [karst](https://www.nps.gov/subjects/caves/karst-landscapes.htm), and [glaciers](https://www.nps.gov/subjects/glaciers/about.htm). These explain process families. The play value is an interpretation for Timberborn.
 `,
 );
+const failureLabels: Record<string, string> = {
+  "water.settles": "water still moving after four game days",
+  "start.water": "pumpable clean water too far from the start",
+  "water.no_flood": "too much of the map under water",
+  "resources.scrap": "too little scrap",
+  "water.outflow": "source water does not reach an outlet",
+};
 const biggest = Object.entries(s.failures16)
   .slice(0, 5)
-  .map(([k, v]) => `${k}: ${v}`)
+  .map(([k, v]) => `${failureLabels[k] ?? k}: ${v}`)
   .join("; ");
 const measures: Record<string, string> = {
   straightShare8: "Contour edges in straight runs of 8+ (fraction)",
