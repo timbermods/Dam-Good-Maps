@@ -44,6 +44,8 @@ Each open choice, what was chosen, and why.
    mostly his own: --keep-mods changes no setting, records the loaded mods in every result, and the summary
    says the numbers are the game with those mods. The runner also stops if it cannot see Unity's launch count
    move, so it never reports a restore it could not make.
+   Kyler, 2026-09-25: his installed mods don't touch water, soil, plants or weather timing, so `--keep-mods` is
+   fine for every check, the weather calibration included.
 8b. **DGM Probe sorts after every other mod.** The game's mod sorter rewrites the load order of mods whose
    position moves; a new mod sorting in among Kyler's moved Harmony and BobHousingOptimize. The manifest lists
    optional mods that never exist, so the sorter places DGM Probe last and moves nothing. The runner also takes
