@@ -14,8 +14,12 @@ listed in [clean/captures.md](clean/captures.md).
 - Dry ground is cracked earth in the reference's grey-brown: broad patches, a few tiles to a dozen
   across, drift between a cooler grey, the base grey-brown and a warmer brown, and in lightness, so
   the ground varies from afar. The cracks are finer, and fainter from afar.
-- Grass varies within and between patches (lighter and deeper patches, darker blotches) and bleeds
-  onto the earth in ragged edges.
+- Grass is a muted, yellowish green (second round). It varies within and between patches (lighter
+  and deeper patches, darker blotches), has clumps with yellower tips and blades up close, and
+  bleeds onto the earth in ragged edges.
+- Water is a deep teal body that darkens to navy with depth (second round). It is clear toward its
+  banks, where the bed shows through a light teal tint. Ripple crests catch the sky, glints
+  sparkle, and a line of foam runs along the shore.
 - Light reads from afar: shadows keep about three fifths of the light (they kept four fifths), the
   corners at the foot of walls are darker, and objects keep their pale sides pale.
 - Walls are dark cobbled stone, every other level a shade darker, without the pale line at each
@@ -43,6 +47,17 @@ on". The generator's 3D preview draws its best dam site only with **Markers** on
 
 What did not change: generation, validation, the file format, the existing tests and `shade.ts`.
 
+**Second round** (Kyler, 2026-09-25, after reviewing the first): water moves toward the game's deep
+teal and navy, with clearer shallows; grass becomes a more muted, yellower green with visible
+texture. Kyler accepted that clean water may be as dark as dry ground in greyscale or darker; it
+reads as water by its shore foam, glints, ripples and see-through shallows. All the clean captures
+were made again.
+
+One existing test, unchanged, still checks that `WATER.deep` is lighter than dry ground
+(`tests/unit/look-water-slopes.test.ts`, from the third round's rule that water sits between dry
+and moist ground). `WATER.deep` is now the colour of the ripples' lit crests; the water's body uses
+the new `WATER.teal` and `WATER.navy`, which are darker than dry ground.
+
 ## Where to look for each core meaning
 
 Positions are in pixels from the top-left corner of the capture (in `docs/map-look/clean/`); they
@@ -51,31 +66,34 @@ listed example in the clean captures of our maps.
 
 | Meaning | Capture and position | What shows it | Greyscale L\* |
 |---|---|---|---|
-| Clean water | riverValley-128-start, 666, 441 | blue-teal, sparkles, a pale edge where it meets a wall | 56 |
-| Badwater | riverValley-256-meets, 415, 370; riverValley-128-badwater, 480, 348 | near black-brown with dark streaks | 14 |
-| Badwater meeting clean water | riverValley-256-meets, 482, 341 and 765, 353 | dark brown streaks and blotches drifting into the blue | between the two |
-| Moist ground | riverValley-128-badwater, 515, 546 | yellow-green grass | 62 |
+| Clean water | riverValley-128-start, 666, 441 (river); lakeBasin-128-start, 504, 577 (lake) | deep teal to navy; foam along the shore, glints, ripple crests; clear toward its banks | 31 |
+| Badwater | riverValley-256-meets, 415, 370; riverValley-128-badwater, 480, 348 | near black-brown, dull, with brown streaks, no glints | 13 |
+| Badwater meeting clean water | riverValley-256-meets, 482, 341 and 765, 353 | dark brown streaks and blotches drifting into the teal | between the two |
+| Moist ground | riverValley-128-badwater, 515, 546 | muted yellowish grass with clumps | 60 |
 | Dry ground | riverValley-128-badwater, 634, 411 | grey-brown cracked earth | 40 |
 | Contaminated ground | riverValley-128-badwater, 474, 403 | rust-red cracked earth with glowing cracks | 30 |
 | Living trees | riverValley-128-start, 382, 288 (oak) and 512, 247 (pine) | dark green crowns with shadows | dark |
 | Dead trees | riverValley-128-badwater, 393, 309 (pines); riverValley-128-start, 197, 184 (oaks) | pale bare trunks and stumps, far lighter than living crowns | pale |
 | The start | riverValley-128-start, 490, 355; riverValley-128-overview, 379, 409 | the lodge: red roof, pale walls and deck, yellow banner | light and dark together |
 
-From light to dark in greyscale: dead trees, moist ground, clean water, dry ground, contaminated
-ground, badwater; living trees are dark. With protanopia and deuteranopia grass turns yellow,
-contaminated ground dark olive and dry ground grey; with tritanopia grass turns a pale grey-green,
-dry ground a greyish mauve and contaminated ground red. The markers captures (`*-markers.jpg`) show the information layer: dam
-sites at riverValley-128-overview-markers 505, 408, slope arrows and the enlarged start and dead
-trees.
+From light to dark in greyscale: dead trees, moist ground, dry ground, then clean water and
+contaminated ground about alike, then badwater; living trees are dark. Clean water and
+contaminated ground differ in texture: water has light foam at its banks, glints and ripple
+crests, and contaminated ground a network of light cracks. With protanopia and deuteranopia grass
+turns yellow, contaminated ground dark olive, dry ground grey and clean water blue-grey; with
+tritanopia grass turns a pale grey-green, dry ground a greyish mauve, contaminated ground red and
+clean water teal. The markers captures (`*-markers.jpg`) show the information layer: dam sites at
+riverValley-128-overview-markers 505, 408, slope arrows and the enlarged start and dead trees.
 
 ## Where readability needed a compromise
 
-- **Water is lighter than in the game.** The game's deep water is darker than dry ground; ours
-  stays lighter (L\* 56 against 40), because in greyscale water as dark as the ground would read as
-  ground. Clean and badwater still differ by about 40 L\*.
+- **In greyscale, clean water reads by texture, not lightness.** Since the second round it is as
+  dark as the game's: about as dark as contaminated ground (L\* 31 against 30) and darker than dry
+  ground (40). Up close its foam, glints and ripples tell it apart; in a view of the whole map a
+  river reads by its shape and banks. Badwater stays about 18 L\* darker than clean water.
 - **Grass is lighter than in the game.** The game's grass and dry ground are about as light as each
-  other; ours differ by about 20 L\*, so moist and dry ground read in greyscale and with colour
-  blindness.
+  other; ours differ by about 20 L\* (60 against 40), so moist and dry ground read in greyscale and
+  with colour blindness. It is now muted and yellower, as in the game.
 - **Contaminated ground is a brighter rust-red than the game's**, and a step darker than dry
   ground, so it reads apart from dry ground and ruins in greyscale and with colour blindness.
 - **Dead trees at their true size are specks in a view of the whole map.** They read as pale
@@ -91,5 +109,7 @@ trees.
 
 A local page, never committed, shows each of Kyler's reference screenshots beside the clean view
 of a comparable scene of our maps, the same scene in the third round's look, and a place for the
-DGM Probe's in-game shot of our map: `C:\dgm-workshop\look\compare.html`. It links the screenshots
-where they are (`C:\dgm-reference\`) and copies none.
+DGM Probe's in-game shot of our map: `C:\dgm-workshop\look\compare.html`. Its first section shows
+the second round's water and grass before and after, beside the matching screenshots, with the
+water scenes in greyscale too. It links the screenshots where they are (`C:\dgm-reference\`) and
+copies none.

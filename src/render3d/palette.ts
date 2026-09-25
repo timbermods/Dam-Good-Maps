@@ -1,18 +1,21 @@
 // The 3D view's colours (ROADMAP "Map look", PLAN §20 D86, D110, D114 and Kyler's clean look), in
 // one place: the shaders and models read them and the legend shows the same swatches, so the legend
 // always says what the scene shows. The clean view is as close to the game as we can make it with
-// our own shaders (Kyler's reference screenshots): moist ground a vivid yellow-green grass (living
-// plants grow), dry ground cracked earth in a cool grey-brown, contaminated ground rusty red-brown
-// with glowing cracks, and ground under water a dark wet bed; a toggle switches the ground to
-// height colours. Walls are dark cobbled stone, every other level a shade darker. Colours are
-// display values (the renderer outputs them without conversion).
+// our own shaders (Kyler's reference screenshots): moist ground a muted yellowish grass (living
+// plants grow), dry ground cracked earth in a grey-brown, contaminated ground rusty red-brown with
+// glowing cracks, clean water a deep teal body darkening to navy with depth, clear in the
+// shallows, and ground under water a dark wet bed; a toggle switches the ground to height colours.
+// Walls are dark cobbled stone, every other level a shade darker. Colours are display values (the
+// renderer outputs them without conversion).
 //
-// Every meaning differs in lightness too, so it reads in greyscale and with any colour blindness:
-// from light to dark, dead trees, moist ground, clean water, dry ground, contaminated ground,
-// badwater (the walls, in the side light, are darker than the ground above them). Living trees are
-// dark, dead trees pale. The information layer (**Markers**)
-// adds dam sites, hatched light and dark with a dark rim so they show on any ground or water,
-// slope arrows and a pale line at every level.
+// Meanings differ in lightness too, so they read in greyscale and with any colour blindness: from
+// light to dark, dead trees, moist ground, dry ground, contaminated ground, badwater. Clean water's
+// body is about as dark as contaminated ground (Kyler, 2026-09-25: as in the game); it reads as
+// water by its light shore foam, glints and ripple crests and its see-through shallows, and in
+// colour by its blue. Badwater is darker still, brown and dull. Living trees are dark, dead trees
+// pale. The walls, in the side light, are darker than the ground above them. The information
+// layer (**Markers**) adds dam sites, hatched light and dark with a dark rim so they show on any
+// ground or water, slope arrows and a pale line at every level.
 //
 // Pure TypeScript, no three.js: the unit tests and the page's legend read it too.
 
@@ -34,10 +37,11 @@ export const GROUND = {
   dryWarm: [0.47, 0.39, 0.31] as Rgb,
   /** The cracks in dry ground. */
   crack: [0.19, 0.17, 0.17] as Rgb,
-  /** Moist ground at the edge of the moist area (the least moisture). */
-  moistLow: [0.62, 0.72, 0.28] as Rgb,
-  /** Moist ground by the water (the most moisture). */
-  moistHigh: [0.52, 0.68, 0.21] as Rgb,
+  /** Moist ground at the edge of the moist area (the least moisture): a muted, yellowish grass
+   *  green, lighter than dry ground. */
+  moistLow: [0.6, 0.66, 0.31] as Rgb,
+  /** Moist ground by the water (the most moisture), a little deeper green. */
+  moistHigh: [0.56, 0.66, 0.26] as Rgb,
   /** Contaminated ground: badwater spoils the soil and plants die. Rusty cracked earth... */
   contaminated: [0.4, 0.2, 0.14] as Rgb,
   /** ...its cracks glowing. */
@@ -63,11 +67,18 @@ export const WALL = {
 } as const;
 
 export const WATER = {
-  /** Clean water: teal where shallow (and see-through), a deeper blue-teal where deep; lighter than
-   *  dry ground at any depth (darker in the game, but then it would read as dry ground in
-   *  greyscale), darker than moist ground. */
+  /** Clean water, as in the game (Kyler's clean look): clear in the shallows, where the bed shows
+   *  through a light teal tint, and a deep teal body darkening to navy with depth. The body may be
+   *  as dark as dry ground or darker; water reads as water by its shore foam, glints, ripples and
+   *  see-through shallows, and badwater stays darker still, brown and dull. */
   shallow: [0.36, 0.6, 0.64] as Rgb,
+  /** The ripples' lit crests, where they catch the sky: the lightest the water gets, lighter than
+   *  dry ground at any depth. */
   deep: [0.26, 0.5, 0.62] as Rgb,
+  /** The body of water a level or so deep. */
+  teal: [0.09, 0.23, 0.25] as Rgb,
+  /** The body of deep water. */
+  navy: [0.07, 0.15, 0.2] as Rgb,
   foam: [0.9, 0.94, 0.95] as Rgb,
   /** The sky the water reflects. */
   sky: [0.6, 0.72, 0.84] as Rgb,
@@ -230,7 +241,7 @@ export function legendEntries(mode: GroundMode): LegendEntry[] {
   const walls = icon(`<rect width="24" height="8" fill="${c(wallColor(11))}"/><rect y="8" width="24" height="8" fill="${c(wallColor(10))}"/>` + cobbles(0) + cobbles(9));
   return [
     ...ground,
-    { swatch: `linear-gradient(90deg, ${c(WATER.foam)} 0 2px, ${c(mixRgb(WATER.shallow, WATER.foam, 0.35))} 2px, ${c(WATER.shallow)})`, label: "Water: darker is deeper" },
+    { swatch: `linear-gradient(90deg, ${c(WATER.foam)} 0 2px, ${c(WATER.shallow)} 2px, ${c(WATER.teal)} 45%, ${c(WATER.navy)})`, label: "Water: darker is deeper" },
     { swatch: icon(`<path d="M0 7 Q6 4 12 7 T24 7" stroke="${c([0.55, 0.4, 0.38])}" stroke-width="1.2" fill="none"/><circle cx="17" cy="11" r="1.3" fill="${c(WATER.badVein)}"/>`, c(WATER.bad)), label: "Badwater" },
     { swatch: walls, label: "Walls: one band per level" },
     { swatch: cssColor(DEAD_TREE), label: "Bare pale trees: dead" },
@@ -245,7 +256,7 @@ export function objectLegend(): LegendEntry[] {
   const dry = c(GROUND.dry);
   return [
     {
-      swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.shallow)),
+      swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.teal)),
       label: "Water mixed with badwater: murkier, with dark streaks",
     },
     {
