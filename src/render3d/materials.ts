@@ -512,7 +512,9 @@ export function waterMaterial(scene: SceneUniforms): ShaderMaterial {
           float churn = vnoise(g * 3.2 + vec2(0.0, t * 1.4)) * 0.6 + vnoise(g * 7.0 - vec2(t * 0.9, 0.0)) * 0.4;
           foam += (1.0 - smoothstep(0.0, 0.95, fall)) * (0.3 + 0.7 * smoothstep(0.3, 0.62, churn));
           // glints of light, and pale ripples drifting where it flows
-          glints = smoothstep(0.72, 0.8, vnoise(g * 11.0 + vec2(t * 0.6, -t * 0.4)) * vnoise(g * 8.3 - vec2(t * 0.3, t * 0.7)) * 1.4);
+          // (small and sparse, and gone where a pixel covers more than a few of them)
+          float fine = 1.0 - smoothstep(0.03, 0.09, fwidth(g.x));
+          glints = fine * smoothstep(0.8, 0.9, vnoise(g * 17.0 + vec2(t * 0.6, -t * 0.4)) * vnoise(g * 13.0 - vec2(t * 0.3, t * 0.7)) * 1.45);
           pale = smoothstep(0.6, 0.82, vnoise(vec2(g.x * 0.9 + g.y * 0.3, (g.y - g.x * 0.2) * 5.0) + vec2(t * 0.15, t * 0.5)));
           // the slow glowing veins of badwater
           float vn = vnoise(g * 1.6 + vec2(t * 0.05, -t * 0.03));

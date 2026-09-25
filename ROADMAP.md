@@ -579,9 +579,11 @@ flat: badwater in its open ditch looks like a brown dirt ramp. Ruins are grey pi
 district center is a small box.
 
 **Delivers**
-1. Ground tops coloured by moisture as in game: moist ground green, dry ground sandy, contaminated
-   soil with its own look. A toggle switches back to height colours. This changes the 3D view's
-   colour meaning from height to moisture (approved by Kyler, D86).
+1. Ground tops coloured by moisture as in game: moist ground green; dry ground cracked earth, a warm
+   grey-brown with a faint violet cast in shadow and visible cracks, not sandy (Kyler's correction
+   from his in-game reference screenshots, D110); contaminated soil with its own look. A toggle
+   switches back to height colours. This changes the 3D view's colour meaning from height to
+   moisture (approved by Kyler, D86).
 2. Height shown on the block walls: layered bands per level, so levels can be counted.
 3. Baked ambient occlusion and soft sun shadows, computed when the mesh is built.
 4. Warmer colour grading and light depth haze.
@@ -610,9 +612,9 @@ district center is a small box.
 - A reviewer can tell each meaning above apart in the after captures.
 - The budgets pass, and every existing test passes unchanged.
 
-**Reference:** when Kyler plays the first in-game test, they will screenshot the same map in
-Timberborn from the default angle ([docs/ingame-log.md](docs/ingame-log.md), ML-1). Use it to
-compare and tune colours, lighting and water. Never ship game screenshots.
+**Reference:** Kyler's in-game screenshots ([docs/ingame-log.md](docs/ingame-log.md), ML-1) arrived
+on 2026-09-25 and tuned the colours, lighting, water and models. They stay on Kyler's machine:
+never ship game screenshots.
 
 **Not in this step:** the workshop study's naturalness targets for generated terrain (straight
 steps, shorelines, ridge crests). Map look changes no map file, so they go to the refinement phase

@@ -44,7 +44,7 @@ const LABEL = arg("label") ?? "after";
 const ONLY = arg("only")?.split(",");
 const QUALITY = Number(arg("quality") ?? 80);
 /** The greyscale and colour-blind versions: a little more compressed (they are many). */
-const VARIANT_QUALITY = Math.min(QUALITY, 72);
+const VARIANT_QUALITY = Math.min(QUALITY, 62);
 const PORT = 4191;
 const DIST = ".scratch/capture-dist";
 const BEAVERTOPIA = "investigation/raw/workshop/Beavertopia - 256x256.timber";
@@ -561,7 +561,7 @@ const MEANINGS: Meaning[] = ["clean water", "badwater", "badwater meets clean wa
 const POSE_NAMES: Record<string, string> = {
   overview: "the whole map from the south",
   start: "close to the start",
-  badwater: "close to where badwater meets clean water (or to the badwater)",
+  badwater: "close to the badwater, where it meets clean water if it does",
   falls: "the tallest waterfall, from downstream",
   "default-ui": "the page's own view from its default camera, with its buttons and legend",
 };
@@ -594,7 +594,10 @@ function writeDoc(): void {
   out.push("y north, from the map's south-west corner) and its position in the image, in pixels from the");
   out.push("top-left corner. The before and after captures of a pose share the camera, so the positions");
   out.push("hold for both, and for the greyscale and colour-blind versions. Trees and the start are");
-  out.push("objects standing on the tile; dam sites are lines of tiles across a river.");
+  out.push("objects standing on the tile; dam sites are lines of tiles across a river. \"Badwater meets clean");
+  out.push("water\" is water partly bad, where the two mix; our generated maps keep their badwater in its");
+  out.push("basins, so only Beavertopia has it. \"Contaminated beside moist ground\" is contaminated ground");
+  out.push("with moist ground next to it.");
   out.push("");
   const maps = [...new Set(after.shots.map((s) => s.map))];
   for (const map of maps) {

@@ -48,6 +48,9 @@ The editor:
 - **Back to settings** keeps your edits. Generate again and they stay.
 - **Open a map** opens any `.timber`, from 0.6 to 1.1.
 - The preview's **3D** switch shows the map in 3D.
+- In 3D the ground looks as in the game: green where the soil is moist, cracked earth where it is
+  dry, rusty red where badwater spoils it. **Height colours** colours it by height instead. The
+  legend says what each colour means.
 
 Your map is saved in the browser as you work.
 

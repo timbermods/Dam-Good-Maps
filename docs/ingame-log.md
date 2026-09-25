@@ -282,7 +282,8 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | pending |
+| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | **received** 2026-09-25: ten in-game screenshots, kept on Kyler's machine only (`C:\dgm-reference\`), used to tune Map look's ground, walls, water, light and models (PLAN §20 D110). Never copied, committed or shipped |
+| ML-2 | Open the map in Timberborn, and the same file in Dam Good Maps (**Open a map**, then look in 3D). Compare the ground near the start and along the river. | Where the game shows grass, the 3D view shows moist ground; where it shows cracked earth, dry ground; where badwater has spoiled the soil, contaminated ground. The badwater itself is clearly water in both. | `out/m8/River Valley (4242) M8 preview.timber` | pending |
 
 ## M12: Claude integration
 
