@@ -14,21 +14,25 @@ export interface PlanSummary {
   maps: { id: string; title: string; checks: string[]; days: number }[];
   estimateMinutes: number;
   kind: 'smoke' | 'batch';
+  /** Played with the installed mods (no settings changed). */
+  keepMods?: boolean;
 }
 
 const pendingFile = () => join(probePaths().runner, 'pending-consent.json');
 
 export function planHash(plan: PlanSummary): string {
-  return createHash('sha256').update(JSON.stringify(plan.maps)).update(plan.kind).digest('hex').slice(0, 16);
+  return createHash('sha256').update(JSON.stringify(plan.maps)).update(plan.kind).update(plan.keepMods ? 'keep-mods' : 'probe-only').digest('hex').slice(0, 16);
 }
 
 export function describe(plan: PlanSummary): string {
   const lines = [
-    `This run LAUNCHES TIMBERBORN through Steam. Only the DGM Probe mod is on during the run: your other mods are switched off and your settings are put back exactly afterwards.`,
+    plan.keepMods
+      ? `This run LAUNCHES TIMBERBORN through Steam, with your installed mods (each result records which loaded). It changes none of your settings, and DGM Probe leaves your Mods folder afterwards.`
+      : `This run LAUNCHES TIMBERBORN through Steam. Only the DGM Probe mod is on during the run: your other mods are switched off and your settings are put back exactly afterwards.`,
     `${plan.kind === 'smoke' ? 'Smoke run' : 'Full batch'}: ${plan.maps.length} map${plan.maps.length === 1 ? '' : 's'}, about ${plan.estimateMinutes} minutes.`,
   ];
   for (const m of plan.maps) lines.push(`  - ${m.title} (${m.days} game days): ${m.checks.join(', ') || 'screenshots and records only'}`);
-  lines.push(`It never runs if Timberborn is already open, and puts back your settings, logs and saves afterwards.`);
+  lines.push(plan.keepMods ? `It never runs if Timberborn is already open, and cleans up its logs and saves afterwards.` : `It never runs if Timberborn is already open, and puts back your settings, logs and saves afterwards.`);
   return lines.join('\n');
 }
 

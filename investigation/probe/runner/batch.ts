@@ -286,7 +286,7 @@ async function main(): Promise<void> {
   const launchOnly = flag('launch-only');
   const plan = launchOnly ? (JSON.parse(readFileSync(join(resultsDir(opt('run-id') ?? ''), 'plan.json'), 'utf8')) as Plan) : planFromArgs();
   const prepared = prepare(selectGames(plan), plan.runId);
-  const s = summary(prepared, plan.kind);
+  const s = summary(prepared, plan.kind, !!plan.keepMods);
   if (flag('prepare-only')) {
     // everything before the launch that needs no real game settings: the maps, the plan and the mod
     mkdirSync(resultsDir(plan.runId), { recursive: true });

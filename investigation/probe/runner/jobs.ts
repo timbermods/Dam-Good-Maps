@@ -96,9 +96,10 @@ export function estimateMinutes(p: Prepared[]): number {
   return Math.ceil(s / 60) + 2;
 }
 
-export function summary(p: Prepared[], kind: 'smoke' | 'batch'): PlanSummary {
+export function summary(p: Prepared[], kind: 'smoke' | 'batch', keepMods = false): PlanSummary {
   return {
     kind,
+    keepMods,
     estimateMinutes: estimateMinutes(p),
     maps: p.map((x) => ({ id: x.game.id, title: x.game.title, checks: x.checks.filter((c) => c.how !== 'none').map((c) => c.id), days: x.game.days })),
   };
