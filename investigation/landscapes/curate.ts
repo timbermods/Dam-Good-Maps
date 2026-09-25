@@ -239,14 +239,22 @@ writeFileSync(
 );
 const escape = (s: string) =>
   s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
-const examples = [
-  ...new Map(
-    index
-      .slice()
-      .reverse()
-      .map((r) => [r.family, r]),
-  ).values(),
-].sort((a, b) => a.family.localeCompare(b.family));
+const preferred = JSON.parse(
+  readFileSync("data/library-examples.json", "utf8"),
+).preferred;
+const exampleMap = new Map(
+  index
+    .slice()
+    .reverse()
+    .map((r) => [r.family, r]),
+);
+for (const [family, id] of Object.entries(preferred)) {
+  const item = index.find((r) => r.id === id && r.family === family);
+  if (item) exampleMap.set(family, item);
+}
+const examples = [...exampleMap.values()].sort((a, b) =>
+  a.family.localeCompare(b.family),
+);
 writeFileSync(
   "library/README.md",
   "\n## One example per sampling family\n\nThe full gallery and index include every fixture. These images show terrain, simulated water and the start.\n\n| Family | Example | Preview |\n|---|---|---|\n" +
