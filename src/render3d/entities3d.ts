@@ -218,6 +218,18 @@ const MODELS: Record<string, () => Model> = {
   },
 };
 
+/** The light look's models, for browsers that render in software (a few triangles each; D110). */
+const LITE_MODELS: Record<string, () => Model> = {
+  Pine: () => new Model().add(cone(0.36, 1.25, 5), [0.13, 0.32, 0.19], { y: 0.2 + 0.625 }),
+  "Pine.dead": () => new Model().add(cyl(0.07, 0.03, 0.95, 3), DEAD_WOOD, { y: 0.475 }),
+  Birch: () => new Model().add(cyl(0.05, 0.04, 0.7, 3), [0.93, 0.91, 0.86], { y: 0.35 }).add(new OctahedronGeometry(0.32, 0), [0.5, 0.7, 0.28], { y: 0.95, sy: 1.3 }),
+  "Birch.dead": () => new Model().add(cyl(0.055, 0.03, 0.8, 3), [0.9, 0.87, 0.8], { y: 0.4 }),
+  Oak: () => new Model().add(cyl(0.1, 0.08, 0.55, 3), [0.34, 0.23, 0.14], { y: 0.275 }).add(new OctahedronGeometry(0.44, 0), [0.24, 0.45, 0.17], { y: 0.92, sy: 0.85 }),
+  "Oak.dead": () => new Model().add(cyl(0.12, 0.06, 0.6, 3), DEAD_WOOD, { y: 0.3 }),
+  BlueberryBush: () => new Model().add(new OctahedronGeometry(0.28, 0), [0.14, 0.29, 0.14], { y: 0.2, sy: 0.75 }),
+};
+const LITE_RUIN = () => new Model().add(box(0.8, 1, 0.8), RUST, { y: 0.5 });
+
 /** Templates whose model stands in the middle of a footprint: the local tile it is centred on. */
 const CENTRED: Record<string, [number, number]> = { BadwaterSource: [1, 1], UndergroundRuins: [2, 2] };
 
@@ -342,8 +354,9 @@ interface Batch {
 }
 
 /** Build the objects of a map view as a group of instanced meshes; with the soil (and the map's
- *  width), ruins on moist ground are overgrown. */
-export function buildEntities(v: EntityView, material: ShaderMaterial, soil: SoilView | null = null, W = 0): { group: Group; instances: number } {
+ *  width), ruins on moist ground are overgrown. `lite`: the light look's models (software
+ *  rendering). */
+export function buildEntities(v: EntityView, material: ShaderMaterial, soil: SoilView | null = null, W = 0, lite = false): { group: Group; instances: number } {
   const batches = new Map<string, Batch>();
   const batch = (key: string, model: () => Model): Batch => {
     let b = batches.get(key);
@@ -371,6 +384,10 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
     const flags = v.flags[k];
     const key = modelKeyOf(template, flags);
     instances++;
+    if (key === "ruin" && lite) {
+      put(batch("ruin.lite", LITE_RUIN), x + 0.5, z, -(y + 0.5), 0, 1, 1, Number(template.slice(-1)));
+      continue;
+    }
     if (key === "ruin") {
       const n = Number(template.slice(-1));
       const ivy = !!soil && W > 0 && x >= 0 && y >= 0 && y * W + x < soil.moisture.length && soil.moisture[y * W + x] > 0;
@@ -401,7 +418,7 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       else put(b, x + 0.5, z, -(y + 0.5), 0, 1, color);
       continue;
     }
-    const b = batch(key, MODELS[key]);
+    const b = lite && LITE_MODELS[key] ? batch(`${key}.lite`, LITE_MODELS[key]) : batch(key, MODELS[key]);
     const centre = CENTRED[template];
     if (centre) {
       const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;

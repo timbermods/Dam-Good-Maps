@@ -226,6 +226,21 @@ describe("the models", () => {
     expect(byName.get("start.entrance")!.count).toBe(1);
   });
 
+  it("has lighter models for software rendering, dead trees still bare", () => {
+    const e = entityView([
+      { template: "Oak", x: 1, y: 1, z: 2, orientation: "Cw0", owner: "f" },
+      { template: "Oak", x: 3, y: 1, z: 2, orientation: "Cw0", owner: "f", dead: true },
+      { template: "RuinColumnH3", x: 5, y: 1, z: 2, orientation: "Cw0", owner: "f" },
+    ]);
+    const { group } = buildEntities(e, new ShaderMaterial(), null, 0, true);
+    const byName = new Map(group.children.map((c) => [c.name, c as unknown as { geometry: { getAttribute(n: string): { array: ArrayLike<number>; count: number } }; count: number }]));
+    expect([...byName.keys()].sort()).toEqual(["Oak.dead.lite", "Oak.lite", "ruin.lite"]);
+    const col = byName.get("Oak.dead.lite")!.geometry.getAttribute("pcolor").array;
+    for (let k = 0; k < col.length; k += 3) expect(col[k + 1] > col[k] + 0.12 && col[k + 1] > col[k + 2] + 0.12).toBe(false);
+    expect(byName.get("ruin.lite")!.count).toBe(1);
+    expect(byName.get("Oak.lite")!.geometry.getAttribute("position").count / 3).toBeLessThan(modelTriangles("Oak"));
+  });
+
   it("places the same instances every time (jitter comes from the tile)", () => {
     const e = entityView(Array.from({ length: 30 }, (_, k) => ({ template: k % 3 ? "Pine" : "Birch", x: k, y: k % 7, z: 2, orientation: "Cw0", owner: "f", dead: k % 5 === 0 })));
     const a = buildEntities(e, new ShaderMaterial()).group.children.map((c) => Array.from((c as unknown as { instanceMatrix: { array: Float32Array } }).instanceMatrix.array));

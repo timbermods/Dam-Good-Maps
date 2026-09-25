@@ -10,7 +10,7 @@
 // north and 70° down. The water's surface moves (at 30 frames a second at most) unless the viewer
 // prefers reduced motion, the browser renders in software, or the view is hidden. A browser that
 // renders in software gets a lighter look: no multisampling, no patterns or shadows, soil without
-// blending.
+// blending, and models of a few triangles.
 //
 // Controls: left drag orbits (pans in the top-down view), right drag pans, the wheel zooms. On the
 // focused canvas: W A S D or the arrows pan, Q and E turn, R and F (or + and −) zoom.
@@ -390,7 +390,7 @@ export class MapRenderer {
       this.scene.remove(this.objects);
       disposeGroup(this.objects);
     }
-    const { group, instances } = buildEntities(e, this.objectMat, this.map?.soil ?? null, this.map?.W ?? 0);
+    const { group, instances } = buildEntities(e, this.objectMat, this.map?.soil ?? null, this.map?.W ?? 0, this.software);
     group.renderOrder = 1;
     this.objects = group;
     this.scene.add(group);
