@@ -1,14 +1,14 @@
-// The mesher against the 3D budgets (PLAN §14.2, D46), measured the way `npm run bench:3d` does:
-// installed Chrome, headed; (1) the default GPU at 1600×900; (2) the other GPU (the integrated
-// one) at 1600×900; (3) the other GPU with the page's CPU 4× slower, on a 1280×720 screen at 150%.
-// Budgets: a build under 1.5 s at 256², and 60 fps.
+// The mesher on this machine's normal GPU (Kyler, 2026-09-25: rough numbers for the prototype; the
+// full budgets of `npm run bench:3d`, the integrated GPU with the CPU slowed 4×, apply when the
+// feature is built). Installed Chrome, headed, 1600×900: each map's build (mesh, light, upload,
+// first frame) and an orbit with and without the cutaway.
 //
 // Maps (256², plus Hollows at 192² and one oversize stress map): the prototype's generated maps
 // (ordinary and high verticality), the official cave maps, and the local workshop maps with the
 // most caves (read only; their per-map numbers stay local, only aggregates are written to results).
 //
 //   npx tsx investigation/terrain3d/proto/bench-mesher.ts --work <scratch dir> [--seconds 8]
-//        [--configs 1,2,3] [--maps name,...] [--gen <dir with terrain3d-*.timber>]
+//        [--maps name,...] [--gen <dir with terrain3d-*.timber>] [--shots <dir>] [--shots-only]
 
 import { mkdirSync, writeFileSync, readdirSync, existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -27,7 +27,6 @@ const arg = (n: string, d?: string) => {
 };
 const WORK = arg("work", ".scratch/terrain3d-bench")!;
 const SECONDS = Number(arg("seconds", "8"));
-const CONFIGS = arg("configs")?.split(",").map(Number);
 const ONLY = arg("maps")?.split(",");
 const GEN = arg("gen", join(WORK, "..", "maps3d"))!;
 const PORT = 4191;
@@ -108,6 +107,17 @@ async function gpus(): Promise<{ name: string; luid: string; active: boolean }[]
   return out;
 }
 
+/** Where the carving prototype put its sky bridge (results/carve-*.json), to aim a picture at it. */
+function bridgeAt(name: string, S: number): [number, number, number] {
+  const vert = name.includes("high") ? "high" : "ordinary";
+  try {
+    const rep = JSON.parse(readFileSync(join(here, "..", "results", `carve-${vert}-${S}.json`), "utf8"));
+    const b = rep.features.find((f: { kind: string }) => f.kind === "sky bridge");
+    if (b?.at) return [b.at[0], b.at[1], b.level - 6];
+  } catch {}
+  return [S * 0.68, S * 0.8, 16];
+}
+
 async function measure(page: Page, r: Ref, cut: number) {
   const t0 = Date.now();
   await page.goto(`http://localhost:${PORT}/index.html?map=${r.name}`);
@@ -146,16 +156,8 @@ async function main() {
   }).listen(PORT);
   try {
     const gl = await gpus();
-    const active = gl.find((g) => g.active) ?? gl[0];
-    const other = gl.find((g) => g !== active);
     const DESKTOP = { width: 1600, height: 900, scale: 1 };
-    const LAPTOP = { width: 1280, height: 720, scale: 1.5 };
-    const configs: [string, string[], number, typeof DESKTOP][] = [["default GPU", [], 1, DESKTOP]];
-    if (other) {
-      configs.push([`other GPU (${other.name})`, [`--use-adapter-luid=${other.luid}`], 1, DESKTOP]);
-      configs.push([`other GPU (${other.name}), CPU 4× slower, 1280×720 at 150%`, [`--use-adapter-luid=${other.luid}`], 4, LAPTOP]);
-    }
-    const chosen = CONFIGS ? configs.filter((_, k) => CONFIGS.includes(k + 1)) : configs;
+    const chosen: [string, string[], number, typeof DESKTOP][] = [["default GPU", [], 1, DESKTOP]];
     const runs = [];
     for (const [label, args, slow, screen] of chosen) {
       const keep = ["--disable-backgrounding-occluded-windows", "--disable-renderer-backgrounding", "--disable-background-timer-throttling"];
@@ -178,7 +180,7 @@ async function main() {
           const poses: [string, number, number, number, number | null, [number, number, number] | null][] = [
             ["overview", 30, 45, S * 1.2, null, null],
             ["massif-face", 10, 22, S * 0.55, null, [S * 0.45, S * 0.62, 14]],
-            ["gorge-bridge", 70, 28, S * 0.35, null, [S * 0.68, S * 0.75, 16]],
+            ["gorge-bridge", 0, 4, S * 0.16, null, bridgeAt(r.name, S)],
             ["cutaway-level-7", 30, 60, S * 0.9, 7, [S * 0.35, S * 0.45, 4]],
             ["cutaway-level-17", 20, 55, S * 0.7, 17, [S * 0.45, S * 0.65, 12]],
           ];
@@ -189,7 +191,7 @@ async function main() {
           await page.evaluate("window.bench.setCut(null)");
         }
       }
-      for (const r of list) {
+      for (const r of process.argv.includes("--shots-only") ? [] : list) {
         const m = await measure(page, r, 10);
         results.push(m);
         console.log(`${r.name.padEnd(28)} build ${String(m.build.ms).padStart(5)} ms (mesh ${m.build.meshMs}, light ${m.build.lightMs}, first frame ${m.build.firstFrameMs}), ${m.triangles.toLocaleString()} tris, orbit ${m.orbit.fps.toFixed(0)} fps (p95 ${m.orbit.p95.toFixed(1)} ms), cut ${m.cutMs} ms, orbit cut ${m.orbitCut.fps.toFixed(0)} fps`);
@@ -198,7 +200,7 @@ async function main() {
       runs.push({ label, gpu, cpuSlowdown: slow, screen, results });
     }
     const machine = { cpu: cpus()[0]?.model.trim(), threads: cpus().length, os: `${platform()} ${release()}`, gpus: gl.map((g) => g.name) };
-    writeFileSync(join(WORK, "bench-mesher-full.json"), JSON.stringify({ machine, nodeSide, runs }, null, 1));
+    if (!process.argv.includes("--shots-only")) writeFileSync(join(WORK, "bench-mesher-full.json"), JSON.stringify({ machine, nodeSide, runs }, null, 1));
     console.log(`\nfull results in ${join(WORK, "bench-mesher-full.json")}`);
   } finally {
     server.close();

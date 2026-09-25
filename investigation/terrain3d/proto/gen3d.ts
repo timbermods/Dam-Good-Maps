@@ -62,7 +62,7 @@ export function gen3d(S: number, vert: Verticality, seed: number): Gen3dResult {
   const yc = (x: number) => S * 0.4 + S * 0.035 * sinDet((6.283185307179586 * x) / (0.9 * S));
   const vw = Math.round(S * 0.1), tw = Math.round(S * 0.12), rw = Math.max(5, Math.round(S * 0.05)), sw = Math.round(S * 0.1);
   const gx = Math.round(S * 0.68), gHalf = Math.max(3, Math.round(S * 0.03));
-  const gEnd = vw + tw + Math.round(S * 0.25);
+  const gEnd = S; // the gorge cuts through the massif to the map's edge: the massif has two halves
   const bx = Math.round(S * 0.45), by = Math.round(yc(Math.round(S * 0.45)) + vw + tw + S * 0.13), rB = Math.max(4, Math.round(S * 0.055));
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     // boundaries wobble smoothly along x, so cliff lines stay continuous
@@ -158,6 +158,7 @@ export function gen3d(S: number, vert: Verticality, seed: number): Gen3dResult {
   const extraRewards: { x: number; y: number; z: number; template: string }[] = [];
   let cliffLedge: { x: number; y: number; z: number }[] = [];
   let basinOutlet = -1;
+  const bridgeVoxels: number[] = [];
   let exit: { x: number; y: number; z: number } | null = null;
   if (vert === "high") {
     const faces = findFaces(vx.surface(), W, H, 5);
@@ -223,13 +224,19 @@ export function gen3d(S: number, vert: Verticality, seed: number): Gen3dResult {
     }
     // ---------------------------------------------------------------- 8. a sky bridge over the gorge
     {
+      // across the gorge, where its rims match, nearest the middle of the gorge's massif reach
       const gaps = findGaps(vx.surface(), W, H, p.M, 4, 5, 3 * gHalf + 4).filter((g) => g.dir === 3 && Math.abs(g.a[0] + g.span / 2 - gx) <= gHalf + 2);
       const hs = vx.surface();
-      const g = gaps.find((c) => hs[c.a[1] * W + c.a[0]] === hs[c.b[1] * W + c.b[0]]) ?? gaps[0];
+      const midY = Math.round(yc(gx) + vw + tw + (H - 1 - (yc(gx) + vw + tw)) / 2);
+      const level = gaps.filter((c) => hs[c.a[1] * W + c.a[0]] === hs[c.b[1] * W + c.b[0]]);
+      level.sort((a, b) => Math.abs(a.a[1] - midY) - Math.abs(b.a[1] - midY) || a.span - b.span);
+      const g = level[0] ?? gaps[0];
       if (g) {
         g.level = Math.min(hs[g.a[1] * W + g.a[0]], hs[g.b[1] * W + g.b[0]]);
+        const before = vx.v.slice();
         const r = skyBridge(vx, g, 3);
-        features.push({ kind: "sky bridge", level: g.level, span: g.span, height: g.level - g.floor, corbelLayers: r.layers, width: 3, candidates: gaps.length });
+        for (let k = 0; k < vx.v.length; k++) if (vx.v[k] && !before[k]) bridgeVoxels.push(k);
+        features.push({ kind: "sky bridge", level: g.level, span: g.span, height: g.level - g.floor, corbelLayers: r.layers, width: 3, candidates: gaps.length, at: [g.a[0] + Math.floor(g.span / 2), g.a[1]], only: "the one way between the massif's two halves" });
       }
     }
     // ---------------------------------------------------------------- 9. a tall arch through the ridge
@@ -294,6 +301,14 @@ export function gen3d(S: number, vert: Verticality, seed: number): Gen3dResult {
   places["massif east of the gorge"] = anyReached(g, reach, N, W, (x, y, z) => z >= p.M && y > yc(x) + vw + tw + 4 && x > gx + gHalf + 2);
   places["ridge top"] = anyReached(g, reach, N, W, (x, y, z) => z === p.R && y < yc(x) - vw && y >= yc(x) - vw - rw - 3);
   if (spring) places["spring cave floor"] = reached(spring.x, spring.y - 3, p.vf) || reached(spring.x - 1, spring.y - 4, p.vf);
+  if (bridgeVoxels.length) {
+    // the same walk with the bridge taken away: is it the only way across?
+    const v2 = vx.v.slice();
+    for (const k of bridgeVoxels) v2[k] = 0;
+    const g2 = new FloorGraph(W, H, v2, vx.L);
+    const r2 = g2.reach(startNode, g2.autoSlopes(startNode, 400, 6, keepClear));
+    places["massif east of the gorge, without the bridge"] = anyReached(g2, r2, N, W, (x, y, z) => z >= p.M && y > yc(x) + vw + tw + 4 && x > gx + gHalf + 2);
+  }
   report.places = places;
   {
     // reach along the terrace's middle row, west to east: # reached, . walkable not reached

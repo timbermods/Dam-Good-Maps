@@ -1,0 +1,205 @@
+{
+ "budget": {
+  "buildMs": 1500,
+  "fps": 60
+ },
+ "machine": {
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor",
+  "threads": 16,
+  "os": "win32 10.0.26200",
+  "gpus": [
+   "NVIDIA GeForce RTX 4080 SUPER",
+   "AMD Radeon(TM) Graphics"
+  ]
+ },
+ "configs": [
+  {
+   "label": "default GPU",
+   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+   "cpuSlowdown": 1,
+   "screen": {
+    "width": 1600,
+    "height": 900,
+    "scale": 1
+   },
+   "worstBuildMs256": 374,
+   "worstFps256": 163,
+   "maps": [
+    {
+     "map": "terrain3d-high-256-1",
+     "source": "generated",
+     "buildMs": 122,
+     "meshMs": 96,
+     "lightMs": 12,
+     "firstFrameMs": 13,
+     "terrainQuads": 5042,
+     "waterQuads": 2236,
+     "triangles": 14234,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 7,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "terrain3d-ordinary-256-1",
+     "source": "generated",
+     "buildMs": 110,
+     "meshMs": 81,
+     "lightMs": 13,
+     "firstFrameMs": 16,
+     "terrainQuads": 4106,
+     "waterQuads": 1106,
+     "triangles": 10102,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 8,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "Hollows",
+     "source": "official",
+     "buildMs": 88,
+     "meshMs": 57,
+     "lightMs": 10,
+     "firstFrameMs": 19,
+     "terrainQuads": 16701,
+     "waterQuads": 4117,
+     "triangles": 40846,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 5,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "Pressure",
+     "source": "official",
+     "buildMs": 128,
+     "meshMs": 88,
+     "lightMs": 13,
+     "firstFrameMs": 23,
+     "terrainQuads": 24684,
+     "waterQuads": 9053,
+     "triangles": 66542,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 6,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "Nomads",
+     "source": "official",
+     "buildMs": 111,
+     "meshMs": 81,
+     "lightMs": 12,
+     "firstFrameMs": 17,
+     "terrainQuads": 13801,
+     "waterQuads": 1328,
+     "triangles": 29944,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 7,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "Lakes",
+     "source": "official",
+     "buildMs": 136,
+     "meshMs": 94,
+     "lightMs": 16,
+     "firstFrameMs": 22,
+     "terrainQuads": 19199,
+     "waterQuads": 9586,
+     "triangles": 57286,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 5,
+     "fpsWithCut": 164.9,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "HelixMountain",
+     "source": "official",
+     "buildMs": 123,
+     "meshMs": 83,
+     "lightMs": 14,
+     "firstFrameMs": 21,
+     "terrainQuads": 25175,
+     "waterQuads": 12778,
+     "triangles": 74132,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 8,
+     "fpsWithCut": 163.8,
+     "p95MsWithCut": 6.2
+    },
+    {
+     "map": "Oasis",
+     "source": "official",
+     "buildMs": 173,
+     "meshMs": 132,
+     "lightMs": 12,
+     "firstFrameMs": 28,
+     "terrainQuads": 17357,
+     "waterQuads": 361,
+     "triangles": 35114,
+     "fps": 164.3,
+     "p95Ms": 6.2,
+     "over60": 1,
+     "cutMs": 7,
+     "fpsWithCut": 163,
+     "p95MsWithCut": 6.2
+    }
+   ],
+   "workshop": {
+    "maps": 7,
+    "buildMs": {
+     "median": 159,
+     "max": 374
+    },
+    "fps": {
+     "median": 164.9,
+     "min": 164.7
+    },
+    "fpsWithCut": {
+     "median": 164.9,
+     "min": 164.4
+    },
+    "triangles": {
+     "median": 163990,
+     "max": 225590
+    }
+   },
+   "stress": [
+    {
+     "map": "oversize workshop map (399×399)",
+     "source": "stress",
+     "buildMs": 353,
+     "meshMs": 220,
+     "lightMs": 38,
+     "firstFrameMs": 87,
+     "terrainQuads": 204545,
+     "waterQuads": 29762,
+     "triangles": 456922,
+     "fps": 164.9,
+     "p95Ms": 6.2,
+     "over60": 0,
+     "cutMs": 8,
+     "fpsWithCut": 164.6,
+     "p95MsWithCut": 6.2
+    }
+   ]
+  }
+ ]
+}

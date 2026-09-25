@@ -37,7 +37,7 @@
    "cells": 99
   }
  ],
- "carveCpuMs": 63,
+ "carveCpuMs": 47,
  "support": {
   "droppedByTheRulePass": 0,
   "at": [],
@@ -72,8 +72,8 @@
     "roofed": 0
    },
    "8": {
-    "walkable": 2000,
-    "reached": 1993,
+    "walkable": 2189,
+    "reached": 2182,
     "roofed": 0
    },
    "9": {
@@ -87,7 +87,7 @@
     "roofed": 0
    },
    "13": {
-    "walkable": 4336,
+    "walkable": 4147,
     "reached": 0,
     "roofed": 0
    },
@@ -102,7 +102,7 @@
     "roofed": 0
    }
   },
-  "reachedShare": 0.442,
+  "reachedShare": 0.454,
   "stairOnlyRegions": [
    {
     "level": 15,
@@ -187,15 +187,6 @@
    },
    {
     "level": 13,
-    "nodes": 2417,
-    "roofedNodes": 0,
-    "at": [
-     73,
-     75
-    ]
-   },
-   {
-    "level": 13,
     "nodes": 1908,
     "roofedNodes": 0,
     "at": [
@@ -204,12 +195,21 @@
     ]
    },
    {
-    "level": 10,
-    "nodes": 768,
+    "level": 13,
+    "nodes": 1491,
     "roofedNodes": 0,
     "at": [
-     80,
-     28
+     92,
+     75
+    ]
+   },
+   {
+    "level": 13,
+    "nodes": 737,
+    "roofedNodes": 0,
+    "at": [
+     73,
+     75
     ]
    }
   ]
@@ -237,7 +237,7 @@
  "water": {
   "settled": true,
   "ticks": 1024,
-  "cpuMs": 171,
+  "cpuMs": 265,
   "levels": 2,
   "sourceStrength": 4.5,
   "edgeOutflow": 4.356,
@@ -254,8 +254,8 @@
   "tileIou": 0.947,
   "wetOnRoofs": 1
  },
- "totalCpuMs": 594,
- "fileBytes": 54423,
+ "totalCpuMs": 828,
+ "fileBytes": 55401,
  "runs": {
   "maxRunsPerTile": 2,
   "multiRunTiles": 47

@@ -76,7 +76,12 @@
    "height": 10,
    "corbelLayers": 4,
    "width": 3,
-   "candidates": 64
+   "candidates": 105,
+   "at": [
+    173,
+    203
+   ],
+   "only": "the one way between the massif's two halves"
   },
   {
    "kind": "natural arch",
@@ -88,14 +93,14 @@
    "cells": 951
   }
  ],
- "carveCpuMs": 140,
+ "carveCpuMs": 313,
  "support": {
   "droppedByTheRulePass": 0,
   "at": [],
   "unsupportedAfter": 0
  },
  "walk": {
-  "slopes": 61,
+  "slopes": 60,
   "perLevel": {
    "3": {
     "walkable": 1148,
@@ -133,9 +138,9 @@
     "roofed": 0
    },
    "10": {
-    "walkable": 8200,
-    "reached": 8200,
-    "roofed": 572
+    "walkable": 8897,
+    "reached": 8897,
+    "roofed": 589
    },
    "11": {
     "walkable": 630,
@@ -183,13 +188,13 @@
     "roofed": 0
    },
    "20": {
-    "walkable": 17933,
-    "reached": 17932,
+    "walkable": 17298,
+    "reached": 17297,
     "roofed": 0
    },
    "21": {
-    "walkable": 4916,
-    "reached": 4912,
+    "walkable": 4871,
+    "reached": 4863,
     "roofed": 0
    },
    "22": {
@@ -316,7 +321,8 @@
   "massif top": true,
   "massif east of the gorge": true,
   "ridge top": false,
-  "spring cave floor": true
+  "spring cave floor": true,
+  "massif east of the gorge, without the bridge": false
  },
  "terraceRow": "################################################################################################################################",
  "cliffPathReach": "10:6/6 11:6/6 12:6/6 13:6/6 14:6/6 15:6/6 16:6/6 17:6/6 18:6/6 19:6/6 20:6/6",
@@ -339,7 +345,7 @@
  "water": {
   "settled": true,
   "ticks": 1280,
-  "cpuMs": 766,
+  "cpuMs": 1188,
   "levels": 2,
   "sourceStrength": 6.5,
   "edgeOutflow": 6.208,
@@ -359,10 +365,10 @@
   "tileIou": 0.764,
   "wetOnRoofs": 42
  },
- "totalCpuMs": 2031,
- "fileBytes": 141477,
+ "totalCpuMs": 3422,
+ "fileBytes": 142874,
  "runs": {
   "maxRunsPerTile": 2,
-  "multiRunTiles": 921
+  "multiRunTiles": 938
  }
 }

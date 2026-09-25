@@ -97,8 +97,8 @@ The corbel rule is what makes tall overhangs and big arches possible.
 - An arch over a gap of G tiles needs ⌈G/6⌉ layers of corbelling (G = 18 closes in 3 layers).
 - An overhanging cliff 10 levels tall can lean out 30 tiles at its top.
 
-`proto/support.ts` checks these limits against the rule, shape by shape, and REPORT.md has the
-results.
+`proto/support-tests.ts` checks these limits against a port of the rule (`proto/support.ts`), shape
+by shape up to the full height. All 38 shapes behave as the table says (`results/support.json`).
 
 **Correction** (blocks_and_placement.md §5, format_1_1.md §4.2): "the first solid run of each cell
 is always kept" holds only for the run that starts at z = 0. Support resets to 0 on every voxel that
@@ -212,9 +212,9 @@ this column's gap:
 - On load the columns are rebuilt from terrain and objects first. Then depth, old depth,
   contamination, overflow and momentum are copied by slot (`WaterSimulator.PostLoad`).
 - A writer must put cave water in the right slot and write `Levels` = the most columns in any tile.
-- Momentum (`ColumnOutflows`) targets are padded 3D indices of the neighbour column. All 4,211
-  stored targets on Meander, and every other official map's, land on columns of our graph
-  (`proto/stackwater.ts` `setMomentum` drops none).
+- Momentum (`ColumnOutflows`) targets are padded 3D indices of the neighbour column. All 259,954
+  stored targets on the 19 official maps land on columns of our graph (`proto/stackwater.ts`
+  `setMomentum` drops none).
 
 ### 3.6 Badtide drains
 
@@ -236,9 +236,14 @@ For information only; it is not a rule:
 
 ### 3.8 Confirmation against real maps
 
-`proto/stackwater.ts` ports these rules. On the official maps it reproduces the water the files
-store, including roofed water and pressure, and it matches today's heightfield port bit for bit on
-heightfield maps. REPORT.md and `results/` have the numbers.
+`proto/stackwater.ts` ports these rules, and the official maps confirm them:
+- One game day from each map's own stored water and momentum keeps the water in place: the same wet
+  columns on 18 of 19 maps (0.999 on the last), and every pressurised column pressurised.
+- From a computed start it reproduces the stored water on 17 of 19. The other two hold aquifer and
+  seep water that no steady state shows.
+- On heightfield maps it can run bit for bit like today's port.
+
+DESIGN.md §3.2 and `results/water-official.json` have the numbers.
 
 ## 4. Walking
 
@@ -264,7 +269,8 @@ heightfield maps. REPORT.md and `results/` have the numbers.
   | `Platform`, `DoublePlatform`, `TriplePlatform` | player-built | 1, 2 or 3, as a new floor on top (`GenerateFloorsOnStackable`) |
   | `Tunnel` | 2,000 science | cuts through a wall, same level |
 
-- **A Slope needs only its own two cells to be air**, at z and z + 1 (`BlockValidator.BlockConflictsWithTerrain`).
+- **A Slope needs only its own two cells to be air**, at z and z + 1
+  (`BlockValidator.BlockConflictsWithTerrain`).
   - The high side needs air at z + 1.
   - A roof at z + 2 over the slope or its high side is fine, so slopes work inside caves and under
     ledges.
