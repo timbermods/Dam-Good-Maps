@@ -9,7 +9,7 @@ import { describeTile, entitiesByTile } from "../../src/editor/features";
 import { buildEntities, modelKeyOf, modelTriangles } from "../../src/render3d/entities3d";
 import { decodeTop, encodeTop, litFraction, objectCasters, shadowMap, shadowTops, SHADOW_RES, skyVisibility, soilNibbles, tileData, waterByte } from "../../src/render3d/light";
 import { DEAD, entityView, soilView, surfaceWater, waterFromDepth, YOUNG } from "../../src/render3d/model";
-import { contaminationByte, cssColor, DEAD_TREE, GROUND, groundColor, groundKind, legendEntries, LIGHT, moistureByte, wallColor, WATER } from "../../src/render3d/palette";
+import { contaminationByte, cssColor, DEAD_TREE, GROUND, groundColor, groundKind, legendEntries, LIGHT, moistureByte, wallColor, WATER, waterBody } from "../../src/render3d/palette";
 import { dropFlags, EDGE_CURTAIN, FALL_IN_BITS, lowerByTile, meshWaterChunk, SHORE_BITS } from "../../src/render3d/waterMesh";
 import { ShaderMaterial } from "three";
 
@@ -48,10 +48,9 @@ describe("the ground's colours", () => {
     // dry earth's cracks are darker than it, contaminated earth's glowing cracks lighter
     expect(lum(GROUND.crack)).toBeLessThan(lum(GROUND.dry) - 0.15);
     expect(lum(GROUND.contaminatedGlow)).toBeGreaterThan(lum(GROUND.contaminated) + 0.3);
-    // badwater is darker than clean water of the same depth (a level deep: three quarters absorbed)
-    const at = (a: readonly number[], b: readonly number[]) => a.map((v, k) => v + (b[k] - v) * 0.75);
+    // badwater is darker than clean water of the same depth: the water's body colours, a level deep
     expect(lum(WATER.shallow) - lum(WATER.bad)).toBeGreaterThan(0.2);
-    expect(lum(at(WATER.shallow, WATER.deep)) - lum(at(WATER.bad, WATER.badDeep))).toBeGreaterThan(0.06);
+    expect(lum(waterBody(1, false)) - lum(waterBody(1, true))).toBeGreaterThan(0.06);
   });
 
   it("bands the walls by level: neighbouring levels differ, higher is lighter", () => {

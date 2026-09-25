@@ -264,3 +264,5 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
 
 
 Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged since M8: no map file changes).
+
+- Two older look tests now compare the water's body colours (Kyler's rule, D148): `look-readable.test.ts` checks that clean water's body is lighter than badwater's at every depth (gap above 0.05; the smallest today is 0.062, in deep water), and `look.test.ts` that it is at one level deep (above 0.06, as before; 0.116 today). They had read the ripple crests through the alias `WATER.deep`, which is removed.

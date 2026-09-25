@@ -9,7 +9,7 @@ import { DAM } from "../../src/editor/tools";
 import { buildEntities } from "../../src/render3d/entities3d";
 import { hatchMarks } from "../../src/render3d/materials";
 import { entityView } from "../../src/render3d/model";
-import { DAM_OVERLAY, DAM_SITE, damLegendSwatch, DEAD_TREE, GROUND, HATCH, LIVING_TREE, cssColor, legendEntries, objectLegend, WATER } from "../../src/render3d/palette";
+import { DAM_OVERLAY, DAM_SITE, damLegendSwatch, DEAD_TREE, GROUND, HATCH, LIVING_TREE, cssColor, legendEntries, objectLegend, WATER, waterBody } from "../../src/render3d/palette";
 
 const lum = (c: readonly number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
@@ -21,8 +21,9 @@ describe("the meanings in lightness", () => {
     expect(lum(GROUND.moistHigh)).toBeGreaterThan(lum(GROUND.dry) + 0.2);
     expect(lum(GROUND.dry)).toBeGreaterThan(lum(GROUND.contaminated) + 0.15);
     expect(lum(GROUND.contaminated)).toBeGreaterThan(lum(WATER.bad) + 0.09);
-    // clean water is well lighter than badwater at any depth
-    expect(lum(WATER.deep)).toBeGreaterThan(lum(WATER.bad) + 0.18);
+    // clean water's body is lighter than badwater's at every depth (Kyler's rule: badwater stays
+    // clearly darker than clean water; the body is the colour the shader draws before its light)
+    for (const d of [0.05, 0.25, 0.5, 1, 2, 3, 5]) expect(lum(waterBody(d, false)) - lum(waterBody(d, true))).toBeGreaterThan(0.05);
     expect(lum(WATER.shallow)).toBeGreaterThan(lum(WATER.bad) + 0.4);
     // living trees are dark, dead trees nearly white
     expect(lum(DEAD_TREE) - lum(LIVING_TREE)).toBeGreaterThan(0.55);
