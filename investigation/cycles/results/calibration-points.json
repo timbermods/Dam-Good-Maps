@@ -3,17 +3,24 @@
     "tile": 6490,
     "coordinate": "(90, 50)",
     "before": 0.457,
-    "day1": 0
+    "droughtDay1": 0
   },
   "lake": {
     "tile": 4653,
     "coordinate": "(45, 36)",
     "before": 3.281,
-    "day4": 2.827
+    "hazardStart": 3.206,
+    "droughtDay4": 2.827
   },
-  "bad": {
-    "tile": 6271,
-    "coordinate": "(127, 48)",
-    "contamination": 0.519
+  "badtide": {
+    "tile": 7880,
+    "coordinate": "(72, 61)",
+    "contaminationDay1": 0.5
+  },
+  "plant": {
+    "species": "BlueberryBush",
+    "coordinate": "(18, 87)",
+    "day": 9.34,
+    "droughtDay": 8.3
   }
 }

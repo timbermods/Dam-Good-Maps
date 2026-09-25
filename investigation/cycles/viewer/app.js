@@ -21,10 +21,10 @@ function cases() {
 function chooseCase() { stop(); scenario = data.scenarios.find(s => s.id === $('case').value); $('day').max = scenario.days.at(-1).day; $('day').value = 0; $('endlabel').textContent = `${scenario.days.at(-1).day} days${scenario.id === 'normal' ? '' : ' including recovery'}`; render(); }
 function describe() {
     if (scenario.id === 'journey')
-        return `Follow the same map through five Normal cycles, then five days of recovery. The droughts lengthen as their early help runs out. The first badtide arrives in cycle 5. This run keeps water, soil and plant deaths between cycles.`;
+        return `A new Normal game from 04:00 on day 1: five cycles, then five days of recovery. The droughts lengthen as their early help runs out. The first badtide arrives in cycle 5. This run keeps water, soil and plant deaths between cycles.`;
     const hazard = scenario.days.filter(d => d.phase !== 'normal'), end = hazard.at(-1), base = scenario.days[0];
     if (!end)
-        return `Over ${scenario.phases[0].days} normal days, the map keeps ${Math.round(scenario.days.at(-1).volume / base.volume * 100)}% of its starting water.`;
+        return `Over the first ${scenario.phases[0].days} days of normal weather, ending as the sources slow before the first drought, the map keeps ${Math.round(scenario.days.at(-1).volume / base.volume * 100)}% of its starting water.`;
     const startDay = hazard[0].day, duration = scenario.phases.find(p => p.weather !== 'normal').days;
     const loss = scenario.firstWaterLost;
     const water = loss === null ? `The start keeps reachable clean water through the whole stretch.` : loss < startDay ? `The start loses reachable clean water before the hazard begins.` : `The start loses reachable clean water by day ${Math.max(0, loss - startDay)} of the ${end.phase}.`;
@@ -45,7 +45,7 @@ function render() {
     $('food').textContent = fmt(day.plants.nearBushesAlive);
     $('wood').textContent = fmt(day.plants.nearTreesAlive);
     $('summary').textContent = describe();
-    $('scope').textContent = `${scenario.id === 'journey' ? 'This is one continuous run.' : scenario.id === 'normal' ? 'This starts from the settled map.' : 'Each weather probe starts from the same settled map. Drought includes one day of falling source flow, then recovery.'} Dead trees still leave ${fmt(day.plants.nearLogs)} potential logs near the start.`;
+    $('scope').textContent = `${scenario.id === 'journey' ? 'This is one continuous run.' : scenario.id === 'normal' ? 'This starts from the settled map.' : 'Each weather probe loads the same map at a date in the weather schedule. A drought probe starts before the sources slow and ends with recovery.'} Dead trees still leave ${fmt(day.plants.nearLogs)} potential logs near the start.`;
     const c = $('terrain'), ctx = c.getContext('2d'), scale = c.width / data.size;
     const maxH = Math.max(...heights);
     for (let y = 0; y < data.size; y++)

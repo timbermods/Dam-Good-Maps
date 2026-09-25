@@ -4,11 +4,10 @@ import { createHash } from 'node:crypto';
 import { cpus } from 'node:os';
 import { generate } from '../../src/core/gen/generate';
 import { makeSpec, THEMES, THEME_NAMES, type ThemeId } from '../../src/core/spec/mapspec';
-import { WaterSim } from '../../src/core/sim/water';
 import { droughtStorage } from '../../src/core/sim/drought';
-import { CycleModel, cloneModel, temperateSettle } from './model';
+import { CycleModel, temperateSettle, sourcesOff } from './model';
 import { Measures, frame, rle, rounded } from './measures';
-import { schedule, type Phase } from './weather';
+import { cases, runStretch } from './stretch';
 const arg = (name: string, fallback: string) => { const i = process.argv.indexOf('--' + name); return i < 0 ? fallback : process.argv[i + 1]; };
 const themes = arg('themes', THEMES.join(',')).split(',') as ThemeId[];
 const sizes = arg('sizes', '96,128,256').split(',').map(Number);
@@ -20,24 +19,7 @@ for (const p of ['results/maps', 'viewer/data', 'generated'])
     mkdirSync(`${dir}/${p}`, { recursive: true });
 const sum = (a: ArrayLike<number>) => Array.from(a).reduce((a, b) => a + b, 0);
 const maxDiff = (a: ArrayLike<number>, b: ArrayLike<number>) => Array.from(a).reduce((m, v, i) => Math.max(m, Math.abs(v - b[i])), 0);
-export function cases(): {
-    id: string;
-    label: string;
-    phases: Phase[];
-}[] {
-    const first = (mode: 'easy' | 'normal' | 'hard') => schedule(mode, weatherSeed).find(p => p.weather === 'drought')!;
-    const bad = schedule('normal', weatherSeed).find(p => p.weather === 'badtide')!;
-    const later = schedule('hard', weatherSeed, 40).find(p => p.weather === 'drought' && p.occurrence === 13)!;
-    return [
-        { id: 'normal', label: 'Normal weather', phases: [{ weather: 'normal', days: schedule('normal', weatherSeed)[0].days, cycle: 1, occurrence: 1 }] },
-        ...(['easy', 'normal', 'hard'] as const).map(mode => ({ id: `first-${mode}`, label: `First drought · ${mode}`, phases: [
-                { weather: 'normal', days: 1, cycle: 1, occurrence: 1, next: 'drought' } as Phase, first(mode),
-                { weather: 'normal', days: 3, cycle: 2, occurrence: 2, previous: 'drought' } as Phase
-            ] })),
-        { id: 'first-badtide', label: `First badtide · Normal · cycle ${bad.cycle}`, phases: [bad, { weather: 'normal', days: 5, cycle: bad.cycle + 1, occurrence: bad.cycle + 1, previous: 'badtide' }] },
-        { id: 'late-hard', label: `Later drought · Hard · cycle ${later.cycle}`, phases: [{ weather: 'normal', days: 1, cycle: later.cycle, occurrence: later.cycle, next: 'drought' }, later, { weather: 'normal', days: 5, cycle: later.cycle + 1, occurrence: later.cycle + 1, previous: 'drought' }] },
-    ];
-}
+
 for (const size of sizes)
     for (const theme of themes)
         for (const seed of seeds) {
@@ -71,29 +53,25 @@ for (const size of sizes)
             const gallery = study === 'gallery' && ((size === 96 && seed === 1) || (size === 128 && seed === 2));
             const visual: any = { id, name: THEME_NAMES[theme], size, seed, start: r.built.start, heights: rle(r.built.heights), plants: [], scenarios: [] };
             let regions: any[] = [], baseline: any;
-            for (const spec of cases()) {
+            for (const spec of cases(r.built, weatherSeed)) {
                 t = performance.now();
-                const model = new CycleModel(r.built), measure = new Measures(model, r.spec.settings.start.rules.waterWithin);
+                const cpu0 = process.cpuUsage().user;
+                const model = new CycleModel(r.built, spec.start), measure = new Measures(model, r.spec.settings.start.rules.waterWithin);
                 regions = measure.regions;
                 baseline = measure.sample(0);
                 if (!visual.plants.length)
                     visual.plants = model.plants.map(p => ({ tile: p.tile, species: p.species, dead: p.initialDead }));
-                let elapsed = 0;
                 const days: any[] = [];
                 const images: any[] = [];
-                for (const phase of spec.phases) {
-                    model.run(phase, (day, m) => {
-                        const row = { ...measure.sample(elapsed + day), phase: phase.weather, phaseDay: day, cycle: phase.cycle };
-                        days.push(row);
-                        if (gallery)
-                            images.push(frame(m, measure.initialWet));
-                    });
-                    elapsed += phase.days;
-                }
+                const phases = runStretch(model, spec.days, (row, m) => {
+                    days.push({ ...measure.sample(row.day), phase: row.phase, phaseDay: row.phaseDay, cycle: row.cycle });
+                    if (gallery)
+                        images.push(frame(m, measure.initialWet));
+                });
                 const first = days[0], last = days.at(-1), hazard = days.filter(x => x.phase !== 'normal').at(-1);
                 const recovery = hazard ? days.filter(x => x.day >= hazard.day && x.phase === 'normal') : [];
                 const recoverAt = recovery.find(x => x.volume >= baseline.volume * .95 && x.badTiles <= baseline.badTiles + Math.max(1, baseline.wetTiles * .01) && x.moistTiles >= baseline.moistTiles * .95);
-                const record = { id: spec.id, label: spec.label, phases: spec.phases, ms: rounded(performance.now() - t), days,
+                const record = { id: spec.id, label: spec.label, phases, ms: rounded(performance.now() - t), cpuMs: rounded((process.cpuUsage().user - cpu0) / 1000), days,
                     firstWaterLost: measure.firstWaterLost, recoveryDays: recoverAt ? rounded(recoverAt.day - hazard.day) : null,
                     finalRetention: hazard ? rounded(hazard.volume / baseline.volume) : rounded(last.volume / first.volume),
                     firstDry: rle(Int16Array.from(measure.firstDry, n => n < 0 ? -1 : Math.round(n * 48))),
@@ -103,16 +81,18 @@ for (const size of sizes)
                 if (gallery)
                     visual.scenarios.push({ ...record, frames: images });
             }
+            // The analytic drought view against the exact model with every source off.
             t = performance.now();
-            const comparisonDays = [9, cases().find(c => c.id === 'late-hard')!.phases[1].days].sort((a, b) => a - b);
-            const sim = new WaterSim(cloneModel(r.built.waterModel), { depth: r.built.water, contamination: r.built.contamination });
+            const late = cases(r.built, weatherSeed).find(c => c.id === 'late-hard')!;
+            const comparisonDays = [9, late.start.plans[late.start.cycle - 1].hazardDays].sort((a, b) => a - b);
+            const off = sourcesOff(r.built);
             let ran = 0;
             const droughtComparison = comparisonDays.map(days => {
-                sim.run((days - ran) * 768, 0);
+                off.run((days - ran) * 768);
                 ran = days;
-                const analytic = droughtStorage(r.built.waterModel, r.built.water, days), a = sum(analytic), v = sim.volume();
+                const analytic = droughtStorage(r.built.waterModel, r.built.water, days), a = sum(analytic), v = off.sim.volume();
                 return { days, analytic: rounded(a), simulated: rounded(v), relativeError: a > 1e-9 ? rounded(Math.abs(v - a) / a) : null,
-                    absoluteError: rounded(Math.abs(v - a)), initialVolumeError: rounded(Math.abs(v - a) / baseline.volume), maxDepthError: rounded(maxDiff(analytic, sim.D)),
+                    absoluteError: rounded(Math.abs(v - a)), initialVolumeError: rounded(Math.abs(v - a) / baseline.volume), maxDepthError: rounded(maxDiff(analytic, off.sim.D)),
                     withinFivePercent: a > 1 ? Math.abs(v - a) / a <= .05 : Math.abs(v - a) <= 1 };
             });
             const comparisonMs = performance.now() - t;
