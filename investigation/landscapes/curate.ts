@@ -212,6 +212,26 @@ writeFileSync(
 );
 const escape = (s: string) =>
   s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+const examples = [
+  ...new Map(
+    index
+      .slice()
+      .reverse()
+      .map((r) => [r.family, r]),
+  ).values(),
+].sort((a, b) => a.family.localeCompare(b.family));
+writeFileSync(
+  "library/README.md",
+  "\n## One example per sampling family\n\nThe full gallery and index include every fixture. These images show terrain, simulated water and the start.\n\n| Family | Example | Preview |\n|---|---|---|\n" +
+    examples
+      .map(
+        (r) =>
+          `| ${r.family} | [${r.name}](${r.fixture}) | <img src="${r.preview}" alt="${escape(r.name)}" width="160"> |`,
+      )
+      .join("\n") +
+    "\n",
+  { flag: "a" },
+);
 writeFileSync(
   "library/gallery.html",
   '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Real landscape fixtures</title><style>body{font:16px system-ui;background:#f0ede3;color:#263529;margin:32px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}article{background:white;padding:15px}img{width:100%;image-rendering:pixelated}h1{font-size:28px}h2{font-size:18px}p{line-height:1.5}a{color:#225d62}</style><h1>Real landscape fixtures</h1><p>' +

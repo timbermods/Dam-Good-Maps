@@ -15,7 +15,7 @@ Use the library for regression tests and to understand quantisation failure. Do 
 - Product principles and §20 D108: add this survey as process evidence. State that both real patches and workshop maps remain outside the generator's template inputs.
 - §5.2 and §7.4: link stratified relief, slope and level-step distributions. Keep the 16-level cap. Do not replace player settings with raw metre units.
 - §7.2 and §7.6: require reporting drainage branching and bends. Keep sealed entries, actual outlet sills and canonical settling. Call inferred springs and discharge game choices.
-- §9: use valley sections, falling-water statistics and the existing dam-site search as evidence for where terrain offers play. Do not place one required landmark in every map.
+- §9: use valley sections, falling-water statistics and the existing dam-site search as evidence for where terrain offers play. Measure water surfaces from the simulation floor; a Blockage can raise it above the terrain array. Do not place one required landmark in every map.
 - §11: retain every hard check. Record advisory drought and access failures in batch reports. Do not turn survey proximity into a validator.
 - §20: record any adopted target ranges and their chosen strata, after the M9 design decision. No decision is made by this branch.
 
