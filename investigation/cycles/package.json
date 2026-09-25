@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "typecheck": "node check.cjs",
     "test": "node run.cjs test.ts",
     "batch": "node run.cjs batch.ts",
     "serve": "node serve.mjs"

@@ -38,7 +38,7 @@ export class CycleModel {
   private sources: {strength:number;contamination:number;template:string;activation:any}[];
   constructor(readonly built: BuildResult, readonly seed=1729, readonly soilTicks=SOIL_TICKS) {
     if (!Number.isInteger(soilTicks)||soilTicks<1||TICKS_PER_DAY%soilTicks) throw new Error('soilTicks must divide 768');
-    const objects = built.entities;
+    const objects = built.entities.map(o=>({...o,components:{...o.before,...o.components}}));
     if (objects.some(o=>o.template==='BadtideDrain'||o.template.startsWith('NaturalOverhang')||o.template==='UnstableCore'))
       throw new Error('Roofed water and changing terrain are outside this generated-heightfield study.');
     this.sim = new WaterSim(cloneModel(built.waterModel),{depth:built.water,contamination:built.contamination});
