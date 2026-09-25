@@ -458,3 +458,54 @@ Open decisions (section 7, P1–P7) have defaults; follow them unless Kyler has 
 in pilot/PILOT.md come from a self-played pilot, not from a model: re-measure the budget with
 the real suite before fixing it in the plan.
 ```
+
+---
+
+## 13. Kyler's decisions after the adoption (2026-09-25)
+
+Recorded in PLAN §20 (D134, D137–D141, D145) and ROADMAP M12; they change how this groundwork is
+used.
+
+**Claude steers the generator; it never hand-builds the map** (D139, a product principle). A request
+for character or new features becomes intentions (outcomes, not recipes; D138) and settings. Claude
+regenerates the affected area steered toward them (M11's regenerate area, with locks on what the
+player wants kept), checks the result with the analysis, and reports honestly what emerged and what
+didn't. Editor operations are for precise edits the player asks for. For the corpus this means:
+
+| Kind of request | Reference solution | Requests |
+|---|---|---|
+| New landforms, water features and dam opportunities, Kyler's flagship requests included (the giant waterfall, S01–S04, and the compound request, M01) | Steered: intentions and settings, regenerate area, checked by the analysis. **Waiting for capability** (M9's intentions; M11's regenerate area for a part of the map; 3D-b for caves; M9a's Verticality for height) | S01–S04, S07, P01, P02, P05, P06, P07, P10, P12, C01, C02, C05, C06, C07, R02, R04, R06, R08, W01–W05, W08, W10–W13, W15, J11, M01, M02, M04, M05, M09, M10, V04, V05, I01–I03, I05, I06, I08, X04, X09 |
+| Requests that change the map's character ("harsher", "more vertical", "more varied") | Steered through settings and regenerating (D145): map-wide, as today (D94); the regional form waits for M11 | S10, J01–J09, J13, M03, M07, M08, V01, V02, X06, X08 |
+| Precise edits, resources, map objects, the start, drawn rivers, precise follow-ups on what exists ("make it wider") | Operations, as today | S05, S06, S08, S09, P03, P04, P08, P09, P14, F01–F09, C03, C04, R01, R03, W06, W07, W09, M06, N01–N05, X01, X02, X03, X05, X07, I04, I07 |
+| Questions and safety | Answers, as today | Q01–Q07, V06, Z01–Z07 |
+
+Kyler confirmed this split (2026-09-25; PLAN §20 D145), with one addition: requests that change the
+map's character ("harsher", "more vertical", "more varied") also steer, through settings and
+regenerating. Precise follow-ups ("make it wider") stay operations. A request marked waiting is not
+a failure: it is checked from the step that provides its capability. The mark needs a field in
+`bin/corpus.ts` (code), so it is added when the suite is next re-run, at M9a (D134). Dam-site
+requests never build a ridge (D111): their steered solution looks for a natural narrows.
+
+**Keep M12 ready** (D134). Every step before M12 that adds or changes a way to edit or understand
+maps (M9a–c, the 3D stages, the Weather view, M10, M11, the refinement phase) adds its capability
+here as a bounded tool entry, in the shape of `lib/tools.ts`, with its limits and refusal reasons;
+adds requests with measurable expectations and reference solutions to `requests.json`; and re-runs
+every reference solution, fixing or re-tuning any that broke. No key is needed. Each step's progress
+entry records the pass count.
+
+**"Describe the map you want"** (D139), new in M12. A player types a sentence; Claude turns it into
+intentions; the generator makes several candidates steered toward them; the analysis checks which
+really have them; Claude shows those and says honestly what didn't emerge. The first good candidate
+appears quickly and more stream in behind it. The suite gains requests of this kind once M9's
+intentions exist.
+
+**Provider-neutral** (D140). `harness/bridge.ts` is the thin adapter; the tools, checks, prompts'
+rules and the steering principle don't depend on the model. Claude is the only provider built in
+M12. An OpenAI adapter may come later, tested with this suite before it's offered.
+
+**An MCP server after M12** (D141): the same tools (generate, steer with intentions, regenerate
+area, edit, validate, export) as an MCP server, a thin wrapper that keeps the honesty and "steer,
+don't hand-build" rules.
+
+**The workshop ratings are dropped** (D137): nothing here depends on them.
+

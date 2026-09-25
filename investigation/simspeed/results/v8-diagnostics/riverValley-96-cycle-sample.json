@@ -1,0 +1,144 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "riverValley-96-cycle-sample",
+  "samplingIntervalUs": 1000,
+  "durationUs": 10252202,
+  "samples": 2176,
+  "functions": [
+    {
+      "name": "substep",
+      "selfUs": 5564402,
+      "inclusiveUs": 5565975
+    },
+    {
+      "name": "moisture",
+      "selfUs": 2171228,
+      "inclusiveUs": 2473269
+    },
+    {
+      "name": "updateEvapMod",
+      "selfUs": 814286,
+      "inclusiveUs": 814286
+    },
+    {
+      "name": "post",
+      "selfUs": 713256,
+      "inclusiveUs": 1429562
+    },
+    {
+      "name": "updateLife",
+      "selfUs": 245355,
+      "inclusiveUs": 2916773
+    },
+    {
+      "name": "clusterSaturation",
+      "selfUs": 239077,
+      "inclusiveUs": 239077
+    },
+    {
+      "name": "soilContamination",
+      "selfUs": 183515,
+      "inclusiveUs": 185078
+    },
+    {
+      "name": "push",
+      "selfUs": 62971,
+      "inclusiveUs": 62971
+    },
+    {
+      "name": "(garbage collector)",
+      "selfUs": 58313,
+      "inclusiveUs": 58313
+    },
+    {
+      "name": "hash32",
+      "selfUs": 49890,
+      "inclusiveUs": 49890
+    },
+    {
+      "name": "tick",
+      "selfUs": 49286,
+      "inclusiveUs": 9373633
+    },
+    {
+      "name": "CycleModel",
+      "selfUs": 31756,
+      "inclusiveUs": 104232
+    },
+    {
+      "name": "sourceScale",
+      "selfUs": 21493,
+      "inclusiveUs": 25932
+    },
+    {
+      "name": "nextU32",
+      "selfUs": 21026,
+      "inclusiveUs": 21026
+    },
+    {
+      "name": "move",
+      "selfUs": 13071,
+      "inclusiveUs": 13071
+    },
+    {
+      "name": "curve",
+      "selfUs": 4439,
+      "inclusiveUs": 4439
+    },
+    {
+      "name": "buildActive",
+      "selfUs": 1573,
+      "inclusiveUs": 1573
+    },
+    {
+      "name": "pop",
+      "selfUs": 1556,
+      "inclusiveUs": 1556
+    },
+    {
+      "name": "dispatch",
+      "selfUs": 1525,
+      "inclusiveUs": 1525
+    },
+    {
+      "name": "run",
+      "selfUs": 1147,
+      "inclusiveUs": 586587
+    },
+    {
+      "name": "profile",
+      "selfUs": 1069,
+      "inclusiveUs": 10193715
+    },
+    {
+      "name": "WaterSim",
+      "selfUs": 1007,
+      "inclusiveUs": 1007
+    },
+    {
+      "name": "range",
+      "selfUs": 553,
+      "inclusiveUs": 553
+    },
+    {
+      "name": "updateSeeps",
+      "selfUs": 234,
+      "inclusiveUs": 234
+    },
+    {
+      "name": "(anonymous)",
+      "selfUs": 0,
+      "inclusiveUs": 10977371
+    },
+    {
+      "name": "(root)",
+      "selfUs": 0,
+      "inclusiveUs": 10252028
+    },
+    {
+      "name": "Rng",
+      "selfUs": 0,
+      "inclusiveUs": 21026
+    }
+  ]
+}

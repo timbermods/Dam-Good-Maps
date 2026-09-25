@@ -8,11 +8,15 @@
 //     The canonical water settle alone (ROADMAP M2: the budget of PLAN §10, ≤ 3 s at 256² and
 //     ≤ 0.6 s at 128²): the water model of each generated map, pre-filled and settled from scratch.
 //     The median must be under the budget; the max is reported.
+//
+//   --info: the budget is information, not a gate (CI, where runners are slower and shared): the
+//     time is recorded (tools/timings.ts) and the exit code says only whether every map generated.
 
 import { build, SettleCache } from "../src/core/features/build";
 import { generate, planFeatures } from "../src/core/gen/generate";
 import { canonicalSettle } from "../src/core/sim/prefill";
 import { makeSpec, type ThemeId } from "../src/core/spec/mapspec";
+import { recordTiming } from "./timings";
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -20,6 +24,7 @@ function arg(name: string, fallback: string): string {
 }
 
 const water = process.argv.includes("--water");
+const info = process.argv.includes("--info");
 const size = Number(arg("size", water ? "256" : "128"));
 const [a, b] = arg("seeds", "1-10").split("-").map(Number);
 const budget = Number(arg("budget", water ? (size >= 256 ? "3000" : "600") : "3000"));
@@ -58,4 +63,9 @@ const max = order[order.length - 1][0];
 const what = water ? "canonical water settle" : "generation";
 const tickText = water ? `, ${Math.min(...ticks)}–${Math.max(...ticks)} ticks (median ${ticks.slice().sort((x, y) => x - y)[ticks.length >> 1]})` : "";
 console.log(`${what}, ${theme}, ${size}×${size}, ${times.length} seeds: median ${Math.round(median)} ms, max ${Math.round(max)} ms${tickText} (budget ${budget} ms)`);
-process.exit((water ? median : max) < budget ? 0 : 1);
+const gated = water ? median : max;
+if (info) {
+  recordTiming({ what: `${what}, ${theme} ${size}², ${water ? "median" : "max"} of ${times.length} seeds`, ms: gated, budget });
+  process.exit(0);
+}
+process.exit(gated < budget ? 0 : 1);

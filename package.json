@@ -11,6 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
+    "test:quick": "vitest run --project quick",
+    "test:heavy": "vitest run --project heavy",
     "test:e2e": "playwright test",
     "gen": "tsx tools/gen.ts",
     "oracle": "tsx tools/oracle.ts",

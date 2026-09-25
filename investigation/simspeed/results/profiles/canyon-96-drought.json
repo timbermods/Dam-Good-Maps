@@ -1,0 +1,36 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "canyon-96-drought",
+  "method": "instrumented-method-wall-v2",
+  "profileBundleSha256": "792f673851c7403abd271d4621e5bd149081d71b7191dd1c525c46af2088aed7",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 2,
+  "workloadMs": 22.202399999999898,
+  "workloadCpuMs": 16,
+  "functions": [
+    {
+      "name": "spillLevels",
+      "calls": 30,
+      "selfUs": 19198.399999999994,
+      "inclusiveUs": 19198.399999999994
+    },
+    {
+      "name": "droughtStorage",
+      "calls": 30,
+      "selfUs": 2408.9000000005854,
+      "inclusiveUs": 22122.300000000345
+    },
+    {
+      "name": "clusterSaturation",
+      "calls": 30,
+      "selfUs": 514.999999999759,
+      "inclusiveUs": 514.999999999759
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 80.09999999955471,
+      "inclusiveUs": 80.09999999955471
+    }
+  ]
+}

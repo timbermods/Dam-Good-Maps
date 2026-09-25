@@ -1,0 +1,263 @@
+{
+ "size": 128,
+ "verticality": "ordinary",
+ "seed": 1,
+ "plan": {
+  "vf": 4,
+  "bed": 3,
+  "tN": 8,
+  "M": 13,
+  "peak": 15,
+  "R": 10
+ },
+ "baseRelief": {
+  "min": 3,
+  "max": 15
+ },
+ "features": [
+  {
+   "kind": "tunnel",
+   "through": "ridge",
+   "level": 4,
+   "length": 7,
+   "width": 2,
+   "height": 2,
+   "cells": 32,
+   "candidates": 133
+  },
+  {
+   "kind": "cave",
+   "with": "spring and pool",
+   "level": 4,
+   "length": 10,
+   "width": 3,
+   "height": 3,
+   "poolTiles": 12,
+   "roofThickness": 1,
+   "cells": 99
+  }
+ ],
+ "carveCpuMs": 47,
+ "support": {
+  "droppedByTheRulePass": 0,
+  "at": [],
+  "unsupportedAfter": 0
+ },
+ "walk": {
+  "slopes": 15,
+  "perLevel": {
+   "3": {
+    "walkable": 556,
+    "reached": 552,
+    "roofed": 18
+   },
+   "4": {
+    "walkable": 4528,
+    "reached": 4528,
+    "roofed": 29
+   },
+   "5": {
+    "walkable": 18,
+    "reached": 18,
+    "roofed": 0
+   },
+   "6": {
+    "walkable": 1927,
+    "reached": 18,
+    "roofed": 0
+   },
+   "7": {
+    "walkable": 648,
+    "reached": 18,
+    "roofed": 0
+   },
+   "8": {
+    "walkable": 2189,
+    "reached": 2182,
+    "roofed": 0
+   },
+   "9": {
+    "walkable": 158,
+    "reached": 141,
+    "roofed": 0
+   },
+   "10": {
+    "walkable": 768,
+    "reached": 0,
+    "roofed": 0
+   },
+   "13": {
+    "walkable": 4147,
+    "reached": 0,
+    "roofed": 0
+   },
+   "14": {
+    "walkable": 1340,
+    "reached": 0,
+    "roofed": 0
+   },
+   "15": {
+    "walkable": 152,
+    "reached": 0,
+    "roofed": 0
+   }
+  },
+  "reachedShare": 0.454,
+  "stairOnlyRegions": [
+   {
+    "level": 15,
+    "nodes": 94,
+    "roofedNodes": 0,
+    "at": [
+     56,
+     102
+    ]
+   },
+   {
+    "level": 15,
+    "nodes": 24,
+    "roofedNodes": 0,
+    "at": [
+     42,
+     102
+    ]
+   },
+   {
+    "level": 15,
+    "nodes": 22,
+    "roofedNodes": 0,
+    "at": [
+     59,
+     89
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 684,
+    "roofedNodes": 0,
+    "at": [
+     59,
+     80
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 262,
+    "roofedNodes": 0,
+    "at": [
+     94,
+     87
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 144,
+    "roofedNodes": 0,
+    "at": [
+     11,
+     83
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 99,
+    "roofedNodes": 0,
+    "at": [
+     77,
+     82
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 89,
+    "roofedNodes": 0,
+    "at": [
+     14,
+     115
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 37,
+    "roofedNodes": 0,
+    "at": [
+     33,
+     92
+    ]
+   },
+   {
+    "level": 13,
+    "nodes": 1908,
+    "roofedNodes": 0,
+    "at": [
+     3,
+     81
+    ]
+   },
+   {
+    "level": 13,
+    "nodes": 1491,
+    "roofedNodes": 0,
+    "at": [
+     92,
+     75
+    ]
+   },
+   {
+    "level": 13,
+    "nodes": 737,
+    "roofedNodes": 0,
+    "at": [
+     73,
+     75
+    ]
+   }
+  ]
+ },
+ "places": {
+  "side valley (beyond the ridge)": true,
+  "terrace": true,
+  "massif top": false,
+  "massif east of the gorge": false,
+  "ridge top": false,
+  "spring cave floor": true
+ },
+ "terraceRow": ".###############################################################",
+ "rewards": [
+  {
+   "what": "a ruin column (60 scrap)",
+   "level": 15,
+   "reachedBy": "player stairs only"
+  }
+ ],
+ "resources": {
+  "trees": 345,
+  "bushes": 94
+ },
+ "water": {
+  "settled": true,
+  "ticks": 1024,
+  "cpuMs": 265,
+  "levels": 2,
+  "sourceStrength": 4.5,
+  "edgeOutflow": 4.356,
+  "roofedWetColumns": 27,
+  "roofedVolume": 19.374,
+  "pressurisedColumns": 0,
+  "springPoolDepth": 1.052,
+  "caveFloorSheetDepth": 0.05
+ },
+ "heightfieldWater": {
+  "settled": true,
+  "wetTiles": 539,
+  "stackedWetTiles": 561,
+  "tileIou": 0.947,
+  "wetOnRoofs": 1
+ },
+ "totalCpuMs": 828,
+ "fileBytes": 55401,
+ "runs": {
+  "maxRunsPerTile": 2,
+  "multiRunTiles": 47
+ }
+}

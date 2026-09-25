@@ -48,6 +48,9 @@ The editor:
 - **Back to settings** keeps your edits. Generate again and they stay.
 - **Open a map** opens any `.timber`, from 0.6 to 1.1.
 - The preview's **3D** switch shows the map in 3D.
+- In 3D the ground looks as in the game: green where the soil is moist, cracked earth where it is
+  dry, rusty red where badwater spoils it. **Height colours** colours it by height instead. The
+  legend says what each colour means.
 
 Your map is saved in the browser as you work.
 
@@ -61,6 +64,7 @@ Your map is saved in the browser as you work.
 | [AUDIT.md](AUDIT.md) | The audit that reconciled both plans with the investigation. Kyler's answers to its decisions are in PLAN.md §20. |
 | [docs/ingame-log.md](docs/ingame-log.md) | The in-game checks each milestone needs. They are deferred for now and listed as pending. |
 | [FORMAT.md](FORMAT.md) | The `.timber` map format as the game writes it in 1.1. |
+| [investigation/](investigation/README.md) | Every study behind the plans, what became of it, and where its adopted pieces live. |
 | [investigation/REPORT.md](investigation/REPORT.md) | What the game's code, data and maps say about map rules and design, with the numbers behind every threshold. |
 | [investigation/calibration.json](investigation/calibration.json) | Measurements of the 19 official maps and 9 workshop maps. |
 | [prototype/](prototype/) | The Python prototype: map reader/writer, generator, validator and round-trip test. It stays as the reference implementation and test oracle for the website. |
@@ -91,7 +95,8 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 ```
 
 - `npm run dev` serves the site at <http://localhost:5173/dam-good-maps/>.
-- `npm test` runs the unit and contract tests.
+- `npm test` runs the unit and contract tests. `npm run test:quick` skips the four heaviest, as CI
+  does on every push; `npm run test:heavy` runs only those, as CI does nightly.
 - `npm run oracle` generates 50 seeds × 3 sizes, checks each map with the Python validator and
   round-trip test, and compares the two validators check by check on 50 of them and on the
   official maps (when `investigation/raw/builtin` is present).

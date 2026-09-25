@@ -26,7 +26,7 @@ If any of these is missing, stop and tell me.
 
 **Working rules.**
 - Build one milestone at a time. Each ends with its acceptance criteria met, tests passing, and a short summary of what changed.
-- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate.
+- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate. The exception is a DGM Probe batch, which plays maps in the real game unattended; it launches Timberborn only after Claude asks Kyler in chat and Kyler says yes, every time (`PLAN.md` §20, D117; `CLAUDE.md`).
 - The editor must never be able to export a file that breaks the game. Load problems block export. Playability and design problems warn. The classes are defined in `PLAN.md` §19.5.
 - Everything works without Claude. Claude features are an add-on.
 
@@ -60,11 +60,11 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
 - Non-destructive editing with undo and redo, saved as a project file.
 
 **Non-goals for this plan**
-- Voxel-level cave and overhang editing.
-  - Imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
-  - The tools edit surface height only.
-  - Design the data model so voxel editing can be added later.
-- Terrain above 16. It is the in-game editor's limit, and every tool keeps to it. Imported maps with terrain up to 22 are preserved.
+- Voxel-level cave and overhang editing, until the 3D stages (`ROADMAP.md`, 3D-a–3D-c; `PLAN.md` §20, D118, D125 lift this non-goal in 3D-c).
+  - Until then, imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
+  - Until then, the tools edit surface height only.
+  - The data model stores terrain as runs per tile from project format 3 (D119), so voxel editing needs no format change.
+- Terrain above 16, except on maps at high Verticality (`PLAN.md` §5.9, D132). 16 is the in-game editor's limit, and the tools keep to the map's own limit (D123). Imported maps with terrain up to 22 are preserved.
 - Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
 - Matching the game's exact visuals. The game's assets can't be included, so the editor uses its own clear, stylized look. The game remains the reference for final appearance and exact water behaviour.
@@ -229,6 +229,10 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 Claude lets users fine-tune a map in plain language, for example: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide," "make it a bit wider," "move the start closer to the lake," or "put more ruins on the eastern plateau." Requests like these must work reliably, with results that match what was asked.
 
+**Claude steers the generator; it never hand-builds the map** (`PLAN.md`, Product principles; §20 D139). When a request asks for character or new features ("make this valley harsher", "give me a huge dam opportunity halfway down", "put the start under a cliff"), Claude turns it into intentions (outcomes, not recipes; D138) and settings, regenerates the affected area steered toward them (M11's regenerate area, with locks on what the player wants kept), checks the result with the analysis, and reports honestly what emerged and what didn't. Requests that change the map's character ("harsher", "more vertical", "more varied") steer too, through settings and regenerating (D145). Editor operations, below, are for precise edits the player asks for ("move the start here", "widen this river by two", "delete that forest", "lock this area") and for precise follow-ups ("make it wider"). Where this section's tables name a builder as a character word's lever (a huge dam opportunity), M12 steers the generator instead; no dam wall is ever built (D111).
+
+**Describe the map you want** (D139). A player types a sentence. Claude turns it into intentions; the generator makes several candidates steered toward them; the analysis checks which really have them; Claude shows the ones that do and says honestly what didn't emerge. Editor operations only for small touches the player asks for. The first good candidate appears quickly, and more stream in behind it while the player looks; progress is shown, and the player can act on the first result.
+
 **Principle.** Claude never edits terrain or voxels directly. It proposes steps (below; `PLAN.md` §20, D89) that the app expands into operations from section 3, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
 
 **Spatial language.** The app, not Claude, resolves places and sizes, so results are consistent. The resolver returns the area, how it read the words, and every assumption it made:
@@ -259,7 +263,7 @@ Playability checks are guards, never traded away to meet a word: every check tha
 | dangerous (safe) badwater | badwater-to-clean strength up; badwater's distance from the start down (safe: the reverse) | Badwater, Badwater distance; a badwater basin's strength (1–3) and place | ratio as above; distance 12 / 30.5 / 54 | Never nearer the start than the badwater rule; the start's water stays clean. |
 | lush (dry) | trees per 10k tiles up; bushes per 10k tiles up; clean flow strength up; natural basins up | Forest density, Berry bushes elsewhere, River flow, Lakes and basins | trees per 10k 402 / 606 / 1,196; bushes per 10k 17 / 44 / 148 | Dry keeps the start's trees, bushes and water within the start rules. |
 | wetter (less water) | water share up; clean flow strength up; natural basins of 20+ tiles up | River flow, Lakes and basins, Drought reserve | water share 0.07 / 0.12 / 0.40; basins 2.8 / 12 / 21 | The water share stays under `water.no_flood`'s cap. |
-| rugged (flatter) | height range up; cliff share up (flatter: both down) | Relief, Terracing, Waterfalls | height range 10.8 / 13 / 15; cliff share 0.09 / 0.16 / 0.19 | Terrain stays within 0–16. |
+| rugged (flatter) | height range up; cliff share up (flatter: both down) | Relief, Terracing, Waterfalls | height range 10.8 / 13 / 15; cliff share 0.09 / 0.16 / 0.19 | Terrain stays within the map's limit: 16, or 22 at high Verticality (`PLAN.md` §5.9). |
 | richer (poorer) | scrap per 1k tiles up; trees per 10k tiles up | Ruins and scrap, Forest density | scrap per 1k 152 / 281 / 724 | Ruins stay the ruin rule's distance from the start. |
 | roomier (cramped) | land walkable from the start up; flat share up | Buildable land, Relief | walkable land 1,007 / 1,296 / 4,523; flat share 0.36 / 0.52 / 0.60 | Cramped never goes below the buildable-land rule. |
 
@@ -340,6 +344,7 @@ A mismatch goes back to Claude to revise, just like a validation failure.
 
 *Recommendation* (decision D8 in `PLAN.md` §20):
 - One `ClaudeBridge` interface with two adapters.
+- The model layer is provider-neutral (D140): the engine, tools, checks and the steering principle don't depend on the model, and only a thin adapter talks to the model API. Claude is the default and the only provider built in M12. The design leaves room for an OpenAI adapter (a player's own OpenAI API key) later, tested with the same request suite before it's offered.
 - Build the Messages API adapter first. It also runs the Claude request suite in Node.
 - Ship bring-your-own-key as an advanced option.
 - Then ship the artifact edition as the no-key route, once the spike passes.
@@ -402,16 +407,19 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - the two 0.6 heightmap maps import through the `Heights` conversion;
   - the 90-layer workshop map keeps layers 0–21 with a warning, as the game does, and exports with the standard 23 layers;
   - a pre-1.0 map without `WaterSimulationMigrator` has its strengths halved at import.
-- **Performance budgets on 256×256** (revised by the audit; adjust in "Editor decisions" if measurements differ, with reasons):
+- **Performance budgets on 256×256** (revised by the audit; adjust in "Editor decisions" if measurements differ, with reasons). Under Kyler's one rule (`PLAN.md` §20, D115) they are information, reported at each step; what blocks is what a player feels: the editor stays responsive, tool feedback comes within a frame, slower work runs in the background, and the page never freezes.
   - tool feedback within one frame (16 ms), with lightweight proxies while dragging;
   - a feature edit committed (rasterize and remesh the affected chunks) in ≤ 100 ms;
   - instant checks ≤ 50 ms;
   - a dirty-chunk remesh ≤ 5 ms per chunk;
-  - the water preview after a local edit ≤ 2 s (warm start);
+  - the water preview after a local edit ≤ 2 s (warm start); CI reports it as a number, never a failed build (D145);
   - the canonical full settle for export ≤ 3 s as the target. The audit measured 6.5–11 s for an unoptimized JS port from empty (`PLAN.md` §10).
 - **End to end** (e.g. Playwright): generate, edit features, export, re-import, compare.
 - **Claude request suite:** 120 requests (`tests/claude/requests.json`), each with its map, its goals and their expectations, whether it is feasible, what the report must say, and a reference solution (`PLAN.md` §20, D88). The kinds: the requests below word for word, simple, follow-ups, compass, feature-relative, flow-relative, judgement and size words, compound, vague, impossible, conflicting, questions and safety. The maps: generated maps of 48², 96², 128² and 256², rivers drawn in each direction, tributaries, and imports.
   - The reference solutions run in CI through `MapSession` with the real validators; every one must pass.
+  - Reference solutions for character and feature requests, Kyler's flagship requests included (the giant waterfall and the compound request; D145), steer the generator (intentions, settings, regenerate area) instead of building features with planners (D139). A request whose steered solution needs a capability that doesn't exist yet (M9's intentions, M11's regenerate area) is marked "waiting for capability", not failed, and is checked from the step that provides it.
+  - Every step before M12 that adds a way to edit or understand maps adds its requests, with reference solutions, and re-runs the whole suite so it stays green (D134).
+  - "Describe the map you want" requests (D139): the candidates shown really have the intentions, and the report names the ones that didn't emerge.
   - With a key, the suite runs nightly in Node through the Messages API adapter, with the same prompts and tools the artifact edition uses and the artifact's limits on (64 KiB input, 32 KB results). It checks expectations against the achievable ranges (`PLAN.md` §9.10).
   - Include at least:
     - "add a giant waterfall in the north part of the map that is roughly 20 blocks wide", on 128² and 256²; on 96² it must fit, and on 48² it must report the reduction to 19;
@@ -464,7 +472,7 @@ Worker-based simulation and full validation; export rules for errors and warning
 
 **E6. Sculpting, naturalize and symmetry.** [M10]
 Advanced sculpt brushes; the naturalize brush; symmetry across all tools.
-*Accept:* performance budgets met; caves and overhangs in imported maps survive edits elsewhere; symmetric edits stay exactly symmetric, entities included (section 5).
+*Accept:* the editor stays responsive (the budgets are reported, D115); caves, overhangs and arches survive edits elsewhere, and the brushes work on runs (D118); symmetric edits stay exactly symmetric, entities included (section 5).
 
 **E7. Stamps, heightmap import, regenerate area, locks.** [M11]
 Built-in stamp library, user stamps with export and import, heightmap import, regenerate a region, locks and conflict rules.
@@ -476,9 +484,11 @@ Operation schema, map summary builder, the tools, the propose, validate, revise 
 
 **E9. Usability and polish.** [M13]
 Run the usability tasks from section 9 and fix what slows people down; onboarding hints; shortcuts reference; help page; accessibility pass; final performance pass.
-*Accept:* every usability task is completed in under 2 minutes by a first-time user.
+*Accept:* the usability tasks are run and what slows people down is fixed; their times (under 2 minutes each for a first-time user as the target) are information (D115).
 
-**Later:** voxel-level cave and overhang tools with stacked-column water, a shared online stamp gallery, tablet and touch support, "make editable" detection for imported maps, share links that carry small edit lists, terrain 17–22 if `PLAN.md` §18 E1 allows it.
+**3D stages** (`ROADMAP.md` 3D-a–3D-c, `PLAN.md` §20 D118–D127): stacked-column water, the support rule and the floor graph (3D-a); 3D forms from the generator's processes (3D-b); Carve, Fill, Tunnel, Arch, Cave, Ledge path and Overhang tools, 3D picking, 3D locks and a level-slice cutaway (3D-c). M10's and M11's tools are built on runs after them.
+
+**Later:** a shared online stamp gallery, tablet and touch support, "make editable" detection for imported maps, share links that carry small edit lists.
 
 ## 11. Contract with the generator
 

@@ -1,0 +1,64 @@
+{
+  "buildId": "ec55b463ef353e1c3b707413ee45a6199b9f9657fab32fd89bbb03879c0697aa",
+  "reference": "a5f189d3e96affec533415090bdb8f09d606c8fd",
+  "nodeCases": 24,
+  "chromiumCases": 24,
+  "expectedCases": 24,
+  "missingNode": [],
+  "missingChrome": [],
+  "status": "complete",
+  "bySize": {
+    "128": {
+      "budgetMs": 3000,
+      "nodeCases": 12,
+      "chromiumCases": 12,
+      "nodeCpuSpeedup": 1.1158821315660405,
+      "nodeWallSpeedup": 1.1160131338610904,
+      "chromiumWallSpeedup": 1.1162800690339896,
+      "nodeBaselineCpuMs": 1187.5,
+      "nodeCombinedCpuMs": 1078,
+      "chromiumBaselineWallMs": 1240.6000000238419,
+      "chromiumCombinedWallMs": 967.5999999940395,
+      "chromiumCombinedCaseMedianRangeMs": [
+        466.80000001192093,
+        4204.5
+      ],
+      "nodeCombinedCpuOverBudget": [
+        "canyon-128-1"
+      ],
+      "chromiumCombinedWallOverBudget": [
+        "canyon-128-1"
+      ]
+    },
+    "256": {
+      "budgetMs": 6000,
+      "nodeCases": 12,
+      "chromiumCases": 12,
+      "nodeCpuSpeedup": 1.079338160227564,
+      "nodeWallSpeedup": 1.079630874521857,
+      "chromiumWallSpeedup": 1.1197633815413095,
+      "nodeBaselineCpuMs": 6391,
+      "nodeCombinedCpuMs": 6180,
+      "chromiumBaselineWallMs": 5198.5,
+      "chromiumCombinedWallMs": 4606.8499999940395,
+      "chromiumCombinedCaseMedianRangeMs": [
+        2542.899999976158,
+        10157.699999988079
+      ],
+      "nodeCombinedCpuOverBudget": [
+        "canyon-256-1",
+        "delta-256-1",
+        "islands-256-1",
+        "islands-256-2",
+        "lakeBasin-256-1",
+        "lakeBasin-256-2",
+        "riverValley-256-1"
+      ],
+      "chromiumCombinedWallOverBudget": [
+        "canyon-256-1",
+        "islands-256-1",
+        "riverValley-256-1"
+      ]
+    }
+  }
+}

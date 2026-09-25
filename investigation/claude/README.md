@@ -4,7 +4,9 @@ Groundwork for roadmap M12: turning players' requests into bounded operations ag
 engine. Nothing here changes `src/` or `tests/`; it imports them read-only.
 
 - [REPORT.md](REPORT.md): what was built and found.
-- [M12-INTEGRATION.md](M12-INTEGRATION.md): how the milestone adopts it.
+- [M12-INTEGRATION.md](M12-INTEGRATION.md): how the milestone adopts it. Its section 13 holds
+  Kyler's later decisions: Claude steers the generator instead of hand-building features, the
+  requests marked "waiting for capability", and keeping the suite green at every step before M12.
 
 ## What is here
 

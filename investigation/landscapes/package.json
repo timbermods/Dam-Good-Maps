@@ -1,0 +1,22 @@
+{
+  "name": "dam-good-maps-landscape-survey",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sample": "node --import ./register.mjs sample.ts",
+    "convert": "node --import ./register.mjs run.ts",
+    "measure": "node --import ./register.mjs summarize.ts",
+    "bench": "node --import ./register.mjs bench/cli.ts",
+    "test": "node --import ./register.mjs --test --test-isolation=none test/*.test.ts"
+  },
+  "dependencies": {
+    "fflate": "0.8.2",
+    "pngjs": "7.0.0"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}

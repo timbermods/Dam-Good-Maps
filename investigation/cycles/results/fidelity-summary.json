@@ -1,0 +1,1000 @@
+{
+  "sameWeather": {
+    "easy": {
+      "cycles": 30,
+      "identical": true,
+      "firstDifference": null
+    },
+    "normal": {
+      "cycles": 30,
+      "identical": true,
+      "firstDifference": null
+    },
+    "hard": {
+      "cycles": 40,
+      "identical": true,
+      "firstDifference": null
+    }
+  },
+  "byProbe": {},
+  "variants": {
+    "moisture": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0.75,
+          "max": 9
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 40.5,
+          "max": 317
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 45.909
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 102.167,
+          "max": 245
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 42,
+          "max": 316
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 1632,
+          "switched": 1632
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 68.748
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 36.833,
+          "max": 266
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 169.375
+        }
+      }
+    },
+    "soilContamination": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 41.937
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 9.417,
+          "max": 26
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 1.417,
+          "max": 3,
+          "exact": 1632,
+          "switched": 1631
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 62.033
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 153.688
+        }
+      }
+    },
+    "waterContamination": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 2,
+          "max": 23
+        },
+        "hazardBadTiles": {
+          "mean": 0.083,
+          "max": 1
+        },
+        "hazardSoilTiles": {
+          "mean": 0.5,
+          "max": 6
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 3.583,
+          "max": 33
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 30.967
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 160.75,
+          "max": 420
+        },
+        "hazardBadTiles": {
+          "mean": 242.167,
+          "max": 1069
+        },
+        "hazardSoilTiles": {
+          "mean": 517.5,
+          "max": 1132
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 29.75,
+          "max": 121
+        },
+        "deaths": {
+          "mean": 18.167,
+          "max": 47,
+          "exact": 1632,
+          "switched": 1850
+        },
+        "firstWaterLostChanged": 3,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 48.624
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 1.5,
+          "max": 13
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 110.716
+        }
+      }
+    },
+    "waterBookkeeping": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0.002
+        },
+        "endMoistTiles": {
+          "mean": 0.417,
+          "max": 4
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 39.971
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0.083,
+          "max": 1
+        },
+        "hazardBadTiles": {
+          "mean": 0.333,
+          "max": 2
+        },
+        "hazardSoilTiles": {
+          "mean": 0.083,
+          "max": 1
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0.083,
+          "max": 1,
+          "exact": 1632,
+          "switched": 1631
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 61.875
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0.005,
+          "max": 0.058
+        },
+        "endMoistTiles": {
+          "mean": 0.333,
+          "max": 4
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 149.657
+        }
+      }
+    },
+    "lags": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0.001
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0.002
+        },
+        "endMoistTiles": {
+          "mean": 0.167,
+          "max": 1
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 39.547
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0.25,
+          "max": 2
+        },
+        "hazardBadTiles": {
+          "mean": 0.333,
+          "max": 3
+        },
+        "hazardSoilTiles": {
+          "mean": 4.667,
+          "max": 10
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 1632,
+          "switched": 1632
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 61.563
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0.01,
+          "max": 0.038
+        },
+        "endMoistTiles": {
+          "mean": 4,
+          "max": 17
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 147.703
+        }
+      }
+    },
+    "floodDelay": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 40.732
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 1632,
+          "switched": 1632
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 61.813
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 149.346
+        }
+      }
+    },
+    "settleState": {
+      "first-normal": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0.001
+        },
+        "hazardMoistTiles": {
+          "mean": 0.25,
+          "max": 3
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 0,
+          "switched": 0
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 41.247,
+          "switched": 40.094
+        }
+      },
+      "first-badtide": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0.002,
+          "max": 0.018
+        },
+        "hazardMoistTiles": {
+          "mean": 47.083,
+          "max": 167
+        },
+        "hazardBadTiles": {
+          "mean": 24.167,
+          "max": 95
+        },
+        "hazardSoilTiles": {
+          "mean": 15.333,
+          "max": 57
+        },
+        "endVolume": {
+          "mean": 0.002,
+          "max": 0.017
+        },
+        "endMoistTiles": {
+          "mean": 2.833,
+          "max": 12
+        },
+        "deaths": {
+          "mean": 3,
+          "max": 17,
+          "exact": 1632,
+          "switched": 1654
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 63.594,
+          "switched": 61.436
+        }
+      },
+      "late-hard": {
+        "runs": 12,
+        "hazardVolume": {
+          "mean": 0,
+          "max": 0.001
+        },
+        "hazardMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardBadTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "hazardSoilTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "endVolume": {
+          "mean": 0,
+          "max": 0
+        },
+        "endMoistTiles": {
+          "mean": 0,
+          "max": 0
+        },
+        "deaths": {
+          "mean": 0,
+          "max": 0,
+          "exact": 6085,
+          "switched": 6085
+        },
+        "firstWaterLostChanged": 0,
+        "cpu": {
+          "exact": 150.408,
+          "switched": 143.202
+        }
+      }
+    }
+  },
+  "firstModel": {
+    "first-normal": {
+      "runs": 12,
+      "hazardVolume": {
+        "mean": 0,
+        "max": 0.001
+      },
+      "hazardMoistTiles": {
+        "mean": 2.5,
+        "max": 29
+      },
+      "hazardBadTiles": {
+        "mean": 0.083,
+        "max": 1
+      },
+      "hazardSoilTiles": {
+        "mean": 0.5,
+        "max": 6
+      },
+      "endVolume": {
+        "mean": 0.002,
+        "max": 0.02
+      },
+      "endMoistTiles": {
+        "mean": 41.833,
+        "max": 341
+      },
+      "deaths": {
+        "mean": 0,
+        "max": 0,
+        "exact": 0,
+        "switched": 0
+      },
+      "firstWaterLostChanged": 0,
+      "cpu": {
+        "exact": 41.247,
+        "switched": 26.581
+      }
+    },
+    "first-badtide": {
+      "runs": 12,
+      "hazardVolume": {
+        "mean": 0.002,
+        "max": 0.018
+      },
+      "hazardMoistTiles": {
+        "mean": 371.333,
+        "max": 815
+      },
+      "hazardBadTiles": {
+        "mean": 236.5,
+        "max": 1077
+      },
+      "hazardSoilTiles": {
+        "mean": 525,
+        "max": 1155
+      },
+      "endVolume": {
+        "mean": 0.002,
+        "max": 0.017
+      },
+      "endMoistTiles": {
+        "mean": 68.917,
+        "max": 343
+      },
+      "deaths": {
+        "mean": 18.583,
+        "max": 60,
+        "exact": 1632,
+        "switched": 1841
+      },
+      "firstWaterLostChanged": 3,
+      "cpu": {
+        "exact": 63.594,
+        "switched": 31.44
+      }
+    },
+    "late-hard": {
+      "runs": 12,
+      "hazardVolume": {
+        "mean": 0,
+        "max": 0.001
+      },
+      "hazardMoistTiles": {
+        "mean": 0,
+        "max": 0
+      },
+      "hazardBadTiles": {
+        "mean": 0,
+        "max": 0
+      },
+      "hazardSoilTiles": {
+        "mean": 0,
+        "max": 0
+      },
+      "endVolume": {
+        "mean": 0.849,
+        "max": 2.53
+      },
+      "endMoistTiles": {
+        "mean": 18.583,
+        "max": 130
+      },
+      "deaths": {
+        "mean": 0,
+        "max": 0,
+        "exact": 6085,
+        "switched": 6085
+      },
+      "firstWaterLostChanged": 0,
+      "cpu": {
+        "exact": 150.408,
+        "switched": 95.108
+      }
+    }
+  },
+  "leadOneDay": null,
+  "newGame": {
+    "runs": 12,
+    "hazardVolume": {
+      "mean": 0,
+      "max": 0
+    },
+    "hazardMoistTiles": {
+      "mean": 0,
+      "max": 0
+    },
+    "hazardBadTiles": {
+      "mean": 0,
+      "max": 0
+    },
+    "hazardSoilTiles": {
+      "mean": 0,
+      "max": 0
+    },
+    "endVolume": {
+      "mean": 0,
+      "max": 0
+    },
+    "endMoistTiles": {
+      "mean": 0,
+      "max": 0
+    },
+    "deaths": {
+      "mean": 0,
+      "max": 0,
+      "exact": 66,
+      "switched": 66
+    },
+    "firstWaterLostChanged": 0,
+    "cpu": {
+      "exact": 148.828,
+      "switched": 150.781
+    }
+  },
+  "leadMaps": [],
+  "cost": {
+    "exactCpuSeconds": 255.249,
+    "firstModelCpuSeconds": 153.129,
+    "ratio": 1.667,
+    "byProbe": {
+      "first-normal": 1.552,
+      "first-badtide": 2.023,
+      "late-hard": 1.581
+    }
+  }
+}

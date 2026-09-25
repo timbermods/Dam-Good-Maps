@@ -1,0 +1,36 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "islands-256-drought",
+  "method": "instrumented-method-wall-v2",
+  "profileBundleSha256": "792f673851c7403abd271d4621e5bd149081d71b7191dd1c525c46af2088aed7",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 2,
+  "workloadMs": 194.0632000000005,
+  "workloadCpuMs": 172,
+  "functions": [
+    {
+      "name": "spillLevels",
+      "calls": 30,
+      "selfUs": 157294.19999999664,
+      "inclusiveUs": 157294.19999999664
+    },
+    {
+      "name": "droughtStorage",
+      "calls": 30,
+      "selfUs": 26605.999999997948,
+      "inclusiveUs": 194003.49999999706
+    },
+    {
+      "name": "clusterSaturation",
+      "calls": 30,
+      "selfUs": 10103.300000002491,
+      "inclusiveUs": 10103.300000002491
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 59.70000000344589,
+      "inclusiveUs": 59.70000000344589
+    }
+  ]
+}

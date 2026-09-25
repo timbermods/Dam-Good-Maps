@@ -1,0 +1,274 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "maps": 216,
+  "expectedMaps": 216,
+  "benchmarks": 18,
+  "expectedBenchmarks": 18,
+  "acceptance": {
+    "node": "complete",
+    "chromium": "passed",
+    "exactCycles": "complete",
+    "m9Pipeline": "complete",
+    "overall": "complete"
+  },
+  "stageSets": 18,
+  "expectedStageSets": 18,
+  "profiles": 72,
+  "expectedProfiles": 72,
+  "missingProfiles": [],
+  "exportedFiles": 1512,
+  "variantFileComparisons": 1296,
+  "canonicalAndWarmCheckpoints": 3038,
+  "analyticArrays": 864,
+  "cycleCheckpoints": 1692,
+  "simulatedCycleDays": 9198,
+  "missingMaps": [],
+  "missingBench": [],
+  "ratios": {
+    "saturation": {
+      "canonicalWall": 1.0812760018985879,
+      "canonicalCpu": 1.0878441140216257,
+      "previewWall": 1.0556031260217558,
+      "previewCpu": 1.0672653760525659,
+      "droughtWall": 1.031875514513307,
+      "droughtCpu": 1.0353642054519816,
+      "cycleWall": 1.0362834046465876,
+      "cycleCpu": 1.0314214376043767,
+      "generationWall": 1.0821223111711733,
+      "generationCpu": 1.0384976084769895
+    },
+    "topology": {
+      "canonicalWall": 1.0566507053069194,
+      "canonicalCpu": 1.04549715421948,
+      "previewWall": 1.0264560850042153,
+      "previewCpu": 1.0003810975609757,
+      "droughtWall": 1.0107287234710307,
+      "droughtCpu": 1.0182452177524324,
+      "cycleWall": 1.0308927920952833,
+      "cycleCpu": 1.0232274306539995,
+      "generationWall": 1.0662444781755183,
+      "generationCpu": 1.0230118498754415
+    },
+    "clear": {
+      "canonicalWall": 1.0005367425314755,
+      "canonicalCpu": 1,
+      "previewWall": 1.0065990087606829,
+      "previewCpu": 1.001068376068376,
+      "droughtWall": 1.0271074164707743,
+      "droughtCpu": 1.0272106539915526,
+      "cycleWall": 0.99562793114446,
+      "cycleCpu": 0.9869064835046983,
+      "generationWall": 1.0498382596948683,
+      "generationCpu": 1.0258868714457814
+    },
+    "unroll": {
+      "canonicalWall": 1.070141936937122,
+      "canonicalCpu": 1.0620056872037915,
+      "previewWall": 1.0605306720027516,
+      "previewCpu": 1.0621320754716983,
+      "droughtWall": 1.0253178175356736,
+      "droughtCpu": 1.0348355617754412,
+      "cycleWall": 1.0805144960188722,
+      "cycleCpu": 1.034541204267911,
+      "generationWall": 1.0776644438511283,
+      "generationCpu": 1.0582613074742933
+    },
+    "drought": {
+      "canonicalWall": 1.0148345301629431,
+      "canonicalCpu": 1.0003723008190617,
+      "previewWall": 0.9962364726965962,
+      "previewCpu": 0.9810072139090169,
+      "droughtWall": 1.0328795320222424,
+      "droughtCpu": 1.0372639821271705,
+      "cycleWall": 0.9950514965772949,
+      "cycleCpu": 0.9943088436777812,
+      "generationWall": 1.061409131653009,
+      "generationCpu": 1.0190436011987152
+    },
+    "combined": {
+      "canonicalWall": 1.1998547243076452,
+      "canonicalCpu": 1.1865441491514126,
+      "previewWall": 1.2095948093243578,
+      "previewCpu": 1.1949449071723588,
+      "droughtWall": 1.0282159929589403,
+      "droughtCpu": 1.0368277211687698,
+      "cycleWall": 1.1146381987463778,
+      "cycleCpu": 1.1322959838825686,
+      "generationWall": 1.1473966963803184,
+      "generationCpu": 1.0951877987296368
+    }
+  },
+  "bySize": {
+    "96": {
+      "cases": 6,
+      "canonicalCpu": 1.2331854290082618,
+      "previewCpu": 1.2449104662293093,
+      "cycleCpu": 1.1463001848496583,
+      "baselineCycleCpuMs": 12225.5,
+      "combinedCycleCpuMs": 10697.5
+    },
+    "128": {
+      "cases": 6,
+      "canonicalCpu": 1.2292950699043415,
+      "previewCpu": 1.1845713543551066,
+      "cycleCpu": 1.1386956925334153,
+      "baselineCycleCpuMs": 16134.5,
+      "combinedCycleCpuMs": 14468
+    },
+    "256": {
+      "cases": 6,
+      "canonicalCpu": 1.1548530640465262,
+      "previewCpu": 1.1748857938718662,
+      "cycleCpu": 1.1033342469666854,
+      "baselineCycleCpuMs": 57044.5,
+      "combinedCycleCpuMs": 52353
+    }
+  },
+  "chromium": {
+    "status": "passed",
+    "maps": 216,
+    "benchmarks": 18,
+    "golden": true
+  },
+  "chromiumRatios": {
+    "saturation": {
+      "canonicalWall": 1.0726813008318163,
+      "previewWall": 1.0998205150305715,
+      "droughtWall": 1.0115706605204697,
+      "cycleWall": 1.0518852231354403,
+      "generationWall": 1.047891891089332
+    },
+    "topology": {
+      "canonicalWall": 1.0149401731074936,
+      "previewWall": 1.026462065748753,
+      "droughtWall": 1.0029968157397322,
+      "cycleWall": 1.013836997292425,
+      "generationWall": 1.0222547792116663
+    },
+    "clear": {
+      "canonicalWall": 1.018122625239164,
+      "previewWall": 1.019310815378406,
+      "droughtWall": 1.0004237088554575,
+      "cycleWall": 1.0131031884112722,
+      "generationWall": 1.0044341801703278
+    },
+    "unroll": {
+      "canonicalWall": 1.0363303912298507,
+      "previewWall": 1.0667599776441712,
+      "droughtWall": 0.9985894839452079,
+      "cycleWall": 1.0429406601122226,
+      "generationWall": 1.0286248306416739
+    },
+    "drought": {
+      "canonicalWall": 0.9963825158772178,
+      "previewWall": 1.016382188717909,
+      "droughtWall": 1.0153304836196433,
+      "cycleWall": 1.0254417428879228,
+      "generationWall": 1.0027002792145694
+    },
+    "combined": {
+      "canonicalWall": 1.1498845139356548,
+      "previewWall": 1.156368764986848,
+      "droughtWall": 1.0184318598011046,
+      "cycleWall": 1.1265444163951284,
+      "generationWall": 1.0920723812038116
+    }
+  },
+  "exactReference": {
+    "buildId": "4e375597585d41dbe97331a5ded4d5b91e505a1fd8169938b92fb96fe1968956",
+    "reference": "a9cdb860be859ddd3339800a88b42e9871293597",
+    "nodeCases": 18,
+    "chromiumCases": 18,
+    "expectedCases": 18,
+    "missingNode": [],
+    "missingChrome": [],
+    "status": "complete",
+    "checkpoints": 1696,
+    "simulatedDaysPerRuntime": 1318,
+    "profiledDays": 108,
+    "coreWaterSimCalls": 0,
+    "bySize": {
+      "96": {
+        "nodeMedianCpuMs": 14103,
+        "chromiumMedianWallMs": 14601.600000053644
+      },
+      "128": {
+        "nodeMedianCpuMs": 18574.5,
+        "chromiumMedianWallMs": 18954.999999910593
+      },
+      "256": {
+        "nodeMedianCpuMs": 73020.5,
+        "chromiumMedianWallMs": 78950.84999981523
+      }
+    },
+    "profileShares": {
+      "GameWater.tick": 0.6190510132520252,
+      "GameSoil.step": 0.3552262949533939,
+      "CycleModel.plantsTick": 0.015537727273189406
+    }
+  },
+  "m9Reference": {
+    "buildId": "ec55b463ef353e1c3b707413ee45a6199b9f9657fab32fd89bbb03879c0697aa",
+    "reference": "a5f189d3e96affec533415090bdb8f09d606c8fd",
+    "nodeCases": 24,
+    "chromiumCases": 24,
+    "expectedCases": 24,
+    "missingNode": [],
+    "missingChrome": [],
+    "status": "complete",
+    "bySize": {
+      "128": {
+        "budgetMs": 3000,
+        "nodeCases": 12,
+        "chromiumCases": 12,
+        "nodeCpuSpeedup": 1.1158821315660405,
+        "nodeWallSpeedup": 1.1160131338610904,
+        "chromiumWallSpeedup": 1.1162800690339896,
+        "nodeBaselineCpuMs": 1187.5,
+        "nodeCombinedCpuMs": 1078,
+        "chromiumBaselineWallMs": 1240.6000000238419,
+        "chromiumCombinedWallMs": 967.5999999940395,
+        "chromiumCombinedCaseMedianRangeMs": [
+          466.80000001192093,
+          4204.5
+        ],
+        "nodeCombinedCpuOverBudget": [
+          "canyon-128-1"
+        ],
+        "chromiumCombinedWallOverBudget": [
+          "canyon-128-1"
+        ]
+      },
+      "256": {
+        "budgetMs": 6000,
+        "nodeCases": 12,
+        "chromiumCases": 12,
+        "nodeCpuSpeedup": 1.079338160227564,
+        "nodeWallSpeedup": 1.079630874521857,
+        "chromiumWallSpeedup": 1.1197633815413095,
+        "nodeBaselineCpuMs": 6391,
+        "nodeCombinedCpuMs": 6180,
+        "chromiumBaselineWallMs": 5198.5,
+        "chromiumCombinedWallMs": 4606.8499999940395,
+        "chromiumCombinedCaseMedianRangeMs": [
+          2542.899999976158,
+          10157.699999988079
+        ],
+        "nodeCombinedCpuOverBudget": [
+          "canyon-256-1",
+          "delta-256-1",
+          "islands-256-1",
+          "islands-256-2",
+          "lakeBasin-256-1",
+          "lakeBasin-256-2",
+          "riverValley-256-1"
+        ],
+        "chromiumCombinedWallOverBudget": [
+          "canyon-256-1",
+          "islands-256-1",
+          "riverValley-256-1"
+        ]
+      }
+    }
+  }
+}

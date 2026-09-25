@@ -6,6 +6,12 @@ checks they would have needed, marked *pending*, with the files to play. Nothing
 the automated validation and tests (PLAN §15) carry each milestone's gate until the checks are
 played.
 
+**DGM Probe batches** (PLAN §20, D116, D117) are the exception: the probe plays maps in the real
+game unattended. Claude launches a batch only after asking Kyler in chat and getting Kyler's yes,
+every time (CLAUDE.md, Standing rules). A batch's results go into the tables below as **pass
+(probe)** or **fail (probe)**, with the date and the run. The batches planned so far are listed
+under "DGM Probe batches" at the end.
+
 When you play one, change its status to **pass** or **fail**, and add the date and what you saw.
 A failure becomes an issue and, if it changes a rule, a PLAN §20 decision.
 
@@ -191,6 +197,9 @@ What the files should show (from `checks.txt`):
 | M6-1b | Load the Lake Basin map. Build a dam 1 high (or one levee) on the 5 gap tiles (113, 59)–(113, 63). Watch the lake for a few days. | The map loads with no issues. The lake rises about one level to level 10 and stays there; no water leaks round the ridge; the start's bench at level 10 stays dry. | `Lake Basin (4242).timber`, `.png` | pending |
 | M6-1c | Block the badwater basin's outlet, 3 tiles wide, with levees where its channel leaves the basin: Canyon (87, 46)–(87, 48), the channel running east; Lake Basin (26, 101)–(28, 101), the channel running south. | No badwater leaves the basin until it fills to its rim (a source never stops, so it spills over the rim later). | `Canyon (4242).timber`, `Lake Basin (4242).timber` | pending |
 
+> **Note (2026-09-25):** the dam sites in C1 and M6-1a/b are the built dam-site ridges that Kyler's no-dam-ridge decision removes from M9a on (PLAN §20 D111). The files still load and can still be played as they are, but the ridge itself is no longer something to judge.
+
+
 **Automated stand-ins used meanwhile (all green at M6):**
 - the batches: 100 seeds per theme at 96², 128², 192² and 256² pass the generate profile (every
   playability check, including `water.reservoir` on the dam site and `water.badwater_contained`);
@@ -282,7 +291,8 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | pending |
+| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | **received** 2026-09-25: ten in-game screenshots, kept on Kyler's machine only (`C:\dgm-reference\`), used to tune Map look's ground, walls, water, light and models (PLAN §20 D110). Never copied, committed or shipped |
+| ML-2 | Open the map in Timberborn, and the same file in Dam Good Maps (**Open a map**, then look in 3D). Compare the ground near the start and along the river. | Where the game shows grass, the 3D view shows moist ground; where it shows cracked earth, dry ground; where badwater has spoiled the soil, contaminated ground. The badwater itself is clearly water in both. | `out/m8/River Valley (4242) M8 preview.timber` | pending |
 
 ## M12: Claude integration
 
@@ -291,7 +301,7 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 | M12-1 | Play the map produced by "add a giant waterfall in the north part of the map that is roughly 20 blocks wide". | The waterfall is there, about 20 wide, in the north, and it flows. | set by M12 | pending |
 | M12-2 | Play the map produced by the compound request: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." | The start stands upstream and reaches its water; a dam at the site halfway down holds its reservoir; the badwater runs on the far bank and stays out of the start's water and the reservoir. | set by M12 | pending |
 
-## M13: usability, design pass, ratings, versioned deploys
+## M13: usability, problem reports, versioned deploys
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
@@ -301,7 +311,28 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. | any map with terrain 17–22 | pending |
+| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. The game's side is the probe batch P-V16 (below). | any map with terrain 17–22 | pending |
 | E2 | Walk a beaver into a ruin column. | Beavers walk through ruin columns, as the code says. | `River Valley (4242).timber`: the website preview of seed 4242 outlines its ruin fields | pending |
 | E3 | Run an aquifer with a powered drill during a drought. | Record whether it yields water. | any map with an aquifer | pending |
 | E4 | Start a new game on a map with no StartingLocation. | Record what happens, for the error message. | needs a hand-made file | pending |
+
+## DGM Probe batches
+
+Each is launched only with Kyler's yes for that batch (D117). None has run: the probe (PR #18) is
+still a draft.
+
+| Batch | Step | What it must show | Status |
+|---|---|---|---|
+| P-M9a | M9a's gate (D116) | M9a's maps load, their pre-filled water holds, their objects load, and droughts and badtides behave as the models predict, within tolerances stated before the run; the probe's review of its screenshots finds nothing visibly broken. | pending (M9a) |
+| P-V16 | M9a, Verticality above 16 (D132; E1 below) | Maps with terrain above 16 load, and keep their terrain, water and objects (the Probe's T6). M9a offers heights above 16 only after it passes. | pending (M9a) |
+| P-ML | Map look (D135) | The DGM Probe's in-game shots of the Map look maps from the 3D view's poses, for Kyler to judge the clean look beside them. Kept local, never committed. | pending (when the probe exists) |
+| P-RP | Real places (D136), optional | A few of the real-terrain maps load in the game. Only if Kyler approves a batch. | optional |
+| P-3Db | 3D-b (D127) | T1–T4 and T6 agree with the model within the tolerances stated before the run (investigation/terrain3d/DESIGN.md §8). | pending (3D-b) |
+| P-3Dc | 3D-c (D127) | T5, and T2 on edited maps. | pending (3D-c) |
+| P-WV | Weather view (D133) | The weather model's calibration: droughts and badtides in the game against the model on the same maps. | pending (Weather view) |
+
+## 3D-b: Kyler's play test
+
+| Check | What to do | What should happen | File | Status |
+|---|---|---|---|---|
+| T7 | A DGM Probe batch of high-verticality maps before 3D-b's public release (D127, as amended by D145: a probe batch, like M9a's gate, instead of Kyler playing two maps; ask Kyler before launching). | They load and play: the start works, the heights are reachable as planned, the caves and overhangs hold. | set by 3D-b | pending |

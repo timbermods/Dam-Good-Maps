@@ -1,0 +1,230 @@
+diff --git a/src/core/sim/water.ts b/src/core/sim/water.ts
+index a63705d..f6bea50 100644
+--- a/src/core/sim/water.ts
++++ b/src/core/sim/water.ts
+@@ -68,6 +68,8 @@ export class WaterSim {
+ 
+   /** Wall bits per tile: bit k set = the out-of-map neighbour in direction k is solid. */
+   private readonly wall: Uint8Array;
++  /** Immutable geometry only, in the original direction order. */
++  private readonly neighbours: Int32Array;
+   private readonly f: Float64Array;
+   private readonly Cnew: Float64Array;
+   private readonly mod: Float64Array;
+@@ -92,6 +94,14 @@ export class WaterSim {
+     this.W = W;
+     this.H = H;
+     this.N = N;
++    this.neighbours = new Int32Array(4 * N);
++    for (let i = 0; i < N; i++) {
++      const x = i % W, y = (i - x) / W, b = 4 * i;
++      this.neighbours[b] = y > 0 ? i - W : -1;
++      this.neighbours[b + 1] = x > 0 ? i - 1 : -1;
++      this.neighbours[b + 2] = y < H - 1 ? i + W : -1;
++      this.neighbours[b + 3] = x < W - 1 ? i + 1 : -1;
++    }
+     this.F = model.floor;
+     this.dam = model.dam;
+     this.emitters = model.emitters;
+@@ -154,6 +164,12 @@ export class WaterSim {
+       const x = i % W;
+       const y = (i - x) / W;
+       let c = 1;
++      // Integer counts only; retain the boundary path for narrow/edge grids.
++      if (x > 0 && x < W - 1 && y > 0 && y < H - 1) {
++        c += +(D[i - W - 1] > 0) + +(D[i - W] > 0) + +(D[i - W + 1] > 0)
++          + +(D[i - 1] > 0) + +(D[i + 1] > 0)
++          + +(D[i + W - 1] > 0) + +(D[i + W] > 0) + +(D[i + W + 1] > 0);
++      } else {
+       for (let dy = -1; dy <= 1; dy++) {
+         const yy = y + dy;
+         if (yy < 0 || yy >= H) continue;
+@@ -163,6 +179,7 @@ export class WaterSim {
+           if (xx >= 0 && xx < W && D[yy * W + xx] > 0) c++;
+         }
+       }
++      }
+       wn[i] = c;
+     }
+   }
+@@ -219,9 +236,11 @@ export class WaterSim {
+   }
+ 
+   private substep(scale: number): void {
+-    const { W, H, F, D, C, out, f, wall, mod, dam } = this;
++    const { W, H, F, D, C, out, f, wall, mod, dam, neighbours } = this;
+     // flows of the tiles that had water last substep are stale: clear them
+     for (let k = 0; k < this.prevWetCount; k++) {
++      // Wet tiles overwrite all four flows before any flow is read.
++      if (D[this.prevWet[k]] > 0) continue;
+       const b = 4 * this.prevWet[k];
+       f[b] = 0;
+       f[b + 1] = 0;
+@@ -233,25 +252,20 @@ export class WaterSim {
+     // 1. outflows of every wet tile, from the start-of-substep state
+     for (let w = 0; w < this.wetCount; w++) {
+       const c = this.wet[w];
+-      const x = c % W;
+-      const y = (c - x) / W;
+       const Fc = F[c];
+       const Dc = D[c];
+       const Hc = Fc + Dc;
+       const b = 4 * c;
+-      for (let k = 0; k < 4; k++) {
+-        let n = -1;
+-        if (k === 0) n = y > 0 ? c - W : -1;
+-        else if (k === 1) n = x > 0 ? c - 1 : -1;
+-        else if (k === 2) n = y < H - 1 ? c + W : -1;
+-        else n = x < W - 1 ? c + 1 : -1;
++      do {
++        const k = 0 as number;
++        const n = neighbours[b + k];
+         const inside = n >= 0;
+         const Fn = inside ? F[n] : 0;
+         const Dn = inside ? D[n] : 0;
+         const Hn = inside ? Fn + Dn : 0;
+         if (wall[c] & (1 << k) || Fn >= Hc) {
+           f[b + k] = 0;
+-          continue;
++          break;
+         }
+         let e = Hc - Hn;
+         const prev = KEEP * out[b + k];
+@@ -272,7 +286,100 @@ export class WaterSim {
+           fk = prev + K * e;
+         }
+         f[b + k] = fk > 0 ? fk : 0;
+-      }
++      } while (false);
++      do {
++        const k = 1 as number;
++        const n = neighbours[b + k];
++        const inside = n >= 0;
++        const Fn = inside ? F[n] : 0;
++        const Dn = inside ? D[n] : 0;
++        const Hn = inside ? Fn + Dn : 0;
++        if (wall[c] & (1 << k) || Fn >= Hc) {
++          f[b + k] = 0;
++          break;
++        }
++        let e = Hc - Hn;
++        const prev = KEEP * out[b + k];
++        let fk: number;
++        const lim = inside && dam ? dam[n] : -1;
++        if (lim >= 0 && Fn < Math.ceil(Hc)) {
++          // a partial obstacle (NaturalDam) in the target tile
++          const hd = Hc - Fn;
++          if (hd < lim) {
++            const a = clamp01(clamp01((lim - hd) / 0.1) * clamp(1 - 2.25 * (Hc - (Fc + this.Dold[c])), 0.5, 2));
++            fk = 0.995 * prev - 0.02 * a;
++          } else {
++            if (hd - lim < 0.1 && e > 0) e = e * ((hd - lim) / 0.1);
++            fk = 0.995 * prev + K * e;
++          }
++        } else {
++          if (inside && Dn === 0 && Fn === Fc) e = e - SPILL;
++          fk = prev + K * e;
++        }
++        f[b + k] = fk > 0 ? fk : 0;
++      } while (false);
++      do {
++        const k = 2 as number;
++        const n = neighbours[b + k];
++        const inside = n >= 0;
++        const Fn = inside ? F[n] : 0;
++        const Dn = inside ? D[n] : 0;
++        const Hn = inside ? Fn + Dn : 0;
++        if (wall[c] & (1 << k) || Fn >= Hc) {
++          f[b + k] = 0;
++          break;
++        }
++        let e = Hc - Hn;
++        const prev = KEEP * out[b + k];
++        let fk: number;
++        const lim = inside && dam ? dam[n] : -1;
++        if (lim >= 0 && Fn < Math.ceil(Hc)) {
++          // a partial obstacle (NaturalDam) in the target tile
++          const hd = Hc - Fn;
++          if (hd < lim) {
++            const a = clamp01(clamp01((lim - hd) / 0.1) * clamp(1 - 2.25 * (Hc - (Fc + this.Dold[c])), 0.5, 2));
++            fk = 0.995 * prev - 0.02 * a;
++          } else {
++            if (hd - lim < 0.1 && e > 0) e = e * ((hd - lim) / 0.1);
++            fk = 0.995 * prev + K * e;
++          }
++        } else {
++          if (inside && Dn === 0 && Fn === Fc) e = e - SPILL;
++          fk = prev + K * e;
++        }
++        f[b + k] = fk > 0 ? fk : 0;
++      } while (false);
++      do {
++        const k = 3 as number;
++        const n = neighbours[b + k];
++        const inside = n >= 0;
++        const Fn = inside ? F[n] : 0;
++        const Dn = inside ? D[n] : 0;
++        const Hn = inside ? Fn + Dn : 0;
++        if (wall[c] & (1 << k) || Fn >= Hc) {
++          f[b + k] = 0;
++          break;
++        }
++        let e = Hc - Hn;
++        const prev = KEEP * out[b + k];
++        let fk: number;
++        const lim = inside && dam ? dam[n] : -1;
++        if (lim >= 0 && Fn < Math.ceil(Hc)) {
++          // a partial obstacle (NaturalDam) in the target tile
++          const hd = Hc - Fn;
++          if (hd < lim) {
++            const a = clamp01(clamp01((lim - hd) / 0.1) * clamp(1 - 2.25 * (Hc - (Fc + this.Dold[c])), 0.5, 2));
++            fk = 0.995 * prev - 0.02 * a;
++          } else {
++            if (hd - lim < 0.1 && e > 0) e = e * ((hd - lim) / 0.1);
++            fk = 0.995 * prev + K * e;
++          }
++        } else {
++          if (inside && Dn === 0 && Fn === Fc) e = e - SPILL;
++          fk = prev + K * e;
++        }
++        f[b + k] = fk > 0 ? fk : 0;
++      } while (false);
+       // a tile never gives more than it has
+       const s = f[b] + f[b + 1] + f[b + 2] + f[b + 3];
+       if (s * DT > Dc) {
+@@ -288,13 +395,11 @@ export class WaterSim {
+     const Cnew = this.Cnew;
+     for (let a = 0; a < this.activeCount; a++) {
+       const c = this.active[a];
+-      const x = c % W;
+-      const y = (c - x) / W;
+       const b = 4 * c;
+-      const n0 = y > 0 ? c - W : -1;
+-      const n1 = x > 0 ? c - 1 : -1;
+-      const n2 = y < H - 1 ? c + W : -1;
+-      const n3 = x < W - 1 ? c + 1 : -1;
++      const n0 = neighbours[b];
++      const n1 = neighbours[b + 1];
++      const n2 = neighbours[b + 2];
++      const n3 = neighbours[b + 3];
+       // inflow from direction k is the neighbour's outflow in the opposite direction
+       const in0 = n0 >= 0 ? f[4 * n0 + 2] : 0;
+       const in1 = n1 >= 0 ? f[4 * n1 + 3] : 0;
+diff --git a/src/core/sim/drought.ts b/src/core/sim/drought.ts
+index 6e396c7..1b962ab 100644
+--- a/src/core/sim/drought.ts
++++ b/src/core/sim/drought.ts
+@@ -76,9 +76,12 @@ export function droughtStorage(m: WaterModel, depth: ArrayLike<number>, days: nu
+     const t = 10 - sat[i];
+     evap[label[i]] += 1e-4 * (0.0595 * (t * t) + 0.101 * t + 0.72) * SECONDS_PER_DAY;
+   }
++  // Identical division then multiplication once per pool, after the ordered sum.
++  const drops = new Float64Array(area.length);
++  for (let p = 0; p < area.length; p++) drops[p] = (evap[p] / area[p]) * days;
+   for (let i = 0; i < N; i++) {
+     if (label[i] < 0) continue;
+-    const drop = (evap[label[i]] / area[label[i]]) * days;
++    const drop = drops[label[i]];
+     const k = kept[i] - drop;
+     kept[i] = k > 0 ? k : 0;
+   }
