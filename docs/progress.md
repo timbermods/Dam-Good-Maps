@@ -1194,7 +1194,7 @@ and a frame in SwiftShader on this machine takes 26 ms (25 ms before).
   - GPU: the Radeon needs 9.23 ms per frame for Beavertopia (median; 10.07 ms at the 95th
     percentile), against 8.23 ms before the fix round. An A/B on this machine puts the fix
     round's cost at about 1 ms (8.21 against 9.22 ms).
-- **Chunk:** `View3D` stays lazy-loaded: 596.67 KB (155.68 KB gzipped), against 588.27 KB
+- **Chunk:** `View3D` stays lazy-loaded: 596.71 KB (155.71 KB gzipped), against 588.27 KB
   (153.13 KB) after the first round and 560.26 KB (143.46 KB) before Map look. The page's own
   script is 93.92 KB (93.89 KB before).
 - **Tests:** no existing test changed. Typecheck passes. The 363 unit and contract tests pass
