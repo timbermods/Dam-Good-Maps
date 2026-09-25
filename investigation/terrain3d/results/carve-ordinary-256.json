@@ -1,0 +1,263 @@
+{
+ "size": 256,
+ "verticality": "ordinary",
+ "seed": 1,
+ "plan": {
+  "vf": 4,
+  "bed": 3,
+  "tN": 8,
+  "M": 13,
+  "peak": 15,
+  "R": 10
+ },
+ "baseRelief": {
+  "min": 3,
+  "max": 15
+ },
+ "features": [
+  {
+   "kind": "tunnel",
+   "through": "ridge",
+   "level": 4,
+   "length": 14,
+   "width": 2,
+   "height": 2,
+   "cells": 64,
+   "candidates": 254
+  },
+  {
+   "kind": "cave",
+   "with": "spring and pool",
+   "level": 4,
+   "length": 10,
+   "width": 3,
+   "height": 3,
+   "poolTiles": 12,
+   "roofThickness": 1,
+   "cells": 105
+  }
+ ],
+ "carveCpuMs": 141,
+ "support": {
+  "droppedByTheRulePass": 0,
+  "at": [],
+  "unsupportedAfter": 0
+ },
+ "walk": {
+  "slopes": 25,
+  "perLevel": {
+   "3": {
+    "walkable": 1096,
+    "reached": 1096,
+    "roofed": 18
+   },
+   "4": {
+    "walkable": 19010,
+    "reached": 19010,
+    "roofed": 47
+   },
+   "5": {
+    "walkable": 34,
+    "reached": 34,
+    "roofed": 0
+   },
+   "6": {
+    "walkable": 7396,
+    "reached": 34,
+    "roofed": 0
+   },
+   "7": {
+    "walkable": 2450,
+    "reached": 34,
+    "roofed": 0
+   },
+   "8": {
+    "walkable": 8322,
+    "reached": 8322,
+    "roofed": 0
+   },
+   "9": {
+    "walkable": 624,
+    "reached": 611,
+    "roofed": 0
+   },
+   "10": {
+    "walkable": 3328,
+    "reached": 0,
+    "roofed": 0
+   },
+   "13": {
+    "walkable": 17519,
+    "reached": 0,
+    "roofed": 0
+   },
+   "14": {
+    "walkable": 5180,
+    "reached": 0,
+    "roofed": 0
+   },
+   "15": {
+    "walkable": 642,
+    "reached": 0,
+    "roofed": 0
+   }
+  },
+  "reachedShare": 0.444,
+  "stairOnlyRegions": [
+   {
+    "level": 15,
+    "nodes": 351,
+    "roofedNodes": 0,
+    "at": [
+     122,
+     218
+    ]
+   },
+   {
+    "level": 15,
+    "nodes": 192,
+    "roofedNodes": 0,
+    "at": [
+     122,
+     188
+    ]
+   },
+   {
+    "level": 15,
+    "nodes": 47,
+    "roofedNodes": 0,
+    "at": [
+     98,
+     207
+    ]
+   },
+   {
+    "level": 15,
+    "nodes": 43,
+    "roofedNodes": 0,
+    "at": [
+     164,
+     176
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 2895,
+    "roofedNodes": 0,
+    "at": [
+     121,
+     159
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 622,
+    "roofedNodes": 0,
+    "at": [
+     209,
+     189
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 560,
+    "roofedNodes": 0,
+    "at": [
+     26,
+     167
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 350,
+    "roofedNodes": 0,
+    "at": [
+     27,
+     229
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 230,
+    "roofedNodes": 0,
+    "at": [
+     161,
+     168
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 202,
+    "roofedNodes": 0,
+    "at": [
+     183,
+     168
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 112,
+    "roofedNodes": 0,
+    "at": [
+     150,
+     248
+    ]
+   },
+   {
+    "level": 14,
+    "nodes": 49,
+    "roofedNodes": 0,
+    "at": [
+     63,
+     169
+    ]
+   }
+  ]
+ },
+ "places": {
+  "side valley (beyond the ridge)": true,
+  "terrace": true,
+  "massif top": false,
+  "massif east of the gorge": false,
+  "ridge top": false,
+  "spring cave floor": true
+ },
+ "terraceRow": "################################################################################################################################",
+ "rewards": [
+  {
+   "what": "a ruin column (60 scrap)",
+   "level": 15,
+   "reachedBy": "player stairs only"
+  }
+ ],
+ "resources": {
+  "trees": 1935,
+  "bushes": 532
+ },
+ "water": {
+  "settled": true,
+  "ticks": 1280,
+  "cpuMs": 375,
+  "levels": 2,
+  "sourceStrength": 4.5,
+  "edgeOutflow": 4.362,
+  "roofedWetColumns": 27,
+  "roofedVolume": 19.378,
+  "pressurisedColumns": 0,
+  "springPoolDepth": 1.052,
+  "caveFloorSheetDepth": 0.05
+ },
+ "heightfieldWater": {
+  "settled": true,
+  "wetTiles": 1079,
+  "stackedWetTiles": 1099,
+  "tileIou": 0.971,
+  "wetOnRoofs": 1
+ },
+ "totalCpuMs": 1094,
+ "fileBytes": 128758,
+ "runs": {
+  "maxRunsPerTile": 2,
+  "multiRunTiles": 65
+ }
+}

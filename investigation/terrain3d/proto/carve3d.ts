@@ -65,36 +65,61 @@ export interface Face {
   base: number;
 }
 
-/** Cliff faces: tiles whose neighbour in a direction is at least `minDrop` lower, grouped into runs
- *  along the face (same direction, next to each other, tops within 1). Longest first. */
+/** Cliff faces: tiles whose neighbour in a direction is at least `minDrop` lower, grouped into
+ *  8-connected runs and ordered along the face (one tile per step along it, the one nearest the
+ *  low side). Largest first (length × drop). */
 export function findFaces(h: Int16Array, W: number, H: number, minDrop: number): Face[] {
   const faces: Face[] = [];
   for (let dir = 0; dir < 4; dir++) {
-    const seen = new Uint8Array(W * H);
-    const isFace = (x: number, y: number) => {
-      const xx = x + DX[dir], yy = y + DY[dir];
-      if (xx < 0 || yy < 0 || xx >= W || yy >= H) return false;
-      return h[y * W + x] - h[yy * W + xx] >= minDrop;
-    };
-    // along the face: perpendicular to dir
-    const ax = DY[dir] !== 0 ? 1 : 0, ay = DY[dir] !== 0 ? 0 : 1;
+    const isFace = new Uint8Array(W * H);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = y * W + x;
-      if (seen[i] || !isFace(x, y)) continue;
-      // walk back to the run's start, then forward
-      let sx = x, sy = y;
-      while (isFace(sx - ax, sy - ay) && Math.abs(h[(sy - ay) * W + sx - ax] - h[i]) <= 1) { sx -= ax; sy -= ay; }
-      const tiles: [number, number][] = [];
-      let cx = sx, cy = sy, top = 0, base = 99;
-      while (cx < W && cy < H && isFace(cx, cy) && Math.abs(h[cy * W + cx] - h[i]) <= 1) {
-        seen[cy * W + cx] = 1;
-        tiles.push([cx, cy]);
-        top = Math.max(top, h[cy * W + cx]);
-        base = Math.min(base, h[(cy + DY[dir]) * W + cx + DX[dir]]);
-        cx += ax;
-        cy += ay;
+      const xx = x + DX[dir], yy = y + DY[dir];
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      if (h[y * W + x] - h[yy * W + xx] >= minDrop) isFace[y * W + x] = 1;
+    }
+    const seen = new Uint8Array(W * H);
+    const alongX = DY[dir] !== 0;
+    for (let i0 = 0; i0 < W * H; i0++) {
+      if (!isFace[i0] || seen[i0]) continue;
+      const comp: number[] = [];
+      const st = [i0];
+      seen[i0] = 1;
+      while (st.length) {
+        const i = st.pop()!;
+        comp.push(i);
+        const x = i % W, y = (i - x) / W;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j = yy * W + xx;
+          if (isFace[j] && !seen[j]) { seen[j] = 1; st.push(j); }
+        }
       }
-      if (tiles.length >= 3) faces.push({ tiles, dir, top, base });
+      // one tile per step along the face: the one furthest toward the low side
+      const byAlong = new Map<number, number>();
+      for (const i of comp) {
+        const x = i % W, y = (i - x) / W;
+        const a = alongX ? x : y;
+        const o = alongX ? y : x;
+        const prev = byAlong.get(a);
+        if (prev === undefined) { byAlong.set(a, i); continue; }
+        const px = prev % W, py = (prev - px) / W;
+        const po = alongX ? py : px;
+        const toward = alongX ? DY[dir] : DX[dir];
+        if ((o - po) * toward > 0) byAlong.set(a, i);
+      }
+      const keys = [...byAlong.keys()].sort((a, b) => a - b);
+      if (keys.length < 3) continue;
+      const tiles: [number, number][] = [];
+      let top = 0, base = 99;
+      for (const a of keys) {
+        const i = byAlong.get(a)!;
+        const x = i % W, y = (i - x) / W;
+        tiles.push([x, y]);
+        top = Math.max(top, h[i]);
+        base = Math.min(base, h[(y + DY[dir]) * W + x + DX[dir]]);
+      }
+      faces.push({ tiles, dir, top, base });
     }
   }
   faces.sort((a, b) => b.tiles.length * (b.top - b.base) - a.tiles.length * (a.top - a.base) || a.tiles[0][1] - b.tiles[0][1] || a.tiles[0][0] - b.tiles[0][0]);
@@ -256,6 +281,8 @@ export function cliffPath(vx: Vox, face: Face, z0: number, step: number, depth =
     if (f >= top) break;
     for (let k = 0; k < depth; k++) {
       const x = fx - DX[face.dir] * k, y = fy - DY[face.dir] * k;
+      // the ledge needs its floor voxel, standing on rock: never add rock over air
+      if (!vx.get(x, y, f - 1) && !vx.get(x, y, f - 2)) continue;
       for (let z = f; z < Math.min(f + height, MAX_SURFACE); z++) vx.set(x, y, z, false);
       vx.set(x, y, f - 1, true);
       out.push({ x, y, z: f });
@@ -264,33 +291,47 @@ export function cliffPath(vx: Vox, face: Face, z0: number, step: number, depth =
   return out;
 }
 
-/** A natural bridge over a gap at its deck level: the deck (`width` tiles wide) plus a corbelled
- *  underside, each layer reaching at most 3 further than the one below, shaped like an arch. */
+/** A natural bridge over a gap at its deck level: the deck (`width` rows wide) plus a corbelled
+ *  underside, each layer reaching at most 3 further than the one below, shaped like an arch. Each
+ *  row is corbelled from its own two walls (a gorge's walls are rarely straight). */
 export function skyBridge(vx: Vox, g: Gap, width: number): { layers: number; thickness: number } {
   const deck = g.level - 1; // the deck's top voxel layer; its top is walkable at g.level
-  const span = g.span;
-  const half = Math.ceil(span / 2);
-  // layers under the deck: reach e_j from each end at deck − j, e_0 = half; e_j ≥ e_{j−1} − 3;
-  // a rounder underside with smaller steps near the crown
-  const reach: number[] = [half];
-  while (reach[reach.length - 1] > 0) {
-    const prev = reach[reach.length - 1];
-    const step = reach.length <= 1 ? 1 : reach.length === 2 ? 2 : 3;
-    reach.push(Math.max(0, prev - step));
-  }
   const ax = DY[g.dir] !== 0 ? 1 : 0, ay = DY[g.dir] !== 0 ? 0 : 1;
   const lo = -Math.floor((width - 1) / 2);
-  for (let t = 1; t <= span; t++) {
-    const dEnd = Math.min(t, span + 1 - t);
-    for (let j = 0; j < reach.length; j++) {
-      if (dEnd > reach[j]) continue;
-      for (let w = lo; w < lo + width; w++) {
-        const x = g.a[0] + DX[g.dir] * t + ax * w, y = g.a[1] + DY[g.dir] * t + ay * w;
+  let layers = 0;
+  for (let w = lo; w < lo + width; w++) {
+    const ox = g.a[0] + ax * w, oy = g.a[1] + ay * w;
+    // this row's gap: its own near wall (at or behind the gap's first end), then the gap, then
+    // its far wall, each at the deck's level
+    const topAt = (t: number) => (vx.inside(ox + DX[g.dir] * t, oy + DY[g.dir] * t) ? vx.top(ox + DX[g.dir] * t, oy + DY[g.dir] * t) : -1);
+    let tw = 0;
+    while (tw > -6 && topAt(tw) < g.level) tw--;
+    if (topAt(tw) < g.level) continue;
+    let t0 = tw + 1;
+    while (t0 <= g.span + 3 && topAt(t0) >= g.level) t0++;
+    let t1 = t0;
+    while (t1 <= g.span + 6 && topAt(t1) >= 0 && topAt(t1) < g.level) t1++;
+    const span = t1 - t0; // tiles t0 .. t1-1 are the gap on this row
+    if (span <= 0 || topAt(t1) < g.level) continue;
+    const half = Math.ceil(span / 2);
+    const reach: number[] = [half];
+    while (reach[reach.length - 1] > 0) {
+      const prev = reach[reach.length - 1];
+      const step = reach.length <= 1 ? 1 : reach.length === 2 ? 2 : 3;
+      reach.push(Math.max(0, prev - step));
+    }
+    layers = Math.max(layers, reach.length - 1);
+    for (let t = t0; t < t1; t++) {
+      const dEnd = Math.min(t - t0 + 1, t1 - t);
+      for (let j = 0; j < reach.length; j++) {
+        if (dEnd > reach[j]) continue;
+        const x = ox + DX[g.dir] * t, y = oy + DY[g.dir] * t;
+        // the walls must hold this layer: a lower wall than the deck leaves the layer to the ones above
         vx.set(x, y, deck - j, true);
       }
     }
   }
-  return { layers: reach.length - 1, thickness: reach.length - 1 };
+  return { layers, thickness: layers };
 }
 
 /** A window arch through a wall or fin: an opening `span` long along the wall and `height` high,
