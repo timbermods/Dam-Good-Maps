@@ -157,6 +157,17 @@ async function main(): Promise<void> {
   check("restore: the probe's saves deleted, Kyler's kept", !existsSync(join(docs, 'Saves/DGMProbe fake')) && existsSync(join(docs, 'Saves/Kyler colony/Day 12.timber')) && existsSync(join(docs, 'Saves/Empty folder')), r.savesDeleted.join(', '));
   check('restore: error reports moved out', !existsSync(join(docs, 'Error reports')) || require('node:fs').readdirSync(join(docs, 'Error reports')).length === 0, r.docsMoved.join(', '));
   check('restore: the marker is gone', !safety.hasPendingRestore());
+
+  // 7. the exact comparison with a settings backup, load order and long binary values included
+  execFileSync('reg.exe', ['add', TEST_KEY, '/v', 'LongBinary_h9', '/t', 'REG_BINARY', '/d', '41'.repeat(120), '/f'], { stdio: 'ignore' });
+  const ref = safety.backupSettings().regFile;
+  const same = safety.compareWithBackup(ref);
+  check('settings check: equal right after the backup', same.equal, JSON.stringify(same));
+  const prio = mods.prefsValueName('ModPriority.Local.SomeMod.someone.somemod');
+  execFileSync('reg.exe', ['add', TEST_KEY, '/v', prio, '/t', 'REG_DWORD', '/d', '0', '/f'], { stdio: 'ignore' });
+  execFileSync('reg.exe', ['add', TEST_KEY, '/v', 'Added_h1', '/t', 'REG_DWORD', '/d', '1', '/f'], { stdio: 'ignore' });
+  const diff = safety.compareWithBackup(ref);
+  check('settings check: a changed load order and an added value are caught', !diff.equal && diff.changed.includes(prio) && diff.extra.includes('Added_h1'), JSON.stringify(diff));
 }
 
 main()

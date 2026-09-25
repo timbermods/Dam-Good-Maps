@@ -4,6 +4,10 @@
 //   npm --prefix investigation/probe run batch -- --compare-only RUN_ID
 //   npm --prefix investigation/probe run batch -- --restore-only
 //   npm --prefix investigation/probe run batch -- --backup-settings   (a copy of the game's settings, kept by hand)
+//   Steps, when the runner itself runs in a sandbox that cannot see the real settings:
+//     --prepare-only (sandboxed) → --launch-only --reference <backup.reg> (outside the sandbox: launch and
+//     restore, settings checked against the backup before and after) → --compare-only (sandboxed);
+//     --verify-settings <backup.reg> reads the settings back (outside the sandbox).
 // Without --confirmed-launch it only prints the plan (maps, checks, time, and that it launches Timberborn)
 // and a one-time code; Kyler's yes is needed for every launch (runner/consent.ts).
 import { execFileSync } from 'node:child_process';
@@ -18,9 +22,9 @@ import { makeJob, prepare, type Prepared, summary } from './jobs';
 import { type LaunchLog, resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
 import { probeOnly } from './mods';
-import { CHECKED_GAME_VERSION, gameVersion, isEntry, probePaths, REGISTRY_KEY, REPO } from './paths';
+import { CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY, REPO } from './paths';
 import { waitQuiet } from './quiet';
-import { backupSettings, hasPendingRestore, isGameRunning, restore, takeSnapshot } from './safety';
+import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, restore, type SettingsDiff, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
 import { writeSummary } from './summary';
 
@@ -67,13 +71,30 @@ function planFromArgs(): Plan {
   return { runId: opt('run-id') ?? newRunId(smoke ? 'smoke' : 'batch'), kind: smoke ? 'smoke' : 'batch', extraMaps, gameIds: ids, speed: Number(opt('speed') ?? 99), smokeDays: smoke ? Number(opt('days') ?? 1) : undefined };
 }
 
-async function launch(plan: Plan, prepared: Prepared[]): Promise<void> {
+/**
+ * The launch and the restore: the only step that must see the real game settings (run it outside any
+ * sandbox). `reference` is Kyler's settings backup: the launch happens only if the settings equal it now,
+ * and after the restore they must equal it again, value by value, mod load order included.
+ */
+async function launch(plan: Plan, prepared: Prepared[], reference: string, build: boolean): Promise<boolean> {
   const p = probePaths();
   const dir = resultsDir(plan.runId);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 1));
-  log('building and installing DGM Probe');
-  buildMod(true);
+  if (!existsSync(reference)) throw new Error(`The settings backup ${reference} does not exist: nothing was launched.`);
+  log(`settings backup found: ${reference}`);
+  const before = compareWithBackup(reference);
+  writeFileSync(join(dir, 'settings-check-before.json'), JSON.stringify(before, null, 1));
+  if (!before.equal) {
+    log(`The game's settings differ from the backup before the launch: ${describeDiff(before)}`);
+    for (const l of handRestore(reference)) log(l);
+    throw new Error('Nothing was launched: the settings do not match the backup.');
+  }
+  log('the settings match the backup exactly (mod load order included)');
+  if (build) {
+    log('building and installing DGM Probe');
+    buildMod(true);
+  } else if (!existsSync(join(modInstallDir(), 'version-1.1', 'Scripts', 'DGMProbe.dll'))) throw new Error('DGM Probe is not installed: run the prepare step first.');
   const snap = takeSnapshot();
   log(`recorded the game's settings, logs and saves (${Object.keys(snap.saves).length} save files)`);
   let restored = false;
@@ -120,6 +141,20 @@ async function launch(plan: Plan, prepared: Prepared[]): Promise<void> {
     doRestore();
     if (existsSync(p.job)) rmSync(p.job);
   }
+  const after = compareWithBackup(reference);
+  writeFileSync(join(dir, 'settings-check-after.json'), JSON.stringify(after, null, 1));
+  if (!after.equal) {
+    log(`STOP: after the restore the game's settings differ from the backup: ${describeDiff(after)}`);
+    for (const l of handRestore(reference)) log(l);
+    return false;
+  }
+  log('after the restore the settings match the backup exactly (mod load order included)');
+  return true;
+}
+
+function describeDiff(d: SettingsDiff): string {
+  const clip = (a: string[]) => a.slice(0, 12).join(', ') + (a.length > 12 ? ` and ${a.length - 12} more` : '');
+  return [d.missing.length ? `missing ${d.missing.length}: ${clip(d.missing)}` : '', d.extra.length ? `added ${d.extra.length}: ${clip(d.extra)}` : '', d.changed.length ? `changed ${d.changed.length}: ${clip(d.changed)}` : ''].filter(Boolean).join('; ');
 }
 
 export function compareRun(plan: Plan): { verdicts: GameVerdicts[]; sheet: string } {
@@ -187,15 +222,35 @@ async function main(): Promise<void> {
     log('an earlier run was not restored: restoring first');
     restore(join(probePaths().runner, 'restored-' + Date.now()));
   }
+  const verify = opt('verify-settings');
+  if (verify) {
+    // read-only: the game's settings now against a backup, value by value
+    const d = compareWithBackup(verify);
+    console.log(d.equal ? `The game's settings match ${verify} exactly (every value, mod load order included).` : `The game's settings differ from ${verify}: ${describeDiff(d)}`);
+    if (!d.equal) for (const l of handRestore(verify)) console.log(l);
+    process.exitCode = d.equal ? 0 : 5;
+    return;
+  }
   const compareOnly = opt('compare-only');
   if (compareOnly) {
     const plan = JSON.parse(readFileSync(join(resultsDir(compareOnly), 'plan.json'), 'utf8')) as Plan;
     compareRun(plan);
     return;
   }
-  const plan = planFromArgs();
+  const launchOnly = flag('launch-only');
+  const plan = launchOnly ? (JSON.parse(readFileSync(join(resultsDir(opt('run-id') ?? ''), 'plan.json'), 'utf8')) as Plan) : planFromArgs();
   const prepared = prepare(selectGames(plan), plan.runId);
   const s = summary(prepared, plan.kind);
+  if (flag('prepare-only')) {
+    // everything before the launch that needs no real game settings: the maps, the plan and the mod
+    mkdirSync(resultsDir(plan.runId), { recursive: true });
+    writeFileSync(join(resultsDir(plan.runId), 'plan.json'), JSON.stringify(plan, null, 1));
+    log('building and installing DGM Probe');
+    buildMod(true);
+    console.log(describe(s));
+    console.log(`\nPrepared run ${plan.runId}. The launch step (outside any sandbox, after Kyler's yes): --launch-only --run-id ${plan.runId} --confirmed-launch <code> --reference <settings backup .reg>`);
+    return;
+  }
   if (flag('job-only')) {
     writeFileSync(join(REPO, 'investigation', 'probe', '.cache', 'job-preview.json'), JSON.stringify(makeJob(plan.runId, prepared, plan.speed), null, 1));
     console.log(describe(s));
@@ -225,8 +280,12 @@ async function main(): Promise<void> {
     const quiet = await waitQuiet(log);
     if (!quiet) throw new Error('The machine did not become quiet in time: nothing was launched.');
   }
-  await launch(plan, prepared);
-  compareRun(plan);
+  const reference = opt('reference');
+  if (!reference) throw new Error('A launch needs --reference <settings backup .reg> (make one with --backup-settings): nothing was launched.');
+  const settingsOk = await launch(plan, prepared, reference, !launchOnly);
+  if (!settingsOk) process.exitCode = 4;
+  // the comparisons need no real settings: after a --launch-only step they run on their own (--compare-only)
+  if (!launchOnly) compareRun(plan);
 }
 
 if (isEntry(__filename))

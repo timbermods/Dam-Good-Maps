@@ -262,3 +262,41 @@ export function backupSettings(): { dir: string; regFile: string; modsFile: stri
   writeFileSync(modsFile, [`Timberborn mod settings on ${new Date().toISOString()} (from ${REGISTRY_KEY}).`, 'ModEnabled: 1 on, 0 off; a mod with no line is on. ModPriority: load order.', '', ...mods, ''].join('\r\n'));
   return { dir, regFile, modsFile };
 }
+
+/** A .reg export read into value name → its exact text (type and data), continuation lines joined. */
+export function parseRegFile(file: string): Map<string, string> {
+  const buf = readFileSync(file);
+  const text = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le').slice(1) : buf.toString('utf8');
+  const out = new Map<string, string>();
+  const lines = text.replace(/\\\r?\n\s*/g, '').split(/\r?\n/);
+  for (const line of lines) {
+    const m = /^"((?:[^"\\]|\\.)*)"=(.*)$/.exec(line);
+    if (m) out.set(m[1].replace(/\\(.)/g, '$1'), m[2].trim());
+    else if (/^@=/.test(line)) out.set('(default)', line.slice(2).trim());
+  }
+  return out;
+}
+
+export interface SettingsDiff {
+  equal: boolean;
+  missing: string[];
+  extra: string[];
+  changed: string[];
+}
+
+/** The key as it is now against a .reg backup, value by value (types and data), load order included. */
+export function compareWithBackup(backupReg: string): SettingsDiff {
+  const now = join(probePaths().runner, `settings-now-${Date.now()}.reg`);
+  mkdirSync(probePaths().runner, { recursive: true });
+  execFileSync('reg.exe', ['export', REGISTRY_KEY, now, '/y'], { stdio: 'ignore' });
+  const a = parseRegFile(backupReg), b = parseRegFile(now);
+  rmSync(now, { force: true });
+  const missing = [...a.keys()].filter((k) => !b.has(k));
+  const extra = [...b.keys()].filter((k) => !a.has(k));
+  const changed = [...a.keys()].filter((k) => b.has(k) && a.get(k) !== b.get(k));
+  return { equal: !missing.length && !extra.length && !changed.length, missing, extra, changed };
+}
+
+export function handRestore(backupReg: string): string[] {
+  return ['Close Timberborn, then in PowerShell:', `  reg delete "${REGISTRY_KEY}" /f`, `  reg import "${backupReg}"`];
+}
