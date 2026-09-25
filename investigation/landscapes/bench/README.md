@@ -32,7 +32,7 @@ The default is named regions, 128² where the input is 128², 60 m per tile, rel
 
 Library fixtures also carry `referenceHeights`: the original quantised crop before the artificial edge rim. Terrain measures use those heights. Water and validation use playable `heights`. Ordinary prototypes omit that field.
 
-Read the measurements as separate comparisons. A smaller distance does not prove fun, realism or validity. Water comparisons are withheld when settling fails. Missing values and groups with fewer than five measured regions remain unscored. See [methods](../METHODS.md).
+Read the measurements as separate comparisons. A smaller distance does not prove fun, realism or validity. Water comparisons are withheld when settling fails. Missing values and measures with fewer than five supporting regions remain unscored. Histograms use total variation; mean valley sections use root mean square difference in levels. See [methods](../METHODS.md).
 
 Programmatic use:
 

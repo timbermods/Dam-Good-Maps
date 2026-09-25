@@ -8,6 +8,8 @@ Another 50 centres come from seeded rejection sampling against Natural Earth's 1
 
 Every centre has nine windows: 96², 128² and 256² cells, crossed with 30, 60 and 120 m per cell. Ground spans range from 2.88 to 30.72 km. Four neighbouring windows and several scales often overlap. Never treat the 4,050 patches as independent observations.
 
+One sampling error is retained openly: [Las Medulas is a Roman mining landscape](https://whc.unesco.org/en/list/803). Its four centres remain in the conversion records and overall pass counts, but `data/quality-flags.json` excludes that region from natural targets and the library. Targets therefore use 99 named regions. The badlands target has four, so the bench marks it as insufficient evidence. Other windows may also contain roads, farms, dams or modified channels; no claim of pristine terrain is made.
+
 The crop includes a 32-cell halo on every side. The halo supports drainage entry detection; it does not recover the entire upstream watershed.
 
 ## Elevation
@@ -77,6 +79,6 @@ Terrain targets include passing and failing conversions. Water-feature targets i
 
 The bench reports distance to those bands, per measurement and group. It reports missing evidence for fewer than five measured regions. Histogram distance is total variation. Group distance is the mean absolute median deviation, divided by a robust spread and capped at ten per measure. It is descriptive, not a fun score or acceptance gate.
 
-Variety uses the repository's layout and feature formulas. Its scale is fitted to one anchor per named region at 128², 60 m per tile and 16 normalised levels. It must not be compared numerically with the workshop's separately fitted scale.
+Variety uses the repository's layout and feature formulas and its published `investigation/workshop/variety-scale.json` calibration. The real set has one anchor per named region at 128², 60 m per tile and 16 normalised levels. Results retain the full set and the settled subset separately. Features include placed resources and simulated water, so this is variety of the conversions, not untouched geography. Fitting a new calibration to nearly constant planted-resource totals would inflate distances; the published calibration avoids that problem. No workshop heightmap is used.
 
 No terrain was checked in Timberborn. Family labels, DEM uncertainty, source inference, edge treatment, start search and resource placement all limit the results.
