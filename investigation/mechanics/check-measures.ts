@@ -37,4 +37,24 @@ assert.ok(deep.deepPumpExtraShore>0,'The same shore fits the six-level proxy');
 for (let y=0;y<H;y++) { const i=y*W+6; water[i]=0.2; contamination[i]=1; }
 const hazard=measureOpening(result());
 assert.ok(hazard.safeLost40>0,'A continuous badwater crossing removes the safe route, not physical walking');
-console.log('Passed: mature/dead wood, ripe JsonFloat berries, missing dam, flat reach, deep shore and hazard-route cases.');
+// Water wheels read the net stored outflow along their axis (VERIFIED.md U01).
+for (let i=0;i<N;i++) { water[i]=0; contamination[i]=0; heights[i]=4; }
+const wheel = (flows: [number, number, number, number][]) => {
+  const out = new Float64Array(4*N);
+  flows.forEach(([i,k,v]) => { out[4*i+k] = v; });
+  return measureOpening({ ...result(), built: { ...result().built, settle: { out } } });
+};
+const a = 5*W+6, b = 6*W+6;
+heights[a] = heights[b] = 3; water[a] = water[b] = 0.5;
+let w = wheel([[a,3,0.6,0]]);
+assert.equal(w.peakAxialFlow64, 0.6, 'Net flow along x counts');
+assert.equal(w.compactWheelHp64, 72, 'ceil(120 × 0.6)');
+assert.equal(w.waterWheelHp64, 81, 'The second blade cell has no flow: ceil(270 × 0.3)');
+w = wheel([[a,3,0.6,0],[b,3,0.6,0]]);
+assert.equal(w.waterWheelHp64, 162, 'Both blade cells carry 0.6');
+w = wheel([[a,3,0.6,0],[a,1,0.5,0]]);
+assert.equal(w.peakAxialFlow64, 0, 'Opposite outflows cancel to 0.1, under the 0.15 threshold');
+assert.ok(w.peakCleanFlux64 > 1, 'The old four-outflow sum counted them as 1.1');
+w = wheel([[a,3,0.6,0],[b,1,0.6,0]]);
+assert.equal(w.waterWheelHp64, 0, 'Opposite flows in the two blade cells cancel');
+console.log('Passed: mature/dead wood, ripe JsonFloat berries, missing dam, flat reach, deep shore, hazard-route and water-wheel cases.');

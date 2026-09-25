@@ -16,7 +16,8 @@ for(const [theme,s] of Object.entries(summary.summaries)) {
 }
 for(const r of rows) {
   assert.deepEqual(r.size,{x:128,y:128}); assert.equal(r.difficulty,'normal');
-  assert.equal(r.metrics.measurementVersion,2);
+  assert.equal(r.metrics.measurementVersion,3);
+  assert.equal(r.metrics.compactWheelHp64,Math.ceil(120*r.metrics.peakAxialFlow64));
   assert.ok(r.metrics.pumpShore6>=r.metrics.pumpShore2);
   assert.ok(r.metrics.fertile20>=r.metrics.fertileEmpty20);
   assert.ok(r.metrics.fertilityPersistence===null || (r.metrics.fertilityPersistence>=0&&r.metrics.fertilityPersistence<=1));

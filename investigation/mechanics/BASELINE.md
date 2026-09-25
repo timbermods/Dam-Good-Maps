@@ -13,15 +13,15 @@ Median [p10–p90]. Units and limitations are in [AXES.md](AXES.md). Full ranges
 | islands | 30/30 | 30 | 30 |
 | all | 180/180 | 179 | 181 |
 
-| Theme | storageRatio | peakCleanFlux64 | flatDry40 | fertilityPersistence |
+| Theme | storageRatio | peakAxialFlow64 | flatDry40 | fertilityPersistence |
 |---|---|---|---|---|
-| riverValley | 0.28 [0–0.54] | 1.14 [1.04–1.25] | 119 [114–124] | 0 [0–0] |
-| canyon | 0 [0–0] | 1.11 [1.06–1.25] | 116 [113–118] | 0 [0–0] |
-| highlands | 0.28 [0–0.68] | 1.47 [1.18–1.77] | 120 [113–124] | 0 [0–0.02] |
-| lakeBasin | 16.18 [13.93–18.03] | 1.10 [0.16–1.27] | 910 [742–1051] | 0.69 [0.67–0.70] |
-| delta | 0.47 [0.08–0.83] | 1.77 [1.62–1.92] | 121 [115–125] | 0 [0–0.03] |
-| islands | 13.78 [11.55–15.74] | 1.10 [0.31–2.19] | 638 [530–713] | 0.81 [0.79–0.86] |
-| all | 0.46 [0–16.06] | 1.19 [0.93–1.88] | 121 [114–884] | 0 [0–0.81] |
+| riverValley | 0.28 [0–0.54] | 1.12 [1.01–1.25] | 119 [114–124] | 0 [0–0] |
+| canyon | 0 [0–0] | 1.10 [1.06–1.25] | 116 [113–118] | 0 [0–0] |
+| highlands | 0.28 [0–0.68] | 1.39 [1.17–1.75] | 120 [113–124] | 0 [0–0.02] |
+| lakeBasin | 16.18 [13.93–18.03] | 1.02 [0.15–1.27] | 910 [742–1051] | 0.69 [0.67–0.70] |
+| delta | 0.47 [0.08–0.83] | 1.75 [1.60–1.92] | 121 [115–125] | 0 [0–0.03] |
+| islands | 13.78 [11.55–15.74] | 1.09 [0.28–2.18] | 638 [530–713] | 0.81 [0.79–0.86] |
+| all | 0.46 [0–16.06] | 1.18 [0.78–1.85] | 121 [114–884] | 0 [0–0.81] |
 
 | Theme | badwaterDistance | logs20 | frontierComponents | deepPumpExtraShore |
 |---|---|---|---|---|
@@ -72,22 +72,22 @@ These are diagnostic bins, not verified strategy classes or D109 acceptance.
 | riverValley | 20 | 10% | 0.13 | 0 | 10% / 20% |
 | canyon | 9 | 30% | 0.08 | 0 | 40% / 36.67% |
 | highlands | 19 | 13.33% | 0.10 | 0 | 6.67% / 16.67% |
-| lakeBasin | 10 | 30% | 0.08 | 0 | 23.33% / 20% |
+| lakeBasin | 11 | 26.67% | 0.08 | 0 | 20% / 20% |
 | delta | 13 | 23.33% | 0.10 | 0 | 10% / 16.67% |
 | islands | 15 | 20% | 0.10 | 0 | 16.67% / 10% |
-| all | 59 | 8.33% | 0.21 | 0 | 7.22% / 9.44% |
+| all | 60 | 8.33% | 0.21 | 0 | 7.22% / 9.44% |
 
 Largest single-bin share per axis:
 
-| Theme | storageRatio | peakCleanFlux64 | flatDry40 | fertilityPersistence | badwaterDistance | logs20 | frontierComponents | deepPumpExtraShore |
+| Theme | storageRatio | peakAxialFlow64 | flatDry40 | fertilityPersistence | badwaterDistance | logs20 | frontierComponents | deepPumpExtraShore |
 |---|---|---|---|---|---|---|---|---|
 | riverValley | 53.33% | 90% | 100% | 96.67% | 100% | 43.33% | 53.33% | 80% |
 | canyon | 100% | 100% | 100% | 100% | 100% | 53.33% | 60% | 80% |
 | highlands | 56.67% | 96.67% | 100% | 96.67% | 100% | 43.33% | 53.33% | 70% |
-| lakeBasin | 100% | 63.33% | 100% | 100% | 100% | 63.33% | 76.67% | 100% |
+| lakeBasin | 100% | 53.33% | 100% | 100% | 100% | 63.33% | 76.67% | 100% |
 | delta | 80% | 96.67% | 100% | 93.33% | 100% | 56.67% | 56.67% | 100% |
 | islands | 100% | 33.33% | 93.33% | 100% | 100% | 70% | 73.33% | 100% |
-| all | 35% | 78.89% | 66.67% | 64.44% | 100% | 47.78% | 55% | 88.33% |
+| all | 35% | 78.33% | 66.67% | 64.44% | 100% | 47.78% | 55% | 88.33% |
 
 ## Advisory and blocking misses
 

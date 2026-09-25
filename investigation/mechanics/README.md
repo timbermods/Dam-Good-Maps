@@ -1,6 +1,6 @@
 # Mechanics investigation
 
-Read [REPORT.md](REPORT.md), then the [catalogue](CATALOGUE.md), [axes](AXES.md),
+Read [REPORT.md](REPORT.md), then the [verified facts](VERIFIED.md), the [catalogue](CATALOGUE.md), [axes](AXES.md),
 [baseline](BASELINE.md) and [M9 proposals](M9-PROPOSALS.md).
 [INTEGRATION.md](INTEGRATION.md) lists proposed changes outside this folder.
 
@@ -17,7 +17,7 @@ node investigation/mechanics/verify.mjs
 node --experimental-transform-types --disable-warning=ExperimentalWarning --import ./investigation/mechanics/runtime.mjs ./investigation/mechanics/check-measures.ts
 ```
 
-If a Windows sandbox blocks Node from launching a child process, run the shell entry point instead:
+On Windows, or if a sandbox blocks Node from launching a child process, run the shell entry point instead:
 
 ```powershell
 & ./investigation/mechanics/batch.ps1

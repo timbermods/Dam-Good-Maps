@@ -53,7 +53,8 @@ Add this baseline and the eight axes to M9's design inputs. Ask the prototype to
 nearest peers, threshold sensitivity and examples from the largest groups. Preserve the 200 seeds per theme, 3+ prototype themes,
 30+ seeds per theme, 40 blind cards and Kyler's Unique-rating gate already required by D109.
 
-Before assigning new gameplay gates, verify U01–U05 and U11 or leave those measures explicitly provisional.
+U01–U08, U11 and U12 are now answered from the game code ([VERIFIED.md](VERIFIED.md)). Gates built on the opening schedule
+or survival margin (U04, U09) stay provisional until played.
 Add scenarios for both factions and every difficulty to the prototype's evidence. Keep ≥98% final batch pass per theme and size,
 both validators, deterministic generation, share links and performance budgets. This 180-map Normal baseline does not replace them.
 
@@ -75,13 +76,13 @@ in their existing Later scope unless Kyler moves them. M9/M10/M11 still wait for
 | Reuse this exploratory math inside deterministic generation unchanged | D15, D106, §19.7 | Needs production review: the sector helper uses `Math.atan2`; replace or isolate nondeterministic math, version changed maps and test share-link parity. No production code is changed here. |
 | Change the colony-water formula | D29, D30, D58, D85 | Proposal only. Resolve consumption, evaporation and usable-depth semantics first. |
 
-## Questions for Kyler
+## The 12 open facts
 
-[UNVERIFIED.md](UNVERIFIED.md) contains the full list, with source boundaries:
-U01 wheel output; U02 floodgates; U03 crop economies; U04 work and hauling;
-U05 aquifer weather shutdown; U06 missing core component contradiction; U07 ruin access/rate;
-U08 blockage-top navigation; U09 repeated-cycle survival; U10 other faction systems;
-U11 full construction footprints/access; U12 cache, blast and roofed-water edge cases.
+[VERIFIED.md](VERIFIED.md) answers all 12 from the decompiled game (1.1.2.4):
+U01 wheel output (corrected); U02 floodgates; U03 crop economies; U04 work and hauling (rates only);
+U05 aquifer weather shutdown (confirmed); U06 core component (required, corrected); U07 ruins (rate corrected);
+U08 blockage top (confirmed); U09 survival (still unknown); U10 other faction systems (in part);
+U11 construction access; U12 cache, blast and stacked-water edge cases.
 
-Keep those 12 entries labelled unverified in any adopted design. Source-supported code rules and proposed strategies
-are separate in the [catalogue](CATALOGUE.md). Nothing here was checked by launching the game.
+Three remain for play: the opening schedule (U04), the survival margin (U09) and faction suitability (U10).
+Keep those labelled unverified in any adopted design. Nothing here was checked by launching the game.

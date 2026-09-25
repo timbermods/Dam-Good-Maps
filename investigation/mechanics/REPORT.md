@@ -3,7 +3,8 @@
 This investigation is an input to M9. It changes no generator or validator code.
 
 Base: `dev` at `cfa5990caeaf462de695caf428280da55fc0f7f5`, generator 0.6.0.
-Game evidence: the repository's notes for Timberborn 1.1.2.4. No game was launched.
+Game evidence: the repository's notes for Timberborn 1.1.2.4, then the decompiled game itself for the 12 open facts
+([VERIFIED.md](VERIFIED.md)). No game was launched.
 
 ## Decisions made for this study
 
@@ -18,7 +19,9 @@ Game evidence: the repository's notes for Timberborn 1.1.2.4. No game was launch
 
 [CATALOGUE.md](CATALOGUE.md) covers 25 mechanics or groups of related mechanics.
 Each entry separates the sourced rule, the design inference, the limit and the measure.
-[UNVERIFIED.md](UNVERIFIED.md) records 12 questions for Kyler. These are questions, not game facts.
+[VERIFIED.md](VERIFIED.md) answers the 12 questions the first pass left open, from the game code. Wheel power (U01),
+the core component (U06) and scrap trips (U07) were corrected; the aquifer (U05) and blockage (U08) rules confirmed.
+The opening schedule, survival margin and faction suitability still need play.
 
 ## Baseline: different themes, repeated decisions
 
@@ -34,6 +37,9 @@ Four maps missed the advisory reservoir target. Those passes are not proofs of c
   retain median 16.18 and 13.78 times the study's drinking reference. This excludes pumping and consumption.
 - Fertile-land persistence has median zero in all four valley themes, 0.69 in Lake Basin and 0.81 in Islands.
 - Only 21 of 180 maps offer extra shore cells under the six-level intake proxy. That does not prove a pump fits.
+- Power follows the game's wheel rule now. Theme medians of the best bank-side axial flow are 1.02–1.75 m³/s, only
+  1–8% below the old four-outflow sum, because settled rivers flow one way. That is 123–211 hp for an Iron Teeth
+  compact wheel and 256–437 hp for a Folktails wheel, where one fits. Three Lake Basin maps have no usable flow.
 - Log stock and outgoing regions vary more. Yet the largest joint diagnostic bin holds 20–30% of Canyon,
   Lake Basin, Delta and Islands seeds. Median nearest-peer bin distance is zero in every theme.
 
@@ -52,4 +58,5 @@ separately. Detect actual routes and storage projects before writing “how it p
 [M9-PROPOSALS.md](M9-PROPOSALS.md) gives eight candidate openings, target spreads and difficulty witnesses.
 [INTEGRATION.md](INTEGRATION.md) maps them to PLAN/ROADMAP and flags decision conflicts.
 Keep D85's advisory policy, the current nearby dam site, deferred roofed-water features and D109's approval gate.
-Wheel output, economic timing and full-cycle survival remain unverified; do not promise them from these proxies.
+Wheel output now follows the game's rule, but only where a wheel fits. Economic timing and full-cycle survival remain
+unverified; do not promise them from these proxies.

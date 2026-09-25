@@ -4,7 +4,7 @@ const root = new URL('.', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 const themes = ['riverValley', 'canyon', 'highlands', 'lakeBasin', 'delta', 'islands'];
 export const bins = {
-  storageRatio: [0.25, 1, 3], peakCleanFlux64: [0.5, 1, 2], flatDry40: [150, 500, 1200],
+  storageRatio: [0.25, 1, 3], peakAxialFlow64: [0.5, 1, 2], flatDry40: [150, 500, 1200],
   fertilityPersistence: [0.25, 0.75], badwaterDistance: [15, 30, 60], logs20: [80, 160, 320],
   frontierComponents: [1.5, 3.5], deepPumpExtraShore: [0.5, 10, 50]
 };
@@ -39,7 +39,7 @@ export function clusters(rows, factor = 1) {
 const rows = readdirSync(new URL('results/rows/', root)).filter(f => f.endsWith('.json')).map(f => JSON.parse(read(`results/rows/${f}`)))
   .sort((a,b) => themes.indexOf(a.theme) - themes.indexOf(b.theme) || a.seed-b.seed);
 if (rows.length !== 180 || new Set(rows.map(r => `${r.theme}/${r.seed}`)).size !== 180 || themes.some(t => rows.filter(r => r.theme === t && r.seed >= 1 && r.seed <= 30).length !== 30)) throw new Error('Expected all six themes, seeds 1–30');
-if (rows.some(r => r.metrics.measurementVersion !== 2)) throw new Error('Outdated measurement rows; rerun that theme');
+if (rows.some(r => r.metrics.measurementVersion !== 3)) throw new Error('Outdated measurement rows; rerun that theme');
 const compactRows = rows.map(r => ({ ...r, checks: r.checks.map(({ message, ...c }) => c) }));
 writeFileSync(new URL('results/maps.jsonl', root), compactRows.map(r => JSON.stringify(r)).join('\n') + '\n');
 const summaries = {};

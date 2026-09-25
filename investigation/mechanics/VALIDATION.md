@@ -14,6 +14,15 @@
 The first measurement reader missed wrapped ripeness values. It was fixed, regression-checked, and all affected rows regenerated.
 Every retained row has measurement version 2. No metrics from that failed reader remain in the delivered dataset.
 
+## Verification pass (measurement version 3)
+
+- Answered the 12 open facts from the decompiled Timberborn 1.1.2.4 ([VERIFIED.md](VERIFIED.md)); key numbers were
+  re-read from the blueprints and the classes named there.
+- Replaced the power proxy with the game's wheel rule (`peakAxialFlow64`, `compactWheelHp64`, `waterWheelHp64`).
+  New synthetic cases check the 0.15 cut-off, cancelling opposite flows and the two-cell average.
+- Regenerated all 180 maps with `batch.ps1`. Every map hash is identical to the first run, and every metric other than
+  the new fields is unchanged. `summarize.mjs`, `verify.mjs` and `check-measures.ts` pass.
+
 Only this investigation's code was tested. Production code and checks were not changed; the Python oracle and browser suite were
 not rerun. Both-validator and browser determinism checks remain requirements for any future production integration.
 No game was launched, no colony was played, and no complete-difficulty survival claim is made.

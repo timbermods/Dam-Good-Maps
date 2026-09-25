@@ -6,7 +6,7 @@
       1,
       3
     ],
-    "peakCleanFlux64": [
+    "peakAxialFlow64": [
       0.5,
       1,
       2
@@ -54,11 +54,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -447,6 +447,33 @@
           "p90": 1.2476222039872855,
           "max": 1.2600010451530808
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.7314146397313488,
+          "p10": 1.0087524737391769,
+          "median": 1.1245865612673338,
+          "p90": 1.2476222039872855,
+          "max": 1.2600010451530808
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 88,
+          "p10": 121.6,
+          "median": 135.5,
+          "p90": 150,
+          "max": 152
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 201,
+          "p10": 257.3,
+          "median": 280,
+          "p90": 295.3,
+          "max": 316
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -822,7 +849,7 @@
             ],
             "largestShare": 0.5333333333333333
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               0,
               3,
@@ -922,7 +949,7 @@
             "p10": 0.041666666666666664,
             "median": 0.14583333333333331,
             "p90": 0.24999999999999997,
-            "max": 0.3958333333333333
+            "max": 0.4375
           },
           "nearestDistance": {
             "n": 30,
@@ -931,7 +958,7 @@
             "p10": 0,
             "median": 0.041666666666666664,
             "p90": 0.08333333333333333,
-            "max": 0.10416666666666666
+            "max": 0.125
           }
         },
         {
@@ -971,11 +998,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -1364,6 +1391,33 @@
           "p90": 1.2527022026591363,
           "max": 1.3142243263174918
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0156248836610906,
+          "p10": 1.0580484742427034,
+          "median": 1.099488728078704,
+          "p90": 1.2527022026591363,
+          "max": 1.3142243263174918
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 122,
+          "p10": 127.9,
+          "median": 132,
+          "p90": 150.4,
+          "max": 158
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 264,
+          "p10": 266.9,
+          "median": 277,
+          "p90": 300.2,
+          "max": 314
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -1673,7 +1727,7 @@
             ],
             "largestShare": 1
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               0,
               0,
@@ -1787,7 +1841,7 @@
         },
         {
           "factor": 1.2,
-          "distinct": 13,
+          "distinct": 14,
           "largestShare": 0.36666666666666664,
           "pairDistance": {
             "n": 435,
@@ -1804,8 +1858,8 @@
             "min": 0,
             "p10": 0,
             "median": 0,
-            "p90": 0.08333333333333333,
-            "max": 0.125
+            "p90": 0.06458333333333337,
+            "max": 0.08333333333333333
           }
         }
       ]
@@ -1823,11 +1877,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -2216,6 +2270,33 @@
           "p90": 1.7662641054850454,
           "max": 2.0450879453585493
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.9746248868851016,
+          "p10": 1.1739115296311684,
+          "median": 1.3948226502625523,
+          "p90": 1.752284439623919,
+          "max": 1.9565226032947567
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 117,
+          "p10": 141.3,
+          "median": 168,
+          "p90": 210.8,
+          "max": 235
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 243,
+          "p10": 286,
+          "median": 349.5,
+          "p90": 423.3,
+          "max": 434
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -2434,9 +2515,9 @@
             "count": 4,
             "members": [
               "highlands:4",
-              "highlands:13",
               "highlands:19",
-              "highlands:24"
+              "highlands:24",
+              "highlands:27"
             ]
           },
           {
@@ -2525,6 +2606,13 @@
             ]
           },
           {
+            "signature": "1/1/0/0/1/1/1/0",
+            "count": 1,
+            "members": [
+              "highlands:13"
+            ]
+          },
+          {
             "signature": "1/2/0/0/1/0/1/0",
             "count": 1,
             "members": [
@@ -2565,13 +2653,6 @@
             "members": [
               "highlands:12"
             ]
-          },
-          {
-            "signature": "1/3/0/0/1/1/1/0",
-            "count": 1,
-            "members": [
-              "highlands:27"
-            ]
           }
         ],
         "marginal": {
@@ -2585,12 +2666,12 @@
             ],
             "largestShare": 0.5666666666666667
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               0,
-              0,
-              29,
               1,
+              29,
+              0,
               0
             ],
             "largestShare": 0.9666666666666667
@@ -2734,11 +2815,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -3127,6 +3208,33 @@
           "p90": 1.2665819511169878,
           "max": 1.6930513761783677
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.14798200501045186,
+          "median": 1.0192472565006478,
+          "p90": 1.2665819511169878,
+          "max": 1.6930513761783677
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 18.000000000000007,
+          "median": 123,
+          "p90": 152.2,
+          "max": 204
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 25.9,
+          "median": 255.5,
+          "p90": 296,
+          "max": 313
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -3337,12 +3445,12 @@
       },
       "clusters": {
         "factor": 1,
-        "distinct": 10,
-        "largestShare": 0.3,
+        "distinct": 11,
+        "largestShare": 0.26666666666666666,
         "groups": [
           {
             "signature": "3/2/2/1/1/2/1/0",
-            "count": 9,
+            "count": 8,
             "members": [
               "lakeBasin:8",
               "lakeBasin:16",
@@ -3350,37 +3458,19 @@
               "lakeBasin:22",
               "lakeBasin:23",
               "lakeBasin:24",
-              "lakeBasin:26",
               "lakeBasin:28",
               "lakeBasin:30"
             ]
           },
           {
             "signature": "3/1/2/1/1/2/1/0",
-            "count": 4,
+            "count": 5,
             "members": [
               "lakeBasin:7",
               "lakeBasin:10",
               "lakeBasin:15",
+              "lakeBasin:26",
               "lakeBasin:27"
-            ]
-          },
-          {
-            "signature": "3/2/2/1/1/1/1/0",
-            "count": 3,
-            "members": [
-              "lakeBasin:12",
-              "lakeBasin:18",
-              "lakeBasin:29"
-            ]
-          },
-          {
-            "signature": "3/2/2/1/1/3/2/0",
-            "count": 3,
-            "members": [
-              "lakeBasin:4",
-              "lakeBasin:17",
-              "lakeBasin:25"
             ]
           },
           {
@@ -3400,11 +3490,27 @@
             ]
           },
           {
+            "signature": "3/1/2/1/1/1/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:13",
+              "lakeBasin:18"
+            ]
+          },
+          {
             "signature": "3/1/2/1/1/3/1/0",
             "count": 2,
             "members": [
               "lakeBasin:9",
               "lakeBasin:21"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/1/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:12",
+              "lakeBasin:29"
             ]
           },
           {
@@ -3424,10 +3530,18 @@
             ]
           },
           {
-            "signature": "3/1/2/1/1/1/1/0",
+            "signature": "3/2/2/1/1/3/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:17",
+              "lakeBasin:25"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/3/2/0",
             "count": 1,
             "members": [
-              "lakeBasin:13"
+              "lakeBasin:4"
             ]
           }
         ],
@@ -3442,15 +3556,15 @@
             ],
             "largestShare": 1
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               4,
-              7,
-              19,
+              10,
+              16,
               0,
               0
             ],
-            "largestShare": 0.6333333333333333
+            "largestShare": 0.5333333333333333
           },
           "flatDry40": {
             "counts": [
@@ -3533,8 +3647,8 @@
       "sensitivity": [
         {
           "factor": 0.8,
-          "distinct": 14,
-          "largestShare": 0.23333333333333334,
+          "distinct": 15,
+          "largestShare": 0.2,
           "pairDistance": {
             "n": 435,
             "missing": 0,
@@ -3551,7 +3665,7 @@
             "p10": 0,
             "median": 0,
             "p90": 0.041666666666666664,
-            "max": 0.0625
+            "max": 0.041666666666666664
           }
         },
         {
@@ -3591,11 +3705,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -3984,6 +4098,33 @@
           "p90": 1.9210620327530359,
           "max": 2.0205894637089328
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.4520209101203672,
+          "p10": 1.596037244858769,
+          "median": 1.7513480588532526,
+          "p90": 1.9210620327530359,
+          "max": 2.0205894637089328
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 175,
+          "p10": 191.8,
+          "median": 210.5,
+          "p90": 231.3,
+          "max": 243
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 381,
+          "p10": 400.8,
+          "median": 436.5,
+          "p90": 469.3,
+          "max": 478
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -4317,7 +4458,7 @@
             ],
             "largestShare": 0.8
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               0,
               0,
@@ -4408,13 +4549,13 @@
       "sensitivity": [
         {
           "factor": 0.8,
-          "distinct": 23,
+          "distinct": 24,
           "largestShare": 0.1,
           "pairDistance": {
             "n": 435,
             "missing": 0,
             "min": 0,
-            "p10": 0.041666666666666664,
+            "p10": 0.050000000000000114,
             "median": 0.14583333333333331,
             "p90": 0.22916666666666666,
             "max": 0.35416666666666663
@@ -4425,8 +4566,8 @@
             "min": 0,
             "p10": 0,
             "median": 0.041666666666666664,
-            "p90": 0.06458333333333337,
-            "max": 0.08333333333333333
+            "p90": 0.08333333333333333,
+            "max": 0.10416666666666666
           }
         },
         {
@@ -4466,11 +4607,11 @@
         "measurementVersion": {
           "n": 30,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 30,
@@ -4859,6 +5000,33 @@
           "p90": 2.1875049238102697,
           "max": 2.791756465242952
         },
+        "peakAxialFlow64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.2312168462857899,
+          "p10": 0.2757190228954968,
+          "median": 1.0873616578779233,
+          "p90": 2.18013507346955,
+          "max": 2.791756465242952
+        },
+        "compactWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 28,
+          "p10": 33.6,
+          "median": 131,
+          "p90": 262.3,
+          "max": 336
+        },
+        "waterWheelHp64": {
+          "n": 30,
+          "missing": 0,
+          "min": 59,
+          "p10": 69.4,
+          "median": 270,
+          "p90": 553.1,
+          "max": 581
+        },
         "flatDry40": {
           "n": 30,
           "missing": 0,
@@ -5073,25 +5241,25 @@
         "largestShare": 0.2,
         "groups": [
           {
-            "signature": "3/3/2/2/1/2/1/0",
+            "signature": "3/2/2/2/1/2/1/0",
             "count": 6,
             "members": [
-              "islands:3",
-              "islands:5",
+              "islands:2",
               "islands:7",
-              "islands:8",
-              "islands:22",
+              "islands:10",
+              "islands:11",
+              "islands:24",
               "islands:26"
             ]
           },
           {
-            "signature": "3/2/2/2/1/2/1/0",
+            "signature": "3/3/2/2/1/2/1/0",
             "count": 4,
             "members": [
-              "islands:2",
-              "islands:10",
-              "islands:11",
-              "islands:24"
+              "islands:3",
+              "islands:5",
+              "islands:8",
+              "islands:22"
             ]
           },
           {
@@ -5204,12 +5372,12 @@
             ],
             "largestShare": 1
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               8,
               4,
-              8,
               10,
+              8,
               0
             ],
             "largestShare": 0.3333333333333333
@@ -5318,7 +5486,7 @@
         },
         {
           "factor": 1.2,
-          "distinct": 22,
+          "distinct": 23,
           "largestShare": 0.1,
           "pairDistance": {
             "n": 435,
@@ -5354,11 +5522,11 @@
         "measurementVersion": {
           "n": 180,
           "missing": 0,
-          "min": 2,
-          "p10": 2,
-          "median": 2,
-          "p90": 2,
-          "max": 2
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
         },
         "thorns": {
           "n": 180,
@@ -5747,6 +5915,33 @@
           "p90": 1.8760632562844854,
           "max": 2.791756465242952
         },
+        "peakAxialFlow64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.7779563107620845,
+          "median": 1.181281221540395,
+          "p90": 1.8465306068629959,
+          "max": 2.791756465242952
+        },
+        "compactWheelHp64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 94,
+          "median": 142,
+          "p90": 222.1,
+          "max": 336
+        },
+        "waterWheelHp64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 205.5,
+          "median": 288,
+          "p90": 461.2,
+          "max": 581
+        },
         "flatDry40": {
           "n": 180,
           "missing": 0,
@@ -5957,7 +6152,7 @@
       },
       "clusters": {
         "factor": 1,
-        "distinct": 59,
+        "distinct": 60,
         "largestShare": 0.08333333333333333,
         "groups": [
           {
@@ -6013,8 +6208,22 @@
             ]
           },
           {
+            "signature": "1/2/0/0/1/1/1/0",
+            "count": 8,
+            "members": [
+              "riverValley:5",
+              "highlands:4",
+              "highlands:19",
+              "highlands:24",
+              "highlands:27",
+              "delta:14",
+              "delta:20",
+              "delta:22"
+            ]
+          },
+          {
             "signature": "3/2/2/1/1/2/1/0",
-            "count": 9,
+            "count": 8,
             "members": [
               "lakeBasin:8",
               "lakeBasin:16",
@@ -6022,23 +6231,8 @@
               "lakeBasin:22",
               "lakeBasin:23",
               "lakeBasin:24",
-              "lakeBasin:26",
               "lakeBasin:28",
               "lakeBasin:30"
-            ]
-          },
-          {
-            "signature": "1/2/0/0/1/1/1/0",
-            "count": 8,
-            "members": [
-              "riverValley:5",
-              "highlands:4",
-              "highlands:13",
-              "highlands:19",
-              "highlands:24",
-              "delta:14",
-              "delta:20",
-              "delta:22"
             ]
           },
           {
@@ -6092,14 +6286,14 @@
             ]
           },
           {
-            "signature": "3/3/2/2/1/2/1/0",
+            "signature": "3/2/2/2/1/2/1/0",
             "count": 6,
             "members": [
-              "islands:3",
-              "islands:5",
+              "islands:2",
               "islands:7",
-              "islands:8",
-              "islands:22",
+              "islands:10",
+              "islands:11",
+              "islands:24",
               "islands:26"
             ]
           },
@@ -6126,6 +6320,17 @@
             ]
           },
           {
+            "signature": "3/1/2/1/1/2/1/0",
+            "count": 5,
+            "members": [
+              "lakeBasin:7",
+              "lakeBasin:10",
+              "lakeBasin:15",
+              "lakeBasin:26",
+              "lakeBasin:27"
+            ]
+          },
+          {
             "signature": "0/2/0/0/1/2/1/1",
             "count": 4,
             "members": [
@@ -6146,23 +6351,13 @@
             ]
           },
           {
-            "signature": "3/1/2/1/1/2/1/0",
+            "signature": "3/3/2/2/1/2/1/0",
             "count": 4,
             "members": [
-              "lakeBasin:7",
-              "lakeBasin:10",
-              "lakeBasin:15",
-              "lakeBasin:27"
-            ]
-          },
-          {
-            "signature": "3/2/2/2/1/2/1/0",
-            "count": 4,
-            "members": [
-              "islands:2",
-              "islands:10",
-              "islands:11",
-              "islands:24"
+              "islands:3",
+              "islands:5",
+              "islands:8",
+              "islands:22"
             ]
           },
           {
@@ -6190,24 +6385,6 @@
               "islands:18",
               "islands:27",
               "islands:29"
-            ]
-          },
-          {
-            "signature": "3/2/2/1/1/1/1/0",
-            "count": 3,
-            "members": [
-              "lakeBasin:12",
-              "lakeBasin:18",
-              "lakeBasin:29"
-            ]
-          },
-          {
-            "signature": "3/2/2/1/1/3/2/0",
-            "count": 3,
-            "members": [
-              "lakeBasin:4",
-              "lakeBasin:17",
-              "lakeBasin:25"
             ]
           },
           {
@@ -6308,6 +6485,14 @@
             ]
           },
           {
+            "signature": "3/1/2/1/1/1/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:13",
+              "lakeBasin:18"
+            ]
+          },
+          {
             "signature": "3/1/2/1/1/3/1/0",
             "count": 2,
             "members": [
@@ -6324,6 +6509,14 @@
             ]
           },
           {
+            "signature": "3/2/2/1/1/1/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:12",
+              "lakeBasin:29"
+            ]
+          },
+          {
             "signature": "3/2/2/1/1/2/2/0",
             "count": 2,
             "members": [
@@ -6337,6 +6530,14 @@
             "members": [
               "lakeBasin:1",
               "lakeBasin:14"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/3/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:17",
+              "lakeBasin:25"
             ]
           },
           {
@@ -6397,6 +6598,13 @@
             ]
           },
           {
+            "signature": "1/1/0/0/1/1/1/0",
+            "count": 1,
+            "members": [
+              "highlands:13"
+            ]
+          },
+          {
             "signature": "1/2/0/0/1/3/2/1",
             "count": 1,
             "members": [
@@ -6425,13 +6633,6 @@
             ]
           },
           {
-            "signature": "1/3/0/0/1/1/1/0",
-            "count": 1,
-            "members": [
-              "highlands:27"
-            ]
-          },
-          {
             "signature": "3/0/2/2/1/0/0/0",
             "count": 1,
             "members": [
@@ -6453,10 +6654,10 @@
             ]
           },
           {
-            "signature": "3/1/2/1/1/1/1/0",
+            "signature": "3/1/2/1/1/3/2/0",
             "count": 1,
             "members": [
-              "lakeBasin:13"
+              "lakeBasin:4"
             ]
           },
           {
@@ -6506,15 +6707,15 @@
             ],
             "largestShare": 0.35
           },
-          "peakCleanFlux64": {
+          "peakAxialFlow64": {
             "counts": [
               12,
-              14,
-              142,
-              12,
+              18,
+              141,
+              9,
               0
             ],
-            "largestShare": 0.7888888888888889
+            "largestShare": 0.7833333333333333
           },
           "flatDry40": {
             "counts": [
@@ -6597,7 +6798,7 @@
       "sensitivity": [
         {
           "factor": 0.8,
-          "distinct": 97,
+          "distinct": 96,
           "largestShare": 0.07222222222222222,
           "pairDistance": {
             "n": 16110,
@@ -6615,7 +6816,7 @@
             "p10": 0,
             "median": 0,
             "p90": 0.041666666666666664,
-            "max": 0.08333333333333333
+            "max": 0.125
           }
         },
         {

@@ -73,6 +73,30 @@ export function measureOpening(r: GenerateResult) {
       peakCleanFlux64 = Math.max(peakCleanFlux64, flux);
     }
   }
+  // Water wheels (VERIFIED.md U01): a blade cell reads the net stored outflow along the wheel's
+  // axis, counts it only above 0.15, and the wheel averages its blade cells. Power ignores
+  // contamination, so only the bank must be safe and dry.
+  let peakAxialFlow64 = 0, waterWheelFlow64 = 0;
+  if (b.settle.out) {
+    const out = b.settle.out;
+    const axial = (i: number, xAxis: boolean) => {
+      if (!(D[i] > 0)) return 0;
+      const v = xAxis ? out[4 * i + 3] - out[4 * i + 1] : out[4 * i + 2] - out[4 * i];
+      return Math.abs(v) > 0.15 ? v : 0;
+    };
+    const bank = (i: number) => n4(i).some(n => dryClean(n) && safe[n] <= 64);
+    for (let i = 0; i < N; i++) {
+      if (!(D[i] > 0)) continue;
+      const x = i % W, y = Math.floor(i / W);
+      for (const xAxis of [true, false]) {
+        const a = axial(i, xAxis);
+        if (bank(i)) peakAxialFlow64 = Math.max(peakAxialFlow64, Math.abs(a));
+        // The Folktails wheel's two blade cells sit side by side across the flow, on one bed level.
+        const j = xAxis ? (y + 1 < H ? i + W : -1) : (x + 1 < W ? i + 1 : -1);
+        if (j >= 0 && h[j] === h[i] && (bank(i) || bank(j))) waterWheelFlow64 = Math.max(waterWheelFlow64, Math.abs((a + axial(j, xAxis)) / 2));
+      }
+    }
+  }
   // Remove the opening's inner 20-walk area; count remaining connected dry regions >=64 tiles.
   const frontierLabels = walkRegions(h, W, H, frontierBlocked, links);
   const frontierSizes = new Map<number, number>();
@@ -128,11 +152,13 @@ export function measureOpening(r: GenerateResult) {
   const eligibleDams = r.analysis.damSites.filter(s => r.analysis!.startDistance![s.y * W + s.x] <= 40 && s.volume >= rulesFor(r.spec).reservoirNeed);
   const m = measure(r);
   return {
-    measurementVersion: 2,
+    measurementVersion: 3,
     ...m,
     cleanRetained40, storageRatio: cleanRetained40 / (50 * 0.424 * 9.5),
     shortestAdequateDam: eligibleDams.length ? Math.min(...eligibleDams.map(s => s.length)) : null,
-    peakCleanFlux64, flatDry40, linkedDry40,
+    peakCleanFlux64, peakAxialFlow64,
+    compactWheelHp64: Math.ceil(120 * peakAxialFlow64), waterWheelHp64: Math.ceil(270 * waterWheelFlow64),
+    flatDry40, linkedDry40,
     flatAccessShare: linkedDry40 ? flatDry40 / linkedDry40 : null,
     fertile20, fertileEmpty20, fertileKept20,
     fertilityPersistence: fertile20 ? fertileKept20 / fertile20 : null,
