@@ -17,7 +17,7 @@ import { makeJob, prepare, type Prepared, summary } from './jobs';
 import { resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
 import { probeOnly } from './mods';
-import { isEntry, probePaths, REPO } from './paths';
+import { CHECKED_GAME_VERSION, gameVersion, isEntry, probePaths, REPO } from './paths';
 import { waitQuiet } from './quiet';
 import { hasPendingRestore, isGameRunning, restore, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
@@ -192,6 +192,11 @@ async function main(): Promise<void> {
     throw new Error('The confirmation code does not match this plan (or was already used): run without --confirmed-launch to get a new one, and ask again.');
   }
   if (isGameRunning()) throw new Error('Timberborn is already running (Kyler may be playing): nothing was launched.');
+  // The mod reads the game's internals as they are in the version it was checked against; after a game
+  // update only a smoke run may go first.
+  const version = gameVersion();
+  if (version !== CHECKED_GAME_VERSION && plan.kind === 'batch' && !flag('allow-new-version'))
+    throw new Error(`The game is ${version}, not ${CHECKED_GAME_VERSION}: run a smoke run first, then the batch with --allow-new-version.`);
   if (plan.kind === 'batch' && !flag('no-wait')) {
     const quiet = await waitQuiet(log);
     if (!quiet) throw new Error('The machine did not become quiet in time: nothing was launched.');

@@ -1,6 +1,7 @@
 // Where the probe reads and writes on this machine. Nothing here is committed: the game's folders, the
 // probe's working folder in Documents\Timberborn\DGMProbe, and the repository's own inputs.
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -76,4 +77,15 @@ export function steamExe(): string {
 export function isEntry(file: string): boolean {
   const arg = process.argv[1];
   return !!arg && resolve(PROBE_DIR, arg).toLowerCase() === resolve(file).toLowerCase();
+}
+
+/** The game version the mod was built and checked against. */
+export const CHECKED_GAME_VERSION = '1.1.2.4-52e959e-sw';
+
+export function gameVersion(): string {
+  try {
+    return readFileSync(join(GAME_DIR, 'Timberborn_Data', 'StreamingAssets', 'Version.txt'), 'utf8').trim();
+  } catch {
+    return 'unknown';
+  }
 }
