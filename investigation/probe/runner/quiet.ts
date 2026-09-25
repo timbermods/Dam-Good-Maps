@@ -3,12 +3,13 @@
 import { execFileSync } from 'node:child_process';
 import { PROBE_DIR } from './paths';
 
+/** Browsers count only when a test drives them (headless, or with a debugging port). */
+const BROWSER = /^(chrome|msedge|chromium|headless_shell|chrome-headless-shell|firefox)\.exe$/i;
+const DRIVEN = [/--headless/i, /--remote-debugging/i];
 const HEAVY = [
   /vitest/i,
   /playwright/i,
   /ms-playwright/i,
-  /--headless/i,
-  /--remote-debugging/i,
   /tools[\\/](batch|bench|bench3d|bench-preview|oracle|gen|capture-look|ingame-files|spike-check)\.ts/i,
   /investigation[\\/]cycles[\\/](run\.cjs|batch|fidelity|journey|calibrate)/i,
   /prototype[\\/].*\.py/i,
@@ -35,7 +36,7 @@ export function heavyProcesses(): Busy[] {
     const [pid, name, ...rest] = line.split('\t');
     const cmd = rest.join('\t');
     if (!cmd || cmd.toLowerCase().includes(own) || Number(pid) === process.pid) continue;
-    const hit = HEAVY.find((re) => re.test(cmd));
+    const hit = HEAVY.find((re) => re.test(cmd)) ?? (BROWSER.test(name) ? DRIVEN.find((re) => re.test(cmd)) : undefined);
     if (hit) out.push({ pid: Number(pid), name, why: cmd.slice(0, 160) });
   }
   return out;
