@@ -10,6 +10,15 @@ import { mapObjects, EMITTERS, MAX_STRENGTH_PER_TILE, SEEP_OFF, SEEP_ON, isDelay
 import { terrainRuns, waterColumns, slotAt, type TerrainRuns, type WaterColumns } from "./columns";
 import type { StackEmitter, StackModel } from "./stackwater";
 
+/** One stored momentum entry (`ColumnOutflows`): from column `from` (slot·N + tile) to the column
+ *  `toSlot` of tile `toTile`, or to the map's padding when `toTile` is −1. */
+export interface StoredFlow {
+  from: number;
+  toTile: number;
+  toSlot: number;
+  flow: number;
+}
+
 export interface LoadedMap {
   name: string;
   W: number;
@@ -19,7 +28,7 @@ export interface LoadedMap {
   cols: WaterColumns;
   model: StackModel;
   /** The file's water per column id (slot·N + tile), mapped by slot as the game loads it. */
-  stored: { depth: Float64Array; overflow: Float64Array; cont: Float64Array; levels: number; ok: boolean };
+  stored: { depth: Float64Array; overflow: Float64Array; cont: Float64Array; levels: number; ok: boolean; momentum: StoredFlow[] };
   gameVersion: string;
   migrated: boolean;
 }
@@ -67,6 +76,7 @@ export function loadMap(path: string, name = path): LoadedMap {
   const cont = new Float64Array(M);
   let levels = 0;
   let ok = false;
+  const momentum: StoredFlow[] = [];
   const wm = w.singletons.WaterMapNew;
   if (isObject(wm) && isObject(wm.WaterColumns)) {
     levels = num(wm.Levels ?? 1);
@@ -85,6 +95,35 @@ export function loadMap(path: string, name = path): LoadedMap {
           overflow[k] = Number(f[2]) || 0;
         }
       }
+      // momentum: "Bottom:Left:Top:Right[:extra]", each "0" or "<padded index3D>|<flow>", the padded
+      // index being slot·(X+2)(Y+2) + (y+1)(X+2) + (x+1)
+      const of = wm.ColumnOutflows;
+      const ot = isObject(of) ? String((of as JsonObject).Array).split(" ") : [];
+      if (ot.length >= levels * N) {
+        const PX = W + 2;
+        const PP = PX * (H + 2);
+        for (let i = 0; i < N; i++) {
+          for (let s = 0; s < Math.min(cols.count[i], levels); s++) {
+            const t = ot[s * N + i];
+            if (t === "0") continue;
+            for (const part of t.split(":")) {
+              if (part === "0") continue;
+              const [idx, fl] = part.split("|");
+              const p3 = Number(idx);
+              const flow = Number(fl);
+              if (!(flow > 0)) continue;
+              const slot = Math.floor(p3 / PP);
+              const r = p3 - slot * PP;
+              const py = Math.floor(r / PX);
+              const px = r - py * PX;
+              const x = px - 1;
+              const y = py - 1;
+              const inside = x >= 0 && x < W && y >= 0 && y < H;
+              momentum.push({ from: s * N + i, toTile: inside ? y * W + x : -1, toSlot: slot, flow });
+            }
+          }
+        }
+      }
     }
   }
   return {
@@ -95,7 +134,7 @@ export function loadMap(path: string, name = path): LoadedMap {
     runs,
     cols,
     model: { cols, emitters },
-    stored: { depth, overflow, cont, levels, ok },
+    stored: { depth, overflow, cont, levels, ok, momentum },
     gameVersion,
     migrated: hadMigrator,
   };

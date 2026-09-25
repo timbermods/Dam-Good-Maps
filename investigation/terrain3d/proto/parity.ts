@@ -15,6 +15,7 @@ import { readTimber } from "../../../src/core/format/timber";
 import { surfaceOf } from "../../../src/core/format/world";
 import { loadMap } from "./loadmap";
 import { StackSim } from "./stackwater";
+import { prefill3d } from "./prefill3d";
 
 const arg = (n: string, d: string) => {
   const i = process.argv.indexOf(`--${n}`);
@@ -45,7 +46,11 @@ for (const theme of themes) {
     // columns: a heightfield has one column per tile, [surface (raised by blockages), 34)
     let multi = 0;
     for (let i = 0; i < lm.cols.N; i++) if (lm.cols.count[i] !== 1) multi++;
-    b.setState(Float64Array.from(start.depth), null, Float64Array.from(start.contamination));
+    const p3 = prefill3d(b);
+    let pdiff = 0;
+    for (let i = 0; i < lm.cols.N; i++) if (p3.depth[i] !== start.depth[i] || p3.cont[i] !== start.contamination[i]) pdiff++;
+    if (pdiff) fails++;
+    b.setState(p3.depth, null, p3.cont);
     const t0 = process.cpuUsage();
     a.run(ticks);
     const t1 = process.cpuUsage(t0);

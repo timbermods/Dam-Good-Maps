@@ -214,6 +214,33 @@ export class StackSim {
     for (let c = 0; c < this.M; c++) if (this.D[c] + this.O[c] > 0) this.wet[this.wetCount++] = c;
   }
 
+  /** Load stored momentum: `from` column to `toTile`'s slot `toSlot` (−1: the padding). Entries with
+   *  no matching edge are counted and dropped. */
+  setMomentum(flows: readonly { from: number; toTile: number; toSlot: number; flow: number }[]): number {
+    const { N, W } = this;
+    let dropped = 0;
+    for (const m of flows) {
+      const target = m.toTile < 0 ? SINK : m.toSlot * N + m.toTile;
+      let found = -1;
+      const fromTile = m.from % N;
+      for (let e = this.eStart[m.from]; e < this.eStart[m.from + 1]; e++) {
+        if (this.eTarget[e] !== target) continue;
+        if (target === SINK) {
+          // which side: the padding cell is beside the origin tile
+          const x = fromTile % W;
+          const y = (fromTile - x) / W;
+          const k = this.eDir[e];
+          if ((k === 0 && y !== 0) || (k === 1 && x !== 0) || (k === 2 && y !== this.H - 1) || (k === 3 && x !== W - 1)) continue;
+        }
+        found = e;
+        break;
+      }
+      if (found >= 0) this.out[found] = m.flow;
+      else dropped++;
+    }
+    return dropped;
+  }
+
   // ------------------------------------------------------------------ evaporation modifier
 
   /** Wet neighbour count of the game (`IsNeighborWatered`): a neighbour tile counts when one of its
