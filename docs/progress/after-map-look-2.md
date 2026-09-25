@@ -34,3 +34,11 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
   probe batch), 3D-b's gate a probe batch, `start.dry` measured first, the one rule's lists stand,
   CI timing tests reported, M9a–M9c approved, character requests steer, M13's rating form dropped.
 - Design version 2 is built on `investigation/generative-v2` (not started).
+
+### Repo improvements (PR #21, merged 2026-09-25)
+
+- The PR checks fail only on breakage; the software-rendered orbit check watches 8 s in CI (the assertion is unchanged).
+- Timing budgets are reported in the job summaries and uploaded as artifacts, not asserted (Kyler's one rule, D145).
+- The heavy vitest suites, the full oracle and the 100-seed batches run nightly (`.github/workflows/nightly.yml`); a failure opens or updates a `nightly` issue. PR checks take about 6 minutes instead of about 12.5.
+- `investigation/README.md` indexes every investigation, with its status, PR and where its adopted pieces live; `tests/unit/boundaries.test.ts` keeps `src/` from importing any of them.
+- Dependabot (weekly npm and GitHub Actions updates, into `dev`) and CodeQL code scanning are added; both start on their schedules once these files reach `main` with the next release.
