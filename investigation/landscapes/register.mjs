@@ -8,6 +8,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier.startsWith('.') && context.parentURL) {
     const u = new URL(specifier, context.parentURL);
     if (!/\.[a-z]+$/i.test(u.pathname) && existsSync(new URL(u.href + '.ts'))) return {url:u.href+'.ts', shortCircuit:true};
+    if (existsSync(new URL(u.href + '/index.ts'))) return {url:u.href+'/index.ts', shortCircuit:true};
   }
   return nextResolve(specifier, context);
 }, load(url, context, nextLoad) {
