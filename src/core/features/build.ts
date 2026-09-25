@@ -22,6 +22,7 @@ import { soilContamination } from "../sim/contamination";
 import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
 import { moisture } from "../sim/moisture";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
+import { previewSettle } from "../sim/preview";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
 import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
@@ -147,6 +148,11 @@ export interface BuildOptions {
   stopBeforeWater?: boolean;
   /** Reuse the canonical settle of a previous build of exactly the same terrain and sources. */
   settleCache?: SettleCache;
+  /** "preview": a rebuild whose water changed warm-starts from the previous build's water
+   *  (sim/preview.ts, the editor's preview) instead of running the canonical settle. The result is
+   *  marked `settle.preview`; `rebuild` without it replaces preview water with the canonical settle
+   *  (EDITOR_PLAN §6, PLAN §19.7). */
+  water?: "canonical" | "preview";
 }
 
 /** The last canonical settle and the model it ran on. The settle depends only on the water model,
@@ -244,10 +250,11 @@ export function buildTerrain(input: BuildInput): { heights: Uint8Array; channel:
   return { heights: terrain.heights, channel: terrain.channel, protect: terrain.protect };
 }
 
-/** An incremental build from `prev`, equal to a full build of `input` (PLAN §19.7). */
-export function rebuild(prev: BuildResult, input: BuildInput): BuildResult {
-  if (prev.W !== input.W || prev.H !== input.H || prev.seed !== input.seed) return run(input, null, {});
-  return run(input, prev, {});
+/** An incremental build from `prev`, equal to a full build of `input` (PLAN §19.7); with
+ *  `water: "preview"`, equal to it except for the water and what grows on it (see BuildOptions). */
+export function rebuild(prev: BuildResult, input: BuildInput, opts: BuildOptions = {}): BuildResult {
+  if (prev.W !== input.W || prev.H !== input.H || prev.seed !== input.seed) return run(input, null, { ...opts, water: "canonical" });
+  return run(input, prev, opts);
 }
 
 // ------------------------------------------------------------------------------------ dirty region
@@ -695,12 +702,18 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let settle: CanonicalWater | null = null;
   let settleEntry = prev?.settle ?? null;
   if (needWater) {
-    if (settleEntry && sameModel(settleEntry.model, settleEntry.emitters, model)) settle = settleEntry.water;
+    const preview = opts.water === "preview";
+    // the previous water serves when nothing that moves water changed; preview water only in a
+    // preview build (anything else gets the canonical settle)
+    if (settleEntry && sameModel(settleEntry.model, settleEntry.emitters, model) && (preview || !settleEntry.water.preview)) settle = settleEntry.water;
     else {
       settle = opts.settleCache?.get(model) ?? null;
       if (!settle) {
-        settle = canonicalSettle(model);
-        opts.settleCache?.set(model, settle);
+        if (preview && settleEntry && settleEntry.model.W === W && settleEntry.model.H === H) settle = previewSettle({ model: settleEntry.model, water: settleEntry.water }, model);
+        else {
+          settle = canonicalSettle(model);
+          opts.settleCache?.set(model, settle);
+        }
       }
       settleEntry = { model: { ...model, floor: model.floor.slice(), dam: model.dam ? model.dam.slice() : null }, emitters, water: settle };
     }

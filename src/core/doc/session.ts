@@ -14,12 +14,15 @@
 //   `rebuildWithCurrentGenerator` (PLAN §19.7).
 
 import { buildMap, rebuild, SettleCache, type BaseLayer, type BuildInput, type BuildResult, type DirtyInfo, type LockedLayer } from "../features/build";
+import { storedWetMask } from "../analysis/mechanics";
+import { canonicalRun, type CanonicalWater } from "../sim/prefill";
+import type { WaterModel } from "../sim/water";
 import { pathField, polygonMask } from "../features/geometry";
 import { entityJson, placementOf, rawEntity } from "../format/entities";
 import { fromBase64, toBase64 } from "../format/base64";
 import { parse, stringify, type JsonObject } from "../format/json";
 import { writeTimber, type TimberFile } from "../format/timber";
-import { settledSimulationSingletons, storedWater, type WorldModel } from "../format/world";
+import { mixedSimulationSingletons, settledSimulationSingletons, storedWater, type WorldModel } from "../format/world";
 import type { Feature } from "../features/schema";
 import { MAX_ATTEMPTS, planFeatures, type GenerateResult } from "../gen/generate";
 import { description, fileName as timberFileName, mapName, toTimberFile } from "../gen/pack";
@@ -132,6 +135,9 @@ export class MapSession {
   private storedWaterCache: { key: BaseMap; water: ReturnType<typeof storedWater> } | null = null;
   /** Things the player should know about how the document was opened. */
   readonly notices: string[] = [];
+  /** "preview": edits re-settle the water from its previous state (the editor's preview); the
+   *  canonical settle follows with `settleCanonical` or `canonicalWater` (EDITOR_PLAN §6). */
+  private waterMode: "canonical" | "preview" = "canonical";
 
   private constructor(doc: MapDocument, built?: BuildResult) {
     this.gen = { spec: doc.spec, generatorVersion: doc.generatorVersion, base: doc.base, baseFeatures: clone(baseFeaturesOf(doc)), kept: doc.kept, meta: doc.meta };
@@ -155,10 +161,52 @@ export class MapSession {
       );
     }
     this.cur = built ?? buildMap(this.input());
+    if (this.mode !== "live" && this.baseStuff().terrain.columns.size) {
+      this.notices.push("This map has caves or overhangs. Water under them keeps the map's own: the preview is approximate there. Show → Water under roofs marks them.");
+    }
     // the log is the history of an opened document: its operations undo one by one (a
     // regeneration's earlier generation is not stored, so the history starts at this one)
     this.undoStack = this.log.map((op) => ({ kind: "ops", ops: [op] }));
     this.snaps.set(this.undoStack.length, this.cur);
+  }
+
+  /** Warm-start the water after each edit (the editor), or settle it canonically (default). */
+  setPreviewWater(on: boolean): void {
+    this.waterMode = on ? "preview" : "canonical";
+  }
+
+  /** Whether the map's water is the preview's, not yet the canonical settle. */
+  get waterPending(): boolean {
+    return this.cur.settle.preview === true;
+  }
+
+  /** The canonical settle of the current map's water, in slices (`advance`), for `adoptWater`. */
+  canonicalRun(): { model: WaterModel; advance(ticks: number): CanonicalWater | null; readonly ticks: number; readonly maxTicks: number } {
+    const model = this.cur.waterModel;
+    const run = canonicalRun(model);
+    return { model, advance: (t) => run.advance(t), get ticks() { return run.ticks; }, get maxTicks() { return run.maxTicks; } };
+  }
+
+  /** Put the canonical settle of `model` in place of the preview's water. False when the map
+   *  changed since (its water model is another). */
+  adoptWater(model: WaterModel, water: CanonicalWater): boolean {
+    if (!this.waterPending) return true;
+    if (!sameWaterModel(model, this.cur.waterModel)) return false;
+    const cache = new SettleCache();
+    cache.set(model, water);
+    const before = this.cur;
+    this.cur = rebuild(this.cur, this.input(), { settleCache: cache });
+    for (const [k, b] of this.snaps) if (b === before) this.snaps.set(k, this.cur);
+    return true;
+  }
+
+  /** Settle the water canonically now, when the map shows the preview's. */
+  settleCanonical(): void {
+    if (!this.waterPending) return;
+    const run = this.canonicalRun();
+    let w = run.advance(Infinity);
+    while (!w) w = run.advance(Infinity);
+    this.adoptWater(run.model, w);
   }
 
   /** Open a document (from `decodeProject`, `toDocument` or `importDocument`). */
@@ -223,7 +271,13 @@ export class MapSession {
    *  water export keeps): the 3D view then draws `storedWater()`, not `built.water`. */
   get showsStoredWater(): boolean {
     if (this.mode === "live") return false;
-    return this.cur.waterFromFile || this.baseStuff().terrain.columns.size > 0;
+    return this.cur.waterFromFile;
+  }
+
+  /** Tiles under roofs (caves, tunnels, overhangs) of an imported map: there the file's own water
+   *  is kept and the preview is approximate (EDITOR_PLAN §6). Empty for generated maps. */
+  get roofedTiles(): ReadonlySet<number> {
+    return this.mode === "live" ? new Set() : new Set(this.baseStuff().terrain.columns.keys());
   }
 
   /** The water the base file stores (every level), for the 3D view. */
@@ -342,7 +396,7 @@ export class MapSession {
     if (errors.length) return { ok: false, errors, applied: [], dirty: null };
     const applied = this.applyChecked(op, origin, label);
     this.pushHistory({ kind: "ops", ops: [applied] });
-    this.cur = rebuild(this.cur, this.input());
+    this.cur = this.rebuilt();
     this.snapshot();
     return { ok: true, errors: [], applied: [applied], dirty: this.cur.dirty };
   }
@@ -358,12 +412,12 @@ export class MapSession {
           invertOp(this.st, a);
           this.log.pop();
         }
-        if (done.length) this.cur = rebuild(this.cur, this.input());
+        if (done.length) this.cur = this.rebuilt();
         return { ok: false, errors, applied: [], dirty: null };
       }
       done.push(this.applyChecked(op, origin, label));
       // later operations of the group may refer to what earlier ones made
-      this.cur = rebuild(this.cur, this.input());
+      this.cur = this.rebuilt();
     }
     this.pushHistory({ kind: "ops", ops: done, ...(label ? { label } : {}) });
     this.snapshot();
@@ -390,7 +444,7 @@ export class MapSession {
       }
     } else this.setGeneration(e.before);
     this.redoStack.push(e);
-    this.cur = this.snaps.get(this.undoStack.length) ?? rebuild(this.cur, this.input());
+    this.cur = this.snaps.get(this.undoStack.length) ?? this.rebuilt();
     return true;
   }
 
@@ -404,7 +458,7 @@ export class MapSession {
       }
     } else this.setGeneration(e.after);
     this.undoStack.push(e);
-    this.cur = this.snaps.get(this.undoStack.length) ?? rebuild(this.cur, this.input());
+    this.cur = this.snaps.get(this.undoStack.length) ?? this.rebuilt();
     this.snapshot();
     return true;
   }
@@ -542,7 +596,7 @@ export class MapSession {
       base: baseFromFile(toTimberFile(spec, baseBuilt), "generated", baseBuilt.entities.map((e) => e.owner)),
     };
     this.setGeneration({ gen: this.gen, log: this.log });
-    this.cur = rebuild(this.cur, this.input());
+    this.cur = this.rebuilt();
     this.pushHistory({ kind: "generation", label: `Rebuild with generator ${GENERATOR_VERSION}`, before, after: this.record() });
     this.snaps.set(this.undoStack.length - 1, beforeBuilt);
     this.snapshot(true);
@@ -610,6 +664,11 @@ export class MapSession {
     return layer;
   }
 
+  /** The incremental build of the document as it now stands, with the session's water mode. */
+  private rebuilt(): BuildResult {
+    return rebuild(this.cur, this.input(), { water: this.waterMode });
+  }
+
   private input(): BuildInput {
     const base = this.mode === "live" ? null : this.baseStuff().layer;
     return this.inputFor(this.gen.base.sizeX, this.gen.base.sizeY, this.gen.spec?.seed ?? 0, this.st, base, this.keptLayer());
@@ -635,24 +694,27 @@ export class MapSession {
   /** The map as a .timber file. A generated map is written the way the generator writes it; an
    *  imported one is its normalized file with the edits: unedited, it is the same file, byte for
    *  byte (PLAN §19.6). */
-  exportFile(built: BuildResult = this.cur): TimberFile {
-    if (this.mode === "live") return toTimberFile(this.gen.spec!, built);
+  exportFile(built: BuildResult = this.cur, opts: { thumbnail?: boolean } = {}): TimberFile {
+    // without a thumbnail (checks read only its size): a blank one, not drawn
+    const blank = opts.thumbnail === false ? blankThumbnail() : undefined;
+    if (this.mode === "live") return toTimberFile(this.gen.spec!, built, blank ? { thumbnail: blank } : {});
     const b = this.baseStuff();
     const { x: W, y: H } = this.size;
     const w = b.file.world;
     const terrainChanged = !sameBytes(built.heights, b.terrain.heights);
     let singletons = w.singletons;
     if (!built.waterFromFile) {
-      if (b.terrain.columns.size) {
-        this.notice("The map has caves or overhangs, so its water was kept from the file: the game settles it again after the edit.");
-      } else singletons = withSettledWater(w.singletons, W, H, built);
+      // under roofs (caves, tunnels, overhangs) the file's own water is kept: the heightfield
+      // model cannot simulate it (EDITOR_PLAN §6); everywhere else the settled water is written
+      if (b.terrain.columns.size) singletons = withSettledWater(w.singletons, W, H, built, new Set(b.terrain.columns.keys()));
+      else singletons = withSettledWater(w.singletons, W, H, built);
     }
     const world: WorldModel = { ...w, voxels: joinTerrain(W, H, built.heights, b.terrain.columns), singletons, entities: built.entities.map(entityJson) };
     // the thumbnail shows terrain and water: a new one when either changed
     const redraw = terrainChanged || !built.waterFromFile;
     return {
       metadata: parse(this.gen.base.metadata) as JsonObject,
-      thumbnail: redraw ? thumbnailJpeg(built.heights, W, H, built.waterFromFile ? null : built.water) : b.file.thumbnail,
+      thumbnail: blank ?? (redraw ? thumbnailJpeg(built.heights, W, H, built.waterFromFile ? null : built.water) : b.file.thumbnail),
       versionTxt: this.gen.base.versionTxt,
       world,
       extraFiles: [],
@@ -667,6 +729,8 @@ export class MapSession {
   }
 
   exportTimber(opts: { warnings?: readonly string[] } = {}): { bytes: Uint8Array; fileName: string } {
+    // a file always gets the canonical settle, never the preview's water (PLAN §19.7)
+    this.settleCanonical();
     const name = this.exportTimberName();
     const file = this.exportFile();
     if (opts.warnings?.length && file.metadata) {
@@ -680,24 +744,47 @@ export class MapSession {
 
   /** The map as it was opened, before any edit: the load and design checks of an imported
    *  file's normalized base (its own problems, which the export gate does not blame on edits). */
-  validateOriginal(): Validation {
-    return validateMap(this.baseStuff().file, { profile: "export", external: true, loadOnly: true, spec: null, designedFor: this.gen.meta.designedFor });
+  validateOriginal(water?: { model: WaterModel; settled: CanonicalWater }): Validation {
+    return validateMap(this.baseStuff().file, {
+      profile: "export",
+      external: true,
+      loadOnly: !water,
+      spec: null,
+      designedFor: this.gen.meta.designedFor,
+      water,
+      storedWet: water ? this.openedWet() : undefined,
+    });
+  }
+
+  /** The imported map's file as it was opened (normalized). */
+  openedFile(): TimberFile {
+    return this.baseStuff().file;
   }
 
   /** Validate the map as it would be exported: the `export` profile for generated maps, `import`
    *  for imported ones (PLAN §19.5), or the profile given. `loadOnly` runs the load and design
    *  classes only (no water settle). */
-  validate(profile?: Profile, opts: { loadOnly?: boolean } = {}): Validation {
+  validate(profile?: Profile, opts: { loadOnly?: boolean; water?: { model: WaterModel; settled: CanonicalWater } } = {}): Validation {
     const live = this.mode === "live";
+    if (!opts.loadOnly && !opts.water) this.settleCanonical();
     return validateMap(this.exportFile(), {
       profile: profile ?? (this.gen.spec ? "export" : "import"),
       external: !live,
       spec: this.gen.spec,
       designedFor: this.gen.meta.designedFor,
       features: this.st.features,
-      water: live ? { model: this.cur.waterModel, settled: this.cur.settle } : undefined,
+      water: opts.water ?? (live ? { model: this.cur.waterModel, settled: this.cur.settle } : undefined),
       loadOnly: opts.loadOnly,
+      // an edited import's approximate-water rule compares the settle with the water it was opened with
+      storedWet: live ? undefined : this.openedWet(),
     });
+  }
+
+  /** The wet tiles of the imported map as it was opened (its own stored water). */
+  openedWet(): Uint8Array {
+    const b = this.baseStuff();
+    const { x: W, y: H } = this.size;
+    return storedWetMask(storedWater(b.file.world.singletons, W, H), W * H);
   }
 
   private notice(msg: string): void {
@@ -707,6 +794,23 @@ export class MapSession {
 
 // ------------------------------------------------------------------------------------ helpers
 
+let blank: Uint8Array | null = null;
+/** A 960×540 thumbnail for checks, which read only its size. */
+function blankThumbnail(): Uint8Array {
+  blank ??= thumbnailJpeg(new Uint8Array(1), 1, 1, null);
+  return blank;
+}
+
+/** Whether two water models are the same map for the water (floors, obstacles and emitters). */
+function sameWaterModel(a: WaterModel, b: WaterModel): boolean {
+  if (a === b) return true;
+  if (a.W !== b.W || a.H !== b.H || a.floor.length !== b.floor.length) return false;
+  for (let i = 0; i < a.floor.length; i++) if (a.floor[i] !== b.floor[i]) return false;
+  if (!!a.dam !== !!b.dam) return false;
+  if (a.dam && b.dam) for (let i = 0; i < a.dam.length; i++) if (a.dam[i] !== b.dam[i]) return false;
+  return JSON.stringify(a.emitters) === JSON.stringify(b.emitters);
+}
+
 function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
@@ -714,9 +818,11 @@ function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
 }
 
 /** An imported map's singletons with the settled water, moisture and contamination of a
- *  heightfield map (one slot per tile), every other singleton as it was. */
-function withSettledWater(singletons: JsonObject, W: number, H: number, b: BuildResult): JsonObject {
-  const s = settledSimulationSingletons(W, H, { floor: b.heights, depth: b.water, contamination: b.contamination, moisture: b.moisture, soilContamination: b.soilContamination, sat: b.settle.sat });
+ *  heightfield map (one slot per tile), every other singleton as it was. With `roofed`, the tiles
+ *  under roofs keep the file's own water and soil (every slot; world.ts mixedSimulationSingletons). */
+function withSettledWater(singletons: JsonObject, W: number, H: number, b: BuildResult, roofed?: ReadonlySet<number>): JsonObject {
+  const st = { floor: b.heights, depth: b.water, contamination: b.contamination, moisture: b.moisture, soilContamination: b.soilContamination, sat: b.settle.sat };
+  const s = roofed ? mixedSimulationSingletons(singletons, W, H, st, roofed) : settledSimulationSingletons(W, H, st);
   const keys = ["WaterEvaporationMap", "WaterSimulationMigrator", "WaterMapNew", "SoilMoistureSimulator", "SoilContaminationSimulator"];
   const out: JsonObject = {};
   for (const k in singletons) out[k] = keys.includes(k) ? s[k] : singletons[k];

@@ -2,7 +2,7 @@
 // selected feature, the preview of a planned edit, the problems an edit made, the history list,
 // the map's health pill and the export dialog.
 
-import type { Remote } from "comlink";
+import { proxy, type Remote } from "comlink";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { OpParams } from "../core/doc/ops";
 import type { Orientation } from "../core/format/footprints";
@@ -12,7 +12,7 @@ import type { Facing } from "../core/features/setpieces/common";
 import { saveFile } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest } from "../worker/session";
+import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
 import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
 import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
@@ -43,6 +43,10 @@ export interface TabPanelProps {
   onOptions(o: ToolOptions): void;
   damSites: DamSiteView[] | null;
   onDamSites(show: boolean): void;
+  /** The water layer on show, and whether the map has tiles under roofs. */
+  layer: LayerKind;
+  onLayer(kind: LayerKind): void;
+  roofed: boolean;
   /** Advanced mode (EDITOR_PLAN §4): objects placed by hand, unstable cores, numeric fields. */
   advanced: boolean;
   onAdvanced(on: boolean): void;
@@ -105,6 +109,7 @@ export function TabPanel(p: TabPanelProps) {
         </label>
         {p.advanced ? <p class="note">Click the map to see the objects on a tile and change them.</p> : null}
         {p.tab === "water" ? <DamSiteToggle sites={p.damSites} onToggle={p.onDamSites} /> : null}
+        <LayerPicker layer={p.layer} onLayer={p.onLayer} roofed={p.roofed || p.info.kind === "import"} />
         <TabNote tab={p.tab} info={p.info} />
         <div class="feature-list" ref={listRef}>
           {features.length ? <h2>On this map</h2> : null}
@@ -122,6 +127,55 @@ export function TabPanel(p: TabPanelProps) {
         </div>
       </div>
     </nav>
+  );
+}
+
+/** The water layers the map can show (EDITOR_PLAN §4 overlays, §6). */
+export type LayerKind = "none" | "moisture" | "badwater" | "drought" | "roofed";
+
+const LAYER_NAMES: Record<LayerKind, string> = {
+  none: "None",
+  moisture: "Soil moisture",
+  badwater: "Badwater",
+  drought: "Drought",
+  roofed: "Water under roofs",
+};
+
+function LayerPicker({ layer, onLayer, roofed }: { layer: LayerKind; onLayer(k: LayerKind): void; roofed: boolean }) {
+  const kinds: LayerKind[] = ["none", "moisture", "badwater", "drought", ...(roofed ? (["roofed"] as LayerKind[]) : [])];
+  return (
+    <section class="layer-toggle" aria-label="Water layers">
+      <label>
+        Show{" "}
+        <select value={layer} onChange={(e) => onLayer((e.target as HTMLSelectElement).value as LayerKind)}>
+          {kinds.map((k) => (
+            <option key={k} value={k}>
+              {LAYER_NAMES[k]}
+            </option>
+          ))}
+        </select>
+      </label>
+    </section>
+  );
+}
+
+/** What the water layer on the map shows, in a line or two. */
+export function LayerLegend({ kind, layers }: { kind: LayerKind; layers: WaterLayers }) {
+  let text = "";
+  if (kind === "moisture") text = "Green soil is moist: living trees and bushes grow there. Darker is wetter.";
+  else if (kind === "badwater") text = "Dark brown is badwater. Light brown soil is contaminated: plants die there.";
+  else if (kind === "drought")
+    text = `After a ${layers.droughtDays}-day drought, blue water is still there and orange water has dried up. About ${layers.droughtKept.toLocaleString()} of ${layers.droughtNow.toLocaleString()} water is left.`;
+  else if (kind === "roofed")
+    text = layers.roofed.length
+      ? `Violet tiles are under caves or overhangs. Their water is the map's own: the preview is approximate there.`
+      : "No caves or overhangs on this map.";
+  return (
+    <div class="layer-legend" role="status">
+      <p>{text}</p>
+      {layers.approximate ? <p class="note">Water checks are approximate here: {layers.approximate}.</p> : null}
+      {layers.preview && kind !== "roofed" ? <p class="note">Preview water: the exact settle is still running.</p> : null}
+    </div>
   );
 }
 
@@ -149,7 +203,7 @@ function TabNote({ tab, info }: { tab: Tab; info: SessionInfo }) {
   const imported = info.kind === "import";
   if (tab === "start") {
     if (imported) return <p class="note">Drag the start's handle to move it. The district center needs level ground and a free tile at its door.</p>;
-    return <p class="note">Select the start, then drag its handle. Green means the district center fits; red means it does not. Water, trees and berries nearby show as you drag.</p>;
+    return <p class="note">Select the start, then drag its handle. Green means the district center fits and meets the start requirements: water on its level without stairs, and enough trees and berry bushes within 20 tiles' walk.</p>;
   }
   if (imported && tab === "land") return <p class="note">Imported maps have no features to select yet. Draw new land on top of the map.</p>;
   return null;
@@ -395,16 +449,31 @@ export function PreviewCard({ plan, pending, onPlace, onCancel }: PreviewProps) 
   );
 }
 
-/** The start's footprint check while it is dragged: fits or not, and what is nearby. */
-export function StartIndicators({ check, needs }: { check: StartCheck; needs: { water: number; trees: number; bushes: number } }) {
+/** The start's footprint check while it is dragged: whether it fits, the three start requirements
+ *  (PLAN §5.6, D85) with the map's numbers, and the targets it misses as warnings. */
+export function StartIndicators({ check, rules }: { check: StartCheck; rules: { waterWithin: number; treesWithin20: number; bushesWithin20: number } }) {
   const mark = (ok: boolean) => (ok ? "ok" : "low");
+  const waterOk = check.water !== null && check.water <= rules.waterWithin;
   return (
     <div class="start-indicators" role="status">
-      <p class={check.problem ? "bad" : "ok"}>{check.problem ? `Does not fit: ${check.problem}` : "The district center fits here"}</p>
+      <p class={check.problem || !check.meets ? "bad" : "ok"}>
+        {check.problem ? `Does not fit: ${check.problem}` : check.meets ? "The district center fits here" : "Fits, but misses a start requirement"}
+      </p>
       <ul>
-        <li class={mark(check.water !== null && check.water <= needs.water)}>Water: {check.water === null ? "none in pump reach" : `${check.water} tiles`}</li>
-        <li class={mark(check.trees >= needs.trees)}>Trees nearby: {check.trees}</li>
-        <li class={mark(check.bushes >= needs.bushes)}>Berry bushes nearby: {check.bushes}</li>
+        <li class={mark(waterOk)} data-need="water">
+          Water without stairs: {check.water === null ? "none on this level" : `${check.water} tiles' walk`} (at most {rules.waterWithin})
+        </li>
+        <li class={mark(check.trees >= rules.treesWithin20)} data-need="trees">
+          Starting trees: {check.trees} (at least {rules.treesWithin20})
+        </li>
+        <li class={mark(check.bushes >= rules.bushesWithin20)} data-need="bushes">
+          Starting bushes: {check.bushes} (at least {rules.bushesWithin20})
+        </li>
+        {check.warnings.map((w) => (
+          <li key={w} class="warn">
+            {w}
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -812,8 +881,8 @@ export function HistoryPanel({ info, onJump, onClose }: { info: SessionInfo; onJ
 
 // ------------------------------------------------------------------------------ health and export
 
-export function StatusPill({ check, busy, onOpen }: { check: ExportCheck | null; busy: boolean; onOpen(): void }) {
-  let text = "Checking…";
+export function StatusPill({ check, busy, progress, onOpen }: { check: ExportCheck | null; busy: boolean; progress?: CheckProgress | null; onOpen(): void }) {
+  let text = progress?.stage === "water" ? `Settling water ${Math.round(progress.done * 100)}%` : "Checking…";
   let tone = "wait";
   if (check && !busy) {
     if (check.blocking.length) {
@@ -910,21 +979,31 @@ export function ExportDialog(p: ExportDialogProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [progress, setProgress] = useState<CheckProgress | null>(null);
+  const [exportingNow, setExportingNow] = useState(false);
   const first = useRef<HTMLButtonElement>(null);
+  const onProgress = proxy((q: CheckProgress) => setProgress(q));
+  // the checks run after the canonical settle, in slices with progress (EDITOR_PLAN §6)
+  const checkNow = async (): Promise<ExportCheck> => {
+    for (;;) {
+      const r = await p.queue(() => p.api.backgroundCheck(onProgress));
+      if (r) return r.check;
+    }
+  };
   const load = () =>
-    p
-      .queue(() => p.api.exportCheck())
+    checkNow()
       .then((c) => {
+        setProgress(null);
         setCheck(c);
         p.onChecked(c);
       })
       .catch((e) => setError(String(e instanceof Error ? e.message : e)));
   useEffect(() => {
     let live = true;
-    void p
-      .queue(() => p.api.exportCheck())
+    void checkNow()
       .then((c) => {
         if (!live) return;
+        setProgress(null);
         setCheck(c);
         p.onChecked(c);
       })
@@ -940,10 +1019,16 @@ export function ExportDialog(p: ExportDialogProps) {
   const canExport = !!check && !check.blocking.length && (!check.warnings.length || confirmed);
   async function doExport() {
     setError(null);
-    const r = await p.queue(() => p.api.exportTimber(confirmed));
-    if (!r.ok) return setError(r.errors.join(" "));
-    saveFile(r.bytes, r.fileName);
-    setSaved(r.fileName);
+    setExportingNow(true);
+    try {
+      const r = await p.queue(() => p.api.exportTimber(confirmed, onProgress));
+      if (!r.ok) return setError(r.errors.join(" "));
+      saveFile(r.bytes, r.fileName);
+      setSaved(r.fileName);
+    } finally {
+      setExportingNow(false);
+      setProgress(null);
+    }
   }
   // a fix changes the map: apply it, then check again
   const given = p.actions;
@@ -968,7 +1053,12 @@ export function ExportDialog(p: ExportDialogProps) {
             ×
           </button>
         </header>
-        {!check && !error ? <p>Checking the map…</p> : null}
+        {!check && !error ? (
+          <p role="status">
+            {progress?.stage === "water" ? "Settling the water…" : "Checking the map…"}
+            {progress ? <progress max={1} value={progress.done} aria-label="Progress" /> : null}
+          </p>
+        ) : null}
         {check ? (
           <>
             {check.blocking.length ? (
@@ -1002,7 +1092,7 @@ export function ExportDialog(p: ExportDialogProps) {
                 <Items items={check.existing} />
               </section>
             ) : null}
-            {!check.playability ? <p class="note">Water and colony checks run on generated maps. For imported maps they come in a later version.</p> : null}
+            {check.approximate ? <p class="note">The water and start checks are approximate on this map: {check.approximate}.</p> : null}
           </>
         ) : null}
         {error ? (
@@ -1019,8 +1109,8 @@ export function ExportDialog(p: ExportDialogProps) {
           <button type="button" class="ghost" onClick={p.onClose}>
             {saved ? "Done" : "Cancel"}
           </button>
-          <button type="button" class="primary" disabled={!canExport} onClick={() => void doExport()}>
-            Export
+          <button type="button" class="primary" disabled={!canExport || exportingNow} onClick={() => void doExport()}>
+            {exportingNow ? "Exporting…" : "Export"}
           </button>
         </footer>
       </div>

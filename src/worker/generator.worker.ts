@@ -64,8 +64,15 @@ const api = {
     return r.response ? transfer(r, responseBuffers(r.response)) : r;
   },
   exportCheck: () => ed.exportCheck(),
-  exportTimber(confirmWarnings: boolean) {
-    const r = ed.exportTimber(confirmWarnings);
+  waterLayers() {
+    const r = ed.waterLayers();
+    return transfer(r, [r.moisture.buffer, r.badwater.buffer, r.drought.buffer, r.roofed.buffer] as Transferable[]);
+  },
+  async backgroundCheck(onProgress?: (p: ed.CheckProgress) => void) {
+    return ed.backgroundCheck(onProgress);
+  },
+  async exportTimber(confirmWarnings: boolean, onProgress?: (p: ed.CheckProgress) => void) {
+    const r = await ed.exportTimber(confirmWarnings, onProgress);
     return transfer(r, [r.bytes.buffer as Transferable]);
   },
   project(level?: number) {
