@@ -150,7 +150,7 @@ export function View3D(props: View3DProps) {
               </li>
             ))}
           </ul>
-          <p class="note">From afar, dead trees, slope arrows and the start are drawn larger.</p>
+          <p class="note">From afar, dead trees, slope arrows and the start are drawn larger, and dam sites wider.</p>
         </details>
       )}
       {props.hoverText ? (

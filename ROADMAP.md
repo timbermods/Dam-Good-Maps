@@ -629,16 +629,18 @@ steps, shorelines, ridge crests). Map look changes no map file, so they go to th
 
 **Status:** built, 2026-09-25, on branch `dev` (the generator stays 0.6.0; no map file changes).
 Tuned to Kyler's in-game reference (ML-1), which corrected Delivers 1. The first independent review
-of the captures failed on ten findings; the fix round (PLAN §20 D114) answers each, and a fresh
-reviewer judges the new captures before the step is tagged:
+of the captures failed on ten findings (fixed in D114), the second narrowly on four (fixed in
+D115); Kyler judges the look from the new captures (no more blind reviews), and the 3D
+benchmark is information only:
 - before and after captures of seed 4242 in every theme, River Valley 4242 at 256² and
   Beavertopia, from the same camera poses, with greyscale and colour-blind versions of every
   after pose; [docs/map-look/captures.md](docs/map-look/captures.md) says where each meaning is;
-- the 3D view builds a 256² map in at most 529 ms and orbits at 100 fps or more, Beavertopia
+- the 3D view builds a 256² map in at most 626 ms and orbits at 100 fps or more, Beavertopia
   included, on the integrated GPU with the CPU slowed 4×;
-- no existing test changed, and all pass; every sha256 stays equal.
+- no existing test changed; all pass in CI, and locally but for one timing budget that a busy
+  machine pushes over for the second round's code too; every sha256 stays equal.
 
-The deviations are PLAN §20 D110 and D114; decisions-pending #49 (the default camera).
+The deviations are PLAN §20 D110, D114 and D115; decisions-pending #49 (the default camera).
 
 ---
 

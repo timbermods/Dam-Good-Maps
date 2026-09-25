@@ -24,9 +24,9 @@ export type GroundKind = "moist" | "dry" | "contaminated" | "underwater";
 
 export const GROUND = {
   /** Dry ground: cracked earth, warm grey-brown, with dark cracks; plants die there. */
-  dry: [0.5, 0.4, 0.3] as Rgb,
+  dry: [0.48, 0.38, 0.29] as Rgb,
   /** Dry ground's cooler, greyer patches. */
-  dryCool: [0.45, 0.4, 0.35] as Rgb,
+  dryCool: [0.43, 0.38, 0.33] as Rgb,
   /** The cracks in dry ground. */
   crack: [0.2, 0.16, 0.16] as Rgb,
   /** Moist ground at the edge of the moist area (the least moisture). */
@@ -38,7 +38,7 @@ export const GROUND = {
   /** ...its cracks glowing. */
   contaminatedGlow: [0.98, 0.56, 0.2] as Rgb,
   /** Ground under water (seen through it). */
-  underwater: [0.34, 0.35, 0.3] as Rgb,
+  underwater: [0.44, 0.45, 0.38] as Rgb,
 } as const;
 
 /** Height colours (the toggle): the low and high ends of the ramp, as before Map look. */
@@ -58,14 +58,16 @@ export const WALL = {
 } as const;
 
 export const WATER = {
-  /** Clean water: light teal where shallow (and see-through), blue where deep. */
-  shallow: [0.3, 0.58, 0.62] as Rgb,
-  deep: [0.13, 0.33, 0.48] as Rgb,
+  /** Clean water: light teal where shallow (and see-through), blue where deep; lighter than dry
+   *  ground at any depth, darker than moist ground. */
+  shallow: [0.42, 0.7, 0.74] as Rgb,
+  deep: [0.28, 0.52, 0.66] as Rgb,
   foam: [0.93, 0.97, 0.97] as Rgb,
   /** The sky the water reflects. */
   sky: [0.62, 0.74, 0.84] as Rgb,
   /** Badwater: much darker than clean water at any depth, a murky red-black liquid with slow
-   *  glowing bubbles. Water mixed with badwater is streaked with it. */
+   *  glowing bubbles. Water mixed with badwater is murkier than clean water all over, and
+   *  streaked with badwater as densely as it is bad. */
   bad: [0.16, 0.06, 0.05] as Rgb,
   badDeep: [0.1, 0.035, 0.03] as Rgb,
   badVein: [0.98, 0.5, 0.16] as Rgb,
@@ -97,8 +99,9 @@ export const START = {
   banner: [1.0, 0.82, 0.16] as Rgb,
 } as const;
 
-/** Ruins: rusty towers with beige panels, one storey per level. */
-export const RUIN = { rust: [0.55, 0.27, 0.13] as Rgb, dark: [0.3, 0.15, 0.08] as Rgb, panel: [0.8, 0.72, 0.55] as Rgb } as const;
+/** Ruins: towers of weathered grey-brown metal with rusty posts and beige panels, one storey per
+ *  level (grey-brown, so they stand apart from rusty contaminated ground). */
+export const RUIN = { body: [0.46, 0.41, 0.35] as Rgb, rust: [0.42, 0.19, 0.09] as Rgb, panel: [0.84, 0.77, 0.6] as Rgb } as const;
 
 /** Slopes: a ramp with pale arrows, rimmed dark, pointing uphill. */
 export const SLOPE = { ramp: [0.62, 0.52, 0.38] as Rgb, side: [0.46, 0.37, 0.26] as Rgb, arrow: [0.97, 0.93, 0.78] as Rgb, rim: [0.14, 0.1, 0.07] as Rgb } as const;
@@ -226,7 +229,7 @@ export function objectLegend(): LegendEntry[] {
   return [
     {
       swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.shallow)),
-      label: "Water mixed with badwater: dark streaks",
+      label: "Water mixed with badwater: murkier, with dark streaks",
     },
     {
       swatch: icon(`<circle cx="7" cy="8" r="5" fill="${c(LIVING_TREE)}"/><path d="M16 2 L21 14 H11Z" fill="${c([0.11, 0.28, 0.17])}"/>`, grass),
@@ -241,12 +244,12 @@ export function objectLegend(): LegendEntry[] {
       label: "The start: district center",
     },
     {
-      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(SLOPE.ramp)}"/><path d="M6 11 L12 4 L18 11 L15.5 11 L12 7.5 L8.5 11Z" fill="${c(SLOPE.arrow)}" stroke="${c(SLOPE.rim)}" stroke-width="1"/>`, dry),
+      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(SLOPE.ramp)}"/><path d="M12 2 L18 8 L14.2 8 L14.2 14 L9.8 14 L9.8 8 L6 8Z" fill="${c(SLOPE.arrow)}" stroke="${c(SLOPE.rim)}" stroke-width="1.2"/>`, dry),
       label: "Slopes: arrows point uphill",
     },
     {
-      swatch: icon(`<rect x="7" y="1" width="10" height="14" fill="${c(RUIN.rust)}"/><rect x="8.5" y="3" width="7" height="4" fill="${c(RUIN.panel)}"/><rect x="8.5" y="9" width="7" height="4" fill="${c(RUIN.panel)}"/>`, dry),
-      label: "Ruins: rusty towers, a storey per level",
+      swatch: icon(`<rect x="7" y="1" width="10" height="14" fill="${c(RUIN.body)}" stroke="${c(RUIN.rust)}" stroke-width="1.2"/><rect x="8.5" y="3" width="7" height="4" fill="${c(RUIN.panel)}"/><rect x="8.5" y="9" width="7" height="4" fill="${c(RUIN.panel)}"/>`, c(GROUND.contaminated)),
+      label: "Ruins: metal towers, a storey per level",
     },
     { swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="6.5" y="3.5" width="11" height="9" fill="${c(MINE.pit)}"/>`, dry), label: "Mine site" },
     {

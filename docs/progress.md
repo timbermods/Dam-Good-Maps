@@ -1243,6 +1243,39 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
   #12.
 - Kyler's rule: one more fix round on these reasons, then a fresh blind review; if that fails
   too, stop and report.
+- **Third fix round** (PLAN §20 D115, 2026-09-25). Kyler then chose a lighter process: no more
+  blind reviews (he judges the look from the captures), and the 3D benchmark is information only.
+  1. badwater meeting clean water has its own **meets** pose (River Valley 4242 at 256², where
+     badwater flows into the river, and Beavertopia), and `captures.md` lists the meeting in it;
+  2. water partly bad shows its own tile's share, murkier than clean water all over and streaked
+     as densely as it is bad (never all of it): at 24–25% it is 7 or more L* darker than clean
+     water at the listed points, in every variant;
+  3. a slope's arrow is level and floats just above the slope, pointing uphill, so it reads from
+     any angle and above dam sites' markers; from afar it grows up to 6 times (in Beavertopia's
+     overview the arrows are about 15–20 px long); the listed positions now fall on the arrows
+     (the tool had put them up to 0.7 of a level too high);
+  4. `captures.md` lists only dry tall cliffs that face the camera, that the view shows first,
+     with at least 6 px a level, and says where a pose has none; every map has a **cliff** pose
+     at its tallest dry cliff (3 to 15 levels, 23–43 px a level).
+
+  Also: clean water is lighter (8 or more L* above dry ground at every listed point, 13 at the
+  median); dead trees grow at most 2.5 times and a dam site's rim is thinner; falls are a
+  see-through veil with no sky patches, and white water only where they come down; badwater
+  shows flow streaks; ruins are grey-brown metal; the legend says dam sites are drawn wider; no
+  example sits under a dam site's marker, under the start as drawn, or in the far haze.
+  CI's margin: the light look now bakes all of a model's objects into one mesh, drawn once. A
+  256² frame in SwiftShader here takes 10 ms, against 30 ms before this round and 47 ms at
+  `m8-done`. CI's software-rendered orbit: CI_FPS.
+  Captures: 42 before and after pairs (with `meets` and `cliff`, their befores made on `m8-done`'s
+  code): 36 after captures of our maps (with the editor's own view) and 140 greyscale and
+  colour-blind versions, and Beavertopia's 6 and 24 locally. The benchmark, for information
+  (`npm run bench:3d`, three setups, 15 maps): worst build 626 ms (Beavertopia, integrated GPU,
+  CPU 4× slower; median 360 ms there), slowest orbit 100 fps; 67 of 56,330 frames over 1/60 s.
+  `View3D` is 598.17 KB (156.24 KB gzipped). No existing test changed; typecheck passes; the 368
+  unit and contract tests pass (30 files, with `tests/unit/look-water-slopes.test.ts` new). The
+  browser tests: 54 of 55 pass in each full run; `tests/e2e/preview.spec.ts`'s Islands edit goes
+  over its 2 s local budget (2.1–2.4 s) while other agents keep this machine busy, for the second
+  round's code too (the same full run on it: 2.3 s), and passes run alone (1.5–1.8 s, both).
 
 ## After Map look: Kyler's decisions
 

@@ -37,7 +37,12 @@ import { chromium, type Page } from "@playwright/test";
 import { build, preview } from "vite";
 import { FOOTPRINTS, footprintTiles, rotate, slopeHighSide, type Orientation } from "../src/core/format/footprints";
 import { THEMES, THEME_NAMES, type ThemeId } from "../src/core/spec/mapspec";
-import { plantPlacement } from "../src/render3d/entities3d";
+import * as entities3d from "../src/render3d/entities3d";
+
+// (read loosely, so the tool also runs against the code of `m8-done` for the before captures)
+const ent = entities3d as { plantPlacement?: (x: number, y: number, flags: number) => { dx: number; dy: number; scale: number }; SLOPE_ARROW_HEIGHT?: number };
+const plantPlacement = ent.plantPlacement ?? (() => ({ dx: 0, dy: 0, scale: 1 }));
+const SLOPE_ARROW_HEIGHT = ent.SLOPE_ARROW_HEIGHT ?? 0.5;
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -171,8 +176,8 @@ const ORIENTATIONS: Orientation[] = ["Cw0", "Cw90", "Cw180", "Cw270"];
 type Tile = [number, number];
 
 /** A point to show: the tile, the world point, its minimum size on screen (px per unit, 0 for
- *  none: the object shader's growth) and how far its visible middle is above the point per unit
- *  of growth; and what it shows (a note for the doc). */
+ *  none: the object shader's growth) and how far its visible middle is above the point, times its
+ *  growth; and what it shows (a note for the doc). */
 interface Candidate {
   tile: Tile;
   point: [number, number, number];
@@ -181,15 +186,23 @@ interface Candidate {
   /** The most it grows (the object shader's cap). */
   cap?: number;
   note?: string;
+  /** Ground and water: the 24 tiles round it alike too (for views of the whole map). */
+  wide?: boolean;
+  /** A tall cliff: the way its face looks (from the high tile to the low), and its levels. */
+  face?: Tile;
+  levels?: number;
+  /** A tall cliff's low tile. */
+  low?: Tile;
 }
 
 /** A tile's kind as the view draws its top. */
 type Kind = "clean" | "bad" | "partly" | "moist" | "dry" | "contaminated";
 
-function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candidate[]>; kind: (x: number, y: number) => Kind | null; covered: Uint8Array; tall: Uint8Array } {
+function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candidate[]>; kind: (x: number, y: number) => Kind | null; covered: Uint8Array; tall: Uint8Array; nearDam: Uint8Array } {
   const { W, H } = v;
   const N = W * H;
   const h = (x: number, y: number) => v.heights[y * W + x];
+  const wet = (x: number, y: number) => x >= 0 && y >= 0 && x < W && y < H && v.surface[y * W + x] >= 0;
   const kindAt = (x: number, y: number): Kind | null => {
     if (x < 0 || y < 0 || x >= W || y >= H) return null;
     const i = y * W + x;
@@ -225,38 +238,75 @@ function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candid
         }
     }
   }
+  // tiles a dam site's marker covers (its tiles and the rim round them)
+  const nearDam = new Uint8Array(N);
+  for (const [x, y] of dam)
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < H) nearDam[(y + dy) * W + x + dx] = 1;
   const cands = Object.fromEntries(MEANINGS.map((m) => [m, [] as Candidate[]])) as Record<Meaning, Candidate[]>;
   const top = (x: number, y: number): [number, number, number] => {
     const i = y * W + x;
     return [x + 0.5, v.surface[i] >= 0 ? v.surface[i] : v.heights[i], -(y + 0.5)];
   };
+  /** The tiles within r all of this tile's kind (ground: at its height too). */
+  const alike = (x: number, y: number, k: Kind, r: number): boolean => {
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) if (kindAt(x + dx, y + dy) !== k || (k !== "clean" && k !== "bad" && k !== "partly" && h(x + dx, y + dy) !== h(x, y))) return false;
+    return true;
+  };
   for (let y = 1; y < H - 1; y++)
     for (let x = 1; x < W - 1; x++) {
       const i = y * W + x;
       const k = kindAt(x, y)!;
-      // inside an area of its kind: the eight neighbours alike (ground: at the same height too)
-      let inside = true;
-      for (let dy = -1; dy <= 1 && inside; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          if (kindAt(x + dx, y + dy) !== k || (k !== "clean" && k !== "bad" && k !== "partly" && h(x + dx, y + dy) !== h(x, y))) {
-            inside = false;
-            break;
+      const free = !covered[i] && !near[i] && !nearDam[i];
+      const inside = alike(x, y, k, 1);
+      const wide = inside && alike(x, y, k, 2);
+      const four: Tile[] = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+      if (k === "clean" && inside && v.depth[i] >= 0.25 && free) cands["clean water"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0, wide });
+      if (k === "bad" && inside && v.depth[i] >= 0.1 && free) cands.badwater.push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0, wide });
+      // water partly bad: its eight neighbours water too
+      let ring = true;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!wet(x + dx, y + dy)) ring = false;
+      if (k === "partly" && ring && free) cands["water partly bad"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0, note: `${Math.round(v.cont[i] * 100)}% bad` });
+      if ((k === "moist" || k === "dry" || k === "contaminated") && inside && free) cands[`${k} ground` as Meaning].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0, wide });
+      if (k === "contaminated" && free && four.some(([a, b]) => kindAt(a, b) === "moist" && h(a, b) === h(x, y)))
+        cands["contaminated beside moist ground"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
+      // a tall cliff: a dry wall three levels or more (no water on either side, nothing standing
+      // at its foot)
+      if (!wet(x, y))
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const lx = x + dx;
+          const ly = y + dy;
+          if (lx < 0 || ly < 0 || lx >= W || ly >= H || wet(lx, ly) || near[ly * W + lx] || nearDam[ly * W + lx]) continue;
+          const drop = h(x, y) - h(lx, ly);
+          if (drop < 3) continue;
+          cands["tall cliff"].push({ tile: [x, y], point: [x + 0.5 + dx * 0.5, (h(x, y) + h(lx, ly)) / 2, -(y + 0.5 + dy * 0.5)], grow: 0, rise: 0, face: [dx, dy], levels: drop, low: [lx, ly] });
+        }
+    }
+  // badwater meets clean water: from a badwater tile to the nearest clean water within four tiles,
+  // water all the way; the example is the middle of the way
+  for (let y = 1; y < H - 1; y++)
+    for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x;
+      if (!(v.surface[i] >= 0) || v.cont[i] < 0.9 || nearDam[i] || near[i]) continue;
+      let best: Tile | null = null;
+      let bestD = 9;
+      for (let dy = -4; dy <= 4; dy++)
+        for (let dx = -4; dx <= 4; dx++) {
+          const d = Math.hypot(dx, dy);
+          if (d >= bestD || !wet(x + dx, y + dy) || v.cont[(y + dy) * W + x + dx] >= 0.05) continue;
+          let path = true;
+          for (let s2 = 1; s2 < 8 && path; s2++) if (!wet(Math.round(x + (dx * s2) / 8), Math.round(y + (dy * s2) / 8))) path = false;
+          if (path) {
+            best = [x + dx, y + dy];
+            bestD = d;
           }
         }
-      const four: Tile[] = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
-      if (k === "clean" && inside && v.depth[i] >= 0.25 && !near[i] && !covered[i]) cands["clean water"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-      if (k === "bad" && inside && v.depth[i] >= 0.1 && !near[i] && !covered[i]) cands.badwater.push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-      if (k === "partly" && v.cont[i] >= 0.15 && v.cont[i] <= 0.85 && four.every(([a, b]) => v.surface[b * W + a] >= 0) && !near[i] && !covered[i])
-        cands["water partly bad"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0, note: `${Math.round(v.cont[i] * 100)}% bad` });
-      if (k === "bad" && four.some(([a, b]) => kindAt(a, b) === "clean") && !near[i] && !covered[i]) cands["badwater meets clean water"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-      if ((k === "moist" || k === "dry" || k === "contaminated") && inside && !covered[i] && !near[i]) cands[`${k} ground` as Meaning].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-      if (k === "contaminated" && !covered[i] && !near[i] && four.some(([a, b]) => kindAt(a, b) === "moist" && h(a, b) === h(x, y)))
-        cands["contaminated beside moist ground"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-      // a tall cliff: a wall three levels or more, facing south or west (toward the cameras)
-      for (const [dx, dy, px, pz] of [[0, -1, x + 0.5, -y], [-1, 0, x, -(y + 0.5)]] as const) {
-        const drop = h(x, y) - h(x + dx, y + dy);
-        if (drop >= 3 && !near[(y + dy) * W + x + dx]) cands["tall cliff"].push({ tile: [x, y], point: [px, (h(x, y) + h(x + dx, y + dy)) / 2, pz], grow: 0, rise: 0, note: `${drop} levels, facing ${dy ? "south" : "west"}` });
-      }
+      if (!best) continue;
+      const mx = (x + best[0]) / 2;
+      const my = (y + best[1]) / 2;
+      const j = best[1] * W + best[0];
+      cands["badwater meets clean water"].push({ tile: [Math.round(mx), Math.round(my)], point: [mx + 0.5, (v.surface[i] + v.surface[j]) / 2, -(my + 0.5)], grow: 0, rise: 0, note: `from badwater at (${x}, ${y}) to clean water at (${best[0]}, ${best[1]})` });
     }
   for (let k = 0; k < e.template.length; k++) {
     const t = e.template[k];
@@ -269,14 +319,16 @@ function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candid
       // where the view stands it (a little off the tile's middle), at the middle of its crown
       const dead = !!(e.flags[k] & DEAD);
       const p = plantPlacement(x, y, e.flags[k]);
-      cands[dead ? "dead tree" : "living tree"].push({ tile: [x, y], point: [x + 0.5 + p.dx, z, -(y + 0.5 + p.dy)], grow: dead ? 16 : 0, rise: 0.9 * p.scale, cap: 4, note: t });
+      cands[dead ? "dead tree" : "living tree"].push({ tile: [x, y], point: [x + 0.5 + p.dx, z, -(y + 0.5 + p.dy)], grow: dead ? 14 : 0, rise: 0.9 * p.scale, cap: 2.5, note: t });
     }
     const ruin = /^RuinColumnH(\d)$/.exec(t);
     if (ruin) cands.ruin.push({ tile: [x, y], point: [x + 0.5, z + Number(ruin[1]) / 2, -(y + 0.5)], grow: 0, rise: 0, note: `${ruin[1]} high` });
     if (t === "Slope") {
       const [dx, dy] = slopeHighSide(o);
       const dir = dx ? (dx > 0 ? "east" : "west") : dy > 0 ? "north" : "south";
-      cands.slope.push({ tile: [x, y], point: [x + 0.5, z + 0.5, -(y + 0.5)], grow: 30, rise: 0.6, cap: 5, note: `rises toward the ${dir}` });
+      // the arrow's middle: just above the slope's top, and 0.7 higher for each time it grows
+      // (the point is 0.7 lower, as `rise` counts from it)
+      cands.slope.push({ tile: [x, y], point: [x + 0.5, z + SLOPE_ARROW_HEIGHT - 0.7, -(y + 0.5)], grow: 25, rise: 0.7, cap: 6, note: `rises toward the ${dir}` });
     }
     if (t === "StartingLocation") {
       const [dx, dy] = rotate(o, 1, 1);
@@ -288,16 +340,16 @@ function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candid
   const straight = (x: number, y: number) => (onDam.has(y * W + x - 1) && onDam.has(y * W + x + 1)) || (onDam.has((y - 1) * W + x) && onDam.has((y + 1) * W + x));
   const inMap = ([x, y]: Tile) => x >= 0 && y >= 0 && x < W && y < H && !near[y * W + x];
   for (const [x, y] of [...dam.filter(([x, y]) => straight(x, y)), ...dam.filter(([x, y]) => !straight(x, y))].filter(inMap)) cands["dam site"].push({ tile: [x, y], point: top(x, y), grow: 0, rise: 0 });
-  // objects the start (drawn larger from afar) or a ruin could stand in front of are left out
-  const start = cands["the start"][0]?.tile;
+  // objects under a dam site's marker or beside a ruin (it could stand in front) are left out
   const ruins = cands.ruin.map((c) => c.tile);
-  for (const m of ["living tree", "dead tree", "slope"] as Meaning[])
-    cands[m] = cands[m].filter((c) => !(start && Math.hypot(c.tile[0] - start[0], c.tile[1] - start[1]) < 7) && !ruins.some(([a, b]) => Math.abs(a - c.tile[0]) <= 1 && Math.abs(b - c.tile[1]) <= 2));
-  return { cands, kind: kindAt, covered, tall };
+  for (const m of ["living tree", "dead tree", "slope", "ruin"] as Meaning[])
+    cands[m] = cands[m].filter((c) => !nearDam[c.tile[1] * W + c.tile[0]] && (m === "ruin" || !ruins.some(([a, b]) => Math.abs(a - c.tile[0]) <= 1 && Math.abs(b - c.tile[1]) <= 2)));
+  return { cands, kind: kindAt, covered, tall, nearDam };
 }
 
-/** Where points are on screen: [x, y, visible, picked tile x, picked tile y] in client pixels. The
- *  point rises by `rise` for each time the object grows from afar (as the object shader does). */
+/** Where points are on screen: [x, y, visible, picked tile x, picked tile y, pixels a unit takes
+ *  there, how much the object grows] in client pixels. The point rises by `rise` for each time the
+ *  object grows from afar (as the object shader does). */
 const PROJECT_JS = `(pts) => {
   const r = window.dgm3d.renderer;
   const v = r.getView();
@@ -311,7 +363,7 @@ const PROJECT_JS = `(pts) => {
     const k = q[3] > 0 ? Math.min(q[5], Math.max(1, q[3] / ppu)) : 1;
     const c = r.project(q[0], q[1] + q[4] * k, q[2]);
     const hit = r.pick(c.x + box.left, c.y + box.top);
-    return [c.x, c.y, c.visible ? 1 : 0, hit ? hit.x : -1, hit ? hit.y : -1];
+    return [c.x, c.y, c.visible ? 1 : 0, hit ? hit.x : -1, hit ? hit.y : -1, ppu, k];
   });
 }`;
 
@@ -341,11 +393,20 @@ function centreOf(tiles: Tile[]): Tile | null {
 }
 
 const GAME_YAW = -Math.PI / 6; // the game's camera looks 30° east of north
-/** The poses of a map: the before run's, when it recorded them (so before and after match), else
- *  worked out from the map as the before run did. */
+/** The poses of a map: the before run's, where it recorded them (so before and after match), else
+ *  worked out from the map as the before run did. `--poses meets,cliff` keeps only those. */
 function posesOf(id: string, v: ViewData, dam: Tile[], before: Shot[]): Pose[] {
-  const recorded = before.filter((s) => s.map === id && s.pose !== "default-ui");
-  if (recorded.length && LABEL === "after") return recorded.map((s) => ({ id: s.pose, view: s.view }));
+  const worked = workedPoses(v, dam);
+  const only = arg("poses")?.split(",");
+  return worked
+    .filter((p) => !only || only.includes(p.id))
+    .map((p) => {
+      const rec = LABEL === "after" ? before.find((s) => s.map === id && s.pose === p.id) : undefined;
+      return rec ? { id: p.id, view: rec.view } : p;
+    });
+}
+
+function workedPoses(v: ViewData, dam: Tile[]): Pose[] {
   const { W, H } = v;
   const span = Math.max(W, H);
   const mean = v.heights.reduce((a, b) => a + b, 0) / v.heights.length;
@@ -385,6 +446,40 @@ function posesOf(id: string, v: ViewData, dam: Tile[], before: Shot[]): Pose[] {
       }
     }
   if (fall) poses.push({ id: "falls", view: { mode: "orbit", yaw: Math.atan2(toward[0], -toward[1]), pitch: 0.75, distance: 26, target: at(fall) } });
+  // where badwater meets clean water, close, when the map has it
+  const meet = centreOf(cands["badwater meets clean water"].map((c) => c.tile));
+  if (meet) {
+    const i = meet[1] * W + meet[0];
+    poses.push({ id: "meets", view: { mode: "orbit", yaw: GAME_YAW, pitch: 0.95, distance: 30, target: [meet[0] + 0.5, v.surface[i] >= 0 ? v.surface[i] : v.heights[i], -(meet[1] + 0.5)] } });
+  }
+  // the tallest dry cliff, the widest of those, seen from in front and a little above, with open
+  // ground in front of it
+  let cliff: Candidate | null = null;
+  let score = 0;
+  const h = (x: number, y: number) => (x >= 0 && y >= 0 && x < W && y < H ? v.heights[y * W + x] : 99);
+  for (const c of cands["tall cliff"]) {
+    const [x, y] = c.tile;
+    const [dx, dy] = c.face!;
+    let run = 0;
+    for (const sgn of [1, -1])
+      for (let k = 1; k <= 6; k++) {
+        const ax = x + sgn * k * dy;
+        const ay = y + sgn * k * dx;
+        if (h(ax, ay) - h(ax + dx, ay + dy) >= c.levels! && !(v.surface[ay * W + ax] >= 0)) run++;
+        else break;
+      }
+    let open = true;
+    for (let k = 2; k <= 6; k++) if (h(x + dx * k, y + dy * k) > h(x + dx, y + dy) + 1) open = false;
+    const sc = c.levels! * 4 + run;
+    if (open && sc > score) {
+      score = sc;
+      cliff = c;
+    }
+  }
+  if (cliff) {
+    const [dx, dy] = cliff.face!;
+    poses.push({ id: "cliff", view: { mode: "orbit", yaw: Math.atan2(dx, -dy), pitch: 0.5, distance: 16 + cliff.levels! * 1.5, target: cliff.point } });
+  }
   return poses;
 }
 
@@ -493,6 +588,7 @@ const SEEN_AS: Partial<Record<Meaning, Kind[]>> = {
   badwater: ["bad"],
   "water partly bad": ["partly", "bad", "clean"],
   "badwater meets clean water": ["bad", "partly", "clean"],
+  "tall cliff": [],
   "moist ground": ["moist"],
   "dry ground": ["dry"],
   "contaminated ground": ["contaminated"],
@@ -525,7 +621,7 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
   const data = JSON.parse((await page.evaluate(`(${READ_VIEW_JS})()`)) as string) as ViewData;
   const shots: Shot[] = [];
   // the first map: the whole view as the page shows it, from its default camera (with the legend)
-  if (m.id === "riverValley-128") {
+  if (m.id === "riverValley-128" && !arg("poses")) {
     await page.evaluate(() => window.dgm3d!.renderer.resetView());
     // the legend open (the editor starts it closed)
     await page.evaluate(() => document.querySelector<HTMLDetailsElement>(".view3d-legend")!.setAttribute("open", ""));
@@ -540,7 +636,7 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
   }
   // then only the scene: the view's buttons, the inspector and the handles hidden
   await page.addStyleTag({ content: ".view3d > :not(canvas), .editor-map > :not(.view3d) { visibility: hidden !important; }" });
-  const { cands, kind, tall } = candidatesOf(data, dam);
+  const { cands, kind, tall, nearDam } = candidatesOf(data, dam);
   const damTiles = new Set(dam.map(([x, y]) => y * data.W + x));
   const poses = posesOf(m.id, data, dam, before);
   const canvas = page.locator(".editor-view canvas");
@@ -578,34 +674,62 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
         }
       return true;
     };
+    // the start as drawn from here (larger from afar): nothing else is listed under it
+    const project = async (list: Candidate[]) => (await page.evaluate(`(${PROJECT_JS})(${JSON.stringify(list.map((c) => [...c.point, c.grow, c.rise, c.cap ?? 3]))})`)) as [number, number, number, number, number, number, number][];
+    const startAt = cands["the start"].length ? (await project(cands["the start"]))[0] : null;
+    const underStart = (px: number, py: number) => !!startAt && Math.hypot(px - startAt[0], py - startAt[1]) < startAt[5] * startAt[6] * 1.9 + 6;
+    const overview = pose.id === "overview";
+    const notes: string[] = [];
+    // examples no farther from the camera than twice the pose's distance (not in the far haze)
+    const vw = pose.view;
+    const cam = [tx + Math.sin(vw.yaw) * Math.cos(vw.pitch) * vw.distance, vw.target[1] + Math.sin(vw.pitch) * vw.distance, tz + Math.cos(vw.yaw) * Math.cos(vw.pitch) * vw.distance];
+    const nearCamera = (c: Candidate) => Math.hypot(c.point[0] - cam[0], c.point[1] - cam[1], c.point[2] - cam[2]) <= 2 * vw.distance;
     for (const meaning of MEANINGS) {
-      const list = cands[meaning];
+      const list = cands[meaning].filter((c) => (!overview || c.wide !== false) && nearCamera(c));
       if (!list.length) continue;
-      const sorted = [...list].sort((a, b) => Math.hypot(a.point[0] - tx, a.point[2] - tz) - Math.hypot(b.point[0] - tx, b.point[2] - tz)).slice(0, 300);
-      const pts = (await page.evaluate(`(${PROJECT_JS})(${JSON.stringify(sorted.map((c) => [...c.point, c.grow, c.rise, c.cap ?? 3]))})`)) as [number, number, number, number, number][];
+      const sorted = [...list].sort((a, b) => Math.hypot(a.point[0] - tx, a.point[2] - tz) - Math.hypot(b.point[0] - tx, b.point[2] - tz)).slice(0, 400);
+      const pts = await project(sorted);
       const found: Where[] = [];
+      let tooSmall = 0;
       for (let k = 0; k < sorted.length && found.length < 3; k++) {
-        const [cx, cy, vis, hx, hy] = pts[k];
-        const px = cx;
-        const py = cy;
+        const [px, py, vis, hx, hy, ppu] = pts[k];
         if (!vis || px < 10 || py < 10 || px > box.width - 10 || py > box.height - 10) continue;
         // the view shows it there: the tile picked under the point is of the same kind (ground
-        // and water), or near the object and not a cliff in front of it
+        // and water), or near the object and not a cliff in front of it; nothing stands in front
+        // of it, no dam site's marker covers it, and the start is not drawn over it
         const c = sorted[k];
-        if (meaning !== "the start" && !clear(c.tile)) continue;
+        if (meaning !== "the start" && (!clear(c.tile) || underStart(px, py))) continue;
+        if (meaning !== "dam site" && hx >= 0 && nearDam[hy * data.W + hx]) continue;
         const seen = SEEN_AS[meaning];
+        let note = c.note;
         if (meaning === "dam site") {
           if (!damTiles.has(hy * data.W + hx)) continue;
+        } else if (meaning === "tall cliff") {
+          // a cliff faces the camera, the ray to its middle meets it first, and each level takes
+          // at least 5 pixels (so the levels can be counted)
+          const [dx, dy] = c.face!;
+          const facing = dx * Math.sin(pose.view.yaw) - dy * Math.cos(pose.view.yaw);
+          if (facing < 0.4) continue;
+          const hitsWall = (hx === c.tile[0] && hy === c.tile[1]) || (hx === c.low![0] && hy === c.low![1]);
+          if (!hitsWall) continue;
+          const perLevel = ppu * Math.cos(pose.view.pitch) * Math.max(0.5, facing);
+          if (perLevel < 6) {
+            tooSmall++;
+            continue;
+          }
+          note = `${c.levels} levels, about ${Math.round(perLevel)} px a level`;
         } else if (seen) {
           if (hx < 0 || !seen.includes(kind(hx, hy)!)) continue;
         } else if (hx < 0 || Math.hypot(hx - c.tile[0], hy - c.tile[1]) > 4 || data.heights[hy * data.W + hx] > c.point[1] + 2) continue;
         // spread the examples out a little
         if (found.some((f) => Math.hypot(f.screen[0] - px, f.screen[1] - py) < 24)) continue;
-        found.push({ tile: c.tile, screen: [Math.round(px), Math.round(py)], ...(c.note ? { note: c.note } : {}) });
+        found.push({ tile: c.tile, screen: [Math.round(px), Math.round(py)], ...(note ? { note } : {}) });
       }
       if (found.length) where[meaning] = found;
+      if (meaning === "tall cliff" && !found.length)
+        notes.push(tooSmall ? "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose" : "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose");
     }
-    shots.push({ map: m.id, name: m.name, pose: pose.id, file, variants: vs, size: [Math.round(box.width), Math.round(box.height)], view: pose.view, where, notes: [] });
+    shots.push({ map: m.id, name: m.name, pose: pose.id, file, variants: vs, size: [Math.round(box.width), Math.round(box.height)], view: pose.view, where, notes });
     console.log(`  ${file}: ${Object.keys(where).length} meanings in view`);
   }
   return shots;
@@ -647,7 +771,7 @@ async function main() {
       for (const s of shots) all.push({ ...s, file: join(dir, s.file).replace(/\\/g, "/"), variants: s.variants.map((v) => join(dir, v).replace(/\\/g, "/")) });
     }
     const json = join(committed, `${LABEL}.json`);
-    const old = existsSync(json) && ONLY ? (JSON.parse(readFileSync(json, "utf8")) as { shots: Shot[] }).shots.filter((s) => !all.some((a) => a.file === s.file)) : [];
+    const old = existsSync(json) && (ONLY || arg("poses")) ? (JSON.parse(readFileSync(json, "utf8")) as { shots: Shot[] }).shots.filter((s) => !all.some((a) => a.file === s.file)) : [];
     writeFileSync(json, JSON.stringify({ label: LABEL, date: new Date().toISOString().slice(0, 10), viewport: VIEWPORT, shots: [...old, ...all] }, null, 1) + "\n");
     console.log(`wrote ${all.length} captures and ${json}`);
     if (errors.length) console.log(`page errors: ${errors.join("; ")}`);
@@ -664,6 +788,8 @@ const POSE_NAMES: Record<string, string> = {
   start: "close to the start",
   badwater: "close to the badwater, where it meets clean water if it does",
   falls: "the tallest waterfall, from downstream",
+  meets: "close to where badwater meets clean water",
+  cliff: "the tallest dry cliff, from in front",
   "default-ui": "the editor's own view from its default camera, with its buttons, and its legend opened",
 };
 const VARIANT_NAMES: Record<string, string> = { grey: "greyscale", protanopia: "protanopia", deuteranopia: "deuteranopia", tritanopia: "tritanopia" };
@@ -679,11 +805,11 @@ function writeDoc(): void {
   out.push("");
   out.push("Before and after captures of the same maps from the same camera poses, for the Map look review");
   out.push("(ROADMAP \"Map look\", PLAN §20 D86, D110 and D114). The before captures show the 3D view at");
-  out.push("`m8-done` (cfa5990); the after captures show it with Map look, after the review's fix round. Each");
+  out.push("`m8-done` (cfa5990); the after captures show it with Map look, after the reviews' fix rounds. Each");
   out.push("after capture also comes in greyscale and in three colour-blindness simulations (protanopia,");
   out.push("deuteranopia, tritanopia; Machado, Oliveira and Fernandes 2009, full severity, in linear RGB).");
   out.push("");
-  out.push(`Made with \`npx tsx tools/capture-look.ts --label before|after\` (before on ${before.date}, after on ${after.date}), in the installed Chrome, headed, at ${after.viewport.width}×${after.viewport.height} CSS pixels and a device pixel ratio of 1. Each map is opened in the editor (generated maps with **Refine this map**, Beavertopia through the file input) with **Show dam sites** on, and only the 3D canvas is captured, except for one whole view per run. The after run takes every pose's camera from the before run's record. The water is held at one moment of its movement.`);
+  out.push(`Made with \`npx tsx tools/capture-look.ts --label before|after\` (before on ${before.date}, after on ${after.date}), in the installed Chrome, headed, at ${after.viewport.width}×${after.viewport.height} CSS pixels and a device pixel ratio of 1. Each map is opened in the editor (generated maps with **Refine this map**, Beavertopia through the file input) with **Show dam sites** on, and only the 3D canvas is captured, except for one whole view per run. The after run takes every pose's camera from the before run's record. The **meets** and **cliff** poses came in the third round; their before captures were made the same way, with \`--poses meets,cliff\`, on \`m8-done\`'s code. The water is held at one moment of its movement.`);
   out.push("");
   out.push("The maps: seed 4242 in every theme at 128² (Normal), seed 4242 River Valley at 256², and");
   out.push("Beavertopia (a workshop map, 256²). Beavertopia's captures are not ours to share: they stay in");
@@ -702,16 +828,26 @@ function writeDoc(): void {
   out.push("objects. Each position is the visible point: the water's surface, the middle of a tree or a");
   out.push("ruin, the middle of a wall, and the start, the slope arrows and the dead trees as they are drawn");
   out.push("from that distance. Ground and water examples lie inside an area of their kind (their eight");
-  out.push("neighbours alike) and away from objects; no example has an object on the tiles in front of it");
-  out.push("(toward the camera); and every example was checked by picking the tile under its position in");
-  out.push("the view.");
+  out.push("neighbours alike; in a view of the whole map, the 24 round them) and away from objects. No");
+  out.push("example has an object on the tiles in front of it (toward the camera), sits under a dam site's");
+  out.push("marker or under the start as it is drawn, or lies more than twice the pose's distance from the");
+  out.push("camera (in the far haze); and every example was checked by picking the tile under its position");
+  out.push("in the view.");
   out.push("");
-  out.push("- **Water partly bad** is water with some badwater in it (the percentage is given); **badwater");
-  out.push("  meets clean water** is badwater next to clean water.");
+  out.push("- **Water partly bad** is water with some badwater in it (the percentage is given).");
+  out.push("- **Badwater meets clean water** is the middle of the way from a badwater tile to the nearest");
+  out.push("  clean water, at most four tiles off; the note names both ends. Our generated maps keep their");
+  out.push("  badwater in its basins but for River Valley at 256², where it flows into the river; the");
+  out.push("  **meets** pose looks at that, and at Beavertopia's.");
   out.push("- **Contaminated beside moist ground** is contaminated ground with moist ground next to it, at the");
   out.push("  same height.");
-  out.push("- **Tall cliff** is a wall three levels high or more, facing the camera; the levels are given.");
-  out.push("- **Slope** gives the way the slope rises; its arrows point that way.");
+  out.push("- **Tall cliff** is a dry wall three levels high or more (no water on either side), facing the");
+  out.push("  camera, whose middle the view shows first, where each level takes at least 6 pixels; the note");
+  out.push("  gives the levels and about how many pixels a level takes. In a view of the whole map a level");
+  out.push("  takes 1 to 4 pixels: there the levels show as the steps between terraces, and a tall cliff as a");
+  out.push("  wide dark band, but they can't be counted. Every map's **cliff** pose looks at its tallest dry");
+  out.push("  cliff from in front, to count them.");
+  out.push("- **Slope** gives the way the slope rises; its arrow points that way.");
   out.push("- **Dam site** tiles are the editor's dam sites, shown with **Show dam sites**.");
   out.push("");
   const maps = [...new Set(after.shots.map((s) => s.map))];
@@ -727,6 +863,8 @@ function writeDoc(): void {
       out.push(`- after: ${link(s.file)}`);
       if (s.variants.length) out.push(`- after, ${s.variants.map((v) => `${VARIANT_NAMES[v.replace(/^.*-(\w+)\.jpg$/, "$1")] ?? v}: ${link(v)}`).join("; ")}`);
       out.push("");
+      for (const n of s.notes) if (!/the page's own view/.test(n)) out.push(`- ${n[0].toUpperCase()}${n.slice(1)}.`);
+      if (s.notes.some((n) => !/the page's own view/.test(n))) out.push("");
       if (!Object.keys(s.where).length) continue;
       out.push("| Meaning | Tile → position in the image |");
       out.push("|---|---|");

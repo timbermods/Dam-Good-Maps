@@ -59,163 +59,99 @@
     ]
    },
    "where": {
-    "clean water": [
-     {
-      "tile": [
-       65,
-       58
-      ],
-      "screen": [
-       499,
-       404
-      ]
-     },
-     {
-      "tile": [
-       61,
-       57
-      ],
-      "screen": [
-       475,
-       408
-      ]
-     },
-     {
-      "tile": [
-       70,
-       58
-      ],
-      "screen": [
-       528,
-       404
-      ]
-     }
-    ],
-    "badwater": [
-     {
-      "tile": [
-       43,
-       83
-      ],
-      "screen": [
-       379,
-       289
-      ]
-     },
-     {
-      "tile": [
-       38,
-       84
-      ],
-      "screen": [
-       352,
-       285
-      ]
-     },
-     {
-      "tile": [
-       33,
-       84
-      ],
-      "screen": [
-       325,
-       285
-      ]
-     }
-    ],
     "moist ground": [
      {
       "tile": [
-       69,
-       61
-      ],
-      "screen": [
-       522,
-       388
-      ]
-     },
-     {
-      "tile": [
-       56,
+       54,
        59
       ],
       "screen": [
-       446,
+       434,
        397
       ]
      },
      {
       "tile": [
-       57,
-       72
+       69,
+       52
       ],
       "screen": [
-       454,
-       339
+       523,
+       431
+      ]
+     },
+     {
+      "tile": [
+       73,
+       53
+      ],
+      "screen": [
+       547,
+       426
       ]
      }
     ],
     "dry ground": [
      {
       "tile": [
-       66,
-       72
+       67,
+       75
       ],
       "screen": [
-       504,
-       324
+       510,
+       311
       ]
      },
      {
       "tile": [
-       56,
-       75
+       57,
+       78
       ],
       "screen": [
-       449,
-       326
+       454,
+       314
       ]
      },
      {
       "tile": [
        48,
-       72
+       73
       ],
       "screen": [
-       403,
-       339
+       404,
+       334
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       35,
-       77
+       33,
+       78
       ],
       "screen": [
-       332,
-       310
+       322,
+       306
       ]
      },
      {
       "tile": [
-       30,
-       77
+       28,
+       78
       ],
       "screen": [
-       304,
-       310
+       294,
+       306
       ]
      },
      {
       "tile": [
-       25,
-       77
+       28,
+       88
       ],
       "screen": [
-       277,
-       310
+       300,
+       266
       ]
      }
     ],
@@ -294,7 +230,7 @@
       ],
       "screen": [
        494,
-       364
+       365
       ],
       "note": "Birch"
      },
@@ -305,7 +241,7 @@
       ],
       "screen": [
        419,
-       331
+       332
       ],
       "note": "Birch"
      },
@@ -316,7 +252,7 @@
       ],
       "screen": [
        503,
-       287
+       288
       ],
       "note": "Birch"
      }
@@ -387,7 +323,7 @@
       ],
       "screen": [
        517,
-       407
+       408
       ],
       "note": "rises toward the south"
      },
@@ -434,44 +370,11 @@
        394
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       65,
-       75
-      ],
-      "screen": [
-       496,
-       319
-      ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       76,
-       52
-      ],
-      "screen": [
-       565,
-       438
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       59,
-       83
-      ],
-      "screen": [
-       466,
-       290
-      ],
-      "note": "3 levels, facing south"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "riverValley-128",
@@ -567,22 +470,22 @@
     "moist ground": [
      {
       "tile": [
-       49,
-       55
-      ],
-      "screen": [
-       571,
-       327
-      ]
-     },
-     {
-      "tile": [
        46,
        51
       ],
       "screen": [
        561,
        429
+      ]
+     },
+     {
+      "tile": [
+       49,
+       54
+      ],
+      "screen": [
+       584,
+       344
       ]
      },
      {
@@ -675,36 +578,36 @@
     "living tree": [
      {
       "tile": [
-       42,
-       63
+       43,
+       61
       ],
       "screen": [
-       340,
-       265
+       382,
+       288
       ],
       "note": "Oak"
      },
      {
       "tile": [
-       51,
-       63
+       49,
+       60
       ],
       "screen": [
-       517,
-       191
+       512,
+       247
       ],
       "note": "Pine"
      },
      {
       "tile": [
-       41,
-       43
+       48,
+       61
       ],
       "screen": [
-       566,
-       652
+       482,
+       241
       ],
-      "note": "Birch"
+      "note": "Pine"
      }
     ],
     "dead tree": [
@@ -757,12 +660,23 @@
     "slope": [
      {
       "tile": [
+       40,
+       58
+      ],
+      "screen": [
+       347,
+       350
+      ],
+      "note": "rises toward the west"
+     },
+     {
+      "tile": [
        59,
        58
       ],
       "screen": [
        714,
-       203
+       206
       ],
       "note": "rises toward the west"
      },
@@ -773,18 +687,7 @@
       ],
       "screen": [
        246,
-       700
-      ],
-      "note": "rises toward the north"
-     },
-     {
-      "tile": [
-       42,
-       78
-      ],
-      "screen": [
-       206,
-       28
+       701
       ],
       "note": "rises toward the north"
      }
@@ -831,18 +734,7 @@
        835,
        231
       ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       64,
-       54
-      ],
-      "screen": [
-       854,
-       199
-      ],
-      "note": "4 levels, facing west"
+      "note": "4 levels, about 6 px a level"
      },
      {
       "tile": [
@@ -853,7 +745,18 @@
        236,
        57
       ],
-      "note": "3 levels, facing south"
+      "note": "3 levels, about 9 px a level"
+     },
+     {
+      "tile": [
+       45,
+       79
+      ],
+      "screen": [
+       265,
+       33
+      ],
+      "note": "3 levels, about 9 px a level"
      }
     ]
    },
@@ -1068,6 +971,17 @@
        663
       ],
       "note": "Oak"
+     },
+     {
+      "tile": [
+       43,
+       61
+      ],
+      "screen": [
+       928,
+       694
+      ],
+      "note": "Oak"
      }
     ],
     "dead tree": [
@@ -1148,7 +1062,7 @@
       ],
       "screen": [
        471,
-       358
+       360
       ],
       "note": "rises toward the south"
      },
@@ -1158,8 +1072,8 @@
        78
       ],
       "screen": [
-       661,
-       361
+       660,
+       363
       ],
       "note": "rises toward the north"
      },
@@ -1169,35 +1083,13 @@
        85
       ],
       "screen": [
-       664,
-       206
+       663,
+       209
       ],
       "note": "rises toward the north"
      }
     ],
     "tall cliff": [
-     {
-      "tile": [
-       43,
-       88
-      ],
-      "screen": [
-       565,
-       231
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       45,
-       85
-      ],
-      "screen": [
-       617,
-       252
-      ],
-      "note": "3 levels, facing west"
-     },
      {
       "tile": [
        43,
@@ -1207,7 +1099,29 @@
        679,
        382
       ],
-      "note": "3 levels, facing south"
+      "note": "3 levels, about 11 px a level"
+     },
+     {
+      "tile": [
+       45,
+       79
+      ],
+      "screen": [
+       701,
+       350
+      ],
+      "note": "3 levels, about 11 px a level"
+     },
+     {
+      "tile": [
+       59,
+       83
+      ],
+      "screen": [
+       866,
+       193
+      ],
+      "note": "3 levels, about 9 px a level"
      }
     ]
    },
@@ -1347,9 +1261,143 @@
       ],
       "screen": [
        23,
-       608
+       609
       ],
       "note": "rises toward the south"
+     }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "riverValley-128",
+   "name": "River Valley (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/riverValley-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/riverValley-128-cliff-grey.jpg",
+    "docs/map-look/after/riverValley-128-cliff-protanopia.jpg",
+    "docs/map-look/after/riverValley-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/riverValley-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.5,
+    "distance": 23.5,
+    "target": [
+     98.5,
+     7.5,
+     -116
+    ]
+   },
+   "where": {
+    "dry ground": [
+     {
+      "tile": [
+       98,
+       114
+      ],
+      "screen": [
+       490,
+       492
+      ]
+     },
+     {
+      "tile": [
+       98,
+       117
+      ],
+      "screen": [
+       490,
+       242
+      ]
+     },
+     {
+      "tile": [
+       97,
+       114
+      ],
+      "screen": [
+       447,
+       492
+      ]
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       105,
+       120
+      ],
+      "screen": [
+       764,
+       172
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       97,
+       124
+      ],
+      "screen": [
+       454,
+       93
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       96,
+       124
+      ],
+      "screen": [
+       416,
+       93
+      ],
+      "note": "Pine"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       98,
+       116
+      ],
+      "screen": [
+       490,
+       367
+      ],
+      "note": "5 levels, about 38 px a level"
+     },
+     {
+      "tile": [
+       97,
+       116
+      ],
+      "screen": [
+       447,
+       367
+      ],
+      "note": "5 levels, about 38 px a level"
+     },
+     {
+      "tile": [
+       99,
+       116
+      ],
+      "screen": [
+       533,
+       367
+      ],
+      "note": "5 levels, about 38 px a level"
      }
     ]
    },
@@ -1382,99 +1430,35 @@
     ]
    },
    "where": {
-    "clean water": [
-     {
-      "tile": [
-       63,
-       63
-      ],
-      "screen": [
-       487,
-       394
-      ]
-     },
-     {
-      "tile": [
-       68,
-       63
-      ],
-      "screen": [
-       515,
-       394
-      ]
-     },
-     {
-      "tile": [
-       73,
-       63
-      ],
-      "screen": [
-       544,
-       394
-      ]
-     }
-    ],
-    "badwater": [
-     {
-      "tile": [
-       15,
-       49
-      ],
-      "screen": [
-       194,
-       441
-      ]
-     },
-     {
-      "tile": [
-       13,
-       45
-      ],
-      "screen": [
-       177,
-       462
-      ]
-     },
-     {
-      "tile": [
-       10,
-       49
-      ],
-      "screen": [
-       163,
-       441
-      ]
-     }
-    ],
     "moist ground": [
      {
       "tile": [
-       63,
-       66
+       72,
+       70
       ],
       "screen": [
-       487,
-       372
+       537,
+       361
       ]
      },
      {
       "tile": [
-       71,
-       66
+       78,
+       71
       ],
       "screen": [
-       532,
-       372
+       570,
+       357
       ]
      },
      {
       "tile": [
-       71,
-       59
+       38,
+       64
       ],
       "screen": [
-       533,
-       404
+       346,
+       388
       ]
      }
     ],
@@ -1482,53 +1466,31 @@
      {
       "tile": [
        67,
-       67
+       68
       ],
       "screen": [
        510,
-       360
-      ]
-     },
-     {
-      "tile": [
-       67,
-       58
-      ],
-      "screen": [
-       511,
-       401
+       356
       ]
      },
      {
       "tile": [
        66,
-       74
+       75
       ],
       "screen": [
        504,
-       323
-      ]
-     }
-    ],
-    "contaminated ground": [
-     {
-      "tile": [
-       10,
-       55
-      ],
-      "screen": [
-       169,
-       409
+       318
       ]
      },
      {
       "tile": [
-       6,
-       52
+       63,
+       50
       ],
       "screen": [
-       141,
-       423
+       487,
+       433
       ]
      }
     ],
@@ -1557,14 +1519,14 @@
      },
      {
       "tile": [
-       82,
-       70
+       42,
+       63
       ],
       "screen": [
-       593,
-       358
+       367,
+       389
       ],
-      "note": "Pine"
+      "note": "Birch"
      }
     ],
     "dead tree": [
@@ -1575,7 +1537,7 @@
       ],
       "screen": [
        493,
-       280
+       281
       ],
       "note": "Pine"
      },
@@ -1586,7 +1548,7 @@
       ],
       "screen": [
        565,
-       294
+       295
       ],
       "note": "Pine"
      },
@@ -1597,7 +1559,7 @@
       ],
       "screen": [
        520,
-       268
+       270
       ],
       "note": "Pine"
      }
@@ -1663,12 +1625,12 @@
      },
      {
       "tile": [
-       52,
+       53,
        47
       ],
       "screen": [
-       418,
-       444
+       424,
+       441
       ],
       "note": "rises toward the east"
      },
@@ -1679,7 +1641,7 @@
       ],
       "screen": [
        378,
-       469
+       470
       ],
       "note": "rises toward the south"
      }
@@ -1715,44 +1677,11 @@
        327
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       63,
-       65
-      ],
-      "screen": [
-       487,
-       384
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       68,
-       65
-      ],
-      "screen": [
-       515,
-       384
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       69,
-       57
-      ],
-      "screen": [
-       522,
-       415
-      ],
-      "note": "4 levels, facing south"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "canyon-128",
@@ -1880,34 +1809,34 @@
     "living tree": [
      {
       "tile": [
+       40,
+       49
+      ],
+      "screen": [
+       516,
+       439
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       41,
+       48
+      ],
+      "screen": [
+       558,
+       449
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
        41,
        63
       ],
       "screen": [
        385,
        211
-      ],
-      "note": "Birch"
-     },
-     {
-      "tile": [
-       45,
-       63
-      ],
-      "screen": [
-       459,
-       180
-      ],
-      "note": "Birch"
-     },
-     {
-      "tile": [
-       47,
-       63
-      ],
-      "screen": [
-       493,
-       162
       ],
       "note": "Birch"
      }
@@ -1962,12 +1891,23 @@
     "slope": [
      {
       "tile": [
+       45,
+       58
+      ],
+      "screen": [
+       511,
+       260
+      ],
+      "note": "rises toward the east"
+     },
+     {
+      "tile": [
        36,
        61
       ],
       "screen": [
-       303,
-       291
+       304,
+       293
       ],
       "note": "rises toward the north"
      },
@@ -1977,21 +1917,10 @@
        47
       ],
       "screen": [
-       817,
-       301
+       816,
+       303
       ],
       "note": "rises toward the east"
-     },
-     {
-      "tile": [
-       46,
-       41
-      ],
-      "screen": [
-       809,
-       470
-      ],
-      "note": "rises toward the south"
      }
     ],
     "dam site": [
@@ -2029,28 +1958,6 @@
     "tall cliff": [
      {
       "tile": [
-       32,
-       63
-      ],
-      "screen": [
-       206,
-       302
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       30,
-       63
-      ],
-      "screen": [
-       162,
-       320
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
        33,
        71
       ],
@@ -2058,7 +1965,7 @@
        143,
        123
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 10 px a level"
      }
     ]
    },
@@ -2341,7 +2248,7 @@
       ],
       "screen": [
        451,
-       329
+       331
       ],
       "note": "rises toward the north"
      },
@@ -2351,49 +2258,27 @@
        61
       ],
       "screen": [
-       760,
-       92
+       759,
+       94
       ],
       "note": "rises toward the north"
-     }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       15,
-       68
-      ],
-      "screen": [
-       430,
-       120
-      ],
-      "note": "3 levels, facing south"
      },
      {
       "tile": [
-       18,
-       67
+       45,
+       58
       ],
       "screen": [
-       480,
-       113
+       894,
+       75
       ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       29,
-       63
-      ],
-      "screen": [
-       659,
-       117
-      ],
-      "note": "3 levels, facing south"
+      "note": "rises toward the east"
      }
     ]
    },
-   "notes": []
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "canyon-128",
@@ -2425,63 +2310,63 @@
     "clean water": [
      {
       "tile": [
-       89,
-       66
-      ],
-      "screen": [
-       529,
-       356
-      ]
-     },
-     {
-      "tile": [
        90,
-       66
+       67
       ],
       "screen": [
-       530,
+       571,
        383
       ]
      },
      {
       "tile": [
-       87,
+       91,
+       67
+      ],
+      "screen": [
+       573,
+       412
+      ]
+     },
+     {
+      "tile": [
+       86,
        65
       ],
       "screen": [
        490,
-       246
+       224
       ]
      }
     ],
     "moist ground": [
      {
       "tile": [
-       90,
-       63
+       88,
+       62
       ],
       "screen": [
-       403,
-       301
+       368,
+       249
       ]
      },
      {
       "tile": [
-       91,
-       63
+       88,
+       61
       ],
       "screen": [
-       400,
-       329
+       327,
+       249
       ]
      },
      {
       "tile": [
        89,
-       62
+       60
       ],
       "screen": [
-       364,
+       280,
        274
       ]
      }
@@ -2532,17 +2417,6 @@
      },
      {
       "tile": [
-       85,
-       71
-      ],
-      "screen": [
-       723,
-       154
-      ],
-      "note": "Pine"
-     },
-     {
-      "tile": [
        92,
        73
       ],
@@ -2551,19 +2425,6 @@
        395
       ],
       "note": "Oak"
-     }
-    ],
-    "slope": [
-     {
-      "tile": [
-       81,
-       66
-      ],
-      "screen": [
-       524,
-       105
-      ],
-      "note": "rises toward the north"
      }
     ],
     "dam site": [
@@ -2597,18 +2458,197 @@
        301
       ]
      }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "canyon-128",
+   "name": "Canyon (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/canyon-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/canyon-128-cliff-grey.jpg",
+    "docs/map-look/after/canyon-128-cliff-protanopia.jpg",
+    "docs/map-look/after/canyon-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/canyon-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 3.141592653589793,
+    "pitch": 0.5,
+    "distance": 34,
+    "target": [
+     122.5,
+     7,
+     -56
+    ]
+   },
+   "where": {
+    "moist ground": [
+     {
+      "tile": [
+       122,
+       57
+      ],
+      "screen": [
+       490,
+       536
+      ]
+     },
+     {
+      "tile": [
+       123,
+       57
+      ],
+      "screen": [
+       462,
+       536
+      ]
+     },
+     {
+      "tile": [
+       124,
+       57
+      ],
+      "screen": [
+       433,
+       536
+      ]
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       122,
+       54
+      ],
+      "screen": [
+       490,
+       181
+      ]
+     },
+     {
+      "tile": [
+       121,
+       54
+      ],
+      "screen": [
+       521,
+       181
+      ]
+     },
+     {
+      "tile": [
+       120,
+       54
+      ],
+      "screen": [
+       552,
+       181
+      ]
+     }
+    ],
+    "living tree": [
+     {
+      "tile": [
+       116,
+       59
+      ],
+      "screen": [
+       681,
+       507
+      ],
+      "note": "Birch"
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       125,
+       52
+      ],
+      "screen": [
+       402,
+       138
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       117,
+       51
+      ],
+      "screen": [
+       634,
+       130
+      ],
+      "note": "Oak"
+     }
+    ],
+    "ruin": [
+     {
+      "tile": [
+       123,
+       39
+      ],
+      "screen": [
+       468,
+       41
+      ],
+      "note": "1 high"
+     },
+     {
+      "tile": [
+       125,
+       38
+      ],
+      "screen": [
+       424,
+       37
+      ],
+      "note": "1 high"
+     }
     ],
     "tall cliff": [
      {
       "tile": [
-       92,
-       65
+       122,
+       55
       ],
       "screen": [
        490,
-       393
+       367
       ],
-      "note": "3 levels, facing west"
+      "note": "12 levels, about 26 px a level"
+     },
+     {
+      "tile": [
+       121,
+       55
+      ],
+      "screen": [
+       520,
+       367
+      ],
+      "note": "12 levels, about 26 px a level"
+     },
+     {
+      "tile": [
+       123,
+       55
+      ],
+      "screen": [
+       460,
+       367
+      ],
+      "note": "12 levels, about 26 px a level"
      }
     ]
    },
@@ -2644,86 +2684,44 @@
     "clean water": [
      {
       "tile": [
-       68,
-       58
+       90,
+       76
       ],
       "screen": [
-       516,
-       406
+       634,
+       333
       ]
      },
      {
       "tile": [
-       60,
-       56
+       22,
+       78
       ],
       "screen": [
-       469,
-       416
+       260,
+       304
       ]
      },
      {
       "tile": [
-       73,
-       59
+       101,
+       91
       ],
       "screen": [
-       545,
-       402
-      ]
-     }
-    ],
-    "badwater": [
-     {
-      "tile": [
-       41,
-       86
-      ],
-      "screen": [
-       369,
-       273
-      ]
-     },
-     {
-      "tile": [
-       33,
-       90
-      ],
-      "screen": [
-       328,
-       258
-      ]
-     },
-     {
-      "tile": [
-       28,
-       90
-      ],
-      "screen": [
-       302,
-       258
+       684,
+       274
       ]
      }
     ],
     "moist ground": [
      {
       "tile": [
-       69,
-       62
+       71,
+       63
       ],
       "screen": [
-       522,
-       386
-      ]
-     },
-     {
-      "tile": [
-       73,
-       64
-      ],
-      "screen": [
-       544,
-       377
+       533,
+       382
       ]
      },
      {
@@ -2735,69 +2733,79 @@
        435,
        386
       ]
+     },
+     {
+      "tile": [
+       75,
+       66
+      ],
+      "screen": [
+       555,
+       368
+      ]
      }
     ],
     "dry ground": [
      {
       "tile": [
        65,
-       63
+       62
       ],
       "screen": [
        499,
-       367
-      ]
-     },
-     {
-      "tile": [
-       54,
-       74
-      ],
-      "screen": [
-       437,
-       334
+       372
       ]
      },
      {
       "tile": [
        68,
-       80
+       85
       ],
       "screen": [
-       515,
-       294
+       514,
+       274
+      ]
+     },
+     {
+      "tile": [
+       62,
+       38
+      ],
+      "screen": [
+       480,
+       493
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       32,
-       83
+       31,
+       84
       ],
       "screen": [
-       318,
-       282
+       313,
+       278
       ]
      },
      {
       "tile": [
-       27,
-       83
+       26,
+       84
       ],
       "screen": [
-       291,
-       282
+       286,
+       278
       ]
      },
      {
       "tile": [
-       32,
-       93
+       21,
+       84
       ],
       "screen": [
-       324,
-       243
+       259,
+       278
       ]
      }
     ],
@@ -2876,7 +2884,7 @@
       ],
       "screen": [
        499,
-       328
+       329
       ],
       "note": "Oak"
      },
@@ -2887,7 +2895,7 @@
       ],
       "screen": [
        460,
-       284
+       286
       ],
       "note": "Oak"
      },
@@ -2964,25 +2972,25 @@
      },
      {
       "tile": [
+       50,
+       58
+      ],
+      "screen": [
+       410,
+       393
+      ],
+      "note": "rises toward the west"
+     },
+     {
+      "tile": [
        53,
        49
       ],
       "screen": [
        426,
-       440
+       441
       ],
       "note": "rises toward the south"
-     },
-     {
-      "tile": [
-       44,
-       79
-      ],
-      "screen": [
-       381,
-       285
-      ],
-      "note": "rises toward the north"
      }
     ],
     "dam site": [
@@ -3016,44 +3024,11 @@
        397
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       68,
-       64
-      ],
-      "screen": [
-       516,
-       372
-      ],
-      "note": "4 levels, facing south"
-     },
-     {
-      "tile": [
-       70,
-       83
-      ],
-      "screen": [
-       525,
-       291
-      ],
-      "note": "4 levels, facing south"
-     },
-     {
-      "tile": [
-       60,
-       39
-      ],
-      "screen": [
-       465,
-       495
-      ],
-      "note": "4 levels, facing west"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "highlands-128",
@@ -3105,12 +3080,12 @@
      },
      {
       "tile": [
-       53,
-       52
+       51,
+       49
       ],
       "screen": [
-       759,
-       416
+       766,
+       494
       ]
      }
     ],
@@ -3225,6 +3200,17 @@
     "living tree": [
      {
       "tile": [
+       39,
+       57
+      ],
+      "screen": [
+       405,
+       448
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
        37,
        59
       ],
@@ -3244,17 +3230,6 @@
        525
       ],
       "note": "Oak"
-     },
-     {
-      "tile": [
-       50,
-       64
-      ],
-      "screen": [
-       548,
-       234
-      ],
-      "note": "Birch"
      }
     ],
     "dead tree": [
@@ -3307,12 +3282,23 @@
     "slope": [
      {
       "tile": [
+       50,
+       58
+      ],
+      "screen": [
+       623,
+       323
+      ],
+      "note": "rises toward the west"
+     },
+     {
+      "tile": [
        53,
        49
       ],
       "screen": [
-       809,
-       464
+       808,
+       466
       ],
       "note": "rises toward the south"
      },
@@ -3323,18 +3309,7 @@
       ],
       "screen": [
        111,
-       649
-      ],
-      "note": "rises toward the north"
-     },
-     {
-      "tile": [
-       62,
-       58
-      ],
-      "screen": [
-       835,
-       227
+       650
       ],
       "note": "rises toward the north"
      }
@@ -3370,44 +3345,11 @@
        378
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       29,
-       52
-      ],
-      "screen": [
-       190,
-       694
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       29,
-       51
-      ],
-      "screen": [
-       201,
-       721
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       68,
-       64
-      ],
-      "screen": [
-       865,
-       85
-      ],
-      "note": "4 levels, facing south"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "highlands-128",
@@ -3683,8 +3625,8 @@
        79
       ],
       "screen": [
-       803,
-       404
+       802,
+       406
       ],
       "note": "rises toward the north"
      },
@@ -3694,49 +3636,16 @@
        86
       ],
       "screen": [
-       810,
-       234
+       809,
+       237
       ],
       "note": "rises toward the west"
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       40,
-       91
-      ],
-      "screen": [
-       581,
-       277
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       42,
-       91
-      ],
-      "screen": [
-       615,
-       262
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       43,
-       89
-      ],
-      "screen": [
-       640,
-       278
-      ],
-      "note": "3 levels, facing west"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "highlands-128",
@@ -3931,36 +3840,271 @@
     "tall cliff": [
      {
       "tile": [
-       21,
-       112
+       10,
+       110
       ],
       "screen": [
-       806,
-       302
+       401,
+       235
       ],
-      "note": "3 levels, facing west"
+      "note": "7 levels, about 33 px a level"
      },
      {
       "tile": [
-       21,
+       9,
+       110
+      ],
+      "screen": [
+       356,
+       235
+      ],
+      "note": "7 levels, about 33 px a level"
+     },
+     {
+      "tile": [
+       8,
+       110
+      ],
+      "screen": [
+       312,
+       235
+      ],
+      "note": "7 levels, about 33 px a level"
+     }
+    ]
+   },
+   "notes": []
+  },
+  {
+   "map": "highlands-128",
+   "name": "Highlands (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/highlands-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/highlands-128-cliff-grey.jpg",
+    "docs/map-look/after/highlands-128-cliff-protanopia.jpg",
+    "docs/map-look/after/highlands-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/highlands-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.5,
+    "distance": 26.5,
+    "target": [
+     8.5,
+     12.5,
+     -110
+    ]
+   },
+   "where": {
+    "badwater": [
+     {
+      "tile": [
+       19,
        113
       ],
       "screen": [
-       797,
-       279
+       834,
+       462
+      ]
+     }
+    ],
+    "moist ground": [
+     {
+      "tile": [
+       9,
+       111
       ],
-      "note": "3 levels, facing west"
+      "screen": [
+       529,
+       220
+      ]
      },
      {
       "tile": [
-       21,
+       6,
+       107
+      ],
+      "screen": [
+       414,
+       562
+      ]
+     },
+     {
+      "tile": [
+       8,
+       106
+      ],
+      "screen": [
+       490,
+       588
+      ]
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       22,
+       113
+      ],
+      "screen": [
+       948,
+       383
+      ]
+     },
+     {
+      "tile": [
+       22,
        115
       ],
       "screen": [
-       782,
-       237
+       923,
+       353
+      ]
+     },
+     {
+      "tile": [
+       3,
+       124
       ],
-      "note": "3 levels, facing west"
+      "screen": [
+       359,
+       150
+      ]
+     }
+    ],
+    "living tree": [
+     {
+      "tile": [
+       8,
+       114
+      ],
+      "screen": [
+       485,
+       150
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       9,
+       114
+      ],
+      "screen": [
+       522,
+       149
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       11,
+       115
+      ],
+      "screen": [
+       598,
+       146
+      ],
+      "note": "Pine"
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       15,
+       104
+      ],
+      "screen": [
+       794,
+       621
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       2,
+       117
+      ],
+      "screen": [
+       314,
+       304
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       16,
+       104
+      ],
+      "screen": [
+       830,
+       612
+      ],
+      "note": "Birch"
+     }
+    ],
+    "ruin": [
+     {
+      "tile": [
+       8,
+       123
+      ],
+      "screen": [
+       490,
+       132
+      ],
+      "note": "2 high"
+     },
+     {
+      "tile": [
+       7,
+       123
+      ],
+      "screen": [
+       463,
+       132
+      ],
+      "note": "2 high"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       8,
+       110
+      ],
+      "screen": [
+       490,
+       367
+      ],
+      "note": "7 levels, about 33 px a level"
+     },
+     {
+      "tile": [
+       9,
+       110
+      ],
+      "screen": [
+       528,
+       367
+      ],
+      "note": "7 levels, about 33 px a level"
+     },
+     {
+      "tile": [
+       7,
+       111
+      ],
+      "screen": [
+       453,
+       349
+      ],
+      "note": "7 levels, about 32 px a level"
      }
     ]
    },
@@ -4025,121 +4169,79 @@
       ]
      }
     ],
-    "badwater": [
-     {
-      "tile": [
-       45,
-       106
-      ],
-      "screen": [
-       397,
-       201
-      ]
-     },
-     {
-      "tile": [
-       44,
-       113
-      ],
-      "screen": [
-       394,
-       177
-      ]
-     }
-    ],
     "moist ground": [
      {
       "tile": [
-       72,
-       91
+       73,
+       92
       ],
       "screen": [
-       535,
-       259
+       540,
+       256
       ]
      },
      {
       "tile": [
-       83,
-       42
+       81,
+       39
       ],
       "screen": [
-       612,
-       479
+       601,
+       495
       ]
      },
      {
       "tile": [
-       67,
-       93
+       59,
+       32
       ],
       "screen": [
-       508,
-       252
+       461,
+       535
       ]
      }
     ],
     "dry ground": [
      {
       "tile": [
-       86,
-       100
+       65,
+       116
       ],
       "screen": [
-       605,
-       223
+       497,
+       149
       ]
      },
      {
       "tile": [
-       94,
-       33
+       88,
+       110
       ],
       "screen": [
-       689,
-       526
+       614,
+       169
       ]
      },
      {
       "tile": [
        100,
-       38
+       25
       ],
       "screen": [
-       723,
-       498
+       742,
+       557
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       47,
-       99
+       46,
+       100
       ],
       "screen": [
-       405,
-       230
-      ]
-     },
-     {
-      "tile": [
-       42,
-       99
-      ],
-      "screen": [
-       380,
-       230
-      ]
-     },
-     {
-      "tile": [
-       36,
-       102
-      ],
-      "screen": [
-       350,
-       216
+       401,
+       226
       ]
      }
     ],
@@ -4178,17 +4280,6 @@
     "living tree": [
      {
       "tile": [
-       80,
-       86
-      ],
-      "screen": [
-       578,
-       275
-      ],
-      "note": "Pine"
-     },
-     {
-      "tile": [
        62,
        92
       ],
@@ -4208,6 +4299,17 @@
        510
       ],
       "note": "Birch"
+     },
+     {
+      "tile": [
+       93,
+       78
+      ],
+      "screen": [
+       652,
+       308
+      ],
+      "note": "Birch"
      }
     ],
     "dead tree": [
@@ -4218,7 +4320,7 @@
       ],
       "screen": [
        426,
-       210
+       212
       ],
       "note": "Pine"
      },
@@ -4229,7 +4331,7 @@
       ],
       "screen": [
        539,
-       170
+       172
       ],
       "note": "Pine"
      },
@@ -4322,7 +4424,7 @@
       ],
       "screen": [
        374,
-       206
+       205
       ],
       "note": "rises toward the west"
      }
@@ -4338,44 +4440,11 @@
        383
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       63,
-       37
-      ],
-      "screen": [
-       484,
-       515
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       71,
-       90
-      ],
-      "screen": [
-       529,
-       272
-      ],
-      "note": "4 levels, facing south"
-     },
-     {
-      "tile": [
-       76,
-       88
-      ],
-      "screen": [
-       556,
-       280
-      ],
-      "note": "4 levels, facing south"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "lakeBasin-128",
@@ -4515,36 +4584,36 @@
     "living tree": [
      {
       "tile": [
-       62,
-       99
+       73,
+       97
       ],
       "screen": [
-       327,
-       411
+       587,
+       333
       ],
       "note": "Pine"
      },
      {
       "tile": [
-       62,
-       92
+       70,
+       102
       ],
       "screen": [
-       402,
-       553
+       461,
+       276
       ],
-      "note": "Oak"
+      "note": "Pine"
      },
      {
       "tile": [
-       60,
-       93
+       66,
+       102
       ],
       "screen": [
-       346,
-       554
+       384,
+       318
       ],
-      "note": "Oak"
+      "note": "Pine"
      }
     ],
     "dead tree": [
@@ -4597,36 +4666,36 @@
     "tall cliff": [
      {
       "tile": [
-       66,
-       92
+       74,
+       107
       ],
       "screen": [
-       506,
-       545
+       492,
+       152
       ],
-      "note": "4 levels, facing south"
+      "note": "3 levels, about 10 px a level"
      },
      {
       "tile": [
-       69,
-       91
+       70,
+       108
       ],
       "screen": [
-       584,
-       531
+       387,
+       167
       ],
-      "note": "4 levels, facing south"
+      "note": "3 levels, about 6 px a level"
      },
      {
       "tile": [
        68,
-       91
+       109
       ],
       "screen": [
-       563,
-       542
+       352,
+       172
       ],
-      "note": "4 levels, facing south"
+      "note": "3 levels, about 11 px a level"
      }
     ]
    },
@@ -4921,7 +4990,7 @@
       ],
       "screen": [
        387,
-       433
+       435
       ],
       "note": "rises toward the north"
      },
@@ -4931,8 +5000,8 @@
        106
       ],
       "screen": [
-       684,
-       405
+       683,
+       407
       ],
       "note": "rises toward the west"
      },
@@ -4943,7 +5012,7 @@
       ],
       "screen": [
        581,
-       570
+       571
       ],
       "note": "rises toward the west"
      }
@@ -4951,36 +5020,36 @@
     "tall cliff": [
      {
       "tile": [
-       46,
-       112
+       37,
+       105
       ],
       "screen": [
-       548,
-       335
+       467,
+       553
       ],
-      "note": "4 levels, facing west"
+      "note": "3 levels, about 12 px a level"
      },
      {
       "tile": [
-       40,
-       112
+       36,
+       104
       ],
       "screen": [
-       448,
-       392
+       457,
+       585
       ],
-      "note": "6 levels, facing south"
+      "note": "3 levels, about 13 px a level"
      },
      {
       "tile": [
-       47,
-       110
+       35,
+       104
       ],
       "screen": [
-       588,
-       369
+       435,
+       597
       ],
-      "note": "4 levels, facing west"
+      "note": "3 levels, about 13 px a level"
      }
     ]
    },
@@ -5120,7 +5189,7 @@
       ],
       "screen": [
        368,
-       131
+       133
       ],
       "note": "rises toward the south"
      }
@@ -5128,36 +5197,248 @@
     "tall cliff": [
      {
       "tile": [
-       14,
-       86
+       15,
+       81
       ],
       "screen": [
-       394,
-       257
+       200,
+       262
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 30 px a level"
      },
      {
       "tile": [
-       16,
-       82
+       13,
+       79
       ],
       "screen": [
-       217,
-       274
+       139,
+       214
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 29 px a level"
      },
      {
       "tile": [
-       14,
-       80
+       13,
+       78
       ],
       "screen": [
-       153,
-       226
+       99,
+       214
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 29 px a level"
+     }
+    ]
+   },
+   "notes": []
+  },
+  {
+   "map": "lakeBasin-128",
+   "name": "Lake Basin (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/lakeBasin-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/lakeBasin-128-cliff-grey.jpg",
+    "docs/map-look/after/lakeBasin-128-cliff-protanopia.jpg",
+    "docs/map-look/after/lakeBasin-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/lakeBasin-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.5,
+    "distance": 25,
+    "target": [
+     121.5,
+     13,
+     -76
+    ]
+   },
+   "where": {
+    "moist ground": [
+     {
+      "tile": [
+       121,
+       74
+      ],
+      "screen": [
+       490,
+       501
+      ]
+     },
+     {
+      "tile": [
+       120,
+       74
+      ],
+      "screen": [
+       450,
+       501
+      ]
+     },
+     {
+      "tile": [
+       122,
+       74
+      ],
+      "screen": [
+       530,
+       501
+      ]
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       117,
+       77
+      ],
+      "screen": [
+       328,
+       231
+      ]
+     },
+     {
+      "tile": [
+       117,
+       79
+      ],
+      "screen": [
+       339,
+       204
+      ]
+     },
+     {
+      "tile": [
+       116,
+       78
+      ],
+      "screen": [
+       295,
+       217
+      ]
+     }
+    ],
+    "living tree": [
+     {
+      "tile": [
+       120,
+       68
+      ],
+      "screen": [
+       436,
+       642
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       125,
+       68
+      ],
+      "screen": [
+       692,
+       650
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       122,
+       67
+      ],
+      "screen": [
+       540,
+       683
+      ],
+      "note": "Oak"
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       122,
+       78
+      ],
+      "screen": [
+       531,
+       180
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       124,
+       77
+      ],
+      "screen": [
+       607,
+       195
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       120,
+       79
+      ],
+      "screen": [
+       450,
+       172
+      ],
+      "note": "Pine"
+     }
+    ],
+    "ruin": [
+     {
+      "tile": [
+       112,
+       92
+      ],
+      "screen": [
+       250,
+       74
+      ],
+      "note": "1 high"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       121,
+       76
+      ],
+      "screen": [
+       490,
+       367
+      ],
+      "note": "6 levels, about 35 px a level"
+     },
+     {
+      "tile": [
+       120,
+       76
+      ],
+      "screen": [
+       450,
+       367
+      ],
+      "note": "6 levels, about 35 px a level"
+     },
+     {
+      "tile": [
+       119,
+       76
+      ],
+      "screen": [
+       409,
+       367
+      ],
+      "note": "6 levels, about 35 px a level"
      }
     ]
    },
@@ -5194,84 +5475,52 @@
      {
       "tile": [
        63,
-       58
+       57
       ],
       "screen": [
        487,
-       403
+       408
       ]
      },
      {
       "tile": [
-       68,
-       59
-      ],
-      "screen": [
-       516,
-       398
-      ]
-     },
-     {
-      "tile": [
-       72,
+       70,
        58
       ],
       "screen": [
-       540,
+       528,
        403
-      ]
-     }
-    ],
-    "badwater": [
-     {
-      "tile": [
-       58,
-       38
-      ],
-      "screen": [
-       455,
-       506
       ]
      },
      {
       "tile": [
-       75,
-       38
+       76,
+       59
       ],
       "screen": [
        563,
-       506
-      ]
-     },
-     {
-      "tile": [
-       54,
-       37
-      ],
-      "screen": [
-       430,
-       511
+       399
       ]
      }
     ],
     "moist ground": [
      {
       "tile": [
-       63,
+       64,
        63
       ],
       "screen": [
-       487,
+       493,
        378
       ]
      },
      {
       "tile": [
-       67,
+       68,
        65
       ],
       "screen": [
-       510,
+       516,
        369
       ]
      },
@@ -5289,54 +5538,44 @@
     "dry ground": [
      {
       "tile": [
-       54,
-       73
+       63,
+       78
       ],
       "screen": [
-       437,
-       334
+       487,
+       313
       ]
      },
      {
       "tile": [
-       63,
+       57,
        77
       ],
       "screen": [
-       487,
+       454,
        318
       ]
      },
      {
       "tile": [
-       58,
-       76
+       52,
+       75
       ],
       "screen": [
-       460,
-       322
+       426,
+       326
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       58,
+       76,
        44
       ],
       "screen": [
-       456,
-       471
-      ]
-     },
-     {
-      "tile": [
-       76,
-       45
-      ],
-      "screen": [
        567,
-       466
+       471
       ]
      },
      {
@@ -5347,6 +5586,16 @@
       "screen": [
        592,
        471
+      ]
+     },
+     {
+      "tile": [
+       75,
+       34
+      ],
+      "screen": [
+       564,
+       526
       ]
      }
     ],
@@ -5425,7 +5674,7 @@
       ],
       "screen": [
        408,
-       288
+       290
       ],
       "note": "Birch"
      },
@@ -5436,7 +5685,7 @@
       ],
       "screen": [
        385,
-       298
+       299
       ],
       "note": "Pine"
      },
@@ -5447,7 +5696,7 @@
       ],
       "screen": [
        461,
-       269
+       271
       ],
       "note": "Birch"
      }
@@ -5502,36 +5751,36 @@
     "slope": [
      {
       "tile": [
-       66,
-       59
+       86,
+       62
       ],
       "screen": [
-       505,
-       388
+       622,
+       374
       ],
       "note": "rises toward the north"
      },
      {
       "tile": [
-       75,
-       56
+       55,
+       41
       ],
       "screen": [
-       559,
-       402
+       436,
+       477
       ],
       "note": "rises toward the south"
      },
      {
       "tile": [
-       49,
-       51
+       55,
+       87
       ],
       "screen": [
-       402,
-       427
+       444,
+       264
       ],
-      "note": "rises toward the west"
+      "note": "rises toward the north"
      }
     ],
     "dam site": [
@@ -5565,44 +5814,11 @@
        398
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       77,
-       64
-      ],
-      "screen": [
-       567,
-       381
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       63,
-       50
-      ],
-      "screen": [
-       487,
-       448
-      ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       67,
-       50
-      ],
-      "screen": [
-       511,
-       448
-      ],
-      "note": "3 levels, facing south"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "delta-128",
@@ -5644,22 +5860,22 @@
      },
      {
       "tile": [
-       57,
-       55
+       61,
+       56
       ],
       "screen": [
-       664,
-       552
+       730,
+       486
       ]
      },
      {
       "tile": [
-       60,
-       56
+       56,
+       54
       ],
       "screen": [
-       710,
-       497
+       657,
+       586
       ]
      }
     ],
@@ -5812,23 +6028,12 @@
     "slope": [
      {
       "tile": [
-       66,
-       59
-      ],
-      "screen": [
-       785,
-       370
-      ],
-      "note": "rises toward the north"
-     },
-     {
-      "tile": [
        43,
        78
       ],
       "screen": [
-       108,
-       263
+       110,
+       265
       ],
       "note": "rises toward the north"
      },
@@ -5839,7 +6044,18 @@
       ],
       "screen": [
        277,
-       51
+       53
+      ],
+      "note": "rises toward the north"
+     },
+     {
+      "tile": [
+       44,
+       89
+      ],
+      "screen": [
+       50,
+       90
       ],
       "note": "rises toward the north"
      }
@@ -5886,7 +6102,7 @@
        259,
        294
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
      },
      {
       "tile": [
@@ -5897,18 +6113,18 @@
        253,
        238
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
      },
      {
       "tile": [
-       43,
-       69
+       52,
+       87
       ],
       "screen": [
-       164,
-       412
+       223,
+       68
       ],
-      "note": "4 levels, facing west"
+      "note": "4 levels, about 9 px a level"
      }
     ]
    },
@@ -6106,7 +6322,7 @@
       ],
       "screen": [
        462,
-       203
+       205
       ],
       "note": "rises toward the north"
      },
@@ -6116,8 +6332,8 @@
        90
       ],
       "screen": [
-       292,
-       545
+       293,
+       546
       ],
       "note": "rises toward the west"
      },
@@ -6127,8 +6343,8 @@
        89
       ],
       "screen": [
-       813,
-       306
+       812,
+       308
       ],
       "note": "rises toward the north"
      }
@@ -6143,7 +6359,152 @@
        899,
        327
       ],
-      "note": "3 levels, facing west"
+      "note": "3 levels, about 6 px a level"
+     }
+    ]
+   },
+   "notes": []
+  },
+  {
+   "map": "delta-128",
+   "name": "Delta (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/delta-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/delta-128-cliff-grey.jpg",
+    "docs/map-look/after/delta-128-cliff-protanopia.jpg",
+    "docs/map-look/after/delta-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/delta-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.5,
+    "distance": 20.5,
+    "target": [
+     75.5,
+     14.5,
+     -111
+    ]
+   },
+   "where": {
+    "dry ground": [
+     {
+      "tile": [
+       75,
+       109
+      ],
+      "screen": [
+       490,
+       469
+      ]
+     },
+     {
+      "tile": [
+       74,
+       109
+      ],
+      "screen": [
+       439,
+       469
+      ]
+     },
+     {
+      "tile": [
+       76,
+       109
+      ],
+      "screen": [
+       541,
+       469
+      ]
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       72,
+       112
+      ],
+      "screen": [
+       346,
+       225
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       78,
+       113
+      ],
+      "screen": [
+       631,
+       214
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       70,
+       111
+      ],
+      "screen": [
+       237,
+       246
+      ],
+      "note": "Pine"
+     }
+    ],
+    "slope": [
+     {
+      "tile": [
+       74,
+       104
+      ],
+      "screen": [
+       427,
+       698
+      ],
+      "note": "rises toward the north"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       75,
+       111
+      ],
+      "screen": [
+       490,
+       367
+      ],
+      "note": "3 levels, about 43 px a level"
+     },
+     {
+      "tile": [
+       76,
+       111
+      ],
+      "screen": [
+       539,
+       367
+      ],
+      "note": "3 levels, about 43 px a level"
+     },
+     {
+      "tile": [
+       77,
+       111
+      ],
+      "screen": [
+       588,
+       367
+      ],
+      "note": "3 levels, about 43 px a level"
      }
     ]
    },
@@ -6208,131 +6569,99 @@
       ]
      }
     ],
-    "badwater": [
-     {
-      "tile": [
-       91,
-       113
-      ],
-      "screen": [
-       628,
-       158
-      ]
-     },
-     {
-      "tile": [
-       31,
-       114
-      ],
-      "screen": [
-       327,
-       155
-      ]
-     },
-     {
-      "tile": [
-       90,
-       121
-      ],
-      "screen": [
-       620,
-       132
-      ]
-     }
-    ],
     "moist ground": [
      {
       "tile": [
-       57,
-       56
+       56,
+       55
       ],
       "screen": [
-       451,
-       402
+       445,
+       406
       ]
      },
      {
       "tile": [
        64,
-       74
+       76
       ],
       "screen": [
        493,
-       320
+       312
       ]
      },
      {
       "tile": [
-       58,
-       73
+       56,
+       50
       ],
       "screen": [
-       459,
-       324
+       444,
+       431
       ]
      }
     ],
     "dry ground": [
      {
       "tile": [
-       111,
-       54
+       118,
+       50
       ],
       "screen": [
-       777,
-       411
+       832,
+       413
       ]
      },
      {
       "tile": [
-       105,
-       101
+       116,
+       43
       ],
       "screen": [
-       707,
-       196
+       829,
+       450
       ]
      },
      {
       "tile": [
        114,
-       39
+       38
       ],
       "screen": [
-       821,
-       472
+       822,
+       477
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       97,
-       109
+       99,
+       110
       ],
       "screen": [
-       661,
-       168
+       671,
+       165
       ]
      },
      {
       "tile": [
-       88,
-       116
-      ],
-      "screen": [
-       612,
-       145
-      ]
-     },
-     {
-      "tile": [
-       83,
+       85,
        119
       ],
       "screen": [
-       587,
+       596,
        136
+      ]
+     },
+     {
+      "tile": [
+       36,
+       120
+      ],
+      "screen": [
+       354,
+       133
       ]
      }
     ],
@@ -6410,8 +6739,8 @@
        98
       ],
       "screen": [
-       690,
-       204
+       689,
+       206
       ],
       "note": "Oak"
      },
@@ -6422,7 +6751,7 @@
       ],
       "screen": [
        679,
-       592
+       593
       ],
       "note": "Pine"
      },
@@ -6432,8 +6761,8 @@
        56
       ],
       "screen": [
-       828,
-       374
+       827,
+       375
       ],
       "note": "Pine"
      }
@@ -6488,23 +6817,12 @@
     "slope": [
      {
       "tile": [
-       98,
-       77
-      ],
-      "screen": [
-       683,
-       302
-      ],
-      "note": "rises toward the north"
-     },
-     {
-      "tile": [
        26,
        86
       ],
       "screen": [
-       287,
-       266
+       286,
+       265
       ],
       "note": "rises toward the north"
      },
@@ -6515,9 +6833,20 @@
       ],
       "screen": [
        240,
-       282
+       281
       ],
       "note": "rises toward the west"
+     },
+     {
+      "tile": [
+       76,
+       112
+      ],
+      "screen": [
+       553,
+       167
+      ],
+      "note": "rises toward the north"
      }
     ],
     "dam site": [
@@ -6531,44 +6860,11 @@
        305
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       82,
-       60
-      ],
-      "screen": [
-       595,
-       393
-      ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       82,
-       55
-      ],
-      "screen": [
-       600,
-       419
-      ],
-      "note": "4 levels, facing south"
-     },
-     {
-      "tile": [
-       63,
-       41
-      ],
-      "screen": [
-       484,
-       488
-      ],
-      "note": "4 levels, facing west"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "islands-128",
@@ -6601,31 +6897,31 @@
      {
       "tile": [
        64,
-       103
+       101
       ],
       "screen": [
-       608,
-       548
+       638,
+       592
       ]
      },
      {
       "tile": [
        63,
-       103
+       101
       ],
       "screen": [
-       586,
-       560
+       616,
+       605
       ]
      },
      {
       "tile": [
        65,
-       103
+       101
       ],
       "screen": [
-       630,
-       536
+       660,
+       579
       ]
      }
     ],
@@ -6708,33 +7004,33 @@
     "living tree": [
      {
       "tile": [
+       60,
+       113
+      ],
+      "screen": [
+       389,
+       376
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       68,
+       109
+      ],
+      "screen": [
+       613,
+       363
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
        57,
        111
       ],
       "screen": [
        343,
-       451
-      ],
-      "note": "Oak"
-     },
-     {
-      "tile": [
-       57,
-       108
-      ],
-      "screen": [
-       378,
-       508
-      ],
-      "note": "Oak"
-     },
-     {
-      "tile": [
-       55,
-       112
-      ],
-      "screen": [
-       283,
        451
       ],
       "note": "Oak"
@@ -6794,8 +7090,8 @@
        112
       ],
       "screen": [
-       727,
-       235
+       726,
+       238
       ],
       "note": "rises toward the north"
      }
@@ -6810,7 +7106,7 @@
        446,
        238
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
      },
      {
       "tile": [
@@ -6821,18 +7117,18 @@
        415,
        231
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
      },
      {
       "tile": [
-       64,
-       105
+       75,
+       116
       ],
       "screen": [
-       584,
-       531
+       666,
+       174
       ],
-      "note": "4 levels, facing south"
+      "note": "3 levels, about 11 px a level"
      }
     ]
    },
@@ -7116,8 +7412,8 @@
        109
       ],
       "screen": [
-       674,
-       458
+       673,
+       460
       ],
       "note": "rises toward the north"
      },
@@ -7128,7 +7424,7 @@
       ],
       "screen": [
        302,
-       632
+       634
       ],
       "note": "rises toward the north"
      }
@@ -7143,7 +7439,18 @@
        516,
        543
       ],
-      "note": "3 levels, facing south"
+      "note": "3 levels, about 11 px a level"
+     },
+     {
+      "tile": [
+       88,
+       110
+      ],
+      "screen": [
+       566,
+       530
+      ],
+      "note": "5 levels, about 11 px a level"
      },
      {
       "tile": [
@@ -7154,18 +7461,7 @@
        546,
        551
       ],
-      "note": "3 levels, facing south"
-     },
-     {
-      "tile": [
-       89,
-       109
-      ],
-      "screen": [
-       580,
-       544
-      ],
-      "note": "3 levels, facing west"
+      "note": "3 levels, about 11 px a level"
      }
     ]
    },
@@ -7261,29 +7557,206 @@
        192
       ]
      }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "islands-128",
+   "name": "Islands (4242), 128×128",
+   "pose": "cliff",
+   "file": "docs/map-look/after/islands-128-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/islands-128-cliff-grey.jpg",
+    "docs/map-look/after/islands-128-cliff-protanopia.jpg",
+    "docs/map-look/after/islands-128-cliff-deuteranopia.jpg",
+    "docs/map-look/after/islands-128-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 3.141592653589793,
+    "pitch": 0.5,
+    "distance": 25,
+    "target": [
+     121.5,
+     13,
+     -63
+    ]
+   },
+   "where": {
+    "moist ground": [
+     {
+      "tile": [
+       119,
+       65
+      ],
+      "screen": [
+       573,
+       526
+      ]
+     },
+     {
+      "tile": [
+       125,
+       64
+      ],
+      "screen": [
+       330,
+       501
+      ]
+     },
+     {
+      "tile": [
+       125,
+       65
+      ],
+      "screen": [
+       324,
+       526
+      ]
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       122,
+       61
+      ],
+      "screen": [
+       450,
+       231
+      ]
+     },
+     {
+      "tile": [
+       123,
+       61
+      ],
+      "screen": [
+       409,
+       231
+      ]
+     },
+     {
+      "tile": [
+       124,
+       61
+      ],
+      "screen": [
+       369,
+       231
+      ]
+     }
+    ],
+    "living tree": [
+     {
+      "tile": [
+       123,
+       68
+      ],
+      "screen": [
+       391,
+       576
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       124,
+       68
+      ],
+      "screen": [
+       352,
+       579
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       110,
+       60
+      ],
+      "screen": [
+       879,
+       389
+      ],
+      "note": "Pine"
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       119,
+       59
+      ],
+      "screen": [
+       568,
+       176
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       124,
+       57
+      ],
+      "screen": [
+       380,
+       146
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       125,
+       57
+      ],
+      "screen": [
+       351,
+       148
+      ],
+      "note": "Birch"
+     }
     ],
     "tall cliff": [
      {
       "tile": [
-       10,
-       96
+       121,
+       62
       ],
       "screen": [
-       510,
-       322
+       490,
+       367
       ],
-      "note": "3 levels, facing south"
+      "note": "6 levels, about 35 px a level"
      },
      {
       "tile": [
-       9,
-       97
+       120,
+       62
       ],
       "screen": [
-       550,
-       265
+       530,
+       367
       ],
-      "note": "3 levels, facing south"
+      "note": "6 levels, about 35 px a level"
+     },
+     {
+      "tile": [
+       122,
+       62
+      ],
+      "screen": [
+       450,
+       367
+      ],
+      "note": "6 levels, about 35 px a level"
      }
     ]
    },
@@ -7320,129 +7793,110 @@
      {
       "tile": [
        127,
-       116
+       115
       ],
       "screen": [
        489,
-       398
-      ]
-     },
-     {
-      "tile": [
-       136,
-       117
-      ],
-      "screen": [
-       515,
-       396
-      ]
-     },
-     {
-      "tile": [
-       119,
-       114
-      ],
-      "screen": [
-       465,
-       403
-      ]
-     }
-    ],
-    "badwater": [
-     {
-      "tile": [
-       142,
-       132
-      ],
-      "screen": [
-       532,
-       361
-      ]
-     },
-     {
-      "tile": [
-       151,
-       136
-      ],
-      "screen": [
-       557,
-       353
+       400
       ]
      },
      {
       "tile": [
        139,
-       100
+       116
       ],
       "screen": [
-       525,
-       437
+       524,
+       398
+      ]
+     },
+     {
+      "tile": [
+       119,
+       112
+      ],
+      "screen": [
+       465,
+       408
       ]
      }
     ],
     "water partly bad": [
      {
       "tile": [
-       173,
+       174,
        154
       ],
       "screen": [
-       615,
+       618,
        317
       ],
-      "note": "54% bad"
+      "note": "26% bad"
      },
      {
       "tile": [
        182,
-       156
-      ],
-      "screen": [
-       640,
-       312
-      ],
-      "note": "55% bad"
-     },
-     {
-      "tile": [
-       183,
-       169
+       160
       ],
       "screen": [
        639,
-       286
+       304
+      ],
+      "note": "37% bad"
+     },
+     {
+      "tile": [
+       186,
+       172
+      ],
+      "screen": [
+       646,
+       280
       ],
       "note": "39% bad"
+     }
+    ],
+    "badwater meets clean water": [
+     {
+      "tile": [
+       180,
+       150
+      ],
+      "screen": [
+       636,
+       324
+      ],
+      "note": "from badwater at (181, 151) to clean water at (179, 149)"
      }
     ],
     "moist ground": [
      {
       "tile": [
-       133,
-       121
+       136,
+       123
       ],
       "screen": [
-       506,
-       385
+       515,
+       381
       ]
      },
      {
       "tile": [
-       142,
-       122
+       145,
+       125
       ],
       "screen": [
-       532,
-       383
+       541,
+       376
       ]
      },
      {
       "tile": [
-       122,
+       121,
        100
       ],
       "screen": [
-       473,
+       470,
        436
       ]
      }
@@ -7460,54 +7914,54 @@
      },
      {
       "tile": [
-       131,
-       138
+       126,
+       140
       ],
       "screen": [
-       500,
-       340
+       486,
+       343
       ]
      },
      {
       "tile": [
-       122,
-       144
+       137,
+       141
       ],
       "screen": [
-       475,
-       334
+       517,
+       340
       ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       146,
-       140
+       148,
+       141
       ],
       "screen": [
-       542,
-       343
+       548,
+       340
       ]
      },
      {
       "tile": [
-       153,
-       133
-      ],
-      "screen": [
-       563,
-       358
-      ]
-     },
-     {
-      "tile": [
-       143,
+       145,
        106
       ],
       "screen": [
-       537,
+       543,
        421
+      ]
+     },
+     {
+      "tile": [
+       155,
+       132
+      ],
+      "screen": [
+       569,
+       360
       ]
      }
     ],
@@ -7581,23 +8035,12 @@
     "dead tree": [
      {
       "tile": [
-       119,
-       132
-      ],
-      "screen": [
-       465,
-       355
-      ],
-      "note": "Birch"
-     },
-     {
-      "tile": [
        115,
        148
       ],
       "screen": [
        455,
-       318
+       321
       ],
       "note": "Pine"
      },
@@ -7608,7 +8051,18 @@
       ],
       "screen": [
        516,
-       312
+       315
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       100,
+       134
+      ],
+      "screen": [
+       411,
+       352
       ],
       "note": "Oak"
      }
@@ -7668,7 +8122,7 @@
       ],
       "screen": [
        486,
-       390
+       389
       ],
       "note": "rises toward the north"
      },
@@ -7679,7 +8133,7 @@
       ],
       "screen": [
        521,
-       361
+       359
       ],
       "note": "rises toward the east"
      },
@@ -7690,7 +8144,7 @@
       ],
       "screen": [
        518,
-       388
+       386
       ],
       "note": "rises toward the north"
      }
@@ -7726,44 +8180,11 @@
        403
       ]
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       128,
-       124
-      ],
-      "screen": [
-       490,
-       375
-      ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       129,
-       137
-      ],
-      "screen": [
-       493,
-       346
-      ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       126,
-       109
-      ],
-      "screen": [
-       484,
-       411
-      ],
-      "note": "4 levels, facing west"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "riverValley-256",
@@ -7795,32 +8216,32 @@
     "clean water": [
      {
       "tile": [
+       117,
+       113
+      ],
+      "screen": [
+       651,
+       622
+      ]
+     },
+     {
+      "tile": [
+       116,
+       113
+      ],
+      "screen": [
+       628,
+       635
+      ]
+     },
+     {
+      "tile": [
        118,
-       114
+       113
       ],
       "screen": [
-       657,
-       587
-      ]
-     },
-     {
-      "tile": [
-       119,
-       114
-      ],
-      "screen": [
-       678,
-       574
-      ]
-     },
-     {
-      "tile": [
-       120,
-       114
-      ],
-      "screen": [
-       700,
-       562
+       672,
+       609
       ]
      }
     ],
@@ -7970,6 +8391,17 @@
     "dead tree": [
      {
       "tile": [
+       116,
+       130
+      ],
+      "screen": [
+       413,
+       284
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
        115,
        132
       ],
@@ -7989,17 +8421,6 @@
        268
       ],
       "note": "Birch"
-     },
-     {
-      "tile": [
-       119,
-       140
-      ],
-      "screen": [
-       376,
-       131
-      ],
-      "note": "Pine"
      }
     ],
     "the start": [
@@ -8017,12 +8438,23 @@
     "slope": [
      {
       "tile": [
+       116,
+       119
+      ],
+      "screen": [
+       545,
+       490
+      ],
+      "note": "rises toward the north"
+     },
+     {
+      "tile": [
        126,
        117
       ],
       "screen": [
-       777,
-       426
+       776,
+       428
       ],
       "note": "rises toward the north"
      },
@@ -8032,21 +8464,10 @@
        109
       ],
       "screen": [
-       808,
-       656
+       807,
+       657
       ],
       "note": "rises toward the south"
-     },
-     {
-      "tile": [
-       137,
-       118
-      ],
-      "screen": [
-       959,
-       300
-      ],
-      "note": "rises toward the north"
      }
     ],
     "dam site": [
@@ -8085,24 +8506,13 @@
      {
       "tile": [
        128,
-       124
-      ],
-      "screen": [
-       712,
-       269
-      ],
-      "note": "4 levels, facing west"
-     },
-     {
-      "tile": [
-       128,
        119
       ],
       "screen": [
        803,
        356
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
      },
      {
       "tile": [
@@ -8113,7 +8523,18 @@
        841,
        336
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 11 px a level"
+     },
+     {
+      "tile": [
+       126,
+       109
+      ],
+      "screen": [
+       920,
+       578
+      ],
+      "note": "4 levels, about 8 px a level"
      }
     ]
    },
@@ -8305,7 +8726,9 @@
      }
     ]
    },
-   "notes": []
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "riverValley-256",
@@ -8406,7 +8829,7 @@
       ],
       "screen": [
        644,
-       200
+       201
       ],
       "note": "rises toward the north"
      },
@@ -8416,45 +8839,528 @@
        74
       ],
       "screen": [
-       316,
-       122
+       317,
+       123
       ],
       "note": "rises toward the south"
+     }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "riverValley-256",
+   "name": "River Valley (4242), 256×256",
+   "pose": "meets",
+   "file": "docs/map-look/after/riverValley-256-meets.jpg",
+   "variants": [
+    "docs/map-look/after/riverValley-256-meets-grey.jpg",
+    "docs/map-look/after/riverValley-256-meets-protanopia.jpg",
+    "docs/map-look/after/riverValley-256-meets-deuteranopia.jpg",
+    "docs/map-look/after/riverValley-256-meets-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 0.95,
+    "distance": 30,
+    "target": [
+     173.5,
+     4.961650371551514,
+     -154.5
+    ]
+   },
+   "where": {
+    "clean water": [
+     {
+      "tile": [
+       174,
+       152
+      ],
+      "screen": [
+       557,
+       373
+      ]
+     },
+     {
+      "tile": [
+       175,
+       152
+      ],
+      "screen": [
+       587,
+       360
+      ]
+     },
+     {
+      "tile": [
+       173,
+       151
+      ],
+      "screen": [
+       545,
+       413
+      ]
+     }
+    ],
+    "badwater": [
+     {
+      "tile": [
+       171,
+       155
+      ],
+      "screen": [
+       415,
+       370
+      ]
+     },
+     {
+      "tile": [
+       170,
+       155
+      ],
+      "screen": [
+       385,
+       384
+      ]
+     },
+     {
+      "tile": [
+       169,
+       154
+      ],
+      "screen": [
+       364,
+       398
+      ]
+     }
+    ],
+    "water partly bad": [
+     {
+      "tile": [
+       174,
+       154
+      ],
+      "screen": [
+       519,
+       353
+      ],
+      "note": "26% bad"
+     },
+     {
+      "tile": [
+       173,
+       155
+      ],
+      "screen": [
+       473,
+       343
+      ],
+      "note": "85% bad"
+     },
+     {
+      "tile": [
+       174,
+       155
+      ],
+      "screen": [
+       502,
+       330
+      ],
+      "note": "63% bad"
+     }
+    ],
+    "badwater meets clean water": [
+     {
+      "tile": [
+       173,
+       155
+      ],
+      "screen": [
+       482,
+       341
+      ],
+      "note": "from badwater at (173, 156) to clean water at (173, 153)"
+     },
+     {
+      "tile": [
+       172,
+       155
+      ],
+      "screen": [
+       452,
+       355
+      ],
+      "note": "from badwater at (171, 156) to clean water at (173, 153)"
+     },
+     {
+      "tile": [
+       180,
+       150
+      ],
+      "screen": [
+       765,
+       353
+      ],
+      "note": "from badwater at (181, 151) to clean water at (179, 149)"
+     }
+    ],
+    "moist ground": [
+     {
+      "tile": [
+       175,
+       163
+      ],
+      "screen": [
+       411,
+       161
+      ]
+     },
+     {
+      "tile": [
+       173,
+       164
+      ],
+      "screen": [
+       346,
+       163
+      ]
+     },
+     {
+      "tile": [
+       174,
+       164
+      ],
+      "screen": [
+       372,
+       153
+      ]
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       164,
+       166
+      ],
+      "screen": [
+       74,
+       221
+      ]
+     },
+     {
+      "tile": [
+       169,
+       169
+      ],
+      "screen": [
+       186,
+       118
+      ]
+     },
+     {
+      "tile": [
+       163,
+       166
+      ],
+      "screen": [
+       44,
+       232
+      ]
+     }
+    ],
+    "contaminated ground": [
+     {
+      "tile": [
+       170,
+       158
+      ],
+      "screen": [
+       333,
+       271
+      ]
+     },
+     {
+      "tile": [
+       174,
+       159
+      ],
+      "screen": [
+       440,
+       245
+      ]
+     },
+     {
+      "tile": [
+       169,
+       158
+      ],
+      "screen": [
+       302,
+       285
+      ]
+     }
+    ],
+    "contaminated beside moist ground": [
+     {
+      "tile": [
+       175,
+       160
+      ],
+      "screen": [
+       452,
+       215
+      ]
+     },
+     {
+      "tile": [
+       174,
+       161
+      ],
+      "screen": [
+       411,
+       207
+      ]
+     },
+     {
+      "tile": [
+       176,
+       161
+      ],
+      "screen": [
+       464,
+       186
+      ]
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       186,
+       152
+      ],
+      "screen": [
+       873,
+       230
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       187,
+       151
+      ],
+      "screen": [
+       921,
+       240
+      ],
+      "note": "Oak"
+     }
+    ],
+    "slope": [
+     {
+      "tile": [
+       175,
+       157
+      ],
+      "screen": [
+       497,
+       273
+      ],
+      "note": "rises toward the north"
+     },
+     {
+      "tile": [
+       185,
+       160
+      ],
+      "screen": [
+       694,
+       113
+      ],
+      "note": "rises toward the south"
+     }
+    ],
+    "dam site": [
+     {
+      "tile": [
+       167,
+       147
+      ],
+      "screen": [
+       418,
+       648
+      ]
+     },
+     {
+      "tile": [
+       168,
+       146
+      ],
+      "screen": [
+       475,
+       652
+      ]
+     },
+     {
+      "tile": [
+       169,
+       145
+      ],
+      "screen": [
+       535,
+       677
+      ]
+     }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "riverValley-256",
+   "name": "River Valley (4242), 256×256",
+   "pose": "cliff",
+   "file": "docs/map-look/after/riverValley-256-cliff.jpg",
+   "variants": [
+    "docs/map-look/after/riverValley-256-cliff-grey.jpg",
+    "docs/map-look/after/riverValley-256-cliff-protanopia.jpg",
+    "docs/map-look/after/riverValley-256-cliff-deuteranopia.jpg",
+    "docs/map-look/after/riverValley-256-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": -1.5707963267948966,
+    "pitch": 0.5,
+    "distance": 22,
+    "target": [
+     131,
+     9,
+     -153.5
+    ]
+   },
+   "where": {
+    "dry ground": [
+     {
+      "tile": [
+       129,
+       153
+      ],
+      "screen": [
+       490,
+       482
+      ]
+     },
+     {
+      "tile": [
+       132,
+       153
+      ],
+      "screen": [
+       490,
+       255
+      ]
+     },
+     {
+      "tile": [
+       129,
+       152
+      ],
+      "screen": [
+       537,
+       482
+      ]
+     }
+    ],
+    "contaminated ground": [
+     {
+      "tile": [
+       146,
+       141
+      ],
+      "screen": [
+       820,
+       210
+      ]
+     },
+     {
+      "tile": [
+       147,
+       142
+      ],
+      "screen": [
+       786,
+       201
+      ]
+     },
+     {
+      "tile": [
+       146,
+       140
+      ],
+      "screen": [
+       848,
+       210
+      ]
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       152,
+       143
+      ],
+      "screen": [
+       736,
+       143
+      ],
+      "note": "Oak"
      }
     ],
     "tall cliff": [
      {
       "tile": [
-       86,
-       77
-      ],
-      "screen": [
-       406,
-       363
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       87,
-       78
-      ],
-      "screen": [
-       447,
-       393
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       89,
-       79
+       131,
+       153
       ],
       "screen": [
        490,
-       458
+       366
       ],
-      "note": "3 levels, facing west"
+      "note": "4 levels, about 40 px a level"
+     },
+     {
+      "tile": [
+       131,
+       152
+      ],
+      "screen": [
+       536,
+       366
+      ],
+      "note": "4 levels, about 40 px a level"
+     },
+     {
+      "tile": [
+       131,
+       154
+      ],
+      "screen": [
+       444,
+       366
+      ],
+      "note": "4 levels, about 40 px a level"
      }
     ]
    },
@@ -8490,123 +9396,83 @@
     "clean water": [
      {
       "tile": [
-       125,
-       98
+       137,
+       170
       ],
       "screen": [
-       482,
-       453
-      ]
-     },
-     {
-      "tile": [
-       118,
-       167
-      ],
-      "screen": [
-       464,
-       273
+       516,
+       265
       ]
      },
      {
       "tile": [
        153,
-       95
+       91
       ],
       "screen": [
-       567,
-       461
+       568,
+       471
+      ]
+     },
+     {
+      "tile": [
+       91,
+       26
+      ],
+      "screen": [
+       363,
+       663
       ]
      }
     ],
     "badwater": [
      {
       "tile": [
-       127,
-       225
+       11,
+       64
       ],
       "screen": [
-       489,
-       176
-      ]
-     },
-     {
-      "tile": [
-       135,
-       248
-      ],
-      "screen": [
-       508,
-       139
-      ]
-     },
-     {
-      "tile": [
-       145,
-       247
-      ],
-      "screen": [
-       532,
-       141
+       108,
+       532
       ]
      }
     ],
     "water partly bad": [
      {
       "tile": [
-       109,
-       180
+       110,
+       184
       ],
       "screen": [
-       441,
-       268
+       444,
+       261
       ],
-      "note": "65% bad"
+      "note": "25% bad"
      },
      {
       "tile": [
-       107,
-       196
+       106,
+       200
       ],
       "screen": [
-       437,
-       239
+       435,
+       232
       ],
       "note": "24% bad"
      },
      {
       "tile": [
-       104,
-       213
+       102,
+       216
       ],
       "screen": [
-       431,
-       209
+       427,
+       204
       ],
       "note": "25% bad"
      }
     ],
     "moist ground": [
-     {
-      "tile": [
-       159,
-       124
-      ],
-      "screen": [
-       582,
-       376
-      ]
-     },
-     {
-      "tile": [
-       95,
-       120
-      ],
-      "screen": [
-       396,
-       399
-      ]
-     },
      {
       "tile": [
        140,
@@ -8616,27 +9482,37 @@
        525,
        284
       ]
+     },
+     {
+      "tile": [
+       161,
+       114
+      ],
+      "screen": [
+       590,
+       399
+      ]
+     },
+     {
+      "tile": [
+       174,
+       137
+      ],
+      "screen": [
+       622,
+       355
+      ]
      }
     ],
     "dry ground": [
      {
       "tile": [
        163,
-       107
+       106
       ],
       "screen": [
        597,
-       416
-      ]
-     },
-     {
-      "tile": [
-       97,
-       156
-      ],
-      "screen": [
-       405,
-       302
+       419
       ]
      },
      {
@@ -8648,37 +9524,47 @@
        401,
        439
       ]
+     },
+     {
+      "tile": [
+       165,
+       96
+      ],
+      "screen": [
+       606,
+       444
+      ]
      }
     ],
     "contaminated ground": [
      {
       "tile": [
-       82,
+       121,
+       198
+      ],
+      "screen": [
+       473,
+       223
+      ]
+     },
+     {
+      "tile": [
+       57,
        102
       ],
       "screen": [
-       351,
+       275,
        427
       ]
      },
      {
       "tile": [
-       77,
-       94
+       49,
+       97
       ],
       "screen": [
-       333,
-       447
-      ]
-     },
-     {
-      "tile": [
-       119,
-       196
-      ],
-      "screen": [
-       468,
-       227
+       248,
+       439
       ]
      }
     ],
@@ -8757,7 +9643,7 @@
       ],
       "screen": [
        506,
-       384
+       386
       ],
       "note": "Oak"
      },
@@ -8768,7 +9654,7 @@
       ],
       "screen": [
        529,
-       390
+       393
       ],
       "note": "Oak"
      },
@@ -8778,8 +9664,8 @@
        127
       ],
       "screen": [
-       558,
-       374
+       557,
+       376
       ],
       "note": "Oak"
      }
@@ -8838,8 +9724,8 @@
        64
       ],
       "screen": [
-       696,
-       538
+       697,
+       537
       ],
       "note": "rises toward the south"
      },
@@ -8850,7 +9736,7 @@
       ],
       "screen": [
        829,
-       325
+       323
       ],
       "note": "rises toward the west"
      },
@@ -8860,49 +9746,16 @@
        82
       ],
       "screen": [
-       870,
-       483
+       871,
+       481
       ],
       "note": "rises toward the south"
      }
-    ],
-    "tall cliff": [
-     {
-      "tile": [
-       90,
-       183
-      ],
-      "screen": [
-       391,
-       255
-      ],
-      "note": "4 levels, facing south"
-     },
-     {
-      "tile": [
-       112,
-       197
-      ],
-      "screen": [
-       449,
-       228
-      ],
-      "note": "3 levels, facing west"
-     },
-     {
-      "tile": [
-       77,
-       182
-      ],
-      "screen": [
-       356,
-       259
-      ],
-      "note": "3 levels, facing west"
-     }
     ]
    },
-   "notes": []
+   "notes": [
+    "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "beavertopia-256",
@@ -8957,35 +9810,35 @@
      {
       "tile": [
        109,
-       183
+       184
       ],
       "screen": [
-       494,
-       83
+       486,
+       74
       ],
-      "note": "46% bad"
+      "note": "40% bad"
      },
      {
       "tile": [
        109,
-       185
+       186
       ],
       "screen": [
-       478,
-       64
+       470,
+       55
       ],
-      "note": "38% bad"
+      "note": "35% bad"
      },
      {
       "tile": [
        108,
-       188
+       189
       ],
       "screen": [
-       441,
-       42
+       434,
+       33
       ],
-      "note": "34% bad"
+      "note": "30% bad"
      }
     ],
     "moist ground": [
@@ -9168,7 +10021,7 @@
        187,
        147
       ],
-      "note": "4 levels, facing south"
+      "note": "4 levels, about 9 px a level"
      },
      {
       "tile": [
@@ -9179,7 +10032,7 @@
        149,
        107
       ],
-      "note": "3 levels, facing south"
+      "note": "3 levels, about 9 px a level"
      },
      {
       "tile": [
@@ -9190,7 +10043,7 @@
        233,
        62
       ],
-      "note": "3 levels, facing south"
+      "note": "3 levels, about 9 px a level"
      }
     ]
    },
@@ -9249,11 +10102,11 @@
      {
       "tile": [
        102,
-       244
+       246
       ],
       "screen": [
-       519,
-       367
+       498,
+       338
       ],
       "note": "41% bad"
      }
@@ -9427,7 +10280,9 @@
      }
     ]
    },
-   "notes": []
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
   },
   {
    "map": "beavertopia-256",
@@ -9511,6 +10366,357 @@
        495
       ],
       "note": "Oak"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       111,
+       110
+      ],
+      "screen": [
+       339,
+       303
+      ],
+      "note": "12 levels, about 37 px a level"
+     }
+    ]
+   },
+   "notes": []
+  },
+  {
+   "map": "beavertopia-256",
+   "name": "Beavertopia, 256×256 (workshop map, local only)",
+   "pose": "meets",
+   "file": ".scratch/map-look/after/beavertopia-256-meets.jpg",
+   "variants": [
+    ".scratch/map-look/after/beavertopia-256-meets-grey.jpg",
+    ".scratch/map-look/after/beavertopia-256-meets-protanopia.jpg",
+    ".scratch/map-look/after/beavertopia-256-meets-deuteranopia.jpg",
+    ".scratch/map-look/after/beavertopia-256-meets-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 0.95,
+    "distance": 30,
+    "target": [
+     110.5,
+     4.202282905578613,
+     -178.5
+    ]
+   },
+   "where": {
+    "water partly bad": [
+     {
+      "tile": [
+       110,
+       179
+      ],
+      "screen": [
+       474,
+       356
+      ],
+      "note": "7% bad"
+     },
+     {
+      "tile": [
+       109,
+       179
+      ],
+      "screen": [
+       445,
+       369
+      ],
+      "note": "71% bad"
+     },
+     {
+      "tile": [
+       110,
+       184
+      ],
+      "screen": [
+       400,
+       251
+      ],
+      "note": "25% bad"
+     }
+    ],
+    "badwater meets clean water": [
+     {
+      "tile": [
+       110,
+       178
+      ],
+      "screen": [
+       490,
+       366
+      ],
+      "note": "from badwater at (109, 177) to clean water at (111, 179)"
+     }
+    ],
+    "dry ground": [
+     {
+      "tile": [
+       98,
+       171
+      ],
+      "screen": [
+       92,
+       704
+      ]
+     }
+    ],
+    "contaminated ground": [
+     {
+      "tile": [
+       106,
+       179
+      ],
+      "screen": [
+       355,
+       402
+      ]
+     }
+    ],
+    "contaminated beside moist ground": [
+     {
+      "tile": [
+       106,
+       184
+      ],
+      "screen": [
+       287,
+       288
+      ]
+     },
+     {
+      "tile": [
+       107,
+       185
+      ],
+      "screen": [
+       303,
+       256
+      ]
+     }
+    ],
+    "living tree": [
+     {
+      "tile": [
+       103,
+       180
+      ],
+      "screen": [
+       229,
+       379
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       118,
+       175
+      ],
+      "screen": [
+       832,
+       132
+      ],
+      "note": "Oak"
+     },
+     {
+      "tile": [
+       100,
+       178
+      ],
+      "screen": [
+       161,
+       501
+      ],
+      "note": "Oak"
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       102,
+       194
+      ],
+      "screen": [
+       34,
+       57
+      ],
+      "note": "Oak"
+     }
+    ]
+   },
+   "notes": [
+    "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose"
+   ]
+  },
+  {
+   "map": "beavertopia-256",
+   "name": "Beavertopia, 256×256 (workshop map, local only)",
+   "pose": "cliff",
+   "file": ".scratch/map-look/after/beavertopia-256-cliff.jpg",
+   "variants": [
+    ".scratch/map-look/after/beavertopia-256-cliff-grey.jpg",
+    ".scratch/map-look/after/beavertopia-256-cliff-protanopia.jpg",
+    ".scratch/map-look/after/beavertopia-256-cliff-deuteranopia.jpg",
+    ".scratch/map-look/after/beavertopia-256-cliff-tritanopia.jpg"
+   ],
+   "size": [
+    980,
+    733
+   ],
+   "view": {
+    "mode": "orbit",
+    "yaw": 1.5707963267948966,
+    "pitch": 0.5,
+    "distance": 38.5,
+    "target": [
+     66,
+     8.5,
+     -136.5
+    ]
+   },
+   "where": {
+    "dry ground": [
+     {
+      "tile": [
+       64,
+       136
+      ],
+      "screen": [
+       490,
+       164
+      ]
+     },
+     {
+      "tile": [
+       63,
+       135
+      ],
+      "screen": [
+       463,
+       155
+      ]
+     },
+     {
+      "tile": [
+       63,
+       137
+      ],
+      "screen": [
+       517,
+       155
+      ]
+     }
+    ],
+    "contaminated ground": [
+     {
+      "tile": [
+       69,
+       136
+      ],
+      "screen": [
+       490,
+       580
+      ]
+     },
+     {
+      "tile": [
+       70,
+       137
+      ],
+      "screen": [
+       516,
+       597
+      ]
+     },
+     {
+      "tile": [
+       70,
+       138
+      ],
+      "screen": [
+       543,
+       597
+      ]
+     }
+    ],
+    "dead tree": [
+     {
+      "tile": [
+       60,
+       133
+      ],
+      "screen": [
+       412,
+       114
+      ],
+      "note": "Birch"
+     },
+     {
+      "tile": [
+       64,
+       143
+      ],
+      "screen": [
+       687,
+       166
+      ],
+      "note": "Pine"
+     },
+     {
+      "tile": [
+       65,
+       149
+      ],
+      "screen": [
+       843,
+       257
+      ],
+      "note": "Pine"
+     }
+    ],
+    "tall cliff": [
+     {
+      "tile": [
+       65,
+       136
+      ],
+      "screen": [
+       490,
+       367
+      ],
+      "note": "15 levels, about 23 px a level"
+     },
+     {
+      "tile": [
+       65,
+       137
+      ],
+      "screen": [
+       516,
+       367
+      ],
+      "note": "15 levels, about 23 px a level"
+     },
+     {
+      "tile": [
+       67,
+       135
+      ],
+      "screen": [
+       463,
+       405
+      ],
+      "note": "14 levels, about 24 px a level"
      }
     ]
    },

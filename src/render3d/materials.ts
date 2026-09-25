@@ -16,17 +16,18 @@
 // - Walls are grey-green stone in faint cobbles: every other level a shade darker, and a pale
 //   ledge over a dark groove between levels, at least a pixel wide at any zoom, so levels can be
 //   counted; a lip of the top's ground.
-// - Water is light teal where shallow (see-through near the shore) and blue where deep, with
-//   glints, pale ripples that move, foam along shores and below falls, and white water down
-//   falls (see-through, so the cliff behind shows). Badwater is a much darker red-black liquid,
-//   with the same ripples and reflections and slow glowing bubbles; water mixed with badwater is
-//   streaked with it, the streaks covering as much of it as is bad.
+// - Water is light teal where shallow (see-through near the shore) and blue where deep, lighter
+//   than dry ground at any depth, with glints, pale ripples that move, foam along shores and
+//   where falls come down, and falls as a see-through veil of streaks (the cliff shows through).
+//   Badwater is a much darker red-black liquid, with the same ripples and reflections and slow
+//   glowing bubbles. Water mixed with badwater (each tile's own share) is murkier than clean
+//   water all over, and streaked with badwater as densely as it is bad.
 // - A per-tile overlay (selection, previews, layers) and the hovered tile stay on top. An overlay
 //   tile with full alpha is hatched (dam sites): light stripes in its colour and dark stripes,
 //   solid light when too small for stripes, and a dark rim just outside, so it shows on any
 //   ground or water in any colours.
 // - Objects that must read from afar (dead trees, slope arrows, the start) grow when they would
-//   be smaller on screen than their minimum size, up to three times.
+//   be smaller on screen than their minimum size, up to a limit of their own.
 // Colours are display values: the renderer outputs them without conversion.
 
 import {
@@ -300,7 +301,7 @@ const COMMON = /* glsl */ `
   }
   /** A hatched overlay (dam sites) at tile position g: inside, light stripes in the tile's
    *  overlay colour and dark stripes (solid light where a stripe would be under two pixels); just
-   *  outside, a dark rim at least a pixel and a half wide. Returns the colour and its weight. */
+   *  outside, a dark rim at least a pixel wide. Returns the colour and its weight. */
   vec4 hatchAt(vec2 g, vec3 col) {
     // (the light look draws a hatched tile plain, in its colour: the overlay's own mix)
     if (LITE == 1 || hatching < 0.5) return vec4(0.0);
@@ -326,10 +327,8 @@ const COMMON = /* glsl */ `
     if (bitOf(d, 2.0) > 0.5) e = min(e, length(vec2(fr.x, 1.0 - fr.y)));
     if (bitOf(d, 4.0) > 0.5) e = min(e, length(vec2(1.0 - fr.x, fr.y)));
     if (bitOf(d, 8.0) > 0.5) e = min(e, length(fr));
-    float wb = px * smoothstep(0.1, 0.2, px);
-    float w = max(0.14, 1.5 * px);
-    if (e < wb) return vec4(col, 1.0);
-    return vec4(${glColor(HATCH.dark)}, 1.0 - smoothstep(wb + w, wb + w + px, e));
+    float w = max(0.12, 1.1 * px);
+    return vec4(${glColor(HATCH.dark)}, 1.0 - smoothstep(w, w + px, e));
   }
   /** The blue-grey haze over distant ground, and the warm grade. */
   vec3 finish(vec3 c, vec3 world) {
@@ -587,23 +586,28 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         vec2 g = vec2(vWorld.x, -vWorld.z);
         vec3 V = normalize(cameraPosition - vWorld);
         float t = time;
-        // how much of this point is badwater: all of pure badwater; water mixed with it is streaked,
-        // the streaks covering about as much of it as is bad
+        // the tile's badwater share: pure badwater (0.95 and up) is murky all over. Water mixed with
+        // badwater is murkier than clean water all over, the more so the more of it is bad (a cue in
+        // lightness at any share), and streaked with badwater as densely as it is bad (a fine
+        // pattern, a few streaks a tile; never all of it, so it never looks pure)
+        bool mixed = cont > 0.05 && cont < 0.95;
+        float bad = cont >= 0.95 ? 1.0 : 0.0;
+        float tint = mixed ? 0.22 + 0.3 * cont : 0.0;
         #if LITE
-          float bad = smoothstep(0.3, 0.7, cont);
+          if (mixed) tint = 0.25 + 0.5 * cont;
         #else
-          float bad = 0.0;
-          if (cont > 0.9) bad = smoothstep(0.9, 0.97, cont);
-          if (cont > 0.02 && cont < 0.97) {
-            float sn = vnoise(g * 0.8 + vec2(t * 0.03, -t * 0.02)) * 0.6 + vnoise(vec2(g.x * 2.4 + g.y * 0.9, g.y * 1.1 - g.x * 0.6) + 3.0) * 0.4;
-            float q = clamp((sn - 0.27) / 0.46, 0.0, 1.0);
-            bad = max(bad, smoothstep(q - 0.05, q + 0.05, cont));
+          if (mixed) {
+            vec2 wq = g * 2.3 + vec2(vnoise(g * 0.7), vnoise(g * 0.7 + 9.0)) * 1.6 + vec2(t * 0.05, -t * 0.04);
+            float sn = vnoise(wq) * 0.6 + vnoise(wq * 2.1 + 5.0) * 0.4;
+            float q = clamp((sn - 0.25) / 0.5, 0.0, 1.0);
+            float aa = max(fwidth(sn) * 2.0, 0.03);
+            bad = smoothstep(q - aa, q + aa, cont * 0.95);
           }
         #endif
         float absorb = 1.0 - exp(-depth * 1.4);
-        vec3 clean = mix(${glColor(WATER.shallow)}, ${glColor(WATER.deep)}, absorb);
         vec3 murky = mix(${glColor(WATER.bad)}, ${glColor(WATER.badDeep)}, absorb);
-        float alpha = mix(mix(0.62, 0.95, absorb), mix(0.95, 0.99, absorb), bad);
+        vec3 clean = mix(mix(${glColor(WATER.shallow)}, ${glColor(WATER.deep)}, absorb), murky, tint);
+        float alpha = mix(mix(0.72, 0.95, absorb), mix(0.95, 0.99, absorb), max(bad, tint));
         float foam = 0.0;
         float glints = 0.0;
         float pale = 0.0;
@@ -633,13 +637,13 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
           // a thin line along the shore, and (clean water only) broken foam just off it
           foam += (1.0 - smoothstep(0.03, 0.08, shore)) * mix(0.7, 0.45, bad);
           #if LITE
-            foam += (1.0 - smoothstep(0.0, 0.95, fall)) * 0.6 * (1.0 - bad * 0.6);
+            foam += (1.0 - smoothstep(0.0, 0.5, fall)) * 0.45 * (1.0 - bad * 0.35);
           #else
             float fn = vnoise(g * 4.0 + vec2(t * 0.3, -t * 0.2));
             foam += (1.0 - smoothstep(0.06, 0.24 + 0.1 * fn, shore)) * smoothstep(0.4, 0.72, fn + 0.12) * 0.5 * (1.0 - bad);
-            // white water where a fall comes down
+            // broken white water just where a fall comes down
             float churn = vnoise(g * 3.2 + vec2(0.0, t * 1.4)) * 0.6 + vnoise(g * 7.0 - vec2(t * 0.9, 0.0)) * 0.4;
-            foam += (1.0 - smoothstep(0.0, 0.95, fall)) * (0.3 + 0.7 * smoothstep(0.3, 0.62, churn)) * (1.0 - bad * 0.6);
+            foam += (1.0 - smoothstep(0.0, 0.5, fall)) * (0.15 + 0.65 * smoothstep(0.35, 0.65, churn)) * (1.0 - bad * 0.35);
             // glints of light, and pale ripples drifting where it flows
             // (small and sparse, and gone where a pixel covers more than a few of them)
             float fine = 1.0 - smoothstep(0.03, 0.09, fwidth(g.x));
@@ -660,9 +664,10 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
           bool edge = vFlags > 254.5;
           float drop = edge ? 0.0 : vFlags / 30.0;
           float streak = smoothstep(0.35, 0.65, s);
-          foam = (0.3 + 0.6 * streak) * smoothstep(0.12, 0.5, drop) * (1.0 - bad * 0.85);
-          // a small step between two waters is barely there; the map's edge shows the water's side
-          alpha = edge ? mix(0.85, 0.95, bad) : mix(mix(0.16, 0.55, streak), 0.85, bad) * smoothstep(0.08, 0.25, drop);
+          foam = (0.3 + 0.6 * streak) * smoothstep(0.12, 0.5, drop) * (1.0 - bad * 0.6);
+          // a veil of streaks (badwater's dark, with brown streaks) that the cliff shows through; a
+          // small step between two waters is barely there; the map's edge shows the water's side
+          alpha = edge ? mix(0.85, 0.95, bad) : mix(0.16, 0.55, streak) * smoothstep(0.08, 0.25, drop);
           if (alpha < 0.01) discard;
         }
         foam = clamp(foam, 0.0, 1.0);
@@ -671,9 +676,11 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         vec3 light = skyColor * 1.2 + sunColor * 0.3 * max(dot(N, sunDir), 0.0) * lit;
         c *= light;
         // the sky's reflection, stronger at low angles; pale ripples; the sun's glint and glints
-        float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0);
+        // (none on a fall: a sheet seen edge-on would mirror the sky in patches)
+        float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0) * step(0.5, n.y);
         c = mix(c, ${glColor(WATER.sky)}, fres * mix(0.35, 0.25, bad));
-        c = mix(c, ${glColor(WATER.sky)} * 0.85, pale * mix(0.2, 0.14, bad));
+        // pale streaks where it flows (badwater's brownish, so it reads as a flowing liquid too)
+        c = mix(c, mix(${glColor(WATER.sky)} * 0.85, ${glColor(WATER.badFoam)} * 0.7, bad), pale * mix(0.2, 0.3, bad));
         float spec = pow(max(dot(reflect(-sunDir, N), V), 0.0), 90.0) * lit;
         c += sunColor * (spec * mix(0.5, 0.2, bad) + glints * 0.6 * (1.0 - bad * 0.5) * (0.3 + 0.7 * lit));
         c += ${glColor(WATER.badVein)} * bubbles * bad * 0.55;

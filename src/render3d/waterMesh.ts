@@ -3,9 +3,9 @@
 // ground is lower, a curtain hangs from the surface down to it, so falls and steps read as falling
 // water. Water in caves (below a tile's surface water) gets its top quad only. Each vertex carries
 // a depth and badwater share, which the shader turns into colour and opacity (Map look, D86: a
-// top's corners share them with the tiles round the corner, so the water thins toward the shore
-// and badwater blends into clean water), and flags for the foam: which sides of a top meet the
-// shore, and which take a fall from higher water.
+// top's corners share depth with the tiles round the corner, so the water thins toward the shore;
+// the badwater share is the tile's own, so each tile shows its own mix, D114), and flags for the
+// foam: which sides of a top meet the shore, and which take a fall from higher water.
 
 import { CHUNK } from "./mesh";
 import type { SurfaceWater, WaterView } from "./model";
@@ -78,7 +78,7 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
   const y1 = Math.min(H, y0 + CHUNK);
   /** A top's corner (tile-corner coordinates) shares the water of the tiles round it at its own
    *  level: their mean depth, dry ground counting as none (so the water thins toward the shore),
-   *  and their mean badwater share (so badwater blends into clean water where they meet). */
+   *  and their mean badwater share (unused: each top shows its own share). */
   const corner = (cxx: number, cyy: number, s: number, d: number, c: number): [number, number] => {
     let dn = 0;
     let ds = 0;
@@ -131,7 +131,9 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
         const k1 = corner(x + 1, y, s, d, c);
         const k2 = corner(x + 1, y + 1, s, d, c);
         const k3 = corner(x, y + 1, s, d, c);
-        b.quad4([x, s, -y, x + 1, s, -y, x + 1, s, -(y + 1), x, s, -(y + 1)], [k0[0], k1[0], k2[0], k3[0]], [k0[1], k1[1], k2[1], k3[1]], 0, 1, 0, flags);
+        // depth shared with the tiles round each corner; the badwater share is the tile's own, so
+        // a tile's pattern shows its own share
+        b.quad4([x, s, -y, x + 1, s, -y, x + 1, s, -(y + 1), x, s, -(y + 1)], [k0[0], k1[0], k2[0], k3[0]], [c, c, c, c], 0, 1, 0, flags);
         // curtains toward lower neighbours: down to the ground (never below the floor), or, where
         // the water falls to lower water, all the way to it, in front of the cliff (a fall)
         const drop = (xx: number, yy: number): number => {
