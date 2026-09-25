@@ -33,10 +33,17 @@ Each open choice, what was chosen, and why.
    poses are reproduced exactly: the same target, direction and 40° vertical field of view.
 7. **Two keys to start.** The mod acts only when the game is launched with `-dgmprobe` and a job file
    exists. A job file left behind can never take over a normal launch.
-8. **Only DGM Probe on during a run.** Kyler's other mods would change the tick (BeaverBuddies), add
-   panels, or write their own files. The runner switches them off in the game's settings for the run and
-   puts the whole settings key back exactly afterwards (checked value by value). This touches the settings
-   only for the length of a run, and leaves them as they were.
+8. **With the installed mods, for now** (Kyler, 2026-09-25). The runner can switch every other mod off in the
+   game's settings for a run and put the key back exactly (--keep-mods off). From the Code tab's shell it
+   cannot: that shell, sandboxed or not, sees a private copy of the registry, so its switches never reach the
+   Steam-launched game (two smoke runs loaded all of Kyler's mods). Kyler chose to run with his mods, which are
+   mostly his own: --keep-mods changes no setting, records the loaded mods in every result, and the summary
+   says the numbers are the game with those mods. The runner also stops if it cannot see Unity's launch count
+   move, so it never reports a restore it could not make.
+8b. **DGM Probe sorts after every other mod.** The game's mod sorter rewrites the load order of mods whose
+   position moves; a new mod sorting in among Kyler's moved Harmony and BobHousingOptimize. The manifest lists
+   optional mods that never exist, so the sorter places DGM Probe last and moves nothing. The runner also takes
+   DGM Probe out of the Mods folder after each run.
 9. **No saves.** `Autosaver.Suspend()` blocks the periodic and the exit saves, and the probe returns to the
    menu with `OpenMainMenu` (no exit save). The runner still records every save file before a launch and
    deletes any new one afterwards, in case a crash writes one.

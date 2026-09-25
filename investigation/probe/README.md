@@ -28,6 +28,9 @@ once, and only for the plan it was printed for.
 - Any `.timber` paths on the command line are added as games of their own, with a Normal drought.
 - `--compare-only <run id>`: redo the verdicts and the contact sheet of a finished run.
 - `--restore-only`: put the game's settings, logs and saves back after an interrupted run.
+- `--keep-mods`: play with the installed mods (no setting is changed or restored; the loaded mods are recorded).
+- `--compare-settings <export.reg> --reference <backup.reg>`: compare an export of the game's settings with a
+  backup, value by value.
 - `--backup-settings`: save a copy of the game's settings (the whole registry key as a `.reg` file, and the
   mods' on/off values in text) and print how to put it back by hand. It changes nothing.
 

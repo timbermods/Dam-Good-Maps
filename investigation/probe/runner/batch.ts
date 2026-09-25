@@ -24,7 +24,7 @@ import { runModel, type ModelRun } from './model';
 import { prefsValueName, probeOnly } from './mods';
 import { CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY, REPO } from './paths';
 import { waitQuiet } from './quiet';
-import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, marker, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
+import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, marker, parseRegFile, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
 import { writeSummary } from './summary';
 
@@ -43,6 +43,8 @@ interface Plan {
   gameIds: string[];
   speed: number;
   smokeDays?: number;
+  /** Play with the installed mods (Kyler, 2026-09-25): no settings are changed or restored. */
+  keepMods?: boolean;
 }
 
 function selectGames(plan: Plan): GameDef[] {
@@ -68,7 +70,7 @@ function planFromArgs(): Plan {
   if (smoke) ids = ids.slice(0, 1);
   const unknown = ids.filter((id) => !all.some((g) => g.id === id));
   if (unknown.length) throw new Error(`unknown games: ${unknown.join(', ')} (known: ${all.map((g) => g.id).join(', ')})`);
-  return { runId: opt('run-id') ?? newRunId(smoke ? 'smoke' : 'batch'), kind: smoke ? 'smoke' : 'batch', extraMaps, gameIds: ids, speed: Number(opt('speed') ?? 99), smokeDays: smoke ? Number(opt('days') ?? 1) : undefined };
+  return { runId: opt('run-id') ?? newRunId(smoke ? 'smoke' : 'batch'), kind: smoke ? 'smoke' : 'batch', extraMaps, gameIds: ids, speed: Number(opt('speed') ?? 99), smokeDays: smoke ? Number(opt('days') ?? 1) : undefined, keepMods: flag('keep-mods') };
 }
 
 /**
@@ -77,20 +79,22 @@ function planFromArgs(): Plan {
  * and after the restore they must equal it again, value by value, mod load order included.
  */
 async function launch(plan: Plan, prepared: Prepared[], reference: string, build: boolean): Promise<boolean> {
+  const keepMods = !!plan.keepMods;
   const p = probePaths();
   const dir = resultsDir(plan.runId);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 1));
   if (!existsSync(reference)) throw new Error(`The settings backup ${reference} does not exist: nothing was launched.`);
   log(`settings backup found: ${reference}`);
-  const before = compareWithBackup(reference);
-  writeFileSync(join(dir, 'settings-check-before.json'), JSON.stringify(before, null, 1));
-  if (!before.equal) {
-    log(`The game's settings differ from the backup before the launch: ${describeDiff(before)}`);
+  const before = keepMods ? null : compareWithBackup(reference);
+  if (before) writeFileSync(join(dir, 'settings-check-before.json'), JSON.stringify(before, null, 1));
+  if (keepMods) log("with the installed mods: this step neither changes nor restores the game's settings; they are checked from outside it");
+  else if (!before!.equal) {
+    log(`The game's settings differ from the backup before the launch: ${describeDiff(before!)}`);
     for (const l of handRestore(reference)) log(l);
     throw new Error('Nothing was launched: the settings do not match the backup.');
   }
-  log('the settings match the backup exactly (mod load order included)');
+  else log('the settings match the backup exactly (mod load order included)');
   if (build) {
     log('building and installing DGM Probe');
     buildMod(true);
@@ -102,7 +106,7 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
   const doRestore = () => {
     if (restored) return;
     restored = true;
-    const r = restore(join(dir, 'game-files'));
+    const r = restore(join(dir, 'game-files'), { registry: !keepMods });
     writeFileSync(join(dir, 'restore.json'), JSON.stringify(r, null, 1));
     log(`restored: registry ${r.registryRestored ? `put back (${r.registryChanged.length} values had changed)` : 'unchanged'}; logs ${r.logsRestored.join(', ') || '-'}; player data ${r.playerDataRestored.join(', ') || 'unchanged'}; saves deleted ${r.savesDeleted.length}, saves changed ${r.savesChanged.length}; other new files moved ${r.docsMoved.length}`);
   };
@@ -120,13 +124,16 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
   };
   process.once('SIGINT', onSignal);
   try {
-    const mods = probeOnly();
-    log(`mods for the run: on ${mods.on.join(', ')}; off ${mods.off.length}`);
+    if (!keepMods) {
+      const mods = probeOnly();
+      log(`mods for the run: on ${mods.on.join(', ')}; off ${mods.off.length}`);
+    }
     const job = makeJob(plan.runId, prepared, plan.speed);
     const launches = await runJob(job, { hangSeconds: 240, startSeconds: 300, mapSeconds: Math.max(...job.maps.map((m) => m.timeoutSeconds)) + 300, maxLaunches: Math.max(3, Math.ceil(prepared.length / 3) + 2), log });
     writeFileSync(join(dir, 'launches.json'), JSON.stringify(launches, null, 1));
     const others = [...new Set(launches.flatMap((l) => l.otherMods ?? []))];
-    if (others.length) {
+    if (keepMods) log(`run with the installed mods: ${others.join(', ') || 'none besides DGM Probe'}`);
+    else if (others.length) {
       // The game saw none of the runner's settings changes, so the restore below cannot reach them either
       // (for example when the runner runs in a sandbox with its own view of the registry).
       copyFileSync(snap.registryFile, join(dir, 'settings-before-the-run.reg'));
@@ -143,7 +150,7 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     // looking at the game's settings (a sandbox with its own copy of the registry, as on 2026-09-25): its
     // mod switches never reached the game, and neither its restore nor its checks can be trusted.
     const count = prefsValueName('unity.player_session_count');
-    viewIsGames = registryValues()[count] !== snap.registryValues[count];
+    viewIsGames = keepMods || registryValues()[count] !== snap.registryValues[count];
     if (!viewIsGames) {
       writeFileSync(join(dir, 'settings-view-not-the-games.txt'), `The launch count ${count} did not change in this process's view of the registry.\n`);
       log("STOP: this process does not see the game's settings (the launch count did not move), so its mod switches did not reach the game and its restore cannot reach your settings.");
@@ -153,8 +160,12 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     }
     doRestore();
     if (existsSync(p.job)) rmSync(p.job);
+    // DGM Probe leaves the Mods folder after each run, so the player's own game never loads it
+    rmSync(modInstallDir(), { recursive: true, force: true });
+    log('DGM Probe removed from the Mods folder');
   }
   if (!viewIsGames) return false;
+  if (keepMods) return true;
   const after = compareWithBackup(reference);
   writeFileSync(join(dir, 'settings-check-after.json'), JSON.stringify(after, null, 1));
   if (!after.equal) {
@@ -199,12 +210,12 @@ export function compareRun(plan: Plan): { verdicts: GameVerdicts[]; sheet: strin
         models[p.game.id] = { cpuSeconds: 0, error: modelError };
       }
     }
-    const checks = evaluate({ L, others: loaded, model, modelError, otherMods }, p.checks);
+    const checks = evaluate({ L, others: loaded, model, modelError, otherMods: plan.keepMods ? [] : otherMods, installedMods: plan.keepMods ? otherMods : [] }, p.checks);
     verdicts.push({ game: p.game.id, title: p.game.title, group: p.game.group, status: L.result?.status ?? 'no result', checks });
     log(`${p.game.id}: ${checks.map((c) => `${c.id} ${c.verdict}`).join(', ')}`);
   }
   writeFileSync(join(dir, 'verdicts.json'), JSON.stringify({ runId: plan.runId, models, verdicts }, null, 1));
-  writeSummary(join(dir, 'summary.md'), plan.runId, prepared, loaded, verdicts, otherMods);
+  writeSummary(join(dir, 'summary.md'), plan.runId, prepared, loaded, verdicts, otherMods, !!plan.keepMods);
   const sheet = writeSheet(probePaths().sheet, plan.runId, probePaths().shots, prepared.filter((p) => loaded.get(p.game.id)?.result).map((p) => ({
     result: loaded.get(p.game.id)!.result!,
     poses: p.map.poses,
@@ -235,6 +246,24 @@ async function main(): Promise<void> {
     if (isGameRunning()) throw new Error('A probe run was not restored and Timberborn is running: close the game, then run the batch with --restore-only.');
     log('an earlier run was not restored: restoring first');
     restore(join(probePaths().runner, 'restored-' + Date.now()));
+  }
+  const exported = opt('compare-settings');
+  if (exported) {
+    // two .reg files, value by value: an export of the real settings (taken outside this process) and the backup
+    const reference = opt('reference');
+    if (!reference) throw new Error('--compare-settings needs --reference <backup .reg>');
+    const a = parseRegFile(reference), b = parseRegFile(exported);
+    const missing = [...a.keys()].filter((k) => !b.has(k)), extra = [...b.keys()].filter((k) => !a.has(k));
+    const changed = [...a.keys()].filter((k) => b.has(k) && a.get(k) !== b.get(k));
+    // Unity's own count of launches and its session ids change at every launch of the game, whoever starts it
+    const bookkeeping = (k: string) => /^unity(\.player_session(id|_count)|_connect\.(mega_)?session_id)_h\d+$/.test(k);
+    const all = [...missing, ...extra, ...changed];
+    const d: SettingsDiff = { equal: all.length === 0, missing, extra, changed };
+    console.log(d.equal ? `The exported settings match ${reference} exactly (every value, mod load order included).` : `The exported settings differ from ${reference}: ${describeDiff(d)}`);
+    for (const k of changed) console.log(`  ${k}: ${a.get(k)} → ${b.get(k)}${bookkeeping(k) ? "   (Unity's own launch bookkeeping)" : ''}`);
+    if (!d.equal) for (const l of handRestore(reference)) console.log(l);
+    process.exitCode = d.equal ? 0 : all.every(bookkeeping) ? 6 : 5;
+    return;
   }
   const verify = opt('verify-settings');
   if (verify) {

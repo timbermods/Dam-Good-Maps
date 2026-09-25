@@ -148,14 +148,14 @@ export function hasPendingRestore(): boolean {
  * into the run's folder. Files that existed before and changed are reported, never deleted.
  * `keepLogsIn` receives the probe's own Player.log files.
  */
-export function restore(keepLogsIn: string | null): RestoreReport {
+export function restore(keepLogsIn: string | null, opts: { registry?: boolean } = {}): RestoreReport {
   if (isGameRunning()) throw new Error('Timberborn is running: the restore waits until it has quit.');
   const p = probePaths();
   const snap = JSON.parse(readFileSync(marker(), 'utf8')) as Snapshot;
   const report: RestoreReport = { registryChanged: [], registryRestored: false, logsRestored: [], playerDataRestored: [], savesDeleted: [], savesChanged: [], docsMoved: [], docsChanged: [] };
 
   // Settings: compare value by value; if anything differs, put the exported key back whole.
-  const now = registryValues();
+  const now = opts.registry === false ? snap.registryValues : registryValues();
   const names = new Set([...Object.keys(now), ...Object.keys(snap.registryValues)]);
   for (const n of names) if (now[n] !== snap.registryValues[n]) report.registryChanged.push(n);
   if (report.registryChanged.length) {
