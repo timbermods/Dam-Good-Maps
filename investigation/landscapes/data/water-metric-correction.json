@@ -1,5 +1,5 @@
 {
-  "reason": "Fall surfaces now use actual converted floors; original relief and all validators are unchanged. Every old record must be replayed by repair-water-metrics.ts before aggregation.",
+  "reason": "Fall surfaces use actual converted floors. Original relief and validators are unchanged. Old settled records are replayed; all published unsettled fall statistics are unavailable. Other terminal-state diagnostics remain flagged as unsettled.",
   "before": {
     "sha256": "e1694cf3e08f2870f2c41254ed6eb10293bb10bb1940dcbc8e2e49523bf2e9a1",
     "rawSha256": "e1694cf3e08f2870f2c41254ed6eb10293bb10bb1940dcbc8e2e49523bf2e9a1",

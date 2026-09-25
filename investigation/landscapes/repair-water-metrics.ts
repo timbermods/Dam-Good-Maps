@@ -14,6 +14,14 @@ function repair(filename: string) {
   const path = ".work/rows/" + filename;
   const row = JSON.parse(readFileSync(path, "utf8"));
   if (row.measurementVersion === 2) return;
+  if (!row.settled) {
+    row.falls = null;
+    row.measurementVersion = 2;
+    row.cachedWaterReplaySkipped =
+      "No steady state; fall statistics are unavailable.";
+    writeFileSync(path, JSON.stringify(row));
+    return;
+  }
   const W = row.size,
     N = W * W;
   const bytes = gunzipSync(

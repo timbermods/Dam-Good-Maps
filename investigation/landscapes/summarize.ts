@@ -18,7 +18,12 @@ const qualityFlags = JSON.parse(
 const rows = readdirSync(".work/rows")
   .filter((x) => x.endsWith(".json"))
   .sort()
-  .map((f) => JSON.parse(readFileSync(".work/rows/" + f, "utf8")));
+  .map((f) => {
+    const r = JSON.parse(readFileSync(".work/rows/" + f, "utf8"));
+    // A terminal transient is not a steady-state fall measurement.
+    if (!r.settled) r.falls = null;
+    return r;
+  });
 const generated = readdirSync(".work/generated")
   .filter((x) => x.endsWith(".json"))
   .sort()
@@ -234,7 +239,12 @@ const summary = {
   passed22: rows.filter((r) => r.cap === 22 && r.passed).length,
   waterMetricAudit: {
     measurementVersion: 2,
+    fallPolicy:
+      "Unsettled simulations have no published fall statistics. Other terminal-state diagnostics remain flagged by settled=false; all water targets require settled=true.",
     cachedRecordsRechecked: rows.filter((r) => r.waterMetricsRechecked).length,
+    cachedReplaysSkippedUnsettled: rows.filter(
+      (r) => r.cachedWaterReplaySkipped,
+    ).length,
     boundaryCorrectionsChangedFalls: rows.filter(
       (r) => r.boundaryFallCorrectionChanged,
     ).length,
