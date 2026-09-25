@@ -4,6 +4,7 @@ import {
   mkdirSync,
   existsSync,
   readdirSync,
+  renameSync,
 } from "node:fs";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,7 @@ import {
   isMainThread,
   workerData,
   parentPort,
+  threadId,
 } from "node:worker_threads";
 import { sourcesFromHalo, crop, quantise } from "./lib/terrain";
 import { convert } from "./lib/convert";
@@ -26,6 +28,11 @@ const priority = process.argv.includes("--priority");
 const all = JSON.parse(readFileSync("data/locations.json", "utf8"));
 const countArg = process.argv.indexOf("--workers");
 const workers = countArg < 0 ? 8 : +process.argv[countArg + 1];
+function atomicWrite(path: string, data: string | Uint8Array) {
+  const temp = `${path}.${process.pid}-${threadId}.tmp`;
+  writeFileSync(temp, data);
+  renameSync(temp, path);
+}
 const tasks = all.flatMap((loc: any, index: number) =>
   pilot && index % 20 !== 0
     ? []
@@ -99,9 +106,8 @@ async function task(t: any) {
       features: r.features,
       ms: Math.round(performance.now() - start),
     };
-    writeFileSync(path, JSON.stringify(row));
     if (r.v.report.passed && cap === 16) {
-      writeFileSync(
+      atomicWrite(
         `.work/candidates/${id}.json.gz`,
         gzipSync(
           JSON.stringify({
@@ -121,6 +127,8 @@ async function task(t: any) {
         ),
       );
     }
+    // The completed row is the cache marker; publish it only after its fixture.
+    atomicWrite(path, JSON.stringify(row));
   }
 }
 if (isMainThread) {
