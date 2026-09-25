@@ -12,12 +12,14 @@
 // (one turn every 8 s) with the time between frames, the CPU time of each render call, and the
 // GPU time per frame from timer queries when Chrome offers them.
 //
-// Usage: npm run bench:3d [-- --seconds 8] [-- --quick]. Writes out/m4/bench3d.json. CI cannot
+// Usage: npm run bench:3d [-- --seconds 8] [-- --quick] [-- --configs 3 --maps Beavertopia --seeds 1]
+// (a subset, for trying things out) [-- --out out/map-look/bench3d.json]. Writes out/m4/bench3d.json
+// by default (a subset run: .scratch/bench3d-subset.json). CI cannot
 // run this (no GPU, no display); tests/e2e/render3d.spec.ts checks what CI can.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cpus, platform, release, totalmem } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { chromium, type Browser, type Page } from "@playwright/test";
 import { strFromU8, unzipSync } from "fflate";
 import { build, preview } from "vite";
@@ -28,6 +30,11 @@ const arg = (name: string) => {
 };
 const SECONDS = Number(arg("seconds") ?? 8);
 const QUICK = process.argv.includes("--quick");
+/** --configs 3: only the third configuration (1-based, comma-separated); --maps Beavertopia: only
+ *  the local maps whose names contain one of these (comma-separated); --seeds 1,2: the generated. */
+const CONFIGS = arg("configs")?.split(",").map(Number);
+const MAPS = arg("maps")?.split(",");
+const SEEDS = arg("seeds")?.split(",").map(Number);
 const PORT = 4190;
 const OUT = ".scratch/bench3d-dist";
 
@@ -164,7 +171,7 @@ async function runConfig(label: string, args: string[], cpuSlowdown: number, scr
   })`)) as { gpu: string; refreshHz: number; dpr: number };
   console.log(`\n== ${label}: ${env.gpu}, CPU ${cpuSlowdown}× slower, display ${env.refreshHz} Hz, DPR ${env.dpr}`);
   const results: MapResult[] = [];
-  const seeds = QUICK ? [1] : [1, 2, 3];
+  const seeds = SEEDS ?? (QUICK ? [1] : [1, 2, 3]);
   for (const seed of seeds) {
     const r = await measureGenerated(page, seed);
     results.push(r);
@@ -198,14 +205,15 @@ async function main() {
     const list = await gpus();
     const active = list.find((g) => g.active) ?? list[0];
     const other = list.find((g) => g !== active);
-    const maps = localMaps();
+    const maps = localMaps().filter((m) => !MAPS || MAPS.some((n) => m.includes(n)));
     const configs: [string, string[], number, Screen][] = [["default GPU", [], 1, DESKTOP]];
     if (other) {
       configs.push([`other GPU (${other.name})`, [`--use-adapter-luid=${other.luid}`], 1, DESKTOP]);
       configs.push([`other GPU (${other.name}), CPU 4× slower, 1080p laptop screen at 150%`, [`--use-adapter-luid=${other.luid}`], 4, LAPTOP]);
     }
     const runs = [];
-    for (const [label, args, slow, screen] of QUICK ? configs.slice(0, 1) : configs) runs.push(await runConfig(label, args, slow, screen, QUICK ? [] : maps));
+    const chosen = CONFIGS ? configs.filter((_, k) => CONFIGS.includes(k + 1)) : QUICK ? configs.slice(0, 1) : configs;
+    for (const [label, args, slow, screen] of chosen) runs.push(await runConfig(label, args, slow, screen, QUICK ? [] : maps));
     const all = runs.flatMap((r) => r.results.map((x) => ({ ...x, config: r.label })));
     const worstBuild = Math.max(...all.map((r) => r.build.ms));
     const worstFps = Math.min(...all.map((r) => r.orbit.fps));
@@ -225,11 +233,13 @@ async function main() {
       })()),
     };
     const summary = { worstBuildMs: worstBuild, worstFps: round(worstFps), framesOver60: over, frames, budget: { buildMs: 1500, fps: 60 } };
-    mkdirSync("out/m4", { recursive: true });
-    writeFileSync("out/m4/bench3d.json", JSON.stringify({ date: new Date().toISOString().slice(0, 10), seconds: SECONDS, machine, summary, runs }, null, 2) + "\n");
+    // --out picks the report's file; a subset run never replaces a full run's report
+    const out = arg("out") ?? (CONFIGS || MAPS || SEEDS || QUICK ? ".scratch/bench3d-subset.json" : "out/m4/bench3d.json");
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out,JSON.stringify({ date: new Date().toISOString().slice(0, 10), seconds: SECONDS, machine, summary, runs }, null, 2) + "\n");
     console.log(`\nmachine: ${machine.cpu}, ${machine.threads} threads, ${machine.memoryGB} GB; GPUs: ${machine.gpus.join(", ")}; Chrome ${machine.chrome}`);
     console.log(`worst build ${worstBuild} ms (budget 1500), worst orbit ${worstFps.toFixed(0)} fps (budget 60), ${over} of ${frames} frames over 1/60 s`);
-    console.log("wrote out/m4/bench3d.json");
+    console.log(`wrote ${out}`);
     if (worstBuild >= 1500 || worstFps < 60) process.exitCode = 1;
   } finally {
     await server.close();

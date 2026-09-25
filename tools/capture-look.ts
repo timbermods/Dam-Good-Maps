@@ -10,7 +10,8 @@
 // shown, and drawn from fixed poses:
 //   - overview: the whole map from the south (the view's default pose before Map look);
 //   - start: close to the start, from the game's default direction (30° east of north, pitched down);
-//   - badwater: close to the map's badwater (its dam site when it has none), the same direction;
+//   - badwater: close to where the map's badwater meets clean water (else its badwater, else its
+//     dam site), the same direction;
 //   - falls: close to the map's tallest waterfall, seen from downstream, when it has one.
 // Only the canvas is captured, but for one whole view of the first map from its default camera, with
 // the view's buttons and legend (riverValley-128-default-ui). Our own generated maps go to docs/map-look/<label>/ (committed);
@@ -18,8 +19,9 @@
 // capture, the tool also records where to look for each map meaning: an example tile of each, its
 // screen position in the capture, and whether it is in view (<label>.json beside the images).
 //
-// With --label after it also writes, for each capture, a greyscale version and the three
-// colour-blindness simulations (Machado, Oliveira and Fernandes 2009, severity 1, in linear RGB).
+// With --label after it also writes, for each capture but the falls, a greyscale version and the
+// three colour-blindness simulations (Machado, Oliveira and Fernandes 2009, severity 1, in linear
+// RGB). --doc writes docs/map-look/captures.md from the two runs' records.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -41,6 +43,8 @@ const arg = (name: string) => {
 const LABEL = arg("label") ?? "after";
 const ONLY = arg("only")?.split(",");
 const QUALITY = Number(arg("quality") ?? 80);
+/** The greyscale and colour-blind versions: a little more compressed (they are many). */
+const VARIANT_QUALITY = Math.min(QUALITY, 72);
 const PORT = 4191;
 const DIST = ".scratch/capture-dist";
 const BEAVERTOPIA = "investigation/raw/workshop/Beavertopia - 256x256.timber";
@@ -57,7 +61,9 @@ type Meaning =
   | "dead tree"
   | "the start"
   | "slope"
-  | "dam site";
+  | "dam site"
+  | "badwater meets clean water"
+  | "contaminated beside moist ground";
 
 interface MapData {
   id: string;
@@ -225,6 +231,8 @@ function examplesOf(m: MapData): Record<Meaning, Tile[]> {
     "the start": [],
     slope: [],
     "dam site": [],
+    "badwater meets clean water": [],
+    "contaminated beside moist ground": [],
   };
   for (let y = 1; y < H - 1; y++)
     for (let x = 1; x < W - 1; x++) {
@@ -237,6 +245,18 @@ function examplesOf(m: MapData): Record<Meaning, Tile[]> {
         else if (m.moisture[i] > 0) out["moist ground"].push([x, y]);
         else out["dry ground"].push([x, y]);
       }
+    }
+  // where the two meet: badwater mixing with clean water, a contaminated tile beside moist ground
+  const clean = (i: number) => m.depth[i] > 0.1 && m.contamination[i] < 0.05;
+  const moist = (i: number) => m.depth[i] <= 0.001 && m.soil[i] === 0 && m.moisture[i] > 0;
+  for (let y = 1; y < H - 1; y++)
+    for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x;
+      const around = [i + 1, i - 1, i + W, i - W];
+      // the two mix where they meet: water part bad, or badwater beside clean water
+      const c = m.contamination[i];
+      if (m.depth[i] > 0.1 && ((c >= 0.05 && c < 0.5) || (c >= 0.5 && around.some(clean)))) out["badwater meets clean water"].push([x, y]);
+      if (m.depth[i] <= 0.001 && m.soil[i] > 0 && !m.covered[i] && around.some(moist)) out["contaminated beside moist ground"].push([x, y]);
     }
   for (const t of m.trees) (t.dead ? out["dead tree"] : out["living tree"]).push([t.x, t.y]);
   for (const s of m.slopes) out.slope.push([s.x, s.y]);
@@ -280,7 +300,8 @@ function posesOf(m: MapData, dam: Tile[]): Pose[] {
   const poses: Pose[] = [{ id: "overview", view: { mode: "orbit", yaw: 0, pitch: 0.9, distance: span * 1.35, target: [m.W / 2, mean(m.heights), -m.H / 2] } }];
   if (m.start) poses.push({ id: "start", view: { mode: "orbit", yaw: GAME_YAW, pitch: 1.0, distance: 42, target: at(m.start) } });
   const ex = examplesOf(m);
-  const bad = centreOf(ex.badwater) ?? centreOf(ex["contaminated ground"]) ?? centreOf(dam);
+  // where badwater meets clean water when it does, else the badwater's middle
+  const bad = centreOf(ex["badwater meets clean water"]) ?? centreOf(ex.badwater) ?? centreOf(ex["contaminated ground"]) ?? centreOf(dam);
   if (bad) poses.push({ id: "badwater", view: { mode: "orbit", yaw: GAME_YAW, pitch: 0.95, distance: 48, target: at(bad) } });
   // the tallest waterfall (water falling a level or more to water), for its foam
   let fall: Tile | null = null;
@@ -423,6 +444,8 @@ async function captureMap(page: Page, tool: Page, m: MapData, dir: string): Prom
     const r = window.dgm3d!.renderer as unknown as { setClock?: (t: number | null) => void };
     r.setClock?.(12.5);
   });
+  // --height: the ground by height (the toggle), for trying things out
+  if (process.argv.includes("--height")) await page.evaluate(() => (window.dgm3d!.renderer as unknown as { setGroundMode(m: string): void }).setGroundMode("height"));
   const shots: Shot[] = [];
   // the first map: the whole view as the page shows it, from its default camera (with the legend)
   if (m.id === "riverValley-128") {
@@ -451,8 +474,8 @@ async function captureMap(page: Page, tool: Page, m: MapData, dir: string): Prom
     const file = `${m.id}-${pose.id}.jpg`;
     writeFileSync(join(dir, file), await toJpeg(tool, png, QUALITY));
     const vs: string[] = [];
-    if (LABEL === "after") {
-      const v = await variants(tool, png, QUALITY);
+    if (LABEL === "after" && pose.id !== "falls") {
+      const v = await variants(tool, png, VARIANT_QUALITY);
       for (const [k, buf] of Object.entries(v)) {
         const f = `${m.id}-${pose.id}-${k}.jpg`;
         writeFileSync(join(dir, f), buf);
@@ -532,4 +555,75 @@ async function main() {
   }
 }
 
-await main();
+// ------------------------------------------------------------------------------ the review doc
+
+const MEANINGS: Meaning[] = ["clean water", "badwater", "badwater meets clean water", "moist ground", "dry ground", "contaminated ground", "contaminated beside moist ground", "living tree", "dead tree", "the start", "slope", "dam site"];
+const POSE_NAMES: Record<string, string> = {
+  overview: "the whole map from the south",
+  start: "close to the start",
+  badwater: "close to where badwater meets clean water (or to the badwater)",
+  falls: "the tallest waterfall, from downstream",
+  "default-ui": "the page's own view from its default camera, with its buttons and legend",
+};
+const VARIANT_NAMES: Record<string, string> = { grey: "greyscale", protanopia: "protanopia", deuteranopia: "deuteranopia", tritanopia: "tritanopia" };
+
+/** docs/map-look/captures.md: every capture, and for each map where to look for each meaning. */
+function writeDoc(): void {
+  const read = (label: string) => (JSON.parse(readFileSync(join("docs/map-look", label, `${label}.json`), "utf8")) as { date: string; viewport: { width: number; height: number }; shots: Shot[] });
+  const before = read("before");
+  const after = read("after");
+  const link = (file: string) => (file.startsWith("docs/map-look/") ? `[${file.slice("docs/map-look/".length)}](${file.slice("docs/map-look/".length)})` : `\`${file}\` (local only)`);
+  const out: string[] = [];
+  out.push("# Map look captures");
+  out.push("");
+  out.push("Before and after captures of the same maps from the same camera poses, for the Map look review");
+  out.push("(ROADMAP \"Map look\", PLAN §20 D86 and D110). The before captures show the 3D view at `m8-done`");
+  out.push("(cfa5990); the after captures show it with Map look. Each after capture (but the falls) also");
+  out.push("comes in greyscale and in three colour-blindness simulations (protanopia, deuteranopia,");
+  out.push("tritanopia; Machado, Oliveira and Fernandes 2009, full severity, in linear RGB).");
+  out.push("");
+  out.push(`Made with \`npx tsx tools/capture-look.ts --label before|after\` (before on ${before.date}, after on ${after.date}), in the installed Chrome, headed, at ${after.viewport.width}×${after.viewport.height} CSS pixels and a device pixel ratio of 1. Each map is opened in the editor (generated maps with **Refine this map**, Beavertopia through the file input) with **Show dam sites** on, and only the 3D canvas is captured, except for one whole view per run. The water is held at one moment of its movement.`);
+  out.push("");
+  out.push("The maps: seed 4242 in every theme at 128² (Normal), seed 4242 River Valley at 256², and");
+  out.push("Beavertopia (a workshop map, 256²). Beavertopia's captures are not ours to share: they stay in");
+  out.push("`.scratch/map-look/` on the machine that made them and are never committed.");
+  out.push("");
+  out.push("## Where to look");
+  out.push("");
+  out.push("For each capture, up to three example tiles of each meaning that are in view: the tile (x east,");
+  out.push("y north, from the map's south-west corner) and its position in the image, in pixels from the");
+  out.push("top-left corner. The before and after captures of a pose share the camera, so the positions");
+  out.push("hold for both, and for the greyscale and colour-blind versions. Trees and the start are");
+  out.push("objects standing on the tile; dam sites are lines of tiles across a river.");
+  out.push("");
+  const maps = [...new Set(after.shots.map((s) => s.map))];
+  for (const map of maps) {
+    const shots = after.shots.filter((s) => s.map === map);
+    out.push(`### ${shots[0].name}`);
+    out.push("");
+    for (const s of shots) {
+      const b = before.shots.find((x) => x.map === s.map && x.pose === s.pose);
+      out.push(`**${s.pose}** (${POSE_NAMES[s.pose] ?? s.pose}):`);
+      out.push("");
+      out.push(`- before: ${b ? link(b.file) : "none"}`);
+      out.push(`- after: ${link(s.file)}`);
+      if (s.variants.length) out.push(`- after, ${s.variants.map((v) => `${VARIANT_NAMES[v.replace(/^.*-(\w+)\.jpg$/, "$1")] ?? v}: ${link(v)}`).join("; ")}`);
+      out.push("");
+      if (!Object.keys(s.where).length) continue;
+      out.push("| Meaning | Tile → position in the image |");
+      out.push("|---|---|");
+      for (const meaning of MEANINGS) {
+        const w = s.where[meaning];
+        out.push(`| ${meaning} | ${w ? w.map((e) => `(${e.tile[0]}, ${e.tile[1]}) → ${e.screen[0]}, ${e.screen[1]}`).join("; ") : "not in view"} |`);
+      }
+      out.push("");
+      for (const n of s.notes) if (/^slope/.test(n)) out.push(`- The ${n}.`);
+      if (s.notes.some((n) => /^slope/.test(n))) out.push("");
+    }
+  }
+  writeFileSync("docs/map-look/captures.md", out.join("\n").replace(/\n{3,}/g, "\n\n"));
+  console.log("wrote docs/map-look/captures.md");
+}
+
+if (process.argv.includes("--doc")) writeDoc();
+else await main();
