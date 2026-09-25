@@ -21,10 +21,10 @@ import type { MapResult } from './job';
 import { makeJob, prepare, type Prepared, summary } from './jobs';
 import { type LaunchLog, resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
-import { probeOnly } from './mods';
+import { prefsValueName, probeOnly } from './mods';
 import { CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY, REPO } from './paths';
 import { waitQuiet } from './quiet';
-import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, restore, type SettingsDiff, takeSnapshot } from './safety';
+import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, marker, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
 import { writeSummary } from './summary';
 
@@ -96,6 +96,7 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     buildMod(true);
   } else if (!existsSync(join(modInstallDir(), 'version-1.1', 'Scripts', 'DGMProbe.dll'))) throw new Error('DGM Probe is not installed: run the prepare step first.');
   const snap = takeSnapshot();
+  let viewIsGames = true;
   log(`recorded the game's settings, logs and saves (${Object.keys(snap.saves).length} save files)`);
   let restored = false;
   const doRestore = () => {
@@ -138,9 +139,22 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     process.removeListener('SIGINT', onSignal);
     // the restore waits for the game to be gone
     for (let i = 0; i < 30 && isGameRunning(); i++) await new Promise((r) => setTimeout(r, 1000));
+    // Unity counts every launch in the settings. If this process does not see the count move, it is not
+    // looking at the game's settings (a sandbox with its own copy of the registry, as on 2026-09-25): its
+    // mod switches never reached the game, and neither its restore nor its checks can be trusted.
+    const count = prefsValueName('unity.player_session_count');
+    viewIsGames = registryValues()[count] !== snap.registryValues[count];
+    if (!viewIsGames) {
+      writeFileSync(join(dir, 'settings-view-not-the-games.txt'), `The launch count ${count} did not change in this process's view of the registry.\n`);
+      log("STOP: this process does not see the game's settings (the launch count did not move), so its mod switches did not reach the game and its restore cannot reach your settings.");
+      for (const l of handRestore(reference)) log(l);
+      restored = true; // nothing it restores would be real
+      rmSync(marker(), { force: true });
+    }
     doRestore();
     if (existsSync(p.job)) rmSync(p.job);
   }
+  if (!viewIsGames) return false;
   const after = compareWithBackup(reference);
   writeFileSync(join(dir, 'settings-check-after.json'), JSON.stringify(after, null, 1));
   if (!after.equal) {

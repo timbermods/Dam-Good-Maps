@@ -81,7 +81,7 @@ export function registryValues(): Record<string, string> {
   return out;
 }
 
-const marker = () => join(probePaths().backup, 'in-progress.json');
+export const marker = () => join(probePaths().backup, 'in-progress.json');
 const DOCS_SKIP = ['DGMProbe', 'Mods', 'Saves', 'ExperimentalSaves'];
 
 /** Record everything a probe run could change. Refuses if an earlier run's backup was never restored. */
