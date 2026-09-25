@@ -573,6 +573,16 @@ Proposed to Kyler as three stages, each with its own deliverables, acceptance an
   preview, names and descriptions from the read-back features and the "how it plays" card, the place
   resolver and judgement words (D84), the settings bands.
 
+**Tooling for Kyler's eyes** (Kyler, 2026-09-25; built in M9a, not now): `npm run sheet`, a contact
+sheet of many maps at once. Seeds 1–30 of every theme at 128² by default, one grid of small
+top-down images per theme labelled with seed, theme and (once they exist) name and score; options
+`--theme`, `--seeds`, `--size`, `--variety`, `--designed-for` and `--compare <git ref>` (the same
+seeds from another version side by side, built in a temporary worktree so the working tree is never
+touched); one HTML page per run in `.scratch/sheets/`, opened automatically, never committed; a click
+opens the map in the app by its share link. It must take a couple of minutes for 180 maps. It is not
+a gate: no checks, no reports. The prototype's own contact sheets (`.scratch/sheet.ts` during this
+step) were the seed of it.
+
 **Permanent checks** (to run on every milestone after M9, so no later milestone brings archetypes
 back): no built dam walls (the terrain check and the feature-list contract test), no clones (M1),
 no archetypes (M2), play variety within its targets (M3), no approximation of workshop maps (M4).

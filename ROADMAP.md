@@ -701,6 +701,17 @@ the stages replace its order, and its premises become recipes inside the system 
     objects, resources); the settler; `water.storage_possible` in place of `water.reservoir` and the
     dam-wall check, in both validators; the document model (a stored field, project format 3); the
     generator version 0.7.0; K = 1.
+  - Also delivers **a contact-sheet command, `npm run sheet`: a tool for Kyler's eyes, not a gate**
+    (Kyler, 2026-09-25). By default it generates seeds 1–30 of every built theme at 128² and renders
+    each as a small top-down shaded image, one grid per theme, labelled with its seed, theme and,
+    once they exist, the map's name and score. Options: `--theme`, `--seeds` (a range), `--size`,
+    `--variety`, `--designed-for`, and `--compare <git ref>`, which puts the same seeds from another
+    version side by side; the other version is built in a temporary worktree (or similar) without
+    touching the working tree. Output: one HTML page per run in `.scratch/sheets/`, opened
+    automatically, never committed; a click on a map opens it in the app with its share link. It
+    must be quick: 30 seeds × 6 themes at 128² in a couple of minutes on Kyler's machine, one process
+    at a time. No checks and no reports; its only acceptance is that it runs and is as quick as
+    stated.
   - Acceptance: **zero built dam walls on every theme, size, difficulty and setting** (the dam-wall
     check on every batch map, and a contract test that no planned feature list holds a dam-site
     ridge); batches ≥ 98% final per theme at 96², 128², 192² and 256², first attempt ≥ 60%; the
