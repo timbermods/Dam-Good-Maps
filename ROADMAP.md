@@ -37,6 +37,7 @@ differently, this file wins.
 | M9 | Interestingness, names, candidates | PLAN §7.9, §12, §13 | no | high |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
+| Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
 | Design | Design pass, after M11 and the refinement phase | the impeccable-app-flow skill (timbermods/.github, `claude-skills/`) · old milestone 6 | no | high |
 | M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 | yes (the waterfall request) | xhigh |
 | M13 | Usability, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
@@ -482,6 +483,85 @@ differences in "Editor decisions".
 **In-game check:** no.
 
 **Effort:** high.
+
+---
+
+## Refinement phase
+
+After M11 and before the design pass. It works through Kyler's refinement notes: things to
+improve once every tool exists. Each note is its own item, with its own tests.
+
+**Kyler's notes**
+1. Pending decision [#2](docs/decisions-pending.md): `plants.drought` warns on every River Valley
+   map, because the berry bushes near the start grow on water that drains in a drought.
+2. Pending decision [#12](docs/decisions-pending.md): narrow a generated fall's channel to 1–3
+   tiles above the drop, for water wheels.
+3. Pending decision [#13](docs/decisions-pending.md): a river drawn across another river.
+4. Pending decision [#21](docs/decisions-pending.md): the measured targets that move less than
+   their formulas (flat share, one-level share, cliff share).
+5. The river-pond crossing fix (a queued task): the editor's **River** tool refuses a drawn river
+   that crosses a riverside pond, so `tests/e2e/tools.spec.ts` draws on a map without ponds
+   (`&lk=0`).
+6. The load checks: Kyler's note. Its details are not recorded in the repository; confirm them
+   with Kyler before the phase starts.
+7. Containment should look natural (below; decisions-pending [#29](docs/decisions-pending.md)).
+
+**Containment should look natural** (Kyler's note, 2026-09-24)
+
+What Kyler measured (River Valley, seed 4242, 128², Normal):
+- The dam site (D25) is a straight terrain wall with a gap. At y = 40 the valley floor is 7, and
+  the ridge rises to 11, 5 tiles thick (x 60–64), with floor on both sides. Its plan: thickness 5,
+  halfSpan 128, topLevel 11, crest 2, wobble 1.25. It runs straight across the whole valley,
+  square to the river, until it meets high ground.
+- The badwater basin is a square 7 × 7 box with a two-level rim. Its outlet ditch runs straight:
+  x = 94 from y = 50 to y = 76.
+- Lake Basin is a bullseye: an elliptical lake with evenly spaced ring terraces, and a straight
+  walled outlet corridor.
+- Canyon's dam site is a squared-off narrows.
+- Drawn rivers in the editor raise their banks (D53), which can read as levees on sloped ground.
+
+Keep what the water physics requires: sealed edge mouths; a lake's level set by its outlet sill;
+a rim on every badwater basin (`water.badwater_contained`); reservoirs that meet high ground at
+both ends. Change only the shapes.
+
+**Delivers**
+1. Measure first. A naturalness metric in the batch tools: the longest straight run of a height
+   step, and how much a ridge's or rim's thickness and height vary along its length. Measure it
+   on the 19 official maps and on generated maps, and set the targets from the official maps.
+2. Dam sites: a narrows between hillsides (two spurs closing in), with uneven thickness and
+   height. Not a straight ridge across the valley.
+3. Badwater basins: an irregular pit and a winding ditch, still passing
+   `water.badwater_contained`.
+4. Lake Basin: uneven terraces, not even rings; an outlet that isn't a straight corridor.
+5. Canyon's narrows: a rock-like outline, not rectangles.
+6. The editor's drawn-river banks: blend them into the ground beside them.
+7. Notes 1–6 above, each closed with Kyler's answer (or its default) and a test.
+
+**Rules**
+- Every check keeps passing, including the reservoir rules and Hard's 3-deep rule.
+- Batches stay at 98% or better.
+- The Python oracle changes with the TypeScript, with 0 disagreements.
+- This changes every map, so bump the generator version and note that old share links change
+  (versioned deploys come in M13).
+
+**Related work:** M9's interestingness score can use the same naturalness metric. M10's naturalize
+brush is the editor version; consider sharing its smoothing with the generator.
+
+**Acceptance**
+- The naturalness metric is reported for the 19 official maps and for the generated maps of every
+  theme, and the targets set from the official maps are recorded in PLAN §20.
+- The generated dam sites, badwater basins, Lake Basin terraces and outlet, Canyon narrows and the
+  editor's drawn-river banks meet those targets.
+- Every check passes on every batch map, the reservoir rules and Hard's 3-deep rule included;
+  batches per theme ≥ 98% final; the oracle shows 0 disagreements.
+
+**In-game check:** short, logged as pending (D11): build a dam at a new narrows and check that
+the basin fills without leaking round the spurs.
+
+**Effort:** xhigh.
+
+**Release:** CLAUDE.md names no tag for this phase. It reaches `main` with the design pass
+(`design-done`), which follows it.
 
 ---
 

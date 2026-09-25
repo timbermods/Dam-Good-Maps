@@ -771,6 +771,9 @@ On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
   ([M12-INTEGRATION.md](../investigation/claude/M12-INTEGRATION.md)).
 - **M12 plan update** (Kyler, D84): compound requests, flow-relative places and a judgement-word
   table (both built in M9), and new suite requests; the loop's budget waits for Kyler (#28).
+- **Refinement note** (Kyler): containment should look natural. A new Refinement phase in
+  ROADMAP (after M11, before the design pass) lists it with Kyler's other notes: #2, #12, #13,
+  #21, the river-pond crossing fix and the load checks. Its targets wait for Kyler (#29).
 
 ---
 
