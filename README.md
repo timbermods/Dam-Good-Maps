@@ -64,6 +64,7 @@ Your map is saved in the browser as you work.
 | [AUDIT.md](AUDIT.md) | The audit that reconciled both plans with the investigation. Kyler's answers to its decisions are in PLAN.md §20. |
 | [docs/ingame-log.md](docs/ingame-log.md) | The in-game checks each milestone needs. They are deferred for now and listed as pending. |
 | [FORMAT.md](FORMAT.md) | The `.timber` map format as the game writes it in 1.1. |
+| [investigation/](investigation/README.md) | Every study behind the plans, what became of it, and where its adopted pieces live. |
 | [investigation/REPORT.md](investigation/REPORT.md) | What the game's code, data and maps say about map rules and design, with the numbers behind every threshold. |
 | [investigation/calibration.json](investigation/calibration.json) | Measurements of the 19 official maps and 9 workshop maps. |
 | [prototype/](prototype/) | The Python prototype: map reader/writer, generator, validator and round-trip test. It stays as the reference implementation and test oracle for the website. |
