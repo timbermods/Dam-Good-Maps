@@ -1118,6 +1118,8 @@ After the Map quality checkpoint and before the Frame pass (Kyler, 2026-09-25; P
 - High adds:
   - a real water shader: ripples catching the light, clear shallows, colour by depth,
     reflections by angle, shore foam;
+    Kyler's direction (2026-09-25): fewer, subtler sparkle flecks on the water than the clean
+    look, and more depth and transparency;
   - real-time soft shadows, ambient occlusion and a warm colour grade;
   - higher-resolution procedural grass, earth and cobbles with surface detail;
   - softened block edges and grass lips;
