@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Weather · Dam Good Maps</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<header><a href="#" class="brand">Dam Good Maps <span>/ weather study</span></a><span class="local">LOCAL PROTOTYPE</span></header>
+<main>
+  <section class="intro"><p class="eyebrow">BEFORE THE FIRST DAM</p><h1>Watch the water change.</h1><p>See what survives a drought, where badwater reaches, and what comes back.</p></section>
+  <div class="layout">
+  <aside>
+    <label for="map">Map</label><select id="map"></select>
+    <p id="mapmeta" class="muted"></p>
+    <fieldset><legend>Weather</legend><div class="phases" role="group" aria-label="Weather"><button data-phase="normal" aria-pressed="true">Normal</button><button data-phase="drought" aria-pressed="false">Drought</button><button data-phase="badtide" aria-pressed="false">Badtide</button></div></fieldset>
+    <label for="case">Weather stretch</label><select id="case"></select>
+    <div class="time"><button id="play" aria-label="Play timeline">▶ Play</button><strong id="daylabel">Day 0</strong></div>
+    <input id="day" type="range" min="0" max="1" value="0" step="1" aria-label="Day">
+    <div class="ends"><span>Start</span><span id="endlabel"></span></div>
+    <label class="check"><input type="checkbox" id="plants" checked> Show original trees and bushes</label>
+    <div class="key"><h2>What the colours mean</h2>
+      <span><i style="--swatch:#817969"></i>Dry ground</span><span><i style="--swatch:#719756"></i>Moist soil</span>
+      <span><i style="--swatch:#8ed4d6"></i>Clean water, less than 0.3 deep</span><span><i style="--swatch:#278ba9"></i>Clean water, at least 0.3 deep</span>
+      <span><i style="--swatch:#b65348"></i>Badwater, at least 5% contaminated</span><span><i style="--swatch:#ad75a7"></i>Contaminated soil</span>
+      <span><i style="--swatch:#d8a348"></i>Water has dried below 0.05</span>
+      <span><b class="tree">●</b>Living tree or bush</span><span><b class="dead">×</b>Dead plant</span><span><b class="start">✦</b>Your start</span>
+    </div>
+    <p class="note">An estimate of the map before you build. Water and soil recover; dead plants stay dead. Drinking and new seedlings are not counted.</p>
+  </aside>
+  <section class="view">
+    <div class="mapwrap"><canvas id="terrain" width="768" height="768" role="img" aria-label="Map showing water, soil and plants"></canvas><span class="north">N ↑</span><p id="loading" role="status">Loading maps…</p></div>
+    <p id="tile" class="tile">Move over the map to read a tile.</p>
+    <div class="summary"><p class="eyebrow">WHAT THIS MEANS</p><p id="summary" aria-live="polite"></p><p id="scope" class="muted"></p></div>
+    <div class="stats"><div><strong id="water">—</strong><span>water left</span></div><div><strong id="soil">—</strong><span>soil tiles contaminated</span></div><div><strong id="food">—</strong><span>starting bushes alive</span></div><div><strong id="wood">—</strong><span>starting trees alive</span></div></div>
+    <h2>Water through this stretch</h2><canvas id="chart" width="900" height="140" role="img" aria-label="Water volume over time; blue is all water, red is badwater volume"></canvas><p class="muted">Blue: all water. Red: badwater volume. The marker is the selected day.</p>
+    <details><summary>Lakes, pools and river reaches</summary><div class="tablewrap"><table><thead><tr><th>Place</th><th>Water now</th><th>Kept</th></tr></thead><tbody id="regions"></tbody></table></div></details>
+  </section>
+  </div>
+  <footer>Generated maps only · Weather seed 1729 · <a href="../README.md">Run notes</a> · <a href="../REPORT.md">Study report</a></footer>
+</main><script type="module" src="app.js"></script></body></html>
