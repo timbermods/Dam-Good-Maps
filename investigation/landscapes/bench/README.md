@@ -26,7 +26,7 @@ Input is JSON or gzip JSON:
 
 Replace `heights` with exactly `W * H` integers from 0 to 22. This shortened example is not a valid map. Index is `y * W + x`; y increases north. Source strength uses the repository's game units. Sources are clean water. Optional `entities` allow full fixture validation; otherwise start and resource checks can fail. `waterSources` is authoritative for clean sources.
 
-The bench settles water with the repository's simulation. It emits JSON with raw measures, generate-profile checks and distances to the selected target stratum. A target must match one of the surveyed sizes. Non-square inputs are measurable but have no matched square-area reference; compare them cautiously.
+The bench settles water with the repository's simulation. It emits JSON with raw measures, generate-profile checks and distances to the selected target stratum. Inputs from 4 to 256 cells per side are measurable. If the dimensions or stratum have no surveyed match, it returns raw measurements with `comparison: null`. An explicit `--reference-size 128` permits comparison across dimensions, with the mismatch labelled in the output; size effects remain.
 
 The default is named regions, 128² where the input is 128², 60 m per tile, relief-normalised, 16 levels. A fixture supplies its own scale and mapping. `--cohort random` uses the random-land control. `--family canyon` narrows the named cohort; inspect `data/targets.json` for all keys.
 

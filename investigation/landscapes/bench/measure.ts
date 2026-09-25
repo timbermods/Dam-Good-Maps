@@ -112,6 +112,8 @@ export function measureInput(input: any) {
     layout: m.layout,
     features: featureVector(m),
     size: W,
+    W,
+    H,
     waterReliable: water.settled,
   };
   return { row, v, file, water };

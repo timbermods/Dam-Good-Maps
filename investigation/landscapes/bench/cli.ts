@@ -25,19 +25,30 @@ const targets = JSON.parse(
 );
 const key = [
   arg("cohort", "named"),
-  input.W ?? input.width,
+  arg("reference-size", String(input.W ?? input.width)),
   arg("metres", String(input.metres ?? 60)),
   arg("mode", input.mapping?.mode ?? "normalised"),
   arg("cap", String(input.mapping?.cap ?? 16)),
   arg("family", "all"),
 ].join("/");
 const target = targets.strata[key];
-if (!target) throw Error("No matching target stratum: " + key);
+const exactSize =
+  (input.W ?? input.width) === (input.H ?? input.height) &&
+  Number(key.split("/")[1]) === (input.W ?? input.width);
+const canCompare =
+  !!target && (exactSize || process.argv.includes("--reference-size"));
 console.log(
   JSON.stringify(
     {
       schema: 1,
       target: key,
+      referenceMatch: !target
+        ? "No matching surveyed stratum; raw measurements only."
+        : exactSize
+          ? "Exact surveyed dimensions."
+          : canCompare
+            ? "Explicit comparison across dimensions; size effects remain."
+            : "No matching surveyed aspect ratio; raw measurements only.",
       settled: water.settled,
       settleTicks: water.ticks,
       validation: {
@@ -52,7 +63,7 @@ console.log(
             limit: c.limit,
           })),
       },
-      comparison: compare(row, target),
+      comparison: canCompare ? compare(row, target) : null,
       measurements: row,
     },
     null,
