@@ -83,6 +83,11 @@ for (const r of chosen.slice(0, 90)) {
     quantise(crop(dem, r.size + 64, r.size, 32), r.mode, 16).heights,
   );
   fixture.attribution = "../ATTRIBUTION.md";
+  // UUIDs carry no terrain or play information and dominate compressed size.
+  // The bench assigns deterministic IDs in stored order before validation/export.
+  for (const entity of fixture.entities) delete entity.Id;
+  fixture.entityIds =
+    "Omitted; the bench assigns deterministic UUIDs in stored order.";
   fixture.notice =
     "Modified Terrain Tiles for testing and optional import. Never a generator template.";
   const result = measureInput(fixture);
@@ -98,7 +103,7 @@ for (const r of chosen.slice(0, 90)) {
     value: c.value,
     limit: c.limit,
   }));
-  const packed = gzipSync(JSON.stringify(fixture));
+  const packed = gzipSync(JSON.stringify(fixture), { level: 9 });
   writeFileSync(path, packed);
   writeFileSync(`.work/oracle/${r.id}.timber`, writeTimber(result.file));
   // A sidecar supplies an explicit empty feature list, so Python also checks outflow.
@@ -203,7 +208,7 @@ writeFileSync(
   "library/README.md",
   "# Landscape fixtures\n\n" +
     index.length +
-    " converted patches from distinct sampling regions. Every fixture passed the unchanged TypeScript generate-profile checks after a fresh settle. Advisory failures remain in each file.\n\nOpen [gallery.html](gallery.html) for previews. Red marks the start; blue is simulated water. North is up.\n\nEach gzip JSON stores row-major heights (y increases north), sources, start anchor, game entities, location, mapping, attribution and checks. `referenceHeights` keeps the same quantised patch before edge sealing, for fair terrain measurements. `heights` is the playable conversion. Sources and resources are simulated or placed for the game.\n\nUse these for regression tests, tuning and an optional M11 import. Never load these into the generator as templates. See [attribution](../ATTRIBUTION.md).\n",
+    " converted patches from distinct sampling regions. Every fixture passed the unchanged TypeScript generate-profile checks after a fresh settle. Advisory failures remain in each file.\n\nOpen [gallery.html](gallery.html) for previews. Red marks the start; blue is simulated water. North is up.\n\nEach gzip JSON stores row-major heights (y increases north), sources, start anchor, game entities, location, mapping, attribution and checks. `referenceHeights` keeps the same quantised patch before edge sealing, for fair terrain measurements. `heights` is the playable conversion. Sources and resources are simulated or placed for the game. Entity UUIDs are omitted for compact storage; the bench reconstructs them in stored order. Family labels describe sampling regions; a window may show only part of the named landform.\n\nUse these for regression tests, tuning and an optional M11 import. Never load these into the generator as templates. See [attribution](../ATTRIBUTION.md).\n",
 );
 const escape = (s: string) =>
   s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");

@@ -30,7 +30,7 @@ The bench settles water with the repository's simulation. It emits JSON with raw
 
 The default is named regions, 128² where the input is 128², 60 m per tile, relief-normalised, 16 levels. A fixture supplies its own scale and mapping. `--cohort random` uses the random-land control. `--family canyon` narrows the named cohort; inspect `data/targets.json` for all keys.
 
-Library fixtures also carry `referenceHeights`: the original quantised crop before the artificial edge rim. Terrain measures use those heights. Water and validation use playable `heights`. Ordinary prototypes omit that field.
+Library fixtures also carry `referenceHeights`: the original quantised crop before the artificial edge rim. Terrain measures use those heights. Water and validation use playable `heights`. Ordinary prototypes omit that field. Library entities omit UUIDs to save space; the bench reconstructs deterministic IDs in stored order before validation or export.
 
 Read the measurements as separate comparisons. A smaller distance does not prove fun, realism or validity. Water comparisons are withheld when settling fails. Missing values and measures with fewer than five supporting regions remain unscored. Histograms use total variation; mean valley sections use root mean square difference in levels. See [methods](../METHODS.md).
 

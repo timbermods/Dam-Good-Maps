@@ -64,9 +64,12 @@ export function measureInput(input: any) {
   const { W, H } = validateInput(input),
     h = Uint8Array.from(input.heights),
     reference = Uint8Array.from(input.referenceHeights ?? input.heights);
-  const others = (input.entities ?? []).filter(
-    (e: any) => e.Template !== "WaterSource",
-  );
+  const others = (input.entities ?? [])
+    .filter((e: any) => e.Template !== "WaterSource")
+    .map((e: any, k: number) => ({
+      ...e,
+      Id: e.Id ?? `10000000-0000-4000-8000-${String(k).padStart(12, "0")}`,
+    }));
   const entities = [
     ...(parseGameJson(JSON.stringify(others)) as any[]),
     ...input.waterSources.map((s: any, k: number) =>
@@ -149,7 +152,7 @@ export const scalarDefinitions: Record<
   },
   rejoinTileShare: {
     path: "network.flowRejoinTileShare",
-    unit: "fraction of flowing wet cells",
+    unit: "rejoining cells / flowing wet cells",
     group: "water",
   },
   enclosedIslands: {
