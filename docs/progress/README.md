@@ -22,6 +22,7 @@ tagged `m<N>-done` when all of its acceptance criteria pass.
 | [after-map-look.md](after-map-look.md) | After Map look: Kyler's decisions | 2026-09-25 |
 | [m9-design.md](m9-design.md) | M9 design step (design version 1) | 2026-09-25 |
 | [after-map-look-2.md](after-map-look-2.md) | After Map look (2): Kyler's decisions | 2026-09-25 |
+| [real-places.md](real-places.md) | Real places: a gallery of 85 real-terrain maps (released as `real-places-done`, after Map look) | 2026-09-25 |
 | [kyler-todo.md](kyler-todo.md) | What Kyler needs to do | kept current; 2026-09-25 |
 
 A milestone's date is the day of its `m<N>-done` tag.
