@@ -1,22 +1,25 @@
 // How well the stacked-column water matches the water the maps themselves store.
 //
 // For every map with terrain above terrain (official maps, and the local workshop maps: read only,
-// never committed), three runs:
-//  hold:  start from the file's own water and run one game day with the map's running sources.
-//         If our rules are the game's, a stored steady state stays where it is.
-//  empty: start from no water and run the §11.3 settle test (up to `--days` game days).
-//  flat:  today's product: the heightfield port's canonical settle on the top surface.
+// never committed), these runs:
+//  hold:      start from the file's own water and momentum and run one game day with the map's
+//             running sources. If our rules are the game's, a stored steady state stays put.
+//  empty:     start from no water and run the §11.3 settle test (up to `--days` game days).
+//  canonical: (--canonical) the proposed canonical settle: the 3D pre-fill, then the settle test.
+//  flat:      today's product: the heightfield port's canonical settle on the top surface.
 // Each is compared with the stored water, column by column (a column is one air gap of a tile,
 // wet when deeper than 0.05), separately for roofed columns (ceiling below the open sky) and open
 // ones. Per-map rows go to the scratch output; only official maps and aggregates are committed.
 //
 //   npx tsx investigation/terrain3d/proto/compare-water.ts --out <dir> [--maps official|workshop|all]
-//        [--days 6] [--mode game|port] [--only Hollows,Pressure]
+//        [--days 6] [--mode game|port] [--only Hollows,Pressure] [--canonical] [--no-hold]
+//        [--no-empty] [--no-flat]
 
 import { readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadMap, type LoadedMap } from "./loadmap";
 import { StackSim, settle, type Mode } from "./stackwater";
+import { prefill3d } from "./prefill3d";
 import { OPEN_CEILING } from "./columns";
 import { readTimber } from "../../../src/core/format/timber";
 import { normalizeImport } from "../../../src/core/format/normalize";
@@ -36,6 +39,8 @@ const mode = arg("mode", "game") as Mode;
 const only = arg("only", "").split(",").filter(Boolean);
 const skipEmpty = process.argv.includes("--no-empty");
 const skipFlat = process.argv.includes("--no-flat");
+const skipHold = process.argv.includes("--no-hold");
+const canon = process.argv.includes("--canonical");
 mkdirSync(outDir, { recursive: true });
 
 const WET = 0.05;
@@ -192,7 +197,7 @@ for (const ref of listMaps()) {
     running: lm.model.emitters.filter((e) => e.strength > 0).length,
   };
   // hold: one day from the stored state
-  {
+  if (!skipHold) {
     const sim = new StackSim(lm.model, mode);
     sim.setState(lm.stored.depth, lm.stored.overflow, lm.stored.cont);
     row.momentumDropped = sim.setMomentum(lm.stored.momentum);
@@ -209,17 +214,27 @@ for (const ref of listMaps()) {
     const t = process.cpuUsage(t0);
     row.empty = { ...compare(lm, sim.D, sim.O), settled: s.settled, ticks: s.ticks, cpuMs: Math.round((t.user + t.system) / 1000), edgeOut: sim.edgeOutflow() };
   }
+  if (canon) {
+    // the proposed canonical settle: the 3D pre-fill, then the §11.3 test
+    const sim = new StackSim(lm.model, mode);
+    const pf = prefill3d(sim);
+    sim.setState(pf.depth, pf.overflow, pf.cont);
+    const t0 = process.cpuUsage();
+    const s = settle(sim, days);
+    const t = process.cpuUsage(t0);
+    row.canonical = { ...compare(lm, sim.D, sim.O), settled: s.settled, ticks: s.ticks, cpuMs: Math.round((t.user + t.system) / 1000) };
+  }
   if (!skipFlat) row.flat = flatBaseline(ref.path, lm);
   results.push(row);
-  const h = row.hold as Cmp;
-  const e = row.empty as (Cmp & { settled: boolean; ticks: number }) | undefined;
+  const h = (row.hold ?? row.canonical ?? row.empty) as Cmp;
+  const e = (row.canonical ?? row.empty) as (Cmp & { settled: boolean; ticks: number }) | undefined;
   const f = row.flat as { tileIou: number } | undefined;
   console.log(
     [ref.name, `${lm.W}x${lm.H}`, `multi-run ${multiRunTiles}`, `roofed wet stored ${h.roofedStored}`,
       `hold iou ${h.iou.toFixed(3)} roofed ${h.iouRoofed.toFixed(3)} depth ${h.depthAgree.toFixed(3)} vol ${(h.volSim / Math.max(h.volStored, 1e-9)).toFixed(3)}`,
-      e ? `empty iou ${e.iou.toFixed(3)} roofed ${e.iouRoofed.toFixed(3)} tile ${e.tileIou.toFixed(3)} ${e.settled ? "settled" : "not settled"} ${e.ticks}` : "",
+      e ? `${row.canonical ? "canonical" : "empty"} iou ${e.iou.toFixed(3)} roofed ${e.iouRoofed.toFixed(3)} tile ${e.tileIou.toFixed(3)} ${e.settled ? "settled" : "not settled"} ${e.ticks}` : "",
       f ? `flat tile iou ${f.tileIou.toFixed(3)}` : ""].join("\t"),
   );
-  writeFileSync(join(outDir, `water-${which}-${mode}.json`), JSON.stringify(results, null, 1));
+  writeFileSync(join(outDir, `water-${which}-${mode}${canon ? "-canonical" : ""}.json`), JSON.stringify(results, null, 1));
 }
-console.log(`${results.length} maps compared; rows in ${join(outDir, `water-${which}-${mode}.json`)}`);
+console.log(`${results.length} maps compared; rows in ${join(outDir, `water-${which}-${mode}${canon ? "-canonical" : ""}.json`)}`);

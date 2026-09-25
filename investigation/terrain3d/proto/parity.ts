@@ -29,6 +29,7 @@ const tmp = arg("tmp", process.env.TEMP ?? ".");
 mkdirSync(tmp, { recursive: true });
 
 const rows: string[] = [];
+const json: Record<string, unknown>[] = [];
 let fails = 0;
 for (const theme of themes) {
   for (const seed of seeds) {
@@ -67,8 +68,11 @@ for (const theme of themes) {
     if (diff) fails++;
     const row = `${theme}\t${seed}\t${size}\tmulti-column tiles ${multi}\tticks ${ticks}\ttiles differing ${diff}\tmax |dD| ${maxd.toExponential(2)}\tCPU port ${((t1.user + t1.system) / 1000).toFixed(0)} ms, stacked ${((t3.user + t3.system) / 1000).toFixed(0)} ms`;
     rows.push(row);
+    json.push({ theme, seed, size, ticks, multiColumnTiles: multi, prefillTilesDiffering: pdiff, tilesDiffering: diff, maxDepthDiff: maxd, cpuMsPort: Math.round((t1.user + t1.system) / 1000), cpuMsStacked: Math.round((t3.user + t3.system) / 1000) });
     console.log(row);
   }
 }
 console.log(fails ? `PARITY FAILED on ${fails} maps` : `parity: bit-identical on ${rows.length} maps`);
+const outPath = arg("out", "");
+if (outPath) writeFileSync(outPath, JSON.stringify({ bitIdentical: !fails, maps: json }, null, 1) + "\n");
 process.exit(fails ? 1 : 0);

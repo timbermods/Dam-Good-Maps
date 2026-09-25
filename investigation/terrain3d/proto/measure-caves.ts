@@ -41,6 +41,8 @@ interface Space {
   zMax: number;
   openings: number;
   wetColumns: number;
+  /** Median layers of ground (and pockets) above the space, over its tiles. */
+  roof: number;
 }
 
 function measure(path: string) {
@@ -129,10 +131,12 @@ function measure(path: string) {
     const tiles = new Set<number>();
     let floorTiles = 0, zMin = Z, zMax = 0, wet = 0;
     const gapH = new Map<number, number>();
+    const topZ = new Map<number, number>();
     for (const v of cells) {
       const z = Math.floor(v / N), i = v - z * N, x = i % W, y = (i - x) / W;
       tiles.add(i);
       gapH.set(i, (gapH.get(i) ?? 0) + 1);
+      if (z > (topZ.get(i) ?? -1)) topZ.set(i, z);
       if (z > 0 && vox[v - N]) floorTiles++;
       if (z < zMin) zMin = z;
       if (z > zMax) zMax = z;
@@ -196,11 +200,13 @@ function measure(path: string) {
     }
     let height = 0;
     for (const h of gapH.values()) if (h > height) height = h;
+    const roofs = [...topZ.entries()].map(([i, z]) => top[i] - 1 - z).sort((a, b) => a - b);
+    const roof = roofs[Math.floor(roofs.length / 2)];
     let kind: Space["kind"];
     if (!mouths.length) kind = "sealed";
     else if (clusters.length >= 2 && far) kind = reach > 1 ? "tunnel" : "arch";
     else kind = reach > 3 ? "cave" : "shelter";
-    spaces.push({ kind, cells: cells.length, tiles: tiles.size, floorTiles, height, reach, zMin, zMax, openings: clusters.length, wetColumns: wet });
+    spaces.push({ kind, cells: cells.length, tiles: tiles.size, floorTiles, height, reach, zMin, zMax, openings: clusters.length, wetColumns: wet, roof });
   }
   // objects under roofs
   const underRoof = (x: number, y: number, z: number) => {
