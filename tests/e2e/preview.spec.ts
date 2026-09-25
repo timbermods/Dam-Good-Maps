@@ -5,15 +5,18 @@
 // the view update. The background check then settles the water canonically, and the export is
 // the canonical file (tools/bench-preview.ts measures the same in Node).
 //
-// Locally the budget is 2 s (this machine, PLAN §20 D46's rule for budgets); CI's runners are
-// slower and share their cores, so there the time is logged and held to 6 s.
+// The edits must apply; their times are reported against the budget, not asserted (timings are
+// information, tools/timings.ts): a loaded machine or a shared CI runner is slower than a player's.
+// The budget is 2 s locally (this machine, PLAN §20 D46's rule for budgets) and 6 s in CI, whose
+// runners are slower and share their cores. `npm run bench:preview` measures the same in Node.
 
 import { expect, test } from "@playwright/test";
+import { recordTiming } from "../../tools/timings";
 
 const BUDGET = process.env.CI ? 6000 : 2000;
 
 for (const theme of ["islands", "lakeBasin"]) {
-  test(`${theme} 256²: a local edit re-previews within the budget`, async ({ page }) => {
+  test(`${theme} 256²: a local edit re-previews, and its time is reported`, async ({ page }) => {
     test.setTimeout(300_000);
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`./#s=1&z=256&d=n&t=${theme}`);
@@ -62,12 +65,12 @@ for (const theme of ["islands", "lakeBasin"]) {
       out.push({ name: "background check (canonical settle and every check)", ms: performance.now() - t0, ok: !!bg });
       return out;
     });
-    for (const t of times) console.log(`${theme} 256²: ${t.name}: ${Math.round(t.ms)} ms`);
     expect(times.length).toBe(3);
     for (const t of times.slice(0, 2)) {
-      expect(t.ok).toBe(true);
-      expect(t.ms, t.name).toBeLessThanOrEqual(BUDGET);
+      expect(t.ok, t.name).toBe(true);
+      recordTiming({ what: `${theme} 256²: ${t.name} (preview.spec)`, ms: t.ms, budget: BUDGET });
     }
+    console.log(`${theme} 256²: ${times[2].name}: ${Math.round(times[2].ms)} ms`);
     expect(times[2].ok).toBe(true);
   });
 }
