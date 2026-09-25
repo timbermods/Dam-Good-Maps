@@ -23,7 +23,7 @@ const generated = readdirSync(".work/generated")
   .filter((x) => x.endsWith(".json"))
   .sort()
   .map((f) => JSON.parse(readFileSync(".work/generated/" + f, "utf8")));
-if (rows.some((r) => r.measurementVersion !== 2))
+if ([...rows, ...generated].some((r) => r.measurementVersion !== 2))
   throw Error("Old water metrics remain; run repair-water-metrics.ts first");
 if (!partial && (rows.length !== 16200 || generated.length !== 180))
   throw Error(

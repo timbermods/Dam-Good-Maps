@@ -18,6 +18,24 @@ if (rows.some((r) => r.measurementVersion !== 2))
   throw Error("Old water measurements remain");
 if (baseline.length !== 180 || new Set(baseline.map((r) => r.id)).size !== 180)
   throw Error("Baseline coverage or uniqueness failed");
+for (const theme of [
+  "riverValley",
+  "canyon",
+  "delta",
+  "highlands",
+  "islands",
+  "lakeBasin",
+])
+  for (let seed = 1; seed <= 30; seed++)
+    if (
+      !baseline.some(
+        (r) =>
+          r.theme === theme && r.seed === seed && r.measurementVersion === 2,
+      )
+    )
+      throw Error("Missing corrected baseline cell");
+if (baseline.filter((r) => r.cliMatch === true).length !== 30)
+  throw Error("Default CLI parity not established");
 const locations = JSON.parse(readFileSync("data/locations.json", "utf8"));
 const seen = new Set(rows.map((r) => r.id));
 for (const loc of locations)

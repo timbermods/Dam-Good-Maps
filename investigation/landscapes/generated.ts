@@ -6,12 +6,18 @@ import { AVAILABLE_THEMES, makeSpec } from "../../src/core/spec/mapspec";
 import { measureFile } from "../workshop/lib/measures";
 import { featureVector } from "../workshop/lib/variety";
 import { terrainMetrics } from "./lib/metrics";
+import { checkCache } from "./lib/provenance";
+await checkCache();
 mkdirSync(".work/generated", { recursive: true });
 for (const theme of AVAILABLE_THEMES)
   for (let seed = 1; seed <= 30; seed++) {
     const id = `${theme}-128-${seed}`,
       path = `.work/generated/${id}.json`;
-    if (existsSync(path)) continue;
+    if (
+      existsSync(path) &&
+      JSON.parse(readFileSync(path, "utf8")).measurementVersion === 2
+    )
+      continue;
     const r = generate(
       makeSpec({
         theme,
@@ -25,7 +31,13 @@ for (const theme of AVAILABLE_THEMES)
       features: r.features,
       water: { model: r.built.waterModel, settled: r.built.settle },
     });
-    const shape = terrainMetrics(r.built.heights, 128, 128, v.water);
+    const shape = terrainMetrics(
+      r.built.heights,
+      128,
+      128,
+      v.water,
+      r.built.waterModel.floor,
+    );
     let cliMatch: null | boolean = null;
     if (theme === "riverValley") {
       const cli = `.work/default-cli/128/River Valley (${seed}).timber`;
@@ -37,6 +49,11 @@ for (const theme of AVAILABLE_THEMES)
       }
     }
     const row = {
+      measurementVersion: 2,
+      waterFloorRaisedCells: r.built.waterModel.floor.reduce(
+        (n, h, i) => n + (h !== r.built.heights[i] ? 1 : 0),
+        0,
+      ),
       id,
       theme,
       seed,

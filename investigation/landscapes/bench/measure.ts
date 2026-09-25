@@ -97,7 +97,7 @@ export function measureInput(input: any) {
     }),
     m = measureValidated(file, v, []);
   const row = {
-    ...terrainMetrics(reference, W, H, water, h),
+    ...terrainMetrics(reference, W, H, water, model.floor),
     natural: naturalness(
       reference,
       W,

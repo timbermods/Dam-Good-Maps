@@ -2,7 +2,7 @@
 
 ## Sample
 
-`anchors.csv` names 100 regions in 20 landscape families. Each region contributes four centres: the anchor, 6 km east, 6 km north, and 6 km southwest on each axis. These are 400 sampling locations, not 400 independent landscapes. A family is a sampling stratum. A nearby window may miss its named feature.
+`anchors.csv` names 100 regions in 20 landscape families. Each region contributes four centres: the anchor, 6 km east, 6 km north, and 6 km southwest on each axis. These are 400 sampling locations, not 400 independent landscapes. Nearby centres test sensitivity to window placement. A family is a sampling stratum. A nearby window may miss its named feature.
 
 Another 50 centres come from seeded rejection sampling against Natural Earth's 110m land mask. Longitude and sine of latitude are uniform, between 80° south and 80° north. This excludes polar terrain beyond that range. The mask is coarse; small islands and detailed coasts are underrepresented.
 
@@ -43,7 +43,7 @@ Priority-flood routing uses eight neighbours. A strictly earlier flood rank reso
 
 Channels begin at `max(32, 1% of central crop cells)` contributing cells. Sources come from channels entering the central crop or reaching that threshold inside it. Up to eight strongest candidates are retained. Edge entries move at most three receiver steps inward where possible. Their origin and contributing area are recorded. They are inferred entries and channel heads, not verified springs.
 
-Total source strength is the repository's size-aware clean-flow median multiplied by two. It is divided in proportion to square-root contributing area, capped at eight per source. This is a game conversion setting, not physical discharge.
+Total source strength is the repository's size-aware clean-flow median multiplied by two, to supply several split entries. It is divided in proportion to square-root contributing area, capped at eight per source. The square root limits domination by one large contributing area. This is a game conversion setting, not physical discharge. It can increase water coverage and flooding relative to a default generated map, so water comparisons are policy-dependent.
 
 Drainage-selected exits and their neighbouring edge cells retain their elevations. Other border cells rise to the height cap to seal incoming mouths. The interior stays unchanged. No channel is carved and no start pad is flattened. Raised edge-cell counts are recorded. Terrain targets use the original quantised crop, excluding that artificial rim. Water statistics use the sealed conversion.
 

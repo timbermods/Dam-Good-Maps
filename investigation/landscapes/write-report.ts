@@ -101,7 +101,7 @@ The clearest geometric difference is straight contours. Generated maps have a me
 
 Generated basin rims vary less in thickness: median CV ${fmt(rims.generated.p50)}, against ${fmt(rims.real.p50)}. Valleys at two levels above the drainage floor are narrower: ${fmt(width.generated.p50)} tiles against ${fmt(width.real.p50)}. These suggest more variation in contours, rims and valley sections. They do not prescribe a process or prove better play.
 
-Medians below compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. Water measures use settled conversions only. The generated maps use their native default height range. Check adjacent scales and mappings before adopting a range.
+Medians below compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. Water measures use settled conversions only. Real conversions use twice the calibrated total flow, shared between up to eight inferred sources. This supplies split entries but makes water figures policy-dependent. The generated maps use their native default height range. Check adjacent scales and mappings before adopting a range.
 
 | Measure | Real median | Generated median | Real regions measured |
 |---|---|---|---|
@@ -121,7 +121,7 @@ The sample is exploratory. Named regions were chosen for interest; nearby centre
 
 ## Decisions and handoff
 
-Preserve failures. Keep 22-level comparisons separate. Infer sources from drainage, seal borders and leave interior heights unchanged. Use Normal start and resource checks without waivers. Search up to 48 start sites; add no slopes. Failure does not prove no workable start exists.
+Preserve failures. Keep 22-level comparisons separate. Infer sources from drainage, seal borders and leave interior heights unchanged. Use Normal start and resource checks without waivers. Bound the start search to 48 sites to keep the matrix tractable; add no slopes. Failure does not prove no workable start exists.
 
 The CLI has no theme switch, so other themes use the same generate API. A local loader reads core TypeScript without changing root dependencies. Variety uses the existing workshop calibration because fitting nearly constant planted-resource totals would distort distances.
 
