@@ -6,7 +6,7 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { MapRenderer, type BuildStats, type MapView, type TileHit, type ViewMode } from "../render3d";
-import { legendEntries, type GroundMode, type LegendEntry } from "../render3d/palette";
+import { legendEntries, objectLegend, type GroundMode, type LegendEntry } from "../render3d/palette";
 
 declare global {
   interface Window {
@@ -23,6 +23,8 @@ export interface View3DProps {
   hoverText?: string | null;
   /** More legend lines for what the page draws on the map (a dam site, say). */
   legendExtra?: LegendEntry[];
+  /** Whether the legend starts open (the editor starts it closed, to keep its map clear). */
+  legendOpen?: boolean;
   children?: ComponentChildren;
   /** Extra class on the frame (the editor fills its area). */
   class?: string;
@@ -112,7 +114,7 @@ export function View3D(props: View3DProps) {
     renderer.current?.setGroundMode(next);
   };
 
-  const legend = [...legendEntries(ground), ...(props.legendExtra ?? [])];
+  const legend = [...legendEntries(ground), ...objectLegend(), ...(props.legendExtra ?? [])];
 
   return (
     <div class={`view3d ${props.class ?? ""}`}>
@@ -138,7 +140,7 @@ export function View3D(props: View3DProps) {
         </div>
       </div>
       {error ? null : (
-        <details class="view3d-legend" open>
+        <details class="view3d-legend" open={props.legendOpen ?? true}>
           <summary>Legend</summary>
           <ul>
             {legend.map((e) => (
@@ -148,6 +150,7 @@ export function View3D(props: View3DProps) {
               </li>
             ))}
           </ul>
+          <p class="note">From afar, dead trees, slope arrows and the start are drawn larger.</p>
         </details>
       )}
       {props.hoverText ? (

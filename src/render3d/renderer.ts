@@ -36,7 +36,7 @@ import {
 } from "three";
 import { buildEntities, disposeGroup } from "./entities3d";
 import { objectCasters, shadowMap, skyVisibility, tileData } from "./light";
-import { drawPatterns, lightTexture, overlayTexture, objectMaterial, sceneUniforms, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
+import { drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
 import { columnMap, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
 import type { GroundMode } from "./palette";
@@ -145,6 +145,7 @@ export class MapRenderer {
   private water = new Map<string, Mesh>();
   private objects: Group | null = null;
   private overlay: DataTexture | null = null;
+  private marks: DataTexture | null = null;
   private tileTex: DataTexture | null = null;
   private lightTex: DataTexture | null = null;
   private uniforms: SceneUniforms;
@@ -188,7 +189,7 @@ export class MapRenderer {
     this.scene.background = null;
     // placeholder textures until a map arrives; every material shares these uniforms
     const one = () => tileTexture(1, 1, new Uint8Array(4));
-    this.uniforms = sceneUniforms(1, 1, one(), lightTexture(1, 1, new Uint8Array(16)), one());
+    this.uniforms = sceneUniforms(1, 1, one(), lightTexture(1, 1, new Uint8Array(16)), one(), one());
     this.patterns = drawPatterns(this.gl);
     this.uniforms.patternTex.value = this.patterns.texture;
     this.terrainMat = terrainMaterial(this.uniforms, 0, 1, this.software);
@@ -271,10 +272,13 @@ export class MapRenderer {
       if (heights[i] > hi) hi = heights[i];
     }
     this.overlay = overlayTexture(W, H);
+    this.marks = overlayTexture(W, H);
     this.tileTex = tileTexture(W, H, tiles);
     this.lightTex = lightTexture(W, H, shadowMap(W, H, heights, objectCasters(W, H, v.entities)));
     const u = this.uniforms;
     u.overlay.value = this.overlay;
+    u.marks.value = this.marks;
+    u.hatching.value = 0;
     u.tileTex.value = this.tileTex;
     u.lightTex.value = this.lightTex;
     u.mapSize.value.set(W, H);
@@ -306,9 +310,10 @@ export class MapRenderer {
       this.objects = null;
     }
     this.overlay?.dispose();
+    this.marks?.dispose();
     this.tileTex?.dispose();
     this.lightTex?.dispose();
-    this.overlay = this.tileTex = this.lightTex = null;
+    this.overlay = this.marks = this.tileTex = this.lightTex = null;
     this.map = null;
   }
 
@@ -466,14 +471,21 @@ export class MapRenderer {
 
   // --------------------------------------------------------------------------------- overlays
 
-  /** The overlay's RGBA bytes (tile (x, y) at (y·W + x)·4): write, then `commitOverlay`. */
+  /** The overlay's RGBA bytes (tile (x, y) at (y·W + x)·4): write, then `commitOverlay`. A tile
+   *  with alpha 255 is drawn hatched with a dark rim (dam sites); any other alpha tints it. */
   overlayData(): Uint8Array | null {
     return (this.overlay?.image.data as Uint8Array | undefined) ?? null;
   }
 
   commitOverlay(): void {
-    if (!this.overlay) return;
+    const m = this.map;
+    if (!this.overlay || !this.marks || !m) return;
     this.overlay.needsUpdate = true;
+    const marks = hatchMarks(m.W, m.H, this.overlay.image.data as Uint8Array, this.marks.image.data as Uint8Array);
+    let any = 0;
+    for (let i = 0; i < marks.length && !any; i += 4) any = marks[i] | marks[i + 1];
+    this.uniforms.hatching.value = any ? 1 : 0;
+    this.marks.needsUpdate = true;
     this.requestRender();
   }
 
@@ -548,7 +560,8 @@ export class MapRenderer {
     }
     // a light haze beyond the point looked at, none from straight above
     const u = this.uniforms;
-    u.hazeAmount.value = v.mode === "top" ? 0 : 0.32;
+    u.viewHeight.value = h;
+    u.hazeAmount.value = v.mode === "top" ? 0 : 0.16;
     u.hazeRange.value.set(v.distance * 0.85, v.distance * 2.6);
   }
 

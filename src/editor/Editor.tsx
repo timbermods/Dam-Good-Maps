@@ -23,6 +23,7 @@ import { bankFor } from "../core/features/raster/terrain";
 import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
 import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater } from "../render3d/model";
+import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
@@ -910,6 +911,8 @@ export default function Editor(props: EditorProps) {
             class="editor-view"
             label={`3D view of ${info.name}. Click a feature to select it. Drag to turn, right-drag to move, wheel to zoom.`}
             onReady={onReady}
+            legendExtra={damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites" }] : []}
+            legendOpen={false}
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
               if (draftRef.current.length) setHoverTile(hit ? [hit.x, hit.y] : null);

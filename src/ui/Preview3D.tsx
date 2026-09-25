@@ -5,6 +5,7 @@
 import { useMemo, useRef, useState } from "preact/hooks";
 import { describeTile, entitiesByTile, FeatureIndex, type TileContext } from "../editor/features";
 import { emptyColumns, entityView, soilView, surfaceWater, waterFromDepth, type MapRenderer, type MapView } from "../render3d";
+import { DAM_OVERLAY as DAM, damLegendSwatch } from "../render3d/palette";
 import type { GenerateResponse } from "../worker/api";
 import { View3D } from "./View3D";
 
@@ -29,9 +30,6 @@ export function damTiles(r: GenerateResponse): [number, number][] {
   for (let k = -half; k <= d.length - 1 - half; k++) out.push([d.x + k * d.dir[1], d.y + k * d.dir[0]]);
   return out.filter(([x, y]) => x >= 0 && y >= 0 && x < r.W && y < r.H);
 }
-
-/** The dam line's colour on the map (the editor's dam sites use it too). */
-const DAM: [number, number, number, number] = [255, 140, 20, 200];
 
 export default function Preview3D({ result }: { result: GenerateResponse }) {
   const view = useMemo(() => viewOfResponse(result), [result]);
@@ -64,7 +62,7 @@ export default function Preview3D({ result }: { result: GenerateResponse }) {
       label="3D view of the map. Drag to turn, right-drag to move, wheel to zoom."
       hoverText={hover}
       onReady={onReady}
-      legendExtra={dam.length ? [{ swatch: `rgb(${DAM[0]}, ${DAM[1]}, ${DAM[2]})`, label: "Best dam site" }] : []}
+      legendExtra={dam.length ? [{ swatch: damLegendSwatch(), label: "Best dam site" }] : []}
       onHover={(hit) => setHover(hit ? describeTile(context(), hit.x, hit.y) : null)}
     />
   );

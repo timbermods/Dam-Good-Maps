@@ -1,28 +1,34 @@
 // Map objects as instanced meshes (EDITOR_PLAN §8), with our own low-poly models (Map look, PLAN
-// §20 D86 and D110, shaped after Kyler's in-game reference screenshots; the game's assets are not
-// ours to include, EDITOR_PLAN §2). One draw call per model, so tens of thousands of trees cost a
-// few draw calls. Every model carries its own colours per vertex; the instance adds a slight tint
+// §20 D86, D110 and D114, shaped after Kyler's in-game reference screenshots; the game's assets are
+// not ours to include, EDITOR_PLAN §2). One draw call per model, so tens of thousands of trees cost
+// a few draw calls. Every model carries its own colours per vertex; the instance adds a slight tint
 // so a grove is not one flat colour.
 //
 // - Trees by species: pine (tiers of dark cones), birch (a white trunk with dark marks and a light
 //   crown), oak (a thick trunk and a broad crown), succulent (a rosette of fleshy leaves). Dead
-//   trees are bare, pale trunks and stubs: no crown, so they read as dead in any colours.
+//   trees are ashen: a nearly white trunk, a pale grey body of bare wood and spiky bare branches
+//   poking out of it, so they read as dead in any colours, far lighter than the dark living crowns.
 // - Berry bushes: dark green, dotted with blue flowers.
-// - Ruins: rusty scaffold towers with beige panels, one storey per level of the ruin's height;
-//   overgrown with ivy where the ground is moist.
-// - The start: a district center of our own, a timber lodge with a banner on a deck, its door
-//   facing the entrance, and a lit post on the entrance tile.
-// - Slopes: a ramp with two chevrons pointing uphill. Water sources: a stone ring round a spring;
-//   badwater sources: a brown swirl in a dark pit. Mine sites: a square pit in an orange frame.
+// - Ruins: rusty towers with beige panels and dark corner posts, one solid storey per level of the
+//   ruin's height, so from afar they read as blocks, never as bare trees; ivy where the ground is
+//   moist.
+// - The start: a district center of our own, a lodge with pale walls, a dark roof and a yellow
+//   banner on a pale deck, its door facing the entrance, and a lit post on the entrance tile.
+// - Slopes: a ramp, with two pale arrows rimmed dark pointing uphill. Water sources: a stone ring
+//   round a spring; badwater sources: a brown swirl in a dark pit. Mine sites: a square pit in an
+//   orange frame.
 // - Every other template: a box on each block its footprint occupies.
+// Dead trees, the slopes' arrows and the start have a minimum size on screen: from afar they grow
+// (the object shader, up to three times, dead trees four and the arrows five) so they stay readable in a view of the
+// whole map.
 // Jitter, turn and tint come from each object's tile, so a redraw looks the same.
 
 import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedBufferAttribute, InstancedMesh, OctahedronGeometry, type ShaderMaterial } from "three";
 import { FOOTPRINTS, rotate, startEntranceTile, worldBlocks, type Orientation } from "../core/format/footprints";
 import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView } from "./model";
-import { DEAD_TREE } from "./palette";
+import { DEAD_TREE, GEOTHERMAL, MINE, RUIN, SLOPE, START } from "./palette";
 
-type Rgb = [number, number, number];
+type Rgb = readonly [number, number, number];
 
 // ------------------------------------------------------------------------------ model building
 
@@ -83,12 +89,17 @@ const ico = (r: number) => new IcosahedronGeometry(r, 0);
 
 const BARK: Rgb = [0.36, 0.25, 0.16];
 const DEAD_WOOD: Rgb = [...DEAD_TREE];
-const DEAD_DARK: Rgb = [0.62, 0.55, 0.44];
+const DEAD_DARK: Rgb = [0.84, 0.82, 0.78];
+/** A dead tree's body of bare wood: bleached white, so it stays nearly white in shade too (the
+ *  shader clamps the lit side), lighter than moist ground in greyscale. */
+const DEAD_FAR: Rgb = [1.1, 1.08, 1.04];
 
-/** A bare branch from the trunk at height y, outward along `angle`, tilted up by `tilt`. */
+/** A bare branch from the trunk at height y, outward along `angle`, tilted up by `tilt`: a spike
+ *  tapering to a point. */
 function branch(m: Model, y: number, angle: number, tilt: number, length: number, r: number, color: Rgb): void {
-  m.add(cyl(r, r * 0.4, length, 3), color, { lift: length / 2, rz: -(Math.PI / 2 - tilt) });
-  rotateTail(m, 18, angle, y);
+  const before = m.pos.length / 3;
+  m.add(cone(r, length, 4), color, { lift: length / 2, rz: -(Math.PI / 2 - tilt) });
+  rotateTail(m, m.pos.length / 3 - before, angle, y);
 }
 
 /** Turn the last `vertices` vertices of a model about the Y axis by `angle`, then lift them by y. */
@@ -117,23 +128,27 @@ const MODELS: Record<string, () => Model> = {
       .add(cone(0.3, 0.56, 6), [0.13, 0.32, 0.19], { y: 0.62 + 0.28, ry: 0.5 })
       .add(cone(0.2, 0.5, 6), [0.15, 0.36, 0.21], { y: 0.95 + 0.25, ry: 1.0 }),
   "Pine.dead": () => {
-    // a bare pale trunk, its top snapped off, a few stubs
-    const m = new Model().add(cyl(0.075, 0.04, 0.95, 4), DEAD_WOOD, { y: 0.475 });
-    branch(m, 0.4, 0.3, 0.3, 0.2, 0.03, DEAD_DARK);
-    branch(m, 0.6, 2.4, 0.35, 0.16, 0.026, DEAD_DARK);
-    branch(m, 0.78, 4.3, 0.4, 0.14, 0.022, DEAD_DARK);
+    // a tall bare trunk, whorls of spiky bare branches shorter toward the top
+    const m = new Model().add(cyl(0.085, 0.03, 1.2, 5), DEAD_WOOD, { y: 0.6 })
+      .add(cone(0.3, 0.9, 5), DEAD_FAR, { y: 0.8 });
+    const whorls: [number, number, number][] = [[0.34, 0.2, 0.44], [0.48, 2.3, 0.4], [0.6, 4.2, 0.34], [0.72, 1.2, 0.3], [0.84, 3.3, 0.24], [0.95, 5.3, 0.18]];
+    for (const [y, a, l] of whorls) branch(m, y, a, 0.75, l, 0.055, y < 0.6 ? DEAD_DARK : DEAD_WOOD);
     return m;
   },
   Birch: () =>
     new Model()
       .add(cyl(0.05, 0.04, 0.75, 4), [0.93, 0.91, 0.86], { y: 0.375 })
       .add(cyl(0.052, 0.05, 0.07, 4), [0.18, 0.16, 0.15], { y: 0.36 })
-      .add(ico(0.31), [0.5, 0.7, 0.28], { y: 0.96, sy: 1.4 }),
+      .add(ico(0.31), [0.34, 0.52, 0.19], { y: 0.96, sy: 1.4 }),
   "Birch.dead": () => {
-    // a white trunk forking into two bare arms
-    const m = new Model().add(cyl(0.055, 0.045, 0.5, 4), [0.9, 0.87, 0.8], { y: 0.25 }).add(cyl(0.057, 0.055, 0.06, 4), [0.3, 0.27, 0.25], { y: 0.3 });
-    branch(m, 0.48, 0.8, 1.05, 0.42, 0.04, [0.88, 0.85, 0.78]);
-    branch(m, 0.48, 3.9, 1.0, 0.36, 0.035, [0.88, 0.85, 0.78]);
+    // a white trunk forking into bare arms that spread up and out
+    const m = new Model().add(cyl(0.07, 0.05, 0.55, 5), [0.93, 0.91, 0.87], { y: 0.275 })
+      .add(new OctahedronGeometry(0.3, 0), DEAD_FAR, { y: 0.8, sy: 1.4 });
+    branch(m, 0.5, 0.8, 1.0, 0.55, 0.06, DEAD_WOOD);
+    branch(m, 0.5, 2.9, 0.95, 0.5, 0.055, DEAD_WOOD);
+    branch(m, 0.5, 5.0, 1.05, 0.48, 0.055, DEAD_DARK);
+    branch(m, 0.72, 1.9, 0.6, 0.3, 0.04, DEAD_WOOD);
+    branch(m, 0.72, 4.1, 0.6, 0.28, 0.04, DEAD_WOOD);
     return m;
   },
   Oak: () =>
@@ -142,10 +157,11 @@ const MODELS: Record<string, () => Model> = {
       .add(ico(0.44), [0.22, 0.42, 0.16], { y: 0.95, sy: 0.85 })
       .add(ico(0.28), [0.26, 0.47, 0.18], { x: 0.2, y: 0.8, z: 0.12 }),
   "Oak.dead": () => {
-    // a thick pale stump of a trunk with two short forks
-    const m = new Model().add(cyl(0.13, 0.09, 0.55, 5), DEAD_WOOD, { y: 0.275 });
-    branch(m, 0.5, 0.2, 1.0, 0.28, 0.05, DEAD_DARK);
-    branch(m, 0.5, 3.0, 0.95, 0.24, 0.045, DEAD_DARK);
+    // a thick pale trunk and a broad crown of bare, spiky limbs
+    const m = new Model().add(cyl(0.14, 0.09, 0.6, 5), DEAD_WOOD, { y: 0.3 })
+      .add(new OctahedronGeometry(0.4, 0), DEAD_FAR, { y: 0.84, sy: 0.9 });
+    for (let k = 0; k < 5; k++) branch(m, 0.52 + 0.06 * (k % 2), 0.4 + (k * Math.PI * 2) / 5, 0.8 + 0.12 * (k % 2), 0.55, 0.07, k % 2 ? DEAD_DARK : DEAD_WOOD);
+    branch(m, 0.6, 0, Math.PI / 2 - 0.1, 0.4, 0.06, DEAD_WOOD);
     return m;
   },
   Succulent: () => {
@@ -165,33 +181,43 @@ const MODELS: Record<string, () => Model> = {
     for (const [x, y, z] of flowers) m.add(new OctahedronGeometry(0.065, 0), [0.46, 0.56, 1.0], { x, y, z });
     return m;
   },
-  "BlueberryBush.dead": () => new Model().add(ico(0.26), [0.55, 0.47, 0.36], { y: 0.16, sy: 0.6 }),
+  "BlueberryBush.dead": () => {
+    // a pale clump of bare twigs
+    const m = new Model();
+    for (let k = 0; k < 5; k++) branch(m, 0.04, (k * Math.PI * 2) / 5, 0.7, 0.36, 0.04, k % 2 ? DEAD_DARK : DEAD_WOOD);
+    return m;
+  },
   Slope: () => {
     // a ramp over the tile, low on the north (−Z) edge and high on the south (+Z), as a Cw0
-    // slope's high side is south; two chevrons on it point uphill
+    // slope's high side is south (its arrows are "Slope.mark")
     const m = new Model();
-    const top: Rgb = [0.64, 0.54, 0.38];
-    const side: Rgb = [0.5, 0.4, 0.28];
     const h = 0.5;
-    m.tris([-h, 0, -h, h, 1, h, h, 0, -h, -h, 0, -h, -h, 1, h, h, 1, h], top);
-    m.tris([-h, 0, h, h, 0, h, h, 1, h, -h, 0, h, h, 1, h, -h, 1, h], side);
-    m.tris([-h, 0, -h, -h, 0, h, -h, 1, h], side);
-    m.tris([h, 0, -h, h, 1, h, h, 0, h], side);
-    // chevrons: on the ramp (u across, v up it), lifted a little off its surface
-    const at = (u: number, v: number): number[] => [u - h, v + 0.012, v - h - 0.012];
-    const chevron = (tip: number) => {
-      const w = 0.09;
+    m.tris([-h, 0, -h, h, 1, h, h, 0, -h, -h, 0, -h, -h, 1, h, h, 1, h], SLOPE.ramp);
+    m.tris([-h, 0, h, h, 0, h, h, 1, h, -h, 0, h, h, 1, h, -h, 1, h], SLOPE.side);
+    m.tris([-h, 0, -h, -h, 0, h, -h, 1, h], SLOPE.side);
+    m.tris([h, 0, -h, h, 1, h, h, 0, h], SLOPE.side);
+    return m;
+  },
+  "Slope.mark": () => {
+    // two pale arrows pointing uphill, each on a dark one a little larger (its rim), on the
+    // ramp's surface (u across, v up it), about the ramp's middle (so it grows from there)
+    const m = new Model();
+    const h = 0.5;
+    const at = (u: number, v: number, lift: number): number[] => [u - h, v - 0.5 + lift, v - h - lift];
+    const chevron = (tip: number, w: number, span: number, lift: number, color: Rgb) => {
       const arm = (sx: number) => {
-        const a = at(0.5, tip);
-        const b = at(0.5 + sx * 0.3, tip - 0.3);
-        const a2 = at(0.5, tip - w * 1.4);
-        const b2 = at(0.5 + sx * 0.3, tip - 0.3 - w * 1.4);
+        const a = at(0.5, tip, lift);
+        const b = at(0.5 + sx * span, tip - span, lift);
+        const a2 = at(0.5, tip - w * 1.4, lift);
+        const b2 = at(0.5 + sx * span, tip - span - w * 1.4, lift);
         return sx < 0 ? [...a, ...b2, ...b, ...a, ...a2, ...b2] : [...a, ...b, ...b2, ...a, ...b2, ...a2];
       };
-      m.tris([...arm(-1), ...arm(1)], [0.94, 0.88, 0.7]);
+      m.tris([...arm(-1), ...arm(1)], color);
     };
-    chevron(0.88);
-    chevron(0.52);
+    for (const tip of [0.92, 0.56]) {
+      chevron(tip + 0.03, 0.21, 0.41, 0.014, SLOPE.rim);
+      chevron(tip, 0.16, 0.36, 0.024, SLOPE.arrow);
+    }
     return m;
   },
   WaterSource: () => new Model().add(cyl(0.38, 0.36, 0.14, 8), [0.47, 0.46, 0.44], { y: 0.07 }).add(new CylinderGeometry(0.3, 0.3, 0.16, 8), [0.32, 0.62, 0.95], { y: 0.08 }),
@@ -210,8 +236,8 @@ const MODELS: Record<string, () => Model> = {
   },
   UndergroundRuins: () => {
     // a mine site: a square pit in an orange frame, over its 5 × 5 footprint (centred on it)
-    const m = new Model().add(box(4.3, 0.04, 4.3), [0.1, 0.1, 0.09], { y: 0.02 }).add(box(3.4, 0.03, 3.4), [0.06, 0.06, 0.06], { y: 0.045 });
-    const frame: Rgb = [0.88, 0.45, 0.14];
+    const m = new Model().add(box(4.3, 0.04, 4.3), [0.1, 0.1, 0.09], { y: 0.02 }).add(box(3.4, 0.03, 3.4), MINE.pit, { y: 0.045 });
+    const frame: Rgb = [...MINE.frame];
     for (const [x, z, w, d] of [[0, 2.2, 4.6, 0.22], [0, -2.2, 4.6, 0.22], [2.2, 0, 0.22, 4.6], [-2.2, 0, 0.22, 4.6]] as const) m.add(box(w, 0.2, d), frame, { x, y: 0.1, z });
     for (const [x, z] of [[2.2, 2.2], [2.2, -2.2], [-2.2, 2.2], [-2.2, -2.2]] as const) m.add(box(0.3, 0.45, 0.3), [0.62, 0.3, 0.1], { x, y: 0.22, z });
     return m;
@@ -221,46 +247,60 @@ const MODELS: Record<string, () => Model> = {
 /** The light look's models, for browsers that render in software (a few triangles each; D110). */
 const LITE_MODELS: Record<string, () => Model> = {
   Pine: () => new Model().add(cone(0.36, 1.25, 5), [0.13, 0.32, 0.19], { y: 0.2 + 0.625 }),
-  "Pine.dead": () => new Model().add(cyl(0.07, 0.03, 0.95, 3), DEAD_WOOD, { y: 0.475 }),
-  Birch: () => new Model().add(cyl(0.05, 0.04, 0.7, 3), [0.93, 0.91, 0.86], { y: 0.35 }).add(new OctahedronGeometry(0.32, 0), [0.5, 0.7, 0.28], { y: 0.95, sy: 1.3 }),
-  "Birch.dead": () => new Model().add(cyl(0.055, 0.03, 0.8, 3), [0.9, 0.87, 0.8], { y: 0.4 }),
+  "Pine.dead": () => {
+    const m = new Model().add(cyl(0.08, 0.03, 1.15, 3), DEAD_WOOD, { y: 0.575 }).add(cone(0.3, 0.9, 5), DEAD_FAR, { y: 0.8 });
+    for (const [y, a, l] of [[0.4, 0.3, 0.42], [0.62, 2.4, 0.34], [0.84, 4.4, 0.24]] as const) branch(m, y, a, 0.45, l, 0.06, DEAD_WOOD);
+    return m;
+  },
+  Birch: () => new Model().add(cyl(0.05, 0.04, 0.7, 3), [0.93, 0.91, 0.86], { y: 0.35 }).add(new OctahedronGeometry(0.32, 0), [0.34, 0.52, 0.19], { y: 0.95, sy: 1.3 }),
+  "Birch.dead": () => {
+    const m = new Model().add(cyl(0.065, 0.05, 0.55, 3), DEAD_WOOD, { y: 0.275 })
+      .add(new OctahedronGeometry(0.3, 0), DEAD_FAR, { y: 0.8, sy: 1.4 });
+    for (const a of [0.8, 2.9, 5.0]) branch(m, 0.5, a, 1.0, 0.5, 0.06, DEAD_WOOD);
+    return m;
+  },
   Oak: () => new Model().add(cyl(0.1, 0.08, 0.55, 3), [0.34, 0.23, 0.14], { y: 0.275 }).add(new OctahedronGeometry(0.44, 0), [0.24, 0.45, 0.17], { y: 0.92, sy: 0.85 }),
-  "Oak.dead": () => new Model().add(cyl(0.12, 0.06, 0.6, 3), DEAD_WOOD, { y: 0.3 }),
+  "Oak.dead": () => {
+    const m = new Model().add(cyl(0.13, 0.08, 0.6, 3), DEAD_WOOD, { y: 0.3 }).add(new OctahedronGeometry(0.4, 0), DEAD_FAR, { y: 0.84, sy: 0.9 });
+    for (const a of [0.4, 2.5, 4.6]) branch(m, 0.55, a, 0.65, 0.55, 0.07, DEAD_WOOD);
+    return m;
+  },
   BlueberryBush: () => new Model().add(new OctahedronGeometry(0.28, 0), [0.14, 0.29, 0.14], { y: 0.2, sy: 0.75 }),
 };
-const LITE_RUIN = () => new Model().add(box(0.8, 1, 0.8), RUST, { y: 0.5 });
+const LITE_RUIN = () => new Model().add(box(0.8, 1, 0.8), RUIN.rust, { y: 0.5 });
 
 /** Templates whose model stands in the middle of a footprint: the local tile it is centred on. */
 const CENTRED: Record<string, [number, number]> = { BadwaterSource: [1, 1], UndergroundRuins: [2, 2] };
 
 /** The district center, its door toward +Z (south, a Cw0 start's entrance side), centred on its
- *  3 × 3 footprint. */
+ *  3 × 3 footprint: pale walls under a dark roof on a pale deck, so it stands out on any ground. */
 function districtCenter(): Model {
   const m = new Model();
-  const wood: Rgb = [0.64, 0.45, 0.27];
-  const roof: Rgb = [0.6, 0.22, 0.15];
-  m.add(box(2.9, 0.2, 2.9), [0.46, 0.33, 0.21], { y: 0.1 });
+  const wood: Rgb = [...START.walls];
+  const roof: Rgb = [...START.roof];
+  m.add(box(2.9, 0.2, 2.9), START.deck, { y: 0.1 });
+  m.add(box(3.0, 0.06, 3.0), [0.22, 0.15, 0.1], { y: 0.03 });
   m.add(box(1.7, 0.9, 1.3), wood, { y: 0.65 });
   // log courses: darker bands on the walls
-  for (const y of [0.42, 0.68, 0.94]) m.add(box(1.74, 0.05, 1.34), [0.5, 0.34, 0.2], { y });
+  for (const y of [0.42, 0.68, 0.94]) m.add(box(1.74, 0.05, 1.34), [0.66, 0.55, 0.4], { y });
   // an A-frame roof along x, overhanging the walls
   const x = 1.02;
   const z = 0.82;
   const y0 = 1.1;
   const y1 = 1.92;
   m.tris([-x, y0, z, x, y0, z, x, y1, 0, -x, y0, z, x, y1, 0, -x, y1, 0], roof);
-  m.tris([x, y0, -z, -x, y0, -z, -x, y1, 0, x, y0, -z, -x, y1, 0, x, y1, 0], [0.52, 0.19, 0.13]);
+  m.tris([x, y0, -z, -x, y0, -z, -x, y1, 0, x, y0, -z, -x, y1, 0, x, y1, 0], [roof[0] * 0.85, roof[1] * 0.85, roof[2] * 0.85]);
   m.tris([x, y0, z, x, y0, -z, x, y1, 0], wood);
   m.tris([-x, y0, -z, -x, y0, z, -x, y1, 0], wood);
-  m.tris([-x, y0, z, -x, y0, -z, x, y0, -z, -x, y0, z, x, y0, -z, x, y0, z], [0.4, 0.27, 0.16]);
+  m.tris([-x, y0, z, -x, y0, -z, x, y0, -z, -x, y0, z, x, y0, -z, x, y0, z], [0.3, 0.2, 0.13]);
   m.add(box(0.22, 0.55, 0.22), [0.52, 0.51, 0.49], { x: 0.5, y: 1.75, z: -0.3 });
   // the door and its awning, facing the entrance
   m.add(box(0.38, 0.56, 0.06), [0.22, 0.14, 0.08], { y: 0.48, z: 0.66 });
   m.add(box(0.64, 0.06, 0.32), roof, { y: 0.84, z: 0.8, rx: 0.25 });
   // a tall banner at the back corner, seen from afar
-  m.add(cyl(0.045, 0.035, 2.7, 5), [0.3, 0.22, 0.15], { x: -1.15, y: 0.2 + 1.35, z: -1.1 });
-  m.add(box(0.72, 0.44, 0.04), [0.97, 0.75, 0.16], { x: -0.77, y: 2.55, z: -1.1 });
-  m.add(box(0.72, 0.08, 0.045), [0.72, 0.2, 0.12], { x: -0.77, y: 2.36, z: -1.1 });
+  m.add(cyl(0.05, 0.04, 2.7, 5), [0.22, 0.16, 0.11], { x: -1.15, y: 0.2 + 1.35, z: -1.1 });
+  m.add(box(0.8, 0.5, 0.05), START.banner, { x: -0.73, y: 2.55, z: -1.1 });
+  m.add(box(0.8, 0.1, 0.055), [0.2, 0.08, 0.05], { x: -0.73, y: 2.33, z: -1.1 });
   return m;
 }
 
@@ -272,27 +312,23 @@ function entrance(): Model {
     .add(box(0.12, 0.12, 0.12), [1.0, 0.85, 0.42], { x: 0.24, y: 0.6, z: 0.18 });
 }
 
-/** Ruins: storeys of a rusty scaffold, one level high each, with beige panels; a ruin stacks one
- *  per level, the top one open. Ivy grows on them where the ground is moist. */
-const RUST: Rgb = [0.62, 0.3, 0.13];
-const RUST_DARK: Rgb = [0.45, 0.2, 0.1];
-const PANEL: Rgb = [0.84, 0.76, 0.56];
+/** Ruins: storeys of a rusty tower, one level high each: a solid rusty body (so from afar a ruin
+ *  reads as a block, never as a bare tree), dark corner posts and rails, and beige panels; a ruin
+ *  stacks one per level. Ivy grows on them where the ground is moist. */
 const IVY: Rgb = [0.2, 0.38, 0.15];
 function storey(variant: number, ivy: boolean): Model {
   const m = new Model();
   const e = 0.38;
-  // corner posts and the rails round the top of the storey
-  for (const [x, z] of [[e, e], [e, -e], [-e, e], [-e, -e]] as const) m.add(cyl(0.035, 0.035, 1.0, 3), RUST, { x, y: 0.5, z });
-  m.add(box(0.84, 0.05, 0.05), RUST_DARK, { y: 0.96, z: e });
-  m.add(box(0.84, 0.05, 0.05), RUST_DARK, { y: 0.96, z: -e });
-  m.add(box(0.05, 0.05, 0.84), RUST_DARK, { x: e, y: 0.96 });
-  m.add(box(0.05, 0.05, 0.84), RUST_DARK, { x: -e, y: 0.96 });
+  m.add(box(0.72, 0.92, 0.72), RUIN.rust, { y: 0.46 });
+  // corner posts, and a dark rim on top of the storey
+  for (const [x, z] of [[e, e], [e, -e], [-e, e], [-e, -e]] as const) m.add(cyl(0.06, 0.06, 1.0, 4), RUIN.dark, { x, y: 0.5, z, ry: Math.PI / 4 });
+  m.add(box(0.86, 0.08, 0.86), RUIN.dark, { y: 0.96 });
   // beige panels on some sides, a diagonal brace on another
   const sides: [number, number, number][] = [[0, e, 0], [e, 0, Math.PI / 2], [0, -e, Math.PI], [-e, 0, -Math.PI / 2]];
   const [a, b, c] = [sides[variant % 4], sides[(variant + 1) % 4], sides[(variant + 2) % 4]];
-  m.add(box(0.62, 0.42, 0.04), PANEL, { x: a[0], y: 0.36, z: a[1], ry: a[2] });
-  if (variant % 2) m.add(box(0.5, 0.3, 0.04), PANEL, { x: b[0], y: 0.7, z: b[1], ry: b[2] });
-  m.add(box(0.05, 1.05, 0.05), RUST_DARK, { x: c[0], y: 0.5, z: c[1], ry: c[2], rz: 0.72 });
+  m.add(box(0.58, 0.42, 0.04), RUIN.panel, { x: a[0], y: 0.38, z: a[1], ry: a[2] });
+  if (variant % 2) m.add(box(0.5, 0.3, 0.04), RUIN.panel, { x: b[0], y: 0.7, z: b[1], ry: b[2] });
+  m.add(box(0.05, 1.05, 0.05), RUIN.dark, { x: c[0], y: 0.5, z: c[1], ry: c[2], rz: 0.72 });
   if (ivy) {
     m.add(ico(0.2), IVY, { x: a[0] * 1.05, y: 0.25, z: a[1] * 1.05, sy: 1.3 });
     m.add(ico(0.16), [0.24, 0.44, 0.17], { x: -e, y: 0.55 + 0.1 * (variant % 2), z: e, sy: 1.6 });
@@ -326,7 +362,7 @@ const GENERIC_COLORS: [RegExp, Rgb][] = [
   [/Blockage/, [0.52, 0.51, 0.49]],
   [/NaturalDam/, [0.54, 0.42, 0.27]],
   [/Thorns/, [0.48, 0.18, 0.18]],
-  [/Geothermal/, [0.82, 0.48, 0.16]],
+  [/Geothermal/, [...GEOTHERMAL]],
   [/Overhang/, [0.62, 0.53, 0.42]],
   [/UnstableCore/, [0.69, 0.29, 0.75]],
   [/Badtide|Badwater/, [0.42, 0.29, 0.16]],
@@ -337,6 +373,13 @@ const GENERIC_COLORS: [RegExp, Rgb][] = [
 function genericColor(template: string): Rgb {
   for (const [re, c] of GENERIC_COLORS) if (re.test(template)) return c;
   return [0.56, 0.56, 0.56];
+}
+
+/** Where a plant stands in its tile and its size (the captures' listing reads it): the offset
+ *  from the tile's middle (x east, y north) and the scale. */
+export function plantPlacement(x: number, y: number, flags: number): { dx: number; dy: number; scale: number } {
+  const dead = !!(flags & DEAD);
+  return { dx: (jitter(x, y, 2) - 0.5) * 0.3, dy: -(jitter(x, y, 3) - 0.5) * 0.3, scale: (flags & YOUNG ? 0.5 : 0.85 + 0.3 * jitter(x, y, 1)) * (dead ? 0.95 : 1) };
 }
 
 /** A per-tile hash in [0, 1): jitter that stays the same between redraws. */
@@ -351,7 +394,18 @@ interface Batch {
   model: () => Model;
   matrices: number[];
   tints: number[];
+  /** Per instance: its minimum size (pixels a unit of the model takes at least, 0 for none), how
+   *  far it rises for each time it grows, and the most it grows (the object shader's `grow`). */
+  grows: number[];
 }
+
+type Grow = readonly [number, number, number];
+/** Minimum sizes on screen: pixels per unit of the model, the rise per growth, the most growth. */
+const NO_GROW: Grow = [0, 0, 1];
+const GROW_DEAD: Grow = [16, 0, 4];
+const GROW_SLOPE_MARK: Grow = [30, 0.6, 5];
+const GROW_START: Grow = [14, 0, 3];
+const TREES = new Set(["Pine", "Birch", "Oak"]);
 
 /** Build the objects of a map view as a group of instanced meshes; with the soil (and the map's
  *  width), ruins on moist ground are overgrown. `lite`: the light look's models (software
@@ -361,18 +415,19 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
   const batch = (key: string, model: () => Model): Batch => {
     let b = batches.get(key);
     if (!b) {
-      b = { model, matrices: [], tints: [] };
+      b = { model, matrices: [], tints: [], grows: [] };
       batches.set(key, b);
     }
     return b;
   };
   /** An instance: turned by `angle` about the vertical, scaled by s, at (px, py, pz). */
-  const put = (b: Batch, px: number, py: number, pz: number, angle: number, s: number, tint: Rgb | number = 1, sy = s) => {
+  const put = (b: Batch, px: number, py: number, pz: number, angle: number, s: number, tint: Rgb | number = 1, sy = s, grow: Grow = NO_GROW) => {
     const c = Math.cos(angle);
     const n = Math.sin(angle);
     b.matrices.push(c * s, 0, -n * s, 0, 0, sy, 0, 0, n * s, 0, c * s, 0, px, py, pz, 1);
     if (typeof tint === "number") b.tints.push(tint, tint, tint);
     else b.tints.push(tint[0], tint[1], tint[2]);
+    b.grows.push(grow[0], grow[1], grow[2]);
   };
   let instances = 0;
   for (let k = 0; k < v.count; k++) {
@@ -404,7 +459,7 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
       // the 3×3 footprint's centre: Coordinates plus the rotated local (1, 1)
       const [dx, dy] = rotate(o, 1, 1);
-      put(batch("start", districtCenter), x + dx + 0.5, z, -(y + dy + 0.5), turn, 1);
+      put(batch("start", districtCenter), x + dx + 0.5, z, -(y + dy + 0.5), turn, 1, 1, 1, GROW_START);
       const [ex, ey] = startEntranceTile(x, y, o);
       put(batch("start.entrance", entrance), ex + 0.5, z, -(ey + 0.5), turn, 1);
       continue;
@@ -427,10 +482,13 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       continue;
     }
     if (PLANTS.has(template)) {
-      const s = (flags & YOUNG ? 0.5 : 0.85 + 0.3 * jitter(x, y, 1)) * (flags & DEAD ? 0.95 : 1);
-      const tint = flags & DEAD ? 0.92 + 0.14 * jitter(x, y, 5) : 0.9 + 0.2 * jitter(x, y, 5);
-      put(b, x + 0.5 + (jitter(x, y, 2) - 0.5) * 0.3, z, -(y + 0.5) + (jitter(x, y, 3) - 0.5) * 0.3, jitter(x, y, 4) * Math.PI * 2, s, tint);
+      const dead = !!(flags & DEAD);
+      const s = (flags & YOUNG ? 0.5 : 0.85 + 0.3 * jitter(x, y, 1)) * (dead ? 0.95 : 1);
+      const tint = dead ? 0.94 + 0.08 * jitter(x, y, 5) : 0.9 + 0.2 * jitter(x, y, 5);
+      put(b, x + 0.5 + (jitter(x, y, 2) - 0.5) * 0.3, z, -(y + 0.5) + (jitter(x, y, 3) - 0.5) * 0.3, jitter(x, y, 4) * Math.PI * 2, s, tint, s, dead && TREES.has(template) ? GROW_DEAD : NO_GROW);
     } else put(b, x + 0.5, z, -(y + 0.5), turn, 1);
+    // a slope's arrows, about the ramp's middle
+    if (template === "Slope") put(batch("Slope.mark", MODELS["Slope.mark"]), x + 0.5, z + 0.5, -(y + 0.5), turn, 1, 1, 1, GROW_SLOPE_MARK);
   }
   const group = new Group();
   for (const [key, b] of batches) {
@@ -441,6 +499,7 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
     mesh.instanceMatrix.array.set(b.matrices);
     mesh.instanceMatrix.needsUpdate = true;
     mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(b.tints), 3);
+    mesh.geometry.setAttribute("grow", new InstancedBufferAttribute(new Float32Array(b.grows), 3));
     mesh.frustumCulled = false;
     mesh.computeBoundingSphere();
     group.add(mesh);
