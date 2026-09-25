@@ -704,7 +704,12 @@ same maps join them once they exist (P-ML in [docs/ingame-log.md](docs/ingame-lo
 **Release:** inside the M9 release, or tagged `map-look-done` and released like a milestone
 (CLAUDE.md, Deploying), once Kyler approves the clean look (D135).
 
-**Status:** built, 2026-09-25, on branch `dev` (the generator stays 0.6.0; no map file changes).
+**Status:** done, 2026-09-25: **Kyler approved the clean look** (D135), and `map-look-done` is
+tagged and released. The default view is the clean look, close to the game; an information layer
+(**Markers**, off by default) holds dam sites, slope arrows and enlarged far-off objects; the
+water is the game's deep teal to navy with clear shallows, and the grass a muted, yellower green
+(see [docs/map-look/CLEAN.md](docs/map-look/CLEAN.md)). The generator stays 0.6.0; no map file
+changes. History of the rounds before the clean look:
 Tuned to Kyler's in-game reference (ML-1), which corrected Delivers 1. The first independent review
 of the captures failed on ten findings (fixed in D114), the second narrowly on four (fixed in
 D115); Kyler judges the look from the new captures (no more blind reviews), and the 3D

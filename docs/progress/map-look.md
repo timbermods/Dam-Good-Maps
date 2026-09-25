@@ -239,3 +239,26 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
   browser tests: 54 of 55 pass in each full run; `tests/e2e/preview.spec.ts`'s Islands edit goes
   over its 2 s local budget (2.1–2.4 s) while other agents keep this machine busy, for the second
   round's code too (the same full run on it: 2.3 s), and passes run alone (1.5–1.8 s, both).
+
+### The clean look, approved (2026-09-25)
+
+- Kyler's appeal decision (D135): the default view is a clean look close to the game, and the
+  markers (dam sites, slope arrows, enlarged far-off objects) moved to an information layer,
+  **Markers**, off by default; the **Dam site** and **Slope** tools turn it on while in use.
+- Two rounds on branch `look/clean`, judged by Kyler from `C:\dgm-workshop\look\compare.html`
+  (local only: his reference screenshots, linked by path, beside the clean view): the first
+  (grey-brown earth that varies from afar, varied grass, deeper shadows, a sky, true-size dead
+  trees, stone ramps, world objects), and the second (the game's deep teal-to-navy water with
+  clear shallows; a muted, yellower grass). Kyler approved it; `look/clean` was merged into
+  `dev`.
+- **The water test changed, as Kyler asked:** `tests/unit/look-water-slopes.test.ts`'s old
+  check ("deep water is lighter than dry ground", the third round's rule) now checks Kyler's new
+  rule and is named "keeps badwater clearly darker than clean water, which has shore foam, glints
+  and see-through shallows": badwater's body at least 6 L* darker than clean water's at every
+  depth; foam and glints above 0.3 and present in the water shader; opacity below 1 everywhere
+  and below 0.8 at a bank. The palette's `WATER.deep` became `WATER.crest` (the ripple crests),
+  with `deep` kept as an alias for two older tests (`look-readable.test.ts`, `look.test.ts`)
+  until Kyler says whether to point them at the body colours.
+- Captures: `docs/map-look/clean/` (our maps; Beavertopia's stay local). The 3D benchmark
+  (information): worst orbit 74 fps on the integrated GPU with the CPU slowed 4×.
+
