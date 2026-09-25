@@ -531,8 +531,9 @@ a ring can be edited and locked, and an unedited map's bytes don't change.
 - Validation parity between editor and generator.
 - A local edit re-previews in ≤ 2 s at 256².
 - The export of an unedited generated map equals the generator's own file byte for byte.
-- Hollows, Pressure, Oasis, Nomads and Beaverome report their water checks as approximate with a
-  reason; the other 14 official maps are unchanged.
+- Hollows, Pressure, Oasis and Nomads report their water checks as approximate with a reason; the
+  other 15 official maps are unchanged. (Kyler took Beaverome off the list on 2026-09-25, PLAN §20
+  D107: its water is modelled correctly and none of the causes applies.)
 - A property test places standalone waterfalls, lakes and landforms beside every kind of map
   object on generated maps: no object is left floating.
 
@@ -542,8 +543,8 @@ differences in "Editor decisions".
 
 **Effort:** xhigh.
 
-**Status:** built, 2026-09-24, on branch `dev` (generator 0.6.0). Every acceptance criterion passes
-but one, which is not met as written:
+**Status:** done, 2026-09-25, on branch `dev` (generator 0.6.0). Every acceptance criterion passes,
+the approximate-water item as amended by Kyler (D107):
 - start requirements: both validators apply them, with 0 disagreements on the full oracle (50
   generated and 19 official maps); the unit tests pass and the three settings move their targets;
   every accepted map's start reaches water on its own level, and 100 seeds per theme at 96², 128²,
@@ -555,9 +556,9 @@ but one, which is not met as written:
 - a local edit re-previews in at most 1.76 s at 256² (Node, six themes) and 1.66 s in Chrome;
 - the export of an unedited generated map equals the generator's file byte for byte;
 - the property test leaves no object floating;
-- **not met as written:** Hollows, Pressure, Oasis and Nomads report approximate water; Beaverome
-  does not. None of the causes applies to it and our settle shows its water right; it fails
-  `start.dry` by its own design (PLAN §20 D98; Kyler decides decisions-pending #48).
+- Hollows, Pressure, Oasis and Nomads report approximate water, with the reason, and the other 15
+  official maps are unchanged. Beaverome was on the list as first written; Kyler took it off
+  (D107, decisions-pending #48).
 
 The in-game check is skipped for now (D11): the River Valley file is in `out/m8/`, and checks
 M8-1a to M8-1c are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20
@@ -627,6 +628,56 @@ steps, shorelines, ridge crests). Map look changes no map file, so they go to th
 ---
 
 ## M9. Interestingness, names, candidates, premises and variety
+
+**M9 design step first** (Kyler, 2026-09-25; PLAN §20 D108, D109). M9 is not built as written
+below until Kyler approves a design that meets the product principle (PLAN, Product principles):
+Dam Good Maps creates maps, never approximations of existing ones and never a few archetypes with
+a little noise, and two maps must play differently, not only look different.
+
+1. **`docs/m9-design.md`: a generator that invents.**
+   - Composition: parts with continuous parameters that combine by rules, so combinations nobody
+     authored appear: the river network (count, sources, confluences, splits, loops, direction),
+     relief at several scales (plateaus, basins, ridges, mesas, escarpments, terraces), the water
+     systems along it (lakes, falls, marshes, springs), hazards and landmarks.
+   - Emergence: macro terrain from deterministic processes (for example warped noise, uplift and
+     erosion, snapped to game levels), rivers from the terrain's drainage, and dam sites, falls and
+     lakes found where the terrain makes them, not stamped. Say how this meets the naturalness
+     refinement note.
+   - Inspiration beyond maps: real geomorphology (canyons, deltas, calderas, oxbows, karst,
+     fjords, badlands, mesas, braided rivers, alluvial fans, and more); Timberborn's mechanics as
+     sources of decisions (droughts and badtides, water physics, dams and floodgates, vertical
+     building, contamination); play design (trade-offs, risk and reward, pacing, frontiers,
+     surprise); playful, whimsical forms that still read as landscapes.
+   - The named premises below become at most a few recipes inside this system, never the space
+     itself. Interest is judged intrinsically (the score's components, play variety and Kyler's
+     ratings), never by similarity to workshop maps. The workshop's bands are a sanity range for
+     playability; Variety may go beyond them where the checks pass.
+   - Keep M9's good parts: 8 flow directions, the Variety setting and Surprise me, no clones, the
+     score and names. Keep every guard: batches ≥ 98% per theme and size, determinism (exact
+     arithmetic, D15), both validators, the budgets, share links that reproduce.
+   - Say what it costs: which planners stay, the generator version, and the risks.
+2. **Measures against archetypes**, on 200 seeds per theme at 128²:
+   - no clones: every map's nearest other seed ≥ 0.25 away, median ≥ 0.40 (variety scale);
+   - no archetypes: cluster the maps' signatures and feature vectors; no cluster holds more than
+     15% of a theme's maps, and the river networks and relief structures show many distinct
+     shapes (report the counts);
+   - play variety: describe each map's opening from the analysis (where the start's water is and
+     how it behaves in a drought, the nearest good dam site, the nearest threat, the directions
+     and kinds of land to expand into, what lies hidden further out); no cluster of openings holds
+     more than 15%; report the spread;
+   - no approximation: no generated map is closer to any workshop map than the workshop's p10
+     nearest-peer distance.
+3. **A prototype** under `investigation/generative/`, with no `src/` changes: at least 3 themes,
+   30+ seeds each at 128². Report renders, the measures above, the score and batch pass rates,
+   compared with the current M9 plan.
+4. **Kyler's judgement is the final gate.** A blind local rating page (never published) with 40
+   prototype maps: mixed themes and seeds, no labels, no hint of the recipe or process, and beside
+   each map's renders a short plain "how it plays" card from its opening description. Kyler rates
+   Fun and Unique from 1 to 5. The design is approved only when his Unique median for these maps
+   is at least his Unique median for the workshop maps (`C:\dgm-workshop\ratings.json`).
+
+M9, M10 and M11 wait for that approval.
+
 
 **Delivers:** old PLAN milestone 4.
 - `score.ts` calibrated on the official maps.
@@ -826,9 +877,15 @@ improve once every tool exists. Each note is its own item, with its own tests.
 5. The river-pond crossing fix (a queued task): the editor's **River** tool refuses a drawn river
    that crosses a riverside pond, so `tests/e2e/tools.spec.ts` draws on a map without ponds
    (`&lk=0`).
-6. The load checks: Kyler's note. Its details are not recorded in the repository; confirm them
-   with Kyler before the phase starts.
+6. The load checks (Kyler, 2026-09-25): the validators' load-class checks that real maps fail
+   even though the game loads them. 12 of the 32 investigation maps fail one (unconnected slopes,
+   a start on uneven ground, Meander Multiplayer's three starts; decisions-pending
+   [#8](docs/decisions-pending.md)). Keep a load check only where the decompiled game really
+   rejects or breaks the map; otherwise make it a warning. Change both validators together.
 7. Containment should look natural (below; decisions-pending [#29](docs/decisions-pending.md)).
+8. `start.dry` and lakeside starts (Kyler, 2026-09-25; PLAN §20 D107): should `start.dry` count
+   only water standing at or above the start's ground, so a lakeside start like Beaverome's
+   passes? Measure how many official, workshop and generated starts it changes before deciding.
 
 **Containment should look natural** (Kyler's note, 2026-09-24)
 
