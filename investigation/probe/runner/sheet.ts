@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { mainCheckout } from './catalog';
 import type { MapResult, Pose } from './job';
 import { REPO } from './paths';
 
@@ -57,7 +58,9 @@ table { border-collapse: collapse; margin: 8px 0; } td, th { border-bottom: 1px 
       for (const s of shots) {
         const pose = m.poses.find((p) => p.id === s.pose);
         const game = join(shotsDir, s.file);
-        const look = pose?.lookCapture ? join(REPO, 'docs', 'map-look', 'after', pose.lookCapture) : null;
+        // lookCapture is the capture's path as Map look records it (relative to the repository, or to
+        // the main checkout for the local-only Beavertopia captures)
+        const look = pose?.lookCapture ? [join(REPO, pose.lookCapture), join(mainCheckout(), pose.lookCapture)].find((f) => existsSync(f)) ?? null : null;
         if (look && existsSync(look))
           parts.push(`<div class="pair"><figure><img loading="lazy" src="${url(game)}"><figcaption>Timberborn · ${esc(s.pose)}</figcaption></figure><figure><img loading="lazy" src="${url(look)}"><figcaption>Our 3D view (Map look, after) · ${esc(pose!.lookCapture!)}</figcaption></figure></div>`);
         else parts.push(`<figure><img loading="lazy" src="${url(game)}"><figcaption>${esc(s.pose)}</figcaption></figure>`);

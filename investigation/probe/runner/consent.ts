@@ -24,8 +24,8 @@ export function planHash(plan: PlanSummary): string {
 
 export function describe(plan: PlanSummary): string {
   const lines = [
-    `This run LAUNCHES TIMBERBORN through Steam, with only the DGM Probe mod enabled for the run.`,
-    `${plan.kind === 'smoke' ? 'Smoke run' : 'Full batch'}: ${plan.maps.length} map${plan.maps.length === 1 ? '' : 's'}, about ${plan.estimateMinutes} minutes of game time.`,
+    `This run LAUNCHES TIMBERBORN through Steam. Only the DGM Probe mod is on during the run: your other mods are switched off and your settings are put back exactly afterwards.`,
+    `${plan.kind === 'smoke' ? 'Smoke run' : 'Full batch'}: ${plan.maps.length} map${plan.maps.length === 1 ? '' : 's'}, about ${plan.estimateMinutes} minutes.`,
   ];
   for (const m of plan.maps) lines.push(`  - ${m.title} (${m.days} game days): ${m.checks.join(', ') || 'screenshots and records only'}`);
   lines.push(`It never runs if Timberborn is already open, and puts back your settings, logs and saves afterwards.`);

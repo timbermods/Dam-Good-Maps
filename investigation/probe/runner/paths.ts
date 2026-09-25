@@ -13,6 +13,7 @@ export const CACHE = join(PROBE_DIR, '.cache');
 let documents: string | null = null;
 /** The Documents folder as Windows resolves it (it can be redirected, for example to OneDrive). */
 export function documentsDir(): string {
+  if (process.env.DGM_PROBE_DOCUMENTS) return process.env.DGM_PROBE_DOCUMENTS;
   if (documents) return documents;
   try {
     documents = execFileSync('powershell.exe', ['-NoProfile', '-Command', "[Environment]::GetFolderPath('MyDocuments')"], { encoding: 'utf8' }).trim();
@@ -26,9 +27,10 @@ export function documentsDir(): string {
 export const STEAM_APP_ID = '1062090';
 export const GAME_DIR = process.env.DGM_PROBE_GAME_DIR ?? 'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Timberborn';
 export const GAME_EXE = 'Timberborn.exe';
-export const GAME_PROCESS = 'Timberborn';
+/** The game's process name (tests use a stand-in). */
+export const GAME_PROCESS = process.env.DGM_PROBE_GAME_PROCESS ?? 'Timberborn';
 /** Unity's PlayerPrefs for the game: its settings, including which mods are enabled. */
-export const REGISTRY_KEY = 'HKCU\\Software\\Mechanistry\\Timberborn';
+export const REGISTRY_KEY = process.env.DGM_PROBE_REGISTRY_KEY ?? 'HKCU\\Software\\Mechanistry\\Timberborn';
 
 export function timberbornDocs(): string {
   return join(documentsDir(), 'Timberborn');
@@ -56,6 +58,7 @@ export function modInstallDir(): string {
 }
 /** Unity writes Player.log here and moves the previous one to Player-prev.log at each launch. */
 export function unityLogDir(): string {
+  if (process.env.DGM_PROBE_UNITY_LOGS) return process.env.DGM_PROBE_UNITY_LOGS;
   return join(homedir(), 'AppData', 'LocalLow', 'Mechanistry', 'Timberborn');
 }
 export function steamExe(): string {
@@ -67,4 +70,10 @@ export function steamExe(): string {
     // fall through to the default install
   }
   return 'C:\\Program Files (x86)\\Steam\\steam.exe';
+}
+
+/** True when `file` is the entry point run.cjs was given (require.main is run.cjs itself there). */
+export function isEntry(file: string): boolean {
+  const arg = process.argv[1];
+  return !!arg && resolve(PROBE_DIR, arg).toLowerCase() === resolve(file).toLowerCase();
 }

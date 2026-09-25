@@ -16,13 +16,14 @@ export interface Cycle {
 }
 
 /**
- * A camera pose. `game`: the game's own camera (target on the ground, the game's angles and zoom).
+ * A camera pose. `current`: the camera exactly as the game has it (its opening view). `game`: the numbers
+ * below with the game's own field of view.
  * `look`: our 3D view's orbit camera, in the view's world (x east, y up, z = −north), vertical field
  * of view `fovY` degrees and an image of `width` × `height`; the mod renders the same frame.
  */
 export interface Pose {
   id: string;
-  kind: 'look' | 'game';
+  kind: 'look' | 'game' | 'current';
   target: [number, number, number];
   yaw: number;
   pitch: number;
@@ -61,6 +62,8 @@ export interface JobMap {
   cycles: Cycle[];
   /** Stop the game at this day. */
   endDay: GameDay;
+  /** Real seconds this map may take before the mod gives up on it. */
+  timeoutSeconds: number;
   /** Tiles whose water and soil are recorded every `sampleHours`. */
   tiles: [number, number][];
   sampleHours: number;
@@ -131,8 +134,14 @@ export interface MapSnapshot {
   floor: number[];
   moisture: number[];
   soilContamination: number[];
+  /** The terrain after the game's terrain physics: the top terrain column's ceiling (first air level)
+   *  and the number of terrain columns (1 without caves). */
+  terrain: number[];
+  terrainColumns: number[];
   /** Tiles with more than one water column (caves, overhangs): x, y and every column. */
   layered: { x: number; y: number; columns: [number, number, number][] }[];
+  plants: EntityRecord[];
+  sources: EntityRecord[];
 }
 
 export interface Shot {
