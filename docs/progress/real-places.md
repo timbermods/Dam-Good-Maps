@@ -80,6 +80,10 @@ Information:
 - Build time, Node on this machine: 96² 0.3–2 s, 128² 0.8–4.5 s, 256² 6–14 s, nearly all of it the
   canonical settle. The browser is about the same. A phone will be slower; the page stays
   responsive.
+- CI's unit and contract step takes about 5.5 minutes, up from about 2: the 85 builds run in three
+  files side by side (about 2 minutes each on CI), and the Python sample takes most of
+  `places.test.ts`'s 2 minutes. Moving the three build files to the nightly run would win the
+  time back, at the cost of finding a changed place a day later.
 - The in-game check is optional: when the probe is available, Kyler may approve a batch that loads
   a few of them (D117). None was run, and Timberborn was never launched.
 - `playwright.config.ts` takes `DGM_E2E_PORT` (default 4173), so the browser tests can run beside
