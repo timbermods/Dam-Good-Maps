@@ -627,18 +627,18 @@ steps, shorelines, ridge crests). Map look changes no map file, so they go to th
 **Release:** inside the M9 release, or tagged `map-look-done` and released like a milestone
 (CLAUDE.md, Deploying).
 
-**Status:** done, 2026-09-25, on branch `dev` (the generator stays 0.6.0; no map file changes).
-Tuned to Kyler's in-game reference (ML-1), which corrected Delivers 1. Every acceptance criterion
-the run can check passes; telling the meanings apart in the captures is for the independent
-reviewer:
+**Status:** built, 2026-09-25, on branch `dev` (the generator stays 0.6.0; no map file changes).
+Tuned to Kyler's in-game reference (ML-1), which corrected Delivers 1. The first independent review
+of the captures failed on ten findings; the fix round (PLAN §20 D114) answers each, and a fresh
+reviewer judges the new captures before the step is tagged:
 - before and after captures of seed 4242 in every theme, River Valley 4242 at 256² and
-  Beavertopia, from the same camera poses, with greyscale and colour-blind versions of the after
-  ones; [docs/map-look/captures.md](docs/map-look/captures.md) says where each meaning is;
-- the 3D view builds a 256² map in at most 482 ms and orbits at 111 fps or more, Beavertopia
+  Beavertopia, from the same camera poses, with greyscale and colour-blind versions of every
+  after pose; [docs/map-look/captures.md](docs/map-look/captures.md) says where each meaning is;
+- the 3D view builds a 256² map in at most 529 ms and orbits at 100 fps or more, Beavertopia
   included, on the integrated GPU with the CPU slowed 4×;
 - no existing test changed, and all pass; every sha256 stays equal.
 
-The deviations are PLAN §20 D110; decisions-pending #49 (the default camera).
+The deviations are PLAN §20 D110 and D114; decisions-pending #49 (the default camera).
 
 ---
 

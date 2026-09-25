@@ -1039,7 +1039,8 @@ Deployed: m8-done, 2026-09-25, live check passed (PR #8; live download = `tools/
 ## Map look
 
 **Built** (branch `dev`; no map file changes, so the generator stays 0.6.0). The 3D view looks
-much closer to Timberborn, and every map meaning stays readable (PLAN §20 D86, D110). Kyler's ten
+much closer to Timberborn, and every map meaning stays readable (PLAN §20 D86, D110). The first
+independent review failed on ten findings; the fix round below (D114) answers them. Kyler's ten
 in-game reference screenshots arrived during the step (ML-1, kept on Kyler's machine only) and
 set the ground, walls, water, light and models:
 - **Ground by soil** (`src/render3d/palette.ts`, `materials.ts`): moist ground a vivid
@@ -1132,6 +1133,87 @@ Page weight: the 3D chunk grows by 28 KB (10 KB gzipped): the shaders, the model
   district center.
 - Other agents' batches kept this machine's CPU at 100% for most of the step. The final
   benchmark and test runs were made once it was quieter.
+
+### Review fix round (PLAN §20 D114)
+
+The first independent review of the captures failed on ten findings, so Map look was not tagged.
+The fix round, on `dev` after the orchestrator's b879dfa, answers each; a fresh reviewer judges the
+new captures. Where readability and Kyler's reference conflict, readability wins (D114).
+1. **Dead trees** could not be seen from afar, and ruins looked like bare trees. Dead trees are
+   now ashen: a nearly white trunk, a bleached body of bare wood and spiky branches poking out of
+   it. From afar they grow, to at least 16 pixels per unit, up to 4 times. Ruins are solid rusty
+   storeys with dark posts and a dark rim.
+2. **Dam sites** faded on moist ground in protanopia and in greyscale, and shared orange with
+   other objects. An overlay tile with alpha 255 is now hatched light yellow and near-black, with a
+   dark rim just outside; from afar it is solid light with the rim. The editor's dam sites and the
+   preview's best dam site use it. The legend names mine sites and geothermal fields.
+3. **Beavertopia's contamination:** the view was right and the listing wrong. The file keeps soil
+   for each column of a tile, and the tool took the highest value of any slot. At (96, 165),
+   slot 0 is a badwater tunnel under the top (floor 5, contamination 1.0); the top, at 11, is
+   dry. The listing now reads what the view draws. The pinkish zone was badwater's foam over
+   badwater cascading down terraces; badwater now keeps only a thin shore line. The flat dark
+   tiles were floors under overhangs (slabs with water on top), drawn with the top's under-water
+   colour; they now show the top's soil in shade. The red-brown object came from a listing that
+   pointed at the tree's foot; examples now point at the tree's crown.
+4. **Slopes:** pale arrows rimmed dark, which grow from afar (to 30 pixels per unit, up to
+   5 times) and rise over the ramp. The legend says they point uphill.
+5. **Badwater:** near-black red, well darker than clean water at any depth and than contaminated
+   ground. It keeps the ripples and reflections of water, with slow glowing bubbles. Water mixed
+   with badwater is streaked with it, the streaks covering about the bad share. Ripples calm
+   down from afar, so far water no longer shimmers.
+6. **Moist and dry in greyscale:** moist grass lighter, dry earth darker; shadows keep about four
+   fifths of the light (about half before), and the haze is lighter.
+7. **The start:** pale walls, a dark roof and a pale deck, growing from afar (up to 3 times).
+8. **Levels:** lighter grey-green walls in faint cobbles, every other level darker, a pale ledge
+   and a dark groove at each level, each at least a pixel wide. Falls are a see-through veil.
+9. **Legend:** every meaning, with small pictures, in two columns, and a note that dead trees,
+   slope arrows and the start are drawn larger from afar. Its seven ground, water and wall
+   swatches differ in greyscale by at least 8 L*: badwater 19, contaminated 33, dry 43, walls 51,
+   water 65, moist 73, dead trees 94. It lets clicks through to the map, and the editor starts it
+   closed.
+10. **Positions:** the listing reads the renderer's own state. Each example is the visible point,
+   checked by picking, with no object on the tiles in front of it.
+
+Also: birch crowns are darker, so living trees stay dark against the grass. Objects are lit a
+little more. Where the browser draws in software (the light look), a dead tree is a pale trunk, a
+bleached body and one branch, nothing grows from afar, and a dam site is plain yellow, so the light
+look stays light: 77,164 triangles for the render test's 256² map (62,008 before the fix round),
+and a frame in SwiftShader on this machine takes 26 ms (25 ms before).
+
+**Acceptance, after the fix round:**
+- **Captures:** 28 after captures of our maps and 108 greyscale and colour-blind versions (the
+  falls now have them too), plus Beavertopia's 4 and 16, locally. Every pose's camera is the
+  before run's, checked equal.
+- **Budgets** (`npm run bench:3d`, D46's three setups, 15 maps at 256²; results in
+  [out/map-look/bench3d.json](../out/map-look/bench3d.json)): **pass**.
+  - Build: worst 529 ms (the run's first map, on the integrated Radeon with the CPU 4× slower),
+    median 342 ms in that setup. On the RTX 4080: median 113 ms.
+  - Orbit: every map at 100 fps or more in every setup. The slowest is Beavertopia on the Radeon
+    with the CPU 4× slower (834,319 triangles; 795,730 before). 60 of 46,158 frames took longer
+    than 1/60 s in all three setups (15 before).
+  - GPU: the Radeon needs 9.23 ms per frame for Beavertopia (median; 10.07 ms at the 95th
+    percentile), against 8.23 ms before the fix round. An A/B on this machine puts the fix
+    round's cost at about 1 ms (8.21 against 9.22 ms).
+- **Chunk:** `View3D` stays lazy-loaded: 596.67 KB (155.68 KB gzipped), against 588.27 KB
+  (153.13 KB) after the first round and 560.26 KB (143.46 KB) before Map look. The page's own
+  script is 93.92 KB (93.89 KB before).
+- **Tests:** no existing test changed. Typecheck passes. The 363 unit and contract tests pass
+  (29 files, 173 s), with `tests/unit/look-readable.test.ts` new (6: the order of lightness, the
+  dam sites' hatch and its marks, minimum sizes, ashen dead trees, the legend). The 55 browser
+  tests pass twice in a row, with `tests/e2e/look-readable.spec.ts` new (the legend's lines, the
+  hatched best dam site). The larger legend first covered the map where three browser tests drag
+  and click in the editor; it now lets clicks through, and the editor starts it closed.
+- **No map file changes:** no generation, validation or format code changed, and every sha256
+  stays equal.
+- **CI:** green on the last code change (run 36156488581): typecheck, 351 unit and contract tests
+  (12 local-only skipped), the build, 22 browser tests, the oracle and the generation checks. In
+  CI's software rendering the render test's orbit draws 6 frames a second (8 and 9 after the first
+  round, 4 and 5 on the fix round's first two commits; the test needs more than 5 frames in
+  1.5 s).
+
+**Look at:** where readability won over Kyler's reference: lighter walls, lighter shadows, solid
+ruins, near-black badwater, and dead trees, slope arrows and the start drawn larger from afar
+(`npm run dev`, generate a map, **3D**).
 
 ## After Map look: Kyler's decisions
 
