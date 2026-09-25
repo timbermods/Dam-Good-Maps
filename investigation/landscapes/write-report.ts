@@ -1,40 +1,58 @@
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 const s = JSON.parse(readFileSync("data/summary.json", "utf8"));
 const library = JSON.parse(readFileSync("library/index.json", "utf8"));
 const notes = JSON.parse(readFileSync("family-notes.json", "utf8"));
-const percent = (a: number, b: number) => ((100 * a) / b).toFixed(1) + "%";
+const verifies = JSON.parse(
+  readFileSync("data/library-verification.json", "utf8"),
+);
+const percent = (a: number, b = 1) => ((100 * a) / b).toFixed(1) + "%";
 const fmt = (n: any) =>
   typeof n === "number" ? Number(n.toFixed(3)).toString() : "not measured";
 const families = Object.entries(s.families)
   .map(
     ([f, x]: any) =>
-      `| ${f} | ${x.passed} / ${x.converted} (${percent(x.passed, x.converted)}) | ${notes[f][0]} ${notes[f][1]} | ${notes[f][2]} |`,
+      `| ${f} | ${x.passed} / ${x.converted} (${percent(x.passed, x.converted)}) | ${library.items.filter((r: any) => r.family === f).length} | ${notes[f][0]} ${notes[f][1]} | ${notes[f][2]} |`,
   )
   .join("\n");
 writeFileSync(
   "FAMILIES.md",
-  `# Landscape families and play\n\nThese are sampling families, not generator templates. Pass rates count all three 16-level mappings, all nine windows, and all four centres around each named region. They describe this conversion policy, not the fraction of real landscapes that are playable. Nearby windows can miss the named feature.\n\n| Family | Passed / converted | Formation and process families | Play value and limits |\n|---|---|---|---|\n${families}\n\nUse combinations: a caldera with an eroded outlet gorge; a glacial floor below hanging tributaries; a meandering floodplain beside an escarpment; a confluence between plateau remnants. The terrain must supply the start, water route and dam opportunities. Do not paste a member of this library into a generator.\n\nProcess references: [NPS river systems](https://home.nps.gov/subjects/geology/fluvial-landforms.htm), [braided streams](https://www.nps.gov/articles/braided-stream.htm), [volcanic landforms](https://www.nps.gov/subjects/volcanoes/volcanoes-volcanic-landforms.htm), [calderas](https://home.nps.gov/articles/000/calderas.htm), [karst](https://www.nps.gov/subjects/caves/karst-landscapes.htm), and [glaciers](https://www.nps.gov/subjects/glaciers/about.htm). These explain process families. The proposed play value is an interpretation for Timberborn.\n`,
+  `# Landscape families and play
+
+These are sampling families, not generator templates. Pass rates count all three 16-level mappings and all nine windows per centre. They describe this conversion policy, not the fraction of real landscapes that are playable. Nearby windows can miss the named feature. Random land is a control cohort.
+
+| Family | Passed / converted | Library | Formation and process families | Play value and limits |
+|---|---|---|---|---|
+${families}
+
+The badlands row retains the Las Medulas sampling error in its counts. That mining landscape is excluded from natural targets and the library. See [methods](METHODS.md).
+
+Use combinations: a caldera with an eroded outlet gorge; a glacial floor below hanging tributaries; a meandering floodplain beside an escarpment; a confluence between plateau remnants. The terrain must supply the start, water route and dam opportunities. Do not paste a member of this library into a generator.
+
+Process references: [NPS river systems](https://home.nps.gov/subjects/geology/fluvial-landforms.htm), [braided streams](https://www.nps.gov/articles/braided-stream.htm), [volcanic landforms](https://www.nps.gov/subjects/volcanoes/volcanoes-volcanic-landforms.htm), [calderas](https://home.nps.gov/articles/000/calderas.htm), [karst](https://www.nps.gov/subjects/caves/karst-landscapes.htm), and [glaciers](https://www.nps.gov/subjects/glaciers/about.htm). These explain process families. The play value is an interpretation for Timberborn.
+`,
 );
 const biggest = Object.entries(s.failures16)
-  .slice(0, 7)
+  .slice(0, 5)
   .map(([k, v]) => `${k}: ${v}`)
   .join("; ");
-const compareKeys = [
-  "straightShare8",
-  "longestRun",
-  "ridgeThicknessCV",
-  "branching",
-  "sinuosity",
-  "junctionAngle",
-  "valleyWidth2",
-  "lakeShare",
-  "fallCount",
-  "reservoirVolume",
-];
-const table = compareKeys
-  .map((k) => {
+const measures: Record<string, string> = {
+  straightShare8: "Contour edges in straight runs of 8+ (fraction)",
+  longestRun: "Longest contour run (tiles)",
+  basinRimThicknessCV: "Basin rim thickness variation (CV)",
+  ridgeThicknessCV: "Ridge thickness variation (CV)",
+  drainageDensity: "Drainage length / area (tile⁻¹)",
+  branching: "Drainage junctions / 10,000 tiles",
+  sinuosity: "River segment length / chord",
+  junctionAngle: "Junction angle (degrees)",
+  valleyWidth2: "Valley width at +2 levels (tiles)",
+  lakeShare: "Lake area / map area",
+  fallDrop: "Wet fall drop (levels)",
+  reservoirEfficiency: "Best reservoir volume / dam length (tile²)",
+};
+const table = Object.entries(measures)
+  .map(([k, label]) => {
     const c = s.comparison[k];
-    return `| ${k} | ${fmt(c.real.p50)} | ${fmt(c.generated.p50)} | ${fmt(c.medianDifference)} |`;
+    return `| ${label} | ${fmt(c.real.p50)} | ${fmt(c.generated.p50)} | ${c.real.n} |`;
   })
   .join("\n");
 const maps = Object.entries(s.mappings)
@@ -43,11 +61,71 @@ const maps = Object.entries(s.mappings)
       `| ${k} | ${v.readabilityProxy} / ${v.n} | ${v.passed} / ${v.n} |`,
   )
   .join("\n");
-const verifies = JSON.parse(
-  readFileSync("data/library-verification.json", "utf8"),
-);
+const straight = s.comparison.straightShare8;
+const rims = s.comparison.basinRimThicknessCV;
+const width = s.comparison.valleyWidth2;
+const namedLibraryFamilies = new Set(
+  library.items
+    .filter((r: any) => r.family !== "random")
+    .map((r: any) => r.family),
+).size;
 writeFileSync(
   "REPORT.md",
-  `# Real landscapes for Dam Good Maps\n\nUse these measurements to set ranges for generative processes. Do not copy the patches into the generator. The [bench](bench/README.md), [families](FAMILIES.md) and [integration proposals](INTEGRATION.md) are the handoff to M9.\n\n## What ran\n\n- 450 centres: 400 around 100 named regions in 20 families, plus 50 seeded random land centres.\n- 4,050 patches: 96², 128² and 256², each at 30, 60 and 120 m per tile.\n- ${s.editorSafe} conversions at 16 levels; ${s.comparison22} at 22 for comparison.\n- ${s.passed16} / ${s.editorSafe} (${percent(s.passed16, s.editorSafe)}) passed the unchanged TypeScript generate-profile validator. ${s.passed22} comparison maps passed.\n- ${s.generated.passed} / ${s.generated.count} current generated maps passed: seeds 1–30 in all six themes at 128². River Valley matched all ${s.generated.defaultCliMatches} files from tools/gen.ts byte for byte.\n\nBase: dev at cfa5990caeaf462de695caf428280da55fc0f7f5. Terrain Tiles was downloaded on 2026-09-25. Raw tiles stay untracked. [Attribution](ATTRIBUTION.md) applies to every fixture and preview.\n\nMain blocking failures, with overlap: ${biggest}. Advisory failures are separate. A pass does not promise adequate drought storage or wide access.\n\n## What changed at game scale\n\n| Mapping | Readability screen | Validator passes |\n|---|---|---|\n${maps}\n\nThe readability screen requires at least five levels and elevation correlation of 0.9. It is not a human judgement of landform identity. Linear mapping keeps a fixed vertical scale but can clip high relief or erase low relief. Normalising preserves more local shape while exaggerating small real differences. Compression preserves ordering but changes slope proportions.\n\n## Real against generated\n\nMedians below compare named regions at 128², 60 m per tile and normalised 16 levels against the 180 generated maps. Real values give each named region one vote. Water bands use only settled conversions. Read the full stratified targets before selecting a range.\n\n| Measure | Real median | Generated median | Generated minus real |\n|---|---|---|---|\n${table}\n\nThese are measurements of shape and simulated water. D8 routing cannot recover splitting rivers; split/rejoin cell shares and enclosed islands are separate water-grid proxies. Shallow braid channels, real lake depths, tides and underground karst drainage remain unresolved.\n\n## Library and limits\n\nThe library contains ${library.count} passing patches from ${new Set(library.items.map((r: any) => r.family)).size} families and distinct regions. Fixtures plus previews occupy ${(library.bytes / 1e6).toFixed(2)} MB. Each stores heights, sources, start, resources, coordinates, mapping, attribution and checks. Open library/gallery.html.\n\nFresh TypeScript settles passed for ${verifies.typescriptFreshSettlePasses} fixtures. Python verification: ${verifies.python}. Timberborn was never launched.\n\nThe sample is exploratory. Named regions were chosen for landform interest. Four nearby centres and several scales overlap. Family labels describe the region, not a verified feature in each window. Random controls exclude latitudes beyond 80 degrees. The start search evaluates at most 48 candidates and adds no slopes. Conversion failures do not prove a landscape cannot work.\n\n## Decisions and handoff\n\nKeep all work and dependencies in this folder. Preserve failures as evidence. Use all three 16-level mappings, with 22 kept separate. Infer sources from drainage, seal the border, and leave interior heights unchanged. Use default Normal start and resource checks. Record rather than waive failed checks.\n\nThe CLI has no theme option, so the other themes use the same generate API. A local loader reads core TypeScript without changing the root package or installing there. Both are tooling choices only.\n\nNo generator process was designed or prototyped here. Changes to PLAN.md and ROADMAP.md are proposals in INTEGRATION.md. Every changed repository file is inside investigation/landscapes/.\n`,
+  `# Real landscapes for Dam Good Maps
+
+Use these measurements to set ranges for generative processes. The [bench](bench/README.md), [families](FAMILIES.md) and [integration proposals](INTEGRATION.md) are the handoff to M9. The patches are references, never generator templates.
+
+## What ran
+
+- 450 centres: 400 around 100 named regions in 20 families, plus 50 seeded random land centres.
+- 4,050 patches: 96², 128² and 256², each at 30, 60 and 120 m per tile.
+- ${s.editorSafe} conversions at 16 levels; ${s.comparison22} at 22 for comparison.
+- ${s.passed16} / ${s.editorSafe} (${percent(s.passed16, s.editorSafe)}) passed the unchanged TypeScript generate-profile validator. ${s.passed22} comparison maps passed.
+- ${s.generated.passed} / ${s.generated.count} generated maps passed: seeds 1–30 in all six themes at 128². River Valley matched all ${s.generated.defaultCliMatches} tools/gen.ts exports byte for byte.
+
+Base: dev at cfa5990caeaf462de695caf428280da55fc0f7f5. Terrain Tiles was downloaded on 2026-09-25. Raw tiles remain untracked. [Attribution](ATTRIBUTION.md) applies to every fixture and preview.
+
+Main blocking failures, with overlap: ${biggest}. Advisories remain separate. Passing does not promise adequate drought storage or wide access.
+
+## What survives quantisation
+
+| Mapping | Readability screen | Validator passes |
+|---|---|---|
+${maps}
+
+The screen requires five occupied levels and elevation correlation of 0.9. It is not a judgement of landform identity. Linear mapping can clip high relief or erase low relief. Normalising preserves local shape but exaggerates small elevation differences. Compression changes slope proportions.
+
+## Real against generated
+
+The clearest geometric difference is straight contours. Generated maps have a median ${percent(straight.generated.p50)} of contour edges in runs of eight or more tiles, against ${percent(straight.real.p50)} for real terrain. ${percent(straight.generatedOutsideRealCentral80)} of generated maps lie outside the real p10–p90 band.
+
+Generated basin rims vary less in thickness: median CV ${fmt(rims.generated.p50)}, against ${fmt(rims.real.p50)}. Valleys at two levels above the drainage floor are narrower: ${fmt(width.generated.p50)} tiles against ${fmt(width.real.p50)}. These suggest more variation in contours, rims and valley sections. They do not prescribe a process or prove better play.
+
+Medians below compare named regions at 128², 60 m per tile and normalised 16 levels against 180 generated maps. Each real region gets one vote. Water measures use settled conversions only. The generated maps use their native default height range. Check adjacent scales and mappings before adopting a range.
+
+| Measure | Real median | Generated median | Real regions measured |
+|---|---|---|---|
+${table}
+
+On the repository's published variety calibration, the complete real anchor set scores ${fmt(s.variety.referenceVariety)}, its ${s.variety.settledReferenceCount} settled members ${fmt(s.variety.settledReferenceVariety)}, and all generated maps ${fmt(s.variety.generatedVariety)}. Per-theme results and signatures remain in the data. This measures conversions, including planted resources. It is not a fun score.
+
+D8 routing cannot recover distributaries. Water-grid split shares and enclosed islands are separate proxies. Shallow braid channels, lake depths, tides and underground karst drainage remain unresolved.
+
+## Library and limits
+
+The library contains ${library.count} passing patches from distinct regions, spanning ${namedLibraryFamilies} named families plus ${library.items.filter((r: any) => r.family === "random").length} random controls. All library files total ${(verifies.bytes / 1e6).toFixed(2)} MB, including previews and metadata. Open [the gallery](library/gallery.html).
+
+Fresh TypeScript settles passed for ${verifies.typescriptFreshSettlePasses} fixtures. Python verification: ${verifies.python}. Timberborn was never launched.
+
+The sample is exploratory. Named regions were chosen for interest; nearby centres and scales overlap. Labels describe regions, not verified features in every window. Las Medulas is a mining landscape, so its records remain visible but its region is excluded from natural targets and the library. Random controls exclude latitudes beyond 80 degrees.
+
+## Decisions and handoff
+
+Preserve failures. Keep 22-level comparisons separate. Infer sources from drainage, seal borders and leave interior heights unchanged. Use Normal start and resource checks without waivers. Search up to 48 start sites; add no slopes. Failure does not prove no workable start exists.
+
+The CLI has no theme switch, so other themes use the same generate API. A local loader reads core TypeScript without changing root dependencies. Variety uses the existing workshop calibration because fitting nearly constant planted-resource totals would distort distances.
+
+No generator process was designed or prototyped here. PLAN.md and ROADMAP.md changes are proposals in INTEGRATION.md. Every changed repository file is inside investigation/landscapes/.
+`,
 );
 console.log("Wrote REPORT.md and FAMILIES.md");

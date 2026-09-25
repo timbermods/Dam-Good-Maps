@@ -59,7 +59,7 @@ async function task(t: any) {
     const q = quantise(central, mode, cap),
       start = performance.now();
     const r = convert(q.heights, t.size, cap, hydro, id),
-      metrics = terrainMetrics(q.heights, t.size, t.size, r.water),
+      metrics = terrainMetrics(q.heights, t.size, t.size, r.water, r.heights),
       checks = r.v.report.checks.map((c) => ({
         id: c.id,
         ok: c.ok,
@@ -69,6 +69,7 @@ async function task(t: any) {
         limit: c.limit,
       }));
     const row = {
+      measurementVersion: 2,
       id,
       location: t.loc.id,
       region: t.loc.region,

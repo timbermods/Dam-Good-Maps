@@ -16,6 +16,7 @@ export function terrainMetrics(
   W: number,
   H: number,
   water?: any,
+  waterFloor: ArrayLike<number> = h,
 ) {
   const N = W * H,
     d = drainage(h, W, H),
@@ -159,7 +160,7 @@ export function terrainMetrics(
         }
         for (const j of neighbours(i, W, H, false))
           if (D[j] > 0.05) {
-            const drop = h[i] + D[i] - h[j] - D[j];
+            const drop = waterFloor[i] + D[i] - waterFloor[j] - D[j];
             if (drop >= 1) {
               fallMask[i] = 1;
               drops.push(drop);

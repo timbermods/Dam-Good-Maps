@@ -73,7 +73,7 @@ D8 cannot split. Its branch statistics are drainage-tree proxies, not a measurem
 
 ## Targets and uncertainty
 
-Targets remain separate by cohort, family, size, metres per tile, mapping and height cap. Within a stratum, each region contributes the median of its available measurements. The target band is p10, median and p90 across those regions. Histogram bins use region medians, then means, and are renormalised. Family strata have only five named regions each.
+Targets remain separate by cohort, family, size, metres per tile, mapping and height cap. Within a stratum, each region contributes the median of its available measurements. The target band is p10, median and p90 across those regions. Quantiles select sorted index `floor((n - 1) * p)` without interpolation. Histogram bins use region medians, then means, and are renormalised. Family strata have five named regions each, except the four retained badlands regions.
 
 Terrain targets include passing and failing conversions. Water-feature targets include only simulations that settled. Nulls stay null. The 22-level comparison is separate. These are exploratory bands from a convenience sample, not confidence intervals for world geography. Compare adjacent scales and both named and random cohorts before adopting a range.
 

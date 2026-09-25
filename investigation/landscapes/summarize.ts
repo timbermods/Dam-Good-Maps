@@ -23,6 +23,8 @@ const generated = readdirSync(".work/generated")
   .filter((x) => x.endsWith(".json"))
   .sort()
   .map((f) => JSON.parse(readFileSync(".work/generated/" + f, "utf8")));
+if (rows.some((r) => r.measurementVersion !== 2))
+  throw Error("Old water metrics remain; run repair-water-metrics.ts first");
 if (!partial && (rows.length !== 16200 || generated.length !== 180))
   throw Error(
     `Run incomplete: ${rows.length}/16200 converted, ${generated.length}/180 generated`,
@@ -230,6 +232,13 @@ const summary = {
   passed16: all16.filter((r) => r.passed).length,
   comparison22: rows.filter((r) => r.cap === 22).length,
   passed22: rows.filter((r) => r.cap === 22 && r.passed).length,
+  waterMetricAudit: {
+    measurementVersion: 2,
+    cachedRecordsRechecked: rows.filter((r) => r.waterMetricsRechecked).length,
+    boundaryCorrectionsChangedFalls: rows.filter(
+      (r) => r.boundaryFallCorrectionChanged,
+    ).length,
+  },
   failures16: failureCounts(all16),
   families,
   mappings,

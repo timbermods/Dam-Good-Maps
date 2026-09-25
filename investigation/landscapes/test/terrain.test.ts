@@ -77,3 +77,15 @@ test("metric histograms are probability distributions and empty angles remain nu
   assert.equal(m.relief.levelStepLength.n, 0);
   assert.equal(m.relief.levelStepLength.p50, null);
 });
+
+test("fall heights use the converted water floor, not the unsealed relief crop", () => {
+  const h = new Uint8Array(16),
+    floor = new Uint8Array(16),
+    depth = new Float64Array(16);
+  h[5] = floor[5] = 15;
+  floor[4] = 16;
+  depth[4] = 0.5;
+  depth[5] = 0.6;
+  assert.equal(terrainMetrics(h, 4, 4, { depth }).falls.count, 1);
+  assert.equal(terrainMetrics(h, 4, 4, { depth }, floor).falls.count, 0);
+});

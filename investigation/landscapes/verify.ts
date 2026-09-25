@@ -14,6 +14,8 @@ const baseline = gunzipSync(readFileSync("data/generated.jsonl.gz"))
   .map((x) => JSON.parse(x));
 if (rows.length !== 16200 || new Set(rows.map((r) => r.id)).size !== 16200)
   throw Error("Conversion coverage or uniqueness failed");
+if (rows.some((r) => r.measurementVersion !== 2))
+  throw Error("Old water measurements remain");
 if (baseline.length !== 180 || new Set(baseline.map((r) => r.id)).size !== 180)
   throw Error("Baseline coverage or uniqueness failed");
 const locations = JSON.parse(readFileSync("data/locations.json", "utf8"));

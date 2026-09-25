@@ -5,6 +5,7 @@ import {
   mkdirSync,
   existsSync,
   statSync,
+  unlinkSync,
 } from "node:fs";
 import { gzipSync, gunzipSync } from "node:zlib";
 import { PNG } from "pngjs";
@@ -125,25 +126,8 @@ for (const r of chosen.slice(0, 90)) {
         png.data[k + c] = Math.min(255, rgb[c] * shade);
       png.data[k + 3] = 255;
     }
-  for (const e of fixture.entities) {
-    const c = e.Components.BlockObject.Coordinates;
-    if (
-      !["Pine", "Oak", "Birch", "BlueberryBush", "StartingLocation"].includes(
-        e.Template,
-      )
-    )
-      continue;
-    const k = ((W - 1 - c.Y) * W + c.X) * 4;
-    const colour =
-      e.Template === "StartingLocation"
-        ? [255, 68, 36]
-        : e.Template === "BlueberryBush"
-          ? [117, 61, 160]
-          : e.Components.LivingNaturalResource?.IsDead
-            ? [105, 78, 49]
-            : [26, 75, 36];
-    for (let a = 0; a < 3; a++) png.data[k + a] = colour[a];
-  }
+  // Show terrain and water clearly. Planted resources remain in the fixture;
+  // thousands of one-pixel markers would obscure the landform in a small preview.
   if (fixture.start) {
     const { x, y } = fixture.start;
     for (let dy = -1; dy <= 3; dy++)
@@ -193,6 +177,28 @@ writeFileSync(
     2,
   ),
 );
+// A later full run can replace an earlier preview selection. Remove only this
+// script's obsolete fixture/preview names, after the replacement index is saved.
+const keepFixtures = new Set(index.map((r) => r.fixture));
+const keepPreviews = new Set(
+  index.map((r) => r.preview.slice("previews/".length)),
+);
+for (const name of readdirSync("library"))
+  if (
+    /^[nu]\d{3}-\d+-(30|60|120)-(linear|compressed|normalised)-16\.json\.gz$/.test(
+      name,
+    ) &&
+    !keepFixtures.has(name)
+  )
+    unlinkSync("library/" + name);
+for (const name of readdirSync("library/previews"))
+  if (
+    /^[nu]\d{3}-\d+-(30|60|120)-(linear|compressed|normalised)-16\.png$/.test(
+      name,
+    ) &&
+    !keepPreviews.has(name)
+  )
+    unlinkSync("library/previews/" + name);
 writeFileSync(
   "library/README.md",
   "# Landscape fixtures\n\n" +
