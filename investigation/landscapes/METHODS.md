@@ -49,6 +49,8 @@ Drainage-selected exits and their neighbouring edge cells retain their elevation
 
 The unchanged `canonicalSettle` supplies water and moisture. The unchanged generate-profile validator checks the assembled map. An explicit empty feature list keeps `water.outflow` active. No planned lakes or badwater basins are invented to waive checks.
 
+Real patches use generic Normal rules, including the 35% maximum water-covered area. Their geographic family is not a planned generator theme. Generated baselines retain native theme defaults; islands and lake basins permit 55% water cover. This affects pass-rate comparisons. No tolerance is raised to make a real conversion pass.
+
 Start search finds existing flat 3×3 sites with a dry five-by-five ring and a same-level entrance. It keeps the moistest candidate in each 8×8 block, then evaluates up to 48 candidates using the repository's walking rules. It prefers same-level water within 20 steps, then room for resources. This is a bounded best-site search, not proof that a failing terrain has no possible start.
 
 Near the selected start, eligible moist cells receive up to 48 bushes and 60 living trees. Remaining living plants use moist, clean, dry-footed soil. Dead trees fill dry ground. Clumped ruins use existing flat dry ground. Totals follow the repository's default size-aware densities. No slopes are added; some terrain could pass with more elaborate slope placement. The resulting pass rate measures this conversion policy.

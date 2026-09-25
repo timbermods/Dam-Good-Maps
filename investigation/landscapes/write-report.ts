@@ -108,7 +108,7 @@ The sample is exploratory. Named regions were chosen for interest; nearby centre
 
 ## Decisions and handoff
 
-Preserve failures. Keep 22-level comparisons separate. Infer sources from drainage, seal borders and leave interior heights unchanged. Use Normal start and resource checks without waivers. Bound the start search to 48 sites to keep the matrix tractable; add no slopes. Failure does not prove no workable start exists.
+Preserve failures. Keep 22-level comparisons separate. Infer sources from drainage, seal borders and leave interior heights unchanged. Use Normal start and resource checks without waivers. Real patches use the generic 35% water-coverage cap; generated island and lake-basin themes allow 55%. A geographic family is not a planned theme. Bound the start search to 48 sites to keep the matrix tractable; add no slopes. Failure does not prove no workable start exists.
 
 The CLI has no theme switch, so other themes use the same generate API. A local loader reads core TypeScript without changing root dependencies. Variety uses the existing workshop calibration because fitting nearly constant planted-resource totals would distort distances.
 
