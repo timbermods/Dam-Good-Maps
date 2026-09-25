@@ -229,6 +229,10 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 Claude lets users fine-tune a map in plain language, for example: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide," "make it a bit wider," "move the start closer to the lake," or "put more ruins on the eastern plateau." Requests like these must work reliably, with results that match what was asked.
 
+**Claude steers the generator; it never hand-builds the map** (`PLAN.md`, Product principles; §20 D139). When a request asks for character or new features ("make this valley harsher", "give me a huge dam opportunity halfway down", "put the start under a cliff"), Claude turns it into intentions (outcomes, not recipes; D138) and settings, regenerates the affected area steered toward them (M11's regenerate area, with locks on what the player wants kept), checks the result with the analysis, and reports honestly what emerged and what didn't. Editor operations, below, are for precise edits the player asks for ("move the start here", "widen this river by two", "delete that forest", "lock this area"). Where this section's tables name a builder as a character word's lever (a huge dam opportunity), M12 steers the generator instead; no dam wall is ever built (D111).
+
+**Describe the map you want** (D139). A player types a sentence. Claude turns it into intentions; the generator makes several candidates steered toward them; the analysis checks which really have them; Claude shows the ones that do and says honestly what didn't emerge. Editor operations only for small touches the player asks for. The first good candidate appears quickly, and more stream in behind it while the player looks; progress is shown, and the player can act on the first result.
+
 **Principle.** Claude never edits terrain or voxels directly. It proposes steps (below; `PLAN.md` §20, D89) that the app expands into operations from section 3, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
 
 **Spatial language.** The app, not Claude, resolves places and sizes, so results are consistent. The resolver returns the area, how it read the words, and every assumption it made:
@@ -340,6 +344,7 @@ A mismatch goes back to Claude to revise, just like a validation failure.
 
 *Recommendation* (decision D8 in `PLAN.md` §20):
 - One `ClaudeBridge` interface with two adapters.
+- The model layer is provider-neutral (D140): the engine, tools, checks and the steering principle don't depend on the model, and only a thin adapter talks to the model API. Claude is the default and the only provider built in M12. The design leaves room for an OpenAI adapter (a player's own OpenAI API key) later, tested with the same request suite before it's offered.
 - Build the Messages API adapter first. It also runs the Claude request suite in Node.
 - Ship bring-your-own-key as an advanced option.
 - Then ship the artifact edition as the no-key route, once the spike passes.
@@ -412,6 +417,9 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
 - **End to end** (e.g. Playwright): generate, edit features, export, re-import, compare.
 - **Claude request suite:** 120 requests (`tests/claude/requests.json`), each with its map, its goals and their expectations, whether it is feasible, what the report must say, and a reference solution (`PLAN.md` §20, D88). The kinds: the requests below word for word, simple, follow-ups, compass, feature-relative, flow-relative, judgement and size words, compound, vague, impossible, conflicting, questions and safety. The maps: generated maps of 48², 96², 128² and 256², rivers drawn in each direction, tributaries, and imports.
   - The reference solutions run in CI through `MapSession` with the real validators; every one must pass.
+  - Reference solutions for character and feature requests, Kyler's flagship request included, steer the generator (intentions, settings, regenerate area) instead of building features with planners (D139). A request whose steered solution needs a capability that doesn't exist yet (M9's intentions, M11's regenerate area) is marked "waiting for capability", not failed, and is checked from the step that provides it.
+  - Every step before M12 that adds a way to edit or understand maps adds its requests, with reference solutions, and re-runs the whole suite so it stays green (D134).
+  - "Describe the map you want" requests (D139): the candidates shown really have the intentions, and the report names the ones that didn't emerge.
   - With a key, the suite runs nightly in Node through the Messages API adapter, with the same prompts and tools the artifact edition uses and the artifact's limits on (64 KiB input, 32 KB results). It checks expectations against the achievable ranges (`PLAN.md` §9.10).
   - Include at least:
     - "add a giant waterfall in the north part of the map that is roughly 20 blocks wide", on 128² and 256²; on 96² it must fit, and on 48² it must report the reduction to 19;

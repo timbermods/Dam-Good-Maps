@@ -15,6 +15,9 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
     heavy work is running on this machine.
   - While waiting for the yes, carry on with any work that doesn't need the batch.
 - Never touch installed mods or saves otherwise. The maintainer (Kyler) tests in game himself.
+- At every milestone or step that changes generated maps, commit one small contact-sheet image to
+  `docs/sheets/<step>.png`: seeds 1–30 of every built theme at 128², top-down, each labelled with its seed and
+  theme; our own generated maps only; under 1 MB (PLAN §20, D144). Design version 2's prototypes get one too.
 
 ## Writing README and website text
 

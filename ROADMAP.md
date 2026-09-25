@@ -34,6 +34,10 @@ differently, this file wins.
   fixes or re-tunes any that broke, so the suite stays green. No model or API key is needed; the
   harness waits for M12. Each step's progress entry records the suite's pass count. Each of those
   steps below has a **Keep M12 ready** line naming its capabilities.
+- **A contact-sheet image at every map-changing step** (Kyler, 2026-09-25; D144; CLAUDE.md). Every
+  milestone or step that changes generated maps commits one small image to
+  `docs/sheets/<step>.png`: seeds 1–30 of every built theme at 128², top-down, each labelled with
+  its seed and theme; our own generated maps only; under 1 MB.
 
 ## Overview
 
@@ -756,8 +760,9 @@ a little noise, and two maps must play differently, not only look different.
      building, contamination); play design (trade-offs, risk and reward, pacing, frontiers,
      surprise); playful, whimsical forms that still read as landscapes.
    - The named premises below become at most a few recipes inside this system, never the space
-     itself. Interest is judged intrinsically (the score's components, play variety and Kyler's
-     ratings), never by similarity to workshop maps. The workshop's bands are a sanity range for
+     itself. Interest is judged intrinsically (the objective measures, play variety, DGM Probe
+     batches, and Kyler's own look when Kyler chooses; never a score fitted to ratings, D137),
+     never by similarity to workshop maps. The workshop's bands are a sanity range for
      playability; Variety may go beyond them where the checks pass.
    - Keep M9's good parts: 8 flow directions, the Variety setting and Surprise me, no clones, the
      score and names. Keep every guard: batches ≥ 98% per theme and size, determinism (exact
@@ -796,7 +801,24 @@ a little noise, and two maps must play differently, not only look different.
    Version 2 also measures Verticality (D132), at the default and at high Verticality: relief
    range, levels used, share of land above 16, tallest fall, cliff share and vertical reach (land
    reachable on foot against land reachable only with stairs), against the official and workshop
-   maps.
+   maps. And:
+   - **Maps feel authored** (Kyler, 2026-09-25; D138). Each map gets one or two deliberate
+     intentions, chosen from a varied set and steered into being by the processes (never stamped,
+     never a dam wall): a signature landmark, or a relation such as "the best farmland lies past
+     the gorge", "the only safe water is uphill", "a waterfall shields the start". The mix varies
+     from map to map, and some maps have none. A simple check that the intention exists on the
+     finished map; if not, re-steer or drop it. Each brief names its intention. The three
+     principles: intentions describe outcomes, never construction recipes; failure is allowed
+     (drop it, never mutilate the map; record how often each is dropped, and one that almost never
+     emerges leaves the set); and each intention has many structural realizations (the
+     no-archetype and no-clone measures run within each intention, on the normal batch or
+     contact-sheet maps). Player or Claude controls wait until it proves itself.
+   - **Kyler's own one-sentence intentions** (to come) become intentions under those principles
+     (D139).
+   - The techniques playbook as proposals (D131), and the corrected no-approximation measure
+     (D128).
+   - A contact-sheet image of its prototypes, `docs/sheets/m9-design-v2.png` (D144).
+   Version 2 is built on branch `investigation/generative-v2` (not yet started).
 
 M9, M10 and M11 wait for that approval.
 
@@ -852,6 +874,7 @@ the stages replace its order, and its premises become recipes inside the system 
     version side by side; the other version is built in a temporary worktree (or similar) without
     touching the working tree. Output: one HTML page per run in `.scratch/sheets/`, opened
     automatically, never committed; a click on a map opens it in the app with its share link. It
+    also writes the small PNG each map-changing step commits to `docs/sheets/` (D144). It
     must be quick: 30 seeds × 6 themes at 128² in a couple of minutes on Kyler's machine, one process
     at a time. No checks and no reports; its only acceptance is that it runs and is as quick as
     stated.
@@ -869,6 +892,9 @@ the stages replace its order, and its premises become recipes inside the system 
     released publicly, and any public beta opened, only after it passes. The orchestrator asks
     Kyler before launching it (the probe rule, D117). PR #18 (`investigation/probe`) is merged at
     a boundary when it is ready, and its INTEGRATION.md adopted as proposals.
+- **After M9a: the agent guide** (Kyler, 2026-09-25; D142): how a Claude Code session generates,
+  edits, validates and exports maps, and runs the contact sheet and the DGM Probe (under the
+  probe rule, D117), written once M9a has settled the generator's code.
 - **M9b: composition and variety** (tag `m9b-done`).
   - Delivers: the recipes (the named premises as forced parts), Variety (`vy`) and Surprise me, the
     8 flow directions (all appear in 100 seeds of each theme, none over 25%), river-network variety
@@ -880,9 +906,20 @@ the stages replace its order, and its premises become recipes inside the system 
     direction as tool entries; suite requests for them; every reference solution re-run.
   - Acceptance: the design's measures M1–M6 on 200 seeds per theme at 128² meet their targets.
 - **M9c: score, names and candidates** (tag `m9c-done`).
-  - Delivers: the 12-component score, fitted to Kyler's ratings when they exist; K = 3 candidates
-    with progressive preview; names and descriptions from the read-back features and the opening
-    ("how it plays"); the place resolver and judgement words (D84, D88); the settings bands.
+  - Delivers: the 12-component score with its default weights, only a mild tiebreaker among a
+    seed's candidates and for ordering a contact sheet, never a gate on quality (D137; how
+    candidates are chosen first is decisions-pending #53); K = 3 candidates with progressive
+    preview; names and descriptions from the read-back features and the opening ("how it
+    plays"); the place resolver and judgement words (D84, D88); the settings bands.
+  - **Variations of this map** (Kyler, 2026-09-25; D143): a button on the generator page and in
+    the editor makes several siblings of the current map: the same theme, settings and
+    intentions, with a genome close to the original but different land. Each is its own map with
+    its own share link, and none is a clone (the no-clone check applies between siblings).
+  - **Proposed for Kyler's approval: feedback on generated maps** (D137). "More like this" and
+    "Less like this" buttons on the generator page and in the editor, plus occasional quick
+    A-or-B picks ("which would you rather play?"). Each vote is recorded with the map's genome,
+    locally, and later from testers. The votes steer each theme's priors and the Variety
+    setting, not a general score. It pairs with Variations.
   - **Keep M12 ready** (D134): "describe this map" and "how does it play?" (names, descriptions,
     the opening) as query tool entries; suite requests for them; every reference solution re-run.
   - Acceptance: the rest of M9's acceptance below that the stages do not cover.
@@ -940,15 +977,14 @@ From the workshop study (D87), M9 grows from "the score" to "maps that diverge":
   to 100; the share link carries the resolved spec, so the map reproduces.
 - **No clones.** The K candidates (PLAN §7.9) are ranked by score, and among those within 5
   points of the best, the one farthest (variety score, `variety-scale.json`) from the theme's
-  reference maps wins. The reference maps are seeds 1–30 of the theme at default settings, stored
+  reference maps wins (D137 makes the score a mild tiebreaker; decisions-pending #53). The reference maps are seeds 1–30 of the theme at default settings, stored
   as 16×16 signatures and feature vectors (about 4 KB per theme).
 - **The score** (`score/score.ts`), ported from `investigation/workshop/lib/score.ts`: 12
   components (engineering, height variety, landmarks, river character, resource pacing, regions,
   trade-off, frontier, surprise, verticality, naturalness, water), each 0–1 (decisions-pending
-  #35, W5; PLAN §12). Its parameters are `data/score-params.json`: a copy of
-  `investigation/workshop/score-fitted.json` when it exists, else of `score-params.json`. Re-run
-  `npx tsx investigation/workshop/fit-score.ts` whenever `C:\dgm-workshop\ratings.json` changes,
-  and commit the new `score-fitted.json` with the change that uses it. The score's inputs from a
+  #35, W5; PLAN §12). Its parameters are `data/score-params.json`, a copy of the study's default
+  `score-params.json`: `fit-score.ts` and `ratings.json` are not used (Kyler, 2026-09-25; D137).
+  The score is only a mild tiebreaker. The score's inputs from a
   built map (plateaus, gorges, the main watercourse through the settled water, resource rings,
   regions, trade-off, frontier, dam sites near the start) move into `analysis/` from
   `lib/measures.ts` (`scoreInputs`), and the naturalness metric from `lib/naturalness.ts` (the
@@ -962,11 +998,9 @@ From the workshop study (D87), M9 grows from "the score" to "maps that diverge":
   `investigation/workshop/settings-bands.json`, the premise's water budget for `water.no_flood`
   (decisions-pending #33, W3), and the relief and terracing presets (#37, W7 in part).
 - **New builders** (PLAN §9.11): `spiral`, `cone`, `mesaField` and the sealed `sea`.
-- **Not built unless Kyler chooses it:** Reservoir help (`rh`) and `water.storage_possible`
-  (decisions-pending #31, W1). They conflict with D25, D30, D58 and D85, so the dam site near the
-  start stays, and `water.reservoir` stays a generation target with an advisory warning. If Kyler
-  adopts them, M9 builds them as WORKSHOP-INTEGRATION.md §2 says, and descriptions add a trade-off
-  clause at Reservoir help None: "No ready reservoir: the river is yours to tame."
+- **Reservoir help and `water.storage_possible`** (decisions-pending #31, settled by D111): no dam
+  ridge is built anywhere, and `water.storage_possible` replaces `water.reservoir` in M9a. Reservoir
+  help, if the design keeps it, only steers what the generator looks for.
 
 Why both variety targets below: a landmark on an unchanged River Valley base adds at most 0.02 to
 the theme's V2 (the north–south valley, a new skeleton, 0.075); counted as landmarks, the eleven
@@ -985,8 +1019,6 @@ maps; the per-premise batch gate is the guard.
   no approximation of workshop maps (at most 10% of a theme's maps closer to their nearest workshop
   map than the workshop's p10 nearest-peer distance, D128; run locally in each milestone's full
   check, since workshop maps never reach CI).
-- The official score distribution is documented, and the recommended official maps land in the
-  top third (with the study's default parameters they rank 3rd, 6th and 7th of 19).
 - Names and premises match the features on 30 hand-checked maps, 10 of them at Variety 100.
 - 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
 - The place resolver is tested on rivers flowing in every direction (the four edge directions
@@ -1007,8 +1039,6 @@ maps; the per-premise batch gate is the guard.
   - no clones: within a theme, every seed's nearest other seed is ≥ 0.25 away and the median
     ≥ 0.40 (today 0.06–0.19 and 0.08–0.26; workshop maps sit 0.59 (p10) and 0.67 (median) from
     their nearest peer);
-  - the generated median score at default settings reaches the official median (today 40 against
-    52);
   - each new builder meets its acceptance (PLAN §9.11);
   - only if Kyler adopts Reservoir help (#31): the obviousness measure
     (`investigation/workshop/obviousness.ts`) matches each level on ≥ 98% of maps, and Normal with
@@ -1502,12 +1532,31 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
   substituted (D92).
 - Intent checks, and the loop's budget: 3 rounds and 10 tool calls for one goal, growing with the
   goals Claude declares, up to 6 rounds and 20 calls (D93; decisions-pending #28).
-- The Messages API adapter (bring-your-own-key, strict tools, prompt caching, configurable model,
-  server-side fallbacks) and the suite runner.
+- **Claude steers the generator; it never hand-builds the map** (Kyler, 2026-09-25; PLAN, Product
+  principles; D139). A request for character or new features ("make this valley harsher", "give
+  me a huge dam opportunity halfway down", "put the start under a cliff") becomes intentions
+  (outcomes, not recipes; D138) and settings; Claude regenerates the affected area steered toward
+  them (M11's regenerate area, with locks on what the player wants kept), checks the result with
+  the analysis, and reports honestly what emerged and what didn't. Editor operations are for
+  precise edits the player asks for ("move the start here", "widen this river by two", "delete
+  that forest", "lock this area").
+- **"Describe the map you want"** (D139): a player types a sentence; Claude turns it into
+  intentions; the generator makes several candidates steered toward them; the analysis checks
+  which really have them; Claude shows the ones that do and says honestly what didn't emerge;
+  editor operations only for small touches the player asks for.
+- **A provider-neutral model layer** (Kyler, 2026-09-25; D140): the engine, tools, checks and the
+  steering principle don't depend on the model; only a thin adapter talks to the model API.
+  Claude is the default and the only provider built here: the Messages API adapter
+  (bring-your-own-key, strict tools, prompt caching, configurable model, server-side fallbacks)
+  and the suite runner. The design leaves room for an OpenAI adapter (a player's own OpenAI API
+  key) later, tested with the same Claude request suite before it's offered.
 - The artifact edition: a single-file build declaring `sample` and `downloads` only, and a `.zip`
   download.
-- The Claude request suite (120 requests in 13 kinds) running in Node, with reference solutions
-  (EDITOR_PLAN §9).
+- The Claude request suite (120 requests in 13 kinds, and those each earlier step added, D134)
+  running in Node, with reference solutions (EDITOR_PLAN §9). The reference solutions for
+  character and feature requests, Kyler's flagship request included, steer the generator instead
+  of building features with planners (D139); requests marked "waiting for capability" are
+  checked from the step that provides it.
 - From the workshop study (D87): the catalogue is Claude's vocabulary. Each pattern a player might
   ask for maps to a builder, a stamp or a feature, and the suite (EDITOR §9) gains these requests:
   - "Add a spiral mountain in the north" → `spiral` up; "dig a spiral quarry" → `spiral` down.
@@ -1603,6 +1652,9 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
 - Each of the workshop study's requests passes the suite on 96², 128² and 256² maps; the intent
   checks measure the landmark (its extent, its levels, the slopes joining a spiral's steps, the
   fork's two wet arms).
+- "Describe the map you want": the first good candidate appears quickly, and more stream in
+  behind it while the player looks; waiting never feels like a stall; progress is shown and the
+  player can act on the first result (D139).
 
 **In-game check:** play the map produced by "add a giant waterfall in the north part of the map
 that is roughly 20 blocks wide", and the one produced by the compound request ("Make this valley
@@ -1624,9 +1676,8 @@ dangerous badwater route on the opposite side.").
   - mobile layout;
   - versioned deploys at `/v/<version>/`.
 - From the workshop study (D87): the rating form asks two questions, as the study's rating page
-  does: fun (1–5) and unique (1–5), with an optional note (PLAN §2.3). `tools/ratings.ts` writes
-  them in the shape `investigation/workshop/fit-score.ts` reads (`{ratings: {<key>: {fun, unique,
-  note}}}`), so the same fit refits the score's target and weights from players' ratings.
+  does: fun (1–5) and unique (1–5), with an optional note (PLAN §2.3). They are feedback only: no
+  rating refits the score (Kyler, 2026-09-25; D137).
 
 **Acceptance**
 - Every usability task is done in under 2 minutes by a first-time user, and the full journey in
@@ -1644,7 +1695,13 @@ export, load in Timberborn.
 
 ## Later
 
-Each item stays behind a feature flag until its own in-game check passes:
+**After M12: a Dam Good Maps MCP server** (Kyler, 2026-09-25; D141). M12's tools (generate, steer
+with intentions, regenerate area, edit, validate, export) packaged as an MCP server, so Claude
+Desktop, claude.ai or other MCP-capable assistants can build Timberborn maps with the same engine,
+tools and steering principle as the app. A thin wrapper over M12's tool layer that inherits the
+same honesty and "steer, don't hand-build" rules.
+
+Each item below stays behind a feature flag until its own in-game check passes:
 - seeps and an arid theme;
 - aquifers;
 - unstable cores out of Advanced;
