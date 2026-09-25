@@ -247,22 +247,22 @@ const MODELS: Record<string, () => Model> = {
 /** The light look's models, for browsers that render in software (a few triangles each; D110). */
 const LITE_MODELS: Record<string, () => Model> = {
   Pine: () => new Model().add(cone(0.36, 1.25, 5), [0.13, 0.32, 0.19], { y: 0.2 + 0.625 }),
+  // dead trees: a pale trunk, a bleached body and one bare branch (few triangles)
   "Pine.dead": () => {
-    const m = new Model().add(cyl(0.08, 0.03, 1.15, 3), DEAD_WOOD, { y: 0.575 }).add(cone(0.3, 0.9, 5), DEAD_FAR, { y: 0.8 });
-    for (const [y, a, l] of [[0.4, 0.3, 0.42], [0.62, 2.4, 0.34], [0.84, 4.4, 0.24]] as const) branch(m, y, a, 0.45, l, 0.06, DEAD_WOOD);
+    const m = new Model().add(cyl(0.08, 0.03, 1.15, 3), DEAD_WOOD, { y: 0.575 }).add(cone(0.3, 0.9, 4), DEAD_FAR, { y: 0.8 });
+    branch(m, 0.45, 0.3, 0.45, 0.42, 0.06, DEAD_WOOD);
     return m;
   },
   Birch: () => new Model().add(cyl(0.05, 0.04, 0.7, 3), [0.93, 0.91, 0.86], { y: 0.35 }).add(new OctahedronGeometry(0.32, 0), [0.34, 0.52, 0.19], { y: 0.95, sy: 1.3 }),
   "Birch.dead": () => {
-    const m = new Model().add(cyl(0.065, 0.05, 0.55, 3), DEAD_WOOD, { y: 0.275 })
-      .add(new OctahedronGeometry(0.3, 0), DEAD_FAR, { y: 0.8, sy: 1.4 });
-    for (const a of [0.8, 2.9, 5.0]) branch(m, 0.5, a, 1.0, 0.5, 0.06, DEAD_WOOD);
+    const m = new Model().add(cyl(0.065, 0.05, 0.55, 3), DEAD_WOOD, { y: 0.275 }).add(cone(0.3, 0.8, 4), DEAD_FAR, { y: 0.8 });
+    branch(m, 0.5, 0.8, 1.0, 0.5, 0.06, DEAD_WOOD);
     return m;
   },
   Oak: () => new Model().add(cyl(0.1, 0.08, 0.55, 3), [0.34, 0.23, 0.14], { y: 0.275 }).add(new OctahedronGeometry(0.44, 0), [0.24, 0.45, 0.17], { y: 0.92, sy: 0.85 }),
   "Oak.dead": () => {
-    const m = new Model().add(cyl(0.13, 0.08, 0.6, 3), DEAD_WOOD, { y: 0.3 }).add(new OctahedronGeometry(0.4, 0), DEAD_FAR, { y: 0.84, sy: 0.9 });
-    for (const a of [0.4, 2.5, 4.6]) branch(m, 0.55, a, 0.65, 0.55, 0.07, DEAD_WOOD);
+    const m = new Model().add(cyl(0.13, 0.08, 0.6, 3), DEAD_WOOD, { y: 0.3 }).add(cone(0.4, 0.7, 4), DEAD_FAR, { y: 0.84 });
+    branch(m, 0.55, 0.4, 0.65, 0.55, 0.07, DEAD_WOOD);
     return m;
   },
   BlueberryBush: () => new Model().add(new OctahedronGeometry(0.28, 0), [0.14, 0.29, 0.14], { y: 0.2, sy: 0.75 }),
