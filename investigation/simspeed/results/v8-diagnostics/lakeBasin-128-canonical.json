@@ -1,0 +1,83 @@
+{
+  "id": "lakeBasin-128-canonical",
+  "samplingIntervalUs": 1000,
+  "durationUs": 930069,
+  "samples": 487,
+  "functions": [
+    {
+      "name": "substep",
+      "selfUs": 635346,
+      "inclusiveUs": 636903
+    },
+    {
+      "name": "updateEvapMod",
+      "selfUs": 117726,
+      "inclusiveUs": 117726
+    },
+    {
+      "name": "post",
+      "selfUs": 88712,
+      "inclusiveUs": 180456
+    },
+    {
+      "name": "prefill",
+      "selfUs": 76499,
+      "inclusiveUs": 76499
+    },
+    {
+      "name": "advance",
+      "selfUs": 3840,
+      "inclusiveUs": 1521633
+    },
+    {
+      "name": "volume",
+      "selfUs": 3126,
+      "inclusiveUs": 3126
+    },
+    {
+      "name": "(garbage collector)",
+      "selfUs": 1560,
+      "inclusiveUs": 1560
+    },
+    {
+      "name": "buildActive",
+      "selfUs": 1557,
+      "inclusiveUs": 1557
+    },
+    {
+      "name": "dispatch",
+      "selfUs": 1516,
+      "inclusiveUs": 1516
+    },
+    {
+      "name": "(anonymous)",
+      "selfUs": 0,
+      "inclusiveUs": 1017034
+    },
+    {
+      "name": "profile",
+      "selfUs": 0,
+      "inclusiveUs": 928322
+    },
+    {
+      "name": "(root)",
+      "selfUs": 0,
+      "inclusiveUs": 929882
+    },
+    {
+      "name": "canonicalRun",
+      "selfUs": 0,
+      "inclusiveUs": 76499
+    },
+    {
+      "name": "canonicalSettle",
+      "selfUs": 0,
+      "inclusiveUs": 838094
+    },
+    {
+      "name": "run",
+      "selfUs": 0,
+      "inclusiveUs": 754629
+    }
+  ]
+}

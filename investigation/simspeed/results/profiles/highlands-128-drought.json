@@ -1,0 +1,36 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "highlands-128-drought",
+  "method": "instrumented-method-wall-v2",
+  "profileBundleSha256": "792f673851c7403abd271d4621e5bd149081d71b7191dd1c525c46af2088aed7",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 2,
+  "workloadMs": 47.322599999999966,
+  "workloadCpuMs": 46,
+  "functions": [
+    {
+      "name": "spillLevels",
+      "calls": 30,
+      "selfUs": 41239.70000000145,
+      "inclusiveUs": 41239.70000000145
+    },
+    {
+      "name": "droughtStorage",
+      "calls": 30,
+      "selfUs": 4613.099999998212,
+      "inclusiveUs": 47292.00000000038
+    },
+    {
+      "name": "clusterSaturation",
+      "calls": 30,
+      "selfUs": 1439.2000000007101,
+      "inclusiveUs": 1439.2000000007101
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 30.599999999583815,
+      "inclusiveUs": 30.599999999583815
+    }
+  ]
+}

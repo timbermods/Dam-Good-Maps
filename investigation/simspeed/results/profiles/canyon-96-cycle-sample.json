@@ -1,0 +1,63 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "canyon-96-cycle-sample",
+  "method": "instrumented-method-wall-v1",
+  "workloadMs": 15824.4925,
+  "workloadCpuMs": 703,
+  "functions": [
+    {
+      "name": "WaterSim.substep",
+      "calls": 9216,
+      "selfUs": 7010307.800000176,
+      "inclusiveUs": 7675537.100000104
+    },
+    {
+      "name": "CycleModel.updateLife",
+      "calls": 288,
+      "selfUs": 6311065.899999968,
+      "inclusiveUs": 6311065.899999968
+    },
+    {
+      "name": "WaterSim.computeWn",
+      "calls": 4608,
+      "selfUs": 1183454.2000003718,
+      "inclusiveUs": 1183454.2000003718
+    },
+    {
+      "name": "WaterSim.buildActive",
+      "calls": 9216,
+      "selfUs": 665229.2999999714,
+      "inclusiveUs": 665229.2999999714
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 368150.699999908,
+      "inclusiveUs": 368150.699999908
+    },
+    {
+      "name": "WaterSim.updateEvapMod",
+      "calls": 4608,
+      "selfUs": 275793.69999974733,
+      "inclusiveUs": 1459247.9000001173
+    },
+    {
+      "name": "CycleModel.tick",
+      "calls": 4608,
+      "selfUs": 5403.399999675457,
+      "inclusiveUs": 15456341.800000092
+    },
+    {
+      "name": "WaterSim.run",
+      "calls": 4608,
+      "selfUs": 4265.200000299956,
+      "inclusiveUs": 9139872.500000464
+    },
+    {
+      "name": "WaterSim.updateSeeps",
+      "calls": 4608,
+      "selfUs": 822.2999999125022,
+      "inclusiveUs": 822.2999999125022
+    }
+  ]
+}

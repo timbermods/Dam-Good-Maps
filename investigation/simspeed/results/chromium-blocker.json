@@ -1,0 +1,29 @@
+{
+  "status": "resolved",
+  "parityPassed": true,
+  "attempts": [
+    {
+      "method": "Playwright installed Chrome / official headless shell",
+      "error": "browserType.launch: spawn EPERM"
+    },
+    {
+      "method": "Direct PowerShell Chrome / official headless shell",
+      "error": "FATAL mojo/public/cpp/platform/platform_channel.cc:108 Access is denied (0x5)"
+    },
+    {
+      "method": "Codex browser surface",
+      "error": "createBrowserTab and getState timed out"
+    }
+  ],
+  "headlessShell": "145.0.7632.6",
+  "reason": "Direct subprocess launches remained unavailable; the browser surface later became available and the complete original, exact-cycle and M9 whole-pipeline proofs passed in Chrome 153.",
+  "resolution": {
+    "runner": "browser-server.mjs",
+    "runtime": "Chrome 153",
+    "maps": 216,
+    "originalCycleCases": 18,
+    "exactCycleCases": 18,
+    "date": "2026-09-25T17:45:55.759Z",
+    "m9PipelineCases": 24
+  }
+}
