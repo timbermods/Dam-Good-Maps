@@ -414,7 +414,8 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
     - the compound request, word for word, on 128² and 256²: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side.";
     - the same request on a map whose river doesn't flow west to east: a drawn river, and a Delta map (M7);
     - an impossible one: a huge dam opportunity on 48². It passes only if the report says honestly what couldn't be done and offers the nearest alternative;
-    - a conflicting one: "put a badwater spring just upstream of the start". It passes only if the start rules hold, and the report or a question says why.
+    - a conflicting one: "put a badwater spring just upstream of the start". It passes only if the start rules hold, and the report or a question says why;
+    - the workshop catalogue's requests (a spiral mountain or quarry, an island in a moat, a heart-shaped lake, a badwater volcano, twin waterfalls, a hanging lake on a mesa, a mesa field, a river split round an island, a less obvious dam site, a more surprising map), listed with their builders in `ROADMAP.md` M12 (`PLAN.md` §20, D87).
   - A request passes when the result validates, meets its expectations, and the report accurately describes what changed. A compound request passes when every goal meets its expectations on the combined result, the map validates, and the report accurately names each trade-off.
   - The artifact edition gets a manual smoke test on the same requests.
 - **Usability tasks,** timed, run by me or testers who haven't seen the editor, each with a target of under 2 minutes and no help:

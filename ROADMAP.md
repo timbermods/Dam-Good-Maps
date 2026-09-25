@@ -35,7 +35,7 @@ differently, this file wins.
 | M7 | Resources, map objects, themes II | PLAN §5.7, §8 (Highlands, Delta, Islands), §9.4, §9.6–9.8 · EDITOR §4, E4 | yes (D) | high |
 | M8 | Water preview and background validation in the editor; start requirements first | EDITOR §6, E5 · PLAN §5.6, §10, §11.4, §19.7 | yes (preview vs game, F3, F4) | xhigh |
 | Look | Map look, after M8, before M9 | Kyler's plan (PLAN §20, D86) · EDITOR §8 · PLAN §14.2 (3D) | no (Kyler's reference screenshot) | high |
-| M9 | Interestingness, names, candidates | PLAN §7.9, §12, §13 | no | high |
+| M9 | Interestingness, names, candidates, premises and variety | PLAN §7.1, §7.9, §8, §12, §13 · the workshop study (D87) · EDITOR §7 words (D84) | no | xhigh |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
 | Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
@@ -53,6 +53,19 @@ differently, this file wins.
 - after M12: Claude.
 
 M9 depends only on M2 and can run alongside M8. M10 and M11 can swap places.
+
+**Investigations adopted after M7.** Their items are built in the milestones below, each marked
+with its source:
+- **The workshop study** (PLAN §20, D87): [investigation/WORKSHOP-INTEGRATION.md](investigation/WORKSHOP-INTEGRATION.md),
+  with the findings in [WORKSHOP.md](investigation/WORKSHOP.md), the numbers in
+  [workshop.json](investigation/workshop.json) and the tools, recipes and parameters in
+  [investigation/workshop/](investigation/workshop/). Port only what a milestone needs, into
+  `src/` or `tools/`, with tests: `lib/measures.ts` (mechanics flags, start quantities, score
+  inputs), `lib/naturalness.ts`, `lib/variety.ts`, `lib/score.ts` and `obviousness.ts`. The recipes
+  are reference implementations for the premises, builders and stamps, not code to ship as they
+  are. Other creators' maps, renders and per-map numbers stay in `C:\dgm-workshop`; never commit
+  them. Its decisions W1–W8 are decisions-pending #31–#38, and its conflicts with recorded
+  decisions #39–#40.
 
 ---
 
@@ -453,6 +466,23 @@ Its acceptance:
 - The editor's start indicators, its footprint and the map card follow the requirements (a
   browser test).
 
+From the workshop study (D87):
+- **Badwater distance** defaults become Easy 30, Normal 15, Hard 8 (decisions-pending #34, W4),
+  as targets with the other start targets. Official maps: nearest badwater to the start median
+  14.8, p25 10; generated maps today 36.
+- **The start must reach water on its own level.** On 82 of 180 generated maps at 128² the
+  start's own level holds no water: the bench stands one level above the floodplain, 6–10 tiles
+  from the channel (D26), and its level region is the bench alone (median 113 tiles; official
+  starts stand on level land of median 980 tiles that reaches the water). Requirement 1 needs the
+  bench to run to the bank, or the start to stand on the floodplain. Expect the batches to drop
+  until it does. Data: `workshop.json` `overall.start*`, measured by `lib/measures.ts`
+  (`startStats`: walking distance on one level, diagonals when both neighbours are level, slopes
+  as links).
+- **Report** how many of the 11 official starts the study could measure meet the three
+  requirements. The study's own thresholds by difficulty (water within 12 / 20 / 28 tiles' walk,
+  trees 60 / 20 / 10, bushes 40 / 25 / 15) are not used: they conflict with D85
+  (decisions-pending #39).
+
 **Also first: editing generated outlines that leave the map** (decisions-pending #30). Generated
 features' outlines may run up to one map side past each edge (the schema's bound since the Lake
 Basin reopen fix); they are clipped to the map when rasterized, and the editor can change and
@@ -468,11 +498,29 @@ a ring can be edited and locked, and an unedited map's bytes don't change.
 - Background full validation, debounced and cancellable.
 - Export rules for errors and warnings; the canonical settle on export, with progress.
 - Moisture and badwater overlays; the analytic drought view.
+- From the workshop study (D87):
+  - Maps whose water a steady state cannot show are recognised on import
+    (`analysis/mechanics.ts`): caves on 5% or more of tiles, delayed sources, aquifers or seeps
+    carrying a quarter or more of the clean water (seeps half of the running water), or a start
+    under a roof. Their water and start checks report "approximate" with the reason, in both
+    validators, and the preview shows the file's water there (the roofed-water rule already does
+    this for caves). Decisions-pending #36 (W6); the rule as written in
+    `investigation/workshop/lib/measures.ts` (`mechanics`) and `lib/table.ts` (`waterReliable`).
+  - Set pieces and lakes that reshape the ground clear the map objects standing on it, as they
+    clear trees, ruins and bushes (`clears`), or the objects move to the new ground and are
+    checked again (EDITOR_PLAN §3). The recipes found it: a standalone waterfall or a lake drawn
+    beside a relic, a geothermal field or a mine site left the object floating
+    (`entities.placement`, `extras.placement`) in 16 attempts over 46 runs of the twin-falls and
+    oxbow recipes.
 
 **Acceptance**
 - Validation parity between editor and generator.
 - A local edit re-previews in ≤ 2 s at 256².
 - The export of an unedited generated map equals the generator's own file byte for byte.
+- Hollows, Pressure, Oasis, Nomads and Beaverome report their water checks as approximate with a
+  reason; the other 14 official maps are unchanged.
+- A property test places standalone waterfalls, lakes and landforms beside every kind of map
+  object on generated maps: no object is left floating.
 
 **In-game check:** compare the preview with the game on three edited maps, including one
 imported official map with roofed water (F4) and one pre-1.0 workshop map (F3). Record the
@@ -530,6 +578,10 @@ district center is a small box.
 Timberborn from the default angle ([docs/ingame-log.md](docs/ingame-log.md), ML-1). Use it to
 compare and tune colours, lighting and water. Never ship game screenshots.
 
+**Not in this step:** the workshop study's naturalness targets for generated terrain (straight
+steps, shorelines, ridge crests). Map look changes no map file, so they go to the refinement phase
+(decisions-pending #40).
+
 **In-game check:** no; the reference screenshot is Kyler's.
 
 **Effort:** high.
@@ -553,17 +605,98 @@ compare and tune colours, lighting and water. Never ship game screenshots.
   - the judgement-word table (EDITOR_PLAN §7 "Judgement words"): each word's measured targets,
     direction, size and guards.
 
+From the workshop study (D87), M9 grows from "the score" to "maps that diverge":
+- **Premises.** At least three per built theme, drawn from the study's recipes
+  (`investigation/workshop/recipes/`) and the catalogue, each a planner variant that lays its
+  landmark out first and the rest around it (PLAN §8):
+
+  | Theme | Premises (existing in bold) |
+  |---|---|
+  | River Valley | **Gorge-dammed basin**; Island in a moat; Oxbow bend; Twin falls; Spiral mountain or quarry |
+  | Canyon | **Narrows**; Rim settlement (PLAN §8); Hanging lake on a mesa; Mesa field |
+  | Highlands | **Staircase**; Twin plateaus (PLAN §8); Badwater volcano; Spiral mountain |
+  | Lake Basin | **Rising lake**; Crater lakes (PLAN §8); Caldera with an island; Heart lake (rare) |
+  | Delta | **Many mouths**; Salt marsh (PLAN §8); Oxbow delta |
+  | Islands | **Archipelago**; Atoll (PLAN §8); Volcano island; Heart islands (rare) |
+
+  Rare premises are drawn only at Variety 60 and above.
+- **River directions** (D67). The valley themes (River Valley, Canyon, Highlands, Delta) and Lake
+  Basin's outlet draw their flow axis from 8 directions (PLAN §7.1). The planners lay out in a
+  west-to-east frame and the feature list is turned by one of the 8 symmetries of the square
+  (paths, outlines, set-piece plans and orientations), or they plan natively. The north–south
+  recipe builds a valley, its dam site and its falls along a north–south river with today's
+  builders.
+- **Variety** (`vy`, 0–100, default 70; decisions-pending #32, W2) and **Surprise me**. Variety
+  sets how the premise is drawn (0: the theme's first; higher: all of the theme's, then the rare
+  ones at 60+, then one catalogue landmark from another theme's list at 85+), how far the
+  settings' targets wander within the workshop's p10–p90 bands (`settings-bands.json`) as a share
+  of Variety, and the flow axis (always drawn at 30+). Surprise me draws a theme and sets Variety
+  to 100; the share link carries the resolved spec, so the map reproduces.
+- **No clones.** The K candidates (PLAN §7.9) are ranked by score, and among those within 5
+  points of the best, the one farthest (variety score, `variety-scale.json`) from the theme's
+  reference maps wins. The reference maps are seeds 1–30 of the theme at default settings, stored
+  as 16×16 signatures and feature vectors (about 4 KB per theme).
+- **The score** (`score/score.ts`), ported from `investigation/workshop/lib/score.ts`: 12
+  components (engineering, height variety, landmarks, river character, resource pacing, regions,
+  trade-off, frontier, surprise, verticality, naturalness, water), each 0–1 (decisions-pending
+  #35, W5; PLAN §12). Its parameters are `data/score-params.json`: a copy of
+  `investigation/workshop/score-fitted.json` when it exists, else of `score-params.json`. Re-run
+  `npx tsx investigation/workshop/fit-score.ts` whenever `C:\dgm-workshop\ratings.json` changes,
+  and commit the new `score-fitted.json` with the change that uses it. The score's inputs from a
+  built map (plateaus, gorges, the main watercourse through the settled water, resource rings,
+  regions, trade-off, frontier, dam sites near the start) move into `analysis/` from
+  `lib/measures.ts` (`scoreInputs`), and the naturalness metric from `lib/naturalness.ts` (the
+  refinement phase extends it).
+- **Names and descriptions** from the catalogue's plain words, keyed by the detected feature or
+  the premise (PLAN §13): *island in a moat*, *crater lake*, *caldera*, *spiral mountain*,
+  *spiral quarry*, *volcano*, *hanging lake*, *mesa field*, *twin falls*, *oxbow lake*, *chain of
+  lakes*, *great scarp*, *hub of channels*, *archipelago*, *branching rifts*, *concentric rings*.
+  Examples: "Moat Isle", "Caldera Rest", "Spiral Quarry", "Twin Falls", "Mesa Reach".
+- **Settings bands** (PLAN §5.8): the new calibration rows and settings from
+  `investigation/workshop/settings-bands.json`, the premise's water budget for `water.no_flood`
+  (decisions-pending #33, W3), and the relief and terracing presets (#37, W7 in part).
+- **New builders** (PLAN §9.11): `spiral`, `cone`, `mesaField` and the sealed `sea`.
+- **Not built unless Kyler chooses it:** Reservoir help (`rh`) and `water.storage_possible`
+  (decisions-pending #31, W1). They conflict with D25, D30, D58 and D85, so the dam site near the
+  start stays, and `water.reservoir` stays a generation target with an advisory warning. If Kyler
+  adopts them, M9 builds them as WORKSHOP-INTEGRATION.md §2 says, and descriptions add a trade-off
+  clause at Reservoir help None: "No ready reservoir: the river is yours to tame."
+
+Why both variety targets below: a landmark on an unchanged River Valley base adds at most 0.02 to
+the theme's V2 (the north–south valley, a new skeleton, 0.075); counted as landmarks, the eleven
+recipes lift V3 from 0.20 to 0.53. Maps diverge when the premise changes the skeleton too (the
+flow axis, where the valley runs, the relief, the water budget). Risk: variety bought with broken
+maps; the per-premise batch gate is the guard.
+
 **Acceptance**
 - The official score distribution is documented, and the recommended official maps land in the
-  top third.
-- Names and premises match the features on 30 hand-checked maps.
+  top third (with the study's default parameters they rank 3rd, 6th and 7th of 19).
+- Names and premises match the features on 30 hand-checked maps, 10 of them at Variety 100.
 - 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
 - The place resolver is tested on rivers flowing in every direction, so "upstream" is never read
   as "west".
+- From the workshop study:
+  - each premise passes a batch of 100 seeds at 96², 128², 192² and 256² at ≥ 98% final (first
+    attempt ≥ 60%), in the `generate` profile, and every built theme has at least 3 premises;
+  - in 100 seeds of each valley theme, all 8 flow directions appear and none exceeds 25%;
+  - variety (`lib/variety.ts`, scale in `variety-scale.json`), seeds 1–30 at 128², default
+    settings, as shares of the workshop's: the shape and numbers alone (V2) each theme ≥ 0.45
+    (today 0.15–0.36), all themes together ≥ 0.80 (today 0.56); with landmarks counted (V3,
+    `patternP0` in the scale file) each theme ≥ 0.60 at default Variety and ≥ 0.80 at Variety 100
+    (River Valley today 0.20);
+  - no clones: within a theme, every seed's nearest other seed is ≥ 0.25 away and the median
+    ≥ 0.40 (today 0.06–0.19 and 0.08–0.26; workshop maps sit 0.59 (p10) and 0.67 (median) from
+    their nearest peer);
+  - the generated median score at default settings reaches the official median (today 40 against
+    52);
+  - each new builder meets its acceptance (PLAN §9.11);
+  - only if Kyler adopts Reservoir help (#31): the obviousness measure
+    (`investigation/workshop/obviousness.ts`) matches each level on ≥ 98% of maps, and Normal with
+    Reservoir help None passes its batches at ≥ 98%.
 
 **In-game check:** no.
 
-**Effort:** high.
+**Effort:** xhigh (was high: the premises and the 8-direction layout frame set architecture).
 
 ---
 
@@ -576,10 +709,16 @@ compare and tune colours, lighting and water. Never ship game screenshots.
   - entity orientation remapping;
   - one start kept.
 
+Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps).
+
 **Acceptance**
 - The performance budgets of EDITOR §9 are met.
 - Caves and overhangs in imported maps survive edits elsewhere, and terrain support is re-checked.
 - Symmetric edits stay exactly symmetric, entities included.
+- From the workshop study (D87): the naturalize brush, on a generated map's terrain, brings the
+  steps in straight runs of 8+ at or below the official median (0.066) and ridge crest variation
+  to 0.25 or more (the naturalness metric M9 ports), without breaking `slopes.connect` or a set
+  piece's protected tiles.
 
 **In-game check:** no.
 
@@ -592,14 +731,28 @@ compare and tune colours, lighting and water. Never ship game screenshots.
 **Delivers:** E7.
 - The built-in stamp library, and user stamps with export and import (the entity transform rules
   of EDITOR §5).
-- Heightmap import scaled to 0–16.
+- Heightmap import scaled to 0–16. It also serves the workshop catalogue's real-geography maps (4
+  workshop maps).
 - Regenerate an area, with constraints.
 - Locks and the conflict rules.
+- From the workshop study (D87):
+  - The built-in stamp library draws on the catalogue's best patterns: island in a moat, crater
+    lake with an island, spiral mountain and spiral quarry, heart-shaped lake (and other
+    outlines: star, crescent), badwater volcano, hanging lake on a mesa, mesa field, twin
+    waterfalls, oxbow lake, and dam narrows between two spurs; plus EDITOR §5's waterfall basin,
+    gorge dam site, terraced cliff, ruin district and island lake. Each stamp is a feature group
+    (landforms, lakes, set pieces, resources) with its own slopes; the recipes in
+    `investigation/workshop/recipes/` are their reference.
+  - The water builders `riverFork`, lake `outlets` and river `switchback` (PLAN §9.11).
 
 **Acceptance**
 - Hand edits survive regeneration per the conflict rules.
 - Stamps round-trip through export and import.
 - A rotated or mirrored stamp passes the load checks.
+- From the workshop study: each built-in stamp, placed rotated and mirrored at 20 random free
+  spots on 96², 128² and 256² maps of every theme, passes the load checks every time and leaves
+  the map passing the `generate` profile at ≥ 90%; each new builder meets its acceptance (PLAN
+  §9.11).
 
 **In-game check:** no.
 
@@ -668,6 +821,38 @@ both ends. Change only the shapes.
 **Related work:** M9's interestingness score can use the same naturalness metric. M10's naturalize
 brush is the editor version; consider sharing its smoothing with the generator.
 
+**From the workshop study** (D87). Step 1 extends the naturalness metric M9 ports
+(`investigation/workshop/lib/naturalness.ts`). The study already measured these on the official
+and workshop maps (`workshop.json` `overall`; seeds 1–30 per theme at 128²); step 1 measures them
+again with the batch tools and records the final targets:
+
+| Measure | Official median | Workshop median | Generated today | Starting target |
+|---|---|---|---|---|
+| Steps in straight runs of 8+ (whole map) | 0.066 | 0.031 | 0.138 (Canyon 0.373) | ≤ 0.066 in every theme (#40) |
+| Longest straight step run (whole map) | 18 | 17 | 27 (Delta 33.5) | ≤ 25, the official p90 (#40) |
+| Ridge thickness variation along a ridge (CV) | 0.30 | 0.36 | 0.32 | ≥ 0.30 |
+| Ridge crest height variation (std, levels) | 0 (p90 0.46) | 0.40 | 0 | ≥ 0.25 |
+| Basin rim thickness variation (CV) | 0.25 | 0.31 | 0.18 | ≥ 0.25 |
+| Dam-site reservoir rim thickness variation (CV) | 0.38 | 0.37 | 0.34 | ≥ 0.35 |
+| Narrows shoulders: thickness variation (CV) | 0.45 | 0.43 | 0.42 | ≥ 0.40 |
+| Narrows shoulders: height variation (std, levels) | 0.31 | 0.22 | 0 (River Valley, Highlands, Delta) | ≥ 0.2 |
+| Shoreline in straight runs of 8+ | 0.12 | 0.06 | 0.22 (Canyon 0.46) | ≤ 0.12 |
+| Water in 1–2-tile ditches (share of water) | 0.021 | 0.053 | 0.009 | report only |
+
+The whole-map rows came from Map look, which changes no map file (decisions-pending #40). The shapes
+this phase changes meet them; whole-map targets beyond those shapes (every terrace edge) wait for
+Kyler.
+
+**The dam site's spurs mode** (a `damSite` builder mode, PLAN §9.11) is how step 2 builds a narrows
+between hillsides. The study's prototype (`investigation/workshop/recipes/narrows.ts`) replaces the
+dam site with two tapered, bent spurs, each with a gentle apron, a cliff core and a cliff crown, of
+different heights. Over 23 maps: the reservoir still holds on 22 (the miss: a 96² valley too
+shallow for spurs that size, so the builder's limits must scale with the ground); a dam of 5 tiles
+or fewer holds a Normal drought's water on 35% of maps (today 77%); the shoulders vary in
+thickness (CV 0.37), but each crown is flat, so the crest heights within 12 tiles vary less than
+today (std 0.45 against 1.56). Stepped crowns fix that: each spur falls 1–3 levels from root to
+tip, in gentle or terraced steps, and the two spurs differ.
+
 **Acceptance**
 - The naturalness metric is reported for the 19 official maps and for the generated maps of every
   theme, and the targets set from the official maps are recorded in PLAN §20.
@@ -675,6 +860,8 @@ brush is the editor version; consider sharing its smoothing with the generator.
   editor's drawn-river banks meet those targets.
 - Every check passes on every batch map, the reservoir rules and Hard's 3-deep rule included;
   batches per theme ≥ 98% final; the oracle shows 0 disagreements.
+- The spurs mode: River Valley, Canyon and Highlands batches ≥ 98% with it; shoulder height std
+  ≥ 0.25 and crest height std within 12 tiles ≥ 1 (official medians 0.47 and 1.75).
 
 **In-game check:** short, logged as pending (D11): build a dam at a new narrows and check that
 the basin fills without leaking round the spurs.
@@ -692,6 +879,10 @@ After M11 and the refinement phase, and before M12. It is the Impeccable design 
 timbermods design system, moved here from M13. It follows the impeccable-app-flow skill
 (timbermods/.github, `claude-skills/impeccable-app-flow/`) and leaves a DESIGN.md and a
 MEANING.md behind.
+
+From the workshop study (D87): the panel gains Variety and a **Surprise me** button beside
+Generate (and Reservoir help, if Kyler adopts it: decisions-pending #31); the map card names the
+premise and its landmark. Copy uses the catalogue's words (M9's list).
 
 ---
 
@@ -713,6 +904,22 @@ MEANING.md behind.
 - The artifact edition: a single-file build declaring `sample` and `downloads` only, and a `.zip`
   download.
 - The Claude request suite running in Node.
+- From the workshop study (D87): the catalogue is Claude's vocabulary. Each pattern a player might
+  ask for maps to a builder, a stamp or a feature, and the suite (EDITOR §9) gains these requests:
+  - "Add a spiral mountain in the north" → `spiral` up; "dig a spiral quarry" → `spiral` down.
+  - "Put an island in a moat near the east edge" → a lake with an island (stamp).
+  - "Make the lake heart-shaped" → the lake's outline replaced, its level kept.
+  - "Add a volcano that spills badwater, far from the start" → `cone` with a crater and a badwater
+    basin; the badwater distance rule decides "far".
+  - "Twin waterfalls on the south cliffs" → two standalone falls, the same facing, side by side.
+  - "A hanging lake on a mesa that pours into the river" → a mesa landform, a lake on it, its
+    outlet routed down.
+  - "A field of mesas with ruins on top" → `mesaField` with ruins on 2 tops.
+  - "Split the river round a big island" → `riverFork`.
+  - "Make the dam site less obvious" → the dam site's spurs mode (refinement phase); with
+    Reservoir help, if Kyler adopts it (decisions-pending #31), help `some`, or no dam site at
+    None.
+  - "Make this map more surprising" → a `specPatch` raising Variety, with the premise drawn again.
 
 **Acceptance**
 - Malformed or out-of-bounds proposals are rejected cleanly.
@@ -722,6 +929,9 @@ MEANING.md behind.
 - The compound, impossible and conflicting requests of the suite (EDITOR_PLAN §9) pass.
 - Results stay editable by hand, and follow-ups modify the right feature.
 - The artifact edition passes a manual smoke test on the same requests.
+- Each of the workshop study's requests passes the suite on 96², 128² and 256² maps; the intent
+  checks measure the landmark (its extent, its levels, the slopes joining a spiral's steps, the
+  fork's two wet arms).
 
 **In-game check:** play the map produced by "add a giant waterfall in the north part of the map
 that is roughly 20 blocks wide".
@@ -740,6 +950,10 @@ that is roughly 20 blocks wide".
   - install help, including the extract step of the artifact edition;
   - mobile layout;
   - versioned deploys at `/v/<version>/`.
+- From the workshop study (D87): the rating form asks two questions, as the study's rating page
+  does: fun (1–5) and unique (1–5), with an optional note (PLAN §2.3). `tools/ratings.ts` writes
+  them in the shape `investigation/workshop/fit-score.ts` reads (`{ratings: {<key>: {fun, unique,
+  note}}}`), so the same fit refits the score's target and weights from players' ratings.
 
 **Acceptance**
 - Every usability task is done in under 2 minutes by a first-time user, and the full journey in
@@ -768,4 +982,18 @@ Each item stays behind a feature flag until its own in-game check passes:
 - "make editable" detection for imported maps;
 - share links that carry small edit lists;
 - a shared online stamp gallery;
-- tablet and touch support.
+- tablet and touch support;
+- flood challenges: 4 workshop maps start flooded or in a badwater sea; they need a challenge
+  profile that relaxes `start.dry` and `water.no_flood`, with a warning.
+
+The workshop study's numbers for these (D87):
+- **Caves, overhangs and tunnels.** Within the 35 workshop maps made for 1.0 or later: some cave
+  or overhang columns on 29 (83%), 5% or more of the map on 13 (37%), NaturalOverhang objects on
+  31 (89%); official maps: some on 15 of 19, 5%+ on 2. Across all 130 workshop maps, 46 are built
+  round caves (cave starts, tunnels, underground rivers, sky islands). They need water under roofs
+  and voxel tools first.
+- **Terrain 17–22.** 19 of 130 workshop maps (7 of the 35) reach above 16; no official map does.
+  D4 stays (decisions-pending #38, W8).
+- **1.0 objects are common in the workshop.** Within the 35: relics 91%, geothermal 86%, plugs
+  94%, thorns 74%, seeps 74%, weirs 69%, aquifers 66%, unstable cores 63%, badtide drains 60%
+  (official: 47%, 37%, 79%, 42%, 42%, 32%, 11%, 16%, 37%).

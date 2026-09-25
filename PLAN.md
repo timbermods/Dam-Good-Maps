@@ -141,7 +141,9 @@ A **GitHub issue form, pre-filled from the page**.
   `github.com/timbermods/dam-good-maps/issues/new?template=map-rating.yml&…` in a new tab. The seed,
   settings, share URL, generator version and score are already filled in.
 - The player picks one of *fun / too easy / boring terrain / frustrating / broken* and can add a
-  comment.
+  comment. Planned for M13 (D87, the workshop study): two questions instead, fun (1–5) and unique
+  (1–5), with an optional note, which `tools/ratings.ts` writes in the shape
+  `investigation/workshop/fit-score.ts` reads, so the fit refits the score (§12).
 - A labelled issue lands in the repo. `tools/ratings.ts` uses `gh api` to pull labelled issues into
   `ratings.csv`: settings, score, rating, comment.
 - The tuning loop joins those ratings to the score components, and recomputes the calibration
@@ -281,7 +283,7 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Setting | Range | Default | Maps to |
 |---|---|---|---|
 | Badwater | Off, Low, Normal, High | Normal | Badwater-to-clean strength ratio 0 / 0.3 / 0.65 / 1.2 (official 0.18–2.2, median 0.65). Sources are BadwaterSource 3×3 at strength 1–3, inland on mid-height ground (as in official maps: none are on the edge). As built (M6, D62): the total is split into basins of 1–3 each (§9.5), so High is higher than Normal on every map size. |
-| Badwater distance | 12 – 60 | 30 (Easy 40, Hard 15) | Minimum distance from the start to badwater or contaminated soil (official p10 12, median 30). The basins are placed about 14 tiles beyond it (D62). The start rule "No badwater within" (§5.6) is the same value: the panel sets both, and validation uses the larger. |
+| Badwater distance | 12 – 60 | 30 (Easy 40, Hard 15); planned from the start of M8: 15 (Easy 30, Hard 8) (W4, decisions-pending #34, D87) | Minimum distance from the start to badwater or contaminated soil (official p10 12, median 30). The basins are placed about 14 tiles beyond it (D62). The start rule "No badwater within" (§5.6) is the same value: the panel sets both, and validation uses the larger; from M8 it is a target with an advisory warning (D85). The workshop study measured the official maps' nearest badwater to the start: median 14.8, p25 10. |
 | Thorn belts | Off, Some | Some (Highlands, River Valley) | 1–3 belts of 13–40 thorns across corridors or plateaus, never within 20 tiles of the start. As built (M7, D75, D81): each belt crosses the way from the start to a relic or a geothermal field, 5–8 tiles in front of it (with none left, a stretch of dry ground), 9–17 tiles across and 2–3 deep, every thorn 22+ tiles from the start; a belt that would cut the colony's land in two is left out. |
 | Unstable cores | Off, On | Off | Advanced. 1–4 cores, 40+ tiles from the start, first countdown at cycle 5+, radius 2–3, never within radius + 2 of each other or of a dam site (no chain reactions). As built (M7, D81): countdown in cycle 5–12, 10.5 days in (the official maps' value). |
 
@@ -331,7 +333,7 @@ straight distance, dead ones included.
 | Clean pumpable water within | 10 | 16 | 22 | Official median 13.8, p90 22. Water must be 0–2 levels below the start (pump reach). |
 | Trees within 20 tiles | 80 | 50 | 40 | Official median 117, p10 47. The generator aims at 1.2× this (D59), never below Minimum starting trees. |
 | Berries near start (§5.5) | 20 | 48 | 60 | Official median 47. Never below Minimum starting bushes. |
-| No badwater within | 40 | 30 | 15 | Official p10 12, median 30. |
+| No badwater within | 40 | 30 | 15 | Official p10 12, median 30. Planned from the start of M8: 30 / 15 / 8 (the workshop study: official median 14.8, p25 10; decisions-pending #34). |
 | No ruins within | 20 | 15 | 12 | Official p10 22; scrap within 40 is 0 on the median official map. |
 | Drought sized for | 4 days, 40 beavers | 9 days, 50 beavers | 30 days, 50 beavers | Game mode durations. |
 | Stored water needed near start | 86 | 253 | 1,174, at 3+ deep | §11.4 formula. |
@@ -362,6 +364,36 @@ Walkable land from the start (`start.reach`) follows Buildable land (§5.2) and 
 | Caves and terrain overhangs | Left out for now | Terrain physics (3-tile support rule) and stacked water columns. The heightfield model cannot validate them. |
 | Reserve stockpiles | Left out | Used by one official map; faction-good pitfalls. |
 
+### 5.8 Settings from the workshop study (M9)
+
+Planned (D87; `investigation/WORKSHOP-INTEGRATION.md` §4). The data for the calibration table is
+in `investigation/workshop/settings-bands.json`, with the evidence for each change. New `DENSITY`
+rows (arrays are small, medium, large, max, as `SIZE_ANCHORS`):
+
+| Row | Values | Use |
+|---|---|---|
+| `workshop_trees_per_10k` | see the file | the top of Forest density (300% = about the workshop p90) |
+| `workshop_bushes_per_10k` | see the file | the top of Berry bushes elsewhere |
+| `workshop_water_strength_per_10k` | 8.8, 4.9, 3.5, 3.2 | River flow's Lush reaches it |
+| `waterfalls_per_map_workshop` | 5, 6, 7, 9.5 | Many and Cascading |
+| `springs_per_map_workshop` | 2, 3, 4, 8 | the new Springs setting |
+| `lakes_per_map_workshop` | 2, 3, 5, 10 | Lakes and basins at Many |
+
+| Setting | Today | Planned | Milestone |
+|---|---|---|---|
+| Terracing | one-level share 0.86–0.27 | theme defaults 25–35 (§6); Smooth reaching 0.92 waits for Kyler (decisions-pending #37, D59) | M9 |
+| Buildable land | Tight, Normal, Generous | a Rugged level (flat share 0.30, walkable land 500) waits for Kyler (#37, D59) | — |
+| Relief | River Valley 50 | 70, and similar +15–20 elsewhere (§6; #37) | M9 |
+| Springs (new, `sg`) | — | None / Few (1–3) / Many (4–10) inland springs feeding streams | M9 |
+| Waterfalls | Off, Few 1–2, Many 3–6 | Many 3–10; Cascading (new code `c`) 10–20; typical drop 3–7 | M9 |
+| Target water share, `water.no_flood` | cap 0.35 (0.55) | the premise's budget, up to 0.70 (#33) | M9 |
+| Forest density | 50–200% | 50–300% | M9 |
+| Berry bushes elsewhere | 50–300% | 50–500%, default 150% | M9 |
+| Badwater distance | 40 / 30 / 15 | 30 / 15 / 8 (#34) | start of M8 |
+| Variety (new, `vy`) | — | 0–100, default 70 (#32) | M9 |
+| Reservoir help (new, `rh`) | — | none / some / ready: only if Kyler adopts it (#31; it conflicts with D25, D30, D58, D85) | — |
+| Flow direction (new, advanced, `fx`) | — | any (default) or one of 8 (§7.1) | M9 |
+
 ---
 
 ## 6. Theme presets
@@ -389,6 +421,11 @@ maps whose measured numbers the preset follows.
 Target water share comes from the anchors' saved water: Meander 0.14, Canyon 0.10, MountainRange
 0.08, Lakes 0.14, Beaverome 0.45 and ThousandIslands 0.50. It is a layout target; validation caps it
 at 0.35, and at 0.55 for Islands and Lake Basin.
+
+Planned for M9 (D87, the workshop study): River Valley's relief 70 and the other themes' +15–20,
+and terracing defaults of 25–35 (decisions-pending #37: generated maps are flatter and lower than
+official and workshop maps: flat share 0.69 against 0.52 and 0.44, height range 10 against 13 and
+14). The water share cap follows the premise's water budget, up to 0.70 (#33).
 
 ---
 
@@ -434,6 +471,13 @@ example River Valley's "gorge-dammed basin", "twin falls" and "oxbow bend". The 
 set pieces are mandatory. The premise also fixes the macro parameters: the flow axis (one of 8
 edge-to-edge directions, so maps are not always west to east), the meander phase, and the
 anchor positions as fractions of the map.
+
+Planned for M9 (D87, the workshop study): at least three premises per theme (§8), drawn by the
+Variety setting (§5.8, decisions-pending #32); the valley themes and Lake Basin's outlet draw their
+flow axis from the 8 directions (D67). The planners lay out in a west-to-east frame, and the
+feature list is turned by one of the 8 symmetries of the square (paths, outlines, set-piece plans,
+orientations), or they plan natively. Today 74% of generated maps whose water leaves the map flow
+west to east (workshop 10%, official 0%).
 
 ### 7.2 Macro layout
 
@@ -588,6 +632,11 @@ score (§12). K is 1 on 256² when the first build took over 6 s; the card then 
 candidate". The M2 benchmark left the 256² settle well under 3 s (§10, D33), so K = 3 stays the
 default at every size.
 
+Planned for M9 (D87, the workshop study): **no clones**. Among the candidates within 5 points of
+the best score, the one farthest (the variety score) from the theme's reference maps wins. The
+reference maps are seeds 1–30 of the theme at default settings, stored as 16×16 signatures and
+feature vectors (about 4 KB per theme).
+
 ### 7.10 Output
 
 ```ts
@@ -634,6 +683,17 @@ basin, Canyon's Narrows, Lake Basin's Rising lake. River Valley and Canyon still
 and Lake Basin's outlet runs east (D67). As built (M7): Highlands and Delta are rows of the valley
 planner's table (D73, D74), and Islands is the Lake Basin planner with a sea (D70); each builds one
 premise until M9 (Staircase, Many mouths, Archipelago).
+
+**Planned for M9** (D87, the workshop study): at least three premises per theme, each a planner
+variant that lays its landmark out first and the rest around it, from the study's recipes
+(`investigation/workshop/recipes/`, which pass their batches on River Valley bases) and the
+premises above. River Valley: Gorge-dammed basin, Island in a moat, Oxbow bend, Twin falls, Spiral
+mountain or quarry. Canyon: Narrows, Rim settlement, Hanging lake on a mesa, Mesa field. Highlands:
+Staircase, Twin plateaus, Badwater volcano, Spiral mountain. Lake Basin: Rising lake, Crater lakes,
+Caldera with an island, Heart lake (rare). Delta: Many mouths, Salt marsh, Oxbow delta. Islands:
+Archipelago, Atoll, Volcano island, Heart islands (rare). Rare premises are drawn only at Variety
+60 and above (§5.8). Every premise that lists a dam site keeps it until Kyler decides Reservoir
+help (decisions-pending #31).
 
 **Canyon as built (M6, D63):** a canyon floor 18–25 tiles wide; walls 4–6 levels by the relief,
 then one-level rim terraces up to the plateau; the dam site in a narrows (a gorge 3–5 wide round
@@ -930,6 +990,29 @@ deep at S = 2, or about 0.12 deep at S = 8. S = 8 is more than twice the map's N
 it needs the advanced override (decision D6). Claude builds the S = 2 sheet by default and says
 so in its report.
 
+### 9.11 Builders planned from the workshop study
+
+Planned (D87; `investigation/WORKSHOP-INTEGRATION.md` §3). Each in D47's shape: `request` (hard
+bounds), `limits(ctx)`, `plan`, `check`, `rasterize`, `footprint`, and `slopes`, `clears` and `area`
+where it has them. The study's recipes (`investigation/workshop/recipes/`) are reference
+implementations built from today's operations.
+
+| Builder | Milestone | Request | Limits | Checks | Acceptance |
+|---|---|---|---|---|---|
+| `spiral` (landform kind or set piece) | M9 | at, radius 8–48, turns 0.75–3, levels 3–12, direction up / down, ramp width 3–12 | levels ≤ 16 − ground (up) or ground − 1 (down); radius ≤ 40% of the shorter side | a slope at every step (`slopes.connect`), planned with the ramp; terrain 0–16 | 100 plans on 96², 128², 256²: every step walkable from the foot of the ramp |
+| `cone` (landform edge style) | M9 | outline, height, crater radius and depth, spill direction | height ≤ 16; crater depth ≤ height − 2 | a crater with water has an outlet (`water.outflow`) | the volcano premises pass their batches |
+| `mesaField` (set piece) | M9 | at, radius 10–40, count 3–15, rise 2–6, ruins on 0–3 tops | mesas 2+ tiles apart; tops of 12+ tiles for ruins | the payoff needs one player stair (§9.4's rule) | as obstaclePayoff's range tests |
+| sealed `sea` (Islands variant) | M9 | the sea's outline to the map edge | the edge sealed by a rim or sources along it | `water.outflow`, `water.settles`; water share ≤ the premise's budget (#33) | the Lone island premise passes its batches |
+| `riverFork` | M11 | river, from, to (arc), island width 6–40 | arms 2+ tiles apart; both arms ≥ 3 wide | both arms carry ≥ 30% of the flow; the island stays dry | 100 forks on random rivers settle and keep both arms wet |
+| lake `outlets` (2–4) | M11 | lake, outlets [{at, to}] | outlets 8+ tiles apart, all at the sill | every outlet carries water; none drains back into the lake | 50 hub lakes settle with every spoke wet |
+| river `switchback` | M11 | a river path with hairpins | a wall ≥ 3 tiles thick and ≥ 2 levels above the lower reach between reaches | reaches at different levels do not leak into each other | D53's property test with hairpins allowed |
+| `damSite` spurs mode | refinement | river, at, crest 1–3, gap 3–12 (and help ready / some, only if Kyler adopts Reservoir help, #31) | gap ≥ channel + 2; the spurs scale with the ground | the reservoir holds need × reserve behind a dam of `gap` tiles; the naturalness targets (ROADMAP, refinement phase) | River Valley, Canyon, Highlands batches ≥ 98% with it |
+
+The recipes also found that a builder must re-check the rules its change can break: a lake added
+near the badwater basin brought contaminated soil 19–27 tiles from the start (`start.badwater`), a
+lake beside a relic or mine site left it within 2 tiles of water (`extras.placement`), and the
+spiral's slopes must be planned with its ramp.
+
 ---
 
 ## 10. Water simulation
@@ -1072,7 +1155,14 @@ Imported maps have no spec, so thresholds come from the document's "designed for
 `water.badwater_contained` (a badwater basin's outlet) or `water.outflow` (a planned lake), report
 "not applicable" when no such feature exists: the result passes, carries `applicable: false` and
 says why (D31). The playability class runs on every map. On maps with caves or overhangs it uses
-the top surface, which is an approximation that `terrain.single_floor` reports (D28).
+the top surface, which is an approximation that `terrain.single_floor` reports (D28). Planned for
+M8 (D87, the workshop study, decisions-pending #36): imports whose water a steady state cannot show
+(caves on 5% or more of tiles; delayed sources, aquifers or seeps carrying a quarter or more of the
+clean water, seeps half of the running water; a start under a roof) report their water and start
+checks as "approximate", with the reason, in both validators. Our steady state cannot show the
+water of 5 of the 19 official maps (Hollows, Pressure, Oasis, Nomads, Beaverome): the canonical
+settle floods starts such as Hollows' (9 deep), Nomads' (7) and Oasis' (2.8). The other 14 match
+their stored water closely.
 
 ### 11.1 File
 
@@ -1113,7 +1203,7 @@ clean water has contamination under 0.05.
 | Id | Rule |
 |---|---|
 | `water.settles` | Steady within 4 game days: volume change under 0.2% and 99.5% of tiles within 0.005 between 128-tick checks. |
-| `water.no_flood` | Wet share ≤ 0.35 (≤ 0.55 for Islands and Lake Basin); official p90 0.40. |
+| `water.no_flood` | Wet share ≤ 0.35 (≤ 0.55 for Islands and Lake Basin); official p90 0.40. Planned for M9 (decisions-pending #33): the cap follows the premise, 0.35 by default and up to 0.70 for water premises (moat, archipelago, lone island, lake world), which declare their water budget; workshop maps: median 0.27, p90 0.67. |
 | `water.clean_exists` | Clean wet tiles ≥ 2% of the map. |
 | `water.outflow` | Every running source's water reaches an edge or a planned basin: its connected wet region (depth > 0) touches a map-edge tile that drains (not a walled source tile) or a lake feature. Not applicable without features (imports). |
 | `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. |
@@ -1222,6 +1312,16 @@ third, and so the unconventional ones don't dominate. Report the official distri
 card: "Score 71 (official maps: 48–79, median 63)". After launch, fit the weights by regressing the
 "fun" and "boring terrain" ratings on the components.
 
+**Planned for M9** (D87, the workshop study, decisions-pending #35): the score is ported from
+`investigation/workshop/lib/score.ts`, with 12 components, each 0–1: engineering (full marks when
+storage takes real work; it replaces dam value D), height variety, landmarks, river character,
+resource pacing, regions, trade-off, frontier, surprise (novelty), verticality, naturalness and
+water. Its targets and weights are `data/score-params.json`, a copy of
+`investigation/workshop/score-fitted.json` (fitted to Kyler's ratings by `fit-score.ts`) when it
+exists, else of `score-params.json`. With the default parameters the recommended official maps rank
+3rd, 6th and 7th of 19; the generated median at default settings is 40 against the official 52.
+Players' ratings refit it after launch (§2.3).
+
 ---
 
 ## 13. Names and premises
@@ -1243,6 +1343,12 @@ seed stream.
   - "Reserves are thin: plan for droughts early."
 - **Map description** in `map_metadata.json`: premise + settings summary + "Made with Dam Good Maps
   <version>, seed N". The in-game map name is the download file name: `<Name> (<seed>).timber`.
+- **Planned for M9** (D87, the workshop study): the templates grow with the catalogue's plain words
+  for what a map has, keyed by the detected feature or the premise: *island in a moat*, *crater
+  lake*, *caldera*, *spiral mountain*, *spiral quarry*, *volcano*, *hanging lake*, *mesa field*,
+  *twin falls*, *oxbow lake*, *chain of lakes*, *great scarp*, *hub of channels*, *archipelago*,
+  *branching rifts*, *concentric rings*. Examples: "Moat Isle", "Caldera Rest", "Spiral Quarry",
+  "Twin Falls", "Mesa Reach".
 
 ---
 
@@ -1355,8 +1461,8 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 
 ### 14.6 Ratings
 
-As §2.3: *fun / too easy / boring terrain / frustrating / broken*, sent as a pre-filled GitHub issue
-form with a copy-text fallback. The button appears after download and on revisits: the last 5
+As §2.3: *fun / too easy / boring terrain / frustrating / broken* (planned for M13: fun and unique,
+1–5 each, with a note; D87), sent as a pre-filled GitHub issue form with a copy-text fallback. The button appears after download and on revisits: the last 5
 downloaded maps are remembered in localStorage.
 
 ---
@@ -1838,6 +1944,7 @@ list, and implementation adds to it.
 | D84 | **M12 handles compound, vague requests**, such as "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." Claude breaks such a request into bounded operations, and the engine tells it whether each idea is feasible. EDITOR_PLAN §7 gains: (1) places measured along a river's flow: upstream and downstream of something, a position along the course from its source ("halfway down" 0.4–0.6 by default), the start's bank and the opposite bank, and "this valley" (the selected feature's valley, otherwise the main river's), always resolved from the river's actual flow, never from the compass; (2) a judgement-word table (harsher/easier, huge/small dam opportunity, dangerous/safe badwater, lush/dry and the others the suite needs), each word with measured targets from `tools/settings-suite.ts` and the analysis metrics, a direction, and a size relative to the map's current value and the official range, with playability checks as guards that are never traded away; (3) compound requests: goals with their own expectations, settings changes and regeneration before placements, regeneration keeping Claude's features, every goal checked on the combined preview, interfering goals detected, the reason and the nearest feasible alternative returned for a goal that isn't feasible (offered in the report, never substituted silently), and a report naming every trade-off and every goal not met. EDITOR_PLAN §9's suite gains that request on 128² and 256², the same on a drawn river and a Delta map, an impossible request (a huge dam opportunity on 48²) and a conflicting one ("put a badwater spring just upstream of the start"). M9 builds the place vocabulary and the word table, because names and descriptions need them too, with the resolver tested on rivers flowing in every direction; M12 reuses both, and its acceptance adds the compound, impossible and conflicting requests. | The builders, limits, `dry_run` and intent checks cover single requests only. Every theme flows west to east today (D67), so "upstream = west" would pass every test and still be wrong for drawn rivers and for M7's Delta. | Kyler, 2026-09-24; the loop's budget for compound requests is pending (decisions-pending #28) |
 | D85 | **Start requirements**, built at the start of M8 and released with `m8-done` (§5.6, §11.4). Three requirements, the same on every difficulty, replace the start rules as reasons to reject a map: (1) water without stairs: clean water (depth ≥ 0.3, contamination < 0.05) touches a shore tile at the start's own level that is walkable from the start without any slope, and a pump on that shore reaches the surface (0–2 levels below); rivers, lakes and ponds count; no distance limit; (2) at least **Minimum starting trees** (default 50) living trees within 20 tiles' walk of the start, slopes allowed, across any number of groves; (3) at least **Minimum starting bushes** (default 20) living berry bushes within 20 tiles' walk, slopes allowed, across any number of patches. "Living" means the plant survives at steady state. The two minimums are the Advanced start rules controls for trees and living bushes within 20, renamed; they keep their ranges and share-link keys (`st`, `sb`); their defaults are 50 and 20 on every difficulty; changing Designed for no longer resets them (updates D66); the generator never aims below them, and a difficulty's target rises with them; imported maps use the defaults. The other start rules stop rejecting maps: the water distance, the badwater and ruin distances, stored drought water near the start (`water.reservoir`, Hard's 3-deep rule included) and walkable land (`start.reach`). They stay settings and generation targets, their controls and share-link keys keep working, and the map card shows an advisory warning when a map misses one. Unchanged: the load checks the game needs (the start's footprint on flat ground, a free entrance, exactly one start) and the water checks that aren't about the start (settling, outflow, badwater containment). `start.dry` is not among the rules Kyler named and keeps rejecting (water on the start is a broken start); to confirm with Kyler. Build rules: both validators (TypeScript and the Python oracle) change together, with 0 disagreements; a unit test for each requirement (water reachable only by a slope fails; only badwater fails; trees or bushes below the minimum, or too far away, fail; changing either setting moves the result); both settings in `tools/settings-suite.ts` with a measured target; the editor's start indicators, its green or red footprint and the map card follow the three requirements with the map's settings; the generator version goes up, and old share links change; batch pass rates are reported per theme at the defaults. | Kyler's decisions, not pending ones: the three requirements, the 50 and 20 defaults, no distance limit on the water, and demoting stored drought water and walkable land to warnings. | Kyler, 2026-09-24 |
 | D86 | **Map look**, a step after M8 and before M9 (ROADMAP). The 3D view looks much closer to Timberborn in game, while every map meaning stays readable: ground tops coloured by moisture as in game (moist green, dry sandy, contaminated soil with its own look), with a toggle back to height colours; height as layered bands per level on the block walls; baked ambient occlusion and soft sun shadows; warmer colour grading and light depth haze; water coloured and faded by depth, with a gently moving surface, foam on falls and shorelines, and badwater as dark murky water; our own models: trees by species with dead trees clearly dead, berry bushes, scrap-heap ruins and a district center of our own design; a default camera closer to the game's. **It changes the 3D view's colour meaning from height to moisture, approved by Kyler** (updates D45). It changes no map files: `src/core/render/shade.ts` (the 2D preview and the thumbnail) stays as it is, and every sha256 stays equal. Rules: none of the game's models, textures or art (textures are generated in the shader, so the artifact edition needs no image files); the M4 budgets hold (D46), Beavertopia included; every meaning is checked in greyscale and under colour-blindness simulation; the 2D preview keeps its height colours; the legend and hover text say what the colours mean; the 3D chunk stays lazy-loaded, with its size reported. Released inside the M9 release, or tagged `map-look-done` and released like a milestone (CLAUDE.md). | Kyler's screenshot of the current 3D view is hard to read: the ground is coloured by height, while the game colours it by moisture; there are no shadows or ambient occlusion; water is flat, and badwater in its open ditch looks like a brown dirt ramp; ruins are grey pillars, and the district center is a small box. | Kyler, 2026-09-24 |
+| D87 | **The workshop study's integration plan is adopted** (`investigation/WORKSHOP-INTEGRATION.md`, PR #4). Each item is built in the milestone it names (ROADMAP, marked "from the workshop study"). **Adopted:** start of M8: Badwater distance 30 / 15 / 8 (W4, decisions-pending #34), and the study's start measurements as data for D85 (the bench must reach water on the start's own level); M8: imports whose water a steady state cannot show report their water and start checks as approximate (W6, #36), and set pieces and lakes that reshape the ground clear or move the map objects on it; M9: at least three premises per theme (§8), 8 flow directions (D67), Variety `vy` with Surprise me (W2, #32), no clones (§7.9), the 12-component score (W5, #35; §12), the catalogue's names (§13), the settings bands (§5.8), the premise's water budget for `water.no_flood` (W3, #33), the relief and terracing presets (W7 in part, #37), and the `spiral`, `cone`, `mesaField` and sealed `sea` builders (§9.11); M10: the naturalize brush meets the naturalness targets; M11: built-in stamps from the catalogue and the `riverFork`, lake `outlets` and river `switchback` builders; refinement phase: the natural-containment targets and the dam site's spurs mode; design pass: Variety and Surprise me in the panel, the premise and its landmark on the map card; M12: the catalogue as Claude's vocabulary (ten suite requests); M13: ratings of fun and unique (1–5), in the shape `fit-score.ts` reads (§2.3); Later: the study's numbers for caves, terrain above 16, flood challenges and 1.0 objects. **Changed:** the study's start-rule acceptance (8 of 11 official starts pass its thresholds) becomes a report of how many of the 11 meet D85's requirements; the naturalness targets it gave Map look move to the refinement phase (#40); the parts that depend on Reservoir help (its panel control, its description clause, its M9 acceptance, the spurs mode's `help` and the "less obvious dam site" request's None) wait for #31. **Kept as recorded, with the conflict pending:** Reservoir help and `water.storage_possible` (W1, #31; D25, D30, D58, D85); the study's start thresholds by difficulty (#39; D85); the Rugged level and Smooth terracing reaching 0.92 (W7, #37; D59); the naturalness targets in Map look (#40; D86). **Kept:** terrain at 16 or below (W8, #38; D4). **Rejected:** nothing else. | Kyler's direction in the study (2026-09-24): maps should diverge sharply and never look like clones, variety, novelty and verticality matter, reservoirs are the player's engineering, and an accessible water source stays a requirement. Kyler's instruction for adopting it: where it conflicts with a decision already recorded, keep the recorded decision and log the conflict as pending. | Kyler, 2026-09-24 (adoption); W1–W8 pending (#31–#38), conflicts #39–#40 |
 
 ---
 
