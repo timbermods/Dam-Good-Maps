@@ -107,7 +107,7 @@ use now.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
    #51–#53.
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), and the M3 spike page
-   ([progress.md](progress.md), "What Kyler needs to do").
+   ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next
 
@@ -116,4 +116,5 @@ use now.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.
-- [progress.md](progress.md): the record of each milestone.
+- [progress/README.md](progress/README.md): the record of each milestone and step, one file each.
+- [progress/kyler-todo.md](progress/kyler-todo.md): what Kyler needs to do, with the exact steps.
