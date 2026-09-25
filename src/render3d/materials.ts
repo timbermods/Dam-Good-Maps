@@ -244,6 +244,9 @@ const COMMON = /* glsl */ `
   }
   /** How lit a point at height z above tile position g is (the baked sun shadow, soft). */
   float sunLit(vec2 g, float z) {
+    #if LITE
+      return 1.0;
+    #endif
     vec4 s = texture2D(lightTex, g / mapSize);
     float hi = s.r * ${f(255 / SHADOW_SCALE)} - ${f(SHADOW_OFFSET)};
     float lo = s.g * ${f(255 / SHADOW_SCALE)} - ${f(SHADOW_OFFSET)};
@@ -272,7 +275,8 @@ export interface TerrainUniforms {
   groundMode: { value: number };
 }
 
-/** `lite`: a lighter look for browsers that render in software: no patterns, no soil blending. */
+/** `lite`: a lighter look for browsers that render in software: no patterns, shadows or soil
+ *  blending. */
 export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, lite = false): ShaderMaterial {
   const own: TerrainUniforms = {
     heightRange: { value: new Vector2(lo, hi) },
@@ -507,10 +511,12 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         float t = time;
         vec3 N = n;
         if (n.y > 0.5) {
-          float slow = mix(1.0, 0.35, bad);
-          vec2 q = g * 1.6 + vec2(sin(g.y * 0.5), sin(g.x * 0.43)) * 1.5;
-          vec2 sl = ripple(q, t * slow) + 0.6 * ripple(q * 1.9 + 7.0, t * 1.3 * slow);
-          N = normalize(vec3(sl.x * 0.07, 1.0, -sl.y * 0.07));
+          #if !LITE
+            float slow = mix(1.0, 0.35, bad);
+            vec2 q = g * 1.6 + vec2(sin(g.y * 0.5), sin(g.x * 0.43)) * 1.5;
+            vec2 sl = ripple(q, t * slow) + 0.6 * ripple(q * 1.9 + 7.0, t * 1.3 * slow);
+            N = normalize(vec3(sl.x * 0.07, 1.0, -sl.y * 0.07));
+          #endif
           // foam where the water meets the shore, and below falls
           vec2 fr = fract(g);
           float shore = 1.0;
@@ -587,8 +593,9 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
 
 /** Instanced objects: each vertex's own colour times the instance's tint, lit like the terrain,
  *  darker toward the model's foot, and in the terrain's shadow where it stands in one. */
-export function objectMaterial(scene: SceneUniforms): ShaderMaterial {
+export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMaterial {
   return new ShaderMaterial({
+    defines: { LITE: lite ? 1 : 0 },
     uniforms: scene as unknown as Record<string, { value: unknown }>,
     vertexShader: /* glsl */ `
       attribute vec3 pcolor;

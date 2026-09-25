@@ -9,7 +9,8 @@
 // shaders read with the per-tile overlay; the default camera looks as the game's does, 30° east of
 // north and 70° down. The water's surface moves (at 30 frames a second at most) unless the viewer
 // prefers reduced motion, the browser renders in software, or the view is hidden. A browser that
-// renders in software gets a lighter look: no multisampling, no patterns, soil without blending.
+// renders in software gets a lighter look: no multisampling, no patterns or shadows, soil without
+// blending.
 //
 // Controls: left drag orbits (pans in the top-down view), right drag pans, the wheel zooms. On the
 // focused canvas: W A S D or the arrows pan, Q and E turn, R and F (or + and −) zoom.
@@ -192,7 +193,7 @@ export class MapRenderer {
     this.uniforms.patternTex.value = this.patterns.texture;
     this.terrainMat = terrainMaterial(this.uniforms, 0, 1, this.software);
     this.waterMat = waterMaterial(this.uniforms, this.software);
-    this.objectMat = objectMaterial(this.uniforms);
+    this.objectMat = objectMaterial(this.uniforms, this.software);
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     this.reducedMotion = !!motion?.matches;
     motion?.addEventListener?.("change", () => {
