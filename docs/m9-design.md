@@ -104,7 +104,7 @@ the part weights flatten toward uniform, and from 85 every part and recipe is op
 **Surprise me** draws a theme and sets Variety to 100.
 
 **Recipes** (the named premises) become at most a few forced parts inside this system, drawn
-sometimes (8–12% of a theme's maps at Variety 70): *island in a river* (the split), *great scarp*
+sometimes (12–20% of a theme's maps at Variety 70, 6–12% for each recipe): *island in a river* (the split), *great scarp*
 (a strong escarpment), *mesa field*, *badwater volcano* (a cone with badwater in a hollow),
 *hanging lake* (a tall mesa and a spring), *caldera*, *chain of lakes* (three basins), *volcano
 island*. A recipe never fixes the rest of the map, and the measures do not count it (§10).
@@ -142,9 +142,11 @@ phase; decisions-pending #29, #40). Nothing is stamped, so none of its targets n
 shape: there is no straight dam ridge (the dam-wall check finds none, §10), no square badwater box
 and no straight ditch (the hollow is a lobed pit and the ditch winds by noise), no bullseye lake
 (basins are lobed by noise and eroded), no squared narrows (narrows are where valleys pinch), and
-no raised banks (channels are cut down, never walled up). The whole-map naturalness numbers
-(straight step runs, the longest run, ridge variation) are measured on every batch map and
-reported in REPORT.md beside the official and workshop medians.
+no raised banks (channels are cut down, never walled up). On the prototype's 1,200 maps at 128²,
+the theme medians put 2–5% of height steps in straight runs of 8+ tiles (official median 6.6%, the
+current generator 11–37%), and the longest straight run at 13–15 tiles (official median 18, p90 25;
+the current generator 24–34). The whole-map targets the refinement phase set are met without a
+special shape.
 
 ## 5. Inspiration beyond maps
 
@@ -262,13 +264,21 @@ It supersedes D25, D30 and D58 and everything built on the ridge, and settles pe
   start requirement (D85's water without stairs).
 - **Measured** (M5): how often a good natural dam site (a dam of 5 tiles or fewer that holds a
   Normal drought's need) lies within 40 tiles of the start, beside the workshop's 46% and the
-  official maps' 36%.
+  official maps' 36%. The prototype: 47.9% over all six themes, 27–73.5% by theme.
 - **Checked** (M6): the dam-wall check fails on a straight wall across a valley with a gap for the
-  river. It flags the current generator's River Valley, Canyon, Highlands and Delta ridges, none of
-  the 19 official maps, and none of the prototype's maps (REPORT.md). It misses the current Lake
-  Basin and Islands ridges, which are 2–4-tile stubs beside a wide outlet; M9 closes that gap with
-  a contract test on every planned feature list (no `damSite` ridge plan, and no set piece that
-  raises ground across a channel), beside the terrain check that catches a wall made any other way.
+  river. On the full sets it flags 765 of the current generator's 1,200 maps at 128² (River Valley
+  198, Canyon 170, Highlands 197 and Delta 200, of 200 each), none of the 19 official maps, and 2 of
+  the 130 workshop maps. It misses the current Lake Basin and Islands ridges, which are 2–4-tile
+  stubs beside a wide outlet; M9 closes that gap with a contract test on every planned feature list
+  (no `damSite` ridge plan, and no set piece that raises ground across a channel), beside the
+  terrain check that catches a wall made any other way.
+- **The prototype.** Run 1 built no wall, yet the check flagged 16 of its 1,200 maps: crater rims
+  and ridges that came out thin, flat-topped and cliff-faced, and tops cut flat at level 16 where a
+  river crossed them. They read as walls, so run 2 changed the land, not the check (rims and ridges
+  rise, fall and swell along their length; the land bends toward 16 instead of being cut there). Run
+  2 also runs the check inside the generate loop, as M9a will: it rejected 10 attempts (3 at 128², 7
+  at other sizes), and those seeds drew another genome. Run 2 has 0 flagged maps: 0 of 1,200 at
+  128² and 0 of 540 at 96², 192² and 256².
 
 **Reservoir help: worth keeping only as steering, and not in M9.** With no ridge, "Ready" is gone,
 and "None" as the study defined it (no short natural dam allowed) would reject exactly the
@@ -347,7 +357,7 @@ not chain as single linkage does, needs no cluster count, and its cut comes from
 | M2a | No archetypes: whole maps | UPGMA on V within each theme, cut at the workshop's p10 nearest-peer V (0.591, `variety.json`). | no cluster over 15% of a theme's maps |
 | M2b | No archetypes: river networks | A vector of 11 numbers per map (`lib/structure.ts` `riverVector`: inflows, springs, outflows, water bodies, lakes, ponds, falls per 10k tiles as log(1 + n); the main course's sinuosity and length over the diagonal; the lake share; islands), each divided by its workshop spread (p10–p90 ÷ 2.56); distance the RMS over the median workshop pair; UPGMA cut at the workshop's p10 nearest-peer distance. Also the number of distinct coarse codes (`riverCode`: inflows, springs, outflows, lakes, falls and islands in buckets). Flow direction is left out: a network turned round is the same shape. | report the counts; no cluster over 15% |
 | M2c | No archetypes: relief | The same with 9 numbers (`reliefVector`: height range, levels covering 1%, plateaus per 10k, cliff share, one-level share, flat share, basins per 10k, ridges per 10k, gorge tiles) and `reliefCode`. | report the counts; no cluster over 15% |
-| M3 | Play variety: openings | An opening vector of 18 numbers per map (`lib/opening.ts`), read from the map's own file and settled water with the validators' analysis: the start's water (walk to it, the size of the body it drinks from, the clean flow feeding it, how much of that body is 1+ deep, how much of its water the Normal drought leaves), the nearest good dam site (distance and length), the nearest threat (badwater distance, whether badwater reaches the start's own water, thorns), land to expand into (walkable land within 30 tiles' walk, open directions, moist share, levels within 40), and what lies further out (share of scrap beyond 40 tiles, relics, geothermal fields and mine sites, other water bodies, falls). Scaled on the workshop and official maps whose start can be measured; distance and cut as M2b. Spread: the mean pairwise opening distance per theme, beside the workshop's. Two slots wait: the weather-cycle signature (`investigation/cycles`) and the strategy axes (`investigation/mechanics`) join the vector when their PRs land (§17). | no opening cluster over 15%; report the spread |
+| M3 | Play variety: openings | An opening vector of 18 numbers per map (`lib/opening.ts`), read from the map's own file and settled water with the validators' analysis: the start's water (walk to it, the size of the body it drinks from, the clean flow feeding it, how much of that body is 1+ deep, how much of its water the Normal drought leaves), the nearest good dam site (distance and length), the nearest threat (badwater distance, whether badwater reaches the start's own water, thorns), land to expand into (walkable land within 30 tiles' walk, open directions, moist share, levels within 40), and what lies further out (share of scrap beyond 40 tiles, relics, geothermal fields and mine sites, other water bodies, falls). Scaled on the workshop and official maps whose start can be measured; distance and cut as M2b. Spread: the mean pairwise opening distance per theme, beside the workshop's. Two slots wait for version 2: the weather-cycle signature (`investigation/cycles`) and the strategy axes (`investigation/mechanics`); version 1 reports both beside M3 (M3c, M3d, below). | no opening cluster over 15%; report the spread |
 | M4 | No approximation | For every generated map, the V distance to its nearest workshop map. | every map at least the workshop's p10 nearest-peer V (0.591) |
 | M5 | A good natural dam site near the start | The workshop study's obviousness measure: the validator's dam sampling (straight dams across clean water, crests 1–3, `analysis/damsites.ts`), and whether a dam of 5 tiles or fewer within 40 tiles of the start holds a Normal drought's need with the Normal reserve (380 blocks). Workshop maps 46%, official maps 36%. | "comparable to the official maps": between 26% and 56% (the official rate less 10 points to the workshop rate plus 10) |
 | M6 | No built dam walls | The wall check (`lib/ridge.ts`, below). | zero maps flagged, every theme |
@@ -402,16 +412,22 @@ M4 runs without committing workshop maps.
 
 Kyler (decisions-pending #21): large maps should feel as varied as official maps, about 18 plateaus
 each plus hills and knolls, not flatter as they grow. Today the generator gets flatter with size
-(flat share about 0.63–0.68 at 128², 0.73–0.76 at 192²), because it spreads the same terrace
-bands over more tiles.
+(theme medians of the flat share: 0.62–0.73 at 128², 0.73–0.82 at 192², 0.79–0.86 at 256²),
+because it spreads the same terrace bands over more tiles.
 
 The design keeps detail per tile, not per map: noise cells, part sizes, knolls and hollows are in
 tiles, and the number of parts and knolls grows with the area (`genome.ts`: parts × √(area ÷ 128²),
 knolls × area ÷ 128²). A 256² map therefore holds four times the knolls of a 128² map and about
-twice the large parts, at the same local roughness. REPORT.md measures plateaus (the score's
-count: level regions of max(40, area ÷ 1000)+ tiles falling away on 90% of their rim), the flat
-share and the height range by size for the prototype and the baseline, beside the official
-medians by size class (small 4, medium 7, large 26, max 27 plateaus).
+twice the large parts, at the same local roughness.
+
+Measured (the score's plateau count: level regions of max(40, area ÷ 1000)+ tiles that fall away on
+90% of their rim; theme medians of 30 seeds, 200 at 128²): the prototype has 4–5 plateaus at 96²,
+5–7 at 128², 8–16 at 192² and 10–16 at 256² (official medians by size class: 4, 7, 26 and 27). Its
+flat share grows from 0.48–0.58 at 96² to 0.59–0.73 at 256²; the current generator's grows from
+0.50–0.69 to 0.79–0.86. So large prototype maps are much less flat than today's, with about as
+many plateaus or more (fewer only in Delta and Islands), but well short of official large maps.
+The fix: part counts in proportion to the area (they now grow with its square root), and more
+plateau and mesa parts on large maps (REPORT.md §9).
 
 ## 12. The document model and the editor
 
@@ -420,7 +436,9 @@ capability working. The design: **a base terrain layer plus features read back o
 
 **The base terrain layer (the field).** The processes (uplift, erosion, levels) produce a height
 field. The document stores it, as it stores an imported map's base today: run-length levels in the
-project file (about 5–15 KB gzipped at 128², 20–40 KB at 256²). Build step 1 (PLAN §19.8) starts
+project file. Measured on the check's maps, the levels as runs, gzipped, take about 2.3 KB at 128²
+and 6.5 KB at 256² (at most 9.7 KB), beside project files of about 180 KB and 370 KB today. Build
+step 1 (PLAN §19.8) starts
 from the field instead of the flat fill of level 2. The field is data, not a process re-run on
 every rebuild, so rebuilds stay fast and exact.
 
@@ -480,12 +498,20 @@ candidate in about 6 s, PLAN §7.9 and ROADMAP M9); the canonical settle ≤ 0.6
 256² (PLAN §10, D33). The prototype's arithmetic is exact (D15; the source audit in `check.ts`
 finds no transcendental function, random number or clock on an output path).
 
-Measured on Kyler's machine (REPORT.md §6 has every number): see the table there, per theme and
-size, in Node and in Chrome, one candidate each, for the prototype and the current generator.
+**Measured** on Kyler's machine (AMD Ryzen 7 9800X3D, Node 24, the installed Chrome), fully loaded
+by other jobs throughout, so every time is inflated; REPORT.md §5 has every number. One candidate
+per theme in Chrome, the slower of seeds 1 and 2:
+- **128²:** the prototype takes 1.3–2.6 s for a first-attempt map (the current generator 0.4–2.2 s),
+  under the 3 s budget. Canyon's seed 1 needed 5 attempts and took 6.1 s.
+- **256²:** 6.7–19.2 s for one attempt (the current generator 1.9–7.1 s), up to about three times
+  the 6 s a candidate; 13–15 s for River Valley's and Canyon's two attempts.
+- **Where the time goes** (median stage times in the batches): the field and the hydrology take
+  0.6 s at 128² and 1.5 s at 256²; the two settles before the final build take 57% and 62% of an
+  attempt.
 
 How the full generator meets them:
-- **The field once.** The processes run once per candidate (≈ 0.1–0.3 s at 128²); every rebuild uses
-  the stored field.
+- **The field once.** The processes run once per candidate (0.6 s at 128² and 1.5 s at 256² on the
+  loaded machine); every rebuild uses the stored field.
 - **Fewer settles.** The prototype settles two to four times per attempt (the land, then again after
   the badwater hollow, then the final build; the cache saves repeats). The real generator plans the
   hollow on the first settle's drainage and settles once more at most.
@@ -499,9 +525,16 @@ How the full generator meets them:
 
 ## 14. Batch pass rates
 
-Reported for 200 seeds per theme at 128² and fewer at 96², 192² and 256² (REPORT.md §3), first
+Reported for 200 seeds per theme at 128² and 30 at 96², 192² and 256² (REPORT.md §2), first
 attempt and final (12 attempts), in the real validators' `generate` profile plus
-`water.storage_possible`. A retry draws a new genome (a new map from the same seed, as today).
+`water.storage_possible` and the dam-wall check. A retry draws a new genome (a new map from the same
+seed, as today).
+
+**Measured:** final 100% in every theme at every size. First attempt 62.5–90.5% at 128² (Canyon
+lowest), and below the 60% floor in two cells: Canyon at 96² (56.7%) and Lake Basin at 256² (53.3%).
+Of the 299 failed attempts at 128², 202 had no storage near the start, 72 no start, 68 too little
+wood within reach, 44 a slow settle and 27 no clean water (an attempt can fail several). At 256²,
+half the failed attempts are slow settles (38 of 77).
 
 How the build reaches ≥ 98% final with a first attempt ≥ 60% (the premise gate of ROADMAP M9):
 - the settler's fallbacks (§7) already turn most "no start" attempts into maps;
@@ -538,9 +571,11 @@ of features, and the measures as tools and CI checks. About 1,800 lines in the p
 0.6.0 makes a different map until versioned deploys (M13); the release notes say so.
 
 **Risks:**
-- *Pass rates at the tail* (big seas, narrow canyons): the prototype's final rates are in REPORT.md;
-  the fixes in §14 are planner work, not new processes.
+- *Pass rates at the tail* (big seas, narrow canyons): the prototype's finals are 100%, but its
+  first attempts drop below 60% in two cells (§14); the fixes are planner work, not new processes.
 - *Settle time with big lakes* at 256²: the water budget caps lakes; measured in §13.
+- *Budgets at 256²*: the prototype is up to three times over (§13). The savings in §13 are
+  planned, not yet measured.
 - *Look*: erosion on 16 levels makes softer land than hand-made maps; the terrace and mesa parts and
   the contour waviness carry the look. Kyler's play test of M9a is the judge.
 - *The dam-wall check* is a heuristic: it could flag a natural ridge a river cuts through (none of
@@ -636,10 +671,24 @@ and its axes. Version 2 widens this to 200 seeds and several weather seeds.
   Version 2 decides how the signature joins the opening vector and its clustering (a workshop-free
   scale, or signatures for the official maps), runs it on 200 seeds, and adds several weather seeds
   (its INTEGRATION.md: the worst of several matters more than one lucky badtide);
-- `investigation/mechanics` (PR #9, finished during version 1): version 1 reports its axes (M3d) and
-  puts each brief map on them. Version 2 adds its proposals (independent storage, fertile land,
+- `investigation/mechanics` (PR #9, finished during version 1; superseded by PR #11,
+  `investigation/mechanics-verified`, which checks its facts against the game code and changes the
+  power axis): version 1 reports #9's axes (M3d) and puts each brief map on them. Version 2 re-runs
+  them with #11's measure and adds its proposals (independent storage, fertile land,
   threats and outgoing rewards; a graph of feasible actions) to the genome and the settler, and
   writes the "how it plays" cards from its axes;
 - `investigation/landscapes`: no branch or PR when version 1 was finished (2026-09-25). A version-2
   input wherever it fits the parts and processes (§3–§5).
 Version 2 brings new prototypes, measures and briefs; Kyler approves version 2.
+
+**Where version 1 stands on the gate** (REPORT.md has every number):
+- **a.** Passes: no built dam walls (0 of 1,740 maps), no clones (M1, 6 of 6 themes), openings
+  (M3, 6 of 6), relief shapes (M2, 6 of 6), natural dam sites (47.9% over all themes, within the
+  26–56% band; 4 of 6 themes within it alone), and final pass rates (100%). Fails: whole-map
+  archetypes (M2, 5 of 6 themes over 15%), Highlands' river networks (20%), no approximation (M4:
+  2–20% of each theme's maps closer to a workshop map than the floor), first attempts in two cells,
+  and the 256² budget.
+- **b.** The maps play differently on both studies' measures (REPORT.md §4), but the cycle groups
+  are still over 15% in every theme.
+- **c.** The ten briefs are in `investigation/generative/briefs/`, and the ten maps in
+  `investigation/generative/out/`.

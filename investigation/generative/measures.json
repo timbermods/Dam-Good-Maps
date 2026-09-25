@@ -110,209 +110,87 @@
     "canyon": {
      "attempts": {
       "n": 200,
-      "first": 127,
+      "first": 125,
       "final": 200
      },
      "maps": 200,
      "M1": {
-      "nearestMin": 0.325,
-      "nearestMedian": 0.447,
-      "nearestP10": 0.393,
+      "nearestMin": 0.328,
+      "nearestMedian": 0.451,
+      "nearestP10": 0.401,
       "below025": 0,
       "pass": true
      },
      "M2a": {
-      "clusters": 31,
-      "largest": 47,
-      "largestShare": 0.235,
-      "singletons": 6,
+      "clusters": 34,
+      "largest": 52,
+      "largestShare": 0.26,
+      "singletons": 13,
       "pass": false
      },
      "M2b": {
-      "clusters": 70,
-      "largest": 14,
-      "largestShare": 0.07,
-      "singletons": 30,
-      "codes": 121
+      "clusters": 60,
+      "largest": 16,
+      "largestShare": 0.08,
+      "singletons": 19,
+      "codes": 125
      },
      "M2c": {
-      "clusters": 169,
-      "largest": 3,
-      "largestShare": 0.015,
-      "singletons": 140,
-      "codes": 48
+      "clusters": 153,
+      "largest": 4,
+      "largestShare": 0.02,
+      "singletons": 116,
+      "codes": 42
      },
      "M3": {
       "maps": 200,
-      "clusters": 122,
-      "largest": 9,
-      "largestShare": 0.045,
-      "singletons": 84,
-      "spread": 0.785,
+      "clusters": 132,
+      "largest": 11,
+      "largestShare": 0.055,
+      "singletons": 97,
+      "spread": 0.788,
       "water": {
-       "river": 144,
-       "lake": 30,
-       "stream": 24,
-       "pond": 2
+       "river": 124,
+       "lake": 44,
+       "stream": 32
       },
       "drought": {
-       "shrinks": 35,
-       "dries": 165
+       "dries": 147,
+       "shrinks": 51,
+       "holds": 2
       },
       "threat": {
-       "badwater": 114,
-       "none near": 53,
-       "thorns": 15,
-       "badwater (reaches the start's water)": 18
+       "badwater": 116,
+       "thorns": 14,
+       "badwater (reaches the start's water)": 17,
+       "none near": 53
       },
       "openDirections": {
-       "1": 1,
-       "2": 14,
-       "3": 44,
-       "4": 70,
-       "5": 46,
-       "6": 21,
-       "7": 4
+       "2": 7,
+       "3": 39,
+       "4": 68,
+       "5": 62,
+       "6": 22,
+       "7": 2
       },
       "land": {
-       "some": 68,
-       "wide": 1,
-       "tight": 131
+       "tight": 118,
+       "some": 79,
+       "wide": 3
       }
      },
      "M4": {
-      "nearestMin": 0.489,
-      "nearestP10": 0.592,
-      "nearestMedian": 0.664,
-      "below": 19,
+      "nearestMin": 0.488,
+      "nearestP10": 0.593,
+      "nearestMedian": 0.673,
+      "below": 18,
       "pass": false
      },
      "M5": {
       "maps": 200,
       "goodNaturalDam": 0.33,
-      "within12": 0.69,
-      "anyLength": 0.755
-     },
-     "M6": {
-      "maps": 200,
-      "flagged": 3
-     },
-     "M7": {
-      "maps": 200,
-      "pass": 1
-     },
-     "score": {
-      "median": 48.958,
-      "p10": 36.759,
-      "p90": 59.843
-     },
-     "shape": {
-      "plateausMedian": 6,
-      "flatShareMedian": 0.568,
-      "heightRangeMedian": 11,
-      "waterShareMedian": 0.075,
-      "waterfallsMedian": 2,
-      "maxFallMedian": 3,
-      "straightShare8Median": 0.022,
-      "longestRunMedian": 13,
-      "flows": {
-       "NW": 22,
-       "SW": 20,
-       "E": 32,
-       "W": 24,
-       "S": 27,
-       "SE": 25,
-       "N": 29,
-       "NE": 18,
-       "local": 3
-      }
-     }
-    },
-    "delta": {
-     "attempts": {
-      "n": 200,
-      "first": 185,
-      "final": 200
-     },
-     "maps": 200,
-     "M1": {
-      "nearestMin": 0.264,
-      "nearestMedian": 0.353,
-      "nearestP10": 0.289,
-      "below025": 0,
-      "pass": false
-     },
-     "M2a": {
-      "clusters": 6,
-      "largest": 189,
-      "largestShare": 0.945,
-      "singletons": 1,
-      "pass": false
-     },
-     "M2b": {
-      "clusters": 47,
-      "largest": 33,
-      "largestShare": 0.165,
-      "singletons": 18,
-      "codes": 93
-     },
-     "M2c": {
-      "clusters": 93,
-      "largest": 14,
-      "largestShare": 0.07,
-      "singletons": 50,
-      "codes": 14
-     },
-     "M3": {
-      "maps": 200,
-      "clusters": 89,
-      "largest": 16,
-      "largestShare": 0.08,
-      "singletons": 48,
-      "spread": 0.678,
-      "water": {
-       "river": 178,
-       "lake": 16,
-       "stream": 6
-      },
-      "drought": {
-       "dries": 174,
-       "shrinks": 25,
-       "holds": 1
-      },
-      "threat": {
-       "badwater (reaches the start's water)": 35,
-       "none near": 51,
-       "badwater": 106,
-       "thorns": 8
-      },
-      "openDirections": {
-       "2": 2,
-       "3": 6,
-       "4": 42,
-       "5": 67,
-       "6": 52,
-       "7": 27,
-       "8": 4
-      },
-      "land": {
-       "some": 126,
-       "wide": 63,
-       "tight": 11
-      }
-     },
-     "M4": {
-      "nearestMin": 0.413,
-      "nearestP10": 0.522,
-      "nearestMedian": 0.603,
-      "below": 86,
-      "pass": false
-     },
-     "M5": {
-      "maps": 200,
-      "goodNaturalDam": 0.235,
-      "within12": 0.415,
-      "anyLength": 0.585
+      "within12": 0.64,
+      "anyLength": 0.725
      },
      "M6": {
       "maps": 200,
@@ -323,33 +201,33 @@
       "pass": 1
      },
      "score": {
-      "median": 41.213,
-      "p10": 30.442,
-      "p90": 48.996
+      "median": 48.503,
+      "p10": 37.492,
+      "p90": 58.775
      },
      "shape": {
-      "plateausMedian": 4,
-      "flatShareMedian": 0.657,
-      "heightRangeMedian": 7,
-      "waterShareMedian": 0.102,
-      "waterfallsMedian": 1,
-      "maxFallMedian": 1.73,
-      "straightShare8Median": 0.044,
-      "longestRunMedian": 14,
+      "plateausMedian": 7,
+      "flatShareMedian": 0.563,
+      "heightRangeMedian": 11,
+      "waterShareMedian": 0.07,
+      "waterfallsMedian": 2,
+      "maxFallMedian": 3.61,
+      "straightShare8Median": 0.019,
+      "longestRunMedian": 13,
       "flows": {
-       "SE": 29,
-       "N": 28,
-       "W": 29,
-       "NE": 27,
-       "S": 27,
-       "local": 1,
-       "SW": 19,
-       "E": 21,
-       "NW": 19
+       "E": 25,
+       "SW": 31,
+       "S": 18,
+       "SE": 31,
+       "NW": 24,
+       "N": 22,
+       "W": 20,
+       "NE": 22,
+       "local": 7
       }
      }
     },
-    "highlands": {
+    "delta": {
      "attempts": {
       "n": 200,
       "first": 181,
@@ -357,204 +235,83 @@
      },
      "maps": 200,
      "M1": {
-      "nearestMin": 0.327,
-      "nearestMedian": 0.456,
-      "nearestP10": 0.405,
+      "nearestMin": 0.335,
+      "nearestMedian": 0.416,
+      "nearestP10": 0.356,
       "below025": 0,
       "pass": true
      },
      "M2a": {
-      "clusters": 32,
-      "largest": 75,
-      "largestShare": 0.375,
-      "singletons": 9,
-      "pass": false
-     },
-     "M2b": {
-      "clusters": 60,
-      "largest": 24,
-      "largestShare": 0.12,
-      "singletons": 24,
-      "codes": 129
-     },
-     "M2c": {
-      "clusters": 145,
-      "largest": 5,
-      "largestShare": 0.025,
-      "singletons": 110,
-      "codes": 46
-     },
-     "M3": {
-      "maps": 200,
-      "clusters": 164,
-      "largest": 5,
-      "largestShare": 0.025,
-      "singletons": 135,
-      "spread": 0.856,
-      "water": {
-       "lake": 98,
-       "river": 91,
-       "stream": 10,
-       "pond": 1
-      },
-      "drought": {
-       "shrinks": 69,
-       "dries": 118,
-       "holds": 13
-      },
-      "threat": {
-       "badwater": 94,
-       "thorns": 46,
-       "none near": 32,
-       "badwater (reaches the start's water)": 28
-      },
-      "openDirections": {
-       "2": 13,
-       "3": 42,
-       "4": 63,
-       "5": 54,
-       "6": 23,
-       "7": 5
-      },
-      "land": {
-       "some": 122,
-       "tight": 66,
-       "wide": 12
-      }
-     },
-     "M4": {
-      "nearestMin": 0.499,
-      "nearestP10": 0.574,
-      "nearestMedian": 0.635,
-      "below": 39,
-      "pass": false
-     },
-     "M5": {
-      "maps": 200,
-      "goodNaturalDam": 0.59,
-      "within12": 0.745,
-      "anyLength": 0.79
-     },
-     "M6": {
-      "maps": 200,
-      "flagged": 3
-     },
-     "M7": {
-      "maps": 200,
-      "pass": 1
-     },
-     "score": {
-      "median": 49.759,
-      "p10": 39.144,
-      "p90": 58.856
-     },
-     "shape": {
-      "plateausMedian": 6,
-      "flatShareMedian": 0.525,
-      "heightRangeMedian": 10,
-      "waterShareMedian": 0.088,
-      "waterfallsMedian": 3,
-      "maxFallMedian": 4.95,
-      "straightShare8Median": 0.031,
-      "longestRunMedian": 14,
-      "flows": {
-       "W": 38,
-       "E": 26,
-       "NW": 24,
-       "SW": 21,
-       "NE": 23,
-       "SE": 21,
-       "S": 19,
-       "N": 26,
-       "local": 2
-      }
-     }
-    },
-    "islands": {
-     "attempts": {
-      "n": 200,
-      "first": 184,
-      "final": 200
-     },
-     "maps": 200,
-     "M1": {
-      "nearestMin": 0.346,
-      "nearestMedian": 0.426,
-      "nearestP10": 0.385,
-      "below025": 0,
-      "pass": true
-     },
-     "M2a": {
-      "clusters": 17,
-      "largest": 144,
-      "largestShare": 0.72,
+      "clusters": 19,
+      "largest": 136,
+      "largestShare": 0.68,
       "singletons": 4,
       "pass": false
      },
      "M2b": {
-      "clusters": 51,
+      "clusters": 61,
       "largest": 22,
       "largestShare": 0.11,
-      "singletons": 13,
-      "codes": 138
+      "singletons": 24,
+      "codes": 108
      },
      "M2c": {
-      "clusters": 74,
-      "largest": 11,
-      "largestShare": 0.055,
-      "singletons": 23,
-      "codes": 13
+      "clusters": 97,
+      "largest": 10,
+      "largestShare": 0.05,
+      "singletons": 43,
+      "codes": 16
      },
      "M3": {
       "maps": 200,
-      "clusters": 86,
-      "largest": 22,
-      "largestShare": 0.11,
-      "singletons": 47,
-      "spread": 0.642,
+      "clusters": 117,
+      "largest": 8,
+      "largestShare": 0.04,
+      "singletons": 76,
+      "spread": 0.735,
       "water": {
-       "lake": 187,
-       "river": 11,
-       "pond": 2
+       "river": 160,
+       "lake": 32,
+       "stream": 8
       },
       "drought": {
-       "shrinks": 147,
-       "holds": 41,
-       "dries": 12
+       "dries": 156,
+       "shrinks": 42,
+       "holds": 2
       },
       "threat": {
-       "badwater": 100,
-       "none near": 70,
-       "thorns": 11,
-       "badwater (reaches the start's water)": 19
+       "badwater (reaches the start's water)": 49,
+       "none near": 58,
+       "badwater": 83,
+       "thorns": 10
       },
       "openDirections": {
-       "2": 4,
-       "3": 11,
-       "4": 49,
-       "5": 74,
-       "6": 52,
-       "7": 8,
-       "8": 2
+       "2": 2,
+       "3": 19,
+       "4": 37,
+       "5": 72,
+       "6": 43,
+       "7": 24,
+       "8": 3
       },
       "land": {
-       "some": 153,
-       "wide": 27,
-       "tight": 20
+       "some": 115,
+       "wide": 57,
+       "tight": 28
       }
      },
      "M4": {
-      "nearestMin": 0.566,
-      "nearestP10": 0.655,
-      "nearestMedian": 0.714,
-      "below": 2,
+      "nearestMin": 0.511,
+      "nearestP10": 0.574,
+      "nearestMedian": 0.639,
+      "below": 33,
       "pass": false
      },
      "M5": {
       "maps": 200,
-      "goodNaturalDam": 0.775,
-      "within12": 0.825,
-      "anyLength": 0.845
+      "goodNaturalDam": 0.27,
+      "within12": 0.48,
+      "anyLength": 0.57
      },
      "M6": {
       "maps": 200,
@@ -565,269 +322,514 @@
       "pass": 1
      },
      "score": {
-      "median": 41.298,
-      "p10": 31.121,
-      "p90": 49.562
+      "median": 42.182,
+      "p10": 32.897,
+      "p90": 50.591
+     },
+     "shape": {
+      "plateausMedian": 5,
+      "flatShareMedian": 0.635,
+      "heightRangeMedian": 7,
+      "waterShareMedian": 0.108,
+      "waterfallsMedian": 1,
+      "maxFallMedian": 1.93,
+      "straightShare8Median": 0.041,
+      "longestRunMedian": 14,
+      "flows": {
+       "E": 22,
+       "N": 33,
+       "SE": 22,
+       "SW": 23,
+       "W": 20,
+       "NE": 25,
+       "S": 31,
+       "NW": 22,
+       "local": 2
+      }
+     }
+    },
+    "highlands": {
+     "attempts": {
+      "n": 200,
+      "first": 172,
+      "final": 200
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.355,
+      "nearestMedian": 0.468,
+      "nearestP10": 0.417,
+      "below025": 0,
+      "pass": true
+     },
+     "M2a": {
+      "clusters": 36,
+      "largest": 58,
+      "largestShare": 0.29,
+      "singletons": 11,
+      "pass": false
+     },
+     "M2b": {
+      "clusters": 61,
+      "largest": 40,
+      "largestShare": 0.2,
+      "singletons": 24,
+      "codes": 122
+     },
+     "M2c": {
+      "clusters": 151,
+      "largest": 4,
+      "largestShare": 0.02,
+      "singletons": 115,
+      "codes": 49
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 161,
+      "largest": 4,
+      "largestShare": 0.02,
+      "singletons": 131,
+      "spread": 0.839,
+      "water": {
+       "lake": 109,
+       "river": 74,
+       "stream": 14,
+       "pond": 3
+      },
+      "drought": {
+       "shrinks": 76,
+       "dries": 108,
+       "holds": 16
+      },
+      "threat": {
+       "badwater": 101,
+       "thorns": 43,
+       "none near": 35,
+       "badwater (reaches the start's water)": 21
+      },
+      "openDirections": {
+       "2": 10,
+       "3": 38,
+       "4": 56,
+       "5": 58,
+       "6": 29,
+       "7": 9
+      },
+      "land": {
+       "some": 140,
+       "tight": 53,
+       "wide": 7
+      }
+     },
+     "M4": {
+      "nearestMin": 0.519,
+      "nearestP10": 0.57,
+      "nearestMedian": 0.645,
+      "below": 31,
+      "pass": false
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.55,
+      "within12": 0.74,
+      "anyLength": 0.78
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "score": {
+      "median": 49.195,
+      "p10": 37.492,
+      "p90": 59.798
+     },
+     "shape": {
+      "plateausMedian": 6,
+      "flatShareMedian": 0.531,
+      "heightRangeMedian": 10,
+      "waterShareMedian": 0.086,
+      "waterfallsMedian": 4,
+      "maxFallMedian": 5,
+      "straightShare8Median": 0.031,
+      "longestRunMedian": 14,
+      "flows": {
+       "W": 25,
+       "E": 15,
+       "NE": 32,
+       "N": 23,
+       "S": 19,
+       "SW": 25,
+       "SE": 26,
+       "local": 9,
+       "NW": 26
+      }
+     }
+    },
+    "islands": {
+     "attempts": {
+      "n": 200,
+      "first": 179,
+      "final": 200
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.354,
+      "nearestMedian": 0.451,
+      "nearestP10": 0.395,
+      "below025": 0,
+      "pass": true
+     },
+     "M2a": {
+      "clusters": 30,
+      "largest": 111,
+      "largestShare": 0.555,
+      "singletons": 11,
+      "pass": false
+     },
+     "M2b": {
+      "clusters": 47,
+      "largest": 17,
+      "largestShare": 0.085,
+      "singletons": 13,
+      "codes": 136
+     },
+     "M2c": {
+      "clusters": 84,
+      "largest": 9,
+      "largestShare": 0.045,
+      "singletons": 42,
+      "codes": 12
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 96,
+      "largest": 15,
+      "largestShare": 0.075,
+      "singletons": 58,
+      "spread": 0.684,
+      "water": {
+       "lake": 183,
+       "stream": 1,
+       "river": 16
+      },
+      "drought": {
+       "holds": 33,
+       "dries": 20,
+       "shrinks": 147
+      },
+      "threat": {
+       "badwater": 93,
+       "none near": 75,
+       "badwater (reaches the start's water)": 23,
+       "thorns": 9
+      },
+      "openDirections": {
+       "2": 6,
+       "3": 39,
+       "4": 41,
+       "5": 68,
+       "6": 28,
+       "7": 14,
+       "8": 4
+      },
+      "land": {
+       "some": 136,
+       "wide": 31,
+       "tight": 33
+      }
+     },
+     "M4": {
+      "nearestMin": 0.559,
+      "nearestP10": 0.655,
+      "nearestMedian": 0.71,
+      "below": 4,
+      "pass": false
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.735,
+      "within12": 0.82,
+      "anyLength": 0.85
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "score": {
+      "median": 41.558,
+      "p10": 31.737,
+      "p90": 50.556
      },
      "shape": {
       "plateausMedian": 8,
-      "flatShareMedian": 0.569,
+      "flatShareMedian": 0.551,
       "heightRangeMedian": 7,
-      "waterShareMedian": 0.223,
+      "waterShareMedian": 0.212,
       "waterfallsMedian": 1,
-      "maxFallMedian": 2.39,
+      "maxFallMedian": 1.89,
       "straightShare8Median": 0.037,
       "longestRunMedian": 13,
       "flows": {
-       "S": 33,
-       "SW": 23,
-       "local": 4,
-       "NW": 26,
-       "NE": 28,
-       "W": 32,
+       "SW": 28,
+       "W": 35,
+       "SE": 28,
+       "NE": 26,
        "N": 17,
-       "E": 14,
-       "SE": 23
+       "E": 19,
+       "S": 31,
+       "NW": 14,
+       "local": 2
       }
      }
     },
     "lakeBasin": {
      "attempts": {
       "n": 200,
-      "first": 159,
+      "first": 150,
       "final": 200
      },
      "maps": 200,
      "M1": {
-      "nearestMin": 0.371,
-      "nearestMedian": 0.468,
-      "nearestP10": 0.404,
+      "nearestMin": 0.377,
+      "nearestMedian": 0.475,
+      "nearestP10": 0.422,
       "below025": 0,
       "pass": true
      },
      "M2a": {
       "clusters": 36,
-      "largest": 50,
-      "largestShare": 0.25,
-      "singletons": 9,
-      "pass": false
+      "largest": 23,
+      "largestShare": 0.115,
+      "singletons": 8,
+      "pass": true
      },
      "M2b": {
-      "clusters": 63,
-      "largest": 20,
-      "largestShare": 0.1,
-      "singletons": 23,
-      "codes": 135
+      "clusters": 62,
+      "largest": 16,
+      "largestShare": 0.08,
+      "singletons": 26,
+      "codes": 126
      },
      "M2c": {
-      "clusters": 134,
-      "largest": 5,
-      "largestShare": 0.025,
-      "singletons": 89,
-      "codes": 26
+      "clusters": 122,
+      "largest": 7,
+      "largestShare": 0.035,
+      "singletons": 75,
+      "codes": 24
      },
      "M3": {
       "maps": 200,
-      "clusters": 131,
-      "largest": 7,
-      "largestShare": 0.035,
-      "singletons": 96,
-      "spread": 0.764,
+      "clusters": 145,
+      "largest": 6,
+      "largestShare": 0.03,
+      "singletons": 110,
+      "spread": 0.769,
       "water": {
-       "lake": 141,
-       "river": 55,
-       "stream": 4
+       "lake": 133,
+       "river": 63,
+       "stream": 2,
+       "pond": 2
       },
       "drought": {
-       "holds": 58,
-       "shrinks": 78,
-       "dries": 64
+       "holds": 49,
+       "shrinks": 79,
+       "dries": 72
       },
       "threat": {
-       "badwater": 119,
-       "thorns": 18,
-       "badwater (reaches the start's water)": 31,
-       "none near": 32
+       "badwater": 126,
+       "thorns": 11,
+       "none near": 39,
+       "badwater (reaches the start's water)": 24
       },
       "openDirections": {
-       "2": 3,
-       "3": 24,
-       "4": 44,
-       "5": 78,
-       "6": 41,
-       "7": 10
+       "1": 1,
+       "2": 4,
+       "3": 30,
+       "4": 45,
+       "5": 82,
+       "6": 26,
+       "7": 11,
+       "8": 1
       },
       "land": {
        "some": 143,
-       "wide": 29,
-       "tight": 28
+       "tight": 31,
+       "wide": 26
       }
      },
      "M4": {
-      "nearestMin": 0.551,
-      "nearestP10": 0.615,
-      "nearestMedian": 0.681,
-      "below": 7,
+      "nearestMin": 0.469,
+      "nearestP10": 0.618,
+      "nearestMedian": 0.687,
+      "below": 8,
       "pass": false
      },
      "M5": {
       "maps": 200,
-      "goodNaturalDam": 0.655,
-      "within12": 0.79,
-      "anyLength": 0.825
+      "goodNaturalDam": 0.575,
+      "within12": 0.71,
+      "anyLength": 0.755
      },
      "M6": {
       "maps": 200,
-      "flagged": 8
+      "flagged": 0
      },
      "M7": {
       "maps": 200,
       "pass": 1
      },
      "score": {
-      "median": 40.164,
-      "p10": 29.846,
-      "p90": 49.593
+      "median": 40.933,
+      "p10": 30.461,
+      "p90": 49.702
      },
      "shape": {
       "plateausMedian": 6,
-      "flatShareMedian": 0.602,
+      "flatShareMedian": 0.566,
       "heightRangeMedian": 7,
-      "waterShareMedian": 0.143,
+      "waterShareMedian": 0.12,
       "waterfallsMedian": 1,
-      "maxFallMedian": 1.87,
-      "straightShare8Median": 0.05,
-      "longestRunMedian": 14,
+      "maxFallMedian": 2,
+      "straightShare8Median": 0.045,
+      "longestRunMedian": 15,
       "flows": {
-       "SW": 21,
-       "W": 32,
-       "S": 22,
-       "SE": 25,
-       "N": 25,
-       "local": 6,
-       "NE": 24,
-       "E": 26,
-       "NW": 19
+       "W": 30,
+       "SW": 26,
+       "SE": 30,
+       "E": 22,
+       "S": 18,
+       "N": 27,
+       "NE": 20,
+       "NW": 18,
+       "local": 9
       }
      }
     },
     "riverValley": {
      "attempts": {
       "n": 200,
-      "first": 165,
+      "first": 174,
       "final": 200
      },
      "maps": 200,
      "M1": {
-      "nearestMin": 0.298,
-      "nearestMedian": 0.405,
-      "nearestP10": 0.355,
+      "nearestMin": 0.326,
+      "nearestMedian": 0.441,
+      "nearestP10": 0.387,
       "below025": 0,
       "pass": true
      },
      "M2a": {
-      "clusters": 19,
-      "largest": 136,
-      "largestShare": 0.68,
-      "singletons": 2,
+      "clusters": 30,
+      "largest": 93,
+      "largestShare": 0.465,
+      "singletons": 13,
       "pass": false
      },
      "M2b": {
-      "clusters": 70,
-      "largest": 12,
-      "largestShare": 0.06,
-      "singletons": 29,
-      "codes": 141
+      "clusters": 58,
+      "largest": 16,
+      "largestShare": 0.08,
+      "singletons": 13,
+      "codes": 137
      },
      "M2c": {
       "clusters": 129,
       "largest": 5,
       "largestShare": 0.025,
-      "singletons": 85,
-      "codes": 29
+      "singletons": 81,
+      "codes": 35
      },
      "M3": {
       "maps": 200,
-      "clusters": 156,
-      "largest": 6,
-      "largestShare": 0.03,
-      "singletons": 122,
-      "spread": 0.824,
+      "clusters": 153,
+      "largest": 5,
+      "largestShare": 0.025,
+      "singletons": 120,
+      "spread": 0.827,
       "water": {
-       "river": 117,
-       "stream": 21,
-       "lake": 62
+       "river": 114,
+       "lake": 73,
+       "stream": 12,
+       "pond": 1
       },
       "drought": {
-       "dries": 159,
-       "shrinks": 34,
-       "holds": 7
+       "shrinks": 58,
+       "dries": 133,
+       "holds": 9
       },
       "threat": {
-       "badwater (reaches the start's water)": 39,
-       "badwater": 108,
-       "thorns": 42,
-       "none near": 11
+       "badwater": 110,
+       "thorns": 35,
+       "badwater (reaches the start's water)": 41,
+       "none near": 14
       },
       "openDirections": {
-       "2": 2,
-       "3": 25,
-       "4": 48,
-       "5": 58,
-       "6": 55,
-       "7": 10,
-       "8": 2
+       "2": 10,
+       "3": 27,
+       "4": 67,
+       "5": 50,
+       "6": 40,
+       "7": 6
       },
       "land": {
-       "some": 141,
-       "tight": 38,
-       "wide": 21
+       "some": 131,
+       "wide": 23,
+       "tight": 46
       }
      },
      "M4": {
-      "nearestMin": 0.447,
-      "nearestP10": 0.546,
-      "nearestMedian": 0.616,
-      "below": 60,
+      "nearestMin": 0.494,
+      "nearestP10": 0.574,
+      "nearestMedian": 0.636,
+      "below": 40,
       "pass": false
      },
      "M5": {
       "maps": 200,
-      "goodNaturalDam": 0.395,
-      "within12": 0.58,
-      "anyLength": 0.62
+      "goodNaturalDam": 0.415,
+      "within12": 0.64,
+      "anyLength": 0.695
      },
      "M6": {
       "maps": 200,
-      "flagged": 2
+      "flagged": 0
      },
      "M7": {
       "maps": 200,
       "pass": 1
      },
      "score": {
-      "median": 46.149,
-      "p10": 35.907,
-      "p90": 54.105
+      "median": 46.748,
+      "p10": 35.355,
+      "p90": 55.264
      },
      "shape": {
       "plateausMedian": 5,
-      "flatShareMedian": 0.544,
+      "flatShareMedian": 0.531,
       "heightRangeMedian": 9,
-      "waterShareMedian": 0.085,
-      "waterfallsMedian": 1,
-      "maxFallMedian": 2.77,
-      "straightShare8Median": 0.031,
+      "waterShareMedian": 0.087,
+      "waterfallsMedian": 2,
+      "maxFallMedian": 3.84,
+      "straightShare8Median": 0.036,
       "longestRunMedian": 14,
       "flows": {
-       "SE": 19,
-       "S": 20,
-       "SW": 27,
-       "NE": 35,
-       "W": 29,
-       "NW": 16,
-       "E": 32,
-       "N": 20,
+       "SE": 24,
+       "W": 24,
+       "S": 23,
+       "NE": 31,
+       "SW": 23,
+       "NW": 20,
+       "E": 29,
+       "N": 24,
        "local": 2
       }
      }
@@ -1480,6 +1482,180 @@
        "E": 193,
        "NE": 5,
        "SE": 2
+      }
+     }
+    }
+   }
+  },
+  "proto-128-v100": {
+   "byTheme": {
+    "delta": {
+     "attempts": {
+      "n": 200,
+      "first": 181,
+      "final": 200
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.349,
+      "nearestMedian": 0.445,
+      "nearestP10": 0.379,
+      "below025": 0,
+      "pass": true
+     },
+     "M2a": {
+      "clusters": 37,
+      "largest": 34,
+      "largestShare": 0.17,
+      "singletons": 13,
+      "pass": false
+     },
+     "M2b": {
+      "clusters": 58,
+      "largest": 18,
+      "largestShare": 0.09,
+      "singletons": 21,
+      "codes": 110
+     },
+     "M2c": {
+      "clusters": 120,
+      "largest": 9,
+      "largestShare": 0.045,
+      "singletons": 75,
+      "codes": 19
+     },
+     "M3": {
+      "maps": 0,
+      "clusters": 0,
+      "largest": 0,
+      "largestShare": 0,
+      "singletons": 0,
+      "spread": 0,
+      "water": {},
+      "drought": {},
+      "threat": {},
+      "openDirections": {},
+      "land": {}
+     },
+     "M4": {
+      "nearestMin": 0.499,
+      "nearestP10": 0.569,
+      "nearestMedian": 0.653,
+      "below": 33,
+      "pass": false
+     },
+     "M5": null,
+     "M6": null,
+     "M7": null,
+     "score": {
+      "median": 39.497,
+      "p10": 28.991,
+      "p90": 48.221
+     },
+     "shape": {
+      "plateausMedian": 6,
+      "flatShareMedian": 0.643,
+      "heightRangeMedian": 7,
+      "waterShareMedian": 0.102,
+      "waterfallsMedian": 1,
+      "maxFallMedian": 1.79,
+      "straightShare8Median": 0.042,
+      "longestRunMedian": 14,
+      "flows": {
+       "E": 19,
+       "NE": 23,
+       "SE": 24,
+       "NW": 23,
+       "N": 29,
+       "SW": 26,
+       "S": 32,
+       "W": 18,
+       "local": 6
+      }
+     }
+    },
+    "riverValley": {
+     "attempts": {
+      "n": 200,
+      "first": 173,
+      "final": 200
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.337,
+      "nearestMedian": 0.475,
+      "nearestP10": 0.397,
+      "below025": 0,
+      "pass": true
+     },
+     "M2a": {
+      "clusters": 55,
+      "largest": 28,
+      "largestShare": 0.14,
+      "singletons": 22,
+      "pass": true
+     },
+     "M2b": {
+      "clusters": 84,
+      "largest": 10,
+      "largestShare": 0.05,
+      "singletons": 39,
+      "codes": 142
+     },
+     "M2c": {
+      "clusters": 141,
+      "largest": 5,
+      "largestShare": 0.025,
+      "singletons": 100,
+      "codes": 38
+     },
+     "M3": {
+      "maps": 0,
+      "clusters": 0,
+      "largest": 0,
+      "largestShare": 0,
+      "singletons": 0,
+      "spread": 0,
+      "water": {},
+      "drought": {},
+      "threat": {},
+      "openDirections": {},
+      "land": {}
+     },
+     "M4": {
+      "nearestMin": 0.48,
+      "nearestP10": 0.568,
+      "nearestMedian": 0.648,
+      "below": 43,
+      "pass": false
+     },
+     "M5": null,
+     "M6": null,
+     "M7": null,
+     "score": {
+      "median": 45.074,
+      "p10": 33.191,
+      "p90": 53.153
+     },
+     "shape": {
+      "plateausMedian": 6,
+      "flatShareMedian": 0.559,
+      "heightRangeMedian": 9,
+      "waterShareMedian": 0.088,
+      "waterfallsMedian": 1,
+      "maxFallMedian": 3,
+      "straightShare8Median": 0.034,
+      "longestRunMedian": 13,
+      "flows": {
+       "E": 30,
+       "S": 30,
+       "NE": 31,
+       "NW": 20,
+       "SE": 22,
+       "W": 31,
+       "N": 13,
+       "SW": 21,
+       "local": 2
       }
      }
     }
