@@ -167,6 +167,8 @@ export interface Ctx {
   others: Map<string, Loaded>;
   model: ModelRun | null;
   modelError: string | null;
+  /** Mods other than DGM Probe that the game loaded during the run (the run is then not a clean one). */
+  otherMods?: string[];
 }
 
 type Eval = (c: Ctx) => { verdict: Verdict; detail: string };
@@ -182,12 +184,14 @@ function loadVerdict(c: Ctx): { verdict: Verdict; detail: string } {
   const probs = logProblems(r);
   const issues = r.loadingIssues ?? [];
   const startOk = !c.L.info.start || !!r.start?.districtCenter;
-  const ok = r.status === 'done' && issues.length === 0 && probs.errors.length === 0 && startOk;
+  const others = c.otherMods ?? [];
+  const ok = r.status === 'done' && issues.length === 0 && probs.errors.length === 0 && startOk && others.length === 0;
   const parts = [
     `status ${r.status}${r.failure ? ` (${r.failure})` : ''}`,
     issues.length ? `loading issues: ${issues.join('; ')}` : 'no loading issues',
     probs.errors.length ? `${probs.errors.length} errors in the log: ${probs.errors.slice(0, 3).join(' | ')}` : 'no error or exception in the log',
     `${probs.warnings} warnings`,
+    others.length ? `other mods were loaded (not the unmodified game): ${others.join(', ')}` : 'only DGM Probe loaded',
     c.L.info.start ? (r.start?.districtCenter ? `district center at (${r.start.districtCenter.x}, ${r.start.districtCenter.y}, ${r.start.districtCenter.z}) ${r.start.districtCenter.orientation}` : 'no district center') : 'the map has no start',
   ];
   return { verdict: ok ? 'passed' : 'failed', detail: parts.join('; ') };

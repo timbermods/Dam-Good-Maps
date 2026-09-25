@@ -51,6 +51,10 @@ async function main(): Promise<void> {
   // 1. Unity's PlayerPrefs names
   check('prefs hash', mods.prefsValueName('ModEnabled.Local.MixedStorage.kyler.mixedstorage') === 'ModEnabled.Local.MixedStorage.kyler.mixedstorage_h637420546' && mods.prefsValueName('GraphicsQuality') === 'GraphicsQuality_h1581385789');
 
+  // 1b. the game's own list of loaded mods, read from its log
+  const sampleLog = 'Successfully connected to the Steam client.\nModded: true, official\n- DGM Probe (v0.1.0)\n- Harmony (v2.4.1)\n[DGMProbe] job x\n';
+  check('loaded mods from the game log', JSON.stringify(launch.loadedMods(sampleLog)) === JSON.stringify(['DGM Probe (v0.1.0)', 'Harmony (v2.4.1)']) && launch.loadedMods('no mods').length === 0);
+
   // 2. consent: a code works once, for its own plan only
   const plan = { kind: 'smoke' as const, estimateMinutes: 3, maps: [{ id: 'a', title: 'A', checks: ['x'], days: 1 }] };
   const other = { ...plan, maps: [{ id: 'b', title: 'B', checks: ['x'], days: 1 }] };

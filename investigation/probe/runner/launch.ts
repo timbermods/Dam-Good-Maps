@@ -40,6 +40,19 @@ export interface LaunchLog {
   lastPhase: string | null;
   lastMap: string | null;
   note: string;
+  /** The mods the game says it loaded ("Modded: true" in its log). */
+  loadedMods?: string[];
+  otherMods?: string[];
+}
+
+/** The mod list the game writes after "Modded: true, official": one "- Name (vX)" line per mod. */
+export function loadedMods(log: string): string[] {
+  const lines = log.split(/\r?\n/);
+  const at = lines.findIndex((l) => l.startsWith('Modded: true'));
+  if (at < 0) return [];
+  const out: string[] = [];
+  for (let i = at + 1; i < lines.length && lines[i].startsWith('- '); i++) out.push(lines[i].slice(2).trim());
+  return out;
 }
 
 export interface WatchOptions {
@@ -144,7 +157,15 @@ export async function runJob(job: Job, o: WatchOptions): Promise<LaunchLog[]> {
     entry.endedAt = new Date().toISOString();
     // The Unity log of this launch (Unity moves it to Player-prev.log at the next launch).
     const unityLog = join(unityLogDir(), 'Player.log');
-    if (existsSync(unityLog) && statSync(unityLog).mtimeMs >= started - 5000) copyFileSync(unityLog, join(resultsDir(job.runId), `launch-${launch}.Player.log`));
+    if (existsSync(unityLog) && statSync(unityLog).mtimeMs >= started - 5000) {
+      const kept = join(resultsDir(job.runId), `launch-${launch}.Player.log`);
+      copyFileSync(unityLog, kept);
+      // The game lists the mods it loaded; anything besides DGM Probe means the run did not measure the
+      // unmodified game (and that the runner's settings changes never reached it).
+      entry.loadedMods = loadedMods(readFileSync(kept, 'utf8'));
+      entry.otherMods = entry.loadedMods.filter((m) => !/^DGM Probe\b/.test(m));
+      if (entry.otherMods.length) o.log(`WARNING: other mods loaded in this launch: ${entry.otherMods.join(', ')}`);
+    }
     // A map that was playing when the game stopped gets a failure, so the next launch moves past it.
     const after = mapsWithResults(job);
     if (entry.outcome !== 'finished' && lastBeat?.mapId && !after.has(lastBeat.mapId) && lastBeat.phase !== 'menu' && lastBeat.phase !== 'done') {

@@ -12,10 +12,11 @@ export function counts(verdicts: GameVerdicts[]): Record<string, number> {
   return c;
 }
 
-export function writeSummary(file: string, runId: string, prepared: Prepared[], loaded: Map<string, Loaded>, verdicts: GameVerdicts[]): void {
+export function writeSummary(file: string, runId: string, prepared: Prepared[], loaded: Map<string, Loaded>, verdicts: GameVerdicts[], otherMods: string[] = []): void {
   const out: string[] = [];
   const c = counts(verdicts);
   out.push(`# DGM Probe run ${runId}`, '');
+  if (otherMods.length) out.push(`**Not a clean run:** other mods were loaded (${otherMods.join(', ')}), so the game measured was not the unmodified game.`, '');
   out.push(`${verdicts.length} maps. Checks: ${c.passed} passed, ${c.failed} failed, ${c['not measurable']} not measurable, ${c.recorded} recorded.`, '');
   const groups = [...new Set(verdicts.map((v) => v.group))];
   for (const g of groups) {

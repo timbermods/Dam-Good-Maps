@@ -7,7 +7,7 @@
 // Without --confirmed-launch it only prints the plan (maps, checks, time, and that it launches Timberborn)
 // and a one-time code; Kyler's yes is needed for every launch (runner/consent.ts).
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { buildMod } from './build-mod';
 import { catalog, type GameDef } from './catalog';
@@ -15,7 +15,7 @@ import { evaluate, type GameVerdicts, Loaded } from './compare';
 import { askInTerminal, consumeConsent, describe, requestConsent } from './consent';
 import type { MapResult } from './job';
 import { makeJob, prepare, type Prepared, summary } from './jobs';
-import { resultsDir, runJob } from './launch';
+import { type LaunchLog, resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
 import { probeOnly } from './mods';
 import { CHECKED_GAME_VERSION, gameVersion, isEntry, probePaths, REGISTRY_KEY, REPO } from './paths';
@@ -103,6 +103,16 @@ async function launch(plan: Plan, prepared: Prepared[]): Promise<void> {
     const job = makeJob(plan.runId, prepared, plan.speed);
     const launches = await runJob(job, { hangSeconds: 240, startSeconds: 300, mapSeconds: Math.max(...job.maps.map((m) => m.timeoutSeconds)) + 300, maxLaunches: Math.max(3, Math.ceil(prepared.length / 3) + 2), log });
     writeFileSync(join(dir, 'launches.json'), JSON.stringify(launches, null, 1));
+    const others = [...new Set(launches.flatMap((l) => l.otherMods ?? []))];
+    if (others.length) {
+      // The game saw none of the runner's settings changes, so the restore below cannot reach them either
+      // (for example when the runner runs in a sandbox with its own view of the registry).
+      copyFileSync(snap.registryFile, join(dir, 'settings-before-the-run.reg'));
+      log(`WARNING: other mods loaded (${others.join(', ')}): this was not a clean run, and the game did not see the runner's settings changes.`);
+      log('Put the settings back by hand from outside the runner (close Timberborn first):');
+      log(`  reg delete "${REGISTRY_KEY}" /f`);
+      log(`  reg import "${join(dir, 'settings-before-the-run.reg')}"`);
+    }
   } finally {
     process.removeListener('SIGINT', onSignal);
     // the restore waits for the game to be gone
@@ -122,6 +132,8 @@ export function compareRun(plan: Plan): { verdicts: GameVerdicts[]; sheet: strin
     const r = existsSync(f) ? (JSON.parse(readFileSync(f, 'utf8')) as MapResult) : null;
     loaded.set(p.game.id, new Loaded(dir, p, r));
   }
+  const launchesFile = join(dir, 'launches.json');
+  const otherMods = existsSync(launchesFile) ? [...new Set((JSON.parse(readFileSync(launchesFile, 'utf8')) as LaunchLog[]).flatMap((l) => l.otherMods ?? []))] : [];
   const verdicts: GameVerdicts[] = [];
   const models: Record<string, { cpuSeconds: number; error?: string }> = {};
   for (const p of prepared) {
@@ -138,12 +150,12 @@ export function compareRun(plan: Plan): { verdicts: GameVerdicts[]; sheet: strin
         models[p.game.id] = { cpuSeconds: 0, error: modelError };
       }
     }
-    const checks = evaluate({ L, others: loaded, model, modelError }, p.checks);
+    const checks = evaluate({ L, others: loaded, model, modelError, otherMods }, p.checks);
     verdicts.push({ game: p.game.id, title: p.game.title, group: p.game.group, status: L.result?.status ?? 'no result', checks });
     log(`${p.game.id}: ${checks.map((c) => `${c.id} ${c.verdict}`).join(', ')}`);
   }
   writeFileSync(join(dir, 'verdicts.json'), JSON.stringify({ runId: plan.runId, models, verdicts }, null, 1));
-  writeSummary(join(dir, 'summary.md'), plan.runId, prepared, loaded, verdicts);
+  writeSummary(join(dir, 'summary.md'), plan.runId, prepared, loaded, verdicts, otherMods);
   const sheet = writeSheet(probePaths().sheet, plan.runId, probePaths().shots, prepared.filter((p) => loaded.get(p.game.id)?.result).map((p) => ({
     result: loaded.get(p.game.id)!.result!,
     poses: p.map.poses,
