@@ -542,6 +542,27 @@ differences in "Editor decisions".
 
 **Effort:** xhigh.
 
+**Status:** built, 2026-09-24, on branch `dev` (generator 0.6.0). Every acceptance criterion passes
+but one, which is not met as written:
+- start requirements: both validators apply them, with 0 disagreements on the full oracle (50
+  generated and 19 official maps); the unit tests pass and the three settings move their targets;
+  every accepted map's start reaches water on its own level, and 100 seeds per theme at 96², 128²,
+  192² and 256² pass 100% final, 94–100% on the first attempt; the browser test passes; 5 of the
+  11 measurable official starts meet all three at Normal;
+- a generated ring past the map edge is edited and locked, and the unedited map's bytes stay;
+- validation parity: the editor's verdicts after a warm-started preview equal the generator's
+  validator on the exported file;
+- a local edit re-previews in at most 1.76 s at 256² (Node, six themes) and 1.66 s in Chrome;
+- the export of an unedited generated map equals the generator's file byte for byte;
+- the property test leaves no object floating;
+- **not met as written:** Hollows, Pressure, Oasis and Nomads report approximate water; Beaverome
+  does not. None of the causes applies to it and our settle shows its water right; it fails
+  `start.dry` by its own design (PLAN §20 D98; Kyler decides decisions-pending #48).
+
+The in-game check is skipped for now (D11): the River Valley file is in `out/m8/`, and checks
+M8-1a to M8-1c are pending in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20
+D97–D106.
+
 ---
 
 ## Map look
