@@ -60,7 +60,44 @@ Proposals only. Nothing here changes the plans, the milestone run or the checks 
 
 ## 5. Later: a scripted bot colony
 
-*To be completed from the study of the game's code (placing buildings, workers, survival measures).*
+A probe stage that builds a small colony itself and measures whether a map is survivable on each
+difficulty. What the decompiled code shows it would take:
+
+- **Placing buildings as the player's tool does.** `ConstructionFactory.CreateAsUnfinished` places a
+  construction site; blueprints come from `TemplateNameMapper` by name (`Path`, `WaterPump.Folktails`,
+  `DeepWaterPump.IronTeeth`, `SmallTank.*`, `SmallPile.*`, `GathererFlag.*`, `LumberjackFlag.*`,
+  `Lodge.Folktails`, `Barrack.IronTeeth`). Validity comes from the tool's own `PreviewPlacer`
+  (`GetBuildableCoordinates`); its warnings (a blocked pump pipe, an unreachable entrance) are not enforced,
+  so the bot checks them itself. Placing happens in `UpdateSingleton`, as the player's does.
+- **Builders build.** The district center is the builder hub; sites finish when their materials, build
+  hours and validators are done. `ConstructionSite.FinishNow` exists but creates the materials from nothing,
+  so an instantly built colony overstates survival (the start has no logs, and no water on Normal and
+  Hard). Instant building would only be a separate "capacity" figure.
+- **What the bot must do that players do without thinking.**
+  - A continuous chain of `Path` tiles from the district center to every entrance: without it a building
+    gets no builders, no workers, and nobody eats or drinks from it (`DistrictBuilding`).
+  - Mark trees for the lumberjack (`TreeCuttingArea.AddCoordinates`); gatherers take any bush in range.
+  - Tell each new tank or warehouse its good (`SingleGoodAllower.Allow`).
+  - Stay on the district center's level (terrain navigation joins same-height tiles only) and within a
+    flag's 20 walking tiles.
+  - Use only buildings with no science cost: code placement skips the science lock.
+- **Workers and homes are automatic** (`DistrictWorkplaceAssigner`, `DwellerHomeAssigner`); the bot sets
+  priorities (`WorkplacePriority`, `BuilderPrioritizable`) so the pump comes first.
+- **Measures.** Population (`PopulationService`), deaths with their cause (at `PreMortalDiedEvent`, the
+  beaver's Thirst or Hunger need at its minimum, else old age), water and food stock
+  (`ResourceCountingService`), the first water pumped, and `GameOverEvent`, per day and per hazard.
+- **Difficulty.** On Normal and Hard the colony starts with food for about 3–4 days and no water, and 13
+  beavers drink about 28 water a day: a pump must work within about 5 days. Easy starts with 250 water and
+  eats and drinks at 0.4.
+- **Where it stops measuring the map.** A Normal drought of about 7 days needs about 190 stored water
+  (7 small tanks, about 105 logs); a full Hard drought needs 400–800. Past the first two or three Hard
+  cycles a science-free bot measures itself, not the map. Maps with no pump site on the start's level, or no
+  trees and bushes in reach, are reported as "no bot layout", apart from "not survivable".
+- **Randomness.** The game's generator is never seeded: each map needs a few runs.
+- **Minimal plan.** Survey the start's level; choose and validate a pump site whose pipe tip is under
+  water; lay paths; place the lumberjack flag (with marked trees) and the gatherer flag; place the pump at
+  top priority; add a log pile, tanks and homes; let the builders build; record daily until N hazards or
+  game over.
 
 ## 6. When the game updates
 
@@ -73,7 +110,9 @@ Proposals only. Nothing here changes the plans, the milestone run or the checks 
   - `SpeedManager` speeds up to 99 (the developers' x99);
   - `Autosaver.Suspend`, `MainMenuSceneLoader.OpenMainMenu`, `GameQuitter.Quit`;
   - `IThreadSafeWaterMap`, `IThreadSafeColumnTerrainMap`, the soil services and their index layout;
-  - `-skipModManager` and the `ModEnabled.<source>.<folder>.<id>` settings keys.
+  - `-skipModManager` and the `ModEnabled.<source>.<folder>.<id>` settings keys;
+  - with the bot colony, also `ConstructionFactory`, `TemplateNameMapper`, `PreviewPlacer`,
+    `TreeCuttingArea`, `SingleGoodAllower`, `WaterInputPipeCoordinates` and `DistrictBuilding`.
 - **How to notice.**
   - The build fails at once on a changed signature (the mod compiles against the installed DLLs).
   - `Version.txt` in the game folder is recorded in every result; the runner refuses to launch when it

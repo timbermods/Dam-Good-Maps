@@ -243,3 +243,22 @@ function listDirs(root: string): string[] {
   walk(root);
   return out;
 }
+/**
+ * A copy of the game's settings kept by hand, before a launch: the whole registry key as a .reg file, and
+ * the mods' on/off values and load order in plain text. Nothing is changed.
+ */
+export function backupSettings(): { dir: string; regFile: string; modsFile: string } {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const dir = join(probePaths().home, 'settings-backup', stamp);
+  mkdirSync(dir, { recursive: true });
+  const regFile = join(dir, 'Timberborn-settings.reg');
+  execFileSync('reg.exe', ['export', REGISTRY_KEY, regFile, '/y'], { stdio: 'ignore' });
+  const values = registryValues();
+  const mods = Object.entries(values)
+    .filter(([k]) => /^Mod(Enabled|Priority)\./.test(k))
+    .map(([k, v]) => `${k.replace(/_h\d+$/, '')} = ${Number.parseInt(v.split(' ')[1], 16) | 0}`)
+    .sort();
+  const modsFile = join(dir, 'mod-settings.txt');
+  writeFileSync(modsFile, [`Timberborn mod settings on ${new Date().toISOString()} (from ${REGISTRY_KEY}).`, 'ModEnabled: 1 on, 0 off; a mod with no line is on. ModPriority: load order.', '', ...mods, ''].join('\r\n'));
+  return { dir, regFile, modsFile };
+}

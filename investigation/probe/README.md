@@ -5,7 +5,7 @@ under forced weather, and records what the game does; a runner builds the job, l
 it, and compares the records with the project's models.
 
 - [REPORT.md](REPORT.md): what was built, the choices made and why.
-- [RESULTS.md](RESULTS.md): the first real batch.
+- RESULTS.md: the first real batch (not run yet).
 - [INTEGRATION.md](INTEGRATION.md): proposals for the repository and the milestone run.
 
 ## Run it
@@ -28,6 +28,8 @@ once, and only for the plan it was printed for.
 - Any `.timber` paths on the command line are added as games of their own, with a Normal drought.
 - `--compare-only <run id>`: redo the verdicts and the contact sheet of a finished run.
 - `--restore-only`: put the game's settings, logs and saves back after an interrupted run.
+- `--backup-settings`: save a copy of the game's settings (the whole registry key as a `.reg` file, and the
+  mods' on/off values in text) and print how to put it back by hand. It changes nothing.
 
 A full batch waits until the machine is quiet (no tests, batches, benchmarks or headless browsers of
 another session, and a low processor load). `--no-wait` skips the wait.

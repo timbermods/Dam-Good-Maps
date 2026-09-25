@@ -1,6 +1,8 @@
 # DGM Probe: report
 
-*Draft: finished after the first batch.*
+**Status, 2026-09-25:** built and tested without the game (the runner's tests, a stand-in game for the
+watchdog, the comparisons fed with the model's own output). The smoke run and the full batch have not run
+yet: Kyler runs the smoke test first. [RESULTS.md](RESULTS.md) follows the first batch.
 
 ## Decisions
 

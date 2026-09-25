@@ -110,6 +110,14 @@ async function main(): Promise<void> {
   const w2 = compare.evaluate({ L: L2, others: new Map(), model: null, modelError: null }, [m8.checks.find((c) => c.id === 'water')!])[0];
   check('compare: a drained map fails the water check', w2.verdict === 'failed', w2.detail);
 
+  // 5a. the hand-kept settings backup: a .reg file of the whole key and the mods' values in text
+  execFileSync('reg.exe', ['add', TEST_KEY, '/v', mods.prefsValueName('ModPriority.Local.SomeMod.someone.somemod'), '/t', 'REG_DWORD', '/d', '4294967295', '/f'], { stdio: 'ignore' });
+  const b = safety.backupSettings();
+  const reg = readFileSync(b.regFile, 'utf16le');
+  const listed = readFileSync(b.modsFile, 'utf8');
+  check('settings backup: the .reg file holds the key', reg.includes('DGMProbeTest\\Timberborn') && reg.includes('KylerSetting_h7'));
+  check('settings backup: mod values in plain text', /ModPriority\.Local\.SomeMod\.someone\.somemod = -1/.test(listed), listed.split('\r\n').slice(3).join(' | '));
+
   // 5. snapshot and restore: settings, logs, player data, saves
   const small = jobs.makeJob('fake-run', prepared.slice(0, 4), 99);
   const snapInfo = safety.takeSnapshot();

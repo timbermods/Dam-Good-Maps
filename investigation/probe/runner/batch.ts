@@ -3,6 +3,7 @@
 //       [--confirmed-launch CODE] [--run-id ID] [--speed 99] [--no-wait]
 //   npm --prefix investigation/probe run batch -- --compare-only RUN_ID
 //   npm --prefix investigation/probe run batch -- --restore-only
+//   npm --prefix investigation/probe run batch -- --backup-settings   (a copy of the game's settings, kept by hand)
 // Without --confirmed-launch it only prints the plan (maps, checks, time, and that it launches Timberborn)
 // and a one-time code; Kyler's yes is needed for every launch (runner/consent.ts).
 import { execFileSync } from 'node:child_process';
@@ -17,9 +18,9 @@ import { makeJob, prepare, type Prepared, summary } from './jobs';
 import { resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
 import { probeOnly } from './mods';
-import { CHECKED_GAME_VERSION, gameVersion, isEntry, probePaths, REPO } from './paths';
+import { CHECKED_GAME_VERSION, gameVersion, isEntry, probePaths, REGISTRY_KEY, REPO } from './paths';
 import { waitQuiet } from './quiet';
-import { hasPendingRestore, isGameRunning, restore, takeSnapshot } from './safety';
+import { backupSettings, hasPendingRestore, isGameRunning, restore, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
 import { writeSummary } from './summary';
 
@@ -153,6 +154,17 @@ export function compareRun(plan: Plan): { verdicts: GameVerdicts[]; sheet: strin
 }
 
 async function main(): Promise<void> {
+  if (flag('backup-settings')) {
+    const b = backupSettings();
+    console.log(`Saved the game's settings (every value of the registry key) and the mods' on/off list:`);
+    console.log(`  ${b.regFile}`);
+    console.log(`  ${b.modsFile}`);
+    console.log('To put the settings back by hand: close Timberborn, then run in PowerShell:');
+    console.log(`  reg delete "${REGISTRY_KEY}" /f`);
+    console.log(`  reg import "${b.regFile}"`);
+    console.log('(Double-clicking the .reg file also restores every saved value, but keeps any value added since.)');
+    return;
+  }
   if (flag('restore-only')) {
     if (!hasPendingRestore()) return log('nothing to restore');
     const r = restore(join(probePaths().runner, 'restored-' + Date.now()));
