@@ -272,13 +272,15 @@ export interface TerrainUniforms {
   groundMode: { value: number };
 }
 
-export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number): ShaderMaterial {
+/** `lite`: a lighter look for browsers that render in software: no patterns, no soil blending. */
+export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, lite = false): ShaderMaterial {
   const own: TerrainUniforms = {
     heightRange: { value: new Vector2(lo, hi) },
     hover: { value: new Vector3(0, 0, 0) },
     groundMode: { value: 0 },
   };
   return new ShaderMaterial({
+    defines: { LITE: lite ? 1 : 0 },
     uniforms: { ...scene, ...own } as unknown as Record<string, { value: unknown }>,
     vertexShader: /* glsl */ `
       varying vec3 vWorld;
@@ -323,6 +325,12 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number): S
        *  and in glow the light of contaminated ground's cracks. Noise shapes the edges between soils
        *  (grass bleeds onto the earth in patches) and their grain. */
       vec3 groundColor(vec4 s, vec2 g, float detail, out float glow) {
+        #if LITE
+          glow = 0.0;
+          vec3 lc = s.x > 0.5 ? mix(${glColor(GROUND.moistLow)}, ${glColor(GROUND.moistHigh)}, clamp((s.y - 1.0) / 9.0, 0.0, 1.0)) : ${glColor(GROUND.dry)};
+          if (s.z > 0.5) lc = ${glColor(GROUND.contaminated)};
+          return s.w > 0.5 ? ${glColor(GROUND.underwater)} : lc;
+        #endif
         float n1 = vnoise(g * 1.3);
         float n2 = vnoise(g * 4.1 + 17.0);
         float n3 = vnoise(g * 19.0 + 5.0) - 0.5;
@@ -358,12 +366,18 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number): S
         vec3 c;
         vec3 light;
         if (n.y > 0.5) {
-          // the tile and its three neighbours toward this point
+          // the tile and its three neighbours toward this point (the light look: the tile alone)
           vec2 fr = g - tile;
           vec2 sd = vec2(fr.x < 0.5 ? -1.0 : 1.0, fr.y < 0.5 ? -1.0 : 1.0);
-          vec4 dx = tileAt(tile + vec2(sd.x, 0.0));
-          vec4 dy = tileAt(tile + vec2(0.0, sd.y));
-          vec4 dd = tileAt(tile + sd);
+          #if LITE
+            vec4 dx = d0;
+            vec4 dy = d0;
+            vec4 dd = d0;
+          #else
+            vec4 dx = tileAt(tile + vec2(sd.x, 0.0));
+            vec4 dy = tileAt(tile + vec2(0.0, sd.y));
+            vec4 dd = tileAt(tile + sd);
+          #endif
           float hx = heightOf(dx);
           float hy = heightOf(dy);
           float hd = heightOf(dd);
@@ -411,7 +425,11 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number): S
           float y = vWorld.y;
           float level = floor(y + 0.001);
           float along = abs(n.x) > 0.5 ? g.y : g.x;
-          float k = cobble(vec2(along * 2.0, y * 2.0));
+          #if LITE
+            float k = 0.75;
+          #else
+            float k = cobble(vec2(along * 2.0, y * 2.0));
+          #endif
           float shade = mix(${f(WALL.low)}, ${f(WALL.high)}, clamp(level / 16.0, 0.0, 1.0)) * (mod(level, 2.0) > 0.5 ? ${f(WALL.alternate)} : 1.0);
           vec3 wc = mix(${glColor(WALL.mortar)}, ${glColor(WALL.stone)} * shade * (0.7 + 0.6 * (k - 0.5)), smoothstep(0.1, 0.4, k));
           wc *= 1.0 - 0.55 * lineAt(y, 0.035);
@@ -438,8 +456,9 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number): S
   });
 }
 
-export function waterMaterial(scene: SceneUniforms): ShaderMaterial {
+export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMaterial {
   return new ShaderMaterial({
+    defines: { LITE: lite ? 1 : 0 },
     uniforms: scene as unknown as Record<string, { value: unknown }>,
     vertexShader: /* glsl */ `
       attribute vec2 wdata;
@@ -505,24 +524,32 @@ export function waterMaterial(scene: SceneUniforms): ShaderMaterial {
           if (bit(vFlags, 64.0) > 0.5) fall = min(fall, 1.0 - fr.y);
           if (bit(vFlags, 128.0) > 0.5) fall = min(fall, fr.y);
           // a thin line along the shore, and broken foam just off it
-          float fn = vnoise(g * 4.0 + vec2(t * 0.3, -t * 0.2));
           foam += (1.0 - smoothstep(0.03, 0.08, shore)) * 0.7;
-          foam += (1.0 - smoothstep(0.06, 0.24 + 0.1 * fn, shore)) * smoothstep(0.4, 0.72, fn + 0.12) * 0.5;
-          // white water where a fall comes down
-          float churn = vnoise(g * 3.2 + vec2(0.0, t * 1.4)) * 0.6 + vnoise(g * 7.0 - vec2(t * 0.9, 0.0)) * 0.4;
-          foam += (1.0 - smoothstep(0.0, 0.95, fall)) * (0.3 + 0.7 * smoothstep(0.3, 0.62, churn));
-          // glints of light, and pale ripples drifting where it flows
-          // (small and sparse, and gone where a pixel covers more than a few of them)
-          float fine = 1.0 - smoothstep(0.03, 0.09, fwidth(g.x));
-          glints = fine * smoothstep(0.8, 0.9, vnoise(g * 17.0 + vec2(t * 0.6, -t * 0.4)) * vnoise(g * 13.0 - vec2(t * 0.3, t * 0.7)) * 1.45);
-          pale = smoothstep(0.6, 0.82, vnoise(vec2(g.x * 0.9 + g.y * 0.3, (g.y - g.x * 0.2) * 5.0) + vec2(t * 0.15, t * 0.5)));
-          // the slow glowing veins of badwater
-          float vn = vnoise(g * 1.6 + vec2(t * 0.05, -t * 0.03));
-          vein = smoothstep(0.84, 0.97, 1.0 - abs(vn * 2.0 - 1.0));
+          #if LITE
+            foam += (1.0 - smoothstep(0.0, 0.95, fall)) * 0.6;
+          #else
+            float fn = vnoise(g * 4.0 + vec2(t * 0.3, -t * 0.2));
+            foam += (1.0 - smoothstep(0.06, 0.24 + 0.1 * fn, shore)) * smoothstep(0.4, 0.72, fn + 0.12) * 0.5;
+            // white water where a fall comes down
+            float churn = vnoise(g * 3.2 + vec2(0.0, t * 1.4)) * 0.6 + vnoise(g * 7.0 - vec2(t * 0.9, 0.0)) * 0.4;
+            foam += (1.0 - smoothstep(0.0, 0.95, fall)) * (0.3 + 0.7 * smoothstep(0.3, 0.62, churn));
+            // glints of light, and pale ripples drifting where it flows
+            // (small and sparse, and gone where a pixel covers more than a few of them)
+            float fine = 1.0 - smoothstep(0.03, 0.09, fwidth(g.x));
+            glints = fine * smoothstep(0.8, 0.9, vnoise(g * 17.0 + vec2(t * 0.6, -t * 0.4)) * vnoise(g * 13.0 - vec2(t * 0.3, t * 0.7)) * 1.45);
+            pale = smoothstep(0.6, 0.82, vnoise(vec2(g.x * 0.9 + g.y * 0.3, (g.y - g.x * 0.2) * 5.0) + vec2(t * 0.15, t * 0.5)));
+            // the slow glowing veins of badwater
+            float vn = vnoise(g * 1.6 + vec2(t * 0.05, -t * 0.03));
+            vein = smoothstep(0.84, 0.97, 1.0 - abs(vn * 2.0 - 1.0));
+          #endif
         } else {
           // a fall: white water streaming down, more the taller it is (none at the map's edge)
           float along = abs(n.x) > 0.5 ? g.y : g.x;
-          float s = vnoise(vec2(along * 6.0, vWorld.y * 1.3 + t * 2.4)) * 0.6 + vnoise(vec2(along * 13.0, vWorld.y * 2.7 + t * 3.3)) * 0.4;
+          #if LITE
+            float s = 0.6;
+          #else
+            float s = vnoise(vec2(along * 6.0, vWorld.y * 1.3 + t * 2.4)) * 0.6 + vnoise(vec2(along * 13.0, vWorld.y * 2.7 + t * 3.3)) * 0.4;
+          #endif
           bool edge = vFlags > 254.5;
           float drop = edge ? 0.0 : vFlags / 30.0;
           foam = (0.45 + 0.55 * smoothstep(0.25, 0.6, s)) * smoothstep(0.12, 0.5, drop);

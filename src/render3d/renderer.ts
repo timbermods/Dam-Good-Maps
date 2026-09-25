@@ -8,7 +8,8 @@
 // baked when the mesh is built (light.ts: sky visibility, soft sun shadows) into two textures the
 // shaders read with the per-tile overlay; the default camera looks as the game's does, 30° east of
 // north and 70° down. The water's surface moves (at 30 frames a second at most) unless the viewer
-// prefers reduced motion, the browser renders in software, or the view is hidden.
+// prefers reduced motion, the browser renders in software, or the view is hidden. A browser that
+// renders in software gets a lighter look: no multisampling, no patterns, soil without blending.
 //
 // Controls: left drag orbits (pans in the top-down view), right drag pans, the wheel zooms. On the
 // focused canvas: W A S D or the arrows pan, Q and E turn, R and F (or + and −) zoom.
@@ -114,6 +115,22 @@ export const DEFAULT_PITCH = (70 * Math.PI) / 180;
 /** Frames a second of the water's movement when nothing else asks for a frame. */
 const WATER_FPS = 30;
 
+/** Whether the browser draws WebGL in software (no GPU, or one it won't use): asked of a throwaway
+ *  context before the view's own is made, so the view can be made lighter for it. */
+export function softwareRendering(): boolean {
+  try {
+    const c = document.createElement("canvas");
+    const g = (c.getContext("webgl2") ?? c.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!g) return false;
+    const e = g.getExtension("WEBGL_debug_renderer_info");
+    const name = String(e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER));
+    g.getExtension("WEBGL_lose_context")?.loseContext();
+    return /SwiftShader|llvmpipe|Software|Basic Render/i.test(name);
+  } catch {
+    return false;
+  }
+}
+
 export class MapRenderer {
   readonly canvas: HTMLCanvasElement;
   private gl: WebGLRenderer;
@@ -161,7 +178,9 @@ export class MapRenderer {
 
   constructor(canvas: HTMLCanvasElement, background = 0xe9dfc8) {
     this.canvas = canvas;
-    this.gl = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    // a browser that draws in software gets the light look, without multisampling (D110)
+    this.software = softwareRendering();
+    this.gl = new WebGLRenderer({ canvas, antialias: !this.software, powerPreference: "high-performance" });
     this.gl.outputColorSpace = LinearSRGBColorSpace;
     this.gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     this.gl.setClearColor(new Color(background));
@@ -171,10 +190,9 @@ export class MapRenderer {
     this.uniforms = sceneUniforms(1, 1, one(), lightTexture(1, 1, new Uint8Array(16)), one());
     this.patterns = drawPatterns(this.gl);
     this.uniforms.patternTex.value = this.patterns.texture;
-    this.terrainMat = terrainMaterial(this.uniforms, 0, 1);
-    this.waterMat = waterMaterial(this.uniforms);
+    this.terrainMat = terrainMaterial(this.uniforms, 0, 1, this.software);
+    this.waterMat = waterMaterial(this.uniforms, this.software);
     this.objectMat = objectMaterial(this.uniforms);
-    this.software = /SwiftShader|llvmpipe|Software|Basic Render/i.test(this.gpu().renderer);
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     this.reducedMotion = !!motion?.matches;
     motion?.addEventListener?.("change", () => {
