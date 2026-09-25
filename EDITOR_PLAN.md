@@ -60,10 +60,10 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
 - Non-destructive editing with undo and redo, saved as a project file.
 
 **Non-goals for this plan**
-- Voxel-level cave and overhang editing.
-  - Imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
-  - The tools edit surface height only.
-  - Design the data model so voxel editing can be added later.
+- Voxel-level cave and overhang editing, until the 3D stages (`ROADMAP.md`, 3D-a–3D-c; `PLAN.md` §20, D118, D125 lift this non-goal in 3D-c).
+  - Until then, imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
+  - Until then, the tools edit surface height only.
+  - The data model stores terrain as runs per tile from project format 3 (D119), so voxel editing needs no format change.
 - Terrain above 16. It is the in-game editor's limit, and every tool keeps to it. Imported maps with terrain up to 22 are preserved.
 - Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
@@ -478,7 +478,9 @@ Operation schema, map summary builder, the tools, the propose, validate, revise 
 Run the usability tasks from section 9 and fix what slows people down; onboarding hints; shortcuts reference; help page; accessibility pass; final performance pass.
 *Accept:* every usability task is completed in under 2 minutes by a first-time user.
 
-**Later:** voxel-level cave and overhang tools with stacked-column water, a shared online stamp gallery, tablet and touch support, "make editable" detection for imported maps, share links that carry small edit lists, terrain 17–22 if `PLAN.md` §18 E1 allows it.
+**3D stages** (`ROADMAP.md` 3D-a–3D-c, `PLAN.md` §20 D118–D127): stacked-column water, the support rule and the floor graph (3D-a); 3D forms from the generator's processes (3D-b); Carve, Fill, Tunnel, Arch, Cave, Ledge path and Overhang tools, 3D picking, 3D locks and a level-slice cutaway (3D-c). M10's and M11's tools are built on runs after them.
+
+**Later:** a shared online stamp gallery, tablet and touch support, "make editable" detection for imported maps, share links that carry small edit lists.
 
 ## 11. Contract with the generator
 

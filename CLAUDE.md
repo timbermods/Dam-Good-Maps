@@ -45,11 +45,12 @@ text.
   `main`, confirm the old site is back, and report.
 - The site stays noindex and unannounced until launch. Launch needs versioned deploys (M13) and Kyler's go-ahead;
   then set the repository variable `DGM_PUBLIC` to `true`.
-- Three steps outside the milestones are released the same way:
+- Steps outside the milestones are released the same way:
   - the design pass (after M11 and the refinement phase, before M12) is tagged `design-done` once Kyler has
     approved and merged it on `dev`;
   - Map look (after M8, before M9) is tagged `map-look-done`, or ships inside the M9 release;
-  - the Frame pass (after the M9 build, before M10) is tagged `frame-pass-done`.
+  - the Frame pass (after the M9 build, before the 3D stages) is tagged `frame-pass-done`;
+  - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
 - Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
 - Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.
