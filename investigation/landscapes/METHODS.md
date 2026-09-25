@@ -26,12 +26,12 @@ Raw PNGs and floating-point crops remain in `.cache/`, which Git ignores. The co
 
 Let `u = (height - minimum) / (maximum - minimum)` within the central crop.
 
-| Mapping | Unrounded game height |
-|---|---|
-| Linear | `(height - minimum) / 30`, clipped to 16 |
-| Compressed | `16 * log(1 + 4u) / log(5)` |
-| Relief-normalised | `16u` |
-| Height comparison | `22u` |
+| Mapping           | Unrounded game height                    |
+| ----------------- | ---------------------------------------- |
+| Linear            | `(height - minimum) / 30`, clipped to 16 |
+| Compressed        | `16 * log(1 + 4u) / log(5)`              |
+| Relief-normalised | `16u`                                    |
+| Height comparison | `22u`                                    |
 
 All mappings round to whole levels. Constant crops become zero. Every crop gets all four conversions: 16,200 attempts. The 22-level case remains a design-limit failure where it exceeds 16.
 
@@ -82,3 +82,9 @@ The bench reports distance to those bands, per measurement and group. It reports
 Variety uses the repository's layout and feature formulas and its published `investigation/workshop/variety-scale.json` calibration. The real set has one anchor per named region at 128², 60 m per tile and 16 normalised levels. Results retain the full set and the settled subset separately. Features include placed resources and simulated water, so this is variety of the conversions, not untouched geography. Fitting a new calibration to nearly constant planted-resource totals would inflate distances; the published calibration avoids that problem. No workshop heightmap is used.
 
 No terrain was checked in Timberborn. Family labels, DEM uncertainty, source inference, edge treatment, start search and resource placement all limit the results.
+
+## Library selection
+
+The library uses family-balanced rounds, with one patch per region. Eligible patches pass the 16-level checks, meet the readability screen and have at least 5 m of source relief. Selection prefers normalised mapping, fewer advisories and a mix of map sizes.
+
+Selection was frozen once all 20 named families had eligible patches, while the rest of the conversion matrix continued. `data/library-selection.json` records that checkpoint and the chosen IDs. This allowed fresh TypeScript and Python checks to overlap the remaining survey. The library is a curated example set, not a random sample or a ranking of every final conversion. Targets and pass rates use the complete matrix.

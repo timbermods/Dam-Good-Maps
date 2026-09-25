@@ -115,6 +115,8 @@ D8 routing cannot recover distributaries. Water-grid split shares and enclosed i
 
 The library contains ${library.count} passing patches from distinct regions, spanning ${namedLibraryFamilies} named families plus ${library.items.filter((r: any) => r.family === "random").length} random controls. All library files total ${(verifies.bytes / 1e6).toFixed(2)} MB, including previews and metadata. Open [the gallery](library/gallery.html).
 
+The saved selection was frozen once every named family had eligible patches. This let library checks run alongside the remaining survey. It is a curated example set. Targets and pass rates use all completed conversions.
+
 Fresh TypeScript settles passed for ${verifies.typescriptFreshSettlePasses} fixtures. Python verification: ${verifies.python}. Timberborn was never launched.
 
 The sample is exploratory. Named regions were chosen for interest; nearby centres and scales overlap. Labels describe regions, not verified features in every window. Las Medulas is a mining landscape, so its records remain visible but its region is excluded from natural targets and the library. Random controls exclude latitudes beyond 80 degrees.

@@ -31,8 +31,8 @@ const eligible = rows.filter(
     existsSync(`.work/candidates/${r.id}.json.gz`),
 );
 const families = [...new Set(eligible.map((r) => r.family))].sort();
-const chosen: any[] = [],
-  regions = new Set<string>();
+let chosen: any[] = [];
+const regions = new Set<string>();
 const score = (r: any) =>
   r.mapping.shapeCorrelation * 100 +
   (r.mode === "normalised" ? 20 : 0) -
@@ -59,6 +59,33 @@ for (let round = 0; round < 5; round++)
   }
 if (!process.argv.includes("--partial") && chosen.length < 60)
   throw Error(`Only ${chosen.length} eligible independent regions`);
+const selectionPath = "data/library-selection.json";
+if (existsSync(selectionPath) && !process.argv.includes("--reselect")) {
+  const selection = JSON.parse(readFileSync(selectionPath, "utf8"));
+  const byId = new Map(eligible.map((r) => [r.id, r]));
+  chosen = selection.ids.map((id: string) => {
+    const row = byId.get(id);
+    if (!row)
+      throw Error(`Frozen library selection is no longer eligible: ${id}`);
+    return row;
+  });
+} else if (!process.argv.includes("--partial")) {
+  chosen = chosen.slice(0, 90);
+  writeFileSync(
+    selectionPath,
+    JSON.stringify(
+      {
+        schema: 1,
+        convertedRecordsAtSelection: rows.length,
+        selection:
+          "Family-balanced rounds; distinct regions; readable passing 16-level conversions with at least 5 m relief. Prefer normalised mapping and varied sizes. Selection is frozen so validation can run alongside the remaining survey and reproduction uses the same fixtures.",
+        ids: chosen.map((r) => r.id),
+      },
+      null,
+      2,
+    ),
+  );
+}
 const index: any[] = [];
 for (const r of chosen.slice(0, 90)) {
   const path = `library/${r.id}.json.gz`;

@@ -20,7 +20,7 @@ Input is JSON or gzip JSON:
   "W": 96,
   "H": 96,
   "heights": [0],
-  "waterSources": [{"x": 4, "y": 70, "strength": 0.5}]
+  "waterSources": [{ "x": 4, "y": 70, "strength": 0.5 }]
 }
 ```
 
@@ -37,9 +37,12 @@ Read the measurements as separate comparisons. A smaller distance does not prove
 Programmatic use:
 
 ```ts
-import { measureInput, compare } from './bench/measure.ts';
+import { measureInput, compare } from "./bench/measure.ts";
 const { row, v } = measureInput(input);
-const comparison = compare(row, targets.strata['named/128/60/normalised/16/all']);
+const comparison = compare(
+  row,
+  targets.strata["named/128/60/normalised/16/all"],
+);
 ```
 
 The bench reads core code. It neither designs nor changes generator processes.

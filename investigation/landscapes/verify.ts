@@ -82,6 +82,19 @@ const bytes = sum("library");
 if (bytes >= 10_000_000) throw Error(`Library exceeds 10 MB: ${bytes}`);
 if (index.count < 60 || index.count > 120 || index.items.length !== index.count)
   throw Error("Library must contain 60–120 fixtures");
+if (
+  new Set(index.items.map((r: any) => r.id)).size !== index.count ||
+  new Set(index.items.map((r: any) => r.region)).size !== index.count
+)
+  throw Error("Library must use distinct fixtures and regions");
+const selection = JSON.parse(
+  readFileSync("data/library-selection.json", "utf8"),
+);
+if (
+  JSON.stringify(selection.ids) !==
+  JSON.stringify(index.items.map((r: any) => r.id))
+)
+  throw Error("Library differs from its frozen selection");
 const problems: any[] = [];
 for (const item of index.items) {
   const data = readFileSync("library/" + item.fixture);

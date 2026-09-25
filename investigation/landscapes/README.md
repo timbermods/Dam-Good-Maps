@@ -26,6 +26,8 @@ node --import ./register.mjs curate.ts
 
 The full matrix runs thousands of canonical water simulations. Allow several hours on a desktop, especially for broad shallow water at 256². `--workers` controls CPU use. Both acquisition and conversion resume from their caches. `--priority` converts the anchor centres at 128² and 60 m per tile first; it changes scheduling, not the final dataset. Do not run a changed conversion or core against old cached rows. The provenance check rejects that combination.
 
+Curation reuses the IDs in `data/library-selection.json`. This preserves the published selection. Use `curate.ts --reselect` only when deliberately choosing a replacement library; rerun both validators afterward.
+
 The acquisition command needs internet access. The remaining steps use local data. Do not commit `.cache/`, `.work/`, `node_modules/` or `npm-cache/`.
 
 For the Python cross-check, use Python with NumPy and the unchanged repository prototype:
