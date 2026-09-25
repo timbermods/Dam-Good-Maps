@@ -14,7 +14,19 @@ differently, this file wins.
 - **Editor-ready from the first milestone.** M1 already generates maps *from* parametric features
   and offers them as a project file, so the editor, when it arrives, opens maps whose rivers,
   plateaus and ruin fields are grabbable. No generator code is retrofitted later.
-- **Every milestone ends with its acceptance criteria met and its tests green.**
+- **Every milestone ends with its blocking criteria met and its tests green.**
+- **Kyler's one rule** (Kyler, 2026-09-25; PLAN §20 D115). Acceptance covers only what a player
+  would notice or what would break. Only three kinds of thing block: **breakage** (maps failing
+  in the game, files or share links changing, lost edits, crashes); **principles Kyler has
+  already decided** (no built dam walls, D111; from the 3D stages, the support rule's 0 dropped
+  voxels and nothing stamped); and **what a player feels** (the page never freezes, and a first
+  result appears quickly while the rest streams in). Measures and numeric budgets are
+  information; the 3D speed benchmark on the integrated GPU with a slowed CPU runs only when
+  something 3D-heavy changes. No blind review rounds: for anything visual, Kyler is shown
+  captures and decides. Stop and ask Kyler only for real decisions or real breakage; otherwise
+  keep building, log the rest in [docs/STATUS.md](docs/STATUS.md), and show the result rather
+  than measure it. Each step from Map look on lists its acceptance as **Blocking** and
+  **Information**; M1–M8 keep their record as written.
 - **In-game checks are deferred** (PLAN §20, D11). Kyler is skipping them for now. A milestone
   marked **in-game check** does not stop or wait: it lists the checks it would have needed in
   [docs/ingame-log.md](docs/ingame-log.md) as *pending*, with the files to play, and relies on the
@@ -766,7 +778,8 @@ a little noise, and two maps must play differently, not only look different.
      playability; Variety may go beyond them where the checks pass.
    - Keep M9's good parts: 8 flow directions, the Variety setting and Surprise me, no clones, the
      score and names. Keep every guard: batches ≥ 98% per theme and size, determinism (exact
-     arithmetic, D15), both validators, the budgets, share links that reproduce.
+     arithmetic, D15), both validators, share links that reproduce; the budgets are information
+     (D115).
    - Say what it costs: which planners stay, the generator version, and the risks.
 2. **Measures against archetypes**, on 200 seeds per theme at 128²:
    - no clones: every map's nearest other seed ≥ 0.25 away, median ≥ 0.40 (variety scale);
@@ -782,10 +795,12 @@ a little noise, and two maps must play differently, not only look different.
 3. **A prototype** under `investigation/generative/`, with no `src/` changes: at least 3 themes,
    30+ seeds each at 128². Report renders, the measures above, the score and batch pass rates,
    compared with the current M9 plan.
-4. **The gate** (Kyler, 2026-09-25; it replaces the rating gate). The design is approved when:
-   a. the objective measures pass: no built dam walls, no clones, no archetypes, play variety
-      within its targets, natural dam sites near the start at a rate comparable to the official
-      maps, and the batch pass rates;
+4. **The gate** (Kyler, 2026-09-25, D112; under Kyler's one rule, D115). Kyler approves version 2
+   by judgement, from:
+   a. the objective measures, as information for that decision: no clones, no archetypes, play
+      variety within its targets, natural dam sites near the start at a rate comparable to the
+      official maps, no approximation (D128), and the batch pass rates. **The no-dam-wall check
+      blocks:** zero built dam walls;
    b. simulated play shows that prototypes play differently: each prototype's weather-cycle
       behaviour (`investigation/cycles`) and its position on the strategy axes
       (`investigation/mechanics`), once those investigations are ready;
@@ -878,12 +893,18 @@ the stages replace its order, and its premises become recipes inside the system 
     must be quick: 30 seeds × 6 themes at 128² in a couple of minutes on Kyler's machine, one process
     at a time. No checks and no reports; its only acceptance is that it runs and is as quick as
     stated.
-  - Acceptance: **zero built dam walls on every theme, size, difficulty and setting** (the dam-wall
-    check on every batch map, and a contract test that no planned feature list holds a dam-site
-    ridge); batches ≥ 98% final per theme at 96², 128², 192² and 256², first attempt ≥ 60%; the
-    same bytes for the same seed in Node and Chrome; 0 disagreements with the Python oracle; the
-    budgets (128² under 3 s, 256² within its budget); every editor test still passes, generated
-    fields added to the incremental-rebuild property test.
+  - Acceptance (Kyler's one rule, D115):
+    - Blocking: **zero built dam walls on every theme, size, difficulty and setting** (the
+      dam-wall check on every batch map, and a contract test that no planned feature list holds a
+      dam-site ridge), and nothing stamped; batches ≥ 98% final per theme at 96², 128², 192² and
+      256² (a seed that makes no map is breakage); the same bytes for the same seed in Node and
+      Chrome, and share links that reproduce; 0 disagreements with the Python oracle, A1's file
+      included, and A2's timestamp writing the same bytes in every time zone; every speedup
+      proved bit for bit; every editor test still passes, generated fields added to the
+      incremental-rebuild property test; generating shows its progress and never feels stalled;
+      the probe batch (Release, below).
+    - Information: first attempts (60% as a target); generation times (128² under 3 s, 256² within
+      its budget), covered by "show progress, never feel stalled"; the Verticality measures.
   - Release: **M9a's in-game gate is a DGM Probe batch** (Kyler, 2026-09-25; PLAN §20 D116,
     amending D112's play test). The batch runs M9a's maps unattended in the real game and must
     pass: the maps load, their pre-filled water holds, their objects load, and droughts and
@@ -904,7 +925,8 @@ the stages replace its order, and its premises become recipes inside the system 
     Verticality now and then; most maps never do (D132).
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
     direction as tool entries; suite requests for them; every reference solution re-run.
-  - Acceptance: the design's measures M1–M6 on 200 seeds per theme at 128² meet their targets.
+  - Acceptance (D115): blocking: M6, the dam-wall check, finds no built wall; information: the
+    design's measures M1–M5 on 200 seeds per theme at 128², against their targets.
 - **M9c: score, names and candidates** (tag `m9c-done`).
   - Delivers: the 12-component score with its default weights, only a mild tiebreaker among a
     seed's candidates and for ordering a contact sheet, never a gate on quality (D137; how
@@ -977,8 +999,9 @@ From the workshop study (D87), M9 grows from "the score" to "maps that diverge":
   to 100; the share link carries the resolved spec, so the map reproduces.
 - **No clones.** The K candidates (PLAN §7.9) are ranked by score, and among those within 5
   points of the best, the one farthest (variety score, `variety-scale.json`) from the theme's
-  reference maps wins (D137 makes the score a mild tiebreaker; decisions-pending #53). The reference maps are seeds 1–30 of the theme at default settings, stored
-  as 16×16 signatures and feature vectors (about 4 KB per theme).
+  reference maps wins (D137 makes the score a mild tiebreaker; decisions-pending #53). The
+  reference maps are seeds 1–30 of the theme at default settings, stored as 16×16 signatures and
+  feature vectors (about 4 KB per theme).
 - **The score** (`score/score.ts`), ported from `investigation/workshop/lib/score.ts`: 12
   components (engineering, height variety, landmarks, river character, resource pacing, regions,
   trade-off, frontier, surprise, verticality, naturalness, water), each 0–1 (decisions-pending
@@ -1008,28 +1031,36 @@ recipes lift V3 from 0.20 to 0.53. Maps diverge when the premise changes the ske
 flow axis, where the valley runs, the relief, the water budget). Risk: variety bought with broken
 maps; the per-premise batch gate is the guard.
 
-**Acceptance**
+**Acceptance** (Kyler's one rule, D115; each stage above takes its part)
+
+Blocking:
 - **Zero built dam walls on every theme, size, difficulty and setting** (Kyler's no-dam-ridge
   decision, 2026-09-25): the dam-wall check (design §10) finds none on any batch map, and no planned
-  feature list holds a dam-site ridge.
-- **Permanent checks**, run on every milestone after M9 so no later milestone brings archetypes
-  back (design §10, §16): no built dam walls; no clones (every seed's nearest other seed of its
-  theme ≥ 0.25 on the variety scale, median ≥ 0.40); no archetypes (no cluster of whole maps, river
-  networks, relief or openings over 15% of a theme); play variety within its targets (openings);
-  no approximation of workshop maps (at most 10% of a theme's maps closer to their nearest workshop
-  map than the workshop's p10 nearest-peer distance, D128; run locally in each milestone's full
-  check, since workshop maps never reach CI).
+  feature list holds a dam-site ridge. It runs on every milestone after M9 and blocks there too.
 - Names and premises match the features on 30 hand-checked maps, 10 of them at Variety 100.
-- 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
 - The place resolver is tested on rivers flowing in every direction (the four edge directions
   and the diagonal flow axes), a curved river, a drawn river and a tributary, so "upstream" is
   never read as "west".
-- Every judgement word moves its measured targets by its size on three maps (two River Valley
-  sizes and a Canyon), keeps every guard, and says so when its settings are already at their
-  limits or its theme is marked weak.
+- Every judgement word moves its measured targets in its direction on three maps (two River
+  Valley sizes and a Canyon), keeps every guard, and says so when its settings are already at
+  their limits or its theme is marked weak.
+- Each premise passes a batch of 100 seeds at 96², 128², 192² and 256² at ≥ 98% final, in the
+  `generate` profile.
+- The first candidate shows at once, with progressive preview, and generating never feels
+  stalled.
+
+Information:
+- **Permanent measures**, reported on every milestone after M9 so no later milestone brings
+  archetypes back unseen (design §10, §16; D112 (4)): no clones (every seed's nearest other seed
+  of its theme ≥ 0.25 on the variety scale, median ≥ 0.40); no archetypes (no cluster of whole
+  maps, river networks, relief or openings over 15% of a theme); play variety within its targets
+  (openings); no approximation of workshop maps (at most 10% of a theme's maps closer to their
+  nearest workshop map than the workshop's p10 nearest-peer distance, D128; run locally in each
+  milestone's full check, since workshop maps never reach CI).
+- 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
+- Each judgement word's move against its size.
 - From the workshop study:
-  - each premise passes a batch of 100 seeds at 96², 128², 192² and 256² at ≥ 98% final (first
-    attempt ≥ 60%), in the `generate` profile, and every built theme has at least 3 premises;
+  - first attempts ≥ 60% per premise, and at least 3 premises in every built theme;
   - in 100 seeds of each valley theme, all 8 flow directions appear and none exceeds 25%;
   - variety (`lib/variety.ts`, scale in `variety-scale.json`), seeds 1–30 at 128², default
     settings, as shares of the workshop's: the shape and numbers alone (V2) each theme ≥ 0.45
@@ -1044,7 +1075,7 @@ maps; the per-premise batch gate is the guard.
     (`investigation/workshop/obviousness.ts`) matches each level on ≥ 98% of maps, and Normal with
     Reservoir help None passes its batches at ≥ 98%.
 
-**In-game check:** no.
+**In-game check:** a DGM Probe batch for M9a (D116), asked under the probe rule (D117).
 
 **Effort:** xhigh (was high: the premises and the 8-direction layout frame set architecture).
 
@@ -1081,12 +1112,13 @@ testers, without redesigning an interface that M10 and M11 are still adding to.
 **Rules:** every hard limit in impeccable-app-flow holds. No map changes, `shade.ts` untouched,
 contracts byte for byte, no state shown by colour alone, the test hooks kept.
 
-**Acceptance**
-- The guard tests pass unchanged.
-- Lighthouse on desktop scores 90 or more with the live hero.
-- The flow's finish review passes.
-- Before and after captures of every frame surface, in light and dark, desktop and phone.
-- The 3D budgets hold.
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - the guard tests pass unchanged;
+  - Kyler approves the frame from before and after captures of every frame surface, in light and
+    dark, desktop and phone.
+- Information: Lighthouse on desktop (90 or more as the target) with the live hero; the flow's
+  finish review, for Kyler; the 3D budgets.
 
 **Release:** tag `frame-pass-done` and release it like a milestone.
 
@@ -1317,16 +1349,20 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
   symmetric" as bounded operations with their limits and refusal reasons; suite requests; every
   reference solution re-run.
 
-**Acceptance**
-- The performance budgets of EDITOR §9 are met.
-- The brushes, naturalize and symmetry work on runs (D118): caves, overhangs and arches survive
-  edits elsewhere, are mirrored exactly by symmetry, and the build's rule pass drops 0 voxels
-  after any brush.
-- Symmetric edits stay exactly symmetric, entities included.
-- From the workshop study (D87): the naturalize brush, on a generated map's terrain, brings the
-  steps in straight runs of 8+ at or below the official median (0.066) and ridge crest variation
-  to 0.25 or more (the naturalness metric M9 ports), without breaking `slopes.connect` or a set
-  piece's protected tiles.
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - the brushes, naturalize and symmetry work on runs (D118): caves, overhangs and arches survive
+    edits elsewhere, are mirrored exactly by symmetry, and the build's rule pass drops 0 voxels
+    after any brush;
+  - symmetric edits stay exactly symmetric, entities included;
+  - the naturalize brush never breaks `slopes.connect` or a set piece's protected tiles;
+  - the editor stays responsive while brushing: feedback within a frame, slower work in the
+    background.
+- Information:
+  - the performance budgets of EDITOR §9;
+  - from the workshop study (D87): the naturalize brush, on a generated map's terrain, against
+    the official median of steps in straight runs of 8+ (0.066) and a ridge crest variation of
+    0.25 or more (the naturalness metric M9 ports).
 
 **In-game check:** no.
 
@@ -1357,14 +1393,16 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
   mountain here" (a stamp) as bounded operations with their limits and refusal reasons; suite
   requests; every reference solution re-run.
 
-**Acceptance**
-- Hand edits survive regeneration per the conflict rules.
-- Stamps round-trip through export and import.
-- A rotated or mirrored stamp passes the load checks.
-- From the workshop study: each built-in stamp, placed rotated and mirrored at 20 random free
-  spots on 96², 128² and 256² maps of every theme, passes the load checks every time and leaves
-  the map passing the `generate` profile at ≥ 90%; each new builder meets its acceptance (PLAN
-  §9.11).
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - hand edits survive regeneration per the conflict rules;
+  - stamps round-trip through export and import;
+  - a rotated or mirrored stamp passes the load checks;
+  - from the workshop study: each built-in stamp, placed rotated and mirrored at 20 random free
+    spots on 96², 128² and 256² maps of every theme, passes the load checks every time; each new
+    builder's output passes the load checks.
+- Information: how often a stamped map still passes the `generate` profile (90% as the target);
+  each new builder's numbers (PLAN §9.11).
 
 **In-game check:** no.
 
@@ -1439,7 +1477,7 @@ both ends. Change only the shapes.
    re-run.
 
 **Rules**
-- Every check keeps passing, including the reservoir rules and Hard's 3-deep rule.
+- Every check keeps passing (`water.storage_possible` included, D111).
 - Batches stay at 98% or better.
 - The Python oracle changes with the TypeScript, with 0 disagreements.
 - This changes every map, so bump the generator version and note that old share links change
@@ -1480,15 +1518,18 @@ thickness (CV 0.37), but each crown is flat, so the crest heights within 12 tile
 today (std 0.45 against 1.56). Stepped crowns fix that: each spur falls 1–3 levels from root to
 tip, in gentle or terraced steps, and the two spurs differ.
 
-**Acceptance**
-- The naturalness metric is reported for the 19 official maps and for the generated maps of every
-  theme, and the targets set from the official maps are recorded in PLAN §20.
-- The generated dam sites, badwater basins, Lake Basin terraces and outlet, Canyon narrows and the
-  editor's drawn-river banks meet those targets.
-- Every check passes on every batch map, the reservoir rules and Hard's 3-deep rule included;
-  batches per theme ≥ 98% final; the oracle shows 0 disagreements.
-- The spurs mode: River Valley, Canyon and Highlands batches ≥ 98% with it; shoulder height std
-  ≥ 0.25 and crest height std within 12 tiles ≥ 1 (official medians 0.47 and 1.75).
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - every check passes on every batch map; batches per theme ≥ 98% final; the oracle shows 0
+    disagreements; no built dam walls, nothing stamped;
+  - Kyler approves the new shapes from captures.
+- Information:
+  - the naturalness metric for the 19 official maps and for the generated maps of every theme,
+    with the targets set from the official maps recorded in PLAN §20;
+  - the badwater basins, Lake Basin terraces and outlet, Canyon narrows, the editor's drawn-river
+    banks and any dam-site tool against those targets;
+  - the spurs mode, if the Dam site tool keeps it: shoulder height std ≥ 0.25 and crest height
+    std within 12 tiles ≥ 1 as targets (official medians 0.47 and 1.75).
 
 **In-game check:** short, logged as pending (D11): build a dam at a new narrows and check that
 the basin fills without leaking round the spurs.
@@ -1638,23 +1679,25 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
   `tools/claude-suite.ts --scripted` replays the reference solutions through the same loop and
   grader, so CI covers the harness without a key.
 
-**Acceptance**
-- Malformed or out-of-bounds proposals are rejected cleanly, with the reason.
-- An accepted proposal undoes as one edit, like a normal edit.
-- Every reference solution passes on its map (96², 128², 256², and 48² for the reductions),
-  including the 20-block waterfall with the reported reduction on 48².
-- With a key, the request suite passes at least 90% overall and in every kind, with the artifact
-  limits on; every compound request's report names every trade-off and every goal not met.
-- The compound, impossible and conflicting requests of the suite (EDITOR_PLAN §9) pass.
-- No request's input passes 64 KiB with the artifact limits on.
-- Results stay editable by hand, and follow-ups modify the right feature.
-- The artifact edition passes a manual smoke test on the same requests.
-- Each of the workshop study's requests passes the suite on 96², 128² and 256² maps; the intent
-  checks measure the landmark (its extent, its levels, the slopes joining a spiral's steps, the
-  fork's two wet arms).
-- "Describe the map you want": the first good candidate appears quickly, and more stream in
-  behind it while the player looks; waiting never feels like a stall; progress is shown and the
-  player can act on the first result (D139).
+**Acceptance** (Kyler's one rule, D115)
+- Blocking:
+  - malformed or out-of-bounds proposals are rejected cleanly, with the reason;
+  - an accepted proposal undoes as one edit, like a normal edit;
+  - every reference solution passes on its map (96², 128², 256², and 48² for the reductions),
+    including the 20-block waterfall with the reported reduction on 48², the compound,
+    impossible and conflicting requests (EDITOR_PLAN §9), and the workshop study's requests on
+    96², 128² and 256² maps (the intent checks measure the landmark: its extent, its levels, the
+    slopes joining a spiral's steps, the fork's two wet arms);
+  - every report says honestly what was built and what didn't emerge: every compound request's
+    report names every trade-off and every goal not met;
+  - no request's input passes 64 KiB with the artifact limits on;
+  - results stay editable by hand, and follow-ups modify the right feature;
+  - the artifact edition passes a manual smoke test on the same requests;
+  - "describe the map you want": the first good candidate appears quickly, and more stream in
+    behind it while the player looks; waiting never feels like a stall; progress is shown and
+    the player can act on the first result (D139).
+- Information: with a key, the suite's pass rate with the artifact limits on (90% overall and in
+  every kind as the target).
 
 **In-game check:** play the map produced by "add a giant waterfall in the north part of the map
 that is roughly 20 blocks wide", and the one produced by the compound request ("Make this valley
@@ -1679,12 +1722,11 @@ dangerous badwater route on the opposite side.").
   does: fun (1–5) and unique (1–5), with an optional note (PLAN §2.3). They are feedback only: no
   rating refits the score (Kyler, 2026-09-25; D137).
 
-**Acceptance**
-- Every usability task is done in under 2 minutes by a first-time user, and the full journey in
-  under 10.
-- Lighthouse performance is ≥ 90 on desktop.
-- A rating issue is created from the page with every field filled.
-- An old-version link reproduces its file.
+**Acceptance** (Kyler's one rule, D115)
+- Blocking: an old-version link reproduces its file; a rating issue is created from the page with
+  every field filled.
+- Information: the usability tasks' times (under 2 minutes each for a first-time user, and the
+  full journey under 10, as targets); Lighthouse performance on desktop (≥ 90 as the target).
 
 **In-game check:** yes, the full journey of EDITOR §9 task 7: generate, refine, ask Claude,
 export, load in Timberborn.

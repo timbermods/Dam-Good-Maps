@@ -6,11 +6,11 @@ checks they would have needed, marked *pending*, with the files to play. Nothing
 the automated validation and tests (PLAN §15) carry each milestone's gate until the checks are
 played.
 
-**DGM Probe batches** (PLAN §20, D116, D117) are the exception: the probe plays maps in the real game
-unattended. Claude launches a batch only after asking Kyler in chat and getting Kyler's yes, every
-time (CLAUDE.md, Standing rules). A batch's results go into the tables below as **pass (probe)** or
-**fail (probe)**, with the date and the run. The batches planned so far are listed under "DGM Probe
-batches" at the end.
+**DGM Probe batches** (PLAN §20, D116, D117) are the exception: the probe plays maps in the real
+game unattended. Claude launches a batch only after asking Kyler in chat and getting Kyler's yes,
+every time (CLAUDE.md, Standing rules). A batch's results go into the tables below as **pass
+(probe)** or **fail (probe)**, with the date and the run. The batches planned so far are listed
+under "DGM Probe batches" at the end.
 
 When you play one, change its status to **pass** or **fail**, and add the date and what you saw.
 A failure becomes an issue and, if it changes a rule, a PLAN §20 decision.

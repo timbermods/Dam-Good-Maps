@@ -407,7 +407,7 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - the two 0.6 heightmap maps import through the `Heights` conversion;
   - the 90-layer workshop map keeps layers 0–21 with a warning, as the game does, and exports with the standard 23 layers;
   - a pre-1.0 map without `WaterSimulationMigrator` has its strengths halved at import.
-- **Performance budgets on 256×256** (revised by the audit; adjust in "Editor decisions" if measurements differ, with reasons):
+- **Performance budgets on 256×256** (revised by the audit; adjust in "Editor decisions" if measurements differ, with reasons). Under Kyler's one rule (`PLAN.md` §20, D115) they are information, reported at each step; what blocks is what a player feels: the editor stays responsive, tool feedback comes within a frame, slower work runs in the background, and the page never freezes.
   - tool feedback within one frame (16 ms), with lightweight proxies while dragging;
   - a feature edit committed (rasterize and remesh the affected chunks) in ≤ 100 ms;
   - instant checks ≤ 50 ms;
@@ -472,7 +472,7 @@ Worker-based simulation and full validation; export rules for errors and warning
 
 **E6. Sculpting, naturalize and symmetry.** [M10]
 Advanced sculpt brushes; the naturalize brush; symmetry across all tools.
-*Accept:* performance budgets met; caves and overhangs in imported maps survive edits elsewhere; symmetric edits stay exactly symmetric, entities included (section 5).
+*Accept:* the editor stays responsive (the budgets are reported, D115); caves, overhangs and arches survive edits elsewhere, and the brushes work on runs (D118); symmetric edits stay exactly symmetric, entities included (section 5).
 
 **E7. Stamps, heightmap import, regenerate area, locks.** [M11]
 Built-in stamp library, user stamps with export and import, heightmap import, regenerate a region, locks and conflict rules.
@@ -484,7 +484,7 @@ Operation schema, map summary builder, the tools, the propose, validate, revise 
 
 **E9. Usability and polish.** [M13]
 Run the usability tasks from section 9 and fix what slows people down; onboarding hints; shortcuts reference; help page; accessibility pass; final performance pass.
-*Accept:* every usability task is completed in under 2 minutes by a first-time user.
+*Accept:* the usability tasks are run and what slows people down is fixed; their times (under 2 minutes each for a first-time user as the target) are information (D115).
 
 **3D stages** (`ROADMAP.md` 3D-a–3D-c, `PLAN.md` §20 D118–D127): stacked-column water, the support rule and the floor graph (3D-a); 3D forms from the generator's processes (3D-b); Carve, Fill, Tunnel, Arch, Cave, Ledge path and Overhang tools, 3D picking, 3D locks and a level-slice cutaway (3D-c). M10's and M11's tools are built on runs after them.
 
