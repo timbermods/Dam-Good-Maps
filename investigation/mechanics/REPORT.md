@@ -14,7 +14,7 @@ Game evidence: the repository's notes for Timberborn 1.1.2.4. No game was launch
 - Compare M9 coverage against ROADMAP's design brief. Neither `docs/m9-design.md` nor `investigation/generative/` exists at the base commit.
 - Keep the current start requirements and advisory checks as they are (D85, D104, D107). Propose new checks separately.
 
-## Phase 1
+## Catalogue
 
 [CATALOGUE.md](CATALOGUE.md) covers 25 mechanics or groups of related mechanics.
 Each entry separates the sourced rule, the design inference, the limit and the measure.
@@ -43,3 +43,13 @@ Pooling themes hides the clustering. Do not compare this metric numerically with
 The reader's tests, all 180 data/hash checks, and a byte-for-byte CLI adapter check passed.
 The usual child-process launcher was blocked; Node's TypeScript transform ran the unchanged core instead.
 The leaf dependency and source hashes are recorded in `results/provenance.json`.
+
+## M9 handoff
+
+Generate combinations of opportunities, then check their dependencies. Vary reserve, fertile land, threats and expansion rewards
+separately. Detect actual routes and storage projects before writing “how it plays” cards. A named landmark alone is not enough.
+
+[M9-PROPOSALS.md](M9-PROPOSALS.md) gives eight candidate openings, target spreads and difficulty witnesses.
+[INTEGRATION.md](INTEGRATION.md) maps them to PLAN/ROADMAP and flags decision conflicts.
+Keep D85's advisory policy, the current nearby dam site, deferred roofed-water features and D109's approval gate.
+Wheel output, economic timing and full-cycle survival remain unverified; do not promise them from these proxies.
