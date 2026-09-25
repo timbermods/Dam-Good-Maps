@@ -1265,7 +1265,8 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
   example sits under a dam site's marker, under the start as drawn, or in the far haze.
   CI's margin: the light look now bakes all of a model's objects into one mesh, drawn once. A
   256² frame in SwiftShader here takes 10 ms, against 30 ms before this round and 47 ms at
-  `m8-done`. CI's software-rendered orbit: CI_FPS.
+  `m8-done`. CI's software-rendered orbit: 12 frames a second (run 36177455299), against 5–6 before
+  this round and 5 at `m8-done`; the test needs more than 5 frames in 1.5 s.
   Captures: 42 before and after pairs (with `meets` and `cliff`, their befores made on `m8-done`'s
   code): 36 after captures of our maps (with the editor's own view) and 140 greyscale and
   colour-blind versions, and Beavertopia's 6 and 24 locally. The benchmark, for information
