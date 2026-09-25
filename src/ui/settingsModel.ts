@@ -16,7 +16,7 @@ export const BUILDABLE: Choice<Settings["terrain"]["buildableLand"]>[] = [
 export const STYLES: Choice<Settings["water"]["riverStyle"]>[] = [
   { value: "straight", label: "Straight" },
   { value: "meandering", label: "Meandering" },
-  { value: "braided", label: "Braided", disabled: "comes with the Delta theme" },
+  { value: "braided", label: "Braided" },
 ];
 export const FLOWS: Choice<Settings["water"]["riverFlow"]>[] = [
   { value: "trickle", label: "Trickle" },
@@ -45,6 +45,14 @@ export const BADWATER: Choice<Settings["hazards"]["badwater"]>[] = [
   { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },
   { value: "high", label: "High" },
+];
+export const OFF_SOME: Choice<"off" | "some">[] = [
+  { value: "off", label: "Off" },
+  { value: "some", label: "Some" },
+];
+export const CORES: Choice<Settings["hazards"]["unstableCores"]>[] = [
+  { value: "off", label: "Off" },
+  { value: "on", label: "On" },
 ];
 export const GROVES: Choice<Settings["resources"]["groveSize"]>[] = [
   { value: "scattered", label: "Scattered" },
@@ -97,6 +105,8 @@ export function band(key: string, spec: MapSpec): string {
       return "Land you can walk to from the start. Official maps: 765–6,022 tiles, most about 1,300.";
     case "rivers":
       return s.water.rivers === 0 ? "No river enters from the edge: springs feed the water." : "Rivers that enter from the map edge.";
+    case "riverStyle":
+      return s.water.riverStyle === "braided" ? "The river splits into 2–4 channels across a low plain before the map edge." : "";
     case "riverFlow":
       return `About ${(flowBudget(spec.size.x, spec.size.y) * RIVER_FLOW_MULTIPLIER[s.water.riverFlow]).toFixed(1)} water/s. Official maps: 0.5–12 per 10,000 tiles.`;
     case "droughtReserve":
@@ -109,6 +119,16 @@ export function band(key: string, spec: MapSpec): string {
       return "Badwater strength against the rivers'. Official maps: 0.18–2.2, most 0.65.";
     case "badwaterDistance":
       return "Official maps: 3–79 tiles, most 30.";
+    case "thornBelts":
+      return "Belts of thorns bar the way to relics and geothermal fields. Clearing them takes builders and hurts. Official maps: 8 of 19 have some.";
+    case "unstableCores":
+      return "Cores explode after a few cycles and take the ground round them. They can't be removed.";
+    case "relics":
+      return "Science for the beavers who reach them: 200, 800 or 3,000. The farther out, the bigger.";
+    case "geothermal":
+      return "Free power for a geothermal engine, on dry ground 30–120 tiles out.";
+    case "mineSites":
+      return "Where the late scrap mine can be built. Official maps: 1–4, most 89 tiles out.";
     case "forestDensity":
       return `About ${Math.round(((density("trees_per_10k", area) * area) / 1e4) * (s.resources.forestDensity / 100)).toLocaleString()} trees on this map.`;
     case "groveSize":

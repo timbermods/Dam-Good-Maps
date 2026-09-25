@@ -2,14 +2,21 @@
 // first attempt ≥ 60%). Generates each seed with the retry loop and reports first-attempt and
 // final pass rates, which checks failed and how often, attempts used, and timings.
 //
+// Every accepted map's project file (PLAN §19.6, the page's download) is also reopened: it must pass
+// the checks on open and rebuild the same .timber byte for byte, or the batch fails.
+//
 //   npx tsx tools/batch.ts [--seeds 1-100] [--size 128] [--difficulty normal] [--theme riverValley]
 //                          [--set rl=80&wf=m] [--report file.md] [--min-final 0.98] [--min-first 0.6]
 //
 // --set takes settings in the share link's short keys (src/core/spec/codec.ts).
 //
-// Exits non-zero when a rate is below its gate.
+// Exits non-zero when a rate is below its gate, or when a project file does not reopen to the same
+// bytes.
 
+import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
+import { decodeProject, encodeProject, toDocument } from "../src/core/doc/document";
+import { MapSession } from "../src/core/doc/session";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
 import { decodeSpecFragment, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 
@@ -41,6 +48,10 @@ let first = 0;
 let final = 0;
 const attempts: number[] = [];
 const times: number[] = [];
+const sha = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
+let reopened = 0;
+const reopenTimes: number[] = [];
+const reopenFailures: string[] = [];
 const failedChecks = new Map<string, number>(); // every failed attempt's blocking checks
 const advisory = new Map<string, number>();
 const lines: string[] = [];
@@ -63,8 +74,22 @@ for (const seed of seeds) {
   }
   for (const f of r.failures) for (const id of f.failed) failedChecks.set(id, (failedChecks.get(id) ?? 0) + 1);
   for (const c of r.report.checks) if (c.advisory && !c.ok) advisory.set(c.id, (advisory.get(c.id) ?? 0) + 1);
+  // the accepted map's project file reopens and rebuilds the same .timber
+  let reopen = "";
+  if (r.report.passed) {
+    const t1 = performance.now();
+    try {
+      const s = MapSession.open(decodeProject(encodeProject(toDocument(r.spec, r.features, r.built, r.file))));
+      if (sha(s.exportTimber().bytes) === sha(r.bytes)) reopened++;
+      else reopen = "its project file rebuilds different bytes";
+    } catch (e) {
+      reopen = `its project file does not reopen: ${(e as Error).message}`;
+    }
+    reopenTimes.push(performance.now() - t1);
+    if (reopen) reopenFailures.push(`seed ${seed}: ${reopen}`);
+  }
   const status = r.report.passed ? (r.attempts === 1 ? "pass" : `pass after ${r.attempts}`) : `FAIL after ${r.attempts}`;
-  log(`seed ${seed}: ${status}, ${Math.round(ms)} ms${r.failures.length ? `  (${r.failures.map((f) => f.failed.join(",")).join(" | ")})` : ""}`);
+  log(`seed ${seed}: ${status}, ${Math.round(ms)} ms${r.failures.length ? `  (${r.failures.map((f) => f.failed.join(",")).join(" | ")})` : ""}${reopen ? `  PROJECT: ${reopen}` : ""}`);
 }
 
 const n = seeds.length;
@@ -78,5 +103,8 @@ log(`- attempts: mean ${(attempts.reduce((a, b) => a + b, 0) / n).toFixed(2)}, m
 log(`- time per map: median ${Math.round(sorted[n >> 1])} ms, p90 ${Math.round(sorted[Math.floor(n * 0.9)])} ms, max ${Math.round(sorted[n - 1])} ms`);
 log(`- checks that failed an attempt: ${[...failedChecks].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ") || "none"}`);
 log(`- advisory warnings on the accepted maps: ${[...advisory].map(([k, v]) => `${k} ${v}/${n}`).join(", ") || "none"}`);
+const rt = reopenTimes.slice().sort((a, b) => a - b);
+log(`- project round trip: ${reopened}/${final} accepted maps reopen from their project file and rebuild the same .timber${rt.length ? ` (median ${Math.round(rt[rt.length >> 1])} ms, max ${Math.round(rt[rt.length - 1])} ms)` : ""}`);
+for (const f of reopenFailures) log(`  - ${f}`);
 if (report) writeFileSync(report, lines.join("\n") + "\n");
-process.exit(final / n >= minFinal && first / n >= minFirst ? 0 : 1);
+process.exit(final / n >= minFinal && first / n >= minFirst && reopenFailures.length === 0 ? 0 : 1);

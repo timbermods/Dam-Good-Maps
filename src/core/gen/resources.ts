@@ -72,7 +72,11 @@ export function nearStartTargets(spec: MapSpec): { trees: number; bushes: number
   };
 }
 
-export function planResources(spec: MapSpec, g: Ground, candidate: number, attempt: number, constraints?: ResourceConstraints): Feature[] {
+/** A second district's site needs a grove of 40+ trees and 20+ berry bushes near it (PLAN §9.8). */
+export const SITE_TREES = 48;
+export const SITE_BUSHES = 24;
+
+export function planResources(spec: MapSpec, g: Ground, candidate: number, attempt: number, constraints?: ResourceConstraints, sites: readonly { x: number; y: number }[] = []): Feature[] {
   const { W, H } = g;
   const N = W * H;
   const area = N;
@@ -217,6 +221,22 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
       if (got >= want) break;
     }
   }
+  // a second district's berries (PLAN §9.8)
+  for (const site of sites) {
+    const w = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      const x = i % W;
+      const y = (i - x) / W;
+      const dx = x - site.x;
+      const dy = y - site.y;
+      if (dx * dx + dy * dy <= BUSHES.nearStartRadius * BUSHES.nearStartRadius && free[i] && moist[i]) w[i] = nearWater(i) ? 2 : 1;
+    }
+    let got = 0;
+    for (const s of pickSeeds(vegRng, w, W, 4, 6)) {
+      got += patch(s, Math.max(4, SITE_BUSHES - got), 1);
+      if (got >= SITE_BUSHES) break;
+    }
+  }
   for (let guard = 0; bushCount < bushTotal && guard < 500; guard++) {
     const w = new Float64Array(N);
     for (let i = 0; i < N; i++) if (free[i] && moist[i]) w[i] = nearWater(i) ? 4 : 1;
@@ -270,6 +290,24 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(near.trees / Math.max(1, each)) + 3), 5)) {
       got += growGrove(s, each, true);
       if (got >= near.trees) break;
+    }
+  }
+  // a second district's grove (PLAN §9.8)
+  for (const site of sites) {
+    const w = new Float64Array(N);
+    const r = FOREST.nearStart.radius;
+    for (let i = 0; i < N; i++) {
+      const x = i % W;
+      const y = (i - x) / W;
+      const dx = x - site.x;
+      const dy = y - site.y;
+      if (dx * dx + dy * dy <= r * r && free[i] && moist[i]) w[i] = 1;
+    }
+    let got = 0;
+    const each = Math.floor(grove.median * 1.5);
+    for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(SITE_TREES / Math.max(1, each)) + 3), 5)) {
+      got += growGrove(s, each, true);
+      if (got >= SITE_TREES) break;
     }
   }
   const livingTarget = Math.floor(treeTotal * FOREST.livingShare);

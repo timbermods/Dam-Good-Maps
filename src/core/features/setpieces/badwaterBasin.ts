@@ -14,7 +14,7 @@ import { arcAtX, floorAt } from "../geometry";
 import { carveChannel, channelBounds, channelTiles, channelWidth, checkChannel, routeChannel, type ChannelPlan } from "../route";
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 import type { Point, RiverFeature, SetPieceFeature } from "../schema";
-import { clampReported, clearsText, fmt, inMap, nearStart, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
+import { clampReported, clearsText, fmt, inMap, nearStart, POINT_SCHEMA, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
 import type { SetPieceBuilder, SetPieceSource } from "./index";
 
 export interface MarshPlan {
@@ -211,7 +211,7 @@ export const badwaterBasin: SetPieceBuilder = {
       river: { type: "string" },
       fromX: { type: "integer", minimum: 0, maximum: 256 },
       far: { type: "array", minItems: 2, maxItems: 2, items: { type: "number" } },
-      at: { type: "array", minItems: 2, maxItems: 2, items: { type: "number", minimum: -1, maximum: 257 } },
+      at: POINT_SCHEMA,
       strength: { type: "number", minimum: 0.1, maximum: 24 },
     },
   },

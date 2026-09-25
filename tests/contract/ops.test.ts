@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import opsSchema from "../../src/core/doc/ops.schema.json" with { type: "json" };
 import { checkSchema } from "../../src/core/spec/schema";
 import { MapSession } from "../../src/core/doc/session";
+import { entityProblem } from "../../src/core/doc/placing";
 import type { EditOp } from "../../src/core/doc/ops";
 import type { ForestFeature, SetPieceFeature } from "../../src/core/features/schema";
 import { generate } from "../../src/core/gen/generate";
@@ -31,6 +32,13 @@ describe("every operation applies and undoes", () => {
   const forest = r.features.find((f): f is ForestFeature => f.kind === "forest")!;
   const tree = r.built.entities.find((e) => e.template === "Pine")!;
   const slope = r.built.entities.find((e) => e.template === "Slope")!;
+  // a tile near the south-west corner where the game keeps the moved tree (placeEntity and
+  // moveEntity refuse what its loader would delete)
+  const to = ((): [number, number] => {
+    const s0 = fresh();
+    for (let y = 2; y < 30; y++) for (let x = 2; x < 30; x++) if (!entityProblem(s0, { template: tree.template, x, y, orientation: tree.orientation }, tree.id)) return [x, y];
+    throw new Error("no free tile for the tree");
+  })();
   const cases: [string, EditOp, (s: MapSession) => void][] = [
     ["addFeature", { op: "addFeature", params: { feature: { id: USER, kind: "landform", origin: "user", locked: false, params: { kind: "hill", edgeStyle: "gentle", outline: [[10, 70], [20, 70], [20, 80], [10, 80]], height: 13 } } } }, (s) => expect(s.built.heights[75 * W + 15]).toBe(13)],
     ["updateFeature", { op: "updateFeature", params: { id: forest.id, patch: { params: { life: "dead" } } } }, (s) => expect(s.built.entities.filter((e) => e.owner === forest.id).every((e) => "LivingNaturalResource" in e.components)).toBe(true)],
@@ -38,7 +46,7 @@ describe("every operation applies and undoes", () => {
     ["reorderFeature", { op: "reorderFeature", params: { id: forest.id, index: 0 } }, (s) => expect(s.features[0].id).toBe(forest.id)],
     ["sculpt", { op: "sculpt", params: { mode: "flatten", cells: rectRuns(3, 3, 8, 6), level: 12 } }, (s) => expect(s.built.heights[4 * W + 5]).toBe(12)],
     ["placeEntity", { op: "placeEntity", params: { id: "11111111-2222-4333-8444-555555555555", template: "Blockage", x: 40, y: 3, orientation: "Cw90" } }, (s) => expect(s.built.entities.find((e) => e.id === "11111111-2222-4333-8444-555555555555")?.orientation).toBe("Cw90")],
-    ["moveEntity", { op: "moveEntity", params: { id: tree.id, x: 2, y: 2 } }, (s) => expect(s.built.entities.find((e) => e.id === tree.id)).toMatchObject({ x: 2, y: 2 })],
+    ["moveEntity", { op: "moveEntity", params: { id: tree.id, x: to[0], y: to[1] } }, (s) => expect(s.built.entities.find((e) => e.id === tree.id)).toMatchObject({ x: to[0], y: to[1] })],
     ["deleteEntities", { op: "deleteEntities", params: { entities: [tree.id] } }, (s) => expect(s.built.entities.some((e) => e.id === tree.id)).toBe(false)],
     ["setEntityProps", { op: "setEntityProps", params: { id: tree.id, components: { Growable: { GrowthProgress: 0.5 } } } }, (s) => expect(stringify(s.exportFile().world.entities.find((e) => e.Id === tree.id)!)).toContain('"Growable":{"GrowthProgress":0.5}')],
     ["removeSlope", { op: "removeSlope", params: { x: slope.x, y: slope.y } }, (s) => expect(s.built.entities.some((e) => e.id === slope.id)).toBe(false)],
@@ -98,7 +106,9 @@ describe("invalid operations are rejected with a reason and change nothing", () 
       },
       /drop of 1–15/,
     ],
-    ["a set piece kind not built yet", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "plugSpillway", request: {}, plan: {}, report: [] } } } }, /not built by this version/],
+    // every set piece is built since M7; natural bridges (a map object) come later
+    ["a map object not built yet", { op: "addFeature", params: { feature: { id: USER, kind: "mapObject", origin: "claude", locked: false, params: { kind: "bridge", placement: { x: 3, y: 3, orientation: "Cw0" } } } } }, /later version/],
+    ["a set piece whose stored plan is out of bounds", { op: "addFeature", params: { feature: { id: USER, kind: "setPiece", origin: "claude", locked: false, params: { kind: "plugSpillway", request: { lake: "x" }, plan: {}, report: [] } } } }, /belongs to a lake/],
     ["the naturalize brush", { op: "sculpt", params: { mode: "naturalize", cells: [[1, 1, 3]] } }, /roadmap M10/],
     ["regenerating an area", { op: "regenerateRegion", params: { area: { runs: [[1, 1, 3]] }, seedVariant: 1, layers: ["terrain"] } }, /roadmap M11/],
     ["a faction-only plant", { op: "placeEntity", params: { id: "11111111-2222-4333-8444-555555555555", template: "Maple", x: 3, y: 3, orientation: "Cw0" } }, /cannot be placed/],
@@ -159,18 +169,20 @@ describe("invalid operations are rejected with a reason and change nothing", () 
 describe("operations and the validation report share one shape", () => {
   it("a fix from the report applies as one step and clears its check", () => {
     const s = fresh();
-    // a large relic across a terrace edge: part of it stands in the terrain, so the game would
-    // delete it on load
-    const h = r.built.heights;
+    // a large relic on level ground, then the ground under part of it raised: that part stands in
+    // the terrain, so the game would delete it on load (placing it there directly is refused)
     let at = -1;
     for (let i = W * 5 + 5; i < W * (W - 5) && at < 0; i++) {
       const x = i % W;
       const y = (i - x) / W;
       if (x > W - 5) continue;
-      if (h[i] < h[i + 1] && h[i + 1] === h[i + 2] && h[(y + 1) * W + x] === h[i] && h[(y + 2) * W + x] === h[i]) at = i;
+      if (entityProblem(s, { template: "LargeRelic", x, y, orientation: "Cw0" }) === null) at = i;
     }
     expect(at).toBeGreaterThan(0);
-    expect(s.apply({ op: "placeEntity", params: { id: "22222222-2222-4333-8444-555555555555", template: "LargeRelic", x: at % W, y: Math.floor(at / W), orientation: "Cw0" } }).ok).toBe(true);
+    const [ax, ay] = [at % W, Math.floor(at / W)];
+    expect(s.apply({ op: "placeEntity", params: { id: "22222222-2222-4333-8444-555555555555", template: "LargeRelic", x: ax, y: ay, orientation: "Cw0" } }).ok).toBe(true);
+    // (two tiles: a single raised tile is a spike the integrity pass removes)
+    expect(s.apply({ op: "sculpt", params: { mode: "raise", cells: [[ay + 1, ax + 1, ax + 2]], amount: 1 } }).ok).toBe(true);
     const failing = s.validate("export").report.checks.find((c) => c.id === "entities.placement")!;
     expect(failing.ok).toBe(false);
     expect(failing.fix![0].params).toEqual({ entities: ["22222222-2222-4333-8444-555555555555"] });

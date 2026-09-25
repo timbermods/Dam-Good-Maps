@@ -109,6 +109,31 @@ export function slope(b: Base & { orientation: Orientation }): EntitySpec {
   return { ...pos(b), orientation: b.orientation, template: "Slope", components: {} };
 }
 
+/** A map object official maps store with its BlockObject alone (FORMAT.md §5): Thorns, NaturalDam,
+ *  Blockage, relics, GeothermalField, UndergroundRuins. Thorns, NaturalDam and Blockage are
+ *  flippable, and the map editor turns and flips them at random. */
+export function blockObject(b: Base & { template: string; orientation: Orientation; flipped?: boolean }): EntitySpec {
+  return { ...pos(b), orientation: b.orientation, flipped: !!b.flipped, template: b.template, components: {} };
+}
+
+/** Official maps' countdown: 10.5 days after its cycle starts (notes/navigation_ruins_entities §8). */
+export const CORE_DAYS = 10.5;
+
+/** An UnstableCore (2×2): it explodes `DaysUntilActivation` days into cycle `cycles`, removing the
+ *  terrain and objects within its radius + 1. `UnstableCore` must be written (the loader throws
+ *  without it); the component order is the official maps'. */
+export function unstableCore(b: Base & { orientation: Orientation; radius: number; cycles: number }): EntitySpec {
+  return {
+    ...pos(b),
+    orientation: b.orientation,
+    template: "UnstableCore",
+    components: {
+      TimeActivatedComponent: { IsEnabled: true, CyclesUntilCountdownActivation: b.cycles, DaysUntilActivation: F(CORE_DAYS), DaysPassed: F(0) },
+      UnstableCore: { ExplosionRadius: b.radius },
+    },
+  };
+}
+
 export function startingLocation(b: Base & { orientation: Orientation; player?: number }): EntitySpec {
   // player is reserved for Timber Together maps (PLAN §20, D5); vanilla maps never write it
   return { ...pos(b), orientation: b.orientation, template: "StartingLocation", components: {} };

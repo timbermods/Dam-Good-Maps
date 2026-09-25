@@ -33,6 +33,7 @@ import { validateMap, type Validation } from "../validate/checks";
 import type { PlayabilityAnalysis } from "../validate/playability";
 import { blocks, type Profile, type ValidationReport } from "../validate/report";
 import { baseFromFile, baseTerrain, fileFromBase, joinTerrain, type BaseMap, type BaseTerrain } from "./base";
+import { entityProblem } from "./placing";
 import { baseFeaturesOf, checkDocument, encodeProject, importDocument, toDocument, type DocMeta, type KeptContent, type MapDocument } from "./document";
 import {
   applyOp,
@@ -317,6 +318,12 @@ export class MapSession {
       slopeTiles,
       lockedColumns: this.mode === "live" ? null : new Set(this.baseStuff().terrain.columns.keys()),
       otherStarts,
+      placement: (p) => {
+        const e = p.id ? this.cur.entities.find((g) => g.id === p.id) : undefined;
+        const template = p.template ?? e?.template;
+        if (!template) return null;
+        return entityProblem(this, { template, x: p.x, y: p.y, orientation: p.orientation ?? e?.orientation ?? "Cw0", flipped: p.flipped ?? e?.flipped ?? false }, p.id ?? null);
+      },
     });
     if (errors.length || this.mode !== "frozen") return errors;
     const frozen = new Set(this.gen.baseFeatures.map((f) => f.id));

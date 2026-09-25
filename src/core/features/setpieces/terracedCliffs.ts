@@ -12,7 +12,7 @@
 
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
-import { clampReported, clearsText, FACINGS, inMap, local, nearStart, pointOf, sideAcross, STEP, type Facing, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
+import { clampReported, clearsText, FACINGS, inMap, local, nearStart, POINT_SCHEMA, pointOf, sideAcross, STEP, type Facing, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
 import type { SetPieceBuilder, SetPieceSlope } from "./index";
 
 export interface TerracedCliffsPlan {
@@ -62,7 +62,7 @@ export const terracedCliffs: SetPieceBuilder = {
     type: "object",
     required: ["at", "facing"],
     properties: {
-      at: { type: "array", minItems: 2, maxItems: 2, items: { type: "number", minimum: -1, maximum: 257 } },
+      at: POINT_SCHEMA,
       facing: { enum: FACINGS },
       bands: { type: "integer", minimum: 1, maximum: 16 },
       depth: { type: "integer", minimum: 1, maximum: 64 },

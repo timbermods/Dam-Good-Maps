@@ -13,8 +13,9 @@ import { damSites, type DamSite } from "../analysis/damsites";
 import { components, walkRegions } from "../analysis/regions";
 import { footprintTiles, slopeHighSide, worldBlocks, FOOTPRINTS } from "../format/footprints";
 import { polygonMask } from "../features/geometry";
+import { OBJECT_NAMES, objectTiles } from "../features/objects";
 import { channelTiles } from "../features/route";
-import type { Feature } from "../features/schema";
+import type { Feature, MapObjectFeature } from "../features/schema";
 import { density, DROUGHT, REACH_MIN, RESERVE, reservoirNeeded } from "../gen/calibrated";
 import { distanceFrom } from "../math/grid";
 import { soilContamination } from "../sim/contamination";
@@ -705,11 +706,122 @@ function checkStart(
     c.notApplicable("ruins.fields", "playability", "no ruins on this map");
     c.notApplicable("ruins.access", "playability", "no ruins on this map");
   }
-  c.notApplicable(
-    "extras.placement",
-    "playability",
-    inp.features ? "no relics, geothermal fields or mine sites are placed by this version (roadmap M7)" : "distance bands are generator rules; imported maps keep their objects",
-  );
+  checkExtras(inp, c, sd);
+}
+
+/** Distance bands of the 1.0 objects from the start (PLAN §5.4–5.5, §11.4), in tiles on maps of
+ *  128² and larger; smaller maps scale the scaled bands by their side ÷ 128. Thorn belts and unstable
+ *  cores keep their distance on every map. */
+export const EXTRA_BANDS: Record<string, { lo: number; hi: number; scaled: boolean }> = {
+  relicSmall: { lo: 13, hi: 70, scaled: true },
+  relicMedium: { lo: 40, hi: 140, scaled: true },
+  relicLarge: { lo: 140, hi: Infinity, scaled: true },
+  geothermal: { lo: 30, hi: 120, scaled: true },
+  mineSite: { lo: 60, hi: Infinity, scaled: true },
+  thornBelt: { lo: 20, hi: Infinity, scaled: false },
+  unstableCore: { lo: 40, hi: Infinity, scaled: false },
+};
+
+/** How much a map shrinks the scaled bands: its longer side ÷ 128, at most 1. */
+export function bandScale(W: number, H: number): number {
+  const side = W > H ? W : H;
+  return side >= 128 ? 1 : side / 128;
+}
+
+/** The objects that sit on flat, dry ground outside flood reach (§11.4). */
+const FLAT_EXTRAS = new Set(["mineSite", "relicSmall", "relicMedium", "relicLarge", "geothermal"]);
+/** No water tile within this many tiles (Chebyshev) of such an object: it stays out of flood reach. */
+export const FLOOD_MARGIN = 2;
+
+/** `extras.placement` (PLAN §11.4): relics, geothermal fields and mine sites sit on flat ground, with
+ *  no water within two tiles and outside every planned reservoir, and the generated ones in their
+ *  distance band from the start; generated thorn belts keep 20 tiles and unstable cores 40 from the
+ *  start, and cores keep their radius + 2 from each other (no chain reaction). */
+function checkExtras(inp: PlayabilityInput, c: Collector, sd: Float64Array): void {
+  const { W, H, surface: h, water, features } = inp;
+  if (!features) {
+    c.notApplicable("extras.placement", "playability", "distance bands are generator rules; imported maps keep their objects");
+    return;
+  }
+  const extras = features.filter((f): f is MapObjectFeature => f.kind === "mapObject" && f.params.kind in EXTRA_BANDS);
+  if (!extras.length) {
+    c.notApplicable("extras.placement", "playability", "no relics, geothermal fields, mine sites, thorn belts or unstable cores on this map");
+    return;
+  }
+  const N = W * H;
+  const D = water.depth;
+  // tiles within the flood margin of water, and the planned reservoirs
+  const flood = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    if (!(D[i] > WET)) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    for (let dy = -FLOOD_MARGIN; dy <= FLOOD_MARGIN; dy++)
+      for (let dx = -FLOOD_MARGIN; dx <= FLOOD_MARGIN; dx++) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < W && yy < H) flood[yy * W + xx] = 1;
+      }
+  }
+  for (const f of features) {
+    if (f.kind !== "lake" || !f.params.planned) continue;
+    const m = polygonMask(f.params.outline, W, H);
+    for (let i = 0; i < N; i++) if (m[i]) flood[i] = 1;
+  }
+  const scale = bandScale(W, H);
+  const bad: [number, number][] = [];
+  const why: string[] = [];
+  const cores: { tiles: [number, number][]; radius: number }[] = [];
+  for (const f of extras) {
+    const k = f.params.kind;
+    const tiles = objectTiles(f, W, H);
+    const on = tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < W && y < H);
+    const name = OBJECT_NAMES[k].toLowerCase();
+    let problem = "";
+    if (on.length < tiles.length) problem = `a ${name} lies off the map`;
+    else if (FLAT_EXTRAS.has(k)) {
+      const lv = h[on[0][1] * W + on[0][0]];
+      if (on.some(([x, y]) => h[y * W + x] !== lv)) problem = `a ${name} stands on uneven ground`;
+      else if (on.some(([x, y]) => flood[y * W + x])) problem = `a ${name} is within ${FLOOD_MARGIN} tiles of water or in a reservoir site`;
+    }
+    if (!problem && f.origin === "generated" && on.length) {
+      const b = EXTRA_BANDS[k];
+      const lo = b.scaled ? b.lo * scale : b.lo;
+      const hi = b.scaled ? b.hi * scale : b.hi;
+      let d = Infinity;
+      for (const [x, y] of on) if (sd[y * W + x] < d) d = sd[y * W + x];
+      if (d < lo || d > hi) problem = `a ${name} is ${Math.round(d)} tiles from the start (its band is ${Math.round(lo)}${hi < Infinity ? `–${Math.round(hi)}` : "+"})`;
+    }
+    if (!problem && k === "unstableCore" && f.origin === "generated") cores.push({ tiles: on, radius: f.params.core?.radius ?? 2 });
+    if (problem) {
+      if (why.length < 4) why.push(problem);
+      if (on.length) bad.push(on[0]);
+      else bad.push([Math.min(W - 1, Math.max(0, tiles[0][0])), Math.min(H - 1, Math.max(0, tiles[0][1]))]);
+    }
+  }
+  // cores keep their blast (radius + 1) and one more tile from each other: no chain reaction
+  for (let a = 0; a < cores.length; a++)
+    for (let b = a + 1; b < cores.length; b++) {
+      let gap = Infinity;
+      for (const [ax, ay] of cores[a].tiles)
+        for (const [bx, by] of cores[b].tiles) {
+          const g = Math.max(Math.abs(ax - bx), Math.abs(ay - by));
+          if (g < gap) gap = g;
+        }
+      if (gap < Math.max(cores[a].radius, cores[b].radius) + 2) {
+        if (why.length < 4) why.push(`two unstable cores are ${gap} tiles apart: one would set off the other`);
+        bad.push(cores[b].tiles[0]);
+      }
+    }
+  c.add({
+    id: "extras.placement",
+    class: "playability",
+    ok: bad.length === 0,
+    value: bad.length,
+    limit: 0,
+    message: bad.length ? why.join("; ") : `${extras.length} map objects stand where they should`,
+    ...(bad.length ? { where: { tiles: bad.slice(0, 20) } } : {}),
+  });
 }
 
 function fixDelete(entities: string[], label: string): FixOp {
