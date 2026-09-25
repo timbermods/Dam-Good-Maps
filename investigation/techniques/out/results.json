@@ -1,0 +1,4657 @@
+{
+  "schema": 1,
+  "m9Revision": "a5f189d3e96affec533415090bdb8f09d606c8fd",
+  "size": [
+    96,
+    96
+  ],
+  "seeds": [
+    1,
+    12
+  ],
+  "themes": [
+    "riverValley",
+    "canyon",
+    "highlands"
+  ],
+  "cap22": "M9 16-level baseline stretched to 22; experimental comparator",
+  "summary": [
+    {
+      "cap": 16,
+      "variant": "baseline",
+      "cases": 36,
+      "uphill": 506,
+      "meanFalls": 9.916666666666666,
+      "meanTinyShare": 0.01793077256944444,
+      "meanBenchShare": 0.8967948254243827,
+      "meanPads": 3328.5555555555557,
+      "meanCliffShare": 0.04976547270955166,
+      "accepted": null
+    },
+    {
+      "cap": 16,
+      "variant": "spatial",
+      "cases": 36,
+      "uphill": 408,
+      "meanFalls": 10.333333333333334,
+      "meanTinyShare": 0.01806339216820988,
+      "meanBenchShare": 0.8942328559027776,
+      "meanPads": 3045.4166666666665,
+      "meanCliffShare": 0.050356359649122814,
+      "accepted": null
+    },
+    {
+      "cap": 16,
+      "variant": "beforeRepair",
+      "cases": 36,
+      "uphill": 2228,
+      "meanFalls": 13.5,
+      "meanTinyShare": 0.03407118055555556,
+      "meanBenchShare": 0.8680013020833333,
+      "meanPads": 2641.722222222222,
+      "meanCliffShare": 0.03911427875243664,
+      "accepted": null
+    },
+    {
+      "cap": 16,
+      "variant": "constrained",
+      "cases": 36,
+      "uphill": 0,
+      "meanFalls": 2.0833333333333335,
+      "meanTinyShare": 0.021198037229938273,
+      "meanBenchShare": 0.8771098572530863,
+      "meanPads": 2638.972222222222,
+      "meanCliffShare": 0.04728313840155945,
+      "accepted": 31
+    },
+    {
+      "cap": 22,
+      "variant": "baseline",
+      "cases": 36,
+      "uphill": 506,
+      "meanFalls": 20.61111111111111,
+      "meanTinyShare": 0.018786771797839507,
+      "meanBenchShare": 0.8927318431712964,
+      "meanPads": 3327.5555555555557,
+      "meanCliffShare": 0.08049159356725147,
+      "accepted": null
+    },
+    {
+      "cap": 22,
+      "variant": "spatial",
+      "cases": 36,
+      "uphill": 408,
+      "meanFalls": 24.52777777777778,
+      "meanTinyShare": 0.01916956018518519,
+      "meanBenchShare": 0.8903688030478393,
+      "meanPads": 3044.1111111111113,
+      "meanCliffShare": 0.08785026803118906,
+      "accepted": null
+    },
+    {
+      "cap": 22,
+      "variant": "beforeRepair",
+      "cases": 36,
+      "uphill": 2967,
+      "meanFalls": 27.63888888888889,
+      "meanTinyShare": 0.05419620466820987,
+      "meanBenchShare": 0.8070867091049386,
+      "meanPads": 1886.4166666666667,
+      "meanCliffShare": 0.058972953216374274,
+      "accepted": null
+    },
+    {
+      "cap": 22,
+      "variant": "constrained",
+      "cases": 36,
+      "uphill": 0,
+      "meanFalls": 5,
+      "meanTinyShare": 0.03824869791666666,
+      "meanBenchShare": 0.8162193769290123,
+      "meanPads": 1884.0833333333333,
+      "meanCliffShare": 0.06779970760233918,
+      "accepted": 17
+    }
+  ],
+  "spread": [
+    {
+      "cap": 16,
+      "theme": "riverValley",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.10773601852055052
+    },
+    {
+      "cap": 16,
+      "theme": "riverValley",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.08686982529797171
+    },
+    {
+      "cap": 16,
+      "theme": "canyon",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.17005742069646274
+    },
+    {
+      "cap": 16,
+      "theme": "canyon",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.17476193544347407
+    },
+    {
+      "cap": 16,
+      "theme": "highlands",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.1612618239597024
+    },
+    {
+      "cap": 16,
+      "theme": "highlands",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.18681125751264116
+    },
+    {
+      "cap": 22,
+      "theme": "riverValley",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.15153799009505908
+    },
+    {
+      "cap": 22,
+      "theme": "riverValley",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.1362121026655363
+    },
+    {
+      "cap": 22,
+      "theme": "canyon",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.18589385251390336
+    },
+    {
+      "cap": 22,
+      "theme": "canyon",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.16966754814182275
+    },
+    {
+      "cap": 22,
+      "theme": "highlands",
+      "variant": "baseline",
+      "meanPairwiseProxyDistance": 0.167924709257942
+    },
+    {
+      "cap": 22,
+      "theme": "highlands",
+      "variant": "spatial",
+      "meanPairwiseProxyDistance": 0.18249424385804425
+    }
+  ],
+  "rows": [
+    {
+      "theme": "riverValley",
+      "seed": 1,
+      "cap": 16,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 48,
+        "volume": 48,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 7,
+          "riverEdges": 639,
+          "falls": 1,
+          "cliffShare": 0.026370614035087718,
+          "tinyShare": 0.011393229166666666,
+          "benchShare": 0.9187282986111112,
+          "padCandidates": 3528,
+          "range": 13,
+          "levels": 13
+        },
+        "spatial": {
+          "uphill": 4,
+          "riverEdges": 629,
+          "falls": 0,
+          "cliffShare": 0.022149122807017543,
+          "tinyShare": 0.012044270833333334,
+          "benchShare": 0.9149305555555556,
+          "padCandidates": 3043,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 28,
+          "riverEdges": 629,
+          "falls": 0,
+          "cliffShare": 0.023300438596491228,
+          "tinyShare": 0.019639756944444444,
+          "benchShare": 0.9049479166666666,
+          "padCandidates": 3032,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 629,
+          "falls": 0,
+          "cliffShare": 0.027467105263157893,
+          "tinyShare": 0.012586805555555556,
+          "benchShare": 0.9133029513888888,
+          "padCandidates": 3032,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 1,
+      "cap": 22,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 51,
+        "volume": 52,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 7,
+          "riverEdges": 639,
+          "falls": 18,
+          "cliffShare": 0.06195175438596491,
+          "tinyShare": 0.012912326388888888,
+          "benchShare": 0.91796875,
+          "padCandidates": 3528,
+          "range": 18,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 4,
+          "riverEdges": 629,
+          "falls": 10,
+          "cliffShare": 0.0625548245614035,
+          "tinyShare": 0.012044270833333334,
+          "benchShare": 0.9117838541666666,
+          "padCandidates": 3043,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 34,
+          "riverEdges": 629,
+          "falls": 2,
+          "cliffShare": 0.03464912280701754,
+          "tinyShare": 0.026692708333333332,
+          "benchShare": 0.8885633680555556,
+          "padCandidates": 2142,
+          "range": 20,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 629,
+          "falls": 0,
+          "cliffShare": 0.039418859649122805,
+          "tinyShare": 0.019205729166666668,
+          "benchShare": 0.8927951388888888,
+          "padCandidates": 2142,
+          "range": 20,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 2,
+      "cap": 16,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 100,
+        "volume": 148,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 640,
+          "falls": 2,
+          "cliffShare": 0.021710526315789475,
+          "tinyShare": 0.022786458333333332,
+          "benchShare": 0.9051649305555556,
+          "padCandidates": 2344,
+          "range": 15,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 16,
+          "riverEdges": 707,
+          "falls": 2,
+          "cliffShare": 0.02450657894736842,
+          "tinyShare": 0.018120659722222224,
+          "benchShare": 0.8948567708333334,
+          "padCandidates": 2429,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 68,
+          "riverEdges": 707,
+          "falls": 4,
+          "cliffShare": 0.0325109649122807,
+          "tinyShare": 0.04220920138888889,
+          "benchShare": 0.8656684027777778,
+          "padCandidates": 2442,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 2,
+          "cliffShare": 0.04024122807017544,
+          "tinyShare": 0.023111979166666668,
+          "benchShare": 0.8798828125,
+          "padCandidates": 2442,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 2,
+      "cap": 22,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 140,
+        "volume": 246,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 640,
+          "falls": 10,
+          "cliffShare": 0.07785087719298246,
+          "tinyShare": 0.023220486111111112,
+          "benchShare": 0.9024522569444444,
+          "padCandidates": 2344,
+          "range": 21,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 16,
+          "riverEdges": 707,
+          "falls": 22,
+          "cliffShare": 0.08607456140350878,
+          "tinyShare": 0.019314236111111112,
+          "benchShare": 0.8914930555555556,
+          "padCandidates": 2429,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 107,
+          "riverEdges": 707,
+          "falls": 15,
+          "cliffShare": 0.042214912280701754,
+          "tinyShare": 0.05457899305555555,
+          "benchShare": 0.8145616319444444,
+          "padCandidates": 1441,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 5,
+          "cliffShare": 0.05224780701754386,
+          "tinyShare": 0.033528645833333336,
+          "benchShare": 0.8238932291666666,
+          "padCandidates": 1441,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 3,
+      "cap": 16,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 38,
+        "volume": 38,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 1,
+          "riverEdges": 699,
+          "falls": 2,
+          "cliffShare": 0.022532894736842106,
+          "tinyShare": 0.009440104166666666,
+          "benchShare": 0.9039713541666666,
+          "padCandidates": 3065,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 639,
+          "falls": 3,
+          "cliffShare": 0.027796052631578947,
+          "tinyShare": 0.011935763888888888,
+          "benchShare": 0.8831380208333334,
+          "padCandidates": 2648,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 21,
+          "riverEdges": 639,
+          "falls": 1,
+          "cliffShare": 0.02982456140350877,
+          "tinyShare": 0.016276041666666668,
+          "benchShare": 0.8913845486111112,
+          "padCandidates": 2786,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 639,
+          "falls": 0,
+          "cliffShare": 0.033168859649122806,
+          "tinyShare": 0.012152777777777778,
+          "benchShare": 0.8929036458333334,
+          "padCandidates": 2785,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 3,
+      "cap": 22,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 58,
+        "volume": 61,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 1,
+          "riverEdges": 699,
+          "falls": 17,
+          "cliffShare": 0.05789473684210526,
+          "tinyShare": 0.010416666666666666,
+          "benchShare": 0.9000651041666666,
+          "padCandidates": 3065,
+          "range": 21,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 639,
+          "falls": 21,
+          "cliffShare": 0.08393640350877193,
+          "tinyShare": 0.012912326388888888,
+          "benchShare": 0.8787977430555556,
+          "padCandidates": 2648,
+          "range": 21,
+          "levels": 20
+        },
+        "beforeRepair": {
+          "uphill": 34,
+          "riverEdges": 639,
+          "falls": 6,
+          "cliffShare": 0.051151315789473684,
+          "tinyShare": 0.0380859375,
+          "benchShare": 0.7934027777777778,
+          "padCandidates": 2130,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 639,
+          "falls": 1,
+          "cliffShare": 0.05592105263157895,
+          "tinyShare": 0.029730902777777776,
+          "benchShare": 0.7952473958333334,
+          "padCandidates": 2130,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 4,
+      "cap": 16,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 89,
+        "volume": 93,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 22,
+          "riverEdges": 666,
+          "falls": 0,
+          "cliffShare": 0.026918859649122807,
+          "tinyShare": 0.015299479166666666,
+          "benchShare": 0.8752170138888888,
+          "padCandidates": 2174,
+          "range": 13,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 581,
+          "falls": 2,
+          "cliffShare": 0.021600877192982457,
+          "tinyShare": 0.017795138888888888,
+          "benchShare": 0.8944227430555556,
+          "padCandidates": 2486,
+          "range": 13,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 50,
+          "riverEdges": 581,
+          "falls": 6,
+          "cliffShare": 0.02319078947368421,
+          "tinyShare": 0.028103298611111112,
+          "benchShare": 0.8810763888888888,
+          "padCandidates": 2414,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 581,
+          "falls": 0,
+          "cliffShare": 0.03031798245614035,
+          "tinyShare": 0.015625,
+          "benchShare": 0.8880208333333334,
+          "padCandidates": 2412,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 4,
+      "cap": 22,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 107,
+        "volume": 115,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 22,
+          "riverEdges": 666,
+          "falls": 16,
+          "cliffShare": 0.08832236842105264,
+          "tinyShare": 0.0185546875,
+          "benchShare": 0.8656684027777778,
+          "padCandidates": 2173,
+          "range": 18,
+          "levels": 18
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 581,
+          "falls": 23,
+          "cliffShare": 0.08262061403508772,
+          "tinyShare": 0.019422743055555556,
+          "benchShare": 0.8851996527777778,
+          "padCandidates": 2485,
+          "range": 18,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 55,
+          "riverEdges": 581,
+          "falls": 9,
+          "cliffShare": 0.03837719298245614,
+          "tinyShare": 0.0390625,
+          "benchShare": 0.8024088541666666,
+          "padCandidates": 1542,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 581,
+          "falls": 0,
+          "cliffShare": 0.046107456140350875,
+          "tinyShare": 0.025173611111111112,
+          "benchShare": 0.8051215277777778,
+          "padCandidates": 1542,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 5,
+      "cap": 16,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 76,
+        "volume": 80,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 702,
+          "falls": 3,
+          "cliffShare": 0.024725877192982457,
+          "tinyShare": 0.012044270833333334,
+          "benchShare": 0.8988715277777778,
+          "padCandidates": 3064,
+          "range": 13,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 7,
+          "riverEdges": 748,
+          "falls": 6,
+          "cliffShare": 0.02768640350877193,
+          "tinyShare": 0.014539930555555556,
+          "benchShare": 0.8957248263888888,
+          "padCandidates": 2879,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 51,
+          "riverEdges": 748,
+          "falls": 5,
+          "cliffShare": 0.026206140350877195,
+          "tinyShare": 0.025824652777777776,
+          "benchShare": 0.8892144097222222,
+          "padCandidates": 2711,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 748,
+          "falls": 1,
+          "cliffShare": 0.03223684210526316,
+          "tinyShare": 0.013888888888888888,
+          "benchShare": 0.8855251736111112,
+          "padCandidates": 2711,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 5,
+      "cap": 22,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 103,
+        "volume": 112,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 702,
+          "falls": 23,
+          "cliffShare": 0.06398026315789473,
+          "tinyShare": 0.013020833333333334,
+          "benchShare": 0.8916015625,
+          "padCandidates": 3064,
+          "range": 18,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 7,
+          "riverEdges": 748,
+          "falls": 21,
+          "cliffShare": 0.0662280701754386,
+          "tinyShare": 0.014973958333333334,
+          "benchShare": 0.89453125,
+          "padCandidates": 2879,
+          "range": 19,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 75,
+          "riverEdges": 748,
+          "falls": 13,
+          "cliffShare": 0.03739035087719298,
+          "tinyShare": 0.04177517361111111,
+          "benchShare": 0.8423394097222222,
+          "padCandidates": 1910,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 748,
+          "falls": 5,
+          "cliffShare": 0.04413377192982456,
+          "tinyShare": 0.027777777777777776,
+          "benchShare": 0.8452690972222222,
+          "padCandidates": 1910,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 6,
+      "cap": 16,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 69,
+        "volume": 71,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 684,
+          "falls": 0,
+          "cliffShare": 0.022149122807017543,
+          "tinyShare": 0.019205729166666668,
+          "benchShare": 0.908203125,
+          "padCandidates": 2457,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 3,
+          "riverEdges": 725,
+          "falls": 3,
+          "cliffShare": 0.01875,
+          "tinyShare": 0.018229166666666668,
+          "benchShare": 0.9070095486111112,
+          "padCandidates": 2864,
+          "range": 12,
+          "levels": 13
+        },
+        "beforeRepair": {
+          "uphill": 44,
+          "riverEdges": 725,
+          "falls": 7,
+          "cliffShare": 0.024890350877192984,
+          "tinyShare": 0.029947916666666668,
+          "benchShare": 0.9054904513888888,
+          "padCandidates": 2990,
+          "range": 12,
+          "levels": 13
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 725,
+          "falls": 0,
+          "cliffShare": 0.030043859649122807,
+          "tinyShare": 0.021701388888888888,
+          "benchShare": 0.9069010416666666,
+          "padCandidates": 2990,
+          "range": 12,
+          "levels": 13
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 6,
+      "cap": 22,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 87,
+        "volume": 100,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 684,
+          "falls": 19,
+          "cliffShare": 0.07631578947368421,
+          "tinyShare": 0.021158854166666668,
+          "benchShare": 0.9050564236111112,
+          "padCandidates": 2456,
+          "range": 21,
+          "levels": 21
+        },
+        "spatial": {
+          "uphill": 3,
+          "riverEdges": 725,
+          "falls": 22,
+          "cliffShare": 0.06787280701754386,
+          "tinyShare": 0.020941840277777776,
+          "benchShare": 0.9036458333333334,
+          "padCandidates": 2864,
+          "range": 16,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 59,
+          "riverEdges": 725,
+          "falls": 21,
+          "cliffShare": 0.034265350877192985,
+          "tinyShare": 0.05099826388888889,
+          "benchShare": 0.8257378472222222,
+          "padCandidates": 1764,
+          "range": 18,
+          "levels": 19
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 725,
+          "falls": 2,
+          "cliffShare": 0.038651315789473686,
+          "tinyShare": 0.03993055555555555,
+          "benchShare": 0.8323567708333334,
+          "padCandidates": 1764,
+          "range": 18,
+          "levels": 19
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 7,
+      "cap": 16,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 98,
+        "volume": 112,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 20,
+          "riverEdges": 684,
+          "falls": 1,
+          "cliffShare": 0.02505482456140351,
+          "tinyShare": 0.016927083333333332,
+          "benchShare": 0.9139539930555556,
+          "padCandidates": 3309,
+          "range": 14,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 664,
+          "falls": 3,
+          "cliffShare": 0.02532894736842105,
+          "tinyShare": 0.013129340277777778,
+          "benchShare": 0.8860677083333334,
+          "padCandidates": 2809,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 21,
+          "riverEdges": 664,
+          "falls": 0,
+          "cliffShare": 0.02593201754385965,
+          "tinyShare": 0.017144097222222224,
+          "benchShare": 0.8809678819444444,
+          "padCandidates": 2737,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 664,
+          "falls": 0,
+          "cliffShare": 0.034265350877192985,
+          "tinyShare": 0.012803819444444444,
+          "benchShare": 0.8937717013888888,
+          "padCandidates": 2732,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 7,
+      "cap": 22,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 120,
+        "volume": 173,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 20,
+          "riverEdges": 684,
+          "falls": 19,
+          "cliffShare": 0.0656798245614035,
+          "tinyShare": 0.018012152777777776,
+          "benchShare": 0.8970269097222222,
+          "padCandidates": 3307,
+          "range": 19,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 664,
+          "falls": 27,
+          "cliffShare": 0.07154605263157894,
+          "tinyShare": 0.014756944444444444,
+          "benchShare": 0.8848741319444444,
+          "padCandidates": 2809,
+          "range": 21,
+          "levels": 20
+        },
+        "beforeRepair": {
+          "uphill": 22,
+          "riverEdges": 664,
+          "falls": 2,
+          "cliffShare": 0.03245614035087719,
+          "tinyShare": 0.027669270833333332,
+          "benchShare": 0.8583984375,
+          "padCandidates": 1856,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 664,
+          "falls": 1,
+          "cliffShare": 0.04292763157894737,
+          "tinyShare": 0.026258680555555556,
+          "benchShare": 0.8578559027777778,
+          "padCandidates": 1856,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 8,
+      "cap": 16,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 61,
+        "volume": 61,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 0,
+          "riverEdges": 698,
+          "falls": 0,
+          "cliffShare": 0.014035087719298246,
+          "tinyShare": 0.004231770833333333,
+          "benchShare": 0.9558376736111112,
+          "padCandidates": 4121,
+          "range": 12,
+          "levels": 12
+        },
+        "spatial": {
+          "uphill": 5,
+          "riverEdges": 588,
+          "falls": 0,
+          "cliffShare": 0.013925438596491228,
+          "tinyShare": 0.009440104166666666,
+          "benchShare": 0.9431423611111112,
+          "padCandidates": 4096,
+          "range": 13,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 12,
+          "riverEdges": 588,
+          "falls": 0,
+          "cliffShare": 0.014692982456140351,
+          "tinyShare": 0.009006076388888888,
+          "benchShare": 0.9367404513888888,
+          "padCandidates": 4065,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 588,
+          "falls": 0,
+          "cliffShare": 0.020778508771929823,
+          "tinyShare": 0.006727430555555556,
+          "benchShare": 0.9397786458333334,
+          "padCandidates": 4065,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 8,
+      "cap": 22,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 59,
+        "volume": 59,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 0,
+          "riverEdges": 698,
+          "falls": 9,
+          "cliffShare": 0.038760964912280704,
+          "tinyShare": 0.004340277777777778,
+          "benchShare": 0.9557291666666666,
+          "padCandidates": 4121,
+          "range": 16,
+          "levels": 13
+        },
+        "spatial": {
+          "uphill": 5,
+          "riverEdges": 588,
+          "falls": 10,
+          "cliffShare": 0.047587719298245616,
+          "tinyShare": 0.010525173611111112,
+          "benchShare": 0.9410807291666666,
+          "padCandidates": 4096,
+          "range": 18,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 17,
+          "riverEdges": 588,
+          "falls": 0,
+          "cliffShare": 0.01924342105263158,
+          "tinyShare": 0.010959201388888888,
+          "benchShare": 0.9261067708333334,
+          "padCandidates": 3256,
+          "range": 21,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 588,
+          "falls": 0,
+          "cliffShare": 0.02406798245614035,
+          "tinyShare": 0.0078125,
+          "benchShare": 0.9290364583333334,
+          "padCandidates": 3245,
+          "range": 21,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 9,
+      "cap": 16,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 21,
+        "volume": 21,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 685,
+          "falls": 5,
+          "cliffShare": 0.023519736842105263,
+          "tinyShare": 0.014865451388888888,
+          "benchShare": 0.8958333333333334,
+          "padCandidates": 3949,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 1,
+          "riverEdges": 592,
+          "falls": 3,
+          "cliffShare": 0.021710526315789475,
+          "tinyShare": 0.011284722222222222,
+          "benchShare": 0.9099392361111112,
+          "padCandidates": 3303,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 16,
+          "riverEdges": 592,
+          "falls": 4,
+          "cliffShare": 0.02143640350877193,
+          "tinyShare": 0.013237847222222222,
+          "benchShare": 0.9025607638888888,
+          "padCandidates": 3313,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 592,
+          "falls": 1,
+          "cliffShare": 0.022971491228070174,
+          "tinyShare": 0.010850694444444444,
+          "benchShare": 0.9025607638888888,
+          "padCandidates": 3313,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 9,
+      "cap": 22,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 27,
+        "volume": 28,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 685,
+          "falls": 18,
+          "cliffShare": 0.048300438596491226,
+          "tinyShare": 0.015299479166666666,
+          "benchShare": 0.892578125,
+          "padCandidates": 3949,
+          "range": 19,
+          "levels": 18
+        },
+        "spatial": {
+          "uphill": 1,
+          "riverEdges": 592,
+          "falls": 22,
+          "cliffShare": 0.053837719298245615,
+          "tinyShare": 0.01171875,
+          "benchShare": 0.9032118055555556,
+          "padCandidates": 3303,
+          "range": 19,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 25,
+          "riverEdges": 592,
+          "falls": 9,
+          "cliffShare": 0.03289473684210526,
+          "tinyShare": 0.025173611111111112,
+          "benchShare": 0.8547092013888888,
+          "padCandidates": 2178,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 592,
+          "falls": 2,
+          "cliffShare": 0.034375,
+          "tinyShare": 0.019965277777777776,
+          "benchShare": 0.8570963541666666,
+          "padCandidates": 2178,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 10,
+      "cap": 16,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 17,
+        "volume": 17,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 674,
+          "falls": 4,
+          "cliffShare": 0.02280701754385965,
+          "tinyShare": 0.009223090277777778,
+          "benchShare": 0.9371744791666666,
+          "padCandidates": 4272,
+          "range": 13,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 3,
+          "riverEdges": 684,
+          "falls": 1,
+          "cliffShare": 0.019462719298245616,
+          "tinyShare": 0.008680555555555556,
+          "benchShare": 0.9318576388888888,
+          "padCandidates": 3934,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 9,
+          "riverEdges": 684,
+          "falls": 0,
+          "cliffShare": 0.021710526315789475,
+          "tinyShare": 0.011827256944444444,
+          "benchShare": 0.9347873263888888,
+          "padCandidates": 3911,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 684,
+          "falls": 0,
+          "cliffShare": 0.023355263157894737,
+          "tinyShare": 0.010091145833333334,
+          "benchShare": 0.9372829861111112,
+          "padCandidates": 3911,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 10,
+      "cap": 22,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 43,
+        "volume": 43,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 674,
+          "falls": 8,
+          "cliffShare": 0.03755482456140351,
+          "tinyShare": 0.009331597222222222,
+          "benchShare": 0.9370659722222222,
+          "padCandidates": 4272,
+          "range": 17,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 3,
+          "riverEdges": 684,
+          "falls": 12,
+          "cliffShare": 0.05224780701754386,
+          "tinyShare": 0.0087890625,
+          "benchShare": 0.9318576388888888,
+          "padCandidates": 3934,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 17,
+          "riverEdges": 684,
+          "falls": 3,
+          "cliffShare": 0.031469298245614036,
+          "tinyShare": 0.018120659722222224,
+          "benchShare": 0.9076605902777778,
+          "padCandidates": 3503,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 684,
+          "falls": 1,
+          "cliffShare": 0.035471491228070175,
+          "tinyShare": 0.015407986111111112,
+          "benchShare": 0.9117838541666666,
+          "padCandidates": 3503,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 11,
+      "cap": 16,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 70,
+        "volume": 71,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 0,
+          "riverEdges": 614,
+          "falls": 1,
+          "cliffShare": 0.017982456140350878,
+          "tinyShare": 0.010633680555555556,
+          "benchShare": 0.9092881944444444,
+          "padCandidates": 3822,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 1,
+          "cliffShare": 0.021875,
+          "tinyShare": 0.013563368055555556,
+          "benchShare": 0.8785807291666666,
+          "padCandidates": 2741,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 69,
+          "riverEdges": 686,
+          "falls": 5,
+          "cliffShare": 0.03031798245614035,
+          "tinyShare": 0.033528645833333336,
+          "benchShare": 0.8746744791666666,
+          "padCandidates": 2764,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 0,
+          "cliffShare": 0.036458333333333336,
+          "tinyShare": 0.017361111111111112,
+          "benchShare": 0.8776041666666666,
+          "padCandidates": 2764,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 11,
+      "cap": 22,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 107,
+        "volume": 117,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 0,
+          "riverEdges": 614,
+          "falls": 8,
+          "cliffShare": 0.05290570175438596,
+          "tinyShare": 0.010850694444444444,
+          "benchShare": 0.9090711805555556,
+          "padCandidates": 3822,
+          "range": 21,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 24,
+          "cliffShare": 0.07576754385964912,
+          "tinyShare": 0.013671875,
+          "benchShare": 0.8741319444444444,
+          "padCandidates": 2741,
+          "range": 21,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 86,
+          "riverEdges": 686,
+          "falls": 26,
+          "cliffShare": 0.046052631578947366,
+          "tinyShare": 0.048177083333333336,
+          "benchShare": 0.8336588541666666,
+          "padCandidates": 1982,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 0,
+          "cliffShare": 0.052796052631578945,
+          "tinyShare": 0.030924479166666668,
+          "benchShare": 0.8372395833333334,
+          "padCandidates": 1981,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 12,
+      "cap": 16,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 137,
+        "volume": 162,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 12,
+          "riverEdges": 808,
+          "falls": 10,
+          "cliffShare": 0.024835526315789475,
+          "tinyShare": 0.027452256944444444,
+          "benchShare": 0.8566623263888888,
+          "padCandidates": 3132,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 19,
+          "riverEdges": 700,
+          "falls": 12,
+          "cliffShare": 0.026096491228070177,
+          "tinyShare": 0.028103298611111112,
+          "benchShare": 0.8560112847222222,
+          "padCandidates": 2420,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 85,
+          "riverEdges": 700,
+          "falls": 19,
+          "cliffShare": 0.03580043859649123,
+          "tinyShare": 0.049479166666666664,
+          "benchShare": 0.8509114583333334,
+          "padCandidates": 2472,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 700,
+          "falls": 2,
+          "cliffShare": 0.043804824561403506,
+          "tinyShare": 0.033203125,
+          "benchShare": 0.8585069444444444,
+          "padCandidates": 2472,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "riverValley",
+      "seed": 12,
+      "cap": 22,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 160,
+        "volume": 222,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 12,
+          "riverEdges": 808,
+          "falls": 40,
+          "cliffShare": 0.07313596491228071,
+          "tinyShare": 0.028862847222222224,
+          "benchShare": 0.8526475694444444,
+          "padCandidates": 3132,
+          "range": 21,
+          "levels": 21
+        },
+        "spatial": {
+          "uphill": 19,
+          "riverEdges": 700,
+          "falls": 47,
+          "cliffShare": 0.08963815789473684,
+          "tinyShare": 0.030164930555555556,
+          "benchShare": 0.8450520833333334,
+          "padCandidates": 2420,
+          "range": 21,
+          "levels": 21
+        },
+        "beforeRepair": {
+          "uphill": 108,
+          "riverEdges": 700,
+          "falls": 46,
+          "cliffShare": 0.05202850877192983,
+          "tinyShare": 0.06304253472222222,
+          "benchShare": 0.7815755208333334,
+          "padCandidates": 1589,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 700,
+          "falls": 6,
+          "cliffShare": 0.05893640350877193,
+          "tinyShare": 0.049153645833333336,
+          "benchShare": 0.7839626736111112,
+          "padCandidates": 1587,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 1,
+      "cap": 16,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 213,
+        "volume": 362,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 776,
+          "falls": 13,
+          "cliffShare": 0.09950657894736842,
+          "tinyShare": 0.015190972222222222,
+          "benchShare": 0.9223090277777778,
+          "padCandidates": 2821,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 14,
+          "riverEdges": 701,
+          "falls": 21,
+          "cliffShare": 0.11951754385964912,
+          "tinyShare": 0.025933159722222224,
+          "benchShare": 0.8774956597222222,
+          "padCandidates": 2481,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 109,
+          "riverEdges": 701,
+          "falls": 25,
+          "cliffShare": 0.0793311403508772,
+          "tinyShare": 0.0703125,
+          "benchShare": 0.7534722222222222,
+          "padCandidates": 1078,
+          "range": 16,
+          "levels": 17
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 701,
+          "falls": 5,
+          "cliffShare": 0.09133771929824562,
+          "tinyShare": 0.049479166666666664,
+          "benchShare": 0.771484375,
+          "padCandidates": 1079,
+          "range": 16,
+          "levels": 17
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 1,
+      "cap": 22,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 271,
+        "volume": 531,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 776,
+          "falls": 18,
+          "cliffShare": 0.1231359649122807,
+          "tinyShare": 0.015516493055555556,
+          "benchShare": 0.9192708333333334,
+          "padCandidates": 2821,
+          "range": 21,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 14,
+          "riverEdges": 701,
+          "falls": 29,
+          "cliffShare": 0.14040570175438596,
+          "tinyShare": 0.026692708333333332,
+          "benchShare": 0.873046875,
+          "padCandidates": 2481,
+          "range": 21,
+          "levels": 21
+        },
+        "beforeRepair": {
+          "uphill": 146,
+          "riverEdges": 701,
+          "falls": 62,
+          "cliffShare": 0.13097587719298245,
+          "tinyShare": 0.13661024305555555,
+          "benchShare": 0.6183810763888888,
+          "padCandidates": 702,
+          "range": 22,
+          "levels": 23
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 701,
+          "falls": 10,
+          "cliffShare": 0.1431469298245614,
+          "tinyShare": 0.10872395833333333,
+          "benchShare": 0.6320529513888888,
+          "padCandidates": 701,
+          "range": 22,
+          "levels": 23
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 2,
+      "cap": 16,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 52,
+        "volume": 55,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 11,
+          "riverEdges": 754,
+          "falls": 17,
+          "cliffShare": 0.046875,
+          "tinyShare": 0.011827256944444444,
+          "benchShare": 0.9332682291666666,
+          "padCandidates": 4057,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 715,
+          "falls": 10,
+          "cliffShare": 0.044407894736842105,
+          "tinyShare": 0.011610243055555556,
+          "benchShare": 0.9267578125,
+          "padCandidates": 3893,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 49,
+          "riverEdges": 715,
+          "falls": 6,
+          "cliffShare": 0.027028508771929825,
+          "tinyShare": 0.023003472222222224,
+          "benchShare": 0.9010416666666666,
+          "padCandidates": 3378,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 715,
+          "falls": 1,
+          "cliffShare": 0.030975877192982455,
+          "tinyShare": 0.012369791666666666,
+          "benchShare": 0.9125434027777778,
+          "padCandidates": 3377,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 2,
+      "cap": 22,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 160,
+        "volume": 171,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 11,
+          "riverEdges": 754,
+          "falls": 19,
+          "cliffShare": 0.06595394736842106,
+          "tinyShare": 0.012586805555555556,
+          "benchShare": 0.9332682291666666,
+          "padCandidates": 4057,
+          "range": 19,
+          "levels": 18
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 715,
+          "falls": 24,
+          "cliffShare": 0.06770833333333333,
+          "tinyShare": 0.012478298611111112,
+          "benchShare": 0.9197048611111112,
+          "padCandidates": 3891,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 85,
+          "riverEdges": 715,
+          "falls": 13,
+          "cliffShare": 0.0450109649122807,
+          "tinyShare": 0.04112413194444445,
+          "benchShare": 0.8651258680555556,
+          "padCandidates": 2505,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 715,
+          "falls": 1,
+          "cliffShare": 0.059429824561403506,
+          "tinyShare": 0.021158854166666668,
+          "benchShare": 0.8732638888888888,
+          "padCandidates": 2505,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 3,
+      "cap": 16,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 267,
+        "volume": 442,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 19,
+          "riverEdges": 648,
+          "falls": 16,
+          "cliffShare": 0.084375,
+          "tinyShare": 0.022243923611111112,
+          "benchShare": 0.8591579861111112,
+          "padCandidates": 2921,
+          "range": 16,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 15,
+          "riverEdges": 680,
+          "falls": 21,
+          "cliffShare": 0.09824561403508772,
+          "tinyShare": 0.02734375,
+          "benchShare": 0.8490668402777778,
+          "padCandidates": 2451,
+          "range": 16,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 123,
+          "riverEdges": 680,
+          "falls": 28,
+          "cliffShare": 0.07105263157894737,
+          "tinyShare": 0.0656467013888889,
+          "benchShare": 0.7973090277777778,
+          "padCandidates": 1547,
+          "range": 16,
+          "levels": 17
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 680,
+          "falls": 11,
+          "cliffShare": 0.0875,
+          "tinyShare": 0.03917100694444445,
+          "benchShare": 0.8136935763888888,
+          "padCandidates": 1555,
+          "range": 16,
+          "levels": 17
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 3,
+      "cap": 22,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 286,
+        "volume": 605,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 19,
+          "riverEdges": 648,
+          "falls": 22,
+          "cliffShare": 0.1061951754385965,
+          "tinyShare": 0.022569444444444444,
+          "benchShare": 0.8588324652777778,
+          "padCandidates": 2921,
+          "range": 22,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 15,
+          "riverEdges": 680,
+          "falls": 29,
+          "cliffShare": 0.13048245614035087,
+          "tinyShare": 0.028537326388888888,
+          "benchShare": 0.8488498263888888,
+          "padCandidates": 2451,
+          "range": 22,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 144,
+          "riverEdges": 680,
+          "falls": 57,
+          "cliffShare": 0.10224780701754387,
+          "tinyShare": 0.08995225694444445,
+          "benchShare": 0.7294921875,
+          "padCandidates": 1033,
+          "range": 22,
+          "levels": 23
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 680,
+          "falls": 16,
+          "cliffShare": 0.11721491228070176,
+          "tinyShare": 0.060872395833333336,
+          "benchShare": 0.7475043402777778,
+          "padCandidates": 1034,
+          "range": 22,
+          "levels": 23
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 4,
+      "cap": 16,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 138,
+        "volume": 167,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 20,
+          "riverEdges": 638,
+          "falls": 4,
+          "cliffShare": 0.04035087719298246,
+          "tinyShare": 0.023980034722222224,
+          "benchShare": 0.8581814236111112,
+          "padCandidates": 1990,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 13,
+          "riverEdges": 684,
+          "falls": 7,
+          "cliffShare": 0.040625,
+          "tinyShare": 0.022894965277777776,
+          "benchShare": 0.8543836805555556,
+          "padCandidates": 2512,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 88,
+          "riverEdges": 684,
+          "falls": 23,
+          "cliffShare": 0.0525219298245614,
+          "tinyShare": 0.042643229166666664,
+          "benchShare": 0.8389756944444444,
+          "padCandidates": 2487,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 684,
+          "falls": 1,
+          "cliffShare": 0.061019736842105265,
+          "tinyShare": 0.020724826388888888,
+          "benchShare": 0.8601345486111112,
+          "padCandidates": 2485,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 4,
+      "cap": 22,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 132,
+        "volume": 203,
+        "maxCut": 5
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 20,
+          "riverEdges": 638,
+          "falls": 15,
+          "cliffShare": 0.09292763157894737,
+          "tinyShare": 0.025065104166666668,
+          "benchShare": 0.8537326388888888,
+          "padCandidates": 1988,
+          "range": 19,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 13,
+          "riverEdges": 684,
+          "falls": 28,
+          "cliffShare": 0.08892543859649123,
+          "tinyShare": 0.025173611111111112,
+          "benchShare": 0.8502604166666666,
+          "padCandidates": 2511,
+          "range": 21,
+          "levels": 21
+        },
+        "beforeRepair": {
+          "uphill": 116,
+          "riverEdges": 684,
+          "falls": 41,
+          "cliffShare": 0.07768640350877193,
+          "tinyShare": 0.0646701388888889,
+          "benchShare": 0.7924262152777778,
+          "padCandidates": 1534,
+          "range": 22,
+          "levels": 23
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 684,
+          "falls": 3,
+          "cliffShare": 0.08283991228070176,
+          "tinyShare": 0.0361328125,
+          "benchShare": 0.8041449652777778,
+          "padCandidates": 1534,
+          "range": 22,
+          "levels": 23
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 5,
+      "cap": 16,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 223,
+        "volume": 372,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 26,
+          "riverEdges": 622,
+          "falls": 24,
+          "cliffShare": 0.05981359649122807,
+          "tinyShare": 0.049370659722222224,
+          "benchShare": 0.8310546875,
+          "padCandidates": 2270,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 27,
+          "riverEdges": 686,
+          "falls": 15,
+          "cliffShare": 0.06557017543859649,
+          "tinyShare": 0.04904513888888889,
+          "benchShare": 0.7956814236111112,
+          "padCandidates": 1691,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 119,
+          "riverEdges": 686,
+          "falls": 52,
+          "cliffShare": 0.07757675438596491,
+          "tinyShare": 0.06391059027777778,
+          "benchShare": 0.7825520833333334,
+          "padCandidates": 1790,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 4,
+          "cliffShare": 0.08782894736842105,
+          "tinyShare": 0.046440972222222224,
+          "benchShare": 0.7977430555555556,
+          "padCandidates": 1778,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 5,
+      "cap": 22,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 230,
+        "volume": 437,
+        "maxCut": 5
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 26,
+          "riverEdges": 622,
+          "falls": 34,
+          "cliffShare": 0.11907894736842105,
+          "tinyShare": 0.050347222222222224,
+          "benchShare": 0.8182508680555556,
+          "padCandidates": 2270,
+          "range": 20,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 27,
+          "riverEdges": 686,
+          "falls": 32,
+          "cliffShare": 0.1299890350877193,
+          "tinyShare": 0.052408854166666664,
+          "benchShare": 0.7909071180555556,
+          "padCandidates": 1685,
+          "range": 21,
+          "levels": 21
+        },
+        "beforeRepair": {
+          "uphill": 134,
+          "riverEdges": 686,
+          "falls": 72,
+          "cliffShare": 0.11524122807017544,
+          "tinyShare": 0.10601128472222222,
+          "benchShare": 0.685546875,
+          "padCandidates": 1255,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 8,
+          "cliffShare": 0.121875,
+          "tinyShare": 0.08561197916666667,
+          "benchShare": 0.7034505208333334,
+          "padCandidates": 1244,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 6,
+      "cap": 16,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 113,
+        "volume": 126,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 733,
+          "falls": 20,
+          "cliffShare": 0.09512061403508772,
+          "tinyShare": 0.006944444444444444,
+          "benchShare": 0.9391276041666666,
+          "padCandidates": 3969,
+          "range": 15,
+          "levels": 13
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 668,
+          "falls": 18,
+          "cliffShare": 0.10646929824561403,
+          "tinyShare": 0.008680555555555556,
+          "benchShare": 0.9450954861111112,
+          "padCandidates": 3830,
+          "range": 13,
+          "levels": 11
+        },
+        "beforeRepair": {
+          "uphill": 84,
+          "riverEdges": 668,
+          "falls": 18,
+          "cliffShare": 0.061019736842105265,
+          "tinyShare": 0.045247395833333336,
+          "benchShare": 0.8427734375,
+          "padCandidates": 2258,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 668,
+          "falls": 1,
+          "cliffShare": 0.06726973684210526,
+          "tinyShare": 0.024631076388888888,
+          "benchShare": 0.8579644097222222,
+          "padCandidates": 2248,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 6,
+      "cap": 22,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 142,
+        "volume": 178,
+        "maxCut": 5
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 733,
+          "falls": 20,
+          "cliffShare": 0.09775219298245615,
+          "tinyShare": 0.006944444444444444,
+          "benchShare": 0.9391276041666666,
+          "padCandidates": 3969,
+          "range": 21,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 668,
+          "falls": 18,
+          "cliffShare": 0.10789473684210527,
+          "tinyShare": 0.008680555555555556,
+          "benchShare": 0.9450954861111112,
+          "padCandidates": 3830,
+          "range": 18,
+          "levels": 11
+        },
+        "beforeRepair": {
+          "uphill": 113,
+          "riverEdges": 668,
+          "falls": 45,
+          "cliffShare": 0.08722587719298246,
+          "tinyShare": 0.09320746527777778,
+          "benchShare": 0.7587890625,
+          "padCandidates": 1494,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 668,
+          "falls": 3,
+          "cliffShare": 0.09199561403508771,
+          "tinyShare": 0.07042100694444445,
+          "benchShare": 0.7837456597222222,
+          "padCandidates": 1492,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 7,
+      "cap": 16,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 135,
+        "volume": 151,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 659,
+          "falls": 10,
+          "cliffShare": 0.05855263157894737,
+          "tinyShare": 0.007595486111111111,
+          "benchShare": 0.9678819444444444,
+          "padCandidates": 5168,
+          "range": 14,
+          "levels": 10
+        },
+        "spatial": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 13,
+          "cliffShare": 0.07971491228070175,
+          "tinyShare": 0.008246527777777778,
+          "benchShare": 0.9670138888888888,
+          "padCandidates": 4508,
+          "range": 15,
+          "levels": 11
+        },
+        "beforeRepair": {
+          "uphill": 102,
+          "riverEdges": 707,
+          "falls": 24,
+          "cliffShare": 0.0481359649122807,
+          "tinyShare": 0.05349392361111111,
+          "benchShare": 0.8509114583333334,
+          "padCandidates": 2906,
+          "range": 16,
+          "levels": 17
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 2,
+          "cliffShare": 0.05745614035087719,
+          "tinyShare": 0.030490451388888888,
+          "benchShare": 0.8704427083333334,
+          "padCandidates": 2906,
+          "range": 16,
+          "levels": 17
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 7,
+      "cap": 22,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 168,
+        "volume": 209,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 3,
+          "riverEdges": 659,
+          "falls": 10,
+          "cliffShare": 0.05855263157894737,
+          "tinyShare": 0.007595486111111111,
+          "benchShare": 0.9678819444444444,
+          "padCandidates": 5168,
+          "range": 20,
+          "levels": 10
+        },
+        "spatial": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 13,
+          "cliffShare": 0.07971491228070175,
+          "tinyShare": 0.008246527777777778,
+          "benchShare": 0.9670138888888888,
+          "padCandidates": 4508,
+          "range": 21,
+          "levels": 11
+        },
+        "beforeRepair": {
+          "uphill": 149,
+          "riverEdges": 707,
+          "falls": 36,
+          "cliffShare": 0.06957236842105263,
+          "tinyShare": 0.08246527777777778,
+          "benchShare": 0.8132595486111112,
+          "padCandidates": 2091,
+          "range": 22,
+          "levels": 23
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 707,
+          "falls": 2,
+          "cliffShare": 0.078125,
+          "tinyShare": 0.04774305555555555,
+          "benchShare": 0.8299696180555556,
+          "padCandidates": 2090,
+          "range": 22,
+          "levels": 23
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 8,
+      "cap": 16,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 164,
+        "volume": 188,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 10,
+          "riverEdges": 659,
+          "falls": 17,
+          "cliffShare": 0.08311403508771929,
+          "tinyShare": 0.013020833333333334,
+          "benchShare": 0.9270833333333334,
+          "padCandidates": 3883,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 663,
+          "falls": 14,
+          "cliffShare": 0.08399122807017544,
+          "tinyShare": 0.013346354166666666,
+          "benchShare": 0.9318576388888888,
+          "padCandidates": 3742,
+          "range": 13,
+          "levels": 13
+        },
+        "beforeRepair": {
+          "uphill": 115,
+          "riverEdges": 663,
+          "falls": 28,
+          "cliffShare": 0.04583333333333333,
+          "tinyShare": 0.052734375,
+          "benchShare": 0.8159722222222222,
+          "padCandidates": 1727,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 663,
+          "falls": 4,
+          "cliffShare": 0.05625,
+          "tinyShare": 0.026584201388888888,
+          "benchShare": 0.8285590277777778,
+          "padCandidates": 1722,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 8,
+      "cap": 22,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 197,
+        "volume": 278,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 10,
+          "riverEdges": 659,
+          "falls": 23,
+          "cliffShare": 0.09709429824561404,
+          "tinyShare": 0.013563368055555556,
+          "benchShare": 0.9232855902777778,
+          "padCandidates": 3883,
+          "range": 19,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 10,
+          "riverEdges": 663,
+          "falls": 23,
+          "cliffShare": 0.09797149122807018,
+          "tinyShare": 0.014431423611111112,
+          "benchShare": 0.9294704861111112,
+          "padCandidates": 3741,
+          "range": 18,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 138,
+          "riverEdges": 663,
+          "falls": 56,
+          "cliffShare": 0.08256578947368422,
+          "tinyShare": 0.07139756944444445,
+          "benchShare": 0.7611762152777778,
+          "padCandidates": 1234,
+          "range": 22,
+          "levels": 23
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 663,
+          "falls": 6,
+          "cliffShare": 0.09100877192982457,
+          "tinyShare": 0.045572916666666664,
+          "benchShare": 0.7746310763888888,
+          "padCandidates": 1232,
+          "range": 22,
+          "levels": 23
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 9,
+      "cap": 16,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 202,
+        "volume": 301,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 34,
+          "riverEdges": 722,
+          "falls": 18,
+          "cliffShare": 0.06633771929824561,
+          "tinyShare": 0.05447048611111111,
+          "benchShare": 0.7750651041666666,
+          "padCandidates": 2197,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 13,
+          "riverEdges": 695,
+          "falls": 8,
+          "cliffShare": 0.051589912280701755,
+          "tinyShare": 0.03884548611111111,
+          "benchShare": 0.828125,
+          "padCandidates": 1731,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 82,
+          "riverEdges": 695,
+          "falls": 21,
+          "cliffShare": 0.06233552631578947,
+          "tinyShare": 0.05447048611111111,
+          "benchShare": 0.8206380208333334,
+          "padCandidates": 1775,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 695,
+          "falls": 6,
+          "cliffShare": 0.07752192982456141,
+          "tinyShare": 0.036458333333333336,
+          "benchShare": 0.8346354166666666,
+          "padCandidates": 1774,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 9,
+      "cap": 22,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 211,
+        "volume": 348,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 34,
+          "riverEdges": 722,
+          "falls": 41,
+          "cliffShare": 0.10827850877192982,
+          "tinyShare": 0.055989583333333336,
+          "benchShare": 0.7688802083333334,
+          "padCandidates": 2196,
+          "range": 21,
+          "levels": 21
+        },
+        "spatial": {
+          "uphill": 13,
+          "riverEdges": 695,
+          "falls": 19,
+          "cliffShare": 0.11107456140350877,
+          "tinyShare": 0.04014756944444445,
+          "benchShare": 0.8247612847222222,
+          "padCandidates": 1731,
+          "range": 21,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 109,
+          "riverEdges": 695,
+          "falls": 37,
+          "cliffShare": 0.09473684210526316,
+          "tinyShare": 0.08561197916666667,
+          "benchShare": 0.7537977430555556,
+          "padCandidates": 1095,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 695,
+          "falls": 7,
+          "cliffShare": 0.10679824561403509,
+          "tinyShare": 0.06032986111111111,
+          "benchShare": 0.7707248263888888,
+          "padCandidates": 1093,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 10,
+      "cap": 16,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 130,
+        "volume": 151,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 9,
+          "riverEdges": 610,
+          "falls": 16,
+          "cliffShare": 0.09336622807017544,
+          "tinyShare": 0.017903645833333332,
+          "benchShare": 0.9264322916666666,
+          "padCandidates": 4232,
+          "range": 13,
+          "levels": 13
+        },
+        "spatial": {
+          "uphill": 6,
+          "riverEdges": 705,
+          "falls": 14,
+          "cliffShare": 0.09676535087719298,
+          "tinyShare": 0.012261284722222222,
+          "benchShare": 0.9399956597222222,
+          "padCandidates": 3703,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 62,
+          "riverEdges": 705,
+          "falls": 23,
+          "cliffShare": 0.04078947368421053,
+          "tinyShare": 0.03211805555555555,
+          "benchShare": 0.9152560763888888,
+          "padCandidates": 3042,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 705,
+          "falls": 0,
+          "cliffShare": 0.04851973684210526,
+          "tinyShare": 0.018663194444444444,
+          "benchShare": 0.9263237847222222,
+          "padCandidates": 3042,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 10,
+      "cap": 22,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 133,
+        "volume": 199,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 9,
+          "riverEdges": 610,
+          "falls": 17,
+          "cliffShare": 0.09429824561403509,
+          "tinyShare": 0.017903645833333332,
+          "benchShare": 0.9264322916666666,
+          "padCandidates": 4232,
+          "range": 17,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 6,
+          "riverEdges": 705,
+          "falls": 17,
+          "cliffShare": 0.10394736842105264,
+          "tinyShare": 0.012803819444444444,
+          "benchShare": 0.9398871527777778,
+          "padCandidates": 3703,
+          "range": 19,
+          "levels": 17
+        },
+        "beforeRepair": {
+          "uphill": 91,
+          "riverEdges": 705,
+          "falls": 37,
+          "cliffShare": 0.06546052631578947,
+          "tinyShare": 0.055121527777777776,
+          "benchShare": 0.8356119791666666,
+          "padCandidates": 2379,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 705,
+          "falls": 4,
+          "cliffShare": 0.07171052631578947,
+          "tinyShare": 0.03342013888888889,
+          "benchShare": 0.8511284722222222,
+          "padCandidates": 2379,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 11,
+      "cap": 16,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 196,
+        "volume": 222,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 10,
+          "riverEdges": 688,
+          "falls": 10,
+          "cliffShare": 0.09665570175438597,
+          "tinyShare": 0.014865451388888888,
+          "benchShare": 0.8798828125,
+          "padCandidates": 3022,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 799,
+          "falls": 20,
+          "cliffShare": 0.09824561403508772,
+          "tinyShare": 0.0205078125,
+          "benchShare": 0.8419053819444444,
+          "padCandidates": 2680,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 126,
+          "riverEdges": 799,
+          "falls": 41,
+          "cliffShare": 0.07171052631578947,
+          "tinyShare": 0.05588107638888889,
+          "benchShare": 0.8249782986111112,
+          "padCandidates": 2137,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 799,
+          "falls": 1,
+          "cliffShare": 0.08459429824561404,
+          "tinyShare": 0.03125,
+          "benchShare": 0.8340928819444444,
+          "padCandidates": 2135,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 11,
+      "cap": 22,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 234,
+        "volume": 320,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 10,
+          "riverEdges": 688,
+          "falls": 14,
+          "cliffShare": 0.10800438596491228,
+          "tinyShare": 0.014865451388888888,
+          "benchShare": 0.8766276041666666,
+          "padCandidates": 3021,
+          "range": 20,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 799,
+          "falls": 31,
+          "cliffShare": 0.1237938596491228,
+          "tinyShare": 0.021267361111111112,
+          "benchShare": 0.8353949652777778,
+          "padCandidates": 2680,
+          "range": 20,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 157,
+          "riverEdges": 799,
+          "falls": 73,
+          "cliffShare": 0.10345394736842105,
+          "tinyShare": 0.07855902777777778,
+          "benchShare": 0.7357855902777778,
+          "padCandidates": 1715,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 799,
+          "falls": 4,
+          "cliffShare": 0.11282894736842106,
+          "tinyShare": 0.051215277777777776,
+          "benchShare": 0.7492404513888888,
+          "padCandidates": 1715,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 12,
+      "cap": 16,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 122,
+        "volume": 126,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 632,
+          "falls": 21,
+          "cliffShare": 0.1,
+          "tinyShare": 0.008680555555555556,
+          "benchShare": 0.9481336805555556,
+          "padCandidates": 4053,
+          "range": 15,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 686,
+          "falls": 30,
+          "cliffShare": 0.10679824561403509,
+          "tinyShare": 0.013346354166666666,
+          "benchShare": 0.9258897569444444,
+          "padCandidates": 3900,
+          "range": 15,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 84,
+          "riverEdges": 686,
+          "falls": 9,
+          "cliffShare": 0.04292763157894737,
+          "tinyShare": 0.04014756944444445,
+          "benchShare": 0.8681640625,
+          "padCandidates": 2676,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 0,
+          "cliffShare": 0.052083333333333336,
+          "tinyShare": 0.018446180555555556,
+          "benchShare": 0.8821614583333334,
+          "padCandidates": 2672,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "canyon",
+      "seed": 12,
+      "cap": 22,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 184,
+        "volume": 202,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 632,
+          "falls": 21,
+          "cliffShare": 0.1006578947368421,
+          "tinyShare": 0.008680555555555556,
+          "benchShare": 0.9481336805555556,
+          "padCandidates": 4053,
+          "range": 20,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 686,
+          "falls": 30,
+          "cliffShare": 0.10707236842105264,
+          "tinyShare": 0.013346354166666666,
+          "benchShare": 0.9258897569444444,
+          "padCandidates": 3900,
+          "range": 20,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 127,
+          "riverEdges": 686,
+          "falls": 33,
+          "cliffShare": 0.06387061403508772,
+          "tinyShare": 0.06304253472222222,
+          "benchShare": 0.7987196180555556,
+          "padCandidates": 1833,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 686,
+          "falls": 4,
+          "cliffShare": 0.07571271929824562,
+          "tinyShare": 0.03309461805555555,
+          "benchShare": 0.8126085069444444,
+          "padCandidates": 1829,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 1,
+      "cap": 16,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 191,
+        "volume": 211,
+        "maxCut": 5
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 27,
+          "riverEdges": 764,
+          "falls": 14,
+          "cliffShare": 0.03788377192982456,
+          "tinyShare": 0.0283203125,
+          "benchShare": 0.8210720486111112,
+          "padCandidates": 2687,
+          "range": 13,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 21,
+          "riverEdges": 672,
+          "falls": 10,
+          "cliffShare": 0.03399122807017544,
+          "tinyShare": 0.027018229166666668,
+          "benchShare": 0.8421223958333334,
+          "padCandidates": 2376,
+          "range": 13,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 130,
+          "riverEdges": 672,
+          "falls": 31,
+          "cliffShare": 0.05263157894736842,
+          "tinyShare": 0.06032986111111111,
+          "benchShare": 0.8322482638888888,
+          "padCandidates": 2365,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 672,
+          "falls": 0,
+          "cliffShare": 0.06233552631578947,
+          "tinyShare": 0.0361328125,
+          "benchShare": 0.8512369791666666,
+          "padCandidates": 2365,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 1,
+      "cap": 22,
+      "controls": [
+        52.737231977516785,
+        60.05280386307277,
+        18.55250866804272
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 252,
+        "volume": 375,
+        "maxCut": 7
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 27,
+          "riverEdges": 764,
+          "falls": 34,
+          "cliffShare": 0.09610745614035088,
+          "tinyShare": 0.029296875,
+          "benchShare": 0.8120659722222222,
+          "padCandidates": 2683,
+          "range": 18,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 21,
+          "riverEdges": 672,
+          "falls": 37,
+          "cliffShare": 0.09978070175438597,
+          "tinyShare": 0.029839409722222224,
+          "benchShare": 0.8366970486111112,
+          "padCandidates": 2372,
+          "range": 18,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 157,
+          "riverEdges": 672,
+          "falls": 72,
+          "cliffShare": 0.08432017543859649,
+          "tinyShare": 0.08094618055555555,
+          "benchShare": 0.7495659722222222,
+          "padCandidates": 1652,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 672,
+          "falls": 7,
+          "cliffShare": 0.09375,
+          "tinyShare": 0.050347222222222224,
+          "benchShare": 0.7605251736111112,
+          "padCandidates": 1651,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 2,
+      "cap": 16,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 150,
+        "volume": 231,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 15,
+          "riverEdges": 605,
+          "falls": 8,
+          "cliffShare": 0.05367324561403509,
+          "tinyShare": 0.01171875,
+          "benchShare": 0.9098307291666666,
+          "padCandidates": 3735,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 622,
+          "falls": 13,
+          "cliffShare": 0.057785087719298245,
+          "tinyShare": 0.021267361111111112,
+          "benchShare": 0.8889973958333334,
+          "padCandidates": 2913,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 46,
+          "riverEdges": 622,
+          "falls": 12,
+          "cliffShare": 0.04117324561403509,
+          "tinyShare": 0.027235243055555556,
+          "benchShare": 0.8746744791666666,
+          "padCandidates": 2790,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 622,
+          "falls": 1,
+          "cliffShare": 0.05296052631578947,
+          "tinyShare": 0.018988715277777776,
+          "benchShare": 0.890625,
+          "padCandidates": 2789,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 2,
+      "cap": 22,
+      "controls": [
+        79.85495145781897,
+        25.088633158477023,
+        31.451047050766647
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 184,
+        "volume": 332,
+        "maxCut": 7
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 15,
+          "riverEdges": 605,
+          "falls": 18,
+          "cliffShare": 0.07741228070175439,
+          "tinyShare": 0.012478298611111112,
+          "benchShare": 0.9071180555555556,
+          "padCandidates": 3733,
+          "range": 20,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 622,
+          "falls": 30,
+          "cliffShare": 0.09451754385964913,
+          "tinyShare": 0.024305555555555556,
+          "benchShare": 0.8833550347222222,
+          "padCandidates": 2908,
+          "range": 20,
+          "levels": 20
+        },
+        "beforeRepair": {
+          "uphill": 58,
+          "riverEdges": 622,
+          "falls": 26,
+          "cliffShare": 0.054989035087719296,
+          "tinyShare": 0.03342013888888889,
+          "benchShare": 0.8406032986111112,
+          "padCandidates": 2044,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 622,
+          "falls": 10,
+          "cliffShare": 0.06595394736842106,
+          "tinyShare": 0.026258680555555556,
+          "benchShare": 0.8488498263888888,
+          "padCandidates": 2035,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 3,
+      "cap": 16,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 204,
+        "volume": 218,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 31,
+          "riverEdges": 539,
+          "falls": 30,
+          "cliffShare": 0.08925438596491228,
+          "tinyShare": 0.029839409722222224,
+          "benchShare": 0.8625217013888888,
+          "padCandidates": 2881,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 30,
+          "riverEdges": 541,
+          "falls": 40,
+          "cliffShare": 0.08289473684210526,
+          "tinyShare": 0.019965277777777776,
+          "benchShare": 0.8738064236111112,
+          "padCandidates": 2703,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 51,
+          "riverEdges": 541,
+          "falls": 14,
+          "cliffShare": 0.04468201754385965,
+          "tinyShare": 0.025499131944444444,
+          "benchShare": 0.8572048611111112,
+          "padCandidates": 2080,
+          "range": 15,
+          "levels": 16
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 541,
+          "falls": 3,
+          "cliffShare": 0.05707236842105263,
+          "tinyShare": 0.019422743055555556,
+          "benchShare": 0.8625217013888888,
+          "padCandidates": 2063,
+          "range": 15,
+          "levels": 16
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 3,
+      "cap": 22,
+      "controls": [
+        75.35120812710375,
+        36.13438809476793,
+        24.011857960838825
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 215,
+        "volume": 289,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 31,
+          "riverEdges": 539,
+          "falls": 38,
+          "cliffShare": 0.11584429824561404,
+          "tinyShare": 0.030164930555555556,
+          "benchShare": 0.859375,
+          "padCandidates": 2880,
+          "range": 21,
+          "levels": 21
+        },
+        "spatial": {
+          "uphill": 30,
+          "riverEdges": 541,
+          "falls": 44,
+          "cliffShare": 0.11337719298245615,
+          "tinyShare": 0.020290798611111112,
+          "benchShare": 0.8682725694444444,
+          "padCandidates": 2703,
+          "range": 20,
+          "levels": 20
+        },
+        "beforeRepair": {
+          "uphill": 64,
+          "riverEdges": 541,
+          "falls": 22,
+          "cliffShare": 0.0650219298245614,
+          "tinyShare": 0.04774305555555555,
+          "benchShare": 0.7570529513888888,
+          "padCandidates": 1509,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 541,
+          "falls": 10,
+          "cliffShare": 0.0781798245614035,
+          "tinyShare": 0.040364583333333336,
+          "benchShare": 0.7604166666666666,
+          "padCandidates": 1498,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 4,
+      "cap": 16,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 56,
+        "volume": 57,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 609,
+          "falls": 10,
+          "cliffShare": 0.037171052631578945,
+          "tinyShare": 0.026150173611111112,
+          "benchShare": 0.8536241319444444,
+          "padCandidates": 2796,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 15,
+          "riverEdges": 603,
+          "falls": 6,
+          "cliffShare": 0.029660087719298244,
+          "tinyShare": 0.025716145833333332,
+          "benchShare": 0.8756510416666666,
+          "padCandidates": 2633,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 31,
+          "riverEdges": 603,
+          "falls": 4,
+          "cliffShare": 0.03349780701754386,
+          "tinyShare": 0.024956597222222224,
+          "benchShare": 0.8648003472222222,
+          "padCandidates": 2623,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 603,
+          "falls": 0,
+          "cliffShare": 0.03700657894736842,
+          "tinyShare": 0.020724826388888888,
+          "benchShare": 0.8706597222222222,
+          "padCandidates": 2615,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 4,
+      "cap": 22,
+      "controls": [
+        63.70032588718459,
+        28.81121594295837,
+        19.68270455673337
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 155,
+        "volume": 194,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 28,
+          "riverEdges": 609,
+          "falls": 24,
+          "cliffShare": 0.08453947368421053,
+          "tinyShare": 0.027886284722222224,
+          "benchShare": 0.8397352430555556,
+          "padCandidates": 2795,
+          "range": 21,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 15,
+          "riverEdges": 603,
+          "falls": 19,
+          "cliffShare": 0.07664473684210527,
+          "tinyShare": 0.025824652777777776,
+          "benchShare": 0.8692491319444444,
+          "padCandidates": 2633,
+          "range": 19,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 37,
+          "riverEdges": 603,
+          "falls": 15,
+          "cliffShare": 0.046107456140350875,
+          "tinyShare": 0.035807291666666664,
+          "benchShare": 0.8178168402777778,
+          "padCandidates": 1783,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 603,
+          "falls": 6,
+          "cliffShare": 0.05740131578947368,
+          "tinyShare": 0.03331163194444445,
+          "benchShare": 0.8138020833333334,
+          "padCandidates": 1778,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 5,
+      "cap": 16,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 166,
+        "volume": 452,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 30,
+          "riverEdges": 662,
+          "falls": 9,
+          "cliffShare": 0.026973684210526316,
+          "tinyShare": 0.013237847222222222,
+          "benchShare": 0.9388020833333334,
+          "padCandidates": 4128,
+          "range": 14,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 598,
+          "falls": 6,
+          "cliffShare": 0.025219298245614034,
+          "tinyShare": 0.008897569444444444,
+          "benchShare": 0.9594184027777778,
+          "padCandidates": 4117,
+          "range": 13,
+          "levels": 13
+        },
+        "beforeRepair": {
+          "uphill": 36,
+          "riverEdges": 598,
+          "falls": 8,
+          "cliffShare": 0.019791666666666666,
+          "tinyShare": 0.017578125,
+          "benchShare": 0.9363064236111112,
+          "padCandidates": 3841,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 598,
+          "falls": 8,
+          "cliffShare": 0.03344298245614035,
+          "tinyShare": 0.0107421875,
+          "benchShare": 0.943359375,
+          "padCandidates": 3837,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 5,
+      "cap": 22,
+      "controls": [
+        67.03483678982593,
+        58.74922993290238,
+        46.95733465673402
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 211,
+        "volume": 646,
+        "maxCut": 6
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 30,
+          "riverEdges": 662,
+          "falls": 14,
+          "cliffShare": 0.04703947368421053,
+          "tinyShare": 0.013780381944444444,
+          "benchShare": 0.9319661458333334,
+          "padCandidates": 4128,
+          "range": 19,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 598,
+          "falls": 10,
+          "cliffShare": 0.0556469298245614,
+          "tinyShare": 0.009331597222222222,
+          "benchShare": 0.9563802083333334,
+          "padCandidates": 4117,
+          "range": 18,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 52,
+          "riverEdges": 598,
+          "falls": 13,
+          "cliffShare": 0.029769736842105262,
+          "tinyShare": 0.024739583333333332,
+          "benchShare": 0.9203559027777778,
+          "padCandidates": 3264,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 598,
+          "falls": 11,
+          "cliffShare": 0.0462719298245614,
+          "tinyShare": 0.016059027777777776,
+          "benchShare": 0.9301215277777778,
+          "padCandidates": 3262,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 6,
+      "cap": 16,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 115,
+        "volume": 148,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 31,
+          "riverEdges": 738,
+          "falls": 19,
+          "cliffShare": 0.05767543859649123,
+          "tinyShare": 0.021484375,
+          "benchShare": 0.8521050347222222,
+          "padCandidates": 2303,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 653,
+          "falls": 20,
+          "cliffShare": 0.05268640350877193,
+          "tinyShare": 0.023220486111111112,
+          "benchShare": 0.869140625,
+          "padCandidates": 2647,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 37,
+          "riverEdges": 653,
+          "falls": 13,
+          "cliffShare": 0.02993421052631579,
+          "tinyShare": 0.022026909722222224,
+          "benchShare": 0.8744574652777778,
+          "padCandidates": 2327,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 653,
+          "falls": 9,
+          "cliffShare": 0.038267543859649124,
+          "tinyShare": 0.017035590277777776,
+          "benchShare": 0.8950737847222222,
+          "padCandidates": 2325,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 6,
+      "cap": 22,
+      "controls": [
+        70.40099239791743,
+        64.28088769665919,
+        30.654678323306143
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 196,
+        "volume": 334,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 31,
+          "riverEdges": 738,
+          "falls": 36,
+          "cliffShare": 0.09528508771929825,
+          "tinyShare": 0.026150173611111112,
+          "benchShare": 0.8415798611111112,
+          "padCandidates": 2298,
+          "range": 20,
+          "levels": 20
+        },
+        "spatial": {
+          "uphill": 17,
+          "riverEdges": 653,
+          "falls": 35,
+          "cliffShare": 0.0981359649122807,
+          "tinyShare": 0.024305555555555556,
+          "benchShare": 0.8648003472222222,
+          "padCandidates": 2647,
+          "range": 19,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 62,
+          "riverEdges": 653,
+          "falls": 24,
+          "cliffShare": 0.047587719298245616,
+          "tinyShare": 0.041015625,
+          "benchShare": 0.7961154513888888,
+          "padCandidates": 1588,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 653,
+          "falls": 18,
+          "cliffShare": 0.0606359649122807,
+          "tinyShare": 0.030598958333333332,
+          "benchShare": 0.8138020833333334,
+          "padCandidates": 1578,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 7,
+      "cap": 16,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 46,
+        "volume": 46,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 1,
+          "riverEdges": 600,
+          "falls": 8,
+          "cliffShare": 0.07834429824561404,
+          "tinyShare": 0.005316840277777778,
+          "benchShare": 0.9678819444444444,
+          "padCandidates": 4397,
+          "range": 13,
+          "levels": 12
+        },
+        "spatial": {
+          "uphill": 1,
+          "riverEdges": 666,
+          "falls": 12,
+          "cliffShare": 0.054276315789473686,
+          "tinyShare": 0.004991319444444444,
+          "benchShare": 0.9539930555555556,
+          "padCandidates": 4924,
+          "range": 13,
+          "levels": 11
+        },
+        "beforeRepair": {
+          "uphill": 37,
+          "riverEdges": 666,
+          "falls": 1,
+          "cliffShare": 0.02362938596491228,
+          "tinyShare": 0.0185546875,
+          "benchShare": 0.9057074652777778,
+          "padCandidates": 2940,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 666,
+          "falls": 1,
+          "cliffShare": 0.02757675438596491,
+          "tinyShare": 0.011827256944444444,
+          "benchShare": 0.9099392361111112,
+          "padCandidates": 2940,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 7,
+      "cap": 22,
+      "controls": [
+        85.65704075735994,
+        26.60519317165017,
+        43.042839066591114
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 85,
+        "volume": 87,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 1,
+          "riverEdges": 600,
+          "falls": 8,
+          "cliffShare": 0.0805921052631579,
+          "tinyShare": 0.005316840277777778,
+          "benchShare": 0.9678819444444444,
+          "padCandidates": 4397,
+          "range": 18,
+          "levels": 12
+        },
+        "spatial": {
+          "uphill": 1,
+          "riverEdges": 666,
+          "falls": 12,
+          "cliffShare": 0.05619517543859649,
+          "tinyShare": 0.004991319444444444,
+          "benchShare": 0.9539930555555556,
+          "padCandidates": 4924,
+          "range": 18,
+          "levels": 12
+        },
+        "beforeRepair": {
+          "uphill": 49,
+          "riverEdges": 666,
+          "falls": 8,
+          "cliffShare": 0.044353070175438596,
+          "tinyShare": 0.029079861111111112,
+          "benchShare": 0.8348524305555556,
+          "padCandidates": 2227,
+          "range": 19,
+          "levels": 20
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 666,
+          "falls": 1,
+          "cliffShare": 0.051644736842105264,
+          "tinyShare": 0.017252604166666668,
+          "benchShare": 0.8442925347222222,
+          "padCandidates": 2223,
+          "range": 19,
+          "levels": 20
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 8,
+      "cap": 16,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 195,
+        "volume": 235,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 18,
+          "riverEdges": 675,
+          "falls": 5,
+          "cliffShare": 0.03744517543859649,
+          "tinyShare": 0.019097222222222224,
+          "benchShare": 0.9117838541666666,
+          "padCandidates": 2740,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 28,
+          "riverEdges": 633,
+          "falls": 2,
+          "cliffShare": 0.03525219298245614,
+          "tinyShare": 0.016710069444444444,
+          "benchShare": 0.9007161458333334,
+          "padCandidates": 2295,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 47,
+          "riverEdges": 633,
+          "falls": 3,
+          "cliffShare": 0.03240131578947368,
+          "tinyShare": 0.020941840277777776,
+          "benchShare": 0.9024522569444444,
+          "padCandidates": 2277,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 633,
+          "falls": 1,
+          "cliffShare": 0.049835526315789476,
+          "tinyShare": 0.010850694444444444,
+          "benchShare": 0.9097222222222222,
+          "padCandidates": 2271,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 8,
+      "cap": 22,
+      "controls": [
+        47.35554781043902,
+        37.393123930785805,
+        25.915624086745083
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 214,
+        "volume": 289,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 18,
+          "riverEdges": 675,
+          "falls": 21,
+          "cliffShare": 0.08459429824561404,
+          "tinyShare": 0.019097222222222224,
+          "benchShare": 0.9117838541666666,
+          "padCandidates": 2740,
+          "range": 21,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 28,
+          "riverEdges": 633,
+          "falls": 29,
+          "cliffShare": 0.09342105263157895,
+          "tinyShare": 0.018337673611111112,
+          "benchShare": 0.8998480902777778,
+          "padCandidates": 2295,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 71,
+          "riverEdges": 633,
+          "falls": 12,
+          "cliffShare": 0.0481359649122807,
+          "tinyShare": 0.041449652777777776,
+          "benchShare": 0.8322482638888888,
+          "padCandidates": 1591,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 633,
+          "falls": 1,
+          "cliffShare": 0.06419956140350877,
+          "tinyShare": 0.028537326388888888,
+          "benchShare": 0.8497178819444444,
+          "padCandidates": 1588,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 9,
+      "cap": 16,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 41,
+        "volume": 42,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 7,
+          "riverEdges": 664,
+          "falls": 21,
+          "cliffShare": 0.062225877192982455,
+          "tinyShare": 0.011935763888888888,
+          "benchShare": 0.9061414930555556,
+          "padCandidates": 4358,
+          "range": 16,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 579,
+          "falls": 18,
+          "cliffShare": 0.06633771929824561,
+          "tinyShare": 0.009657118055555556,
+          "benchShare": 0.9441189236111112,
+          "padCandidates": 4179,
+          "range": 15,
+          "levels": 16
+        },
+        "beforeRepair": {
+          "uphill": 34,
+          "riverEdges": 579,
+          "falls": 6,
+          "cliffShare": 0.025219298245614034,
+          "tinyShare": 0.0224609375,
+          "benchShare": 0.8997395833333334,
+          "padCandidates": 3468,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 579,
+          "falls": 3,
+          "cliffShare": 0.02817982456140351,
+          "tinyShare": 0.014322916666666666,
+          "benchShare": 0.9039713541666666,
+          "padCandidates": 3468,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 9,
+      "cap": 22,
+      "controls": [
+        58.4033247444313,
+        30.255191447213292,
+        22.32244386523962
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 72,
+        "volume": 83,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 7,
+          "riverEdges": 664,
+          "falls": 27,
+          "cliffShare": 0.07225877192982456,
+          "tinyShare": 0.012478298611111112,
+          "benchShare": 0.9026692708333334,
+          "padCandidates": 4355,
+          "range": 22,
+          "levels": 22
+        },
+        "spatial": {
+          "uphill": 2,
+          "riverEdges": 579,
+          "falls": 23,
+          "cliffShare": 0.07960526315789473,
+          "tinyShare": 0.009657118055555556,
+          "benchShare": 0.9441189236111112,
+          "padCandidates": 4179,
+          "range": 20,
+          "levels": 19
+        },
+        "beforeRepair": {
+          "uphill": 44,
+          "riverEdges": 579,
+          "falls": 10,
+          "cliffShare": 0.03684210526315789,
+          "tinyShare": 0.03439670138888889,
+          "benchShare": 0.8553602430555556,
+          "padCandidates": 2413,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 579,
+          "falls": 5,
+          "cliffShare": 0.0418859649122807,
+          "tinyShare": 0.0234375,
+          "benchShare": 0.8559027777777778,
+          "padCandidates": 2413,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 10,
+      "cap": 16,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 62,
+        "volume": 62,
+        "maxCut": 1
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 582,
+          "falls": 1,
+          "cliffShare": 0.0368969298245614,
+          "tinyShare": 0.0205078125,
+          "benchShare": 0.8605685763888888,
+          "padCandidates": 2793,
+          "range": 14,
+          "levels": 15
+        },
+        "spatial": {
+          "uphill": 16,
+          "riverEdges": 622,
+          "falls": 0,
+          "cliffShare": 0.03508771929824561,
+          "tinyShare": 0.020941840277777776,
+          "benchShare": 0.8379991319444444,
+          "padCandidates": 2272,
+          "range": 13,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 42,
+          "riverEdges": 622,
+          "falls": 0,
+          "cliffShare": 0.03695175438596491,
+          "tinyShare": 0.026692708333333332,
+          "benchShare": 0.8323567708333334,
+          "padCandidates": 2264,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 622,
+          "falls": 0,
+          "cliffShare": 0.042160087719298245,
+          "tinyShare": 0.015516493055555556,
+          "benchShare": 0.8429904513888888,
+          "padCandidates": 2261,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 10,
+      "cap": 22,
+      "controls": [
+        57.91751599521376,
+        45.563944126013666,
+        44.76760955248028
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 101,
+        "volume": 104,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 4,
+          "riverEdges": 582,
+          "falls": 21,
+          "cliffShare": 0.09698464912280702,
+          "tinyShare": 0.021484375,
+          "benchShare": 0.8555772569444444,
+          "padCandidates": 2784,
+          "range": 20,
+          "levels": 17
+        },
+        "spatial": {
+          "uphill": 16,
+          "riverEdges": 622,
+          "falls": 37,
+          "cliffShare": 0.09967105263157895,
+          "tinyShare": 0.023980034722222224,
+          "benchShare": 0.8328993055555556,
+          "padCandidates": 2264,
+          "range": 18,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 55,
+          "riverEdges": 622,
+          "falls": 3,
+          "cliffShare": 0.060032894736842105,
+          "tinyShare": 0.060872395833333336,
+          "benchShare": 0.7404513888888888,
+          "padCandidates": 1512,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 622,
+          "falls": 0,
+          "cliffShare": 0.06737938596491228,
+          "tinyShare": 0.048285590277777776,
+          "benchShare": 0.7486979166666666,
+          "padCandidates": 1512,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 11,
+      "cap": 16,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 40,
+        "volume": 43,
+        "maxCut": 2
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 656,
+          "falls": 8,
+          "cliffShare": 0.035526315789473684,
+          "tinyShare": 0.014431423611111112,
+          "benchShare": 0.9194878472222222,
+          "padCandidates": 4061,
+          "range": 15,
+          "levels": 16
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 730,
+          "falls": 6,
+          "cliffShare": 0.034978070175438594,
+          "tinyShare": 0.012912326388888888,
+          "benchShare": 0.9083116319444444,
+          "padCandidates": 3224,
+          "range": 14,
+          "levels": 15
+        },
+        "beforeRepair": {
+          "uphill": 29,
+          "riverEdges": 730,
+          "falls": 10,
+          "cliffShare": 0.03048245614035088,
+          "tinyShare": 0.021701388888888888,
+          "benchShare": 0.8977864583333334,
+          "padCandidates": 3181,
+          "range": 14,
+          "levels": 15
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 730,
+          "falls": 1,
+          "cliffShare": 0.033278508771929824,
+          "tinyShare": 0.015082465277777778,
+          "benchShare": 0.8921440972222222,
+          "padCandidates": 3181,
+          "range": 14,
+          "levels": 15
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 11,
+      "cap": 22,
+      "controls": [
+        48.48098231013864,
+        62.91517455247231,
+        30.025562266353518
+      ],
+      "accepted": true,
+      "repair": {
+        "changed": 83,
+        "volume": 89,
+        "maxCut": 3
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 8,
+          "riverEdges": 656,
+          "falls": 19,
+          "cliffShare": 0.05235745614035088,
+          "tinyShare": 0.015950520833333332,
+          "benchShare": 0.9188368055555556,
+          "padCandidates": 4061,
+          "range": 21,
+          "levels": 22
+        },
+        "spatial": {
+          "uphill": 8,
+          "riverEdges": 730,
+          "falls": 22,
+          "cliffShare": 0.0756030701754386,
+          "tinyShare": 0.014214409722222222,
+          "benchShare": 0.9058159722222222,
+          "padCandidates": 3224,
+          "range": 19,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 56,
+          "riverEdges": 730,
+          "falls": 20,
+          "cliffShare": 0.04139254385964912,
+          "tinyShare": 0.034830729166666664,
+          "benchShare": 0.8483072916666666,
+          "padCandidates": 2450,
+          "range": 21,
+          "levels": 22
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 730,
+          "falls": 7,
+          "cliffShare": 0.04731359649122807,
+          "tinyShare": 0.024305555555555556,
+          "benchShare": 0.8516710069444444,
+          "padCandidates": 2450,
+          "range": 21,
+          "levels": 22
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 12,
+      "cap": 16,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 228,
+        "volume": 416,
+        "maxCut": 4
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 16,
+          "riverEdges": 674,
+          "falls": 9,
+          "cliffShare": 0.04177631578947368,
+          "tinyShare": 0.023871527777777776,
+          "benchShare": 0.8343098958333334,
+          "padCandidates": 3129,
+          "range": 13,
+          "levels": 14
+        },
+        "spatial": {
+          "uphill": 23,
+          "riverEdges": 626,
+          "falls": 12,
+          "cliffShare": 0.04183114035087719,
+          "tinyShare": 0.030056423611111112,
+          "benchShare": 0.8591579861111112,
+          "padCandidates": 2578,
+          "range": 13,
+          "levels": 14
+        },
+        "beforeRepair": {
+          "uphill": 91,
+          "riverEdges": 626,
+          "falls": 35,
+          "cliffShare": 0.047642543859649125,
+          "tinyShare": 0.04275173611111111,
+          "benchShare": 0.83984375,
+          "padCandidates": 2508,
+          "range": 13,
+          "levels": 14
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 626,
+          "falls": 6,
+          "cliffShare": 0.06260964912280702,
+          "tinyShare": 0.027669270833333332,
+          "benchShare": 0.837890625,
+          "padCandidates": 2486,
+          "range": 13,
+          "levels": 14
+        }
+      }
+    },
+    {
+      "theme": "highlands",
+      "seed": 12,
+      "cap": 22,
+      "controls": [
+        73.80380621412769,
+        44.4932395783253,
+        33.338643388822675
+      ],
+      "accepted": false,
+      "repair": {
+        "changed": 252,
+        "volume": 667,
+        "maxCut": 7
+      },
+      "metrics": {
+        "baseline": {
+          "uphill": 16,
+          "riverEdges": 674,
+          "falls": 23,
+          "cliffShare": 0.08009868421052632,
+          "tinyShare": 0.024631076388888888,
+          "benchShare": 0.8291015625,
+          "padCandidates": 3126,
+          "range": 18,
+          "levels": 19
+        },
+        "spatial": {
+          "uphill": 23,
+          "riverEdges": 626,
+          "falls": 31,
+          "cliffShare": 0.09111842105263158,
+          "tinyShare": 0.031575520833333336,
+          "benchShare": 0.8419053819444444,
+          "padCandidates": 2559,
+          "range": 18,
+          "levels": 18
+        },
+        "beforeRepair": {
+          "uphill": 114,
+          "riverEdges": 626,
+          "falls": 56,
+          "cliffShare": 0.07423245614035087,
+          "tinyShare": 0.07465277777777778,
+          "benchShare": 0.78515625,
+          "padCandidates": 1715,
+          "range": 20,
+          "levels": 21
+        },
+        "constrained": {
+          "uphill": 0,
+          "riverEdges": 626,
+          "falls": 13,
+          "cliffShare": 0.08843201754385965,
+          "tinyShare": 0.059027777777777776,
+          "benchShare": 0.8019748263888888,
+          "padCandidates": 1712,
+          "range": 20,
+          "levels": 21
+        }
+      }
+    }
+  ],
+  "sha256": "b6ac8285e06e5d7a5b151eb1d80edc39e4633b8a3cd5553bfd49666e2dbc87b9"
+}
