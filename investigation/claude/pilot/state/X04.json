@@ -1,0 +1,162 @@
+{
+ "id": "X04",
+ "text": "Put a dam site near the mouth and a badwater spring just upstream of it.",
+ "setup": "rv128c",
+ "calls": [
+  {
+   "tool": "dry_run",
+   "args": {
+    "request": "Put a dam site near the mouth and a badwater spring just upstream of it.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a dam site near the mouth"
+     },
+     {
+      "id": "g2",
+      "text": "a badwater spring just upstream of the dam site"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "where": "near the mouth",
+      "handle": "dam"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "badwaterBasin",
+      "where": "just upstream of the dam",
+      "handle": "badwater"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "course.frac",
+      "min": 0.75
+     },
+     {
+      "goal": "g2",
+      "subject": "badwater",
+      "metric": "course.frac",
+      "max": {
+       "of": "dam",
+       "metric": "course.frac"
+      }
+     },
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "reservoirClean",
+      "equals": true
+     }
+    ]
+   },
+   "bytes": 3648,
+   "error": false
+  },
+  {
+   "tool": "dry_run",
+   "args": {
+    "request": "Put a dam site near the mouth and a badwater spring just upstream of it.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a dam site near the mouth"
+     },
+     {
+      "id": "g2",
+      "text": "a badwater spring just upstream of the dam site"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "where": "near the mouth",
+      "handle": "dam"
+     },
+     {
+      "op": "addSetPiece",
+      "kind": "badwaterBasin",
+      "where": "just upstream of the dam",
+      "keepReservoirsClean": true,
+      "awayFromStart": 0,
+      "handle": "badwater"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "course.frac",
+      "min": 0.75
+     },
+     {
+      "goal": "g2",
+      "subject": "badwater",
+      "metric": "course.frac",
+      "max": {
+       "of": "dam",
+       "metric": "course.frac"
+      }
+     },
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "reservoirClean",
+      "equals": true
+     }
+    ]
+   },
+   "bytes": 3648,
+   "error": false
+  },
+  {
+   "tool": "propose",
+   "args": {
+    "request": "Put a dam site near the mouth and a badwater spring just upstream of it.",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a dam site near the mouth"
+     },
+     {
+      "id": "g2",
+      "text": "a badwater spring just upstream of the dam site"
+     }
+    ],
+    "steps": [
+     {
+      "op": "addSetPiece",
+      "kind": "damSite",
+      "where": "near the mouth",
+      "handle": "dam"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "course.frac",
+      "min": 0.75
+     },
+     {
+      "goal": "g1",
+      "subject": "dam",
+      "metric": "reservoirClean",
+      "equals": true
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1996,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Added a dam site near the mouth, in the southeast corner, 92% of the way down the main river: a 6-tile dam there would hold about 2,550 blocks of clean water. Not done: the badwater spring just upstream of it. The dam's reservoir would reach back past that spot, and in the preview its water came out contaminated, so a spring there ruins the dam site you asked for. Nearest I can do: the spring just downstream of the dam, or upstream beyond the reservoir's reach, draining to the map edge. Say which and I'll add it. Every start rule still holds."
+}

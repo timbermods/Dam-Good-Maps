@@ -18,6 +18,7 @@
 import type { Orientation } from "../format/footprints";
 import { arcAtX, bedAt, pathField, pointAtArc, polygonMask, round } from "../features/geometry";
 import { buildMap, START_CLEAR_RADIUS, type BuildResult, type LockedLayer, type SettleCache } from "../features/build";
+import { bankFor, inBench } from "../features/raster/terrain";
 import { featureId } from "../features/ids";
 import { BUILDERS, flowBudget, planSetPiece, type PlanContext as PieceContext, type PlanRecord } from "../features/setpieces";
 import type {
@@ -46,7 +47,7 @@ import { slopeHighSide } from "../format/footprints";
 import { entityTiles } from "../features/edits";
 import { objectTiles } from "../features/objects";
 import { WALK_BLOCKERS } from "../validate/playability";
-import { planResources } from "./resources";
+import { nearStartTargets, planResources } from "./resources";
 import { groundOf, placeBadwater, placeRiversidePonds, reachOf, type PlanGround } from "./water";
 
 export type ValleyArchetype = "riverValley" | "canyon" | "highlands" | "delta";
@@ -388,25 +389,51 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
       };
       let side = startSide;
       let sx: number;
+      let lo: number;
+      let top: number;
       const benchR = BENCH_RADIUS[spec.settings.start.area];
       if (A.stairs) {
         // a canyon's start leaves room downstream for the flight up the wall beside its bench
-        const lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
-        const hi = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
-        sx = lo + Math.floor(startDraw * (hi - lo + 1));
+        lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
+        top = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
+        sx = lo + Math.floor(startDraw * (top - lo + 1));
       } else if (hard || braided) {
         // below the ridge, clear of it by the bench and its margin (a delta's start stands at the
         // head of the delta, clear of its pool)
-        const first = gorgeX + 14;
-        const last = braided ? headX - 16 : fallsX - 10;
-        sx = Math.min(last, first + Math.floor(startDraw * Math.max(1, last - first)));
+        lo = gorgeX + 14;
+        top = Math.max(lo, braided ? headX - 16 : fallsX - 10);
+        sx = Math.min(top, lo + Math.floor(startDraw * Math.max(1, top - lo)));
       } else {
         sx = basinX0 + 2 + Math.floor(startDraw * Math.max(1, gorgeX - 6 - basinX0 - 2));
         const lastX = Math.max(basinX0 + 2, gorgeX - 7);
         while (sx < lastX && toGorge(sx, side) > 34) sx++;
+        lo = basinX0 + 2;
+        top = lastX;
       }
       if (toGorge(sx, side) > 34 && toGorge(sx, -side) < toGorge(sx, side)) side = -side;
-      const sy = startY(sx, side);
+      // the bench runs to the bank, so the start's own level reaches the river (D85, D97); where
+      // the drawn place has no bank to run to (a fall beside it), the nearest place along the
+      // valley that has one, as close to the gorge as the drawn one allows
+      const bankAt = (x: number) => {
+        const y = startY(x, side);
+        const level = bedAt(river.params.bedProfile, arcAtX(path, x)) + 2;
+        return { y, level, bank: bankFor([river], x, y, level, benchR) };
+      };
+      let at = bankAt(sx);
+      const far = Math.max(34, toGorge(sx, side));
+      for (let d = 1; d <= 16 && !at.bank; d++)
+        for (const x of [sx + d, sx - d]) {
+          if (x < lo || x > top || toGorge(x, side) > far) continue;
+          const b = bankAt(x);
+          if (b.bank) {
+            sx = x;
+            at = b;
+            break;
+          }
+        }
+      const sy = at.y;
+      const benchLevel = at.level;
+      const bank = at.bank;
       const orientation: Orientation = centre(sx) < sy ? "Cw0" : "Cw180";
       const start: StartFeature = {
         id: id("start", "start/main"),
@@ -418,7 +445,8 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
           position: [sx, sy],
           orientation,
           benchRadius: BENCH_RADIUS[spec.settings.start.area],
-          benchLevel: bedAt(river.params.bedProfile, arcAtX(path, sx)) + 2,
+          benchLevel,
+          ...(bank ? { bank } : {}),
           player: 0,
         },
       };
@@ -496,6 +524,8 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
     const avoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 10, band);
     // ponds may lie near the start (drinking water and storage), off its zone
     const pondsAvoid = keepOff(W, H, ground, lake, zone, context?.protect ?? null, 2, band);
+    // and off the bench's strip to the bank, with a margin
+    markBench(start, W, H, 3, avoid, pondsAvoid);
 
     // the pre-built weir (PLAN §5.7, §9.1 variants; D72): on half the maps a NaturalDam line across
     // the channel at the dam site holds the river 0.65 above its bed upstream (not in a canyon's
@@ -732,7 +762,7 @@ export function objectsAndResources(
   const extraFeatures: Feature[] = [];
   if (obstacle) {
     const radius = W * H >= 128 * 128 ? 5 : 4;
-    for (const [x, y] of obstacleSpots(base, [...layout, ...others], avoidAll, radius, 3)) {
+    for (const [x, y] of obstacleSpots(base, [...layout, ...others], avoidAll, radius, 3, nearStartTargets(spec).ruinsClear)) {
       const ctx: PieceContext = { W, H, seed, features: [...layout, ...others], heights: base.heights, channel: base.channel, start: base.start ? { x: base.start.x, y: base.start.y, radius: 8 } : null, protect: base.cache.terrain.protect };
       const role = "setpiece/obstaclePayoff/ruins";
       const r = planSetPiece("obstaclePayoff", { at: [x, y], radius, rise: 2 }, ctx, { id: featureId(seed, "setPiece", role), origin: "generated", role }, true);
@@ -1343,6 +1373,29 @@ export function farReach(path: Point[], x: number, y: number, d: number): number
 }
 
 /** Distance from (x, y) to a polyline. */
+/** Mark the start's bench (its disc and its strip to the bank), grown by `margin` tiles. */
+export function markBench(start: StartFeature, W: number, H: number, margin: number, ...masks: Uint8Array[]): void {
+  const [cx, cy] = start.params.position;
+  const bank = start.params.bank ?? start.params.position;
+  const r = start.params.benchRadius + margin + 2;
+  const x0 = Math.max(0, Math.floor(Math.min(cx - r, bank[0] - margin - 2)));
+  const x1 = Math.min(W - 1, Math.ceil(Math.max(cx + r, bank[0] + margin + 2)));
+  const y0 = Math.max(0, Math.floor(Math.min(cy - r, bank[1] - margin - 2)));
+  const y1 = Math.min(H - 1, Math.ceil(Math.max(cy + r, bank[1] + margin + 2)));
+  const bench = new Uint8Array(W * H);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (inBench(start, x, y)) bench[y * W + x] = 1;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      if (!bench[y * W + x]) continue;
+      for (let dy = -margin; dy <= margin; dy++)
+        for (let dx = -margin; dx <= margin; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < W && yy < H) for (const m of masks) m[yy * W + xx] = 1;
+        }
+    }
+}
+
 function distToPath(path: Point[], x: number, y: number): number {
   let best = Infinity;
   for (let i = 0; i + 1 < path.length; i++) {

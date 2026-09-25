@@ -11,7 +11,7 @@
 // 2. Validator parity (M2): for the --parity-seeds (default: the --seeds), the map of seed k at
 //    size sizes[k mod n] is validated in full by both validators, the TypeScript one re-reading the
 //    written file and its project file (as the Python one does), and their verdicts must agree
-//    check by check: pass, fail or not applicable.
+//    check by check: pass, fail, not applicable or approximate (PLAN §11, D98).
 // 3. The same parity on the official maps in investigation/raw/builtin (import profile, default
 //    Normal thresholds), when they are present (they are local only, never in CI).
 //
@@ -118,18 +118,19 @@ for (const size of sizes) {
 
 // ------------------------------------------------------------------------------ 2, 3. parity
 
-type Verdict = "pass" | "fail" | "na";
+type Verdict = "pass" | "fail" | "na" | "approx";
 interface PyCheck {
   id: string;
   ok: boolean;
   na: boolean;
   advisory: boolean;
+  approx?: string;
   detail: string;
   value: unknown;
 }
 
-const tsVerdict = (c: CheckResult): Verdict => (c.applicable === false ? "na" : c.ok ? "pass" : "fail");
-const pyVerdict = (c: PyCheck): Verdict => (c.na ? "na" : c.ok ? "pass" : "fail");
+const tsVerdict = (c: CheckResult): Verdict => (c.applicable === false ? "na" : c.approximate ? "approx" : c.ok ? "pass" : "fail");
+const pyVerdict = (c: PyCheck): Verdict => (c.na ? "na" : c.approx ? "approx" : c.ok ? "pass" : "fail");
 
 /** Compare the two reports of one map; returns the disagreements. */
 function compare(label: string, ts: CheckResult[], pyChecks: PyCheck[]): string[] {
@@ -214,7 +215,8 @@ if (official) {
     for (const s of d) log(`OFFICIAL ${s}`);
     officialDisagreements += d.length;
     const fails = v.report.checks.filter((c) => tsVerdict(c) === "fail").map((c) => c.id);
-    log(`  ${p.split(/[\\/]/).pop()}: ${v.report.checks.length} checks agree=${d.length === 0}; failing (both): ${fails.join(", ") || "none"}`);
+    const approx = v.report.checks.filter((c) => tsVerdict(c) === "approx").length;
+    log(`  ${p.split(/[\\/]/).pop()}: ${v.report.checks.length} checks agree=${d.length === 0}; failing (both): ${fails.join(", ") || "none"}${approx ? `; approximate: ${approx}` : ""}`);
   }
   log(`official maps: ${officialMaps} validated in the import profile, ${officialDisagreements} disagreements`);
 } else {

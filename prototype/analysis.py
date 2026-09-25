@@ -315,6 +315,88 @@ def walk_regions(h: np.ndarray, max_step: int, blocked: np.ndarray | None = None
     return labels, sizes
 
 
+WALK_LIMIT = 64
+_WALK_DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1))   # (dx, dy)
+
+
+def walk_distance(h: np.ndarray, blocked, links, sx: int, sy: int, limit: float = WALK_LIMIT) -> np.ndarray:
+    """Walking distance from the start's 3x3 (PLAN §5.6, D85; src/core/analysis/walk.ts): moves
+    to the 4 neighbours on the same level (1), to a diagonal neighbour when both tiles beside it are
+    on that level (sqrt 2), and along slope links [((y, x), (y2, x2)), ...] (1); blocked tiles are
+    never entered. inf beyond `limit`. Dijkstra's distances do not depend on the order ties pop, so
+    they equal the TypeScript port's bit for bit."""
+    Y, X = h.shape
+    hl = h.tolist()
+    bl = blocked.tolist() if blocked is not None else None
+    adj = {}
+    for a, b in links:
+        ia, ib = a[0] * X + a[1], b[0] * X + b[1]
+        adj.setdefault(ia, []).append(ib)
+        adj.setdefault(ib, []).append(ia)
+    INF = float("inf")
+    d = [INF] * (X * Y)
+    heap = []
+    for y in range(sy - 1, sy + 2):
+        for x in range(sx - 1, sx + 2):
+            if 0 <= x < X and 0 <= y < Y:
+                d[y * X + x] = 0.0
+                heapq.heappush(heap, (0.0, y * X + x))
+    s2 = math.sqrt(2)
+
+    def free(x, y, lv):
+        return not (bl is not None and bl[y][x]) and hl[y][x] == lv
+
+    while heap:
+        k, c = heapq.heappop(heap)
+        if k > d[c]:
+            continue
+        y, x = divmod(c, X)
+        lv = hl[y][x]
+        for dx, dy in _WALK_DIRS:
+            xx, yy = x + dx, y + dy
+            if not (0 <= xx < X and 0 <= yy < Y) or not free(xx, yy, lv):
+                continue
+            if dx and dy and not (free(xx, y, lv) and free(x, yy, lv)):
+                continue
+            nd = k + (s2 if dx and dy else 1.0)
+            n = yy * X + xx
+            if nd < d[n] and nd <= limit:
+                d[n] = nd
+                heapq.heappush(heap, (nd, n))
+        for n in adj.get(c, ()):
+            ny, nx = divmod(n, X)
+            if bl is not None and bl[ny][nx]:
+                continue
+            nd = k + 1.0
+            if nd < d[n] and nd <= limit:
+                d[n] = nd
+                heapq.heappush(heap, (nd, n))
+    return np.array(d).reshape(Y, X)
+
+
+def reach_at(d: np.ndarray, y: int, x: int) -> float:
+    """How far a beaver walks to reach (y, x): the tile, or a 4-neighbour and one more step."""
+    Y, X = d.shape
+    best = d[y, x]
+    for dy, dx in N4:
+        yy, xx = y + dy, x + dx
+        if 0 <= yy < Y and 0 <= xx < X and d[yy, xx] + 1 < best:
+            best = d[yy, xx] + 1
+    return float(best)
+
+
+def shore_distance(flat: np.ndarray, h: np.ndarray, water: np.ndarray, level: int) -> float:
+    """Walking distance to the nearest tile on `level` that touches (4-neighbour) a `water` tile."""
+    Y, X = h.shape
+    best = float("inf")
+    for y, x in zip(*np.nonzero(water)):
+        for dy, dx in N4:
+            yy, xx = y + dy, x + dx
+            if 0 <= yy < Y and 0 <= xx < X and h[yy, xx] == level and flat[yy, xx] < best:
+                best = float(flat[yy, xx])
+    return best
+
+
 # ---------------------------------------------------------------------------------------------
 # Dam sites: a straight dam across a channel, measured by the reservoir it would hold
 

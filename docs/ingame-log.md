@@ -244,17 +244,52 @@ What the file should show (from `checks.txt`):
 
 ## M8: water preview and background validation in the editor
 
+The files are in [out/m8/](../out/m8/), made with generator 0.6.0. Remake them with
+`npx tsx tools/ingame-files.ts --milestone m8`; [out/m8/checks.txt](../out/m8/checks.txt) lists
+their sha256, every coordinate and water samples to compare. The two imported maps are not ours to
+share: the tool writes them to `out/m8/local/` from your own copies in `investigation/raw/`, and
+only the edits are committed.
+
+- **`River Valley (4242) M8 preview.timber`:** seed 4242, 128 × 128, Normal, with three edits made
+  with the M8 editor: a 9 × 9 lake with its spring east of the start, ground lowered one level
+  beside the river in the south-west, and a weir across the river in the east. It is exported with
+  the canonical settle. **`.png`:** water blue, the start white (door red), the lake's basin yellow
+  dots, the lowered ground magenta dots, the weir cyan.
+- **`local/Canyon (M8 edited).timber`** (F4): the official Canyon with a lake drawn on dry ground,
+  10+ tiles from any cave or overhang. Its 228 columns under roofs keep the map's own water.
+- **`local/Cozy Secret Valley (M8 edited).timber`** (F3): the pre-1.0 workshop map (its 6 sources
+  halved on import), with ground lowered one level beside its river, away from its caves.
+
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| M8-1 | Compare the editor's water preview with the game on three edited maps. | Water matches the preview. Record the differences in PLAN §20. | set by M8 | pending |
-| F3 | Re-export a pre-1.0 workshop map that has no `WaterSimulationMigrator` (the importer halves its strengths). | Its rivers run at the same level as the original's in game. | set by M8 | pending |
-| F4 | Edit an imported map with roofed water (Canyon or Terraces) away from the tunnels, then export it. | The tunnels keep flowing as in the original. | set by M8 | pending |
+| M8-1a | Load the River Valley map. Let it run a day. Look at the lake, the lowered ground and the weir (checks.txt gives the tiles and the water depth the editor showed). | The water stands where the editor showed it, within about 0.1 deep. The lake fills to about its level, the weir holds the river about 0.65 up. | `River Valley (4242) M8 preview.timber`, `.png` | pending |
+| M8-1b, F4 | Load the edited Canyon. Look at the new lake, then at the tunnels under the cliffs. | The lake fills from its spring. The tunnels keep flowing as in the original Canyon. | `local/Canyon (M8 edited).timber` | pending |
+| M8-1c, F3 | Load the edited Cozy Secret Valley next to the original from the Workshop. | Its rivers run at the same level as the original's: the halved sources are right. The lowered ground fills as the editor showed. | `local/Cozy Secret Valley (M8 edited).timber` | pending |
+
+Record every difference as a PLAN §20 decision ("Editor decisions").
+
+**Automated stand-ins used meanwhile (all green at M8):**
+- validation parity: the editor's verdicts after its preview and the canonical settle equal the
+  generator's validator on the exported file, check by check, and its map equals a full build
+  (`tests/contract/parity.test.ts`);
+- the canonical settle in slices gives the same bytes as the one-go settle;
+- the roofed-water export keeps every slot of the file's water under roofs (the round trip of the
+  edited Canyon and Cozy Secret Valley above);
+- the preview after a local edit differs from the canonical settle by at most 0.19 deep on any tile
+  at 256² (`tools/bench-preview.ts`).
+
+## Map look: a reference screenshot
+
+| Check | What to do | What should happen | File | Status |
+|---|---|---|---|---|
+| ML-1 | When you play your first in-game check, screenshot the same map in Timberborn from the default camera angle. | Map look (ROADMAP, PLAN §20 D86) compares its colours, lighting and water with it. Keep the screenshot out of the repository: game screenshots are never shipped. | the map of your first check (seed 4242) | pending |
 
 ## M12: Claude integration
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
 | M12-1 | Play the map produced by "add a giant waterfall in the north part of the map that is roughly 20 blocks wide". | The waterfall is there, about 20 wide, in the north, and it flows. | set by M12 | pending |
+| M12-2 | Play the map produced by the compound request: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." | The start stands upstream and reaches its water; a dam at the site halfway down holds its reservoir; the badwater runs on the far bank and stays out of the start's water and the reservoir. | set by M12 | pending |
 
 ## M13: usability, design pass, ratings, versioned deploys
 

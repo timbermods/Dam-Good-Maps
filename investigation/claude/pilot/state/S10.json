@@ -1,0 +1,44 @@
+{
+ "id": "S10",
+ "text": "make the map harder",
+ "setup": "rv128",
+ "calls": [
+  {
+   "tool": "propose",
+   "args": {
+    "request": "make the map harder",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "a harder map"
+     }
+    ],
+    "steps": [
+     {
+      "op": "changeSettings",
+      "word": "harsher"
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "cleanStrength",
+      "change": "down"
+     },
+     {
+      "goal": "g1",
+      "subject": "map",
+      "metric": "badwaterRatio",
+      "change": "up"
+     }
+    ],
+    "report": "Made the map harder."
+   },
+   "bytes": 1968,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Made the whole map harsher: the river is now a trickle (2.2 blocks/s, was 3.6), droughts leave less water behind, there is more badwater (about twice as much as clean water now), and there are a quarter fewer trees and 30% fewer berry bushes. Trade-off: every reservoir fills more slowly. Your own features stay. Assumption: \"harder\" means harsher land and water; I did not change the difficulty the map is designed for (normal). Say if you want it designed for hard instead, which tightens the start rules. Every start rule still holds."
+}

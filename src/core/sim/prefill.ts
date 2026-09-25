@@ -13,7 +13,7 @@
 //   passes all its water each substep, PLAN §9.2).
 
 import { MinHeap } from "../math/grid";
-import { settle, WaterSim, type SettleResult, type WaterModel, type WaterState } from "./water";
+import { SettleRun, WaterSim, type SettleResult, type WaterModel, type WaterState } from "./water";
 
 /** Spill level of every tile: the lowest level water standing there can drain at, through the map
  *  edge (Barnes' priority flood). Edge tiles that emit water are walled off from the edge and are
@@ -153,12 +153,41 @@ export interface CanonicalWater extends SettleResult {
   contamination: Float64Array;
   /** Cluster saturation of the settled water (moisture and evaporation). */
   sat: Uint8Array;
+  /** The settled outflow momentum, 4 per tile (the editor's preview warm-starts from it). */
+  out?: Float64Array;
+  /** The editor's warm-started preview (sim/preview.ts), not the canonical settle: never written
+   *  to a file, and replaced by the canonical settle in the background (EDITOR_PLAN §6). */
+  preview?: boolean;
 }
 
 /** The canonical settle: the pre-fill, then the exact simulation until it settles (at most 4 game
  *  days, checked every 128 ticks). The same input always gives the same bytes. */
 export function canonicalSettle(m: WaterModel): CanonicalWater {
+  const run = canonicalRun(m);
+  let r = run.advance(Infinity);
+  while (!r) r = run.advance(Infinity);
+  return r;
+}
+
+/** The canonical settle in slices (`advance` runs at most the ticks it is given): the editor's
+ *  worker runs it between answers to the page, and drops it when a newer edit arrives. The result
+ *  equals `canonicalSettle`'s. */
+export function canonicalRun(m: WaterModel): { advance(ticks: number): CanonicalWater | null; readonly ticks: number; readonly maxTicks: number } {
   const sim = new WaterSim(m, prefill(m));
-  const r = settle(sim);
-  return { ...r, depth: sim.D, contamination: sim.C, sat: sim.saturation() };
+  const run = new SettleRun(sim);
+  let done: CanonicalWater | null = null;
+  return {
+    advance(ticks: number): CanonicalWater | null {
+      if (done) return done;
+      const r = run.advance(ticks);
+      if (r) done = { ...r, depth: sim.D, contamination: sim.C, sat: sim.saturation(), out: sim.out.slice() };
+      return done;
+    },
+    get ticks() {
+      return run.ticks;
+    },
+    get maxTicks() {
+      return run.maxTicks;
+    },
+  };
 }

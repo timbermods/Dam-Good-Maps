@@ -11,6 +11,7 @@
 
 import { damSites, type DamSite } from "../analysis/damsites";
 import { components, walkRegions } from "../analysis/regions";
+import { reachAt, shoreDistance, walkDistance, WALK_LIMIT } from "../analysis/walk";
 import { footprintTiles, slopeHighSide, worldBlocks, FOOTPRINTS } from "../format/footprints";
 import { polygonMask } from "../features/geometry";
 import { OBJECT_NAMES, objectTiles } from "../features/objects";
@@ -41,7 +42,10 @@ export const WALK_BLOCKERS = new Set([
 ]);
 const START_AREA = { small: 0.6, normal: 1, large: 1.8 } as const;
 
-/** Thresholds for one map: from its spec, or the difficulty's defaults for an imported map. */
+/** Thresholds for one map: from its spec, or the difficulty's defaults for an imported map. The
+ *  three start requirements (PLAN §5.6, D85) are `waterWithin` (water without stairs, tiles' walk
+ *  on the start's level), `treesWithin20` (Minimum starting trees) and `bushesWithin20` (Minimum
+ *  starting bushes); the other start rules are targets with an advisory warning. */
 export interface Rules {
   difficulty: Difficulty;
   waterWithin: number;
@@ -107,8 +111,13 @@ export interface PlayabilityAnalysis {
   reach: Uint8Array;
   /** Chamfer distance from the start's 3×3, in tiles. */
   startDistance: Float64Array | null;
-  /** Distance from the start to pumpable clean water (Infinity if none). */
+  /** Walking distance on the start's own level, without slopes, to a shore tile that touches
+   *  clean pumpable water (Infinity if none within the walk limit): the "water without stairs"
+   *  requirement (D85). */
   waterDistance: number;
+  /** Living trees and living berry bushes within 20 tiles' walk of the start (slopes allowed). */
+  treesNear: number;
+  bushesNear: number;
   damSites: DamSite[];
   /** The best dam site within 40 tiles of the start, and the natural water kept there. */
   bestDam: DamSite | null;
@@ -197,6 +206,8 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     reach: new Uint8Array(N),
     startDistance: null,
     waterDistance: Infinity,
+    treesNear: 0,
+    bushesNear: 0,
     damSites: [],
     bestDam: null,
     naturalStorage: 0,
@@ -205,7 +216,7 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
   // ---- the start (vanilla: exactly one; `start.count` reports anything else)
   const starts = objects.map((o, k) => [o, k] as const).filter(([o]) => o.template === "StartingLocation");
   if (starts.length !== 1) {
-    for (const cid of START_CHECKS) c.notApplicable(cid, "playability", `needs exactly one start (the map has ${starts.length})`, cid === "plants.drought");
+    for (const cid of START_CHECKS) c.notApplicable(cid, "playability", `needs exactly one start (the map has ${starts.length})`, ADVISORY_START.has(cid));
     return analysis;
   }
   checkStart(inp, c, starts[0][0], { M, SC, wet, clean, blocked, barrier }, analysis, id);
@@ -290,10 +301,12 @@ export function basinLeak(p: ContainedPlan, h: Uint8Array, W: number, H: number)
 
 /** The checks that need the start, in report order. */
 const START_CHECKS = [
-  "start.dry", "start.water", "start.badwater", "start.reach", "start.reach_water", "start.food", "start.wood", "start.ruins_clear",
+  "start.dry", "start.water", "start.badwater", "start.reach", "start.food", "start.wood", "start.ruins_clear",
   "plants.survive", "plants.drought", "water.reservoir", "resources.scrap", "resources.trees", "resources.bushes", "ruins.fields",
   "ruins.access", "extras.placement",
 ];
+/** Advisory from M8 (D85): generation targets with a warning, never a reason to reject a map. */
+const ADVISORY_START = new Set(["start.badwater", "start.reach", "start.ruins_clear", "water.reservoir", "plants.drought"]);
 
 function checkOutflow(inp: PlayabilityInput, c: Collector): void {
   const { W, H, model, water, features } = inp;
@@ -394,31 +407,42 @@ function checkStart(
 
   // pumpable clean water: at least 0.3 deep, its surface 0–2 levels below the start
   const pumpable = new Uint8Array(N);
-  let dw = Infinity;
-  let nearest = -1;
   for (let i = 0; i < N; i++) {
     const s = h[i] + D[i];
-    if (clean[i] && D[i] >= 0.3 && s >= sz - PUMP_REACH && s <= sz + 0.01) {
-      pumpable[i] = 1;
-      if (sd[i] < dw) {
-        dw = sd[i];
-        nearest = i;
-      }
-    }
+    if (clean[i] && D[i] >= 0.3 && s >= sz - PUMP_REACH && s <= sz + 0.01) pumpable[i] = 1;
   }
+  // walking: slopes join levels; without them the walk stays on the start's own level
+  const links: [number, number][] = [];
+  for (const o of objects) {
+    if (o.template !== "Slope") continue;
+    const [dx, dy] = slopeHighSide(o.orientation);
+    const hx = o.x + dx;
+    const hy = o.y + dy;
+    if (o.x < 0 || o.x >= W || o.y < 0 || o.y >= H) continue;
+    if (hx >= 0 && hx < W && hy >= 0 && hy < H) links.push([o.y * W + o.x, hy * W + hx]);
+  }
+  const walk = walkDistance(h, W, H, blocked, links, { x: sx, y: sy });
+  const flat = walkDistance(h, W, H, blocked, [], { x: sx, y: sy });
+
+  // requirement 1, water without stairs (D85): clean pumpable water touches a shore tile on the
+  // start's own level, within the rule's walk of the start without any slope
+  const shore = shoreDistance(flat, h, W, H, pumpable, sz);
+  const dw = shore.distance;
   analysis.waterDistance = dw;
-  const dwText = Number.isFinite(dw) ? `${dw.toFixed(1)} tiles` : "nowhere";
+  const dwText = Number.isFinite(dw) ? `${(Math.round(dw * 10) / 10).toString()} tiles' walk` : "not";
   c.add({
     id: "start.water",
     class: "playability",
     ok: dw <= rules.waterWithin,
     value: Number.isFinite(dw) ? Math.round(dw * 10) / 10 : "none",
     limit: rules.waterWithin,
-    ...(nearest >= 0 ? { where: { tiles: [[nearest % W, Math.floor(nearest / W)]] as [number, number][] } } : {}),
+    ...(shore.tile >= 0 ? { where: { tiles: [[shore.tile % W, Math.floor(shore.tile / W)]] as [number, number][] } } : {}),
     message:
       dw <= rules.waterWithin
-        ? `clean pumpable water is ${dwText} from the start (${cap(rules.difficulty)} allows ${rules.waterWithin})`
-        : `the start is ${dwText} from pumpable clean water; ${cap(rules.difficulty)} allows ${rules.waterWithin} (beavers go thirsty on day 6)`,
+        ? `clean water a pump reaches is ${dwText} from the start on its own level, without stairs (${cap(rules.difficulty)} allows ${rules.waterWithin})`
+        : Number.isFinite(dw)
+          ? `the nearest clean water on the start's own level is ${dwText} away; ${cap(rules.difficulty)} allows ${rules.waterWithin} (beavers go thirsty on day 6)`
+          : `no clean water a pump reaches on the start's own level within ${WALK_LIMIT} tiles' walk: beavers would need stairs to drink`,
   });
   let db = Infinity;
   let badAt = -1;
@@ -431,23 +455,15 @@ function checkStart(
   c.add({
     id: "start.badwater",
     class: "playability",
+    advisory: true,
     ok: db >= rules.badwaterWithin,
     value: Number.isFinite(db) ? Math.round(db * 10) / 10 : "none",
     limit: rules.badwaterWithin,
     ...(badAt >= 0 ? { where: { tiles: [[badAt % W, Math.floor(badAt / W)]] as [number, number][] } } : {}),
-    message: Number.isFinite(db) ? `the nearest badwater or contaminated soil is ${Math.round(db)} tiles from the start (at least ${rules.badwaterWithin})` : "no badwater or contaminated soil on the map",
+    message: Number.isFinite(db) ? `the nearest badwater or contaminated soil is ${Math.round(db)} tiles from the start (the target is ${rules.badwaterWithin})` : "no badwater or contaminated soil on the map",
   });
 
   // reach: same-level land joined by slopes (beavers cannot climb a 1-level step)
-  const links: [number, number][] = [];
-  for (const o of objects) {
-    if (o.template !== "Slope") continue;
-    const [dx, dy] = slopeHighSide(o.orientation);
-    const hx = o.x + dx;
-    const hy = o.y + dy;
-    if (o.x < 0 || o.x >= W || o.y < 0 || o.y >= H) continue;
-    if (hx >= 0 && hx < W && hy >= 0 && hy < H) links.push([o.y * W + o.x, hy * W + hx]);
-  }
   const labels = walkRegions(h, W, H, blocked, links);
   const root = labels[sy * W + sx];
   const reach = analysis.reach;
@@ -461,52 +477,40 @@ function checkStart(
   c.add({
     id: "start.reach",
     class: "playability",
+    advisory: true,
     ok: dry >= rules.reachMin,
     value: dry,
     limit: rules.reachMin,
-    message: `${dry} dry tiles are walkable from the start through slopes (at least ${rules.reachMin}; official p10 1,007)`,
-  });
-  const touches = (i: number) => {
-    const x = i % W;
-    const y = (i - x) / W;
-    for (const [dx, dy] of N4) {
-      const xx = x + dx;
-      const yy = y + dy;
-      if (xx >= 0 && xx < W && yy >= 0 && yy < H && reach[yy * W + xx]) return true;
-    }
-    return false;
-  };
-  let reachWater = false;
-  for (let i = 0; i < N && !reachWater; i++) if (pumpable[i] && (reach[i] || touches(i))) reachWater = true;
-  c.add({
-    id: "start.reach_water",
-    class: "playability",
-    ok: reachWater,
-    message: reachWater ? "the pumpable water borders land the colony can walk to" : "no pumpable water borders land the colony can walk to",
+    message: `${dry} dry tiles are walkable from the start through slopes (the target is ${rules.reachMin}; official p10 1,007)`,
   });
 
-  // food and wood within 20 tiles, on or beside walkable land
-  const reachable = (o: MapObject) => {
-    const i = o.y * W + o.x;
-    return o.x >= 0 && o.x < W && o.y >= 0 && o.y < H && sd[i] <= NEAR && (reach[i] || touches(i));
-  };
+  // requirements 2 and 3 (D85): living trees and living berry bushes within 20 tiles' walk of the
+  // start, slopes allowed; living means alive and on soil where it survives at steady state
   const dead = (o: MapObject) => {
     const lnr = o.components.LivingNaturalResource as { IsDead?: boolean } | undefined;
     return !!lnr && lnr.IsDead === true;
   };
+  const survives = (i: number) => M[i] > 0 && !(D[i] > 0) && !(SC[i] > 0);
   let bushes = 0;
   let trees = 0;
   for (const o of objects) {
-    if (o.template === "BlueberryBush" && !dead(o) && reachable(o)) bushes++;
-    else if ((TREES as readonly string[]).includes(o.template) && reachable(o)) trees++;
+    const tree = (TREES as readonly string[]).includes(o.template);
+    if (!tree && o.template !== "BlueberryBush") continue;
+    if (o.x < 0 || o.x >= W || o.y < 0 || o.y >= H || dead(o)) continue;
+    const i = o.y * W + o.x;
+    if (!survives(i) || reachAt(walk, W, H, i) > NEAR) continue;
+    if (tree) trees++;
+    else bushes++;
   }
+  analysis.treesNear = trees;
+  analysis.bushesNear = bushes;
   c.add({
     id: "start.food",
     class: "playability",
     ok: bushes >= rules.bushesWithin20,
     value: bushes,
     limit: rules.bushesWithin20,
-    message: `${bushes} living berry bushes within 20 tiles of the start (at least ${rules.bushesWithin20}; Normal's food lasts about 4 days)`,
+    message: `${bushes} living berry bushes within 20 tiles' walk of the start (at least ${rules.bushesWithin20})`,
   });
   c.add({
     id: "start.wood",
@@ -514,7 +518,7 @@ function checkStart(
     ok: trees >= rules.treesWithin20,
     value: trees,
     limit: rules.treesWithin20,
-    message: `${trees} trees within 20 tiles of the start (at least ${rules.treesWithin20})`,
+    message: `${trees} living trees within 20 tiles' walk of the start (at least ${rules.treesWithin20})`,
   });
   const ruinsNear: string[] = [];
   let ruinsNearCount = 0;
@@ -530,10 +534,11 @@ function checkStart(
   c.add({
     id: "start.ruins_clear",
     class: "playability",
+    advisory: true,
     ok: ruinsNearCount === 0,
     value: ruinsNearCount,
     limit: 0,
-    message: `${ruinsNearCount} ruin columns within ${rules.ruinsWithin} tiles of the start`,
+    message: `${ruinsNearCount} ruin columns within ${rules.ruinsWithin} tiles of the start (the target is none)`,
     ...(ruinsNear.length ? { where: { entities: ruinsNear }, fix: [fixDelete(ruinsNear, "Remove the ruin columns next to the start")] } : {}),
   });
 
@@ -623,6 +628,7 @@ function checkStart(
   c.add({
     id: "water.reservoir",
     class: "playability",
+    advisory: true,
     ok: held >= need,
     value: Math.round(held),
     limit: Math.round(need),

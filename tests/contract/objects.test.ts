@@ -267,7 +267,9 @@ describe("spillways and badwater rivers in the editor (ROADMAP M7)", () => {
 describe("generated maps: every new object passes the placement emulation (ROADMAP M7)", () => {
   const themes: ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
   it.each(themes)("%s, every map object on, 96²", (theme) => {
-    const spec = makeSpec({ seed: 11, size: { x: 96, y: 96 }, theme });
+    // seed 13: a seed on which every theme places every kind of object (a thorn belt is left out
+    // where it would cut the colony's land in two; generator 0.6.0 moved the start, D85)
+    const spec = makeSpec({ seed: 13, size: { x: 96, y: 96 }, theme });
     spec.settings.hazards.thornBelts = "some";
     spec.settings.hazards.unstableCores = "on";
     spec.settings.resources.mineSites = 3;
@@ -301,7 +303,8 @@ function walkFromStart(b: BuildResult): { labels: Int32Array; root: number } {
 describe("the generator's M7 set pieces keep their rules (ROADMAP M7)", () => {
   it("a second district's site: 60–120 tiles out, 600+ tiles of level land, its own water, joined by slopes, with trees and bushes", () => {
     let sites = 0;
-    for (const [theme, seed] of [["delta", 1], ["delta", 2], ["lakeBasin", 1], ["riverValley", 1]] as [ThemeId, number][]) {
+    // maps with a site at generator 0.6.0 (D77: a site only where one fits; D85 moved the start)
+    for (const [theme, seed] of [["delta", 1], ["delta", 2], ["lakeBasin", 3], ["riverValley", 2]] as [ThemeId, number][]) {
       const r = generate(makeSpec({ seed, size: { x: 128, y: 128 }, theme }));
       expect(r.report.passed).toBe(true);
       const f = r.features.find((g) => g.kind === "setPiece" && g.params.kind === "secondDistrict");

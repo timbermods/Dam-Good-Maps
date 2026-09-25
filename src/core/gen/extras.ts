@@ -338,7 +338,7 @@ export function districtCandidates(b: BuildResult, features: readonly Feature[],
 /** Where "ruins on a plateau" (PLAN §9.4) can rise: a disc of `radius` (and a ring of one) on
  *  level, dry, free ground the colony walks on from the start, 35–70% of the way from the start to
  *  the farthest ground, the nearest first to the middle of that band. */
-export function obstacleSpots(b: BuildResult, features: readonly Feature[], avoid: Uint8Array | null, radius: number, n: number): [number, number][] {
+export function obstacleSpots(b: BuildResult, features: readonly Feature[], avoid: Uint8Array | null, radius: number, n: number, minDist = 0): [number, number][] {
   const { W, H } = b;
   const N = W * H;
   if (!b.start) return [];
@@ -369,7 +369,8 @@ export function obstacleSpots(b: BuildResult, features: readonly Feature[], avoi
   for (let y = R + 1; y < H - R - 1; y += 2)
     for (let x = R + 1; x < W - R - 1; x += 2) {
       const i = y * W + x;
-      if (sd[i] < 0.35 * far || sd[i] > 0.7 * far || bad(i)) continue;
+      // its ruins keep the ruins target's distance from the start (D85: the generator aims for it)
+      if (sd[i] < 0.35 * far || sd[i] > 0.7 * far || sd[i] < minDist + R || bad(i)) continue;
       const lv = b.heights[i];
       let ok = true;
       for (let yy = y - R; yy <= y + R && ok; yy++)

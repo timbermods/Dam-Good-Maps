@@ -4,12 +4,17 @@
 
 import { pathField, pointAtArc, polygonMask, type PathField } from "../core/features/geometry";
 import { BUILDERS } from "../core/features/setpieces";
-import type { Feature, Point, RiverFeature } from "../core/features/schema";
+import type { Feature, Point, RiverFeature, StartFeature } from "../core/features/schema";
 import { runsToTiles, tilesToRuns, type Runs } from "../core/math/grid";
-import type { OpParams } from "../core/doc/ops";
+import { outlineBounds, type OpParams } from "../core/doc/ops";
 import { movePatch as corePatch } from "../core/doc/tools";
 import { OBJECT_NAMES as OBJECT_KIND_NAMES, objectTiles } from "../core/features/objects";
-import { DEAD, YOUNG, type EntityView, type SurfaceWater } from "../render3d/model";
+import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SurfaceWater } from "../render3d/model";
+import { walkRegions } from "../core/analysis/regions";
+import { reachAt, shoreDistance, walkDistance } from "../core/analysis/walk";
+import { inBench } from "../core/features/raster/terrain";
+import { FOOTPRINTS, footprintTiles, slopeHighSide, type Orientation } from "../core/format/footprints";
+import { WALK_BLOCKERS } from "../core/validate/playability";
 
 // ------------------------------------------------------------------------------------- names
 
@@ -402,12 +407,15 @@ function coordsBounds(f: Feature, W: number, H: number): { x0: number; y0: numbe
   return { x0, y0, x1, y1 };
 }
 
-/** Clamp a move so the feature stays on the map (the handle stops at the edge). */
+/** Clamp a move so the feature stays on the map (the handle stops at the edge). A generated
+ *  landform or lake whose outline reaches past the map (Lake Basin's terrace rings) may move as far
+ *  as its outline stays within a map side of the edges (decisions-pending #30). */
 export function clampMove(f: Feature, dx: number, dy: number, W: number, H: number): [number, number] {
   const b = coordsBounds(f, W, H);
   if (!b) return [0, 0];
-  const cx = Math.max(-Math.floor(b.x0), Math.min(W - 1 - Math.ceil(b.x1), dx));
-  const cy = Math.max(-Math.floor(b.y0), Math.min(H - 1 - Math.ceil(b.y1), dy));
+  const ob = f.kind === "landform" || f.kind === "lake" ? outlineBounds(f, W, H) : { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+  const cx = Math.max(Math.ceil(ob.x0 - b.x0), Math.min(Math.floor(ob.x1 - b.x1), dx));
+  const cy = Math.max(Math.ceil(ob.y0 - b.y0), Math.min(Math.floor(ob.y1 - b.y1), dy));
   return [cx, cy];
 }
 
@@ -415,8 +423,8 @@ const onEdge = (v: number, max: number) => v <= 0 || v >= max;
 
 /** The `updateFeature` patch that moves a feature by (dx, dy) tiles (the core's rule: a river keeps
  *  its edge ends on their edge, the start's bench takes the ground level at its new place). */
-export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array): OpParams["updateFeature"]["patch"] {
-  return corePatch(f, dx, dy, W, H, heights);
+export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array, features: readonly Feature[] = []): OpParams["updateFeature"]["patch"] {
+  return corePatch(f, dx, dy, W, H, heights, features);
 }
 
 /** Where a feature's move handle sits: the middle of its tiles. */
@@ -486,24 +494,47 @@ export interface StartCheck {
   /** The 3×3 footprint and the tile at its door. */
   tiles: number[];
   door: number;
-  /** Tiles to the nearest water a pump reaches (0–2 levels below the start, 0.3+ deep), trees and
-   *  living berry bushes within 20 tiles. */
+  /** The three start requirements (PLAN §5.6, D85): tiles' walk on the start's level, without
+   *  stairs, to a shore that touches clean water a pump reaches (null: none within the walk
+   *  limit); living trees and living berry bushes within 20 tiles' walk. */
   water: number | null;
   trees: number;
   bushes: number;
+  /** All three requirements hold with the map's rules. */
+  meets: boolean;
+  /** The start targets it misses (badwater and ruin distances, walkable land), in plain words. */
+  warnings: string[];
 }
 
-/** The start's footprint and nearby water, wood and food at (x, y), from what the page shows
- *  (EDITOR_PLAN §4: the footprint preview, green or red, and simple indicators). `level` is the
- *  bench level for a start that levels its ground (a generated map), or null for an imported start
- *  that stands on the ground as it is. */
-export function checkStartAt(c: TileContext, x: number, y: number, door: [number, number], level: number | null, self: string | null): StartCheck {
+export interface StartNeeds {
+  rules: { waterWithin: number; treesWithin20: number; bushesWithin20: number; badwaterWithin: number; ruinsWithin: number };
+  /** Dry land walkable from the start that the map aims for. */
+  reachMin: number;
+}
+
+const WOOD = new Set(["Pine", "Birch", "Oak"]);
+
+/** The start's footprint and the three start requirements at (x, y), from what the page shows
+ *  (EDITOR_PLAN §4: the footprint preview, green or red, and simple indicators). `bench` is the
+ *  bench a start that levels its ground (a generated map) would make there, or null for an
+ *  imported start that stands on the ground as it is. The walks are the validator's (analysis/
+ *  walk.ts) on the ground as it would be; which plants live is the page's guess from their dead
+ *  flags (the validator, after the move, also checks their soil). */
+export function checkStartAt(
+  c: TileContext,
+  x: number,
+  y: number,
+  door: [number, number],
+  bench: { level: number; radius: number; bank?: Point } | null,
+  self: string | null,
+  needs: StartNeeds,
+): StartCheck {
   const { W, H } = c;
   const tiles: number[] = [];
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) tiles.push((y + dy) * W + (x + dx));
   const doorI = door[1] * W + door[0];
   let problem: string | null = null;
-  const z = level ?? c.heights[y * W + x];
+  const z = bench ? bench.level : c.heights[y * W + x];
   for (const i of [...tiles, doorI]) {
     const tx = i % W;
     const ty = Math.floor(i / W);
@@ -519,7 +550,7 @@ export function checkStartAt(c: TileContext, x: number, y: number, door: [number
       problem = "under water";
       break;
     }
-    if (level === null && c.heights[i] !== z) {
+    if (!bench && c.heights[i] !== z) {
       problem = "not on level ground";
       break;
     }
@@ -529,27 +560,87 @@ export function checkStartAt(c: TileContext, x: number, y: number, door: [number
       break;
     }
   }
-  // indicators: pumpable water, trees and bushes within 20 tiles (straight distance)
-  let water: number | null = null;
+  const N = W * H;
+  // the ground as it would be: a generated start's bench levels its disc and its strip to the bank
+  const h = c.heights.slice();
+  if (bench) {
+    const f = { kind: "start", params: { position: [x, y], orientation: "Cw0", benchRadius: bench.radius, benchLevel: bench.level, player: 0, ...(bench.bank ? { bank: bench.bank } : {}) } } as unknown as StartFeature;
+    const r = bench.radius + 1;
+    const bx = bench.bank ?? [x, y];
+    const x0 = Math.max(0, Math.floor(Math.min(x - r, bx[0] - 3)));
+    const x1 = Math.min(W - 1, Math.ceil(Math.max(x + r, bx[0] + 3)));
+    const y0 = Math.max(0, Math.floor(Math.min(y - r, bx[1] - 3)));
+    const y1 = Math.min(H - 1, Math.ceil(Math.max(y + r, bx[1] + 3)));
+    for (let yy = y0; yy <= y1; yy++)
+      for (let xx = x0; xx <= x1; xx++) {
+        const i = yy * W + xx;
+        if (inBench(f, xx, yy) && !(c.index && c.index.river[i] >= 0)) h[i] = bench.level;
+      }
+  }
+  // what blocks walking, and the slopes
+  const blocked = new Uint8Array(N);
+  const links: [number, number][] = [];
+  const e = c.entities;
+  for (let k = 0; k < e.count; k++) {
+    const t = e.templates[e.template[k]];
+    if (t === "Slope") {
+      const [dx, dy] = slopeHighSide(ORIENTATION_NAMES[e.orientation[k]] as Orientation);
+      const hx = e.x[k] + dx;
+      const hy = e.y[k] + dy;
+      if (e.x[k] >= 0 && e.y[k] >= 0 && e.x[k] < W && e.y[k] < H && hx >= 0 && hy >= 0 && hx < W && hy < H) links.push([e.y[k] * W + e.x[k], hy * W + hx]);
+    } else if (WALK_BLOCKERS.has(t) && FOOTPRINTS[t]) {
+      const p = { template: t, x: e.x[k], y: e.y[k], z: e.z[k], orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: (e.flags[k] & FLIPPED) !== 0 };
+      for (const [tx, ty] of footprintTiles(t, p)) if (tx >= 0 && ty >= 0 && tx < W && ty < H) blocked[ty * W + tx] = 1;
+    }
+  }
+  // 1. water without stairs: a shore on the start's level, touching clean water a pump reaches
+  const pumpable = new Uint8Array(N);
+  let nearestBad = Infinity;
+  for (let i = 0; i < N; i++) {
+    const d = c.water.depth[i];
+    if (!(d > 0.05)) continue;
+    const surface = c.heights[i] + d;
+    if (c.water.contamination[i] < 0.05) {
+      if (d >= 0.3 && surface >= z - 2 && surface <= z + 0.01) pumpable[i] = 1;
+    } else {
+      const dist = Math.hypot((i % W) - x, Math.floor(i / W) - y);
+      if (dist < nearestBad) nearestBad = dist;
+    }
+  }
+  const flat = walkDistance(h, W, H, blocked, [], { x, y });
+  const shore = shoreDistance(flat, h, W, H, pumpable, z);
+  const water = Number.isFinite(shore.distance) ? Math.round(shore.distance * 10) / 10 : null;
+  // 2 and 3: living trees and berry bushes within 20 tiles' walk, slopes allowed
+  const walk = walkDistance(h, W, H, blocked, links, { x, y });
   let trees = 0;
   let bushes = 0;
-  const r = 24;
-  for (let yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++)
-    for (let xx = Math.max(0, x - r); xx <= Math.min(W - 1, x + r); xx++) {
-      const i = yy * W + xx;
-      const d = Math.max(0, Math.hypot(xx - x, yy - y) - 1);
-      const depth = c.water.depth[i];
-      const surface = c.heights[i] + depth;
-      if (depth >= 0.3 && c.water.contamination[i] < 0.05 && surface <= z + 0.01 && surface >= z - 2 && (water === null || d < water)) water = Math.round(d);
-      if (d > 20) continue;
-      for (const k of c.entitiesAt.get(i) ?? []) {
-        const t = c.entities.templates[c.entities.template[k]];
-        const dead = (c.entities.flags[k] & DEAD) !== 0;
-        if (t === "Pine" || t === "Birch" || t === "Oak") trees++;
-        else if (t === "BlueberryBush" && !dead) bushes++;
-      }
+  let nearestRuin = Infinity;
+  for (let k = 0; k < e.count; k++) {
+    const t = e.templates[e.template[k]];
+    const i = e.y[k] * W + e.x[k];
+    if (t.startsWith("RuinColumnH")) {
+      const dist = Math.hypot(e.x[k] - x, e.y[k] - y);
+      if (dist < nearestRuin) nearestRuin = dist;
+      continue;
     }
-  return { problem, tiles, door: doorI, water, trees, bushes };
+    const tree = WOOD.has(t);
+    if ((!tree && t !== "BlueberryBush") || (e.flags[k] & DEAD) !== 0 || i < 0 || i >= N) continue;
+    if (reachAt(walk, W, H, i) > 20) continue;
+    if (tree) trees++;
+    else bushes++;
+  }
+  const r = needs.rules;
+  const meets = water !== null && water <= r.waterWithin && trees >= r.treesWithin20 && bushes >= r.bushesWithin20;
+  // the targets: badwater and ruins farther than their distances, enough land to walk on
+  const warnings: string[] = [];
+  if (nearestBad < r.badwaterWithin) warnings.push(`Badwater ${Math.round(nearestBad)} tiles away (the target is ${r.badwaterWithin})`);
+  if (nearestRuin < r.ruinsWithin) warnings.push(`Ruins ${Math.round(nearestRuin)} tiles away (the target is ${r.ruinsWithin})`);
+  const labels = walkRegions(h, W, H, blocked, links);
+  const root = labels[y * W + x];
+  let land = 0;
+  if (root >= 0) for (let i = 0; i < N; i++) if (labels[i] === root && !(c.water.depth[i] > 0.05)) land++;
+  if (land < needs.reachMin) warnings.push(`${land.toLocaleString()} tiles of land to walk on (the target is ${needs.reachMin.toLocaleString()})`);
+  return { problem, tiles, door: doorI, water, trees, bushes, meets, warnings };
 }
 
 /** The river whose channel holds tile (x, y), and the arc position there (a click on a river). */

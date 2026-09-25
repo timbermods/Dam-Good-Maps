@@ -11,6 +11,7 @@ import { strFromU8, unzipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { decodeProject } from "../../src/core/doc/document";
 import { MapSession } from "../../src/core/doc/session";
+import { planContextOf, planLake } from "../../src/core/doc/tools";
 import { isObject, num, type JsonObject } from "../../src/core/format/json";
 import { ImportError, normalizeImport } from "../../src/core/format/normalize";
 import { readTimber } from "../../src/core/format/timber";
@@ -141,6 +142,47 @@ describe("import of the investigation maps (local only)", () => {
     expect(after.voxels[h * plane + plain]).toBe(1);
     const reopened = MapSession.open(decodeProject(s.project()));
     expect(Buffer.from(reopened.exportTimber().bytes).equals(Buffer.from(s.exportTimber().bytes))).toBe(true);
+  });
+
+  it.skipIf(!named("Canyon.timber"))("an edited map with water under roofs keeps the file's water there, every slot, and settles the rest (M8, D100)", () => {
+    const s = MapSession.importMap(new Uint8Array(readFileSync(named("Canyon.timber")!)), "Canyon.timber");
+    s.setPreviewWater(true);
+    const roofed = s.roofedTiles;
+    expect(roofed.size).toBeGreaterThan(100);
+    const tokens = (bytes: Uint8Array, key: "WaterColumns" | "ColumnOutflows") => {
+      const w = decodeWorld(worldText(bytes));
+      const wm = w.singletons.WaterMapNew as JsonObject;
+      return { levels: num(wm.Levels), t: String((wm[key] as JsonObject).Array).split(" "), plane: w.sizeX * w.sizeY };
+    };
+    const before = tokens(s.exportTimber().bytes, "WaterColumns");
+    const outBefore = tokens(s.exportTimber().bytes, "ColumnOutflows");
+    // a lake on dry ground, away from the caves
+    const W = s.size.x;
+    let plan: ReturnType<typeof planLake> | null = null;
+    for (let y = 20; y < W - 20 && !plan?.ok; y += 7)
+      for (let x = 20; x < W - 20 && !plan?.ok; x += 7) {
+        let clear = true;
+        for (let dy = -9; dy <= 9 && clear; dy++) for (let dx = -9; dx <= 9; dx++) if (roofed.has((y + dy) * W + x + dx)) clear = false;
+        if (!clear) continue;
+        const p = planLake({ outline: [[x - 3.5, y - 3.5], [x + 3.5, y - 3.5], [x + 3.5, y + 3.5], [x - 3.5, y + 3.5]] }, planContextOf(s), "7a1b2c3d-4444-4222-8333-444455556666");
+        if (p.ok) plan = p;
+      }
+    expect(plan?.ok).toBe(true);
+    if (!plan?.ok) return;
+    expect(s.applyAll(plan.ops, "user", plan.label).ok).toBe(true);
+    const bytes = s.exportTimber().bytes;
+    const after = tokens(bytes, "WaterColumns");
+    const outAfter = tokens(bytes, "ColumnOutflows");
+    expect(after.levels).toBe(before.levels);
+    for (const i of roofed)
+      for (let k = 0; k < after.levels; k++) {
+        expect(after.t[k * after.plane + i]).toBe(before.t[k * before.plane + i]);
+        expect(outAfter.t[k * outAfter.plane + i]).toBe(outBefore.t[k * outBefore.plane + i]);
+      }
+    // the new lake has settled water in the file
+    const lakeTile = plan.tiles[Math.floor(plan.tiles.length / 2)];
+    expect(after.t[lakeTile]).not.toBe("0");
+    expect(Number(after.t[lakeTile].split(":")[0])).toBeGreaterThan(0.3);
   });
 
   it.skipIf(saves.length === 0)("saves are refused with a message", () => {

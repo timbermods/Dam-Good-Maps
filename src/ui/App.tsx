@@ -49,7 +49,7 @@ declare global {
      *  on screen, its sha256 and its share link. */
     dgm?: {
       generate(fragment: string): Promise<{ sha256: string; bytes: number; passed: boolean; ms: number; ticks: number }>;
-      current?(): { sha256: string; link: string; passed: boolean } | null;
+      current?(): { sha256: string; link: string; passed: boolean; checks: { id: string; ok: boolean; value?: number | string; limit?: number | string }[] } | null;
     };
   }
 }
@@ -62,7 +62,7 @@ window.dgm = {
     return { sha256: r.sha256, bytes: r.timber.length, passed: r.passed, ms: r.ms, ticks: r.facts.settle.ticks };
   },
   current() {
-    return shown ? { sha256: shown.sha256, link: shareLink(location.href, shown.spec), passed: shown.passed } : null;
+    return shown ? { sha256: shown.sha256, link: shareLink(location.href, shown.spec), passed: shown.passed, checks: shown.checks.map((c) => ({ id: c.id, ok: c.ok, value: c.value, limit: c.limit })) } : null;
   },
 };
 

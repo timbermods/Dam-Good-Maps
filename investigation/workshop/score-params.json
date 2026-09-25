@@ -1,0 +1,84 @@
+{
+ "version": 1,
+ "weights": {
+  "engineering": 0.08,
+  "height": 0.1,
+  "landmarks": 0.14,
+  "river": 0.04,
+  "pacing": 0.1,
+  "regions": 0.15,
+  "tradeoff": 0.01,
+  "frontier": 0.04,
+  "surprise": 0.12,
+  "vertical": 0.12,
+  "natural": 0.06,
+  "water": 0.04
+ },
+ "targets": {
+  "step1Share": 0.808,
+  "waterShare": 0.263
+ },
+ "bands": {
+  "step1Share": 0.35,
+  "waterShare": 0.256
+ },
+ "norms": {
+  "levels1pct": [
+   12,
+   17
+  ],
+  "regions": [
+   23,
+   36
+  ],
+  "sinuosity": [
+   1,
+   1.6
+  ],
+  "courseLength": [
+   0.5,
+   1.5
+  ],
+  "plateausBySize": {
+   "small": 4,
+   "medium": 7,
+   "large": 26,
+   "max": 27
+  },
+  "rings": {
+   "trees": [
+    0.087,
+    0.288,
+    0.281,
+    0.344,
+    0
+   ],
+   "bushes": [
+    0.155,
+    0.404,
+    0.139,
+    0.302,
+    0
+   ],
+   "scrap": [
+    0,
+    0,
+    0.229,
+    0.653,
+    0.118
+   ]
+  },
+  "surprise": [
+   0.664,
+   0.99
+  ],
+  "straight": [
+   0.011,
+   0.098
+  ],
+  "ridgeCV": [
+   0.322,
+   0.364
+  ]
+ }
+}

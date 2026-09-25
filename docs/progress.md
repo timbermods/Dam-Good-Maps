@@ -5,7 +5,76 @@ tagged `m<N>-done` when all of its acceptance criteria pass.
 
 ## Run summary
 
-**Run 1 (M1 check, then M2–M4) finished on 2026-09-24. Every milestone passed.**
+**Run 2 (M5–M11) stopped at M8 on 2026-09-25. One M8 acceptance criterion is not met as
+written.** M5, M6 and M7 passed; M6 and M7 are live.
+
+| Milestone | Tag | Released | Result |
+|---|---|---|---|
+| M5 Set pieces, land and water tools, slopes, fixes | `m5-done` | inside the M6 release | All criteria pass |
+| M6 Full settings, sharing, themes I | `m6-done` | PR #2, live 2026-09-24 | All criteria pass |
+| M7 Resources, map objects, themes II | `m7-done` | PR #7, live 2026-09-25 | All criteria pass (includes the Lake Basin project-file fix) |
+| M8 Water preview and background validation, with the start requirements | not tagged | not released | Built; one criterion not met (below) |
+| Map look, M9, M10, M11 | — | — | Not started |
+
+Before each tag the run re-checked the milestone itself: typecheck, every unit, contract and
+browser test, and the full oracle (0 disagreements between the two validators on 50 generated
+and 19 official maps). After each release, the live check passed: the site's download equals
+`tools/gen.ts` byte for byte.
+
+- **Where it stopped, and why.** M8's acceptance says Hollows, Pressure, Oasis, Nomads and
+  Beaverome report their water checks as approximate. Four do. Beaverome has none of the causes
+  (no caves, delayed sources, aquifers or seeps, and no roof over the start), and the settle
+  matches its own water within 1%. The workshop study listed it because its start fails
+  `start.dry` (its lake stands 0.7 below the start), not because of its water. Flagging it would
+  need a reason that isn't true, so the run stopped, as the gate rule says. Everything else in M8
+  passes:
+  - the three start requirements (D85), in both validators;
+  - every generated start reaches water on its own level;
+  - batches are 100% final in every theme, with higher first-attempt rates than M7;
+  - a 2-second re-preview at 256²;
+  - byte-identical unedited exports;
+  - editable generated outlines;
+  - no floating objects;
+  - 338 tests and 52 browser tests.
+
+  M8 is on `dev` at `e6d8720`, and CI is green. It's not tagged or released, so the site stays
+  at M7.
+- **What you need to do next:**
+  1. Decide #48 (Beaverome). The simplest fix is to take Beaverome off M8's list, since its
+     water is shown correctly. Then `m8-done` can be tagged and released, and the run can
+     resume.
+  2. Resume the run from M8: Map look, M9 (with #21's variety target), M10 and M11. The
+     river-pond crossing task and the fit-score step wait with it, as you asked.
+  3. Say what "the load checks" in your refinement notes means. It's on the Refinement list,
+     marked "details to confirm".
+  4. Play the pending in-game checks, and run the M3 spike page. See "What Kyler needs to do".
+- **Pending decisions:** 46 are open in [decisions-pending.md](decisions-pending.md). #34 and #39
+  are decided. The run went ahead with each default.
+  - M2–M4: #1–#10
+  - M5: #11–#14
+  - M6: #15–#22 (#21: large maps flatter than official maps, now an M9 target)
+  - M7: #23–#27
+  - M8: #30, #36, #47, #48
+  - Map look: #40
+  - M9, from the workshop study: #31–#33, #35, #37
+  - Refinement: #29
+  - M12: #28, #41–#46
+  - Later: #38
+- **Also done in this run:**
+  - Pages is on. `main` gets tagged releases as merge commits, and a live check runs daily and
+    after each deploy (PRs #2, #3 and #6).
+  - The impeccable-app-flow skill was added to timbermods/.github (#30, merged) and installed
+    locally.
+  - The design pass is now its own roadmap step before M12.
+  - `main` was merged into `dev` once.
+  - The workshop study (PR #4) and the Claude groundwork (PR #5) were merged and their plans
+    adopted (D87–D96).
+  - Your plan updates were recorded: D84 (M12 compound requests), D85 (start requirements, as
+    amended), D86 (Map look), and the Refinement phase with the natural-containment note.
+  - Fixed: a number-field race in the editor, and Lake Basin and Islands project files not
+    reopening.
+
+### Run 1 (M1 check, then M2–M4), 2026-09-24: every milestone passed
 
 | Milestone | Tag | Result |
 |---|---|---|
@@ -646,6 +715,8 @@ updated.
 - `out/m5/` was made with generator 0.3.0. Remaking it now gives different maps; test the
   committed files.
 
+Deployed: m6-done, 2026-09-24, live check passed (PR #2; live download = `tools/gen.ts`, sha256 `d99fa422…`).
+
 ## M7: resources, map objects, themes II
 
 **Built** (branch `dev`, generator 0.5.0):
@@ -757,25 +828,232 @@ the editor's chunks are 127 KB (42 KB gzipped); the 3D chunk is 560 KB (143 KB g
 - Fixed after M7: Lake Basin and Islands project files reopen (point bounds widened to one map side
   past each edge, −256…512; bytes unchanged; project round trip in every batch).
 
+Deployed: m7-done, 2026-09-25, live check passed (PR #7; live download = `tools/gen.ts`, sha256 `7d976a77…`).
+
+## After M7: plan updates and merges
+
+On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
+
+- **`main` merged into `dev`** (eb8bac8): CLAUDE.md with the writing and deploying rules, the
+  noindex deploy step and the live check.
+- **PR #4 merged** (`investigation/workshop`): the study of 130 Steam Workshop maps
+  ([WORKSHOP.md](../investigation/WORKSHOP.md)), and its integration plan
+  ([WORKSHOP-INTEGRATION.md](../investigation/WORKSHOP-INTEGRATION.md)) adopted into ROADMAP and
+  PLAN (D87), each item in the milestone it names. Kyler decided W4 (#34, badwater distances
+  30 / 15 / 8) and the start thresholds (#39) in the amended Part A (D85). The other seven W
+  decisions wait for Kyler (#31–#33, #35–#38): W1 Reservoir help (#31) and part of W7 (#37) keep
+  the recorded decisions until Kyler answers, and #40 logs where the study conflicts with Map look.
+- **PR #5 merged** (`investigation/claude`): the Claude groundwork for M12
+  ([REPORT.md](../investigation/claude/REPORT.md)), and its integration plan
+  ([M12-INTEGRATION.md](../investigation/claude/M12-INTEGRATION.md)) adopted into ROADMAP, PLAN
+  and EDITOR_PLAN (D88–D96), merged with Kyler's M12 update: the vocabularies in M9, the rest in
+  M12. P3, P5, P6 and P7 wait for Kyler (#41, #43–#45); P1 is settled by D84, and P2 is #28. #42,
+  #46 and #47 log where it conflicts with D84 and D87.
+- **M12 plan update** (Kyler, D84): compound requests, flow-relative places and a judgement-word
+  table (both built in M9), and new suite requests; the loop's budget waits for Kyler (#28).
+- **Refinement note** (Kyler): containment should look natural. A new Refinement phase in
+  ROADMAP (after M11, before the design pass) lists it with Kyler's other notes: #2, #12, #13,
+  #21, the river-pond crossing fix and the load checks. Its targets wait for Kyler (#29).
+- **Part A, start requirements** (Kyler, D85; built at the start of M8, released with `m8-done`):
+  three requirements that reject a map (clean water on the start's own level reached without
+  stairs; **Minimum starting trees** and **Minimum starting bushes** within 20 tiles' walk); the
+  other start rules become generation targets with advisory warnings. Also at the start of M8:
+  editing generated outlines that leave the map (#30).
+- **Part A amended** (Kyler, D85): thresholds by difficulty, as player settings that Designed for
+  resets: water within 12 / 20 / 28 tiles' walk on the start's level, living trees 60 / 40 / 20,
+  living bushes 40 / 30 / 20; badwater distances 30 / 15 / 8 as targets (W4); the start must reach
+  water on its own level (D26's bench changes), with batches ≥ 98% per theme.
+- **Part B, Map look** (Kyler, D86): a new step after M8, before M9. The 3D view moves closer to
+  the game's look, its ground coloured by moisture; no map file changes. Released with M9 or as
+  `map-look-done`.
+- **New pending decisions:** #28–#47 (20 rows). #34 (W4) and #39 (the start thresholds) are
+  already decided by Kyler (D85); the rest wait for Kyler, each with the default the plans follow.
+  #31, #37 (in part), #40, #42, #46 and #47 are conflicts where the recorded decision stays.
+
+## M8: water preview and background validation (with the start requirements)
+
+**Built** (branch `dev`, generator 0.6.0):
+- **The start requirements** (Kyler's Part A, D85; as built D97, D104), in both validators (TS and
+  Python):
+  - **Water without stairs:** a shore tile on the start's own level, reached without a slope,
+    next to clean water a pump reaches (0.3 deep or more, contamination under 0.05, surface 0–2
+    below the start), within 12 / 20 / 28 tiles' walk (Easy / Normal / Hard);
+  - **Minimum starting trees** and **Minimum starting bushes:** 60 / 40 / 20 living Pine, Birch and
+    Oak, and 40 / 30 / 20 living blueberry bushes, within 20 tiles' walk (slopes allowed);
+  - walking distance (`src/core/analysis/walk.ts`, `prototype/analysis.py`): orthogonal steps 1,
+    diagonals √2 only where both neighbours are level, slopes as links, from the start's 3 × 3;
+  - the badwater and ruin distances, the walkable land (`start.reach`) and the stored drought water
+    (`water.reservoir`) are targets now: advisory warnings that never reject a map.
+    `start.reach_water` is folded into `start.water`. `start.dry` still rejects.
+  - the settings panel names them **Water without stairs (tiles)**, **Minimum starting trees** and
+    **Minimum starting bushes**; **Designed for** resets them; the Badwater distance range is
+    8–60 and its defaults are 30 / 15 / 8. The map card lists the three under **Start
+    requirements**.
+- **The generator reaches them** (D97): the start's bench runs to the bank, a strip about 3 tiles
+  wide from the start to the river at the bench's level (`StartParams.bank`, `bankFor`); where the
+  drawn place has none, the start moves along the valley, up to 16 tiles, to one that has. Groves
+  and berry patches near the start grow within its 20 tiles' walk first, and share scarce land by
+  their minimums. Generator 0.6.0 (D106): every map changes, and old share links open with the
+  note that the map may differ.
+- **Approximate water on imports** (`src/core/analysis/mechanics.ts`, the workshop study's W6, D98):
+  a cause (caves on 5%+ of tiles, sources that turn on later or aquifers with a quarter of the clean
+  water, seeps with half the running water, a start under a roof) plus evidence that the settle
+  disagrees with the map's own water makes the water and start checks "approximate", with the
+  reason, in both validators. They pass, keep their numbers and say why; the oracle compares them
+  as their own verdict.
+- **Generated outlines past the map** (decisions-pending #30, D103): a generated landform's or
+  lake's outline may reach one map side past each edge, and can be changed, moved and locked.
+  Outlines the player draws stay on the map's tiles.
+- **The editor's water preview** (`src/core/sim/preview.ts`, D99): after an edit that moves water,
+  the rebuild warm-starts from the previous settled water, keeps it away from the edit, pre-fills
+  round the edit and runs the exact simulation until it stops moving (one game day at most).
+  Moisture and the plants on it follow.
+- **Background validation** (`src/worker/session.ts`, D99): 0.7 s after the last edit the worker
+  runs the canonical settle in slices of 16 ticks (`SettleRun`, the same bytes as the one-go
+  settle), puts it in place of the preview's water and runs every check. A newer edit cancels it.
+  The pill shows **Settling water** with its progress. Imported maps get the water and colony
+  checks too (decisions-pending #9); an unedited import is settled once.
+- **Export** settles canonically first, with progress in the dialog: a file never gets the
+  preview's water. Problems stop it, warnings are listed and need a confirm, and approximate
+  checks say why.
+- **Water under roofs** (D100): on an imported map with caves or overhangs, the columns under
+  roofs keep the file's own water (every slot) in the view and the export; the rest is settled. A
+  notice says so when the map opens.
+- **Show** (D101) in every tab: **Soil moisture**, **Badwater**, **Drought** (the analytic drought
+  of PLAN §10: the water kept and the water that dries up, with the totals) and, on imports,
+  **Water under roofs**, each with a legend.
+- **The start's indicators** (D105): while the start moves, the page runs the validator's walks on
+  the ground as it would be; the footprint is green only where the district center fits and all
+  three requirements hold, with the map's own settings. The other targets show as warnings.
+- **Objects on reshaped ground** (D102, the workshop study's recipes): set pieces, lakes, landforms,
+  rivers and moves clear the objects on uneven or flooded ground or move them to the new ground,
+  and the report says which and why.
+- **Tools:** `tools/bench-preview.ts` (`npm run bench:preview`: five local edits per theme at
+  256², the preview's time and its distance from the canonical settle);
+  `tools/ingame-files.ts --milestone m8`; `tools/oracle.ts` compares approximate verdicts;
+  `tools/settings-suite.ts` measures the three requirements (the water experiment measures the
+  walk on the start's level).
+- **Tests:** `tests/contract/start.test.ts` (10: each requirement, each setting moving its result,
+  slopes, badwater, pump reach, dead trees, trees across a slope), `tests/contract/mechanics.test.ts`
+  (4: the approximate rule, and the official maps it flags, local only),
+  `tests/contract/parity.test.ts` (4: the editor's verdicts equal the generator's validator on the
+  exported file; slices equal the one-go settle), `tests/contract/reshape.test.ts` (4: the
+  property test below), an outline test in `tests/contract/projects.test.ts`, a roofed-water test
+  in `tests/contract/import.test.ts`; `tests/e2e/start.spec.ts` (the map card and the start's
+  indicators and footprint) and `tests/e2e/preview.spec.ts` (a local edit's preview time in
+  Chrome at 256², Islands and Lake Basin).
+- **In-game files:** `out/m8/`: `River Valley (4242) M8 preview.timber`, its PNG and `checks.txt`;
+  the edited Canyon (F4) and Cozy Secret Valley (F3) are written to `out/m8/local/` from local
+  copies, never committed.
+- **New npm dependencies:** none.
+
+**Acceptance:**
+
+| Criterion | Result |
+|---|---|
+| Start requirements: both validators apply the three requirements and the advisory targets, with 0 disagreements on the full oracle | **pass**. `npm run oracle`: 150 maps of the six themes pass `validate.py --load-only` and the round trip; parity on 50 generated maps (2,150 checks) and the 19 official maps shows 0 disagreements. Hollows, Nomads, Oasis and Pressure report 12 approximate checks each, in both validators |
+| Start requirements: the unit tests pass, and the three settings move their measured targets | **pass**. `tests/contract/start.test.ts` (10 tests): water reached only by a slope fails; water beyond the walk fails; only badwater fails; water too shallow or out of a pump's reach fails; trees or bushes below the minimum, too far away, dead or on soil that kills them fail; trees across a slope count; each of the three settings moves the result. `tools/settings-batch.ts`, 20 seeds at 96² ([out/m8/settings-96.md](../out/m8/settings-96.md)): Water without stairs 8 → 20: the walk 2.6 → 6.7 tiles; Minimum starting trees 20 → 120: 66 → 152 trees; Minimum starting bushes 10 → 80: 31 → 96 bushes. All 33 experiments move |
+| Start requirements: every accepted map's start reaches water on its own level; batches ≥ 98% final per theme at the defaults, first-attempt rates beside M7's | **pass**. `start.water` rejects, so all 2,400 accepted maps reach water on the start's level. 100 seeds each, Normal: 100% final at every size in every theme. First attempt at 96², 128², 192², 256² (M7 in brackets): River Valley 98%, 99%, 100%, 100% (92, 94, 93, 100). Canyon 100% at every size (97, 96, 87, 96). Highlands 96%, 98%, 95%, 94% (87, 94, 94, 91). Lake Basin 100% at every size (96, 100, 100, 100). Delta 100%, 99%, 100%, 99% (100, 99, 100, 99). Islands 100%, 100%, 100%, 98% (90, 99, 100, 69). Easy and Hard, 30 seeds at 128²: 100% final in every theme; first attempt 87–100% (Highlands Easy 87%, Highlands Hard 93%, Canyon Hard 97%, the rest 100%; M7 had Delta Hard at 57%) |
+| Start requirements: the editor's start indicators, its footprint and the map card follow the requirements (a browser test) | **pass**. `tests/e2e/start.spec.ts`: the map card lists the three with the validator's numbers and Normal's limits; **Minimum starting trees** 25 moves the card's limit; in the editor the indicators show the three with the map's settings, agree with the validator at the start's own place (the same water walk, at least its living trees and bushes) and say **The district center fits here**; walked away from the river, the footprint turns red with **Fits, but misses a start requirement** and the missed requirement marked |
+| Start requirements: how many of the 11 official starts the study could measure meet the three at Normal | **5 of 11**: Canyon, Craters, Lakes, MountainRange and ThousandIslands. 8 of the 11 meet each requirement on its own (D104) |
+| Outlines past the map: a generated ring that leaves the map can be edited and locked, and an unedited map's bytes don't change | **pass**. `tests/contract/projects.test.ts`: on a 96² Lake Basin map a terrace ring past the edge is locked (the export's sha256 is unchanged), a region lock is set at the map's edge, the ring is lowered one level and moved with its outline still past the edge; undoing it all gives the generator's bytes. An outline the player draws past the edge is refused ("leaves the map"); one to the tiles' outer edge (−0.5) is accepted (D103) |
+| Validation parity between editor and generator | **pass**. `tests/contract/parity.test.ts` on River Valley 96², Lake Basin 128² and Islands 96²: after edits previewed with warm-started water (ground lowered beside water, a lake with its spring, a forest removed), the editor's verdicts equal the generator's validator on the exported file, check by check, and its water and bytes equal a full build. In the worker, the background check equals the one-go export check, and a newer edit drops a running check |
+| A local edit re-previews in ≤ 2 s at 256² | **pass**. `npm run bench:preview` (Node, seed 1, five edits in each of the six themes): River Valley at most 0.66 s, Canyon 0.39 s, Highlands 0.81 s, Lake Basin 1.46 s, Delta 0.93 s, Islands 1.76 s (its weir). In Chrome (`tests/e2e/preview.spec.ts`, two runs): Islands 1.53–1.66 s, Lake Basin 1.41–1.51 s. The preview's water is within 0.19 deep of the canonical settle on every tile; the canonical settle follows in the background in 0.45–5.4 s |
+| The export of an unedited generated map equals the generator's own file byte for byte | **pass**. `tests/contract/editor.test.ts` (the worker's export of an unedited map), `tests/contract/parity.test.ts`, the project round trip in every batch (2,400 maps rebuild the same `.timber`), and `tests/e2e/share.spec.ts` (a share link opens the same bytes in every theme) |
+| Hollows, Pressure, Oasis, Nomads and Beaverome report their water checks as approximate with a reason; the other 14 official maps are unchanged | **not met as written: 4 of 5.** Hollows, Pressure, Oasis and Nomads report every water check and the start's checks as approximate, with the reason, in both validators (`tests/contract/mechanics.test.ts`, the oracle), and the other 14 have no approximate check. **Beaverome is not approximate.** It has none of the causes (no caves, no timed sources, aquifers or seeps, its start not under a roof), and our settle matches its own water within 1% of the map, exactly round the start. It fails `start.dry` because its lake stands 0.7 below the start within two tiles, which is how the map was made. The study listed it because its start could not be measured (the study's `startMeasurable` needs `start.dry` to pass), not because its water could not be shown. Tried: the causes alone (flags Spillage, Pillars and HelixMountain, whose water our settle shows within 7%, and still misses Beaverome); causes plus evidence (built, D98). Flagging Beaverome would need a reason that is not true of its water. Kyler's call: decisions-pending #48 |
+| A property test places standalone waterfalls, lakes and landforms beside every kind of map object on generated maps: no object is left floating | **pass**. `tests/contract/reshape.test.ts`: on River Valley, Lake Basin and Highlands maps, each of the nine object kinds beside a waterfall, a lake and a landform at random offsets (15+ edits per map, some moving or clearing objects): no object fails the loader's rules or its ground, and the report says which objects moved or were cleared (D102) |
+| In-game check (the preview against the game on three edited maps, including F4 and F3) | **skipped for now (D11)**. `out/m8/` has the River Valley map with a lake, lowered ground and a weir; the edited Canyon (F4, roofed water) and Cozy Secret Valley (F3, pre-1.0) are written locally to `out/m8/local/`. Checks M8-1a to M8-1c are pending in [ingame-log.md](ingame-log.md) |
+
+Also green:
+- the full oracle (above), in 22.7 minutes locally;
+- 338 unit and contract tests, and 52 browser tests locally, run twice (Node = Chromium on 10
+  seeds; every investigation map imports, renders and exports unchanged);
+- generation at 128², median / max of 10 seeds: River Valley 607 / 1,165 ms, Canyon 213 / 289,
+  Highlands 1,009 / 1,990, Lake Basin 892 / 1,011, Delta 712 / 923, Islands 1,783 / 1,908 (budget
+  3 s). The canonical settle at 256², median: River Valley 844 ms, Canyon 430, Highlands 1,446,
+  Lake Basin 2,349, Delta 2,239, Islands 5,159 (budget 3 s; D83). The settle code is no slower
+  than M7's on the same maps (Islands 5.2 s against 5.4 s). Local times vary with the machine's
+  state: on CI the River Valley settle is 1.06 s now, and was 1.40 s at M7's last run.
+
+Page weight: the page's own script is 94 KB (32 KB gzipped); the worker is 376 KB (128 KB gzipped);
+the editor's chunks are 136 KB (45 KB gzipped); the 3D chunk is unchanged at 560 KB (143 KB
+gzipped).
+
+Tests whose expectations changed because Kyler changed the rules (D85); none was deleted:
+- `tests/contract/features.test.ts`: a generated map may warn on `start.badwater`, `start.reach`,
+  `start.ruins_clear`, `plants.drought` and `water.reservoir` (only `plants.drought` before): D85
+  made the other four targets.
+- `tests/contract/validate.test.ts`: `start.reach_water` left the list of checks: D85's water
+  requirement folds it into `start.water`.
+- `tests/contract/editor.test.ts`: an import's colony checks now run (`playability` true, and its
+  export is awaited and byte-equal), decisions-pending #9 as M8 built it.
+- `tests/unit/editor.test.ts`: a moved start's patch includes `bank: null` where no river is near
+  (D97: the bench runs to the bank).
+- `tests/e2e/tools.spec.ts`: the indicators' text is the three requirements (**Starting trees**,
+  **Fits, but misses a start requirement**).
+- `tests/contract/objects.test.ts`: generator 0.6.0 moved the start, so the every-object map is
+  seed 13 (was 11), and the second-district sample is Lake Basin 3 and River Valley 2 (were 1 and
+  1): maps where the objects and the site still fit. The checks are the same.
+
+**Deviations** (the plan is updated to match): PLAN §20 D97–D106; D26 and D40 changed.
+- D97: the start's bench runs to the bank (D26 changes), and near-start plants grow within the
+  walk first.
+- D98: the approximate rule needs evidence as well as a cause; Beaverome is not flagged (#48).
+- D99: the preview's settle stops on a tolerance, one game day at most; the canonical settle runs
+  in slices in the background and before export.
+- D100: water under roofs keeps the file's water (D40 changes).
+- D101: the layers are one **Show** menu.
+- D102: objects on reshaped ground move or are cleared (#47's default).
+- D103: player outlines reach the tiles' outer edge (−0.5); generated ones a map side past it.
+- D104: the requirements' details: the walk to the shore tile; Pine, Birch and Oak as trees.
+- D105: the start's indicators count plants that are not dead; the validator judges living.
+- D106: generator 0.6.0; 0.5.0 share links open with the note that the map may differ.
+
+**Look at:**
+- Beaverome: M8's acceptance lists it as approximate, and it is not (above). Decide
+  [decisions-pending #48](decisions-pending.md): keep `start.dry` as it is, or count only water on
+  or above the start's level.
+- The in-game checks M8-1a to M8-1c are pending ([ingame-log.md](ingame-log.md)). The Canyon and
+  Cozy Secret Valley files come from your own copies: run
+  `npx tsx tools/ingame-files.ts --milestone m8` and look in `out/m8/local/`.
+- Try it: `npm run dev`, generate a map and read **Start requirements** on the map card. Then
+  **Refine this map** and lower some ground beside the river: the water moves within a second or
+  two, and the pill shows **Settling water** before **Ready to play**. Pick **Show → Drought**.
+  Drag the start away from the river and watch its footprint turn red.
+- Every generated map changed with 0.6.0. `out/m6/` and `out/m7/` were made with older
+  generators: test the committed files.
+- The preview is approximate by design: after a weir on a Delta map it differs from the exact
+  settle by at most 0.1 deep (594 tiles wet in one and dry in the other) until the background
+  check replaces it, about 2 s later.
+- Islands' canonical settle at 256² is still over the 3 s budget (5.2 s median here, D83). The
+  editor runs it in the background, and waits for it only on export.
+
+## After M8: Kyler's decisions and the M9 design step
+
+- Kyler decided #48 (PLAN §20 D107): Beaverome is off M8's approximate-water list; M8's acceptance names four maps; `start.dry` stays as built.
+- Refinement list: the load checks are defined (keep a load check only where the game rejects or breaks the map), and `start.dry` for lakeside starts is added, to be measured first.
+- Product principle recorded (PLAN, Product principles; D108): maps are created, not copied. An M9 design step comes before M9 (D109).
+
 ---
 
 ## What Kyler needs to do
 
 Things the run can't do itself. Each has the exact steps.
 
-1. **Turn on GitHub Pages from Actions.** Pages is a repository setting, so the run leaves it to
-   you. On <https://github.com/timbermods/dam-good-maps/settings/pages>, under **Build and
-   deployment → Source**, choose **GitHub Actions**. Then either merge `dev` into `main` or
-   start the workflow by hand: Actions → "Deploy to GitHub Pages" → Run workflow → branch
-   `main`. The site appears at <https://timbermods.github.io/dam-good-maps/>. The workflow only
-   deploys `main` (D23).
+1. **Decide #48** (Beaverome's start) in [decisions-pending.md](decisions-pending.md). It is the
+   one M8 acceptance item not met as written, and the run waits on it. (GitHub Pages is on since
+   2026-09-24: <https://timbermods.github.io/dam-good-maps/>, deployed from `main`.)
 2. **Play the pending in-game checks** when you're ready. See [ingame-log.md](ingame-log.md). M2
    adds B1–B4 (files in `out/m2/`): the first time pre-filled water meets the real game. M5 adds
    C1–C3, F1 and the gorge's stair notch (files in `out/m5/`). M6 adds M6-1a to M6-1c: a Canyon
    and a Lake Basin map, their dam sites and their badwater basins (files in `out/m6/`). M7 adds D1–D5: one Lake Basin map with every 1.0 object;
-   demolish the spillway's plug and watch the lake drop (files in `out/m7/`).
+   demolish the spillway's plug and watch the lake drop (files in `out/m7/`). M8 adds M8-1a to
+   M8-1c: compare the editor's water with the game on three edited maps (a River Valley map in
+   `out/m8/`; Canyon and Cozy Secret Valley made from your own copies with
+   `npx tsx tools/ingame-files.ts --milestone m8`, in `out/m8/local/`).
 3. **Answer the pending decisions** in [decisions-pending.md](decisions-pending.md) when convenient;
-   the run went ahead with the defaults listed there.
+   the run went ahead with the defaults listed there. #48 (Beaverome's start) decides the one M8
+   acceptance item that is not met as written.
 4. **Run the delivery spike page** (M3). It needs your claude.ai account and your consent, so the
    run leaves it to you. It takes about ten minutes.
    1. Open <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp> while signed in to claude.ai.

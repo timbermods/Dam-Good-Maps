@@ -118,7 +118,7 @@ export function band(key: string, spec: MapSpec): string {
     case "badwater":
       return "Badwater strength against the rivers'. Official maps: 0.18–2.2, most 0.65.";
     case "badwaterDistance":
-      return "Official maps: 3–79 tiles, most 30.";
+      return "A target: the map card warns when badwater is nearer. Official maps: most 15 tiles.";
     case "thornBelts":
       return "Belts of thorns bar the way to relics and geothermal fields. Clearing them takes builders and hurts. Official maps: 8 of 19 have some.";
     case "unstableCores":
@@ -134,19 +134,19 @@ export function band(key: string, spec: MapSpec): string {
     case "groveSize":
       return "Official groves: most 10 trees.";
     case "berriesNearStart":
-      return "Official maps: most 47 within 20 tiles.";
+      return "Never fewer than Minimum starting bushes. Official maps: most 57 within 20 tiles' walk.";
     case "berryBushes":
       return `About ${Math.round(((density("bushes_per_10k", area) * area) / 1e4) * (s.resources.berryBushes / 100)).toLocaleString()} bushes on this map.`;
     case "ruins":
       return `About ${Math.round(((density("scrap_per_1k_tiles", area) * area) / 1e3) * (s.resources.ruins / 100)).toLocaleString()} scrap on this map.`;
     case "waterWithin":
-      return "Official maps: 1–24 tiles, most 14.";
+      return "Walk on the start's level to clean water a pump reaches, with no stairs. Official maps: most 13 tiles.";
     case "treesWithin20":
-      return "Official maps: 41–186, most 117.";
+      return "Living trees within 20 tiles' walk. Official maps: most 112.";
     case "bushesWithin20":
-      return "Official maps: 0–84, most 47.";
+      return "Living berry bushes within 20 tiles' walk. Official maps: most 57.";
     case "ruinsWithin":
-      return "Official maps: 10–97 tiles, most 45.";
+      return "A target: the map card warns when ruins are nearer. Official maps: most 45 tiles.";
     default:
       return "";
   }

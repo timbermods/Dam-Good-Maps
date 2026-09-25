@@ -194,6 +194,9 @@ export interface StartParams {
   orientation: Orientation;
   benchRadius: number;
   benchLevel: number;
+  /** Where the bench runs to the water (D85, D97): a point on a river's course. The bench's strip
+   *  from the start to it stops at the channel, so the start's own level touches the river. */
+  bank?: Point;
   /** Timber Together colonies are numbered from 0 (PLAN §20, D5). Vanilla maps have one start
    *  with player 0, and the writer never writes the player. */
   player: number;

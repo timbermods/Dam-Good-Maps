@@ -1,0 +1,42 @@
+{
+ "id": "F02",
+ "text": "move it a bit east",
+ "setup": "rv128-fall",
+ "calls": [
+  {
+   "tool": "propose",
+   "args": {
+    "request": "move it a bit east",
+    "goals": [
+     {
+      "id": "g1",
+      "text": "the selected waterfall a few tiles east"
+     }
+    ],
+    "steps": [
+     {
+      "op": "moveFeature",
+      "target": "waterfall",
+      "by": [
+       5,
+       0
+      ]
+     }
+    ],
+    "expectations": [
+     {
+      "goal": "g1",
+      "subject": "waterfall",
+      "metric": "at.0",
+      "change": "up"
+     }
+    ],
+    "report": "x"
+   },
+   "bytes": 1740,
+   "error": false,
+   "accepted": true
+  }
+ ],
+ "ended": "Moved the waterfall 5 tiles east. It is otherwise unchanged: a 20-tile lip, a 6-level drop, and it still drains to the north edge. It is now 27 tiles from the start. Assumption: \"a bit\" means about 5 tiles; say if you want it further. Every start rule still holds."
+}
