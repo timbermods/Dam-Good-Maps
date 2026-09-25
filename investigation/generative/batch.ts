@@ -9,7 +9,7 @@
 // investigation/generative/proto/. Records land in <ROOT>\maps\<gen>-<size>\<theme>-<seed>.json,
 // with the .timber and the settled water (.f32: depth, contamination, moisture) beside them.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { generate as generateCurrent, type GenerateResult } from "../../src/core/gen/generate";
 import { blocks } from "../../src/core/validate/report";
@@ -43,6 +43,7 @@ async function main(): Promise<void> {
     let pass = 0;
     let first = 0;
     for (const seed of seeds) {
+      if (process.argv.includes("--resume") && existsSync(join(dir, `${theme}-${seed}.json`))) continue;
       const t0 = performance.now();
       const r = run(theme, seed, size, difficulty);
       const ms = Math.round(performance.now() - t0);

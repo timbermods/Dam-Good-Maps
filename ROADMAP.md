@@ -670,13 +670,57 @@ a little noise, and two maps must play differently, not only look different.
 3. **A prototype** under `investigation/generative/`, with no `src/` changes: at least 3 themes,
    30+ seeds each at 128². Report renders, the measures above, the score and batch pass rates,
    compared with the current M9 plan.
-4. **Kyler's judgement is the final gate.** A blind local rating page (never published) with 40
-   prototype maps: mixed themes and seeds, no labels, no hint of the recipe or process, and beside
-   each map's renders a short plain "how it plays" card from its opening description. Kyler rates
-   Fun and Unique from 1 to 5. The design is approved only when his Unique median for these maps
-   is at least his Unique median for the workshop maps (`C:\dgm-workshop\ratings.json`).
+4. **The gate** (Kyler, 2026-09-25; it replaces the rating gate). The design is approved when:
+   a. the objective measures pass: no built dam walls, no clones, no archetypes, play variety
+      within its targets, natural dam sites near the start at a rate comparable to the official
+      maps, and the batch pass rates;
+   b. simulated play shows that prototypes play differently: each prototype's weather-cycle
+      behaviour (`investigation/cycles`) and its position on the strategy axes
+      (`investigation/mechanics`), once those investigations are ready;
+   c. a one-page brief for each of 10 prototype maps: its terrain, a "how it plays" card, its
+      cycle timeline and its position on the strategy axes. Kyler approves the direction from these
+      briefs and the measures.
+   The ten maps are also exported as `.timber` files (`investigation/generative/out/`). The blind
+   rating page is optional and decides nothing.
+5. **Two design rounds.** Design version 1 (`docs/m9-design.md`, PR from
+   `investigation/generative`) comes first. Version 2 folds in the three Codex investigations
+   (`investigation/cycles`, `investigation/landscapes`, `investigation/mechanics`) when their PRs
+   are ready, with new prototypes, measures and briefs. **Kyler approves version 2, not version 1.**
 
 M9, M10 and M11 wait for that approval.
+
+**Proposed staging (for Kyler's approval).** From design version 1 (`docs/m9-design.md` §16). M9
+is built in three stages, each with its own deliverables, acceptance and release, tagged and
+released like a milestone. The text under the stages ("Delivers" and below) is M9 as first planned;
+the stages replace its order, and its premises become recipes inside the system (design §3).
+
+- **M9a: terrain and water from processes** (tag `m9a-done`).
+  - Delivers: the genome and the themes as priors; the field (uplift, erosion, levels) and the
+    hydrology (rivers from the drainage, lakes, falls, pools, splits, deltas) in `src/core`;
+    features read back out of the field (rivers, natural lakes, badwater hollows, the start,
+    objects, resources); the settler; `water.storage_possible` in place of `water.reservoir` and the
+    dam-wall check, in both validators; the document model (a stored field, project format 3); the
+    generator version 0.7.0; K = 1.
+  - Acceptance: **zero built dam walls on every theme, size, difficulty and setting** (the dam-wall
+    check on every batch map, and a contract test that no planned feature list holds a dam-site
+    ridge); batches ≥ 98% final per theme at 96², 128², 192² and 256², first attempt ≥ 60%; the
+    same bytes for the same seed in Node and Chrome; 0 disagreements with the Python oracle; the
+    budgets (128² under 3 s, 256² within its budget); every editor test still passes, generated
+    fields added to the incremental-rebuild property test.
+  - Release: **M9a must pass Kyler's play test of at least two of its maps before it's released
+    publicly, and before any public beta.**
+- **M9b: composition and variety** (tag `m9b-done`).
+  - Delivers: the recipes (the named premises as forced parts), Variety (`vy`) and Surprise me, the
+    8 flow directions (all appear in 100 seeds of each theme, none over 25%), river-network variety
+    (splits, deltas, meanders and oxbows), no clones (K candidates ranked against reference
+    signatures), the openings with the weather-cycle signature and the strategy axes (design
+    version 2), and the measures as permanent checks.
+  - Acceptance: the design's measures M1–M6 on 200 seeds per theme at 128² meet their targets.
+- **M9c: score, names and candidates** (tag `m9c-done`).
+  - Delivers: the 12-component score, fitted to Kyler's ratings when they exist; K = 3 candidates
+    with progressive preview; names and descriptions from the read-back features and the opening
+    ("how it plays"); the place resolver and judgement words (D84, D88); the settings bands.
+  - Acceptance: the rest of M9's acceptance below that the stages do not cover.
 
 
 **Delivers:** old PLAN milestone 4.
@@ -766,6 +810,16 @@ flow axis, where the valley runs, the relief, the water budget). Risk: variety b
 maps; the per-premise batch gate is the guard.
 
 **Acceptance**
+- **Zero built dam walls on every theme, size, difficulty and setting** (Kyler's no-dam-ridge
+  decision, 2026-09-25): the dam-wall check (design §10) finds none on any batch map, and no planned
+  feature list holds a dam-site ridge.
+- **Permanent checks**, run on every milestone after M9 so no later milestone brings archetypes
+  back (design §10, §16): no built dam walls; no clones (every seed's nearest other seed of its
+  theme ≥ 0.25 on the variety scale, median ≥ 0.40); no archetypes (no cluster of whole maps, river
+  networks, relief or openings over 15% of a theme); play variety within its targets (openings);
+  no approximation of workshop maps (every map at least the workshop's p10 nearest-peer distance
+  from every workshop map, run locally in each milestone's full check, since workshop maps never
+  reach CI).
 - The official score distribution is documented, and the recommended official maps land in the
   top third (with the study's default parameters they rank 3rd, 6th and 7th of 19).
 - Names and premises match the features on 30 hand-checked maps, 10 of them at Variety 100.

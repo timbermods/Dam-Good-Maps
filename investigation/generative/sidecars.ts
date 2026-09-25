@@ -21,7 +21,7 @@ import { loadMap } from "../workshop/lib/load";
 import { readSettled } from "../workshop/lib/settled";
 import { startCentre } from "../workshop/lib/measures";
 import { openingOf } from "./lib/opening";
-import { arg, lowPriority, MAPS, ROOT } from "./lib/paths";
+import { arg, lowPriority, MAPS, ROOT, WORKSHOP } from "./lib/paths";
 import { damWalls } from "./lib/ridge";
 import { storagePossible } from "./proto/storage";
 
@@ -43,7 +43,7 @@ if (process.argv.includes("--workshop")) {
       out[ref.key] = prev[ref.key];
       continue;
     }
-    const recPath = join("C:/dgm-workshop/measured", `${ref.key}.json`);
+    const recPath = join(WORKSHOP, "measured", `${ref.key}.json`);
     if (!existsSync(recPath)) continue;
     const rec = JSON.parse(readFileSync(recPath, "utf8"));
     const l = loadMap(ref);

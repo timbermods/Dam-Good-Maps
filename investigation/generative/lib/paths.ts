@@ -22,6 +22,7 @@ export function mapDir(gen: string, size: number): string {
 
 /** Heavy work runs below normal priority, so another session's benchmarks keep the CPU. */
 export function lowPriority(): void {
+  if (process.env.DGM_PRIORITY === "normal") return;
   try {
     setPriority(0, 10);
   } catch {
