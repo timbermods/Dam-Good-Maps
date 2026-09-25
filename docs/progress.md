@@ -5,7 +5,76 @@ tagged `m<N>-done` when all of its acceptance criteria pass.
 
 ## Run summary
 
-**Run 1 (M1 check, then M2–M4) finished on 2026-09-24. Every milestone passed.**
+**Run 2 (M5–M11) stopped at M8 on 2026-09-25. One M8 acceptance criterion is not met as
+written.** M5, M6 and M7 passed; M6 and M7 are live.
+
+| Milestone | Tag | Released | Result |
+|---|---|---|---|
+| M5 Set pieces, land and water tools, slopes, fixes | `m5-done` | inside the M6 release | All criteria pass |
+| M6 Full settings, sharing, themes I | `m6-done` | PR #2, live 2026-09-24 | All criteria pass |
+| M7 Resources, map objects, themes II | `m7-done` | PR #7, live 2026-09-25 | All criteria pass (includes the Lake Basin project-file fix) |
+| M8 Water preview and background validation, with the start requirements | not tagged | not released | Built; one criterion not met (below) |
+| Map look, M9, M10, M11 | — | — | Not started |
+
+Before each tag the run re-checked the milestone itself: typecheck, every unit, contract and
+browser test, and the full oracle (0 disagreements between the two validators on 50 generated
+and 19 official maps). After each release, the live check passed: the site's download equals
+`tools/gen.ts` byte for byte.
+
+- **Where it stopped, and why.** M8's acceptance says Hollows, Pressure, Oasis, Nomads and
+  Beaverome report their water checks as approximate. Four do. Beaverome has none of the causes
+  (no caves, delayed sources, aquifers or seeps, and no roof over the start), and the settle
+  matches its own water within 1%. The workshop study listed it because its start fails
+  `start.dry` (its lake stands 0.7 below the start), not because of its water. Flagging it would
+  need a reason that isn't true, so the run stopped, as the gate rule says. Everything else in M8
+  passes:
+  - the three start requirements (D85), in both validators;
+  - every generated start reaches water on its own level;
+  - batches are 100% final in every theme, with higher first-attempt rates than M7;
+  - a 2-second re-preview at 256²;
+  - byte-identical unedited exports;
+  - editable generated outlines;
+  - no floating objects;
+  - 338 tests and 52 browser tests.
+
+  M8 is on `dev` at `e6d8720`, and CI is green. It's not tagged or released, so the site stays
+  at M7.
+- **What you need to do next:**
+  1. Decide #48 (Beaverome). The simplest fix is to take Beaverome off M8's list, since its
+     water is shown correctly. Then `m8-done` can be tagged and released, and the run can
+     resume.
+  2. Resume the run from M8: Map look, M9 (with #21's variety target), M10 and M11. The
+     river-pond crossing task and the fit-score step wait with it, as you asked.
+  3. Say what "the load checks" in your refinement notes means. It's on the Refinement list,
+     marked "details to confirm".
+  4. Play the pending in-game checks, and run the M3 spike page. See "What Kyler needs to do".
+- **Pending decisions:** 46 are open in [decisions-pending.md](decisions-pending.md). #34 and #39
+  are decided. The run went ahead with each default.
+  - M2–M4: #1–#10
+  - M5: #11–#14
+  - M6: #15–#22 (#21: large maps flatter than official maps, now an M9 target)
+  - M7: #23–#27
+  - M8: #30, #36, #47, #48
+  - Map look: #40
+  - M9, from the workshop study: #31–#33, #35, #37
+  - Refinement: #29
+  - M12: #28, #41–#46
+  - Later: #38
+- **Also done in this run:**
+  - Pages is on. `main` gets tagged releases as merge commits, and a live check runs daily and
+    after each deploy (PRs #2, #3 and #6).
+  - The impeccable-app-flow skill was added to timbermods/.github (#30, merged) and installed
+    locally.
+  - The design pass is now its own roadmap step before M12.
+  - `main` was merged into `dev` once.
+  - The workshop study (PR #4) and the Claude groundwork (PR #5) were merged and their plans
+    adopted (D87–D96).
+  - Your plan updates were recorded: D84 (M12 compound requests), D85 (start requirements, as
+    amended), D86 (Map look), and the Refinement phase with the natural-containment note.
+  - Fixed: a number-field race in the editor, and Lake Basin and Islands project files not
+    reopening.
+
+### Run 1 (M1 check, then M2–M4), 2026-09-24: every milestone passed
 
 | Milestone | Tag | Result |
 |---|---|---|
@@ -965,12 +1034,9 @@ Tests whose expectations changed because Kyler changed the rules (D85); none was
 
 Things the run can't do itself. Each has the exact steps.
 
-1. **Turn on GitHub Pages from Actions.** Pages is a repository setting, so the run leaves it to
-   you. On <https://github.com/timbermods/dam-good-maps/settings/pages>, under **Build and
-   deployment → Source**, choose **GitHub Actions**. Then either merge `dev` into `main` or
-   start the workflow by hand: Actions → "Deploy to GitHub Pages" → Run workflow → branch
-   `main`. The site appears at <https://timbermods.github.io/dam-good-maps/>. The workflow only
-   deploys `main` (D23).
+1. **Decide #48** (Beaverome's start) in [decisions-pending.md](decisions-pending.md). It is the
+   one M8 acceptance item not met as written, and the run waits on it. (GitHub Pages is on since
+   2026-09-24: <https://timbermods.github.io/dam-good-maps/>, deployed from `main`.)
 2. **Play the pending in-game checks** when you're ready. See [ingame-log.md](ingame-log.md). M2
    adds B1–B4 (files in `out/m2/`): the first time pre-filled water meets the real game. M5 adds
    C1–C3, F1 and the gorge's stair notch (files in `out/m5/`). M6 adds M6-1a to M6-1c: a Canyon
