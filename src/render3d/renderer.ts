@@ -22,6 +22,7 @@ import {
   Mesh,
   OrthographicCamera,
   PerspectiveCamera,
+  PlaneGeometry,
   Raycaster,
   Scene,
   Vector2,
@@ -36,10 +37,10 @@ import {
 } from "three";
 import { buildEntities, disposeGroup } from "./entities3d";
 import { objectCasters, shadowMap, skyVisibility, tileData } from "./light";
-import { drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
+import { drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
 import { columnMap, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
-import type { GroundMode } from "./palette";
+import { SKY, type GroundMode } from "./palette";
 import { pickHeightfield, pickPlane, type Ray, type TileHit } from "./pick";
 import { changedWaterChunks, lowerByTile, meshWaterChunk } from "./waterMesh";
 
@@ -153,7 +154,12 @@ export class MapRenderer {
   private terrainMat: ShaderMaterial;
   private waterMat: ShaderMaterial;
   private objectMat: ShaderMaterial;
+  private skyMat: ShaderMaterial;
+  private sky: Mesh;
+  /** The map's base: its sides carried down below the lowest ground, so the map is a block of land. */
+  private skirt: Mesh | null = null;
   private ground: GroundMode = "moisture";
+  private markersOn = false;
   /** A fixed moment of the water's movement (captures, tests), or null: it moves. */
   private clock: number | null = null;
   private readonly t0 = performance.now();
@@ -178,14 +184,15 @@ export class MapRenderer {
   onClick: ((hit: TileHit | null, ev: PointerEvent) => void) | null = null;
   lastBuild: BuildStats | null = null;
 
-  constructor(canvas: HTMLCanvasElement, background = 0xe9dfc8) {
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     // a browser that draws in software gets the light look, without multisampling (D110)
     this.software = softwareRendering();
     this.gl = new WebGLRenderer({ canvas, antialias: !this.software, powerPreference: "high-performance" });
     this.gl.outputColorSpace = LinearSRGBColorSpace;
     this.gl.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-    this.gl.setClearColor(new Color(background));
+    // the sky round the map (the light look clears to its colour below the horizon instead)
+    this.gl.setClearColor(new Color(...SKY.below));
     this.scene.background = null;
     // placeholder textures until a map arrives; every material shares these uniforms
     const one = () => tileTexture(1, 1, new Uint8Array(4));
@@ -195,6 +202,11 @@ export class MapRenderer {
     this.terrainMat = terrainMaterial(this.uniforms, 0, 1, this.software);
     this.waterMat = waterMaterial(this.uniforms, this.software);
     this.objectMat = objectMaterial(this.uniforms, this.software);
+    this.skyMat = skyMaterial();
+    this.sky = new Mesh(new PlaneGeometry(2, 2), this.skyMat);
+    this.sky.frustumCulled = false;
+    this.sky.renderOrder = -1000;
+    if (!this.software) this.scene.add(this.sky);
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     this.reducedMotion = !!motion?.matches;
     motion?.addEventListener?.("change", () => {
@@ -224,11 +236,6 @@ export class MapRenderer {
     };
   }
 
-  setBackground(color: number): void {
-    this.gl.setClearColor(new Color(color));
-    this.requestRender();
-  }
-
   /** What colours the ground's tops: soil (as in the game) or height. */
   setGroundMode(mode: GroundMode): void {
     this.ground = mode;
@@ -238,6 +245,23 @@ export class MapRenderer {
 
   get groundMode(): GroundMode {
     return this.ground;
+  }
+
+  /** The information layer (**Markers**): dam sites, slope arrows, level lines, far-off objects
+   *  drawn larger. Off: the clean view. */
+  setMarkers(on: boolean): void {
+    this.markersOn = on;
+    this.uniforms.markers.value = on ? 1 : 0;
+    this.showMarkerObjects();
+    this.requestRender();
+  }
+
+  get markers(): boolean {
+    return this.markersOn;
+  }
+
+  private showMarkerObjects(): void {
+    for (const c of this.objects?.children ?? []) if (c.name === "Slope.mark" || c.name === "Slope.mark.lite") c.visible = this.markersOn;
   }
 
   /** Hold the water's movement at a moment (seconds), or let it move again (null). */
@@ -287,6 +311,7 @@ export class MapRenderer {
     let terrainQuads = 0;
     for (let cy = 0; cy < ny; cy++) for (let cx = 0; cx < nx; cx++) terrainQuads += this.meshTerrain(cx, cy);
     const waterQuads = this.meshAllWater();
+    this.skirt = this.buildSkirt(W, H, lo);
     const instances = this.setEntitiesInner(v.entities);
     const meshMs = performance.now() - t0;
     if (!keepView) this.resetView();
@@ -299,7 +324,41 @@ export class MapRenderer {
     return this.lastBuild;
   }
 
+  /** The map's sides carried from level 0 down to three levels below its lowest ground, and its
+   *  bottom, in the walls' stone. */
+  private buildSkirt(W: number, H: number, lo: number): Mesh {
+    const b = Math.min(0, lo) - 3;
+    // east, west, north (−Z), south (+Z), each wound to face outward; and the bottom, facing down
+    const quads: number[][] = [
+      [W, 0, 0, W, b, 0, W, b, -H, W, 0, -H],
+      [0, 0, -H, 0, b, -H, 0, b, 0, 0, 0, 0],
+      [W, 0, -H, W, b, -H, 0, b, -H, 0, 0, -H],
+      [0, 0, 0, 0, b, 0, W, b, 0, W, 0, 0],
+      [0, b, 0, 0, b, -H, W, b, -H, W, b, 0],
+    ];
+    const normals = [[1, 0, 0], [-1, 0, 0], [0, 0, -1], [0, 0, 1], [0, -1, 0]];
+    const pos: number[] = [];
+    const nrm: number[] = [];
+    const idx: number[] = [];
+    quads.forEach((q, k) => {
+      pos.push(...q);
+      for (let v = 0; v < 4; v++) nrm.push(...normals[k].map((n) => n * 127));
+      idx.push(k * 4, k * 4 + 1, k * 4 + 2, k * 4, k * 4 + 2, k * 4 + 3);
+    });
+    const g = new BufferGeometry();
+    g.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
+    g.setAttribute("normal", new BufferAttribute(new Int8Array(nrm), 3, true));
+    g.setIndex(idx);
+    g.computeBoundingSphere();
+    const mesh = new Mesh(g, this.terrainMat);
+    mesh.matrixAutoUpdate = false;
+    this.scene.add(mesh);
+    return mesh;
+  }
+
   private clearMap(): void {
+    if (this.skirt) this.dropMesh(this.skirt);
+    this.skirt = null;
     for (const m of this.terrain.values()) this.dropMesh(m);
     for (const m of this.water.values()) this.dropMesh(m);
     this.terrain.clear();
@@ -399,6 +458,7 @@ export class MapRenderer {
     group.renderOrder = 1;
     this.objects = group;
     this.scene.add(group);
+    this.showMarkerObjects();
     this.map!.entities = e;
     return instances;
   }
@@ -561,7 +621,7 @@ export class MapRenderer {
     // a light haze beyond the point looked at, none from straight above
     const u = this.uniforms;
     u.viewHeight.value = h;
-    u.hazeAmount.value = v.mode === "top" ? 0 : 0.16;
+    u.hazeAmount.value = v.mode === "top" ? 0 : 0.24;
     u.hazeRange.value.set(v.distance * 0.85, v.distance * 2.6);
   }
 
@@ -883,6 +943,8 @@ export class MapRenderer {
     this.terrainMat.dispose();
     this.waterMat.dispose();
     this.objectMat.dispose();
+    this.skyMat.dispose();
+    this.sky.geometry.dispose();
     this.patterns.dispose();
     this.gl.dispose();
     // free the context now: browsers keep only a few, and the editor opens a view per map

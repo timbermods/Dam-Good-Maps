@@ -67,10 +67,10 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
-- **M1–M8** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
+- **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
-- **Map look** is built. Its clean look (default view, plus a **Markers** layer that is off by
-  default) is on branch `look/clean`, ready for Kyler's approval. It is not released.
+- **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
+  approved, with a **Markers** layer off by default.
 - Merged investigations: workshop (#4), Claude groundwork (#5), cycles (#10, #15), mechanics,
   verified (#11), names (#12), audit (#13), M9 design version 1 (#14), landscapes (#16), simspeed
   (#17), techniques (#19), terrain 3D (#20).
@@ -85,11 +85,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Waiting on Kyler
 
-1. **Approve Map look's clean look.** Open `C:\dgm-workshop\look\compare.html` (local only):
-   each of Kyler's reference screenshots beside the clean view of a comparable scene, with the
-   third round's look in a third column. The committed captures are in
-   [map-look/clean/](map-look/clean/), with [CLEAN.md](map-look/CLEAN.md). On approval:
-   `look/clean` merges into `dev`, `map-look-done` is tagged and released, then Real places.
+1. Whether two older look tests should compare the water's body, not its ripple crests, with
+   badwater (they pass through an alias today; see `docs/progress/map-look.md`).
 2. Kyler's own one-sentence intentions, for design version 2.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).

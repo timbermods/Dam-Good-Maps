@@ -62,7 +62,7 @@ export default function Preview3D({ result }: { result: GenerateResponse }) {
       label="3D view of the map. Drag to turn, right-drag to move, wheel to zoom."
       hoverText={hover}
       onReady={onReady}
-      legendExtra={dam.length ? [{ swatch: damLegendSwatch(), label: "Best dam site" }] : []}
+      legendExtra={dam.length ? [{ swatch: damLegendSwatch(), label: "Best dam site", markers: true }] : []}
       onHover={(hit) => setHover(hit ? describeTile(context(), hit.x, hit.y) : null)}
     />
   );
