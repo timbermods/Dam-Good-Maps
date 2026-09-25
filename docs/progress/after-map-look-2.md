@@ -30,4 +30,7 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 - D142: the agent guide after M9a.
 - D143: Variations of this map, in M9c.
 - D144: a contact-sheet image at every map-changing step (CLAUDE.md).
+- D145: Kyler's answers to STATUS.md's eight flags: Verticality in M9a (above 16 locked until a
+  probe batch), 3D-b's gate a probe batch, `start.dry` measured first, the one rule's lists stand,
+  CI timing tests reported, M9a–M9c approved, character requests steer, M13's rating form dropped.
 - Design version 2 is built on `investigation/generative-v2` (not started).

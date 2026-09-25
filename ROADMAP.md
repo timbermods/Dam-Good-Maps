@@ -26,7 +26,10 @@ differently, this file wins.
   captures and decides. Stop and ask Kyler only for real decisions or real breakage; otherwise
   keep building, log the rest in [docs/STATUS.md](docs/STATUS.md), and show the result rather
   than measure it. Each step from Map look on lists its acceptance as **Blocking** and
-  **Information**; M1–M8 keep their record as written.
+  **Information**; M1–M8 keep their record as written. Kyler confirmed the lists' reading (D145):
+  they stand as written, and the no-built-dam-wall check (D111) and the support rule (0 dropped
+  voxels) always block. CI's timing tests (the 256² settle median, D33; the editor's 2 s
+  re-preview) are reported numbers, never a failed build.
 - **In-game checks are deferred** (PLAN §20, D11). Kyler is skipping them for now. A milestone
   marked **in-game check** does not stop or wait: it lists the checks it would have needed in
   [docs/ingame-log.md](docs/ingame-log.md) as *pending*, with the files to play, and relies on the
@@ -68,7 +71,7 @@ differently, this file wins.
 | M9 | Interestingness, names, candidates, premises and variety (staged M9a–M9c) | PLAN §7.1, §7.9, §8, §12, §13 · the workshop study (D87) · EDITOR §7 words (D84) · the M9 design (D112) | a probe batch for M9a (D116) | xhigh |
 | Frame | Frame pass, after the M9 build, before the 3D stages | the impeccable-app-flow skill · PLAN §20 D113 | no | high |
 | 3D-a | Terrain above terrain: model, water and checks | investigation/terrain3d/DESIGN.md §2–4, §9 · PLAN §10, §11, §19.6, §19.8 · D118–D122 | no (the Probe's test maps are written) | xhigh |
-| 3D-b | Terrain above terrain: generation and Verticality | DESIGN.md §5 · PLAN §5.9 · D123, D132 | a probe batch (T1–T4, T6), and Kyler plays T7 | xhigh |
+| 3D-b | Terrain above terrain: generation and Verticality | DESIGN.md §5 · PLAN §5.9 · D123, D132 | a probe batch (T1–T4, T6, T7; D145) | xhigh |
 | 3D-c | Terrain above terrain: the editor and the view | DESIGN.md §6–7 · EDITOR §4–6, §8 · D125, D126 | a probe batch (T5, T2 on edited maps) | xhigh |
 | Weather | Weather view, with live water, after the 3D stages, before M10 | investigation/cycles/, investigation/mechanics/ · PLAN §20 D133 | a probe batch (calibration) | xhigh |
 | M10 | Sculpting, naturalize, symmetry | EDITOR §5, E6 | no | high |
@@ -76,7 +79,7 @@ differently, this file wins.
 | Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
 | Design | Design pass, after M11 and the refinement phase | the impeccable-app-flow skill (timbermods/.github, `claude-skills/`) · old milestone 6 | no | high |
 | M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 · the Claude groundwork (D88) · the workshop study (D87) · steering and a provider-neutral layer (D139, D140) | yes (the waterfall and compound requests) | xhigh |
-| M13 | Usability, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
+| M13 | Usability, problem reports, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
 | Later | See the end of this file | PLAN §5.7, old milestone 7 · EDITOR §10 Later | per item | — |
 
 **Release points** (suggested):
@@ -90,7 +93,7 @@ differently, this file wins.
   batch passes (D116);
 - the Frame pass: tagged `frame-pass-done`;
 - 3D-a: no visible change (tagged `3d-a-done`); 3D-b: Verticality's 3D forms (tagged `3d-b-done`,
-  after Kyler's play test of two high-verticality maps, T7); 3D-c: 3D editing (tagged
+  public only after its probe batch passes, T7 included; D145); 3D-c: 3D editing (tagged
   `3d-c-done`);
 - the Weather view: tagged `weather-view-done`;
 - the refinement phase and the design pass: tagged `design-done`;
@@ -837,10 +840,12 @@ a little noise, and two maps must play differently, not only look different.
 
 M9, M10 and M11 wait for that approval.
 
-**Proposed staging (for Kyler's approval).** From design version 1 (`docs/m9-design.md` §16). M9
-is built in three stages, each with its own deliverables, acceptance and release, tagged and
-released like a milestone. The text under the stages ("Delivers" and below) is M9 as first planned;
-the stages replace its order, and its premises become recipes inside the system (design §3).
+**Staging: M9a, M9b and M9c, approved by Kyler** (2026-09-25; PLAN §20 D145). From design version 1
+(`docs/m9-design.md` §16). M9 is built in three stages, each with its own deliverables, acceptance
+and release, tagged and released like a milestone. What goes into each stage waits for Kyler's
+approval of design version 2; the lists below are design version 1's. The text under the stages
+("Delivers" and below) is M9 as first planned; the stages replace its order, and its premises
+become recipes inside the system (design §3).
 
 - **M9a: terrain and water from processes** (tag `m9a-done`).
   - Delivers: the genome and the themes as priors; the field (uplift, erosion, levels) and the
@@ -871,9 +876,10 @@ the stages replace its order, and its premises become recipes inside the system 
     cliff-bench terraces) emerge more as it rises; never stamped. Traversable at any value: the
     start and its first resources on reachable land, natural ramps where the land needs them;
     stairs-only heights allowed as rewards. Terrain above 16, up to 22 with layer 22 empty, only
-    at high Verticality (70+), and only after a DGM Probe batch confirms such maps load and keep
-    their terrain, water and objects (asked under D117). The vertical-reach measure joins the
-    batch tools.
+    at high Verticality (70+). It is built in M9a but stays locked until a DGM Probe batch
+    confirms such maps load and keep their terrain, water and objects (asked under D117; Kyler
+    confirmed this stage, D145). 3D-b extends Verticality to 3D forms. The vertical-reach measure
+    joins the batch tools.
   - **Keep M12 ready** (D134): generating from the processes, and "make it more vertical"
     (Verticality), as tool entries with their limits and refusal reasons; the read-back features
     as a query ("what's on this map?"); suite requests for them; every reference solution re-run.
@@ -1156,7 +1162,9 @@ while water settles). Budgets and measures are information.
    - the support rule on every map, and the build's rule pass (D121);
    - the floor graph in both validators (D122);
    - plant clearance and first-run placement;
-   - floor-aware slope and start checks;
+   - floor-aware slope and start checks; `start.dry` applies the floor rule (water counts only at
+     or above the start's floor) to water under roofs only, and open water keeps today's rule
+     until Refinement item 8 has measured it (Kyler, D145);
    - `walk.levels`, `terrain.dropped`, `water.sealed_source`;
    - `terrain.single_floor` retired for generated maps.
 6. Imports: roofed water simulated (D100's exception retires); the cave cause of approximate
@@ -1202,8 +1210,8 @@ while water settles). Budgets and measures are information.
    - underground rivers;
    - collapses.
 3. Traversal: derived slopes on the floor graph, and rewards planned on stairs-only heights.
-4. Relief to 22 at Verticality 70 and above, if M9a has not already offered it (D132), once the
-   Probe's T6 passes.
+4. Relief to 22 at Verticality 70 and above comes with M9a, locked until a probe batch confirms it
+   (D132, D145). If it is still locked, the Probe's T6 here unlocks it once it passes.
 5. NaturalOverhang bridges and badtide drains in cliff notches (from Later).
 6. The 3D measures in the batch and the M9 measure suite.
 7. **Keep M12 ready** (D134): "make it more vertical" with 3D forms, and "add caves" through
@@ -1220,7 +1228,10 @@ while water settles). Budgets and measures are information.
   - the same bytes for the same seed in Node and Chrome, and share links reproduce;
   - a whole generation shows progress and never feels stalled;
   - the Probe's batch (asked under D117): T1–T4 and T6 agree with the model within the tolerances
-    stated before the run; Kyler plays two high-verticality maps (T7) before the public release.
+    stated before the run; and T7, like M9a's batch (D116): the Probe plays high-verticality maps,
+    which load, keep their water and objects, and behave through droughts and badtides as the
+    models predict, with nothing visibly broken in its screenshots. 3D-b is released publicly only
+    after the batch passes (Kyler, D145; it replaces Kyler's own play of two maps).
 - Information:
   - first attempts (≥ 60% as a target);
   - at Verticality 20: at most 2 small 3D forms at 128², relief within 16; at 80: the median map has
@@ -1434,9 +1445,10 @@ improve once every tool exists. Each note is its own item, with its own tests.
    [#8](docs/decisions-pending.md)). Keep a load check only where the decompiled game really
    rejects or breaks the map; otherwise make it a warning. Change both validators together.
 7. Containment should look natural (below; decisions-pending [#29](docs/decisions-pending.md)).
-8. `start.dry` and lakeside starts (Kyler, 2026-09-25; PLAN §20 D107): should `start.dry` count
-   only water standing at or above the start's ground, so a lakeside start like Beaverome's
+8. `start.dry` and lakeside starts (Kyler, 2026-09-25; PLAN §20 D107, D145): should `start.dry`
+   count only water standing at or above the start's ground, so a lakeside start like Beaverome's
    passes? Measure how many official, workshop and generated starts it changes before deciding.
+   Until then the floor rule applies only to water under roofs (3D-a).
 9. The audit's A3 and A4 (PLAN §20 D129; investigation/audit/AUDIT.md), both P3: a `__proto__`
    key in an imported singleton is rewritten as forged sibling data (parse into null-prototype
    records, write own keys only); and the JSON parser accepts raw control characters inside
@@ -1580,9 +1592,12 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
   me a huge dam opportunity halfway down", "put the start under a cliff") becomes intentions
   (outcomes, not recipes; D138) and settings; Claude regenerates the affected area steered toward
   them (M11's regenerate area, with locks on what the player wants kept), checks the result with
-  the analysis, and reports honestly what emerged and what didn't. Editor operations are for
-  precise edits the player asks for ("move the start here", "widen this river by two", "delete
-  that forest", "lock this area").
+  the analysis, and reports honestly what emerged and what didn't. Requests that change the map's
+  character ("harsher", "more vertical", "more varied") steer too, through settings and
+  regenerating (Kyler, D145). Editor operations are for precise edits the player asks for ("move
+  the start here", "widen this river by two", "delete that forest", "lock this area") and for
+  precise follow-ups ("make it wider"). Which of the suite's requests steer is in
+  M12-INTEGRATION.md §13.
 - **"Describe the map you want"** (D139): a player types a sentence; Claude turns it into
   intentions; the generator makes several candidates steered toward them; the analysis checks
   which really have them; Claude shows the ones that do and says honestly what didn't emerge;
@@ -1597,9 +1612,10 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
   download.
 - The Claude request suite (120 requests in 13 kinds, and those each earlier step added, D134)
   running in Node, with reference solutions (EDITOR_PLAN §9). The reference solutions for
-  character and feature requests, Kyler's flagship request included, steer the generator instead
-  of building features with planners (D139); requests marked "waiting for capability" are
-  checked from the step that provides it.
+  character and feature requests, Kyler's flagship requests included (the giant waterfall,
+  S01–S04, and the compound request, M01; D145), steer the generator instead of building features
+  with planners (D139); requests marked "waiting for capability" are checked from the step that
+  provides it.
 - From the workshop study (D87): the catalogue is Claude's vocabulary. Each pattern a player might
   ask for maps to a builder, a stamp or a feature, and the suite (EDITOR §9) gains these requests:
   - "Add a spiral mountain in the north" → `spiral` up; "dig a spiral quarry" → `spiral` down.
@@ -1710,23 +1726,22 @@ dangerous badwater route on the opposite side.").
 
 ---
 
-## M13. Usability, ratings, versioned deploys
+## M13. Usability, problem reports, versioned deploys
 
 **Delivers**
 - E9: the usability tasks, onboarding hints, shortcuts reference, help page, accessibility pass
   and final performance pass.
 - The rest of old PLAN milestone 6 (its design pass is now the Design pass step, before M12):
-  - the ratings flow and `tools/ratings.ts`;
   - install help, including the extract step of the artifact edition;
   - mobile layout;
   - versioned deploys at `/v/<version>/`.
-- From the workshop study (D87): the rating form asks two questions, as the study's rating page
-  does: fun (1–5) and unique (1–5), with an optional note (PLAN §2.3). They are feedback only: no
-  rating refits the score (Kyler, 2026-09-25; D137).
+- A plain **Report a problem** link to the repository's GitHub issues, for bug reports (PLAN
+  §2.3). The rating form and `tools/ratings.ts` are dropped (Kyler, 2026-09-25; D145, which
+  supersedes the workshop study's two-question form, D87).
 
 **Acceptance** (Kyler's one rule, D115)
-- Blocking: an old-version link reproduces its file; a rating issue is created from the page with
-  every field filled.
+- Blocking: an old-version link reproduces its file; the **Report a problem** link opens the
+  repository's GitHub issues.
 - Information: the usability tasks' times (under 2 minutes each for a first-time user, and the
   full journey under 10, as targets); Lighthouse performance on desktop (≥ 90 as the target).
 
