@@ -1034,6 +1034,103 @@ Tests whose expectations changed because Kyler changed the rules (D85); none was
 - Refinement list: the load checks are defined (keep a load check only where the game rejects or breaks the map), and `start.dry` for lakeside starts is added, to be measured first.
 - Product principle recorded (PLAN, Product principles; D108): maps are created, not copied. An M9 design step comes before M9 (D109).
 
+## Map look
+
+**Built** (branch `dev`; no map file changes, so the generator stays 0.6.0). The 3D view looks
+much closer to Timberborn, and every map meaning stays readable (PLAN §20 D86, D110). Kyler's ten
+in-game reference screenshots arrived during the step (ML-1, kept on Kyler's machine only) and
+set the ground, walls, water, light and models:
+- **Ground by soil** (`src/render3d/palette.ts`, `materials.ts`): moist ground a vivid
+  yellow-green grass whose edge bleeds onto the earth in patches; dry ground cracked earth, warm
+  grey-brown, violet in shadow (Kyler's correction to Delivers 1: not sandy); contaminated
+  ground rusty red-brown with glowing cracks; a dark bed under water. Soil blends between tiles
+  of one height, never over a cliff, and each tile's middle shows its own soil. **Height
+  colours** switches the tops back to the height ramp; the browser remembers the choice.
+- **Walls:** dark charcoal-green cobbles, with a groove and a change of shade at every level so
+  levels can be counted, and a lip of the top's ground.
+- **Light, baked when the mesh is built** (`src/render3d/light.ts`): sky visibility per tile,
+  and soft sun shadows from two sweeps (the sun 6° higher and lower), cast by the ground, trees,
+  ruins and the start. The shader adds contact shadows at the foot of walls, a blue-grey haze far
+  off and a warm grade. The same map always bakes the same bytes.
+- **Water:** teal to navy by depth, see-through near the shore; ripples, pale streaks and small
+  glints that move at up to 30 frames a second (still for reduced motion, in software rendering,
+  and when the view is hidden); a foam line on shores; falls drawn down the cliff to the lower
+  water, with white water down them and below. Badwater is murky red-brown with slow glowing
+  veins, and blends into clean water where they meet.
+- **Models**, our own (`src/render3d/entities3d.ts`): pine, birch, oak and succulent, dead ones
+  bare and pale; berry bushes dark green with blue flowers; ruins as rusty scaffold storeys with
+  beige panels, one per level, with ivy on moist ground; a timber lodge with a banner for the
+  district center, its door toward the entrance; badwater sources a brown swirl in a pit; mine
+  sites a square pit in an orange frame; slopes with two chevrons pointing uphill.
+- **Camera:** the default is the game's angle, 30° east of north and 70° down (the game's camera
+  settings), over the whole map (decisions-pending #49).
+- **No image files:** the patterns (noise, cracks, cobbles) are drawn once by a shader into a
+  small tiling texture when the view starts.
+- **Software rendering:** where the browser draws WebGL in software (CI's SwiftShader, a machine
+  without a GPU), the view drops multisampling, the patterns, the shadows and the soil's
+  blending, uses models of a few triangles (dead trees still bare), and the water holds still.
+  It then draws faster than before Map look: 36 frames a second in SwiftShader here, against 22.
+  The full look had halved CI's software frame rate, and `render3d.spec.ts`'s orbit failed once
+  (4 frames in 1.5 s); this fixed it.
+- **The page:** a legend on the 3D view says what each colour means; the hover text names the
+  soil (moist, dry, contaminated); the generator's 3D preview marks the best dam site, as the 2D
+  preview does. The worker sends the soil with the water, so the ground follows both of an edit's
+  water updates (M8). Imported maps show the soil their file stores.
+- **Tools:** `tools/capture-look.ts` (the captures, their greyscale and colour-blind versions,
+  and [map-look/captures.md](map-look/captures.md)); `npm run bench:3d` takes `--configs`,
+  `--maps`, `--seeds` and `--out`, and keeps covered windows drawing.
+- **Tests:**
+  - `tests/unit/look.test.ts` (17): the soil colours and their order in greyscale, the legend,
+    wall bands, baked light and its determinism, water foam flags, models by species and dead
+    state, the light models, a file's soil, the hover text;
+  - `tests/contract/look.test.ts` (2): the soil comes with the map and with both water updates,
+    and an import shows its own soil;
+  - `tests/e2e/look.spec.ts` (2): the legend, **Height colours** and its memory, the hover text,
+    the game's camera, the worker's soil in the editor, still water for reduced motion.
+- **New npm dependencies:** none.
+
+**Acceptance:**
+
+| Criterion | Result |
+|---|---|
+| Before and after captures of the same maps from the same camera angles | **pass**. Seed 4242 in all six themes at 128², River Valley 4242 at 256², and Beavertopia: 4 poses each (overview; the start; the badwater, where it meets clean water on maps that have that; the tallest waterfall, from downstream; Delta has no fall), plus the page's own view from its default camera. The before captures come from `m8-done` (cfa5990) through a worktree, with the same tool and poses. 28 before and 28 after for our maps in [map-look/](map-look/) (Beavertopia's 8 stay in `.scratch/map-look/`, never committed) |
+| Greyscale and colour-blind versions of the after captures | **pass**. 84 for our maps (greyscale, protanopia, deuteranopia, tritanopia of every pose but the falls; Machado, Oliveira and Fernandes 2009 at full severity, in linear RGB), and 12 for Beavertopia, locally |
+| A reviewer can tell each meaning apart in the after captures | **for the independent reviewer**. [map-look/captures.md](map-look/captures.md) lists every capture and, for each, up to three tiles of each meaning with their positions in the image: water, badwater, badwater meeting clean water, moist, dry and contaminated ground, contaminated beside moist ground, living and dead trees, the start, slopes and the way they rise, dam sites. The colours are chosen so the meanings also differ in brightness and pattern: moist grass is the lightest ground, dry earth darker with dark cracks, contaminated earth darkest with light cracks, and badwater darker than clean water of the same depth (a unit test checks the order) |
+| Build under 1.5 s at 256² | **pass**. `npm run bench:3d` in D46's three setups, 15 maps at 256² (3 generated, 12 official and workshop): worst 482 ms (Beavertopia, 795,730 triangles, on the integrated Radeon with the CPU 4× slower on a 1080p laptop screen at 150%), median 324 ms in that setup; on the RTX 4080, median 112 ms and worst 265 ms. M4 had 445 ms worst. Results: [out/map-look/bench3d.json](../out/map-look/bench3d.json) |
+| 60 fps on the integrated GPU with the CPU slowed 4×, including Beavertopia | **pass**. Every map orbits at 111 fps or more in every setup (the display ran at 127–129 Hz). With the CPU 4× slower on the Radeon, the slowest is Beavertopia at 111 fps, and 14 of 15,222 frames took longer than 1/60 s (15 of 45,924 in all three setups; M4 had none). The Radeon needs at most 8.23 ms per frame (median; 9.01 ms at the 95th percentile), for Beavertopia, against 4.3 ms before Map look. A first run while other agents' batches kept the CPU at 100% passed too (worst build 828 ms, slowest orbit 86 fps) |
+| The 3D chunk stays lazy-loaded; its size | **pass**. `View3D` is loaded only by **3D** or the editor, as before: 560.26 KB (143.46 KB gzipped) before, 588.27 KB (153.13 KB gzipped) after. The page's own script is unchanged (93.89 KB) |
+| Every existing test passes unchanged | **pass**. No existing test was changed. Typecheck passes; the 357 unit and contract tests pass (28 files, 185 s); the 54 browser tests pass, twice in a row; CI passes (below). Earlier, while other agents kept the CPU at 100%, six heavy tests hit vitest's 120 s timeout and `tests/e2e/preview.spec.ts` went over its 2 s local budget for an edit; the same browser test on `m8-done` went over it under that load too, and the worker's time for the same Islands edit was equal before and after (1.85 and 1.87 s against 1.86 and 1.76 s). On the quieter machine every one passes |
+| No map file changes: every sha256 equal | **pass**. No generation, validation or format output code changed (`src/core`: only a new reader of a file's soil and a session method that calls it). The golden water hashes, Node = Chromium (`determinism.spec.ts`), share links (`share.spec.ts`), every investigation map exporting unchanged (`maps.spec.ts`) and the oracle's generated maps pass |
+| The 2D preview keeps its height colours | **pass**. `src/core/render/shade.ts` is unchanged |
+
+Also green:
+- CI (run 36131877903, on the last code change): typecheck, 345 unit and contract tests (12
+  local-only skipped), the build, 21 browser tests (Node = Chromium on 10 seeds, share links),
+  the oracle on 18 seeds, the generation times and pass rates. In CI's software rendering the 3D view now draws 8 frames a
+  second, against 5 before Map look.
+- The full oracle (`npm run oracle`): 150 maps of the six themes pass `validate.py --load-only`
+  and the round trip; parity on 50 generated and 19 official maps shows 0 disagreements.
+
+Page weight: the 3D chunk grows by 28 KB (10 KB gzipped): the shaders, the models and the baking.
+
+**Deviations** (the plan is updated to match): PLAN §20 D110.
+- D110: Map look as built, with Kyler's correction from his reference (dry ground is cracked
+  earth, not sandy; ROADMAP Delivers 1 changed to his wording). Beyond D86's list: ruins are
+  rusty scaffolds (Kyler's reference) rather than scrap heaps; the tile grid is gone; the
+  patterns are drawn by a shader into a texture once; a lighter look where the browser draws
+  in software; the 3D preview marks the best dam site; the default camera frames the whole map
+  (#49).
+
+**Look at:**
+- Try it: `npm run dev`, generate a map and click **3D**. The legend is at the bottom right;
+  **Height colours** switches the ground. **Refine this map** shows the same look in the editor.
+- Compare it with the game on the same map: in-game check ML-2 is pending in
+  [ingame-log.md](ingame-log.md).
+- The default camera shows the whole map at the game's angle (#49). The game starts close on the
+  district center.
+- Other agents' batches kept this machine's CPU at 100% for most of the step. The final
+  benchmark and test runs were made once it was quieter.
+
 ---
 
 ## What Kyler needs to do
