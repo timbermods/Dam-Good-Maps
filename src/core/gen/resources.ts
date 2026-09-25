@@ -53,8 +53,8 @@ function walkFromStart(g: Ground): Float64Array | null {
   return out;
 }
 
-/** Near the start, food and wood go within this walk (the requirements count 20). */
-const NEAR_WALK = 18;
+/** Near the start, food and wood go within this walk: the requirements count 20 (D85). */
+const NEAR_WALK = 20;
 
 /** Regeneration constraints (PLAN §7.0): tiles resources keep off, and what locks kept. */
 export interface ResourceConstraints {
@@ -186,6 +186,21 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     placed += tiles.length;
   }
 
+  // where the colony's walk holds little moist land (a narrow floodplain), the near-start berries
+  // and groves share it by their minimums instead of the berries taking theirs first (D85)
+  let nearBushes = near.bushes;
+  let nearTrees = near.trees;
+  if (nearWalk) {
+    let room = 0;
+    for (let i = 0; i < N; i++) if (nearWalk[i] && free[i] && moist[i]) room++;
+    const need = 1.25 * (near.bushes + near.trees);
+    if (room < need) {
+      const r = spec.settings.start.rules;
+      nearBushes = Math.max(Math.ceil(1.1 * r.bushesWithin20), Math.floor((near.bushes * room) / need));
+      nearTrees = Math.max(Math.ceil(1.1 * r.treesWithin20), Math.floor((near.trees * room) / need));
+    }
+  }
+
   // ---- berry patches beside water, the first ones near the start (PLAN §7.7)
   const vegRng = stream(seed, "veg", candidate, attempt);
   const waterDist = distanceFrom(wet, W, H);
@@ -212,14 +227,14 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     return tiles.length;
   };
   if (g.start) {
-    const want = near.bushes;
+    const want = nearBushes;
     // 2–3 patches as PLAN §7.7 says, more when the target is large or the moist land near the
     // start is narrow (a canyon floor): patches until the target is met, at most 6 a pass. They go
-    // within the colony's walk first (D85 counts 20 tiles' walk), beyond it only when that walk
-    // holds too little moist land.
+    // within the colony's walk first, in two passes (D85 counts 20 tiles' walk), beyond it only
+    // when that walk holds too little moist land.
     const each = Math.max(4, Math.floor(want / Math.max(2, Math.ceil(want / 30))));
     let got = 0;
-    for (const within of nearWalk ? [nearWalk, null] : [null]) {
+    for (const within of nearWalk ? [nearWalk, nearWalk, null] : [null]) {
       if (got >= want) break;
       const w = new Float64Array(N);
       for (let i = 0; i < N; i++) {
@@ -227,7 +242,8 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
         const y = (i - x) / W;
         const dx = x - g.start.x;
         const dy = y - g.start.y;
-        if (dx * dx + dy * dy <= BUSHES.nearStartRadius * BUSHES.nearStartRadius && free[i] && moist[i] && (!within || within[i])) w[i] = (nearWater(i) ? 2 : 1) * byWalk(i);
+        const nearHere = within ? within[i] === 1 : dx * dx + dy * dy <= BUSHES.nearStartRadius * BUSHES.nearStartRadius;
+        if (nearHere && free[i] && moist[i]) w[i] = (nearWater(i) ? 2 : 1) * byWalk(i);
       }
       for (const s of pickSeeds(vegRng, w, W, 6, 6)) {
         got += patch(s, Math.min(each, Math.max(4, want - got)), 1, within);
@@ -294,19 +310,20 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
     let got = 0;
     const each = Math.floor(grove.median * 1.5);
     // within the colony's walk first, as the berries
-    for (const within of nearWalk ? [nearWalk, null] : [null]) {
-      if (got >= near.trees) break;
+    for (const within of nearWalk ? [nearWalk, nearWalk, null] : [null]) {
+      if (got >= nearTrees) break;
       const w = new Float64Array(N);
       for (let i = 0; i < N; i++) {
         const x = i % W;
         const y = (i - x) / W;
         const dx = x - g.start.x;
         const dy = y - g.start.y;
-        if (dx * dx + dy * dy <= r * r && free[i] && moist[i] && (!within || within[i])) w[i] = byWalk(i);
+        const nearHere = within ? within[i] === 1 : dx * dx + dy * dy <= r * r;
+        if (nearHere && free[i] && moist[i]) w[i] = byWalk(i);
       }
-      for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(near.trees / Math.max(1, each)) + 3), 5)) {
+      for (const s of pickSeeds(vegRng, w, W, Math.max(4, Math.ceil(nearTrees / Math.max(1, each)) + 3), 5)) {
         got += growGrove(s, each, true, within);
-        if (got >= near.trees) break;
+        if (got >= nearTrees) break;
       }
     }
   }

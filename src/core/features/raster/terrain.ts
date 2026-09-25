@@ -270,12 +270,15 @@ export const BANK_REACH = 10;
 /** Where a start's bench runs to the water (D97): the nearest point of a clean river's course,
  *  within the bench's radius + 10 tiles, where that river's bed lies 1 or 2 levels below the bench
  *  (its water, about half a level deep, is then within a pump's reach of the start's level). The
- *  course is sampled every half tile, so a bed step beside the start is passed by. */
+ *  course is sampled every half tile, so a bed step beside the start is passed by; a strip that
+ *  would pass a reach whose water stands at the bench's level or higher (above a fall) is not taken,
+ *  since that water would spill onto the bench. */
 export function bankFor(features: readonly Feature[], x: number, y: number, benchLevel: number, benchRadius: number): Point | undefined {
-  let best: Point | undefined;
-  let bd = (benchRadius + BANK_REACH) * (benchRadius + BANK_REACH);
-  for (const f of features) {
-    if (f.kind !== "river" || f.params.badwater) continue;
+  const rivers = features.filter((f): f is RiverFeature => f.kind === "river" && !f.params.badwater);
+  // every river's course, sampled every half tile, with its bed and half-width
+  const samples: { x: number; y: number; bed: number; half: number }[] = [];
+  const reach = benchRadius + BANK_REACH + 12;
+  for (const f of rivers) {
     const path = f.params.path;
     let arc = 0;
     for (let k = 0; k + 1 < path.length; k++) {
@@ -288,15 +291,25 @@ export function bankFor(features: readonly Feature[], x: number, y: number, benc
         const u = j / n;
         const px = ax + u * vx;
         const py = ay + u * vy;
-        const d = (px - x) * (px - x) + (py - y) * (py - y);
-        if (!(d < bd)) continue;
-        const bed = bedAt(f.params.bedProfile, arc + u * len);
-        if (bed < benchLevel - 2 || bed > benchLevel - 1) continue;
-        bd = d;
-        best = [round2(px, 2), round2(py, 2)];
+        if (Math.abs(px - x) <= reach && Math.abs(py - y) <= reach) samples.push({ x: px, y: py, bed: bedAt(f.params.bedProfile, arc + u * len), half: f.params.width / 2 });
       }
       arc += len;
     }
+  }
+  const high = samples.filter((q) => q.bed >= benchLevel);
+  const clear = (px: number, py: number) => {
+    // the strip from the start to (px, py) keeps off water at the bench's level or above
+    const m = BANK_HALF_WIDTH + 1.5;
+    for (const q of high) if (segmentDistance2(q.x, q.y, [x, y], [px, py]) <= (q.half + m) * (q.half + m)) return false;
+    return true;
+  };
+  let best: Point | undefined;
+  let bd = (benchRadius + BANK_REACH) * (benchRadius + BANK_REACH);
+  for (const q of samples) {
+    const d = (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y);
+    if (!(d < bd) || q.bed < benchLevel - 2 || q.bed > benchLevel - 1 || !clear(q.x, q.y)) continue;
+    bd = d;
+    best = [round2(q.x, 2), round2(q.y, 2)];
   }
   return best;
 }
