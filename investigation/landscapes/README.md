@@ -3,6 +3,7 @@
 Start with [REPORT.md](REPORT.md). M9's handoff is [INTEGRATION.md](INTEGRATION.md).
 
 - [Methods and limits](METHODS.md)
+- [Comparisons and random-land controls](COMPARISON.md)
 - [Landform families](FAMILIES.md)
 - [Measurement bench](bench/README.md)
 - [Fixture library](library/README.md)

@@ -129,3 +129,60 @@ No generator process was designed or prototyped here. PLAN.md and ROADMAP.md cha
 `,
 );
 console.log("Wrote REPORT.md and FAMILIES.md");
+
+const targets = JSON.parse(readFileSync("data/targets.json", "utf8"));
+const named = targets.strata["named/128/60/normalised/16/all"];
+const random = targets.strata["random/128/60/normalised/16/all"];
+const numberBand = (x: any) => `${fmt(x.p10)} / ${fmt(x.p50)} / ${fmt(x.p90)}`;
+const comparisonRows = Object.entries(s.comparison)
+  .map(
+    ([key, c]: any) =>
+      `| ${key} (${c.unit}) | ${numberBand(c.real)} | ${numberBand(c.generated)} | ${c.real.n} / ${c.generated.n} | ${typeof c.generatedOutsideRealCentral80 === "number" ? percent(c.generatedOutsideRealCentral80) : "not measured"} |`,
+  )
+  .join("\n");
+const controlRows = Object.entries(targets.definitions)
+  .map(([key, def]: any) => {
+    const a = named.scalars[key],
+      b = random.scalars[key];
+    return `| ${key} (${def.unit}) | ${fmt(a.p50)} | ${fmt(b.p50)} | ${a.nRegions} / ${b.nRegions} |`;
+  })
+  .join("\n");
+const themeRows = Object.entries(s.baseline)
+  .map(
+    ([theme, b]: any) =>
+      `| ${theme} | ${b.passed} / ${b.n} | ${fmt(b.variety)} | ${fmt(b.statistics.scalars.straightShare8.p50)} | ${fmt(b.statistics.scalars.valleyWidth2.p50)} | ${fmt(b.statistics.scalars.lakeShare.p50)} |`,
+  )
+  .join("\n");
+writeFileSync(
+  "COMPARISON.md",
+  `# Comparison tables
+
+Read [methods](METHODS.md) before adopting targets. These are descriptive bands, not significance tests or global population estimates. The reference is 128² at 60 m per tile, relief-normalised to 16. Generated maps use native default heights. Every table uses the same measurement code for both groups.
+
+## Named regions and generated maps
+
+Bands are p10 / median / p90. Each named region gets one vote; each generated seed gets one vote. Water statistics use settled real conversions only. Missing measures are not zeros. The last column counts generated values outside the real central band; roughly 20% would be expected for another sample from the same continuous distribution, but ties, unequal groups and exploratory selection prevent a formal test here.
+
+| Measure and unit | Real band | Generated band | Real regions / generated maps measured | Generated outside real band |
+|---|---|---|---|---|
+${comparisonRows}
+
+## Generated themes
+
+Variety uses the unchanged published workshop calibration. These figures include placed resources and simulated water. Themes should be compared with relevant terrain strata as well as the broad reference above.
+
+| Theme | Passed | Variety | Straight contour fraction, median | Valley width +2, median tiles | Lake share, median |
+|---|---|---|---|---|---|
+${themeRows}
+
+## Named selection and random-land controls
+
+The cohorts stay separate. This table shows how choosing interesting named terrain changes the reference. Random controls have no assigned process family. Both cohorts use the same mapping, scale, source policy, edge treatment and measurement code.
+
+| Measure and unit | Named median | Random median | Named / random regions measured |
+|---|---|---|---|
+${controlRows}
+
+All sizes, scales, mappings and families remain in data/targets.json. Scalar support counts vary because some features are absent or water did not settle. Histograms and mean transverse valley profiles are stored with their own support counts. Do not interpret low support as agreement.
+`,
+);
