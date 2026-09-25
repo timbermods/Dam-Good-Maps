@@ -13,6 +13,8 @@ The generator:
   map. Each setting shows what the official maps use.
 - **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
   colony's survival.
+- Every map's start has water on its own level, trees and bushes within a short walk. The map card
+  lists the **Start requirements**. **Advanced: start rules** sets them.
 - The preview shows water, moisture and reach layers.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
 - **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
@@ -34,7 +36,11 @@ The editor:
 - Tick **Advanced** to add **Unstable core** and **Object** to **Resources**. **Object** places any
   object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
   them, set a water source's strength, or make it turn on in a later cycle.
-- **Start**: drag the start. Green means the district center fits.
+- **Start**: drag the start. Green means the district center fits and the start has its water,
+  trees and bushes.
+- **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
+- Water settles within a couple of seconds of an edit. The full check follows in the background.
+  The pill shows **Settling water** with its progress, then **Ready to play** or the problems.
 - Each tool shows what it will do first. **Place** adds it.
 - Select a feature to move it, change it or delete it. This works on most of what the generator
   made too.
@@ -95,6 +101,7 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
   bytes, the editor's tools and its generate-refine-regenerate journey, the 3D view, and every local
   investigation map through import, 3D and export.
 - `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
+- `npm run bench:preview` times the editor's water preview after local edits at 256².
 - `npm run bench:3d` measures the 3D view's build time and frame rate at 256² in Chrome. It opens
   browser windows, so it runs locally only. It writes `out/m4/bench3d.json`.
 - `npm run fixtures` rewrites the water golden vectors from the Python reference.

@@ -46,7 +46,9 @@ test("the map card lists the start requirements, and the editor's start follows 
   await page.locator(".feature-list").getByRole("button", { name: "Start", exact: true }).click();
   const handle = page.getByRole("button", { name: /^Move Start/ });
   await handle.focus();
+  // a nudge there and back: the indicators read the start's own place, which the validator passed
   await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowRight");
   const box = page.locator(".start-indicators");
   await expect(box).toContainText(/Water without stairs: [\d.]+ tiles' walk \(at most 20\)/);
   await expect(box).toContainText(/Starting trees: \d+ \(at least 25\)/);
@@ -54,6 +56,11 @@ test("the map card lists the start requirements, and the editor's start follows 
   const near = await page.evaluate(() => window.dgmEditor!.startCheck());
   expect(near!.problem).toBeNull();
   expect(near!.meets).toBe(true);
+  // the page's walks give the validator's water distance; it counts every tree and bush that is
+  // not dead, so at least the validator's living ones (D105)
+  expect(near!.water).toBe(c["start.water"].value);
+  expect(near!.trees).toBeGreaterThanOrEqual(c["start.wood"].value as number);
+  expect(near!.bushes).toBeGreaterThanOrEqual(c["start.food"].value as number);
   await expect(box.getByRole("paragraph").first()).toHaveText("The district center fits here");
 
   // walked away from the river, the start's own level loses the water, or the trees and bushes
