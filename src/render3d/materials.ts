@@ -51,7 +51,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from "three";
-import { GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, type Rgb } from "./palette";
+import { GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, WATER_SURFACE as WS, type Rgb } from "./palette";
 import { SHADOW_OFFSET, SHADOW_RES, SHADOW_SCALE } from "./light";
 
 const az = LIGHT.sunAzimuth;
@@ -634,14 +634,15 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         if (bitOf(vFlags, 4.0) > 0.5) shore = min(shore, 1.0 - fr.y);
         if (bitOf(vFlags, 8.0) > 0.5) shore = min(shore, fr.y);
         if (n.y < 0.5) shore = 1.0;
-        float d = depth * mix(0.3, 1.0, smoothstep(0.0, 0.45, shore));
+        // (palette.ts's waterBody and waterOpacity say the same, for the tests)
+        float d = depth * mix(${f(WS.bank)}, 1.0, smoothstep(0.0, ${f(WS.bankWidth)}, shore));
         // clean water: clear in the shallows (the bed shows through a light teal tint), a deep teal
         // body a level or so deep, navy where deep; badwater murky and nearly opaque at any depth
-        float absorb = 1.0 - exp(-d * 4.0);
-        vec3 murky = mix(${glColor(WATER.bad)}, ${glColor(WATER.badDeep)}, 1.0 - exp(-depth * 1.4));
-        vec3 body = mix(mix(${glColor(WATER.shallow)}, ${glColor(WATER.teal)}, absorb), ${glColor(WATER.navy)}, smoothstep(0.6, 2.8, d));
+        float absorb = 1.0 - exp(-d * ${f(WS.absorb)});
+        vec3 murky = mix(${glColor(WATER.bad)}, ${glColor(WATER.badDeep)}, 1.0 - exp(-depth * ${f(WS.badAbsorb)}));
+        vec3 body = mix(mix(${glColor(WATER.shallow)}, ${glColor(WATER.teal)}, absorb), ${glColor(WATER.navy)}, smoothstep(${f(WS.navyFrom)}, ${f(WS.navyTo)}, d));
         vec3 clean = mix(body, murky, tint);
-        float alpha = mix(mix(0.3, 0.93, absorb), mix(0.95, 0.99, absorb), max(bad, tint));
+        float alpha = mix(mix(${f(WS.clearest)}, ${f(WS.deepest)}, absorb), mix(0.95, 0.99, absorb), max(bad, tint));
         float foam = 0.0;
         float glints = 0.0;
         float pale = 0.0;
@@ -668,12 +669,12 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
           if (bitOf(vFlags, 64.0) > 0.5) fall = min(fall, 1.0 - fr.y);
           if (bitOf(vFlags, 128.0) > 0.5) fall = min(fall, fr.y);
           // a thin line along the shore, and (clean water only) broken foam just off it
-          foam += (1.0 - smoothstep(0.03, 0.08, shore)) * mix(0.7, 0.45, bad);
+          foam += (1.0 - smoothstep(0.03, 0.08, shore)) * mix(${f(WS.shoreFoam)}, 0.45, bad);
           #if LITE
             foam += (1.0 - smoothstep(0.0, 0.5, fall)) * 0.45 * (1.0 - bad * 0.35);
           #else
             float fn = vnoise(g * 4.0 + vec2(t * 0.3, -t * 0.2));
-            foam += (1.0 - smoothstep(0.06, 0.24 + 0.1 * fn, shore)) * smoothstep(0.4, 0.72, fn + 0.12) * 0.6 * (1.0 - bad);
+            foam += (1.0 - smoothstep(0.06, 0.24 + 0.1 * fn, shore)) * smoothstep(0.4, 0.72, fn + 0.12) * ${f(WS.brokenFoam)} * (1.0 - bad);
             // broken white water just where a fall comes down
             float churn = vnoise(g * 3.2 + vec2(0.0, t * 1.4)) * 0.6 + vnoise(g * 7.0 - vec2(t * 0.9, 0.0)) * 0.4;
             foam += (1.0 - smoothstep(0.0, 0.5, fall)) * (0.15 + 0.65 * smoothstep(0.35, 0.65, churn)) * (1.0 - bad * 0.35);
@@ -708,7 +709,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         float lit = sunLit(g, vWorld.y);
         vec3 light = skyColor * 1.2 + sunColor * 0.3 * max(dot(N, sunDir), 0.0) * lit;
         c *= light;
-        c = mix(c, ${glColor(WATER.deep)} * light, crest * 0.3);
+        c = mix(c, ${glColor(WATER.crest)} * light, crest * 0.3);
         // the sky's reflection, stronger at low angles; pale ripples; the sun's glint and glints
         // (none on a fall: a sheet seen edge-on would mirror the sky in patches)
         float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0) * step(0.5, n.y);
@@ -716,7 +717,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         // pale streaks where it flows (badwater's brownish, so it reads as a flowing liquid too)
         c = mix(c, mix(${glColor(WATER.sky)} * 0.85, ${glColor(WATER.badFoam)} * 0.7, bad), pale * mix(0.22, 0.3, bad));
         float spec = pow(max(dot(reflect(-sunDir, N), V), 0.0), 90.0) * lit;
-        c += sunColor * (spec * mix(0.5, 0.2, bad) + glints * 0.6 * (1.0 - bad * 0.5) * (0.3 + 0.7 * lit));
+        c += sunColor * (spec * mix(0.5, 0.2, bad) + glints * ${f(WS.glints)} * (1.0 - bad * 0.5) * (0.3 + 0.7 * lit));
         c += ${glColor(WATER.badVein)} * bubbles * bad * 0.55;
         c = mix(c, mix(${glColor(WATER.foam)}, ${glColor(WATER.badFoam)}, bad) * (0.8 + 0.2 * lit), foam);
         if (n.y > 0.5) alpha = mix(alpha, 0.95, max(foam, glints * 0.6));

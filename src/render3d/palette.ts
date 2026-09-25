@@ -72,8 +72,9 @@ export const WATER = {
    *  as dark as dry ground or darker; water reads as water by its shore foam, glints, ripples and
    *  see-through shallows, and badwater stays darker still, brown and dull. */
   shallow: [0.36, 0.6, 0.64] as Rgb,
-  /** The ripples' lit crests, where they catch the sky: the lightest the water gets, lighter than
-   *  dry ground at any depth. */
+  /** The ripples' lit crests, where they catch the sky: the lightest the water gets. */
+  crest: [0.26, 0.5, 0.62] as Rgb,
+  /** The crests' old name, which two older tests still read. */
   deep: [0.26, 0.5, 0.62] as Rgb,
   /** The body of water a level or so deep. */
   teal: [0.09, 0.23, 0.25] as Rgb,
@@ -90,6 +91,57 @@ export const WATER = {
   badVein: [0.98, 0.5, 0.16] as Rgb,
   badFoam: [0.66, 0.5, 0.36] as Rgb,
 } as const;
+
+/** Clean water's surface, as the water shader draws it: foam along the shore and broken foam
+ *  just off it, glints on the ripples, and shallows clear enough to see the bed through, the more
+ *  so toward the banks. */
+export const WATER_SURFACE = {
+  /** Foam: the line along the shore, and the broken foam just off it. */
+  shoreFoam: 0.7,
+  brokenFoam: 0.6,
+  /** Glints of light on the ripples (up close). */
+  glints: 0.6,
+  /** Opacity where the water is shallowest, and where it is deep. */
+  clearest: 0.3,
+  deepest: 0.93,
+  /** At a bank the water is this share of its depth, deepening over this far from it (tiles). */
+  bank: 0.3,
+  bankWidth: 0.45,
+  /** How quickly clean water turns from its clear shallows to its teal body (per level), and
+   *  between which depths the teal turns navy; how quickly badwater turns to its deep colour. */
+  absorb: 4,
+  navyFrom: 0.6,
+  navyTo: 2.8,
+  badAbsorb: 1.4,
+} as const;
+
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** Clean water's depth as its colour and opacity see it, `fromBank` tiles from a bank. */
+function seenDepth(depth: number, fromBank: number): number {
+  const S = WATER_SURFACE;
+  return depth * (S.bank + (1 - S.bank) * smooth(0, S.bankWidth, fromBank));
+}
+
+/** The body colour of water `depth` levels deep, clean or bad, `fromBank` tiles from a bank (open
+ *  water by default): before the light, the ripples, the foam and the glints (as the shader). */
+export function waterBody(depth: number, bad: boolean, fromBank = 1): Rgb {
+  const S = WATER_SURFACE;
+  if (bad) return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-depth * S.badAbsorb));
+  const d = seenDepth(depth, fromBank);
+  return mixRgb(mixRgb(WATER.shallow, WATER.teal, 1 - Math.exp(-d * S.absorb)), WATER.navy, smooth(S.navyFrom, S.navyTo, d));
+}
+
+/** Clean water's opacity, `depth` levels deep and `fromBank` tiles from a bank: see-through in
+ *  the shallows and toward the banks (as the shader, before foam and glints). */
+export function waterOpacity(depth: number, fromBank = 1): number {
+  const S = WATER_SURFACE;
+  const absorb = 1 - Math.exp(-seenDepth(depth, fromBank) * S.absorb);
+  return S.clearest + (S.deepest - S.clearest) * absorb;
+}
 
 /** Dead trees: bare, pale wood (no crown), so they read as dead in any colours; the models use a
  *  greyer tone of it, so dead trees sit back in the landscape. */

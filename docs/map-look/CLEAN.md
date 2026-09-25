@@ -53,10 +53,11 @@ texture. Kyler accepted that clean water may be as dark as dry ground in greysca
 reads as water by its shore foam, glints, ripples and see-through shallows. All the clean captures
 were made again.
 
-One existing test, unchanged, still checks that `WATER.deep` is lighter than dry ground
-(`tests/unit/look-water-slopes.test.ts`, from the third round's rule that water sits between dry
-and moist ground). `WATER.deep` is now the colour of the ripples' lit crests; the water's body uses
-the new `WATER.teal` and `WATER.navy`, which are darker than dry ground.
+With Kyler's approval, the water test in `tests/unit/look-water-slopes.test.ts` now checks his new
+rule instead of the third round's "water is lighter than dry ground": it is called "keeps badwater
+clearly darker than clean water, which has shore foam, glints and see-through shallows". The ripple
+crests' colour is `WATER.crest` (its old name `deep` stays as an alias for two older tests); the
+water's body uses `WATER.teal` and `WATER.navy`.
 
 ## Where to look for each core meaning
 
