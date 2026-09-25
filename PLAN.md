@@ -1306,7 +1306,7 @@ column says which; until M8 every row rejects, with the rule before M8 given in 
 
 | Id | Rule | From M8 |
 |---|---|---|
-| `start.dry` | No water within Chebyshev 2 of the start centre after settling. From 3D-a (investigation/terrain3d I-11): no wet column at or above the start's floor within Chebyshev 2. Whether that also settles lakeside starts (Refinement item 8, D107) is to confirm with Kyler. | rejects |
+| `start.dry` | No water within Chebyshev 2 of the start centre after settling. From 3D-a (investigation/terrain3d I-11): no wet column at or above the start's floor within Chebyshev 2. Whether that also settles lakeside starts (Refinement item 8, D107) is to confirm with Kyler; until then the Refinement item still measures first, and 3D-a applies the floor rule only to water under roofs. | rejects |
 | `start.water` | Requirement 1, water without stairs: clean water (depth ≥ 0.3, contamination < 0.05) touches a shore tile at the start's own level, within the water-distance rule's walk of the start (12 / 20 / 28) without any slope, and a pump on that shore reaches the surface (0–2 levels below). Before M8: water 0–2 levels below the start within 10 / 16 / 22 tiles, straight distance. | rejects |
 | `start.reach_water` | Before M8: that water borders land walkable from the start. From M8 it is part of `start.water`. | — |
 | `start.wood` | Requirement 2: living trees within 20 tiles' walk (slopes allowed) ≥ Minimum starting trees (60 / 40 / 20). Before M8: trees within 20 tiles and reachable ≥ 80 / 50 / 40. | rejects |

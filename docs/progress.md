@@ -5,111 +5,8 @@ tagged `m<N>-done` when all of its acceptance criteria pass.
 
 ## Run summary
 
-**Run 2 (M5–M11) stopped at M8 on 2026-09-25. One M8 acceptance criterion is not met as
-written.** M5, M6 and M7 passed; M6 and M7 are live.
-
-| Milestone | Tag | Released | Result |
-|---|---|---|---|
-| M5 Set pieces, land and water tools, slopes, fixes | `m5-done` | inside the M6 release | All criteria pass |
-| M6 Full settings, sharing, themes I | `m6-done` | PR #2, live 2026-09-24 | All criteria pass |
-| M7 Resources, map objects, themes II | `m7-done` | PR #7, live 2026-09-25 | All criteria pass (includes the Lake Basin project-file fix) |
-| M8 Water preview and background validation, with the start requirements | not tagged | not released | Built; one criterion not met (below) |
-| Map look, M9, M10, M11 | — | — | Not started |
-
-Before each tag the run re-checked the milestone itself: typecheck, every unit, contract and
-browser test, and the full oracle (0 disagreements between the two validators on 50 generated
-and 19 official maps). After each release, the live check passed: the site's download equals
-`tools/gen.ts` byte for byte.
-
-- **Where it stopped, and why.** M8's acceptance says Hollows, Pressure, Oasis, Nomads and
-  Beaverome report their water checks as approximate. Four do. Beaverome has none of the causes
-  (no caves, delayed sources, aquifers or seeps, and no roof over the start), and the settle
-  matches its own water within 1%. The workshop study listed it because its start fails
-  `start.dry` (its lake stands 0.7 below the start), not because of its water. Flagging it would
-  need a reason that isn't true, so the run stopped, as the gate rule says. Everything else in M8
-  passes:
-  - the three start requirements (D85), in both validators;
-  - every generated start reaches water on its own level;
-  - batches are 100% final in every theme, with higher first-attempt rates than M7;
-  - a 2-second re-preview at 256²;
-  - byte-identical unedited exports;
-  - editable generated outlines;
-  - no floating objects;
-  - 338 tests and 52 browser tests.
-
-  M8 is on `dev` at `e6d8720`, and CI is green. It's not tagged or released, so the site stays
-  at M7.
-- **What you need to do next:**
-  1. Decide #48 (Beaverome). The simplest fix is to take Beaverome off M8's list, since its
-     water is shown correctly. Then `m8-done` can be tagged and released, and the run can
-     resume.
-  2. Resume the run from M8: Map look, M9 (with #21's variety target), M10 and M11. The
-     river-pond crossing task and the fit-score step wait with it, as you asked.
-  3. Say what "the load checks" in your refinement notes means. It's on the Refinement list,
-     marked "details to confirm".
-  4. Play the pending in-game checks, and run the M3 spike page. See "What Kyler needs to do".
-- **Pending decisions:** 46 are open in [decisions-pending.md](decisions-pending.md). #34 and #39
-  are decided. The run went ahead with each default.
-  - M2–M4: #1–#10
-  - M5: #11–#14
-  - M6: #15–#22 (#21: large maps flatter than official maps, now an M9 target)
-  - M7: #23–#27
-  - M8: #30, #36, #47, #48
-  - Map look: #40
-  - M9, from the workshop study: #31–#33, #35, #37
-  - Refinement: #29
-  - M12: #28, #41–#46
-  - Later: #38
-- **Also done in this run:**
-  - Pages is on. `main` gets tagged releases as merge commits, and a live check runs daily and
-    after each deploy (PRs #2, #3 and #6).
-  - The impeccable-app-flow skill was added to timbermods/.github (#30, merged) and installed
-    locally.
-  - The design pass is now its own roadmap step before M12.
-  - `main` was merged into `dev` once.
-  - The workshop study (PR #4) and the Claude groundwork (PR #5) were merged and their plans
-    adopted (D87–D96).
-  - Your plan updates were recorded: D84 (M12 compound requests), D85 (start requirements, as
-    amended), D86 (Map look), and the Refinement phase with the natural-containment note.
-  - Fixed: a number-field race in the editor, and Lake Basin and Islands project files not
-    reopening.
-
-### Run 1 (M1 check, then M2–M4), 2026-09-24: every milestone passed
-
-| Milestone | Tag | Result |
-|---|---|---|
-| M1 Shared core and end-to-end slice | `m1-done` | All criteria pass |
-| M2 Water, playability and validation profiles | `m2-done` | All criteria pass |
-| M3 Map document and operations engine, delivery spike | `m3-done` | All criteria pass; spike questions 4–5 need you (below) |
-| M4 Shared 3D view and editor shell | `m4-done` | All criteria pass |
-
-Before tagging each milestone, the run re-checked it: typecheck, all unit and contract tests, all
-browser tests, and the full oracle. The oracle is 150 maps, with 0 disagreements between the
-Python and TypeScript validators on 50 generated and 19 official maps. CI is green on `dev`.
-
-- **Where it stopped:** after M4, as planned. No criterion failed. The queued second run
-  (M5–M11) continues on `dev`.
-- **What you need to do:** see "What Kyler needs to do" at the end of this file.
-  1. Turn on Pages from Actions.
-  2. Play the pending in-game checks: A and F2 (`out/m1/`), and B (`out/m2/`).
-  3. Run the M3 spike page signed in. The live `sample` call and public sharing need your
-     account and consent.
-  4. Answer the pending decisions.
-- **Pending decisions:** 10, in [decisions-pending.md](decisions-pending.md). The run went ahead
-  with each default.
-  1. Hard's 3-deep reservoir rule is deferred to M6.
-  2. The advisory `plants.drought` warns on every River Valley map.
-  3. Imports get approximate survival checks.
-  4. The badwater sits far east.
-  5. Multi-colony export follows the vanilla rule (superseded by #8).
-  6. What a lock keeps.
-  7. Imports are stamped 1.1.2.4.
-  8. An import's own problems never block its export.
-  9. Import water checks wait for M8.
-  10. Autosave keeps one map.
-- **Note:** another session added `CLAUDE.md` (the writing rule and "never launch Timberborn")
-  to `main` in PR #1. `dev` does not include it, and doesn't touch that file either, so merging
-  `dev` into `main` brings both together without conflict. The run followed both rules.
+Where things stand, what's running and what waits on Kyler: [STATUS.md](STATUS.md), rewritten at
+every step and stop. This file keeps the record of each milestone and step below.
 
 ## M1: shared core and end-to-end slice (tag `m1-done`)
 
@@ -1286,7 +1183,7 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
 
 ## M9 design step (design version 1)
 
-Branch `investigation/generative`, PR into `dev` (not merged). Design:
+Branch `investigation/generative`, merged into `dev` as PR #14. Design:
 [docs/m9-design.md](m9-design.md); numbers:
 [investigation/generative/REPORT.md](../investigation/generative/REPORT.md). Kyler approves design
 version 2, not this one.
@@ -1322,15 +1219,49 @@ version 2, not this one.
 4. Design version 2 follows once `investigation/landscapes` is ready; it folds in all three Codex
    investigations, and that is the version you approve.
 
+## After Map look (2): Kyler's decisions
+
+Recorded on 2026-09-25 (PLAN §20; decisions-pending #38 and #50 closed, #51–#53 new). The one-line
+list of every decision since M8 is in [STATUS.md](STATUS.md).
+
+- D116: M9a's in-game gate is a DGM Probe batch, not Kyler's play test (amends D112 (3)).
+- D117: the probe rule. The Probe may launch Timberborn only after Kyler's yes in chat, every batch
+  (CLAUDE.md's standing rule; #50 decided).
+- D118: real 3D terrain is essential; the terrain design's P3D-1 to P3D-9 are Kyler's decisions
+  (D119–D127), with the 3D stages 3D-a, 3D-b and 3D-c after the Frame pass and before M10; I-1 puts
+  runs in M9a's format 3.
+- D128: the no-approximation measure allows 10% of a theme's maps under the workshop's p10 distance.
+- D129: the audit's A1 and A2 go into M9a, A3 and A4 onto the Refinement list.
+- D130: the simulation speedups join M9a's build plan as proposals, each proved bit for bit.
+- D131: the techniques playbook as proposals; its conflicts are #51–#53.
+- D132: Verticality beside Variety; above 16 only at high values, after a probe batch (#38 decided).
+- D133: the Weather view with live water, after the 3D stages (`weather-view-done`).
+- D134: keep M12 ready: each step before M12 adds tool entries and suite requests, and re-runs the
+  suite.
+- D135: Map look's clean default look and information layer; Kyler approves the appeal from
+  captures.
+- D136: Real places, a gallery of 88 real-terrain maps, right after Map look (`real-places-done`).
+- D137: the workshop ratings are dropped; the score is a mild tiebreaker; in-site feedback proposed.
+- D115, final version: Kyler's one rule, applied to every step's acceptance in ROADMAP.
+- D138: maps feel authored: one or two intentions per map in design version 2.
+- D139: Claude steers the generator and never hand-builds the map (a product principle);
+  "describe the map you want" in M12; the Claude suite's requests sorted in M12-INTEGRATION.md §13.
+- D140: M12's model layer is provider-neutral.
+- D141: an MCP server after M12.
+- D142: the agent guide after M9a.
+- D143: Variations of this map, in M9c.
+- D144: a contact-sheet image at every map-changing step (CLAUDE.md).
+- Design version 2 is built on `investigation/generative-v2` (not started).
+
 ---
 
 ## What Kyler needs to do
 
 Things the run can't do itself. Each has the exact steps.
 
-1. **Decide #48** (Beaverome's start) in [decisions-pending.md](decisions-pending.md). It is the
-   one M8 acceptance item not met as written, and the run waits on it. (GitHub Pages is on since
-   2026-09-24: <https://timbermods.github.io/dam-good-maps/>, deployed from `main`.)
+1. **See [STATUS.md](STATUS.md)**, "Waiting on Kyler", for the current decisions and approvals.
+   (GitHub Pages is on since 2026-09-24: <https://timbermods.github.io/dam-good-maps/>, deployed
+   from `main`.)
 2. **Play the pending in-game checks** when you're ready. See [ingame-log.md](ingame-log.md). M2
    adds B1–B4 (files in `out/m2/`): the first time pre-filled water meets the real game. M5 adds
    C1–C3, F1 and the gorge's stair notch (files in `out/m5/`). M6 adds M6-1a to M6-1c: a Canyon
@@ -1340,8 +1271,7 @@ Things the run can't do itself. Each has the exact steps.
    `out/m8/`; Canyon and Cozy Secret Valley made from your own copies with
    `npx tsx tools/ingame-files.ts --milestone m8`, in `out/m8/local/`).
 3. **Answer the pending decisions** in [decisions-pending.md](decisions-pending.md) when convenient;
-   the run went ahead with the defaults listed there. #48 (Beaverome's start) decides the one M8
-   acceptance item that is not met as written.
+   the run went ahead with the defaults listed there.
 4. **Run the delivery spike page** (M3). It needs your claude.ai account and your consent, so the
    run leaves it to you. It takes about ten minutes.
    1. Open <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiRp> while signed in to claude.ai.

@@ -75,7 +75,7 @@ differently, this file wins.
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
 | Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
 | Design | Design pass, after M11 and the refinement phase | the impeccable-app-flow skill (timbermods/.github, `claude-skills/`) · old milestone 6 | no | high |
-| M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 · the Claude groundwork (D88) · the workshop study (D87) | yes (the waterfall and compound requests) | xhigh |
+| M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 · the Claude groundwork (D88) · the workshop study (D87) · steering and a provider-neutral layer (D139, D140) | yes (the waterfall and compound requests) | xhigh |
 | M13 | Usability, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
 | Later | See the end of this file | PLAN §5.7, old milestone 7 · EDITOR §10 Later | per item | — |
 
@@ -644,9 +644,8 @@ district center is a small box.
 **Delivers**
 1. Ground tops coloured by moisture as in game: moist ground green; dry ground cracked earth, the
    cool grey-brown of Kyler's reference, not reddish brown (D135; it replaces D110's warm
-   grey-brown); contaminated soil with its own look. A toggle
-   switches back to height colours. This changes the 3D view's colour meaning from height to
-   moisture (approved by Kyler, D86).
+   grey-brown); contaminated soil with its own look. A toggle switches back to height colours.
+   This changes the 3D view's colour meaning from height to moisture (approved by Kyler, D86).
 2. Height shown on the block walls: layered bands per level, so levels can be counted.
 3. Baked ambient occlusion and soft sun shadows, computed when the mesh is built.
 4. Warmer colour grading and light depth haze.
@@ -692,7 +691,8 @@ never ship game screenshots.
 steps, shorelines, ridge crests). Map look changes no map file, so they go to the refinement phase
 (decisions-pending #40).
 
-**In-game check:** no; the reference screenshot is Kyler's.
+**In-game check:** no; the reference screenshots are Kyler's. The DGM Probe's in-game shots of the
+same maps join them once they exist (P-ML in [docs/ingame-log.md](docs/ingame-log.md)).
 
 **Effort:** high.
 
@@ -738,8 +738,8 @@ playable, validated maps. Players can play them as they are, or refine one in th
 5. Kept separate from the generator: real places are content, never templates (the product
    principle, D108).
 
-**Acceptance:** only that every map passes the validators and exports, and that the page works on
-desktop and on a phone.
+**Acceptance** (blocking): only that every map passes the validators and exports, and that the page
+works on desktop and on a phone.
 
 **In-game check:** optional. When the probe is available, Kyler may approve a batch that loads a
 few of them in the game (D117).
@@ -921,8 +921,9 @@ the stages replace its order, and its premises become recipes inside the system 
     8 flow directions (all appear in 100 seeds of each theme, none over 25%), river-network variety
     (splits, deltas, meanders and oxbows), no clones (K candidates ranked against reference
     signatures), the openings with the weather-cycle signature and the strategy axes (design
-    version 2), and the measures as permanent checks. Surprise me and high Variety may reach high
-    Verticality now and then; most maps never do (D132).
+    version 2), and the measures as permanent measures (information, D115; the dam-wall check
+    blocks). Surprise me and high Variety may reach high Verticality now and then; most maps
+    never do (D132).
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
     direction as tool entries; suite requests for them; every reference solution re-run.
   - Acceptance (D115): blocking: M6, the dam-wall check, finds no built wall; information: the
@@ -943,7 +944,8 @@ the stages replace its order, and its premises become recipes inside the system 
     locally, and later from testers. The votes steer each theme's priors and the Variety
     setting, not a general score. It pairs with Variations.
   - **Keep M12 ready** (D134): "describe this map" and "how does it play?" (names, descriptions,
-    the opening) as query tool entries; suite requests for them; every reference solution re-run.
+    the opening) as query tool entries, and "show me variations of this map" as an operation;
+    suite requests for them; every reference solution re-run.
   - Acceptance: the rest of M9's acceptance below that the stages do not cover.
 
 
