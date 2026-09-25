@@ -719,7 +719,8 @@ variant's must-have set pieces are listed in brackets.
 | **Islands** | A sea or lake filling 45–55% of the map, held by a rim with 1–2 outlets. Inflow rivers come from the edges. 6–25 islands of 100+ tiles, with the start on the largest island or shore. Islands without slopes are reachable over shallow water (water never blocks walking). | *Archipelago* [islands of varied heights, relics on far islands]; *Atoll* [ring island around a lagoon, dam site at the lagoon mouth] |
 
 Layout parameters per archetype live in `gen/layout/<name>.ts` as a typed table, so they can be
-tuned from rating data without code changes. As built (M6): River Valley and Canyon share one
+tuned without code changes (from the objective measures and, later, the in-site feedback on
+generated maps; D137). As built (M6): River Valley and Canyon share one
 planner with a typed table (`gen/valley.ts`, D59, D63), Lake Basin has its own (`gen/lakeBasin.ts`,
 D64). Each theme builds one premise until names and premises (M9): River Valley's gorge-dammed
 basin, Canyon's Narrows, Lake Basin's Rising lake. River Valley and Canyon still flow west to east,
@@ -1576,7 +1577,7 @@ milestone and says where it went. Effort: S under a day, M 1–3 days, L 3–7 d
 | Cross-browser floating point in the water sim. | Share links reproduce a different map. | Only IEEE-exact operations on output paths (§2.1); the nightly cross-browser determinism test. The water result feeds placement, so a divergence would move trees; the golden tests catch it. |
 | Generator changes break old share links. | Players lose maps. | Versioned deploys `/v/<version>/`; the version in the link and the map description. |
 | JS performance of the Dijkstra moisture pass and the sim at 256². | Slow generation. | Budgets in §10; a binary heap over typed arrays; active-set simulation; a priority-flood initial state; progressive candidates. |
-| Official calibration is 19 maps (2 small, 3 medium). | Small-map targets are noisy. | Blend with workshop numbers for small maps; tune from ratings. |
+| Official calibration is 19 maps (2 small, 3 medium). | Small-map targets are noisy. | Blend with workshop numbers for small maps; tune from the objective measures and the in-site feedback on generated maps (D137). |
 | Heights above 16. | Unknown editor behaviour. | Kept at 16 except at high Verticality (§5.9, D132), which a probe batch confirms first (§18 E1). |
 | Aquifer drills only work in temperate weather (per code). | Would mislead if used. | Left out (§5.7). |
 | Map name is the file name. | Players rename files and lose the name. | Also stored in `MapDescription`. |
