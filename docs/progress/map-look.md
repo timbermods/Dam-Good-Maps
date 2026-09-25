@@ -262,3 +262,5 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
 - Captures: `docs/map-look/clean/` (our maps; Beavertopia's stay local). The 3D benchmark
   (information): worst orbit 74 fps on the integrated GPU with the CPU slowed 4×.
 
+
+Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged since M8: no map file changes).
