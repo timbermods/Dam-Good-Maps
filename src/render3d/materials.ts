@@ -302,7 +302,8 @@ const COMMON = /* glsl */ `
    *  overlay colour and dark stripes (solid light where a stripe would be under two pixels); just
    *  outside, a dark rim at least a pixel and a half wide. Returns the colour and its weight. */
   vec4 hatchAt(vec2 g, vec3 col) {
-    if (hatching < 0.5) return vec4(0.0);
+    // (the light look draws a hatched tile plain, in its colour: the overlay's own mix)
+    if (LITE == 1 || hatching < 0.5) return vec4(0.0);
     vec2 tile = floor(g);
     vec4 m = texture2D(marks, (tile + 0.5) / mapSize);
     float r = floor(m.r * 255.0 + 0.5);
@@ -530,7 +531,7 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         c += ${glColor(GROUND.contaminatedGlow)} * glow * 0.42;
         vec4 o = texture2D(overlay, (tile + 0.5) / mapSize);
         if (o.a < 0.998) c = mix(c, o.rgb * (0.8 + 0.2 * min(light.g, 1.0)), o.a);
-        else c = mix(c, o.rgb, n.y > 0.5 ? 0.0 : 0.5);
+        else c = mix(c, o.rgb, n.y > 0.5 ? float(LITE) : 0.5);
         if (n.y > 0.5) {
           vec4 hatch = hatchAt(g, o.rgb * (0.88 + 0.12 * min(light.g, 1.0)));
           c = mix(c, hatch.rgb, hatch.a);
@@ -680,7 +681,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         if (n.y > 0.5) alpha = mix(alpha, 0.95, max(foam, glints * 0.6));
         if (n.y > 0.5) {
           vec4 o = texture2D(overlay, (floor(g) + 0.5) / mapSize);
-          if (o.a < 0.998) {
+          if (o.a < 0.998 || LITE == 1) {
             c = mix(c, o.rgb, o.a * 0.85);
             alpha = mix(alpha, 1.0, o.a * 0.6);
           }
@@ -723,12 +724,14 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
         #endif
         vFoot = position.y;
         vec3 p = position;
+        #if !LITE
         if (grow.x > 0.0) {
           vec4 o = projectionMatrix * viewMatrix * m * vec4(0.0, 0.0, 0.0, 1.0);
           float perUnit = 0.5 * viewHeight * projectionMatrix[1][1] / max(o.w, 0.001);
           float k = clamp(grow.x / perUnit, 1.0, grow.z);
           p = p * k + vec3(0.0, grow.y * (k - 1.0), 0.0);
         }
+        #endif
         vec4 w = m * vec4(p, 1.0);
         vWorld = w.xyz;
         gl_Position = projectionMatrix * viewMatrix * w;
