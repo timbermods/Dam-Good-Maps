@@ -646,6 +646,8 @@ updated.
 - `out/m5/` was made with generator 0.3.0. Remaking it now gives different maps; test the
   committed files.
 
+Deployed: m6-done, 2026-09-24, live check passed (PR #2; live download = `tools/gen.ts`, sha256 `d99fa422…`).
+
 ## M7: resources, map objects, themes II
 
 **Built** (branch `dev`, generator 0.5.0):
@@ -756,6 +758,8 @@ the editor's chunks are 127 KB (42 KB gzipped); the 3D chunk is 560 KB (143 KB g
   committed files.
 - Fixed after M7: Lake Basin and Islands project files reopen (point bounds widened to one map side
   past each edge, −256…512; bytes unchanged; project round trip in every batch).
+
+Deployed: m7-done, 2026-09-25, live check passed (PR #7; live download = `tools/gen.ts`, sha256 `7d976a77…`).
 
 ## After M7: plan updates and merges
 
