@@ -1028,6 +1028,8 @@ Tests whose expectations changed because Kyler changed the rules (D85); none was
 - Islands' canonical settle at 256² is still over the 3 s budget (5.2 s median here, D83). The
   editor runs it in the background, and waits for it only on export.
 
+Deployed: m8-done, 2026-09-25, live check passed (PR #8; live download = `tools/gen.ts`, sha256 `5118b6a6…`).
+
 ## After M8: Kyler's decisions and the M9 design step
 
 - Kyler decided #48 (PLAN §20 D107): Beaverome is off M8's approximate-water list; M8's acceptance names four maps; `start.dry` stays as built.
@@ -1130,6 +1132,12 @@ Page weight: the 3D chunk grows by 28 KB (10 KB gzipped): the shaders, the model
   district center.
 - Other agents' batches kept this machine's CPU at 100% for most of the step. The final
   benchmark and test runs were made once it was quieter.
+
+## After Map look: Kyler's decisions
+
+- No built dam walls (PLAN §20 D111): the dam-site ridge goes away from M9a on; `water.storage_possible` replaces `water.reservoir`; supersedes D25, D30, D58; settles #31.
+- The M9 design's gate is the objective measures, simulated play and ten one-page briefs; Kyler approves design version 2; M9a needs Kyler's play test of two maps before any public release; permanent checks after M9 (D112).
+- A Frame pass step after the M9 build and before M10, released as `frame-pass-done` (D113; CLAUDE.md's Deploying rules).
 
 ---
 

@@ -816,6 +816,48 @@ maps; the per-premise batch gate is the guard.
 
 ---
 
+## Frame pass
+
+After the M9 build (all its stages) and before M10 (Kyler, 2026-09-25; PLAN §20 D113). It follows
+the impeccable-app-flow skill (timbermods/.github, `claude-skills/impeccable-app-flow/`) in
+redesign mode, scoped to the frame zone. This overrides the flow's gate, which waits for M11. The
+full design pass after M11 stays, and continues in update mode from the records this step creates.
+
+**Why:** Dam Good Maps should catch the eye as soon as its new generator exists, for sharing with
+testers, without redesigning an interface that M10 and M11 are still adding to.
+
+**Delivers**
+1. The flow's records: PRODUCT.md, MEANING.md (for the surfaces that exist after M9), DESIGN.md
+   and `.impeccable/design.json`.
+2. The flow's freeze-meaning step before any restyle: the capture tool, ARIA snapshots, the map
+   palette module and its test.
+3. A direction of the app's own. Its own accent (pine is the hub's), clear of the data palette and
+   the state colours, and clear of every sibling site's world. Show Kyler 2–3 candidate directions
+   with captures, and wait for his pick.
+4. The frame redesigned: the masthead, the generator page's first viewport, install help,
+   first-run and empty states, the footer with credits, and the 404.
+5. A hero that shows the product: a live 3D view of a freshly generated map from the new
+   generator, captioned with its seed and settings, with a way to roll another. For speed, show a
+   still render made by our own renderer first, and load the live 3D view lazily behind it. Never
+   game art or screenshots.
+6. The instruments (settings, map card, editor panels, reports) keep their layout and components.
+   They may take the new tokens' colours only where the guard tests and contrast checks pass. The
+   map is never styled.
+
+**Rules:** every hard limit in impeccable-app-flow holds. No map changes, `shade.ts` untouched,
+contracts byte for byte, no state shown by colour alone, the test hooks kept.
+
+**Acceptance**
+- The guard tests pass unchanged.
+- Lighthouse on desktop scores 90 or more with the live hero.
+- The flow's finish review passes.
+- Before and after captures of every frame surface, in light and dark, desktop and phone.
+- The 3D budgets hold.
+
+**Release:** tag `frame-pass-done` and release it like a milestone.
+
+---
+
 ## M10. Sculpting, naturalize, symmetry
 
 **Delivers:** E6.
@@ -924,7 +966,9 @@ both ends. Change only the shapes.
 1. Measure first. A naturalness metric in the batch tools: the longest straight run of a height
    step, and how much a ridge's or rim's thickness and height vary along its length. Measure it
    on the 19 official maps and on generated maps, and set the targets from the official maps.
-2. Dam sites: a narrows between hillsides (two spurs closing in), with uneven thickness and
+2. (Changed by Kyler's no-dam-ridge decision, PLAN §20 D111: the generator builds no dam site at
+   all from M9a on, so this item applies to the editor's **Dam site** tool only, if the M9 design
+   keeps it.) Dam sites: a narrows between hillsides (two spurs closing in), with uneven thickness and
    height. Not a straight ridge across the valley.
 3. Badwater basins: an irregular pit and a winding ditch, still passing
    `water.badwater_contained`.

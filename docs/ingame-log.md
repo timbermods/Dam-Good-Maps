@@ -191,6 +191,9 @@ What the files should show (from `checks.txt`):
 | M6-1b | Load the Lake Basin map. Build a dam 1 high (or one levee) on the 5 gap tiles (113, 59)–(113, 63). Watch the lake for a few days. | The map loads with no issues. The lake rises about one level to level 10 and stays there; no water leaks round the ridge; the start's bench at level 10 stays dry. | `Lake Basin (4242).timber`, `.png` | pending |
 | M6-1c | Block the badwater basin's outlet, 3 tiles wide, with levees where its channel leaves the basin: Canyon (87, 46)–(87, 48), the channel running east; Lake Basin (26, 101)–(28, 101), the channel running south. | No badwater leaves the basin until it fills to its rim (a source never stops, so it spills over the rim later). | `Canyon (4242).timber`, `Lake Basin (4242).timber` | pending |
 
+> **Note (2026-09-25):** the dam sites in C1 and M6-1a/b are the built dam-site ridges that Kyler's no-dam-ridge decision removes from M9a on (PLAN §20 D111). The files still load and can still be played as they are, but the ridge itself is no longer something to judge.
+
+
 **Automated stand-ins used meanwhile (all green at M6):**
 - the batches: 100 seeds per theme at 96², 128², 192² and 256² pass the generate profile (every
   playability check, including `water.reservoir` on the dam site and `water.badwater_contained`);
