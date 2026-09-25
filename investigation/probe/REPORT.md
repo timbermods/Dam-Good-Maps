@@ -1,8 +1,12 @@
 # DGM Probe: report
 
 **Status, 2026-09-25:** built and tested without the game (the runner's tests, a stand-in game for the
-watchdog, the comparisons fed with the model's own output). The smoke run and the full batch have not run
-yet: Kyler runs the smoke test first. [RESULTS.md](RESULTS.md) follows the first batch.
+watchdog, the comparisons fed with the model's own output), then three smoke runs of the M8 preview map, each
+launched after Kyler's yes. The third, with his installed mods (`--keep-mods`), is the clean one: unattended
+from launch to quit, every check passed, and his settings, read from outside afterwards, matched his backup
+but for Unity's own per-launch values. The first two loaded his mods too: the runner's mod switches could
+not reach the game from the Code tab's shell (decision 8). The full batch has not run yet.
+[RESULTS.md](RESULTS.md) follows it.
 
 ## Decisions
 

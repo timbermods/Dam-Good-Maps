@@ -261,8 +261,11 @@ async function main(): Promise<void> {
     const d: SettingsDiff = { equal: all.length === 0, missing, extra, changed };
     console.log(d.equal ? `The exported settings match ${reference} exactly (every value, mod load order included).` : `The exported settings differ from ${reference}: ${describeDiff(d)}`);
     for (const k of changed) console.log(`  ${k}: ${a.get(k)} → ${b.get(k)}${bookkeeping(k) ? "   (Unity's own launch bookkeeping)" : ''}`);
-    if (!d.equal) for (const l of handRestore(reference)) console.log(l);
-    process.exitCode = d.equal ? 0 : all.every(bookkeeping) ? 6 : 5;
+    // Kyler, 2026-09-25: Unity's four per-launch values may differ after a run; everything else must match.
+    const accepted = !d.equal && all.every(bookkeeping);
+    if (accepted) console.log("Only Unity's own per-launch values changed (accepted): every other setting, mod load order included, matches exactly.");
+    else if (!d.equal) for (const l of handRestore(reference)) console.log(l);
+    process.exitCode = d.equal || accepted ? 0 : 5;
     return;
   }
   const verify = opt('verify-settings');
