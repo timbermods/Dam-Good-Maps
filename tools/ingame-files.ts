@@ -44,15 +44,26 @@
 //       Lake Basin (4242) D objects.png      where each object is (see checks.txt for the colours)
 //       checks.txt                           sha256, coordinates and what should happen
 //
+//   npx tsx tools/ingame-files.ts --milestone m8 [--seed 4242] [--size 128] [--out out/m8]
+//     M8-1 (the editor's water preview against the game) on three edited maps, and F3, F4:
+//       River Valley (4242) M8 preview.timber   a generated map with a lake, lowered ground by the
+//                                                river and a weir, exported with the canonical settle
+//       River Valley (4242) M8 preview.png      where each edit is (see checks.txt for the colours)
+//       local/Canyon (M8 edited).timber          the official Canyon with a lake (F4: its tunnels keep
+//                                                their water); local only, never committed
+//       local/Cozy Secret Valley (M8 edited).timber  a pre-1.0 workshop map with lowered ground (F3);
+//                                                local only, never committed
+//       checks.txt                               sha256, coordinates, water samples and the edits
+//
 // Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
 
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { BuildResult } from "../src/core/features/build";
 import { MapSession } from "../src/core/doc/session";
-import { planContextOf, planPiece, planRiver, type PlannedEdit } from "../src/core/doc/tools";
-import { planObject } from "../src/core/doc/placing";
+import { planContextOf, planLake, planPiece, planRiver, withObjectsOnNewGround, type PlannedEdit } from "../src/core/doc/tools";
+import { planObject, waterDepth } from "../src/core/doc/placing";
 import { entityTiles } from "../src/core/features/edits";
 import type { SpillwayPlan } from "../src/core/features/setpieces/plugSpillway";
 import { pointAtArc } from "../src/core/features/geometry";
@@ -187,6 +198,8 @@ if (milestone === "m1") {
   m6();
 } else if (milestone === "m7") {
   m7();
+} else if (milestone === "m8") {
+  m8();
 } else {
   // ---- B: pre-filled water, tree survival, the empty-water A/B file, badwater downstream
   const emptyBytes = writeTimber(toTimberFile(r.spec, b, { emptyWater: true }));
@@ -643,4 +656,185 @@ function m7(): void {
     `  Demolish the ${plug.length} Blockage tiles: the lake should drain about one level (to about level ${sp.level - 1}) down the channel, about ${sp.release.toLocaleString("en-US")} water, and then keep that level.`,
     "",
   );
+}
+
+function m8(): void {
+  lines.length = 0;
+  const id = (k: number) => `00000000-0000-4000-8000-${String(800 + k).padStart(12, "0")}`;
+  const edited = (s: MapSession, p: PlannedEdit, what: string) => {
+    if (!p.ok) throw new Error(`${what}: ${p.errors.join("; ")}`);
+    const a = s.applyAll(p.ops, "user", p.label);
+    if (!a.ok) throw new Error(`${what}: ${a.errors.join("; ")}`);
+    return p;
+  };
+  /** A dry square of `r` tiles round (x, y), at least `gap` tiles from the start, the map edge and
+   *  the tiles under roofs, where a lake plans. */
+  const lakeSpot = (s: MapSession, lo: number, hi: number, gap: number): PlannedEdit => {
+    const b0 = s.built;
+    const Wm = s.size.x;
+    const Hm = s.size.y;
+    const roofed = s.roofedTiles;
+    const st0 = b0.entities.find((e) => e.template === "StartingLocation")!;
+    for (let d = lo; d <= hi; d += 3)
+      for (let a = 0; a < 24; a++) {
+        const cx = Math.round(st0.x + d * Math.cos((a * Math.PI) / 12));
+        const cy = Math.round(st0.y + d * Math.sin((a * Math.PI) / 12));
+        if (cx < 10 || cy < 10 || cx > Wm - 11 || cy > Hm - 11) continue;
+        let clear = true;
+        for (let y = cy - gap; y <= cy + gap && clear; y++) for (let x = cx - gap; x <= cx + gap && clear; x++) if (roofed.has(y * Wm + x)) clear = false;
+        if (!clear) continue;
+        const outline: [number, number][] = [
+          [cx - 4.5, cy - 4.5],
+          [cx + 4.5, cy - 4.5],
+          [cx + 4.5, cy + 4.5],
+          [cx - 4.5, cy + 4.5],
+        ];
+        const p = withObjectsOnNewGround(s, planLake({ outline }, planContextOf(s), id(1)), id(1));
+        if (p.ok) return p;
+      }
+    return { ok: false, errors: ["no place for the lake"] };
+  };
+  /** Dry ground 2–4 tiles from deep water, away from the start and the roofs: lowered one level. */
+  const lowerBeside = (s: MapSession): { op: { op: "sculpt"; params: { mode: "lower"; cells: [number, number, number][]; amount: number } }; x: number; y: number } => {
+    const b0 = s.built;
+    const Wm = s.size.x;
+    const Hm = s.size.y;
+    const roofed = s.roofedTiles;
+    const wd = waterDepth(s); // an unedited import shows the file's own water
+    const st0 = b0.entities.find((e) => e.template === "StartingLocation")!;
+    for (let i = 0; i < Wm * Hm; i += 5) {
+      const x = i % Wm;
+      const y = (i - x) / Wm;
+      if (x < 12 || y < 12 || x > Wm - 14 || y > Hm - 14 || wd[i] > 0 || Math.hypot(x - st0.x, y - st0.y) < 24) continue;
+      let ok = false;
+      let bad = false;
+      for (let dy = -8; dy <= 8 && !bad; dy++)
+        for (let dx = -8; dx <= 8; dx++) {
+          const j = (y + dy) * Wm + x + dx;
+          if (roofed.has(j)) bad = true;
+          if (Math.abs(dx) <= 4 && Math.abs(dy) <= 4 && wd[j] > 0.3) ok = true;
+        }
+      if (!ok || bad) continue;
+      const cells: [number, number, number][] = [];
+      for (let yy = y - 2; yy <= y + 2; yy++) cells.push([yy, x - 2, x + 2]);
+      return { op: { op: "sculpt", params: { mode: "lower", cells, amount: 1 } }, x, y };
+    }
+    throw new Error("no ground beside the water to lower");
+  };
+  /** Water at a few tiles: the depth and the surface, to compare with the game. */
+  const samples = (b0: BuildResult, pts: [number, number][]) =>
+    pts.map(([x, y]) => {
+      const i = y * b0.W + x;
+      return `(${x}, ${y}): ground ${b0.heights[i]}, water ${b0.water[i] > 0.001 ? `${b0.water[i].toFixed(2)} deep, surface ${(b0.heights[i] + b0.water[i]).toFixed(2)}` : "none"}`;
+    });
+
+  // ---- 1. a generated map, edited: a lake, a weir, lowered ground by the river (committed)
+  {
+    const g = generate(makeSpec({ seed, size: { x: size, y: size } }));
+    if (!g.report.passed) throw new Error(`riverValley ${seed} failed`);
+    const name = `${fileName(g.spec).replace(/\.timber$/, "")} M8 preview`;
+    const s = MapSession.fromGenerated(g);
+    s.setPreviewWater(true);
+    const lake = edited(s, lakeSpot(s, 22, 60, 0), "the lake");
+    const low = lowerBeside(s);
+    const a = s.apply(low.op, "user", "Lower terrain");
+    if (!a.ok) throw new Error(a.errors.join("; "));
+    const river = s.features.find((f): f is RiverFeature => f.kind === "river" && "edge" in f.params.entry && !f.params.badwater)!;
+    const len = river.params.path.reduce((acc, q, k, ps) => (k ? acc + Math.hypot(q[0] - ps[k - 1][0], q[1] - ps[k - 1][1]) : 0), 0);
+    let weir: PlannedEdit | null = null;
+    for (let at = Math.round(len * 0.7); at < len * 0.95 && !weir; at += 2) {
+      const p = planObject(s, { kind: "weir", river: { id: river.id, at } }, id(2));
+      if (p.ok) weir = p;
+    }
+    if (!weir) throw new Error("no place for the weir");
+    edited(s, weir, "the weir");
+    // the preview's water (warm-started after the last edit), then the canonical settle the
+    // export writes
+    const preview0 = s.built.water.slice();
+    const pticks = s.built.settle.ticks;
+    const { bytes } = s.exportTimber();
+    let maxd = 0;
+    for (let i = 0; i < preview0.length; i++) maxd = Math.max(maxd, Math.abs(preview0[i] - s.built.water[i]));
+    writeFileSync(join(outDir, `${name}.timber`), bytes);
+    const v = s.validate("export");
+    const failing = v.report.checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false);
+    if (failing.some((c) => c.class === "load")) throw new Error(`load problems: ${failing.map((c) => c.id).join(", ")}`);
+    const b2 = s.built;
+    const marks = startMarks(b2);
+    const lf = lake.ok ? (lake.feature as import("../src/core/features/schema").LakeFeature) : null;
+    const lakeTiles = lake.ok ? lake.tiles : [];
+    for (const i of lakeTiles) marks.push({ x: i % b2.W, y: Math.floor(i / b2.W), rgb: [255, 230, 0], inset: 2 });
+    for (const e of b2.entities.filter((q) => q.template === "NaturalDam")) marks.push({ x: e.x, y: e.y, rgb: [0, 230, 255] });
+    for (let y = low.y - 2; y <= low.y + 2; y++) for (let x = low.x - 2; x <= low.x + 2; x++) marks.push({ x, y, rgb: [230, 0, 200], inset: 2 });
+    writeFileSync(join(outDir, `${name}.png`), preview(b2, marks, true));
+    const dams = b2.entities.filter((q) => q.template === "NaturalDam");
+    const lx = lakeTiles.length ? Math.round(lakeTiles.reduce((acc, i) => acc + (i % b2.W), 0) / lakeTiles.length) : 0;
+    const ly = lakeTiles.length ? Math.round(lakeTiles.reduce((acc, i) => acc + Math.floor(i / b2.W), 0) / lakeTiles.length) : 0;
+    const st2 = b2.entities.find((e) => e.template === "StartingLocation")!;
+    const upstream = dams.length ? dams[0] : null;
+    lines.push(
+      `M8-1a, ${name}: generator ${GENERATOR_VERSION}; ${size}×${size}, seed ${seed}, River Valley, designed for Normal; three edits with the M8 editor: a lake, ground lowered beside the river, and a weir across the river.`,
+      "",
+      "Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.",
+      "PNG: north up, 5 px per tile, dotted grid every 16 tiles; the settled water blue (badwater brown); start white (door red); the lake's basin yellow dots; the lowered ground magenta dots; the weir (NaturalDam) cyan.",
+      "",
+      `sha256 ${sha(bytes)}  ${name}.timber`,
+      `StartingLocation at (${st2.x}, ${st2.y}), z ${st2.z}, ${st2.orientation}.`,
+      `Validation (export profile): ${failing.length ? `warnings ${failing.map((c) => c.id).join(", ")}` : "every check passes"}.`,
+      `The editor's preview after the last edit ran ${pticks} ticks from the previous water; the exported file has the canonical settle, which differs from that preview by at most ${maxd.toFixed(3)} deep on any tile.`,
+      "",
+      `The lake: basin round (${lx}, ${ly}), ${lf ? `water level ${lf.params.outlet.sill}, ${lf.params.floorDepth} deep, a spring of ${"spring" in lf.params.inflow ? lf.params.inflow.spring : 0} water/s` : ""}. ${lake.ok ? lake.report.join("; ") : ""}.`,
+      ...samples(b2, [[lx, ly]]).map((l) => `  ${l}`),
+      `The lowered ground: (${low.x - 2}, ${low.y - 2})–(${low.x + 2}, ${low.y + 2}), one level down beside the river.`,
+      ...samples(b2, [[low.x, low.y]]).map((l) => `  ${l}`),
+      `The weir: ${dams.length} NaturalDam tiles: ${dams.map((e) => `(${e.x}, ${e.y})`).join(" ")}. ${weir.ok ? weir.report.join("; ") : ""}.`,
+      ...(upstream ? samples(b2, [[upstream.x, upstream.y]]).map((l) => `  ${l}`) : []),
+      "",
+    );
+  }
+
+  // ---- 2 and 3. an official map with water under roofs (F4) and a pre-1.0 workshop map (F3):
+  // not ours to share, so only the edits and the instructions are committed; the files are written
+  // to out/m8/local/ (never committed) when the maps are here
+  const local = join(outDir, "local");
+  const cases: { key: string; path: string; what: string; check: string }[] = [
+    { key: "M8-1b, F4", path: "investigation/raw/builtin/Canyon.timber", what: "the official map Canyon (128×128), which has water in tunnels under its cliffs", check: "a lake drawn on dry ground at least 10 tiles from any cave or overhang" },
+    { key: "M8-1c, F3", path: "investigation/raw/workshop/Cozy Secret Valley.timber", what: "the workshop map Cozy Secret Valley (128×128), made before Timberborn 1.0 (the importer halves its 6 water sources' strength)", check: "ground lowered one level beside its river, at least 8 tiles from any cave" },
+  ];
+  for (const c of cases) {
+    lines.push(`${c.key}: ${c.what}.`);
+    let s: MapSession;
+    try {
+      s = MapSession.importMap(new Uint8Array(readFileSync(c.path)), c.path.replace(/^.*[\\/]/, ""));
+    } catch {
+      lines.push(`  Not here (${c.path} is local only). Open the map in the editor and make the edit below by hand.`, "");
+      continue;
+    }
+    s.setPreviewWater(true);
+    const roofed = s.roofedTiles;
+    let how: string;
+    if (c.key.includes("F4")) {
+      const p = edited(s, lakeSpot(s, 16, 70, 10), "the lake");
+      const lf = p.ok ? (p.feature as import("../src/core/features/schema").LakeFeature) : null;
+      const outline = lf ? lf.params.outline : [];
+      how = `Water → Lake, drag from (${Math.ceil(outline[0]?.[0] ?? 0)}, ${Math.ceil(outline[0]?.[1] ?? 0)}) to (${Math.floor(outline[2]?.[0] ?? 0)}, ${Math.floor(outline[2]?.[1] ?? 0)}), then Place. ${p.ok ? p.report.join("; ") : ""}.`;
+    } else {
+      const low = lowerBeside(s);
+      const a = s.apply(low.op, "user", "Lower terrain");
+      if (!a.ok) throw new Error(a.errors.join("; "));
+      how = `Advanced sculpting comes later (M10), so this edit is made by this tool: the 5×5 tiles (${low.x - 2}, ${low.y - 2})–(${low.x + 2}, ${low.y + 2}) lowered one level beside the river.`;
+    }
+    const { bytes, fileName: fn } = s.exportTimber();
+    mkdirSync(local, { recursive: true });
+    const out = `${fn.replace(/\.timber$/, "")} (M8 edited).timber`;
+    writeFileSync(join(local, out), bytes);
+    const v = s.validate("export", {});
+    const approx = v.report.checks.find((q) => q.approximate)?.approximate;
+    lines.push(
+      `  The edit: ${c.check}. ${how}`,
+      `  Written to out/m8/local/${out} (local only, never committed); sha256 ${sha(bytes)}.`,
+      `  ${roofed.size} columns under roofs keep the map's own water in the export (every slot); the rest of the map has the canonical settle of its heightfield.${approx ? ` The water checks are approximate: ${approx}.` : ""}`,
+      "",
+    );
+  }
 }

@@ -78,6 +78,36 @@ describe("every theme's project file reopens and rebuilds the same .timber (PLAN
   });
 });
 
+describe("generated outlines past the map edge are edited and locked (decisions-pending #30, D103)", () => {
+  it("a Lake Basin terrace ring past the edge: locked, changed and moved in the editor; the unedited map keeps its bytes", () => {
+    const r = gen("lakeBasin", 96, 1);
+    const s = MapSession.fromGenerated(r, r.file);
+    const W = s.size.x;
+    const ring = s.features.find((f) => f.kind === "landform" && f.origin === "generated" && (f.params.outline ?? []).some(([x, y]) => x < 0 || y < 0 || x > W - 1 || y > W - 1));
+    expect(ring, "a ring reaching past the map").toBeDefined();
+    if (!ring || ring.kind !== "landform") return;
+    // locking it changes nothing on the map
+    const lock = s.apply({ op: "updateFeature", params: { id: ring.id, patch: { locked: true } } });
+    expect(lock.errors).toEqual([]);
+    expect(sha(s.exportTimber().bytes)).toBe(sha(r.bytes));
+    // a region lock over it
+    const tiles: [number, number, number][] = [[10, 0, 20]];
+    expect(s.apply({ op: "setLock", params: { id: "8b8b8b8b-1111-4222-8333-444455556666", region: { runs: tiles } } }).errors).toEqual([]);
+    // its height changes, and it moves, with its outline still past the edge
+    expect(s.apply({ op: "updateFeature", params: { id: ring.id, patch: { params: { height: ring.params.height! - 1 } } } }).errors).toEqual([]);
+    const moved = ring.params.outline!.map(([x, y]) => [x + 2, y + 1]);
+    expect(s.apply({ op: "updateFeature", params: { id: ring.id, patch: { params: { outline: moved } } } }).errors).toEqual([]);
+    // the edits undo to the generator's own file
+    while (s.undo());
+    expect(sha(s.exportTimber().bytes)).toBe(sha(r.bytes));
+    // an outline the player draws stays on the map's tiles
+    const mine = { id: "8b8b8b8b-2222-4222-8333-444455556666", kind: "landform", origin: "user", locked: false, params: { kind: "plateau", edgeStyle: "cliff", outline: [[-3, 10], [10, 10], [10, 20], [-3, 20]], height: 9 } } as unknown as Feature;
+    expect(s.check({ op: "addFeature", params: { feature: mine } })[0]).toMatch(/leaves the map/);
+    const edge = { ...mine, params: { ...(mine.params as object), outline: [[-0.5, 10], [10, 10], [10, 20], [-0.5, 20]] } } as unknown as Feature;
+    expect(s.check({ op: "addFeature", params: { feature: edge } })).toEqual([]);
+  });
+});
+
 describe("the feature schema's points (PLAN §19.2)", () => {
   const landform = (outline: number[][]): Feature[] => [
     { id: "f-aaaaaaaaaaaaa", kind: "landform", origin: "user", locked: false, params: { kind: "plateau", edgeStyle: "cliff", outline: outline as [number, number][], height: 8 } },
