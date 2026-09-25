@@ -211,7 +211,7 @@ for (const s of sets) {
     (m.M2a as any).pass = m.M2a.largestShare <= 0.15;
     byTheme[t] = { attempts: attempts[t], ...m };
   }
-  out.sets[s] = { byTheme, all: measureMaps(maps) };
+  out.sets[s] = { byTheme };
   console.log(`measured ${s}: ${maps.length} maps`);
 }
 // the current M9 plan: River Valley with the study's recipes mixed in as premises (128² only)

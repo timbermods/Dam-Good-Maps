@@ -106,7 +106,7 @@ interface Prior {
 
 const P: Record<ThemeId, Prior> = {
   riverValley: {
-    base: { lo: 2, hi: 4 }, relief: { lo: 9, hi: 13 }, tilt: { lo: 3, hi: 7 }, amp: { lo: 2.5, hi: 5 }, cell: { lo: 28, hi: 56 }, warp: { lo: 4, hi: 16 }, ridged: { lo: 0, hi: 0.4 },
+    base: { lo: 2, hi: 4 }, relief: { lo: 9, hi: 13 }, tilt: { lo: 2, hi: 5 }, amp: { lo: 3, hi: 6 }, cell: { lo: 28, hi: 56 }, warp: { lo: 4, hi: 16 }, ridged: { lo: 0, hi: 0.4 },
     parts: { ridge: 2, trough: 1, basin: 1, mesa: 1, escarpment: 1, plateau: 2, knolls: 2, caldera: 0.3, cone: 0.3, mesaField: 0.3 },
     partCount: { lo: 1, hi: 4 }, knollsPer128: { lo: 4, hi: 14 },
     erosion: { iterations: { lo: 8, hi: 22 }, k: { lo: 0.01, hi: 0.035 }, diffusion: { lo: 0.02, hi: 0.12 } },
@@ -116,7 +116,7 @@ const P: Record<ThemeId, Prior> = {
     recipes: { "island-in-a-river": 0.08, "great-scarp": 0.06 },
   },
   canyon: {
-    base: { lo: 2, hi: 3 }, relief: { lo: 11, hi: 14 }, tilt: { lo: 2, hi: 6 }, amp: { lo: 2, hi: 4.5 }, cell: { lo: 24, hi: 48 }, warp: { lo: 6, hi: 20 }, ridged: { lo: 0.2, hi: 0.7 },
+    base: { lo: 2, hi: 3 }, relief: { lo: 11, hi: 14 }, tilt: { lo: 1, hi: 5 }, amp: { lo: 2.5, hi: 5.5 }, cell: { lo: 24, hi: 48 }, warp: { lo: 6, hi: 20 }, ridged: { lo: 0.2, hi: 0.7 },
     parts: { mesa: 2, mesaField: 1.5, escarpment: 1.5, plateau: 2, ridge: 1, trough: 1.5, knolls: 0.5, cone: 0.2 },
     partCount: { lo: 2, hi: 5 }, knollsPer128: { lo: 0, hi: 6 },
     erosion: { iterations: { lo: 14, hi: 30 }, k: { lo: 0.025, hi: 0.06 }, diffusion: { lo: 0, hi: 0.04 } },
@@ -126,7 +126,7 @@ const P: Record<ThemeId, Prior> = {
     recipes: { "mesa-field": 0.1, "great-scarp": 0.08 },
   },
   highlands: {
-    base: { lo: 2, hi: 4 }, relief: { lo: 11, hi: 14 }, tilt: { lo: 2, hi: 6 }, amp: { lo: 3, hi: 6 }, cell: { lo: 22, hi: 44 }, warp: { lo: 6, hi: 18 }, ridged: { lo: 0.1, hi: 0.6 },
+    base: { lo: 2, hi: 4 }, relief: { lo: 11, hi: 14 }, tilt: { lo: 1, hi: 4 }, amp: { lo: 3.5, hi: 7 }, cell: { lo: 22, hi: 44 }, warp: { lo: 6, hi: 18 }, ridged: { lo: 0.1, hi: 0.6 },
     parts: { plateau: 3, mesa: 2, ridge: 2, escarpment: 1, cone: 0.7, caldera: 0.5, knolls: 1.5, basin: 0.5, spiral: 0.1 },
     partCount: { lo: 2, hi: 6 }, knollsPer128: { lo: 6, hi: 18 },
     erosion: { iterations: { lo: 8, hi: 20 }, k: { lo: 0.012, hi: 0.035 }, diffusion: { lo: 0.01, hi: 0.08 } },
@@ -136,7 +136,7 @@ const P: Record<ThemeId, Prior> = {
     recipes: { "badwater-volcano": 0.08, "hanging-lake": 0.08 },
   },
   lakeBasin: {
-    base: { lo: 2, hi: 4 }, relief: { lo: 8, hi: 12 }, tilt: { lo: 0, hi: 3 }, amp: { lo: 2, hi: 4 }, cell: { lo: 30, hi: 60 }, warp: { lo: 4, hi: 14 }, ridged: { lo: 0, hi: 0.3 },
+    base: { lo: 2, hi: 4 }, relief: { lo: 8, hi: 12 }, tilt: { lo: 0, hi: 2.5 }, amp: { lo: 2.5, hi: 5 }, cell: { lo: 30, hi: 60 }, warp: { lo: 4, hi: 14 }, ridged: { lo: 0, hi: 0.3 },
     parts: { basin: 4, caldera: 1.5, plateau: 1, knolls: 1.5, ridge: 1, mesa: 0.5, cone: 0.3 },
     partCount: { lo: 1, hi: 4 }, knollsPer128: { lo: 3, hi: 12 },
     erosion: { iterations: { lo: 6, hi: 16 }, k: { lo: 0.008, hi: 0.025 }, diffusion: { lo: 0.03, hi: 0.12 } },
@@ -146,7 +146,7 @@ const P: Record<ThemeId, Prior> = {
     recipes: { caldera: 0.12, "chain-of-lakes": 0.1 },
   },
   delta: {
-    base: { lo: 2, hi: 3 }, relief: { lo: 6, hi: 10 }, tilt: { lo: 4, hi: 8 }, amp: { lo: 1.5, hi: 3 }, cell: { lo: 30, hi: 64 }, warp: { lo: 6, hi: 20 }, ridged: { lo: 0, hi: 0.2 },
+    base: { lo: 2, hi: 3 }, relief: { lo: 6, hi: 10 }, tilt: { lo: 2, hi: 5 }, amp: { lo: 2, hi: 4 }, cell: { lo: 30, hi: 64 }, warp: { lo: 6, hi: 20 }, ridged: { lo: 0, hi: 0.2 },
     parts: { plateau: 1, trough: 1, knolls: 2, basin: 1, ridge: 0.5, escarpment: 0.5 },
     partCount: { lo: 1, hi: 3 }, knollsPer128: { lo: 4, hi: 12 },
     erosion: { iterations: { lo: 6, hi: 14 }, k: { lo: 0.008, hi: 0.02 }, diffusion: { lo: 0.05, hi: 0.15 } },
@@ -156,7 +156,7 @@ const P: Record<ThemeId, Prior> = {
     recipes: { "island-in-a-river": 0.12 },
   },
   islands: {
-    base: { lo: 2, hi: 3 }, relief: { lo: 7, hi: 11 }, tilt: { lo: 0, hi: 2 }, amp: { lo: 2.5, hi: 5 }, cell: { lo: 18, hi: 36 }, warp: { lo: 4, hi: 14 }, ridged: { lo: 0, hi: 0.3 },
+    base: { lo: 2, hi: 3 }, relief: { lo: 7, hi: 11 }, tilt: { lo: 0, hi: 2 }, amp: { lo: 3, hi: 6 }, cell: { lo: 18, hi: 36 }, warp: { lo: 4, hi: 14 }, ridged: { lo: 0, hi: 0.3 },
     parts: { basin: 5, knolls: 2, cone: 0.7, caldera: 0.5, mesa: 0.5, plateau: 0.5 },
     partCount: { lo: 1, hi: 3 }, knollsPer128: { lo: 6, hi: 16 },
     erosion: { iterations: { lo: 4, hi: 12 }, k: { lo: 0.006, hi: 0.02 }, diffusion: { lo: 0.03, hi: 0.1 } },
@@ -267,7 +267,7 @@ export function drawGenome(theme: ThemeId, seed: number, W: number, H: number, a
     flowDir: rng.int(0, 8),
     tilt: Math.max(0, draw(rng, p.tilt, vy)),
     tiltKind: rng.float() < (vy >= 85 ? Math.max(p.radial, 0.2) : p.radial) ? "radial" : "linear",
-    focus: [0.35 + 0.3 * rng.float(), 0.35 + 0.3 * rng.float()],
+    focus: [0.25 + 0.5 * rng.float(), 0.25 + 0.5 * rng.float()],
     noise: {
       amp: draw(rng, p.amp, vy),
       cell: draw(rng, p.cell, vy),
@@ -309,7 +309,7 @@ export function drawGenome(theme: ThemeId, seed: number, W: number, H: number, a
   };
   if (g.hydro.inflows === 0 && g.hydro.springs === 0) g.hydro.springs = 2;
   // parts: counts per 128² map, scaled by area
-  const n = Math.max(1, Math.round(draw(rng, p.partCount, vy) * Math.max(1, Math.sqrt(areaK))));
+  const n = Math.max(1, Math.round((draw(rng, p.partCount, vy) + 0.5) * Math.max(1, Math.sqrt(areaK))));
   const keys = vy >= 85 ? ALL_PARTS : (Object.keys(p.parts) as PartKind[]);
   for (let k = 0; k < n; k++) g.parts.push(randomPart(rng, pickWeighted(rng, p.parts, keys, vy), W, H, vy));
   // a radial slope falls toward the first basin (or caldera) when there is one

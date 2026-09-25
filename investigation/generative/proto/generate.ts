@@ -36,7 +36,7 @@ import { pickStart, type StartPick } from "./start";
 import { storagePossible } from "./storage";
 import { shoreWalkFrom } from "./start";
 
-export const PROTO_VERSION = "0.7.0-proto.1";
+export const PROTO_VERSION = "0.7.0-proto.2";
 export const MAX_ATTEMPTS = 12;
 
 export interface ProtoInfo {

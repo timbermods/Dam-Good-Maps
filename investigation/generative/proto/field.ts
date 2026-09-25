@@ -77,9 +77,11 @@ function addPart(U: Float64Array, p: Part, g: Genome, seed: number, W: number, H
     case "ridge":
     case "trough": {
       const line = partLine(p, W, H, seed, k);
+      // the crest rises and falls along the ridge and its width swells and narrows, as a real
+      // range's does (the refinement's naturalness targets: crest height and thickness vary)
       each((x, y, i) => {
-        const w = p.extra * (1 + 0.35 * fbm(s, x, y, 18, 2));
-        U[i] += p.height * bump(polyDist(x, y, line) / w) * (1 + 0.3 * fbm(s + 1, x, y, 12, 2));
+        const w = p.extra * (1 + 0.5 * fbm(s, x, y, 16, 2));
+        U[i] += p.height * bump(polyDist(x, y, line) / w) * (1 + 0.5 * fbm(s + 1, x, y, 9, 2));
       });
       return;
     }
@@ -87,7 +89,7 @@ function addPart(U: Float64Array, p: Part, g: Genome, seed: number, W: number, H
       // a hollow with a lobed outline: the radius swings by up to half with the angle and the noise
       each((x, y, i) => {
         const d = dist(x, y, cx, cy) / (p.size * (1 + 0.5 * fbm(s, x, y, Math.max(8, p.size * 0.7), 3)));
-        U[i] += p.height * bump(d) + p.extra * bump(Math.abs(d - 1.05) / 0.3);
+        U[i] += p.height * bump(d) + p.extra * (0.3 + 0.7 * (fbm(s + 3, x, y, 8, 2) + 1)) * bump(Math.abs(d - 1.05) / 0.45);
       });
       return;
     }
@@ -96,9 +98,10 @@ function addPart(U: Float64Array, p: Part, g: Genome, seed: number, W: number, H
       each((x, y, i) => {
         const r = p.size * (1 + 0.15 * fbm(s, x, y, 14, 2));
         const d = dist(x, y, cx, cy);
-        const ring = bump(Math.abs(d - r) / p.soft / 1.6);
-        const inside = d < r ? smoothstep((r - d) / 3) : 0;
-        U[i] += p.height * ring - (p.height + 1.5) * inside;
+        // a rim of uneven height and width, with sloping flanks (a crater's rim, not a wall)
+        const ring = bump(Math.abs(d - r) / (p.soft * (3.2 + 1.0 * fbm(s + 2, x, y, 10, 2))));
+        const inside = d < r ? smoothstep((r - d) / 5) : 0;
+        U[i] += p.height * (0.65 + 0.35 * (fbm(s + 3, x, y, 8, 2) + 1)) * ring - (p.height + 1.5) * inside;
         if (p.extra > 0) U[i] += (p.height + 2) * bump(d / p.extra);
       });
       return;

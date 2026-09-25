@@ -21,6 +21,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -145,10 +146,26 @@ function summary(): void {
   const cycleDist = (a: number[], b: number[]) => a.reduce((s, v, k) => s + Math.abs(v - b[k]), 0) / a.length;
   const maxBin = AXIS_BINS.map(([, c]) => c.length);
   const axisDist = (a: number[], b: number[]) => a.reduce((s, v, k) => s + (v === -1 || b[k] === -1 ? (v === b[k] ? 0 : 1) : Math.abs(v - b[k]) / maxBin[k]), 0) / a.length;
+  // the baseline (m8-done): the two studies' own committed results for the same seeds, computed by
+  // the same code on the same maps (both branch from m8-done)
+  const git = (path: string) => execFileSync("git", ["show", path], { encoding: "utf8", maxBuffer: 64 << 20 });
+  const baseline: any[] = [];
+  try {
+    const sig = JSON.parse(git("origin/investigation/cycles:investigation/cycles/results/signatures.json"));
+    const mech = git("origin/investigation/mechanics:investigation/mechanics/results/maps.jsonl").split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l)).filter((r) => r.size === 128);
+    for (const x of sig) {
+      const m = mech.find((r) => r.theme === x.theme && r.seed === x.seed);
+      if (!m?.metrics) continue;
+      baseline.push({ theme: x.theme, seed: x.seed, cycle: { values: x, vector: x.vector, group: x.group }, axes: axesOf(m.metrics) });
+    }
+  } catch (e) {
+    console.log(`baseline from the studies' results not available: ${(e as Error).message}`);
+  }
   for (const gen of ["proto", "current"]) {
     const dir = mapDir(gen, 128);
-    if (!existsSync(dir)) continue;
-    const all = readdirSync(dir).filter((n) => n.endsWith(".sim.json")).map((n) => JSON.parse(readFileSync(join(dir, n), "utf8")));
+    const own = existsSync(dir) ? readdirSync(dir).filter((n) => n.endsWith(".sim.json")).map((n) => JSON.parse(readFileSync(join(dir, n), "utf8"))) : [];
+    const all = gen === "current" && baseline.length ? baseline : own;
+    if (!all.length) continue;
     const byTheme: Record<string, unknown> = {};
     for (const theme of [...new Set(all.map((x) => x.theme))].sort()) {
       const set = all.filter((x) => x.theme === theme);

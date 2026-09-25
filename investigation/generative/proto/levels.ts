@@ -32,6 +32,12 @@ export function snapLevels(field: Float64Array, g: Genome, seed: number, W: numb
       const i = y * W + x;
       const t = (field[i] - lo) / span;
       let L = g.base + t * (top - g.base) + g.terrace.jitter * fbm(js, x, y, 7, 2);
+      // a soft cap two levels below the editor's limit: ground above it bends toward 16 instead of
+      // being cut flat there (cut tops made flat walls where a river crossed them)
+      if (L > MAX_LEVEL - 2) {
+        const over = L - (MAX_LEVEL - 2);
+        L = MAX_LEVEL - 2 + (2 * over) / (over + 2);
+      }
       let lv = Math.round(L);
       if (g.terrace.step > 1 && g.terrace.share > 0) {
         // benches in part of the map: a noise mask covering about `share` of it

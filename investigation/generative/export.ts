@@ -8,8 +8,8 @@
 // The pick: one map per theme first, then four more from any theme, each the map farthest (the mean
 // of its variety distance V and its opening distance, both on the workshop's scales) from the maps
 // already picked; the first is River Valley's most typical map (the one nearest the others on
-// average), so the set spans the batch without starting from an oddity. Only maps with no dam wall
-// and a measured opening take part.
+// average), so the set spans the batch without starting from an oddity. Only maps with no dam wall,
+// a measured opening and simulated play (seeds 1–30 of each theme, simplay.ts) take part.
 //
 //   npx tsx investigation/generative/export.ts [--count 10]
 
@@ -44,6 +44,7 @@ interface Cand {
   seed: number;
   rec: any;
   opening: Opening;
+  sim: any;
 }
 const cands: Cand[] = [];
 for (const f of readdirSync(dir).filter((n) => /^[a-zA-Z]+-\d+\.json$/.test(n))) {
@@ -51,8 +52,9 @@ for (const f of readdirSync(dir).filter((n) => /^[a-zA-Z]+-\d+\.json$/.test(n)))
   const xp = join(dir, f.replace(/\.json$/, ".x.json"));
   if (!rec.passed || !existsSync(xp)) continue;
   const x = JSON.parse(readFileSync(xp, "utf8"));
-  if (!x.opening || x.walls?.length) continue;
-  cands.push({ key: rec.key, theme: rec.theme, seed: rec.seed, rec, opening: x.opening });
+  const sp = join(dir, f.replace(/\.json$/, ".sim.json"));
+  if (!x.opening || x.walls?.length || !existsSync(sp)) continue;
+  cands.push({ key: rec.key, theme: rec.theme, seed: rec.seed, rec, opening: x.opening, sim: JSON.parse(readFileSync(sp, "utf8")) });
 }
 cands.sort((a, b) => a.theme.localeCompare(b.theme) || a.seed - b.seed);
 const inp = (c: Cand) => ({ key: c.key, layout: c.rec.layout, features: featureVector(c.rec) });
@@ -105,6 +107,41 @@ const jpg = (p: Picture, q = 82) => {
   return encodeJpeg({ data: rgba, width: p.w, height: p.h }, q).data;
 };
 
+const AXIS_NAMES: Record<string, [string, string, number]> = {
+  storageRatio: ["Storage work", "× the drought need kept by the land within 40 tiles", 3],
+  peakCleanFlux64: ["Power location", "blocks/s at the best clean flow beside reachable land", 3],
+  flatDry40: ["Land and height", "dry tiles on the start's level within 40 tiles' walk", 3],
+  fertilityPersistence: ["Fertile land", "share of moist land near the start still moist after the drought", 2],
+  badwaterDistance: ["Threat exposure", "tiles to the nearest badwater or contaminated soil", 3],
+  logs20: ["Resource timing", "logs standing within 20 tiles' walk", 3],
+  frontierComponents: ["Expansion choice", "separate regions to expand into beyond 20 tiles", 2],
+  deepPumpExtraShore: ["Faction opportunity", "extra shore tiles a deep pump reaches", 3],
+};
+function axisRows(sim: any): string {
+  return Object.entries(AXIS_NAMES)
+    .map(([k, [name, unit, top]], i) => {
+      const v = sim.axes.values[k];
+      const b = sim.axes.bins[i];
+      return `| ${name} | ${v === null ? "none found" : `${Math.round(v * 100) / 100} ${unit}`} | ${b === null ? "–" : `${b} of ${top}`} |`;
+    })
+    .join("\n");
+}
+function cycleRows(sim: any): string {
+  const t = sim.timeline;
+  const row = (id: string, label: string) => {
+    const x = t[id];
+    const hz = x.days.filter((d: any) => d.phase !== "normal");
+    const end = hz[hz.length - 1] ?? x.days[x.days.length - 1];
+    // probes start with one normal day before a drought (none before the badtide)
+    const offset = id === "first-badtide" ? 0 : 1;
+    const lost = x.firstWaterLost === null ? "keeps it throughout" : x.firstWaterLost <= offset ? "none at the start" : `loses it by day ${Math.round(x.firstWaterLost - offset)}`;
+    const rec = x.recoveryDays === null ? "not back within 5 days" : `back in ${Math.round(x.recoveryDays * 10) / 10} days`;
+    const kept = id === "first-badtide" ? `${end.bad} badwater tiles at its end` : `${Math.round(end.kept * 100)}% at its end`;
+    return `| ${label} (${hz.length} days) | ${kept} | ${lost} | ${rec} |`;
+  };
+  return [row("first-normal", "First drought, Normal"), row("late-hard", "Later drought, Hard"), row("first-badtide", "First badtide, Normal")].join("\n");
+}
+
 const readme: string[] = [];
 const index: unknown[] = [];
 picked.forEach((c, k) => {
@@ -119,6 +156,9 @@ picked.forEach((c, k) => {
   writeFileSync(join(renderDir, `${nn}-top.jpg`), jpg(topDown(b.heights, b.W, b.H, b.water, b.contamination, objs, 384)));
   writeFileSync(join(renderDir, `${nn}-3d.jpg`), jpg(isometric(b.heights, b.W, b.H, b.water, b.contamination, objs, 640)));
   const lines = card(c.opening);
+  const lh = c.sim.timeline["late-hard"];
+  const hardDays = lh.days.filter((d: any) => d.phase !== "normal").length;
+  lines.splice(2, 0, lh.firstWaterLost === null ? `Your water lasts through a ${hardDays}-day Hard drought.` : `In a ${hardDays}-day Hard drought your water is gone by day ${Math.max(1, Math.round(lh.firstWaterLost - 1))}.`);
   const g = r.genome;
   const info = r.info;
   const m = c.rec;
@@ -144,15 +184,21 @@ ${lines.map((l) => `- ${l}`).join("\n")}
 
 ## Cycle timeline
 
-*Waiting for the weather-cycle simulator (branch \`investigation/cycles\`, no finished PR on
-2026-09-25).* It will show, cycle by cycle, when the start's water stops, what the colony can store
-and when badwater arrives. Until then, from the analysis: in a Normal drought (9 days) the start's
-water keeps ${Math.round(c.opening.v.droughtKeep * 100)}% of its volume; ${c.opening.shortest40 !== null ? `a straight dam of ${c.opening.shortest40} tiles within 40 tiles holds 380 blocks` : "no straight dam within 40 tiles holds 380 blocks"}.
+From the weather-cycle simulator of \`investigation/cycles\` (PR #10, read only), weather seed 1729,
+before anything is built:
+
+| Weather | Water the map keeps | The start's pumpable water | Afterwards |
+|---|---|---|---|
+${cycleRows(c.sim)}
 
 ## Strategy axes
 
-*Waiting for the mechanics catalogue (branch \`investigation/mechanics\`, no finished PR on
-2026-09-25).* This map's position on its strategy axes goes here.
+From the mechanics study of \`investigation/mechanics\` (PR #9, read only): its eight axes, each in
+its own fixed bins (bin 0 is the lowest).
+
+| Axis | Value | Bin |
+|---|---|---|
+${axisRows(c.sim)}
 `;
   writeFileSync(join(briefDir, `${nn}.md`), brief);
   console.log(`${nn} ${name}: ${same ? "same bytes as the batch" : "DIFFERENT BYTES"}, ${r.report.passed && r.storage.ok ? "passes" : "FAILS"}`);
