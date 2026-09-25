@@ -1,0 +1,41 @@
+# Dependabot version updates: weekly, as pull requests into dev (work happens on dev; main only
+# takes tagged releases). Minor and patch updates come grouped, one pull request per ecosystem;
+# majors come one by one.
+#
+# fflate writes the .timber zip, so an update could change a map's bytes: it always comes on its
+# own, and the fixed sha256s in tests/contract/projects.test.ts fail in CI if it does. No update
+# that changes a map's bytes is merged.
+#
+# Only the root package matters: the package.json files under investigation/ belong to finished
+# studies and prototypes that nothing imports (investigation/README.md).
+#
+# GitHub reads this file from the default branch (main), so it takes effect with the next release.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        patterns: ["*"]
+        exclude-patterns: [fflate]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
