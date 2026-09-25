@@ -11,7 +11,7 @@ import { hash32, tileHash01 } from "../../math/hash";
 import { carveChannel, channelBounds, channelTiles, checkChannel, routeChannel, type ChannelPlan } from "../route";
 import { clipRect, type BuildTarget, type Rect } from "../target";
 import type { LakeFeature, SetPieceFeature } from "../schema";
-import { clearsText, fmt, inMap, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
+import { clearsText, fmt, inMap, POINT_SCHEMA, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
 import type { SetPieceBlock, SetPieceBuilder } from "./index";
 
 export interface SpillwayPlan {
@@ -114,7 +114,7 @@ export const plugSpillway: SetPieceBuilder = {
     required: ["lake"],
     properties: {
       lake: { type: "string" },
-      at: { type: "array", minItems: 2, maxItems: 2, items: { type: "number", minimum: -1, maximum: 257 } },
+      at: POINT_SCHEMA,
       width: { enum: [1, 3, 5] },
     },
   },

@@ -4,7 +4,7 @@
 // payoff (a ruin field, or a relic) stands on top. With a rise of 2 one flight of stairs from the
 // ground round it is enough.
 
-import { inMap, nearStart, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
+import { inMap, nearStart, POINT_SCHEMA, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
 import { clipRect, type BuildTarget, type Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
 import type { SetPieceBuilder } from "./index";
@@ -62,7 +62,7 @@ export const obstaclePayoff: SetPieceBuilder = {
     type: "object",
     required: ["at"],
     properties: {
-      at: { type: "array", minItems: 2, maxItems: 2, items: { type: "number", minimum: -1, maximum: 257 } },
+      at: POINT_SCHEMA,
       radius: { type: "integer", minimum: 3, maximum: 16 },
       rise: { type: "integer", minimum: 2, maximum: 4 },
     },

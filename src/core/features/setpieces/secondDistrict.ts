@@ -7,7 +7,7 @@
 import { levelRegions } from "../../math/grid";
 import type { BuildTarget, Rect } from "../target";
 import type { SetPieceFeature } from "../schema";
-import { fmt, inMap, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
+import { fmt, inMap, POINT_SCHEMA, pointOf, type PlanContext, type PlanOutcome, type PlanRecord } from "./common";
 import type { SetPieceBuilder } from "./index";
 
 export interface DistrictPlan {
@@ -83,7 +83,7 @@ export const secondDistrict: SetPieceBuilder = {
   request: {
     type: "object",
     required: ["at"],
-    properties: { at: { type: "array", minItems: 2, maxItems: 2, items: { type: "number", minimum: -1, maximum: 257 } } },
+    properties: { at: POINT_SCHEMA },
   },
   limits: () => ({ distance: { min: 60, max: 120 }, land: { min: DISTRICT_LAND, max: 65536 } }),
   plan: (req: PlanRecord, ctx: PlanContext) => planDistrict(req, ctx),
