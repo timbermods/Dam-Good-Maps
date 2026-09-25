@@ -94,7 +94,8 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 ```
 
 - `npm run dev` serves the site at <http://localhost:5173/dam-good-maps/>.
-- `npm test` runs the unit and contract tests.
+- `npm test` runs the unit and contract tests. `npm run test:quick` skips the four heaviest, as CI
+  does on every push; `npm run test:heavy` runs only those, as CI does nightly.
 - `npm run oracle` generates 50 seeds × 3 sizes, checks each map with the Python validator and
   round-trip test, and compares the two validators check by check on 50 of them and on the
   official maps (when `investigation/raw/builtin` is present).
