@@ -40,7 +40,9 @@ export class Loaded {
   }
   snapshot(momentId: string): MapSnapshot | null {
     if (this.snaps.has(momentId)) return this.snaps.get(momentId)!;
-    const file = this.result?.snapshots?.find((s) => s.endsWith(`-${safe(momentId)}.snapshot.json.gz`));
+    // the mod names them <map id>-<moment id>.snapshot.json.gz (exactly: "end" must not find "drought1-end")
+    const name = `${safe(this.prepared.game.id)}-${safe(momentId)}.snapshot.json.gz`;
+    const file = this.result?.snapshots?.find((s) => s === name);
     let s: MapSnapshot | null = null;
     if (file && existsSync(join(this.dir, file))) s = JSON.parse(gunzipSync(readFileSync(join(this.dir, file))).toString('utf8')) as MapSnapshot;
     this.snaps.set(momentId, s);
@@ -559,8 +561,9 @@ function timeline(c: Ctx) {
       if (s.depth[t] > 0.05 && s.contamination[t] > 0.05) bg++;
       if (mm.depth[t] > 0.05 && mm.contamination[t] > 0.05) bm++;
     }
-    worstV = Math.max(worstV, Math.abs(vm / Math.max(1e-9, vg) - 1));
-    worstW = Math.max(worstW, Math.abs(wm / Math.max(1, wg) - 1));
+    // relative to the larger of the two (a map that has run dry in both is no difference)
+    worstV = Math.max(worstV, Math.abs(vm - vg) / Math.max(1, vg, vm));
+    worstW = Math.max(worstW, Math.abs(wm - wg) / Math.max(1, wg, wm));
     rows.push(`day ${f2(s.day - D0)}: water ${vg.toFixed(0)}/${vm.toFixed(0)}, wet ${wg}/${wm}, moist ${mg}/${mo}, badwater ${bg}/${bm}`);
   }
   const deadG = (c.L.result!.plantDeaths ?? []).length, deadM = c.model.plants.filter((p) => p.diedDay != null).length;

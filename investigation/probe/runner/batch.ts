@@ -7,7 +7,7 @@
 // and a one-time code; Kyler's yes is needed for every launch (runner/consent.ts).
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { buildMod } from './build-mod';
 import { catalog, type GameDef } from './catalog';
 import { evaluate, type GameVerdicts, Loaded } from './compare';
@@ -52,7 +52,9 @@ function newRunId(kind: string): string {
 }
 
 function planFromArgs(): Plan {
-  const extraMaps = argv.filter((a, i) => a.toLowerCase().endsWith('.timber') && !argv[i - 1]?.startsWith('--'));
+  const valued = new Set(['--only', '--group', '--confirmed-launch', '--run-id', '--speed', '--compare-only', '--days']);
+  // npm --prefix runs the script in investigation/probe; paths are meant from where the command was typed
+  const extraMaps = argv.filter((a, i) => a.toLowerCase().endsWith('.timber') && !valued.has(argv[i - 1])).map((a) => resolve(process.env.INIT_CWD ?? process.cwd(), a));
   const smoke = flag('smoke');
   const all = catalog(extraMaps);
   let ids = opt('only')?.split(',') ?? [];
