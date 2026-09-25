@@ -62,7 +62,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await page.getByRole("button", { name: "256×256" }).click();
   const big = canyons.filter((p) => p.size === 256);
   await expect(cards).toHaveCount(big.length);
-  expect(new URL(page.url()).search).toBe("?family=canyon&size=256");
+  await expect(page).toHaveURL(/\/real-places\/\?family=canyon&size=256$/);
   await page.reload();
   await expect(cards).toHaveCount(big.length);
   await expect(page.getByLabel("Landform")).toHaveValue("canyon");
