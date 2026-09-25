@@ -1,0 +1,22 @@
+{
+  "name": "dam-good-maps-probe",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "batch": "node run.cjs runner/batch.ts",
+    "build-mod": "node run.cjs runner/build-mod.ts",
+    "job": "node run.cjs runner/batch.ts --job-only",
+    "compare": "node run.cjs runner/batch.ts --compare-only",
+    "sheet": "node run.cjs runner/batch.ts --sheet-only",
+    "restore": "node run.cjs runner/batch.ts --restore-only",
+    "test": "node run.cjs runner/test.ts",
+    "typecheck": "node check.cjs"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "typescript": "~5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.6"
+  }
+}
