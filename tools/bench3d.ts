@@ -95,7 +95,7 @@ async function orbit(page: Page) {
 async function measureGenerated(page: Page, seed: number): Promise<MapResult> {
   await page.goto("about:blank"); // a new page load, not a hash change
   await page.goto(`http://localhost:${PORT}/#s=${seed}&z=256&d=n&t=riverValley&v=0.3.0`);
-  await page.getByText(/checks passed/).first().waitFor({ timeout: 120_000 });
+  await page.getByText(/checks passed/).first().waitFor({ timeout: 300_000 });
   await page.evaluate(() => delete window.dgm3d);
   const t0 = Date.now();
   await page.getByRole("button", { name: "3D", exact: true }).click();
@@ -120,7 +120,7 @@ const round = (v: number) => Math.round(v * 10) / 10;
 async function measureFile(page: Page, path: string): Promise<MapResult | null> {
   await page.goto("about:blank");
   await page.goto(`http://localhost:${PORT}/#s=1&z=96&d=n&t=riverValley&v=0.3.0`);
-  await page.getByText(/checks passed|checks failed/).first().waitFor({ timeout: 120_000 });
+  await page.getByText(/checks passed|checks failed/).first().waitFor({ timeout: 300_000 });
   await page.evaluate(() => delete window.dgm3d);
   const t0 = Date.now();
   await page.getByLabel("Open a map or a project file in the editor").setInputFiles(path);
@@ -148,7 +148,9 @@ const DESKTOP: Screen = { width: 1600, height: 900, scale: 1 };
 const LAPTOP: Screen = { width: 1280, height: 720, scale: 1.5 };
 
 async function runConfig(label: string, args: string[], cpuSlowdown: number, screen: Screen, maps: string[]): Promise<{ label: string; gpu: string; cpuSlowdown: number; screen: Screen; refreshHz: number; dpr: number; results: MapResult[] }> {
-  const browser: Browser = await chromium.launch({ channel: "chrome", headless: false, args });
+  // (a window other windows cover still draws at the display's rate: Chrome would pause it)
+  const keepDrawing = ["--disable-backgrounding-occluded-windows", "--disable-renderer-backgrounding", "--disable-background-timer-throttling"];
+  const browser: Browser = await chromium.launch({ channel: "chrome", headless: false, args: [...args, ...keepDrawing] });
   const page = await browser.newPage({ viewport: { width: screen.width, height: screen.height }, deviceScaleFactor: screen.scale });
   if (cpuSlowdown > 1) {
     const cdp = await page.context().newCDPSession(page);
