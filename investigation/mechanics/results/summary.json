@@ -1,0 +1,6647 @@
+{
+  "base": "cfa5990caeaf462de695caf428280da55fc0f7f5",
+  "bins": {
+    "storageRatio": [
+      0.25,
+      1,
+      3
+    ],
+    "peakCleanFlux64": [
+      0.5,
+      1,
+      2
+    ],
+    "flatDry40": [
+      150,
+      500,
+      1200
+    ],
+    "fertilityPersistence": [
+      0.25,
+      0.75
+    ],
+    "badwaterDistance": [
+      15,
+      30,
+      60
+    ],
+    "logs20": [
+      80,
+      160,
+      320
+    ],
+    "frontierComponents": [
+      1.5,
+      3.5
+    ],
+    "deepPumpExtraShore": [
+      0.5,
+      10,
+      50
+    ]
+  },
+  "summaries": {
+    "riverValley": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 30,
+      "totalAttempts": 30,
+      "misses": {
+        "plants.drought": 30,
+        "water.reservoir": 3
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 13.9,
+          "median": 30.5,
+          "p90": 54.50000000000001,
+          "max": 65
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 11,
+          "p90": 11,
+          "max": 11
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.095458984375,
+          "p10": 0.099224853515625,
+          "median": 0.117645263671875,
+          "p90": 0.129718017578125,
+          "max": 0.1478271484375
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.3526939243408483,
+          "p10": 0.4662879367902681,
+          "median": 0.5438613832212302,
+          "p90": 0.6405270759469683,
+          "max": 0.6656698564593302
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.60235595703125,
+          "p10": 0.60841064453125,
+          "median": 0.649017333984375,
+          "p90": 0.686358642578125,
+          "max": 0.69329833984375
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 2519,
+          "p10": 2760.6,
+          "median": 6030.5,
+          "p90": 8820.2,
+          "max": 9394
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.1794380215180929,
+          "p10": 0.214581868212336,
+          "median": 0.2640974162842931,
+          "p90": 0.3230234890969538,
+          "max": 0.386447380250251
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.1909613086587532,
+          "p10": 1.3187949889200776,
+          "median": 1.38383405324356,
+          "p90": 1.4587365261104388,
+          "max": 1.4912069617190187
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 3.5980000000000008,
+          "p10": 3.5997999999999997,
+          "median": 3.5999999999999996,
+          "p90": 3.6,
+          "max": 3.6000000000000005
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 2.34,
+          "p10": 2.34,
+          "median": 2.34,
+          "p90": 2.34,
+          "max": 2.34
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 3,
+          "median": 4,
+          "p90": 5,
+          "max": 5
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 3,
+          "median": 4,
+          "p90": 4,
+          "max": 4
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 2,
+          "median": 2,
+          "p90": 3,
+          "max": 3
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.05859375,
+          "p10": 0.062078857421875,
+          "median": 0.06640625,
+          "p90": 0.070751953125,
+          "max": 0.07257080078125
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 262,
+          "p10": 419.40000000000003,
+          "median": 1408,
+          "p90": 1758.1,
+          "max": 2076
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.0948066532722618,
+          "median": 1.1167973788268184,
+          "p90": 1.1407044847896584,
+          "max": 1.2603550295857988
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 57.891808127999944,
+          "p90": 110.72243435054541,
+          "max": 150.23501824000002
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 4,
+          "p10": 5.9,
+          "median": 7,
+          "p90": 9,
+          "max": 10
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 16.7,
+          "p10": 16.99,
+          "median": 21.75,
+          "p90": 24,
+          "max": 24
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.242640687119286,
+          "p10": 4.78700576850888,
+          "median": 6.207106781186548,
+          "p90": 8.088225099390856,
+          "max": 8.414213562373096
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 1050.4150390625,
+          "p10": 1056.15234375,
+          "median": 1060.791015625,
+          "p90": 1061.4013671875,
+          "max": 1062.01171875
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.3996549741230592,
+          "p10": 0.4116225546605293,
+          "median": 0.43379281544098514,
+          "p90": 0.4606711172855332,
+          "max": 0.4907940161104718
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 9,
+          "median": 10,
+          "p90": 11.100000000000001,
+          "max": 13
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 44,
+          "p10": 48,
+          "median": 48,
+          "p90": 64.80000000000001,
+          "max": 79
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 45,
+          "p10": 54.8,
+          "median": 63.5,
+          "p90": 99.20000000000002,
+          "max": 129
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.1630859375,
+          "median": 99.18212890625,
+          "p90": 111.75537109375,
+          "max": 117.7978515625
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 674.74365234375,
+          "p10": 881.927490234375,
+          "median": 933.380126953125,
+          "p90": 971.19140625,
+          "max": 1010.7421875
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22,
+          "p10": 22.071067811865476,
+          "median": 28.349242404917504,
+          "p90": 36.96812408671318,
+          "max": 45.87005768508882
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 114,
+          "median": 118.5,
+          "p90": 119.1,
+          "max": 120
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 56.71164300800001,
+          "p90": 108.18739651490891,
+          "max": 148.14010624000008
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0.2815871053028799,
+          "p90": 0.5371767453570453,
+          "max": 0.7355516695134066
+        },
+        "shortestAdequateDam": {
+          "n": 27,
+          "missing": 3,
+          "min": 3,
+          "p10": 3,
+          "median": 5,
+          "p90": 6,
+          "max": 8
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.9654669671453782,
+          "p10": 1.0448957757444257,
+          "median": 1.1358996845329732,
+          "p90": 1.2476222039872855,
+          "max": 1.2600010451530808
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 114,
+          "median": 119,
+          "p90": 124,
+          "max": 125
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 370,
+          "p10": 576.2,
+          "median": 916.5,
+          "p90": 1747.8000000000002,
+          "max": 2117
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.05904581955597544,
+          "p10": 0.06751618944470769,
+          "median": 0.13153334398039668,
+          "p90": 0.19942288680177953,
+          "max": 0.32432432432432434
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 148,
+          "p10": 159.5,
+          "median": 269.5,
+          "p90": 422.20000000000005,
+          "max": 621
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 32,
+          "p10": 55.1,
+          "median": 141,
+          "p90": 274,
+          "max": 452
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1.3000000000000185,
+          "max": 213
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0030023094688222136,
+          "max": 0.34299516908212563
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 53,
+          "p10": 74.9,
+          "median": 140,
+          "p90": 377.3,
+          "max": 635
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 14,
+          "p90": 145.10000000000008,
+          "max": 573
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 108,
+          "p10": 119.7,
+          "median": 142.5,
+          "p90": 165.3,
+          "max": 183
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1474.5,
+          "max": 2070
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.9000000000000004,
+          "median": 4,
+          "p90": 5,
+          "max": 7
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 3,
+          "median": 6,
+          "p90": 8,
+          "max": 8
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 20.000000000000284,
+          "max": 200
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1,
+          "max": 1
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 19,
+          "missing": 11,
+          "min": 43.284271247461895,
+          "p10": 56.490158697766454,
+          "median": 70.76955262170044,
+          "p90": 97.3827560572968,
+          "max": 122.49747468305824
+        },
+        "nearestGeothermal": {
+          "n": 11,
+          "missing": 19,
+          "min": 43.31370849898475,
+          "p10": 45.242640687119284,
+          "median": 69.35533905932733,
+          "p90": 83.32590180780446,
+          "max": 108.5685424949237
+        },
+        "nearestMine": {
+          "n": 2,
+          "missing": 28,
+          "min": 100.63961030678917,
+          "p10": 103.46387437550109,
+          "median": 114.76093065034883,
+          "p90": 126.05798692519656,
+          "max": 128.88225099390849
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 11,
+          "p10": 19.9,
+          "median": 28,
+          "p90": 68.30000000000001,
+          "max": 112
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 11,
+          "p10": 19.9,
+          "median": 28,
+          "p90": 69.5,
+          "max": 114
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 2.1000000000000014,
+          "max": 4
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 20,
+        "largestShare": 0.1,
+        "groups": [
+          {
+            "signature": "0/2/0/0/1/1/1/0",
+            "count": 3,
+            "members": [
+              "riverValley:2",
+              "riverValley:6",
+              "riverValley:11"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/0",
+            "count": 3,
+            "members": [
+              "riverValley:12",
+              "riverValley:13",
+              "riverValley:21"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/0",
+            "count": 2,
+            "members": [
+              "riverValley:8",
+              "riverValley:24"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/0",
+            "count": 2,
+            "members": [
+              "riverValley:18",
+              "riverValley:30"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/1",
+            "count": 2,
+            "members": [
+              "riverValley:9",
+              "riverValley:23"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/1/0",
+            "count": 2,
+            "members": [
+              "riverValley:19",
+              "riverValley:20"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/1",
+            "count": 2,
+            "members": [
+              "riverValley:7",
+              "riverValley:10"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/2/0",
+            "count": 2,
+            "members": [
+              "riverValley:25",
+              "riverValley:28"
+            ]
+          },
+          {
+            "signature": "0/1/0/0/1/1/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:27"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/1/0",
+            "count": 1,
+            "members": [
+              "riverValley:4"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/2/0",
+            "count": 1,
+            "members": [
+              "riverValley:1"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/1/0",
+            "count": 1,
+            "members": [
+              "riverValley:3"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/2/0",
+            "count": 1,
+            "members": [
+              "riverValley:26"
+            ]
+          },
+          {
+            "signature": "1/1/0/0/1/0/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:16"
+            ]
+          },
+          {
+            "signature": "1/1/0/0/1/1/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:14"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/1/0",
+            "count": 1,
+            "members": [
+              "riverValley:5"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/1/0",
+            "count": 1,
+            "members": [
+              "riverValley:29"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/0",
+            "count": 1,
+            "members": [
+              "riverValley:22"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/1",
+            "count": 1,
+            "members": [
+              "riverValley:15"
+            ]
+          },
+          {
+            "signature": "1/2/0/1/1/2/2/1",
+            "count": 1,
+            "members": [
+              "riverValley:17"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              14,
+              16,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.5333333333333333
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              0,
+              3,
+              27,
+              0,
+              0
+            ],
+            "largestShare": 0.9
+          },
+          "flatDry40": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "fertilityPersistence": {
+            "counts": [
+              29,
+              1,
+              0,
+              0
+            ],
+            "largestShare": 0.9666666666666667
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              5,
+              13,
+              8,
+              4,
+              0
+            ],
+            "largestShare": 0.43333333333333335
+          },
+          "frontierComponents": {
+            "counts": [
+              3,
+              11,
+              16,
+              0
+            ],
+            "largestShare": 0.5333333333333333
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              24,
+              6,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.8
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.041666666666666664,
+          "median": 0.125,
+          "p90": 0.22916666666666666,
+          "max": 0.3541666666666667
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.041666666666666664,
+          "max": 0.0625
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 25,
+          "largestShare": 0.1,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.14583333333333331,
+            "p90": 0.24999999999999997,
+            "max": 0.3958333333333333
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.041666666666666664,
+            "p90": 0.08333333333333333,
+            "max": 0.10416666666666666
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 20,
+          "largestShare": 0.2,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.125,
+            "p90": 0.22916666666666666,
+            "max": 0.3541666666666667
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.020833333333333332,
+            "p90": 0.06458333333333337,
+            "max": 0.10416666666666666
+          }
+        }
+      ]
+    },
+    "canyon": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 30,
+      "totalAttempts": 30,
+      "misses": {
+        "plants.drought": 30
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 11,
+          "p90": 13,
+          "max": 13
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.05364990234375,
+          "p10": 0.056292724609375,
+          "median": 0.059539794921875,
+          "p90": 0.063739013671875,
+          "max": 0.0667724609375
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.6408602150537634,
+          "p10": 0.6543780148533767,
+          "median": 0.7300412090552814,
+          "p90": 0.7593130514080582,
+          "max": 0.7614638447971781
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.709716796875,
+          "p10": 0.71610107421875,
+          "median": 0.73126220703125,
+          "p90": 0.78995361328125,
+          "max": 0.79608154296875
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 7159,
+          "p10": 7446.1,
+          "median": 7614.5,
+          "p90": 7842.9,
+          "max": 7892
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.03423705827450709,
+          "p10": 0.042374130685343125,
+          "median": 0.05325141494237418,
+          "p90": 0.0607906829713514,
+          "max": 0.07421150636905402
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0090883594497495,
+          "p10": 1.0148288934585026,
+          "median": 1.0190168867364027,
+          "p90": 1.0237952162558397,
+          "max": 1.025186092211321
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 3.5999999999999996,
+          "p10": 3.5999999999999996,
+          "median": 3.5999999999999996,
+          "p90": 3.6,
+          "max": 3.6
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 2.34,
+          "p10": 2.34,
+          "median": 2.34,
+          "p90": 2.34,
+          "max": 2.34
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1,
+          "max": 1
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 4,
+          "p90": 5,
+          "max": 5
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 4,
+          "p90": 5,
+          "max": 5
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.037841796875,
+          "p10": 0.040142822265625,
+          "median": 0.042572021484375,
+          "p90": 0.044268798828125004,
+          "max": 0.04656982421875
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 843,
+          "p10": 944.3,
+          "median": 1908,
+          "p90": 2150.9,
+          "max": 2483
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.200212992545261,
+          "p10": 1.212062960058069,
+          "median": 1.9985269674299782,
+          "p90": 2.0197758612945242,
+          "max": 2.0374015748031495
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 22.851903999999976,
+          "max": 22.851903999999976
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 5,
+          "p10": 5,
+          "median": 6,
+          "p90": 6.100000000000001,
+          "max": 7
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 17,
+          "median": 20.8,
+          "p90": 22.82,
+          "max": 24
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 2.414213562373095,
+          "p10": 3.94142135623731,
+          "median": 5,
+          "p90": 6,
+          "max": 7
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 831.9091796875,
+          "p10": 848.08349609375,
+          "median": 848.388671875,
+          "p90": 848.388671875,
+          "max": 849.609375
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.3964028776978417,
+          "p10": 0.40489208633093526,
+          "median": 0.4327338129496403,
+          "p90": 0.46365706572053644,
+          "max": 0.5682471264367817
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 7,
+          "p10": 8.9,
+          "median": 10,
+          "p90": 12,
+          "max": 13
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 48,
+          "p10": 48,
+          "median": 48,
+          "p90": 71.2,
+          "max": 89
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 52,
+          "p10": 55.9,
+          "median": 67,
+          "p90": 104.2,
+          "max": 114
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.7734375,
+          "median": 98.2666015625,
+          "p90": 119.873046875,
+          "max": 125.732421875
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 736.083984375,
+          "p10": 760.6201171875,
+          "median": 798.33984375,
+          "p90": 850.89111328125,
+          "max": 869.7509765625
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22,
+          "p10": 23.059292911256335,
+          "median": 27.22792206135786,
+          "p90": 35.35634918610404,
+          "max": 40.76955262170046
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 104,
+          "p10": 112.7,
+          "median": 116,
+          "p90": 118,
+          "max": 120
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "shortestAdequateDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 4,
+          "max": 4
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0515413798067532,
+          "p10": 1.062103972768653,
+          "median": 1.1070715029670009,
+          "p90": 1.2527022026591363,
+          "max": 1.3142243263174918
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 104,
+          "p10": 112.7,
+          "median": 116,
+          "p90": 118,
+          "max": 122
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 465,
+          "p10": 548.9,
+          "median": 753,
+          "p90": 997.1,
+          "max": 1232
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.09902597402597403,
+          "p10": 0.11684502405010624,
+          "median": 0.15381578396921017,
+          "p90": 0.21211123452872105,
+          "max": 0.2537634408602151
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 150,
+          "p10": 175.7,
+          "median": 224,
+          "p90": 417.3,
+          "max": 457
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 45,
+          "p10": 68,
+          "median": 97.5,
+          "p90": 249.40000000000003,
+          "max": 283
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 68,
+          "p10": 93,
+          "median": 147,
+          "p90": 226.10000000000002,
+          "max": 358
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 10.400000000000006,
+          "max": 32
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 114,
+          "p10": 122.7,
+          "median": 142.5,
+          "p90": 180.3,
+          "max": 192
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 738.0000000000002,
+          "max": 1605
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5.100000000000001,
+          "max": 8
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 4,
+          "p10": 6,
+          "median": 7,
+          "p90": 7,
+          "max": 8
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 200,
+          "max": 600
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.10000000000000142,
+          "max": 1
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 27,
+          "missing": 3,
+          "min": 35.72792206135786,
+          "p10": 41.422539674441616,
+          "median": 76.14213562373094,
+          "p90": 99.34112549695423,
+          "max": 118.5979797464466
+        },
+        "nearestGeothermal": {
+          "n": 17,
+          "missing": 13,
+          "min": 55.313708498984745,
+          "p10": 61.519595949289325,
+          "median": 80.97056274847712,
+          "p90": 115.52691193458114,
+          "max": 122.66904755831206
+        },
+        "nearestMine": {
+          "n": 12,
+          "missing": 18,
+          "min": 83.89949493661166,
+          "p10": 96.43452377915605,
+          "median": 104.25483399593898,
+          "p90": 126.31391770309001,
+          "max": 127.52691193458112
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 25,
+          "p10": 27,
+          "median": 33,
+          "p90": 43.100000000000016,
+          "max": 61
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 25,
+          "p10": 27,
+          "median": 33,
+          "p90": 47.100000000000016,
+          "max": 65
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 4,
+          "max": 7
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 9,
+        "largestShare": 0.3,
+        "groups": [
+          {
+            "signature": "0/2/0/0/1/1/1/0",
+            "count": 9,
+            "members": [
+              "canyon:2",
+              "canyon:3",
+              "canyon:7",
+              "canyon:8",
+              "canyon:9",
+              "canyon:11",
+              "canyon:13",
+              "canyon:23",
+              "canyon:26"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/0",
+            "count": 7,
+            "members": [
+              "canyon:17",
+              "canyon:18",
+              "canyon:19",
+              "canyon:21",
+              "canyon:25",
+              "canyon:29",
+              "canyon:30"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/1",
+            "count": 4,
+            "members": [
+              "canyon:4",
+              "canyon:14",
+              "canyon:16",
+              "canyon:20"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/1/0",
+            "count": 2,
+            "members": [
+              "canyon:1",
+              "canyon:27"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/0",
+            "count": 2,
+            "members": [
+              "canyon:6",
+              "canyon:12"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/0",
+            "count": 2,
+            "members": [
+              "canyon:10",
+              "canyon:15"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/1",
+            "count": 2,
+            "members": [
+              "canyon:5",
+              "canyon:28"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/2/0",
+            "count": 1,
+            "members": [
+              "canyon:22"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/1/0",
+            "count": 1,
+            "members": [
+              "canyon:24"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              0,
+              0,
+              30,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "flatDry40": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "fertilityPersistence": {
+            "counts": [
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              3,
+              16,
+              10,
+              1,
+              0
+            ],
+            "largestShare": 0.5333333333333333
+          },
+          "frontierComponents": {
+            "counts": [
+              0,
+              18,
+              12,
+              0
+            ],
+            "largestShare": 0.6
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              24,
+              6,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.8
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0.08333333333333333,
+          "p90": 0.14583333333333331,
+          "max": 0.1875
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0.041666666666666664
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 10,
+          "largestShare": 0.4,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.041666666666666664,
+            "p90": 0.14583333333333331,
+            "max": 0.22916666666666666
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.08333333333333333
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 13,
+          "largestShare": 0.36666666666666664,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.08333333333333333,
+            "p90": 0.16666666666666666,
+            "max": 0.2708333333333333
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.08333333333333333,
+            "max": 0.125
+          }
+        }
+      ]
+    },
+    "highlands": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 29,
+      "totalAttempts": 31,
+      "misses": {
+        "plants.drought": 30,
+        "water.reservoir": 1
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 13,
+          "p10": 14,
+          "median": 29.5,
+          "p90": 59.2,
+          "max": 67
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 2
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 13,
+          "p10": 13,
+          "median": 13,
+          "p90": 14,
+          "max": 14
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.110595703125,
+          "p10": 0.1305908203125,
+          "median": 0.148529052734375,
+          "p90": 0.17109375,
+          "max": 0.1754150390625
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.3158620689655172,
+          "p10": 0.39965425837328655,
+          "median": 0.5193185452150888,
+          "p90": 0.5909968384339356,
+          "max": 0.6168298491664461
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.56378173828125,
+          "p10": 0.568292236328125,
+          "median": 0.615447998046875,
+          "p90": 0.66353759765625,
+          "max": 0.66961669921875
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 1630,
+          "p10": 1992.2,
+          "median": 2424.5,
+          "p90": 7449.8,
+          "max": 8047
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.1794380215180929,
+          "p10": 0.21948411189617623,
+          "median": 0.27244194541958366,
+          "p90": 0.3230234890969538,
+          "max": 0.3955624936731846
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.1909613086587532,
+          "p10": 1.2977599579582133,
+          "median": 1.3822558483623273,
+          "p90": 1.4655503449505975,
+          "max": 1.499598500208475
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.498,
+          "p10": 4.5,
+          "median": 5.3999999999999995,
+          "p90": 5.4,
+          "max": 5.4
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.08,
+          "p10": 1.08,
+          "median": 1.08,
+          "p90": 1.08,
+          "max": 1.08
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 1,
+          "median": 4,
+          "p90": 4.100000000000001,
+          "max": 6
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 1,
+          "median": 3.5,
+          "p90": 4,
+          "max": 4
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 5,
+          "p10": 5,
+          "median": 7,
+          "p90": 10,
+          "max": 11
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 7,
+          "p10": 8,
+          "median": 10,
+          "p90": 11,
+          "max": 13
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.067138671875,
+          "p10": 0.069061279296875,
+          "median": 0.075347900390625,
+          "p90": 0.08538818359375,
+          "max": 0.0889892578125
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 270,
+          "p10": 1033.1000000000001,
+          "median": 2703,
+          "p90": 3258.7,
+          "max": 3716
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.1504382822706394,
+          "median": 1.9606263084868474,
+          "p90": 2.008098843116049,
+          "max": 2.06993006993007
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 59.46763362461539,
+          "p90": 137.2146460160001,
+          "max": 179.65896820412658
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 6,
+          "p10": 7,
+          "median": 9,
+          "p90": 12,
+          "max": 13
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 15.4,
+          "p10": 16.99,
+          "median": 22.05,
+          "p90": 23.19,
+          "max": 24.2
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.242640687119286,
+          "p10": 4.242640687119286,
+          "median": 6.82842712474619,
+          "p90": 8.242640687119284,
+          "max": 8.414213562373096
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 935.6689453125,
+          "p10": 944.15283203125,
+          "median": 954.58984375,
+          "p90": 954.58984375,
+          "max": 955.2001953125
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.40153452685422,
+          "p10": 0.40826887721333843,
+          "median": 0.43021427053981814,
+          "p90": 0.4792838874680307,
+          "max": 0.539002557544757
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 8.9,
+          "median": 10,
+          "p90": 12,
+          "max": 14
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 34,
+          "p10": 48,
+          "median": 48,
+          "p90": 51,
+          "max": 75
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 48,
+          "p10": 55.5,
+          "median": 65,
+          "p90": 101.2,
+          "max": 133
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.1630859375,
+          "median": 95.8251953125,
+          "p90": 111.51123046875001,
+          "max": 125.732421875
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 606.0791015625,
+          "p10": 659.36279296875,
+          "median": 914.154052734375,
+          "p90": 947.479248046875,
+          "max": 974.12109375
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22,
+          "p10": 22.06396103067893,
+          "median": 28.642135623730958,
+          "p90": 38.55807358037435,
+          "max": 46.25483399593902
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 113,
+          "median": 118,
+          "p90": 119,
+          "max": 119
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 55.87390690461535,
+          "p90": 137.2146460160001,
+          "max": 179.65896820412658
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0.27742754173096007,
+          "p90": 0.6813041013704076,
+          "max": 0.8920504876073813
+        },
+        "shortestAdequateDam": {
+          "n": 29,
+          "missing": 1,
+          "min": 3,
+          "p10": 3,
+          "median": 5,
+          "p90": 6,
+          "max": 16
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.054167177757397,
+          "p10": 1.1763673526452865,
+          "median": 1.4728216118899273,
+          "p90": 1.7662641054850454,
+          "max": 2.0450879453585493
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 113,
+          "median": 120,
+          "p90": 124,
+          "max": 126
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 406,
+          "p10": 480.8,
+          "median": 801,
+          "p90": 1499.4,
+          "max": 1818
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.06545654565456546,
+          "p10": 0.08265861837692824,
+          "median": 0.14714180514767858,
+          "p90": 0.23709727067514882,
+          "max": 0.29064039408866993
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 128,
+          "p10": 161.8,
+          "median": 297,
+          "p90": 470.7,
+          "max": 513
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 38,
+          "p10": 55.9,
+          "median": 174.5,
+          "p90": 322.20000000000005,
+          "max": 343
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 6.500000000000007,
+          "max": 153
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.022772096049447993,
+          "max": 0.32075471698113206
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 42,
+          "p10": 75,
+          "median": 140.5,
+          "p90": 271.80000000000007,
+          "max": 378
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 16,
+          "p90": 72.60000000000001,
+          "max": 188
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 102,
+          "p10": 110.7,
+          "median": 144,
+          "p90": 144,
+          "max": 171
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 720
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 7.100000000000001,
+          "max": 8
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 3,
+          "median": 4,
+          "p90": 7.100000000000001,
+          "max": 8
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 20.000000000000284,
+          "max": 800
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 2
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 12,
+          "missing": 18,
+          "min": 43.21320343559643,
+          "p10": 53.3529003975634,
+          "median": 77.52691193458116,
+          "p90": 101.86316010800749,
+          "max": 109.87005768508877
+        },
+        "nearestGeothermal": {
+          "n": 7,
+          "missing": 23,
+          "min": 45.28427124746188,
+          "p10": 46.39898987322332,
+          "median": 79.01219330881972,
+          "p90": 108.05239533417505,
+          "max": 123.32590180780444
+        },
+        "nearestMine": {
+          "n": 2,
+          "missing": 28,
+          "min": 112.98275605729681,
+          "p10": 114.18986283848336,
+          "median": 119.01828996322955,
+          "p90": 123.84671708797573,
+          "max": 125.05382386916229
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 20.9,
+          "median": 35.5,
+          "p90": 76.4,
+          "max": 108
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 20.9,
+          "median": 35.5,
+          "p90": 79.60000000000001,
+          "max": 112
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 4.100000000000001,
+          "max": 6
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 19,
+        "largestShare": 0.13333333333333333,
+        "groups": [
+          {
+            "signature": "1/2/0/0/1/1/1/0",
+            "count": 4,
+            "members": [
+              "highlands:4",
+              "highlands:13",
+              "highlands:19",
+              "highlands:24"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/1/0",
+            "count": 3,
+            "members": [
+              "highlands:20",
+              "highlands:22",
+              "highlands:25"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/0",
+            "count": 3,
+            "members": [
+              "highlands:2",
+              "highlands:10",
+              "highlands:15"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/0",
+            "count": 2,
+            "members": [
+              "highlands:5",
+              "highlands:30"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/2/1",
+            "count": 2,
+            "members": [
+              "highlands:6",
+              "highlands:28"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/1/0",
+            "count": 2,
+            "members": [
+              "highlands:11",
+              "highlands:23"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/1",
+            "count": 2,
+            "members": [
+              "highlands:8",
+              "highlands:17"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/1/0",
+            "count": 1,
+            "members": [
+              "highlands:16"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/1/1",
+            "count": 1,
+            "members": [
+              "highlands:14"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/0",
+            "count": 1,
+            "members": [
+              "highlands:21"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/1",
+            "count": 1,
+            "members": [
+              "highlands:18"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/1",
+            "count": 1,
+            "members": [
+              "highlands:1"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/1/0",
+            "count": 1,
+            "members": [
+              "highlands:9"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/0",
+            "count": 1,
+            "members": [
+              "highlands:26"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/0",
+            "count": 1,
+            "members": [
+              "highlands:3"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/1/0",
+            "count": 1,
+            "members": [
+              "highlands:29"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/2/1",
+            "count": 1,
+            "members": [
+              "highlands:7"
+            ]
+          },
+          {
+            "signature": "1/2/0/1/1/1/2/1",
+            "count": 1,
+            "members": [
+              "highlands:12"
+            ]
+          },
+          {
+            "signature": "1/3/0/0/1/1/1/0",
+            "count": 1,
+            "members": [
+              "highlands:27"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              13,
+              17,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.5666666666666667
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              0,
+              0,
+              29,
+              1,
+              0
+            ],
+            "largestShare": 0.9666666666666667
+          },
+          "flatDry40": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "fertilityPersistence": {
+            "counts": [
+              29,
+              1,
+              0,
+              0
+            ],
+            "largestShare": 0.9666666666666667
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              4,
+              13,
+              11,
+              2,
+              0
+            ],
+            "largestShare": 0.43333333333333335
+          },
+          "frontierComponents": {
+            "counts": [
+              0,
+              16,
+              14,
+              0
+            ],
+            "largestShare": 0.5333333333333333
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              21,
+              9,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.7
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.041666666666666664,
+          "median": 0.10416666666666666,
+          "p90": 0.18749999999999997,
+          "max": 0.2708333333333333
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.041666666666666664,
+          "max": 0.10416666666666666
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 27,
+          "largestShare": 0.06666666666666667,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.08333333333333333,
+            "median": 0.14583333333333331,
+            "p90": 0.22916666666666666,
+            "max": 0.3541666666666667
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.041666666666666664,
+            "p90": 0.043750000000000025,
+            "max": 0.10416666666666666
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 19,
+          "largestShare": 0.16666666666666666,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.125,
+            "p90": 0.22916666666666666,
+            "max": 0.3333333333333333
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.08333333333333333,
+            "max": 0.08333333333333333
+          }
+        }
+      ]
+    },
+    "lakeBasin": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 30,
+      "totalAttempts": 30,
+      "misses": {
+        "plants.drought": 23
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 10,
+          "p90": 10,
+          "max": 10
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.06610107421875,
+          "p10": 0.089825439453125,
+          "median": 0.097137451171875,
+          "p90": 0.120855712890625,
+          "max": 0.12481689453125
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.23577235772357724,
+          "p10": 0.3479055432401701,
+          "median": 0.5705752930404591,
+          "p90": 0.6149355971370005,
+          "max": 0.7480029048656499
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.6820068359375,
+          "p10": 0.698077392578125,
+          "median": 0.732421875,
+          "p90": 0.77200927734375,
+          "max": 0.8033447265625
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 1621,
+          "p10": 1833.7,
+          "median": 2515,
+          "p90": 3215.1,
+          "max": 3896
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.0010060569262610262,
+          "p10": 0.002515380918378989,
+          "median": 0.005822332328576679,
+          "p90": 0.00881242023739179,
+          "max": 0.009502917474696695
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0000282685895534,
+          "p10": 1.0001839568885016,
+          "median": 1.0009073222242164,
+          "p90": 1.0021695889707214,
+          "max": 1.0026053923646605
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 7.219999999999999,
+          "p10": 7.219999999999999,
+          "median": 7.222000000000001,
+          "p90": 7.224000000000002,
+          "max": 7.224000000000002
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 2.35,
+          "p10": 4.465000000000002,
+          "median": 4.7,
+          "p90": 4.7,
+          "max": 4.7
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.9000000000000004,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 3,
+          "median": 3.5,
+          "p90": 5,
+          "max": 6
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 2,
+          "median": 3,
+          "p90": 4,
+          "max": 4
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 2
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.24072265625,
+          "p10": 0.24444580078125,
+          "median": 0.266693115234375,
+          "p90": 0.28970947265625,
+          "max": 0.294189453125
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 6586,
+          "p90": 7481.8,
+          "max": 7672
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 2552.5459110170655,
+          "p10": 2829.288975577682,
+          "median": 3277.8190068763133,
+          "p90": 3633.49663060456,
+          "max": 4076.8178802499747
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2.9000000000000004,
+          "median": 4,
+          "p90": 7,
+          "max": 7
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 17.7,
+          "p90": 22.41,
+          "max": 23.8
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 5.414213562373095,
+          "p10": 5.811269837220809,
+          "median": 6.621320343559642,
+          "p90": 8.84558441227157,
+          "max": 9.414213562373096
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 1000.3662109375,
+          "p10": 1044.61669921875,
+          "median": 1058.65478515625,
+          "p90": 1060.791015625,
+          "max": 1060.791015625
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.39260969976905313,
+          "p10": 0.40724971231300344,
+          "median": 0.42836593785960875,
+          "p90": 0.4524865921741686,
+          "max": 0.4700805523590334
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 8.9,
+          "median": 10,
+          "p90": 11,
+          "max": 15
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 48,
+          "p10": 48,
+          "median": 48,
+          "p90": 62.2,
+          "max": 80
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 63,
+          "p10": 73,
+          "median": 99,
+          "p90": 152.70000000000002,
+          "max": 211
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 92.1630859375,
+          "p10": 93.93310546875,
+          "median": 101.01318359375,
+          "p90": 119.62890625,
+          "max": 134.27734375
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 613.4033203125,
+          "p10": 629.791259765625,
+          "median": 670.623779296875,
+          "p90": 702.301025390625,
+          "max": 720.52001953125
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22,
+          "p10": 22.135028842544408,
+          "median": 28.72792206135786,
+          "p90": 42.608326112068525,
+          "max": 69.48528137423855
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 165,
+          "p10": 166,
+          "median": 180,
+          "p90": 188,
+          "max": 189
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 2552.5459110170655,
+          "p10": 2806.4370715776818,
+          "median": 3257.705089307862,
+          "p90": 3631.21144020456,
+          "max": 4053.9659762499746
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 12.674011474761993,
+          "p10": 13.934642857883226,
+          "median": 16.17529835803308,
+          "p90": 18.029848263180536,
+          "max": 20.12892738952321
+        },
+        "shortestAdequateDam": {
+          "n": 26,
+          "missing": 4,
+          "min": 2,
+          "p10": 9,
+          "median": 11,
+          "p90": 13,
+          "max": 17
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.04448071679908353,
+          "p10": 0.16230274256852353,
+          "median": 1.1032463907413648,
+          "p90": 1.2665819511169878,
+          "max": 1.6930513761783677
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 697,
+          "p10": 742.2,
+          "median": 910,
+          "p90": 1051.1,
+          "max": 1082
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 698,
+          "p10": 795.8,
+          "median": 1027,
+          "p90": 1230.2,
+          "max": 1559
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.6747915330339962,
+          "p10": 0.7908100736843416,
+          "median": 0.9035207052293628,
+          "p90": 1,
+          "max": 1
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 497,
+          "p10": 511,
+          "median": 543,
+          "p90": 555,
+          "max": 557
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 257,
+          "p10": 329.4,
+          "median": 373.5,
+          "p90": 405.90000000000003,
+          "max": 421
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 338,
+          "p10": 346.8,
+          "median": 374,
+          "p90": 383.1,
+          "max": 394
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.6524953789279113,
+          "p10": 0.6678529649052036,
+          "median": 0.6867145421903051,
+          "p90": 0.7003925315167502,
+          "max": 0.7163636363636363
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 112,
+          "p10": 157.9,
+          "median": 234,
+          "p90": 416.00000000000006,
+          "max": 470
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 13.5,
+          "p90": 81.40000000000002,
+          "max": 133
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 144,
+          "p10": 144,
+          "median": 144,
+          "p90": 165.9,
+          "max": 183
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 696.0000000000003,
+          "max": 1140
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 4,
+          "max": 5
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 4,
+          "max": 5
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 400,
+          "max": 1000
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1,
+          "max": 1
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 11,
+          "missing": 19,
+          "min": 17,
+          "p10": 17.242640687119284,
+          "median": 21.72792206135786,
+          "p90": 51.35533905932735,
+          "max": 80.15432893255064
+        },
+        "nearestGeothermal": {
+          "n": 6,
+          "missing": 24,
+          "min": 31.384776310850242,
+          "p10": 31.520815280171313,
+          "median": 36.4350288425444,
+          "p90": 60.66295090390224,
+          "max": 77.59797974644664
+        },
+        "nearestMine": {
+          "n": 1,
+          "missing": 29,
+          "min": 102.56854249492373,
+          "p10": 102.56854249492373,
+          "median": 102.56854249492373,
+          "p90": 102.56854249492373,
+          "max": 102.56854249492373
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 53,
+          "p10": 55.8,
+          "median": 62.5,
+          "p90": 70.1,
+          "max": 85
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 53,
+          "p10": 55.8,
+          "median": 62.5,
+          "p90": 70.1,
+          "max": 85
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 10,
+        "largestShare": 0.3,
+        "groups": [
+          {
+            "signature": "3/2/2/1/1/2/1/0",
+            "count": 9,
+            "members": [
+              "lakeBasin:8",
+              "lakeBasin:16",
+              "lakeBasin:19",
+              "lakeBasin:22",
+              "lakeBasin:23",
+              "lakeBasin:24",
+              "lakeBasin:26",
+              "lakeBasin:28",
+              "lakeBasin:30"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/2/1/0",
+            "count": 4,
+            "members": [
+              "lakeBasin:7",
+              "lakeBasin:10",
+              "lakeBasin:15",
+              "lakeBasin:27"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/1/1/0",
+            "count": 3,
+            "members": [
+              "lakeBasin:12",
+              "lakeBasin:18",
+              "lakeBasin:29"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/3/2/0",
+            "count": 3,
+            "members": [
+              "lakeBasin:4",
+              "lakeBasin:17",
+              "lakeBasin:25"
+            ]
+          },
+          {
+            "signature": "3/0/2/1/1/2/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:3",
+              "lakeBasin:11"
+            ]
+          },
+          {
+            "signature": "3/0/2/1/1/2/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:5",
+              "lakeBasin:20"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/3/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:9",
+              "lakeBasin:21"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/2/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:2",
+              "lakeBasin:6"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/3/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:1",
+              "lakeBasin:14"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/1/1/0",
+            "count": 1,
+            "members": [
+              "lakeBasin:13"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              0,
+              0,
+              0,
+              30,
+              0
+            ],
+            "largestShare": 1
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              4,
+              7,
+              19,
+              0,
+              0
+            ],
+            "largestShare": 0.6333333333333333
+          },
+          "flatDry40": {
+            "counts": [
+              0,
+              0,
+              30,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "fertilityPersistence": {
+            "counts": [
+              0,
+              30,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              0,
+              4,
+              19,
+              7,
+              0
+            ],
+            "largestShare": 0.6333333333333333
+          },
+          "frontierComponents": {
+            "counts": [
+              0,
+              23,
+              7,
+              0
+            ],
+            "largestShare": 0.7666666666666667
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0.08333333333333333,
+          "p90": 0.14583333333333331,
+          "max": 0.1875
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0.041666666666666664
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 14,
+          "largestShare": 0.23333333333333334,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.10416666666666666,
+            "p90": 0.1875,
+            "max": 0.2708333333333333
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.0625
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 14,
+          "largestShare": 0.2,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.08333333333333333,
+            "p90": 0.125,
+            "max": 0.22916666666666666
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.041666666666666664
+          }
+        }
+      ]
+    },
+    "delta": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 30,
+      "totalAttempts": 30,
+      "misses": {
+        "plants.drought": 30
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 4,
+          "max": 4
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 10,
+          "p90": 10,
+          "max": 10
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.0662841796875,
+          "p10": 0.0760498046875,
+          "median": 0.08551025390625,
+          "p90": 0.10907592773437501,
+          "max": 0.11419677734375
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.5576271186440678,
+          "p10": 0.6132484640504788,
+          "median": 0.6971311349970388,
+          "p90": 0.7742818016821188,
+          "max": 0.7967828418230563
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.56927490234375,
+          "p10": 0.583026123046875,
+          "median": 0.62176513671875,
+          "p90": 0.65152587890625,
+          "max": 0.67620849609375
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 7679,
+          "p10": 8430.9,
+          "median": 9959,
+          "p90": 10874.300000000001,
+          "max": 11455
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 4,
+          "p90": 5,
+          "max": 5
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.07928210986604367,
+          "p10": 0.11923560323663185,
+          "median": 0.17272496418309957,
+          "p90": 0.27221255755635876,
+          "max": 0.2987093484642925
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0769272251471083,
+          "p10": 1.1555371340748586,
+          "median": 1.2951574913797612,
+          "p90": 1.4452715519492878,
+          "max": 1.5387342249522047
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 7.207999999999999,
+          "p10": 7.208900000000001,
+          "median": 7.211,
+          "p90": 7.212,
+          "max": 7.212
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.7,
+          "p10": 4.7,
+          "median": 4.7,
+          "p90": 4.7,
+          "max": 4.7
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 4,
+          "max": 4
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2.9000000000000004,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.10000000000000142,
+          "max": 2
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.07958984375,
+          "p10": 0.081536865234375,
+          "median": 0.092681884765625,
+          "p90": 0.10260009765625,
+          "max": 0.1075439453125
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 412,
+          "p10": 488.8,
+          "median": 1345,
+          "p90": 2088.5,
+          "max": 2485
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.0881940525287606,
+          "median": 1.1218716847939243,
+          "p90": 1.3300649655080035,
+          "max": 1.3760129659643436
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 38.593652223999996,
+          "median": 111.91109471085711,
+          "p90": 185.68442060126335,
+          "max": 216.0478080000004
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 8,
+          "median": 10,
+          "p90": 11,
+          "max": 13
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 15.8,
+          "p10": 16.63,
+          "median": 19.85,
+          "p90": 23.02,
+          "max": 24
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.242640687119286,
+          "p10": 4.7698484809835,
+          "median": 6.914213562373095,
+          "p90": 8.007106781186547,
+          "max": 8.414213562373096
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 1234.7412109375,
+          "p10": 1258.48388671875,
+          "median": 1273.193359375,
+          "p90": 1273.193359375,
+          "max": 1274.4140625
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.40115440115440115,
+          "p10": 0.4077320539227583,
+          "median": 0.42641418983700863,
+          "p90": 0.4641178513179355,
+          "max": 0.4937679769894535
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 9,
+          "median": 10,
+          "p90": 10.100000000000001,
+          "max": 13
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 44,
+          "p10": 48,
+          "median": 48,
+          "p90": 48,
+          "max": 56
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 54,
+          "p10": 60.9,
+          "median": 82,
+          "p90": 107.2,
+          "max": 132
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.71240234375,
+          "median": 96.435546875,
+          "p90": 106.01806640625,
+          "max": 120.849609375
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 509.94873046875,
+          "p10": 758.331298828125,
+          "median": 796.966552734375,
+          "p90": 840.63720703125,
+          "max": 845.947265625
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22.142135623730955,
+          "p10": 26.704163056034265,
+          "median": 32.74873734152917,
+          "p90": 45.45361466505705,
+          "max": 50.41421356237309
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 114.9,
+          "median": 118,
+          "p90": 119,
+          "max": 119
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 16.89197347031579,
+          "median": 93.6515388509091,
+          "p90": 167.51186497347382,
+          "max": 197.2402790399996
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.0838727580452621,
+          "median": 0.4650026755258644,
+          "p90": 0.8317371647143684,
+          "max": 0.9793459733862939
+        },
+        "shortestAdequateDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 4,
+          "p10": 4,
+          "median": 4,
+          "p90": 4,
+          "max": 4
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.5754199911162698,
+          "p10": 1.6160001170267326,
+          "median": 1.7739650522313544,
+          "p90": 1.9210620327530359,
+          "max": 2.0205894637089328
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 113,
+          "p10": 114.9,
+          "median": 120.5,
+          "p90": 125,
+          "max": 125
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 637,
+          "p10": 851.2,
+          "median": 1232,
+          "p90": 1486.6,
+          "max": 1916
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.0652400835073069,
+          "p10": 0.07986577733860342,
+          "median": 0.09720186703426927,
+          "p90": 0.1416239588760917,
+          "max": 0.18053375196232338
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 130,
+          "p10": 200.4,
+          "median": 251,
+          "p90": 292.30000000000007,
+          "max": 435
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 39,
+          "p10": 61.2,
+          "median": 118,
+          "p90": 153.40000000000003,
+          "max": 280
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 8.800000000000011,
+          "max": 125
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.032848484848484905,
+          "max": 0.5319148936170213
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 51,
+          "p10": 69.5,
+          "median": 191,
+          "p90": 289.20000000000005,
+          "max": 408
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 10.5,
+          "p90": 138.3,
+          "max": 192
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 114,
+          "p10": 122.10000000000001,
+          "median": 144,
+          "p90": 144,
+          "max": 150
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 2070
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 4,
+          "p90": 6,
+          "max": 6
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 4,
+          "p10": 4.9,
+          "median": 8,
+          "p90": 8,
+          "max": 8
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 200,
+          "p90": 400,
+          "max": 1000
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1,
+          "max": 1
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 28,
+          "missing": 2,
+          "min": 18.899494936611667,
+          "p10": 22.1698484809835,
+          "median": 40.50609665440987,
+          "p90": 94.71707063234759,
+          "max": 118.0121933088197
+        },
+        "nearestGeothermal": {
+          "n": 24,
+          "missing": 6,
+          "min": 39.79898987322332,
+          "p10": 55.034018715767715,
+          "median": 79.2132034355964,
+          "p90": 112.41930009000625,
+          "max": 128.3969696196699
+        },
+        "nearestMine": {
+          "n": 16,
+          "missing": 14,
+          "min": 73.5979797464466,
+          "p10": 84.02691193458116,
+          "median": 102.2045814642448,
+          "p90": 115.82590180780446,
+          "max": 125.59797974644661
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 19,
+          "p10": 27.9,
+          "median": 48.5,
+          "p90": 64.1,
+          "max": 74
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 19,
+          "p10": 27.9,
+          "median": 48.5,
+          "p90": 64.1,
+          "max": 74
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 13,
+        "largestShare": 0.23333333333333334,
+        "groups": [
+          {
+            "signature": "1/2/0/0/1/2/2/0",
+            "count": 7,
+            "members": [
+              "delta:6",
+              "delta:9",
+              "delta:15",
+              "delta:17",
+              "delta:18",
+              "delta:19",
+              "delta:25"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/0/0",
+            "count": 4,
+            "members": [
+              "delta:4",
+              "delta:26",
+              "delta:28",
+              "delta:29"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/1/0",
+            "count": 3,
+            "members": [
+              "delta:14",
+              "delta:20",
+              "delta:22"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/0",
+            "count": 3,
+            "members": [
+              "delta:3",
+              "delta:7",
+              "delta:30"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/1/0",
+            "count": 3,
+            "members": [
+              "delta:10",
+              "delta:13",
+              "delta:23"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/0",
+            "count": 2,
+            "members": [
+              "delta:8",
+              "delta:11"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/2/0",
+            "count": 2,
+            "members": [
+              "delta:1",
+              "delta:16"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/1/0",
+            "count": 1,
+            "members": [
+              "delta:2"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/2/0",
+            "count": 1,
+            "members": [
+              "delta:24"
+            ]
+          },
+          {
+            "signature": "0/2/0/1/1/0/1/0",
+            "count": 1,
+            "members": [
+              "delta:27"
+            ]
+          },
+          {
+            "signature": "0/2/0/1/1/2/2/0",
+            "count": 1,
+            "members": [
+              "delta:5"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/1/0",
+            "count": 1,
+            "members": [
+              "delta:21"
+            ]
+          },
+          {
+            "signature": "1/3/0/0/1/0/2/0",
+            "count": 1,
+            "members": [
+              "delta:12"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              6,
+              24,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.8
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              0,
+              0,
+              29,
+              1,
+              0
+            ],
+            "largestShare": 0.9666666666666667
+          },
+          "flatDry40": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "fertilityPersistence": {
+            "counts": [
+              28,
+              2,
+              0,
+              0
+            ],
+            "largestShare": 0.9333333333333333
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              5,
+              6,
+              17,
+              2,
+              0
+            ],
+            "largestShare": 0.5666666666666667
+          },
+          "frontierComponents": {
+            "counts": [
+              4,
+              9,
+              17,
+              0
+            ],
+            "largestShare": 0.5666666666666667
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.041666666666666664,
+          "median": 0.10416666666666666,
+          "p90": 0.20833333333333331,
+          "max": 0.25
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.043750000000000025,
+          "max": 0.0625
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 23,
+          "largestShare": 0.1,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.14583333333333331,
+            "p90": 0.22916666666666666,
+            "max": 0.35416666666666663
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.041666666666666664,
+            "p90": 0.06458333333333337,
+            "max": 0.08333333333333333
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 16,
+          "largestShare": 0.16666666666666666,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.10416666666666666,
+            "p90": 0.1875,
+            "max": 0.29166666666666663
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.0625
+          }
+        }
+      ]
+    },
+    "islands": {
+      "requested": 30,
+      "passed": 30,
+      "firstAttempt": 30,
+      "totalAttempts": 30,
+      "misses": {
+        "plants.drought": 18
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "cores": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "heightRange": {
+          "n": 30,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 10,
+          "p90": 10,
+          "max": 10
+        },
+        "cliffShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.08819580078125,
+          "p10": 0.090777587890625,
+          "median": 0.115386962890625,
+          "p90": 0.14056396484375,
+          "max": 0.148681640625
+        },
+        "step1Share": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.13735070575461455,
+          "p10": 0.2969528205971229,
+          "median": 0.5221884016010221,
+          "p90": 0.6818082081317376,
+          "max": 0.703552342030808
+        },
+        "flatShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.7056884765625,
+          "p10": 0.71826171875,
+          "median": 0.730712890625,
+          "p90": 0.746429443359375,
+          "max": 0.78619384765625
+        },
+        "maxHeight": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 30,
+          "missing": 0,
+          "min": 1385,
+          "p10": 1433.4,
+          "median": 1768,
+          "p90": 2117.8,
+          "max": 3826
+        },
+        "rivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 3,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "edgeRivers": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "meander": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.0003117501838850641,
+          "p10": 0.0032241388874759695,
+          "median": 0.006915803133666912,
+          "p90": 0.008658792385273298,
+          "max": 0.009452962668925275
+        },
+        "sinuosity": {
+          "n": 30,
+          "missing": 0,
+          "min": 1.0000048689660228,
+          "p10": 1.00047905505625,
+          "median": 1.001938125334187,
+          "p90": 1.0044806089894123,
+          "max": 1.0049666926160261
+        },
+        "cleanStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 14.418000000000001,
+          "p10": 14.418000000000001,
+          "median": 14.418000000000001,
+          "p90": 14.424000000000003,
+          "max": 14.424000000000003
+        },
+        "badwaterStrength": {
+          "n": 30,
+          "missing": 0,
+          "min": 4.34,
+          "p10": 4.34,
+          "median": 4.34,
+          "p90": 4.34,
+          "max": 4.34
+        },
+        "badwaterSources": {
+          "n": 30,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "basins20": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 2,
+          "p90": 3,
+          "max": 3
+        },
+        "lakes": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 1,
+          "max": 1
+        },
+        "waterfalls": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 1,
+          "p90": 2,
+          "max": 4
+        },
+        "bedDrops2": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "waterShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.30023193359375,
+          "p10": 0.311822509765625,
+          "median": 0.33795166015625,
+          "p90": 0.35257568359375,
+          "max": 0.35662841796875
+        },
+        "bestDam": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 9093,
+          "p90": 9579.800000000001,
+          "max": 10098
+        },
+        "bestDamDepth": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "natural": {
+          "n": 30,
+          "missing": 0,
+          "min": 2187.3463984284494,
+          "p10": 2326.946305960623,
+          "median": 2798.8205722265384,
+          "p90": 3175.043285201072,
+          "max": 3440.080249823964
+        },
+        "damSites": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1.9000000000000004,
+          "median": 2,
+          "p90": 4,
+          "max": 5
+        },
+        "badwaterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 17.85,
+          "p90": 22.73,
+          "max": 24
+        },
+        "waterDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 5,
+          "p10": 5.632590180780452,
+          "median": 8,
+          "p90": 9,
+          "max": 9.071067811865476
+        },
+        "treesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 1024.7802734375,
+          "p10": 1044.43359375,
+          "median": 1059.26513671875,
+          "p90": 1060.791015625,
+          "max": 1062.01171875
+        },
+        "livingShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.4144092219020173,
+          "p10": 0.41482359875382413,
+          "median": 0.43416848331681024,
+          "p90": 0.4624072050972636,
+          "max": 0.4871495327102804
+        },
+        "groveMedian": {
+          "n": 30,
+          "missing": 0,
+          "min": 8,
+          "p10": 8.9,
+          "median": 10,
+          "p90": 11,
+          "max": 11
+        },
+        "bushesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 48,
+          "p10": 48,
+          "median": 48,
+          "p90": 73.10000000000002,
+          "max": 101
+        },
+        "treesNearStart": {
+          "n": 30,
+          "missing": 0,
+          "min": 66,
+          "p10": 77.6,
+          "median": 98,
+          "p90": 134.2,
+          "max": 152
+        },
+        "bushesPer10k": {
+          "n": 30,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.7734375,
+          "median": 97.35107421875,
+          "p90": 108.21533203125,
+          "max": 130.615234375
+        },
+        "scrapPer1k": {
+          "n": 30,
+          "missing": 0,
+          "min": 600.5859375,
+          "p10": 614.959716796875,
+          "median": 658.26416015625,
+          "p90": 684.99755859375,
+          "max": 721.435546875
+        },
+        "ruinsNearest": {
+          "n": 30,
+          "missing": 0,
+          "min": 22.071067811865476,
+          "p10": 22.071067811865476,
+          "median": 28.69238815542512,
+          "p90": 47.746803743153535,
+          "max": 68
+        },
+        "benchTiles": {
+          "n": 30,
+          "missing": 0,
+          "min": 153,
+          "p10": 155,
+          "median": 159,
+          "p90": 165.1,
+          "max": 166
+        },
+        "cleanRetained40": {
+          "n": 30,
+          "missing": 0,
+          "min": 2164.9608598162044,
+          "p10": 2326.946305960623,
+          "median": 2775.9686682265383,
+          "p90": 3170.732038102035,
+          "max": 3394.3764418239602
+        },
+        "storageRatio": {
+          "n": 30,
+          "missing": 0,
+          "min": 10.749557397299922,
+          "p10": 11.55385454796734,
+          "median": 13.783359822376058,
+          "p90": 15.74345599852053,
+          "max": 16.853904874994836
+        },
+        "shortestAdequateDam": {
+          "n": 24,
+          "missing": 6,
+          "min": 6,
+          "p10": 7,
+          "median": 10,
+          "p90": 13.7,
+          "max": 17
+        },
+        "peakCleanFlux64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.2312168462857899,
+          "p10": 0.3133745598270561,
+          "median": 1.103435639601852,
+          "p90": 2.1875049238102697,
+          "max": 2.791756465242952
+        },
+        "flatDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 491,
+          "p10": 529.6,
+          "median": 638,
+          "p90": 712.5,
+          "max": 803
+        },
+        "linkedDry40": {
+          "n": 30,
+          "missing": 0,
+          "min": 527,
+          "p10": 603.6,
+          "median": 680,
+          "p90": 783.1,
+          "max": 905
+        },
+        "flatAccessShare": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.796969696969697,
+          "p10": 0.8279232412886259,
+          "median": 0.9256397239144667,
+          "p90": 1,
+          "max": 1
+        },
+        "fertile20": {
+          "n": 30,
+          "missing": 0,
+          "min": 415,
+          "p10": 423.8,
+          "median": 443,
+          "p90": 459,
+          "max": 464
+        },
+        "fertileEmpty20": {
+          "n": 30,
+          "missing": 0,
+          "min": 216,
+          "p10": 236,
+          "median": 274,
+          "p90": 301.90000000000003,
+          "max": 334
+        },
+        "fertileKept20": {
+          "n": 30,
+          "missing": 0,
+          "min": 334,
+          "p10": 345.8,
+          "median": 365,
+          "p90": 385.1,
+          "max": 387
+        },
+        "fertilityPersistence": {
+          "n": 30,
+          "missing": 0,
+          "min": 0.7690631808278867,
+          "p10": 0.7927261551070587,
+          "median": 0.8113423758218576,
+          "p90": 0.8604471157768773,
+          "max": 0.8710407239819005
+        },
+        "safeLost40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 79,
+          "p10": 133.9,
+          "median": 217,
+          "p90": 299.2,
+          "max": 440
+        },
+        "deadLogs20": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 5,
+          "p90": 37.000000000000014,
+          "max": 69
+        },
+        "readyBerries20": {
+          "n": 30,
+          "missing": 0,
+          "min": 144,
+          "p10": 144,
+          "median": 144,
+          "p90": 195.9,
+          "max": 225
+        },
+        "scrap40": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1864.5,
+          "max": 2535
+        },
+        "frontierComponents": {
+          "n": 30,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 2,
+          "p90": 3,
+          "max": 3
+        },
+        "frontierSectors": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 1.9000000000000004,
+          "median": 3,
+          "p90": 3,
+          "max": 4
+        },
+        "science64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 200,
+          "max": 200
+        },
+        "geothermal64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.10000000000000142,
+          "max": 1
+        },
+        "mines64": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 13,
+          "missing": 17,
+          "min": 15.414213562373096,
+          "p10": 16.014213562373094,
+          "median": 26.313708498984763,
+          "p90": 48.46904755831212,
+          "max": 55.669047558312116
+        },
+        "nearestGeothermal": {
+          "n": 3,
+          "missing": 27,
+          "min": 32.284271247461916,
+          "p10": 34.924473272817245,
+          "median": 45.48528137423856,
+          "p90": 49.04995667241112,
+          "max": 49.94112549695426
+        },
+        "nearestMine": {
+          "n": 0,
+          "missing": 30,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "pumpShore2": {
+          "n": 30,
+          "missing": 0,
+          "min": 50,
+          "p10": 50.9,
+          "median": 58,
+          "p90": 66,
+          "max": 69
+        },
+        "pumpShore6": {
+          "n": 30,
+          "missing": 0,
+          "min": 50,
+          "p10": 50.9,
+          "median": 58,
+          "p90": 66,
+          "max": 69
+        },
+        "deepPumpExtraShore": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 15,
+        "largestShare": 0.2,
+        "groups": [
+          {
+            "signature": "3/3/2/2/1/2/1/0",
+            "count": 6,
+            "members": [
+              "islands:3",
+              "islands:5",
+              "islands:7",
+              "islands:8",
+              "islands:22",
+              "islands:26"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/2/1/0",
+            "count": 4,
+            "members": [
+              "islands:2",
+              "islands:10",
+              "islands:11",
+              "islands:24"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/2/1/0",
+            "count": 3,
+            "members": [
+              "islands:18",
+              "islands:27",
+              "islands:29"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/1/1/0",
+            "count": 3,
+            "members": [
+              "islands:12",
+              "islands:19",
+              "islands:21"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/2/0/0",
+            "count": 2,
+            "members": [
+              "islands:1",
+              "islands:13"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/2/1/0",
+            "count": 2,
+            "members": [
+              "islands:14",
+              "islands:15"
+            ]
+          },
+          {
+            "signature": "3/3/1/2/1/2/0/0",
+            "count": 2,
+            "members": [
+              "islands:4",
+              "islands:28"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/0/0/0",
+            "count": 1,
+            "members": [
+              "islands:16"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/1/0/0",
+            "count": 1,
+            "members": [
+              "islands:20"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/3/1/0",
+            "count": 1,
+            "members": [
+              "islands:9"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/1/1/0",
+            "count": 1,
+            "members": [
+              "islands:30"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/3/1/0",
+            "count": 1,
+            "members": [
+              "islands:6"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/2/0/0",
+            "count": 1,
+            "members": [
+              "islands:25"
+            ]
+          },
+          {
+            "signature": "3/3/2/2/1/1/1/0",
+            "count": 1,
+            "members": [
+              "islands:17"
+            ]
+          },
+          {
+            "signature": "3/3/2/2/1/2/0/0",
+            "count": 1,
+            "members": [
+              "islands:23"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              0,
+              0,
+              0,
+              30,
+              0
+            ],
+            "largestShare": 1
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              8,
+              4,
+              8,
+              10,
+              0
+            ],
+            "largestShare": 0.3333333333333333
+          },
+          "flatDry40": {
+            "counts": [
+              0,
+              2,
+              28,
+              0,
+              0
+            ],
+            "largestShare": 0.9333333333333333
+          },
+          "fertilityPersistence": {
+            "counts": [
+              0,
+              0,
+              30,
+              0
+            ],
+            "largestShare": 1
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              30,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              1,
+              6,
+              21,
+              2,
+              0
+            ],
+            "largestShare": 0.7
+          },
+          "frontierComponents": {
+            "counts": [
+              8,
+              22,
+              0,
+              0
+            ],
+            "largestShare": 0.7333333333333333
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              30,
+              0,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          }
+        },
+        "pairDistance": {
+          "n": 435,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.041666666666666664,
+          "median": 0.10416666666666666,
+          "p90": 0.1875,
+          "max": 0.2708333333333333
+        },
+        "nearestDistance": {
+          "n": 30,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.041666666666666664,
+          "max": 0.041666666666666664
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 18,
+          "largestShare": 0.16666666666666666,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.125,
+            "p90": 0.22916666666666666,
+            "max": 0.3333333333333333
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.08333333333333333
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 22,
+          "largestShare": 0.1,
+          "pairDistance": {
+            "n": 435,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.041666666666666664,
+            "median": 0.125,
+            "p90": 0.22916666666666666,
+            "max": 0.3125
+          },
+          "nearestDistance": {
+            "n": 30,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0.041666666666666664,
+            "p90": 0.04583333333333339,
+            "max": 0.08333333333333333
+          }
+        }
+      ]
+    },
+    "all": {
+      "requested": 180,
+      "passed": 180,
+      "firstAttempt": 179,
+      "totalAttempts": 181,
+      "misses": {
+        "plants.drought": 161,
+        "water.reservoir": 4
+      },
+      "metrics": {
+        "measurementVersion": {
+          "n": 180,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "thorns": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 46.099999999999994,
+          "max": 67
+        },
+        "cores": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "relics": {
+          "n": 180,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 5
+        },
+        "geothermal": {
+          "n": 180,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "mines": {
+          "n": 180,
+          "missing": 0,
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 2,
+          "max": 2
+        },
+        "edgeExits": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 3,
+          "max": 4
+        },
+        "heightRange": {
+          "n": 180,
+          "missing": 0,
+          "min": 10,
+          "p10": 10,
+          "median": 10,
+          "p90": 13,
+          "max": 14
+        },
+        "cliffShare": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.05364990234375,
+          "p10": 0.060400390625,
+          "median": 0.10821533203125,
+          "p90": 0.146392822265625,
+          "max": 0.1754150390625
+        },
+        "step1Share": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.13735070575461455,
+          "p10": 0.39965425837328655,
+          "median": 0.5800398473782871,
+          "p90": 0.7405826997697413,
+          "max": 0.7967828418230563
+        },
+        "flatShare": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.56378173828125,
+          "p10": 0.595849609375,
+          "median": 0.69171142578125,
+          "p90": 0.77200927734375,
+          "max": 0.8033447265625
+        },
+        "maxHeight": {
+          "n": 180,
+          "missing": 0,
+          "min": 16,
+          "p10": 16,
+          "median": 16,
+          "p90": 16,
+          "max": 16
+        },
+        "reach": {
+          "n": 180,
+          "missing": 0,
+          "min": 1385,
+          "p10": 1771.2,
+          "median": 3740.5,
+          "p90": 9621.599999999999,
+          "max": 11455
+        },
+        "rivers": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 3,
+          "p90": 4,
+          "max": 5
+        },
+        "edgeRivers": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 2
+        },
+        "meander": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.0003117501838850641,
+          "p10": 0.005080640106818202,
+          "median": 0.07674680811754885,
+          "p90": 0.30086968111068524,
+          "max": 0.3955624936731846
+        },
+        "sinuosity": {
+          "n": 180,
+          "missing": 0,
+          "min": 1.0000048689660228,
+          "p10": 1.0007820088570365,
+          "median": 1.0510566586792147,
+          "p90": 1.4235779905542303,
+          "max": 1.5387342249522047
+        },
+        "cleanStrength": {
+          "n": 180,
+          "missing": 0,
+          "min": 3.5980000000000008,
+          "p10": 3.5999999999999996,
+          "median": 6.304,
+          "p90": 14.418000000000001,
+          "max": 14.424000000000003
+        },
+        "badwaterStrength": {
+          "n": 180,
+          "missing": 0,
+          "min": 1.08,
+          "p10": 1.08,
+          "median": 2.3449999999999998,
+          "p90": 4.7,
+          "max": 4.7
+        },
+        "badwaterSources": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 2
+        },
+        "basins20": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 3,
+          "p90": 4,
+          "max": 6
+        },
+        "lakes": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 3,
+          "p90": 4,
+          "max": 4
+        },
+        "waterfalls": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 2,
+          "p90": 6,
+          "max": 11
+        },
+        "bedDrops2": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 1.5,
+          "p90": 9.099999999999994,
+          "max": 13
+        },
+        "waterShare": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.037841796875,
+          "p10": 0.042950439453125,
+          "median": 0.08514404296875,
+          "p90": 0.334466552734375,
+          "max": 0.35662841796875
+        },
+        "bestDam": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 486.9,
+          "median": 1977.5,
+          "p90": 8810.199999999999,
+          "max": 10098
+        },
+        "bestDamDepth": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 1.0948066532722618,
+          "median": 1.4267608082416874,
+          "p90": 2.000095602294455,
+          "max": 2.06993006993007
+        },
+        "natural": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 99.63755026285722,
+          "p90": 3240.913840768835,
+          "max": 4076.8178802499747
+        },
+        "damSites": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 2,
+          "median": 6,
+          "p90": 10,
+          "max": 13
+        },
+        "badwaterDistance": {
+          "n": 180,
+          "missing": 0,
+          "min": 15.4,
+          "p10": 16.7,
+          "median": 19.9,
+          "p90": 23,
+          "max": 24.2
+        },
+        "waterDistance": {
+          "n": 180,
+          "missing": 0,
+          "min": 2.414213562373095,
+          "p10": 4.397056274847714,
+          "median": 6.414213562373095,
+          "p90": 8.242640687119284,
+          "max": 9.414213562373096
+        },
+        "treesPer10k": {
+          "n": 180,
+          "missing": 0,
+          "min": 831.9091796875,
+          "p10": 848.388671875,
+          "median": 1057.12890625,
+          "p90": 1270.751953125,
+          "max": 1274.4140625
+        },
+        "livingShare": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.39260969976905313,
+          "p10": 0.4079269167785976,
+          "median": 0.4308988991419783,
+          "p90": 0.46516912092815704,
+          "max": 0.5682471264367817
+        },
+        "groveMedian": {
+          "n": 180,
+          "missing": 0,
+          "min": 7,
+          "p10": 9,
+          "median": 10,
+          "p90": 11,
+          "max": 15
+        },
+        "bushesNearStart": {
+          "n": 180,
+          "missing": 0,
+          "min": 34,
+          "p10": 48,
+          "median": 48,
+          "p90": 65,
+          "max": 101
+        },
+        "treesNearStart": {
+          "n": 180,
+          "missing": 0,
+          "min": 45,
+          "p10": 59,
+          "median": 82,
+          "p90": 122.1,
+          "max": 211
+        },
+        "bushesPer10k": {
+          "n": 180,
+          "missing": 0,
+          "min": 91.552734375,
+          "p10": 92.71240234375,
+          "median": 97.96142578125,
+          "p90": 111.75537109375,
+          "max": 134.27734375
+        },
+        "scrapPer1k": {
+          "n": 180,
+          "missing": 0,
+          "min": 509.94873046875,
+          "p10": 643.61572265625,
+          "median": 779.571533203125,
+          "p90": 939.3310546875,
+          "max": 1010.7421875
+        },
+        "ruinsNearest": {
+          "n": 180,
+          "missing": 0,
+          "min": 22,
+          "p10": 22.142135623730955,
+          "median": 28.985281374238575,
+          "p90": 44.77544007200505,
+          "max": 69.48528137423855
+        },
+        "benchTiles": {
+          "n": 180,
+          "missing": 0,
+          "min": 104,
+          "p10": 114,
+          "median": 119,
+          "p90": 175,
+          "max": 189
+        },
+        "cleanRetained40": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 93.20114293307134,
+          "p90": 3234.247872078355,
+          "max": 4053.9659762499746
+        },
+        "storageRatio": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0.4627663502138596,
+          "p90": 16.058827567419836,
+          "max": 20.12892738952321
+        },
+        "shortestAdequateDam": {
+          "n": 166,
+          "missing": 14,
+          "min": 2,
+          "p10": 3,
+          "median": 4,
+          "p90": 12,
+          "max": 17
+        },
+        "peakCleanFlux64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.04448071679908353,
+          "p10": 0.925091882023976,
+          "median": 1.1889184054882107,
+          "p90": 1.8760632562844854,
+          "max": 2.791756465242952
+        },
+        "flatDry40": {
+          "n": 180,
+          "missing": 0,
+          "min": 104,
+          "p10": 114,
+          "median": 121,
+          "p90": 884.0999999999999,
+          "max": 1082
+        },
+        "linkedDry40": {
+          "n": 180,
+          "missing": 0,
+          "min": 370,
+          "p10": 576.8000000000001,
+          "median": 838.5,
+          "p90": 1406,
+          "max": 2117
+        },
+        "flatAccessShare": {
+          "n": 180,
+          "missing": 0,
+          "min": 0.05904581955597544,
+          "p10": 0.0886995640834,
+          "median": 0.16891696912303233,
+          "p90": 0.9985802236227179,
+          "max": 1
+        },
+        "fertile20": {
+          "n": 180,
+          "missing": 0,
+          "min": 128,
+          "p10": 176.9,
+          "median": 319.5,
+          "p90": 542,
+          "max": 621
+        },
+        "fertileEmpty20": {
+          "n": 180,
+          "missing": 0,
+          "min": 32,
+          "p10": 63.900000000000006,
+          "median": 185.5,
+          "p90": 359.1,
+          "max": 452
+        },
+        "fertileKept20": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 376,
+          "max": 394
+        },
+        "fertilityPersistence": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.8065407925407926,
+          "max": 0.8710407239819005
+        },
+        "safeLost40": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "logs20": {
+          "n": 180,
+          "missing": 0,
+          "min": 42,
+          "p10": 83.50000000000001,
+          "median": 178,
+          "p90": 316.4999999999999,
+          "max": 635
+        },
+        "deadLogs20": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 8,
+          "p90": 80,
+          "max": 573
+        },
+        "readyBerries20": {
+          "n": 180,
+          "missing": 0,
+          "min": 102,
+          "p10": 123,
+          "median": 144,
+          "p90": 171,
+          "max": 225
+        },
+        "scrap40": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 886.4999999999999,
+          "max": 2535
+        },
+        "frontierComponents": {
+          "n": 180,
+          "missing": 0,
+          "min": 1,
+          "p10": 2,
+          "median": 3,
+          "p90": 5,
+          "max": 8
+        },
+        "frontierSectors": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 2,
+          "median": 5,
+          "p90": 8,
+          "max": 8
+        },
+        "science64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 200,
+          "max": 1000
+        },
+        "geothermal64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 1,
+          "max": 2
+        },
+        "mines64": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "nearestRelic": {
+          "n": 110,
+          "missing": 70,
+          "min": 15.414213562373096,
+          "p10": 21.232590180780452,
+          "median": 59.74873734152914,
+          "p90": 96.37665940288697,
+          "max": 122.49747468305824
+        },
+        "nearestGeothermal": {
+          "n": 68,
+          "missing": 112,
+          "min": 31.384776310850242,
+          "p10": 43.603657992645914,
+          "median": 75.73401871576769,
+          "p90": 110.84772721475245,
+          "max": 128.3969696196699
+        },
+        "nearestMine": {
+          "n": 33,
+          "missing": 147,
+          "min": 73.5979797464466,
+          "p10": 86.28914857098977,
+          "median": 103.84062043356589,
+          "p90": 125.87249634685271,
+          "max": 128.88225099390849
+        },
+        "pumpShore2": {
+          "n": 180,
+          "missing": 0,
+          "min": 8,
+          "p10": 25,
+          "median": 53,
+          "p90": 68,
+          "max": 112
+        },
+        "pumpShore6": {
+          "n": 180,
+          "missing": 0,
+          "min": 8,
+          "p10": 25,
+          "median": 53,
+          "p90": 69,
+          "max": 114
+        },
+        "deepPumpExtraShore": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 2,
+          "max": 7
+        }
+      },
+      "clusters": {
+        "factor": 1,
+        "distinct": 59,
+        "largestShare": 0.08333333333333333,
+        "groups": [
+          {
+            "signature": "0/2/0/0/1/1/1/0",
+            "count": 15,
+            "members": [
+              "riverValley:2",
+              "riverValley:6",
+              "riverValley:11",
+              "canyon:2",
+              "canyon:3",
+              "canyon:7",
+              "canyon:8",
+              "canyon:9",
+              "canyon:11",
+              "canyon:13",
+              "canyon:23",
+              "canyon:26",
+              "highlands:20",
+              "highlands:22",
+              "highlands:25"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/0",
+            "count": 10,
+            "members": [
+              "riverValley:8",
+              "riverValley:24",
+              "canyon:17",
+              "canyon:18",
+              "canyon:19",
+              "canyon:21",
+              "canyon:25",
+              "canyon:29",
+              "canyon:30",
+              "highlands:21"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/0",
+            "count": 9,
+            "members": [
+              "riverValley:22",
+              "highlands:3",
+              "delta:6",
+              "delta:9",
+              "delta:15",
+              "delta:17",
+              "delta:18",
+              "delta:19",
+              "delta:25"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/2/1/0",
+            "count": 9,
+            "members": [
+              "lakeBasin:8",
+              "lakeBasin:16",
+              "lakeBasin:19",
+              "lakeBasin:22",
+              "lakeBasin:23",
+              "lakeBasin:24",
+              "lakeBasin:26",
+              "lakeBasin:28",
+              "lakeBasin:30"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/1/0",
+            "count": 8,
+            "members": [
+              "riverValley:5",
+              "highlands:4",
+              "highlands:13",
+              "highlands:19",
+              "highlands:24",
+              "delta:14",
+              "delta:20",
+              "delta:22"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/0",
+            "count": 7,
+            "members": [
+              "canyon:10",
+              "canyon:15",
+              "highlands:2",
+              "highlands:10",
+              "highlands:15",
+              "delta:8",
+              "delta:11"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/0",
+            "count": 7,
+            "members": [
+              "riverValley:12",
+              "riverValley:13",
+              "riverValley:21",
+              "highlands:26",
+              "delta:3",
+              "delta:7",
+              "delta:30"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/0",
+            "count": 6,
+            "members": [
+              "riverValley:18",
+              "riverValley:30",
+              "canyon:6",
+              "canyon:12",
+              "highlands:5",
+              "highlands:30"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/1/0",
+            "count": 6,
+            "members": [
+              "riverValley:29",
+              "highlands:11",
+              "highlands:23",
+              "delta:10",
+              "delta:13",
+              "delta:23"
+            ]
+          },
+          {
+            "signature": "3/3/2/2/1/2/1/0",
+            "count": 6,
+            "members": [
+              "islands:3",
+              "islands:5",
+              "islands:7",
+              "islands:8",
+              "islands:22",
+              "islands:26"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/1/0",
+            "count": 5,
+            "members": [
+              "riverValley:4",
+              "canyon:1",
+              "canyon:27",
+              "highlands:16",
+              "delta:2"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/2/1",
+            "count": 5,
+            "members": [
+              "riverValley:9",
+              "riverValley:23",
+              "canyon:5",
+              "canyon:28",
+              "highlands:1"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/2/1/1",
+            "count": 4,
+            "members": [
+              "canyon:4",
+              "canyon:14",
+              "canyon:16",
+              "canyon:20"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/0/0",
+            "count": 4,
+            "members": [
+              "delta:4",
+              "delta:26",
+              "delta:28",
+              "delta:29"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/2/1/0",
+            "count": 4,
+            "members": [
+              "lakeBasin:7",
+              "lakeBasin:10",
+              "lakeBasin:15",
+              "lakeBasin:27"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/2/1/0",
+            "count": 4,
+            "members": [
+              "islands:2",
+              "islands:10",
+              "islands:11",
+              "islands:24"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/1/0",
+            "count": 3,
+            "members": [
+              "riverValley:19",
+              "riverValley:20",
+              "highlands:9"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/2/2/1",
+            "count": 3,
+            "members": [
+              "riverValley:15",
+              "highlands:8",
+              "highlands:17"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/2/1/0",
+            "count": 3,
+            "members": [
+              "islands:18",
+              "islands:27",
+              "islands:29"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/1/1/0",
+            "count": 3,
+            "members": [
+              "lakeBasin:12",
+              "lakeBasin:18",
+              "lakeBasin:29"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/3/2/0",
+            "count": 3,
+            "members": [
+              "lakeBasin:4",
+              "lakeBasin:17",
+              "lakeBasin:25"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/1/1/0",
+            "count": 3,
+            "members": [
+              "islands:12",
+              "islands:19",
+              "islands:21"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/0/2/0",
+            "count": 2,
+            "members": [
+              "riverValley:1",
+              "canyon:22"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/1/0",
+            "count": 2,
+            "members": [
+              "riverValley:3",
+              "canyon:24"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/3/2/0",
+            "count": 2,
+            "members": [
+              "riverValley:26",
+              "delta:24"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/2/0",
+            "count": 2,
+            "members": [
+              "delta:1",
+              "delta:16"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/0/2/1",
+            "count": 2,
+            "members": [
+              "highlands:6",
+              "highlands:28"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/1/2/1",
+            "count": 2,
+            "members": [
+              "riverValley:7",
+              "riverValley:10"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/1/0",
+            "count": 2,
+            "members": [
+              "highlands:29",
+              "delta:21"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/2/0",
+            "count": 2,
+            "members": [
+              "riverValley:25",
+              "riverValley:28"
+            ]
+          },
+          {
+            "signature": "3/0/2/1/1/2/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:3",
+              "lakeBasin:11"
+            ]
+          },
+          {
+            "signature": "3/0/2/1/1/2/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:5",
+              "lakeBasin:20"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/2/0/0",
+            "count": 2,
+            "members": [
+              "islands:1",
+              "islands:13"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/3/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:9",
+              "lakeBasin:21"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/2/1/0",
+            "count": 2,
+            "members": [
+              "islands:14",
+              "islands:15"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/2/2/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:2",
+              "lakeBasin:6"
+            ]
+          },
+          {
+            "signature": "3/2/2/1/1/3/1/0",
+            "count": 2,
+            "members": [
+              "lakeBasin:1",
+              "lakeBasin:14"
+            ]
+          },
+          {
+            "signature": "3/3/1/2/1/2/0/0",
+            "count": 2,
+            "members": [
+              "islands:4",
+              "islands:28"
+            ]
+          },
+          {
+            "signature": "0/1/0/0/1/1/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:27"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/1/1",
+            "count": 1,
+            "members": [
+              "highlands:14"
+            ]
+          },
+          {
+            "signature": "0/2/0/0/1/1/2/1",
+            "count": 1,
+            "members": [
+              "highlands:18"
+            ]
+          },
+          {
+            "signature": "0/2/0/1/1/0/1/0",
+            "count": 1,
+            "members": [
+              "delta:27"
+            ]
+          },
+          {
+            "signature": "0/2/0/1/1/2/2/0",
+            "count": 1,
+            "members": [
+              "delta:5"
+            ]
+          },
+          {
+            "signature": "1/1/0/0/1/0/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:16"
+            ]
+          },
+          {
+            "signature": "1/1/0/0/1/1/0/0",
+            "count": 1,
+            "members": [
+              "riverValley:14"
+            ]
+          },
+          {
+            "signature": "1/2/0/0/1/3/2/1",
+            "count": 1,
+            "members": [
+              "highlands:7"
+            ]
+          },
+          {
+            "signature": "1/2/0/1/1/1/2/1",
+            "count": 1,
+            "members": [
+              "highlands:12"
+            ]
+          },
+          {
+            "signature": "1/2/0/1/1/2/2/1",
+            "count": 1,
+            "members": [
+              "riverValley:17"
+            ]
+          },
+          {
+            "signature": "1/3/0/0/1/0/2/0",
+            "count": 1,
+            "members": [
+              "delta:12"
+            ]
+          },
+          {
+            "signature": "1/3/0/0/1/1/1/0",
+            "count": 1,
+            "members": [
+              "highlands:27"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/0/0/0",
+            "count": 1,
+            "members": [
+              "islands:16"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/1/0/0",
+            "count": 1,
+            "members": [
+              "islands:20"
+            ]
+          },
+          {
+            "signature": "3/0/2/2/1/3/1/0",
+            "count": 1,
+            "members": [
+              "islands:9"
+            ]
+          },
+          {
+            "signature": "3/1/2/1/1/1/1/0",
+            "count": 1,
+            "members": [
+              "lakeBasin:13"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/1/1/0",
+            "count": 1,
+            "members": [
+              "islands:30"
+            ]
+          },
+          {
+            "signature": "3/1/2/2/1/3/1/0",
+            "count": 1,
+            "members": [
+              "islands:6"
+            ]
+          },
+          {
+            "signature": "3/2/2/2/1/2/0/0",
+            "count": 1,
+            "members": [
+              "islands:25"
+            ]
+          },
+          {
+            "signature": "3/3/2/2/1/1/1/0",
+            "count": 1,
+            "members": [
+              "islands:17"
+            ]
+          },
+          {
+            "signature": "3/3/2/2/1/2/0/0",
+            "count": 1,
+            "members": [
+              "islands:23"
+            ]
+          }
+        ],
+        "marginal": {
+          "storageRatio": {
+            "counts": [
+              63,
+              57,
+              0,
+              60,
+              0
+            ],
+            "largestShare": 0.35
+          },
+          "peakCleanFlux64": {
+            "counts": [
+              12,
+              14,
+              142,
+              12,
+              0
+            ],
+            "largestShare": 0.7888888888888889
+          },
+          "flatDry40": {
+            "counts": [
+              120,
+              2,
+              58,
+              0,
+              0
+            ],
+            "largestShare": 0.6666666666666666
+          },
+          "fertilityPersistence": {
+            "counts": [
+              116,
+              34,
+              30,
+              0
+            ],
+            "largestShare": 0.6444444444444445
+          },
+          "badwaterDistance": {
+            "counts": [
+              0,
+              180,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 1
+          },
+          "logs20": {
+            "counts": [
+              18,
+              58,
+              86,
+              18,
+              0
+            ],
+            "largestShare": 0.4777777777777778
+          },
+          "frontierComponents": {
+            "counts": [
+              15,
+              99,
+              66,
+              0
+            ],
+            "largestShare": 0.55
+          },
+          "deepPumpExtraShore": {
+            "counts": [
+              159,
+              21,
+              0,
+              0,
+              0
+            ],
+            "largestShare": 0.8833333333333333
+          }
+        },
+        "pairDistance": {
+          "n": 16110,
+          "missing": 0,
+          "min": 0,
+          "p10": 0.0625,
+          "median": 0.20833333333333331,
+          "p90": 0.4583333333333333,
+          "max": 0.6666666666666666
+        },
+        "nearestDistance": {
+          "n": 180,
+          "missing": 0,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.041666666666666664,
+          "max": 0.0625
+        }
+      },
+      "sensitivity": [
+        {
+          "factor": 0.8,
+          "distinct": 97,
+          "largestShare": 0.07222222222222222,
+          "pairDistance": {
+            "n": 16110,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.08333333333333333,
+            "median": 0.24999999999999997,
+            "p90": 0.4791666666666667,
+            "max": 0.6666666666666666
+          },
+          "nearestDistance": {
+            "n": 180,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.08333333333333333
+          }
+        },
+        {
+          "factor": 1.2,
+          "distinct": 80,
+          "largestShare": 0.09444444444444444,
+          "pairDistance": {
+            "n": 16110,
+            "missing": 0,
+            "min": 0,
+            "p10": 0.08333333333333333,
+            "median": 0.22916666666666666,
+            "p90": 0.41666666666666663,
+            "max": 0.6041666666666666
+          },
+          "nearestDistance": {
+            "n": 180,
+            "missing": 0,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.041666666666666664,
+            "max": 0.08333333333333333
+          }
+        }
+      ]
+    }
+  }
+}
