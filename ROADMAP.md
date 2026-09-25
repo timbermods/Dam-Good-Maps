@@ -19,6 +19,9 @@ differently, this file wins.
   marked **in-game check** does not stop or wait: it lists the checks it would have needed in
   [docs/ingame-log.md](docs/ingame-log.md) as *pending*, with the files to play, and relies on the
   automated validation and tests. The game stays the final judge once the checks are played.
+  The one exception is a **DGM Probe batch** (D116, D117): an automated run of maps in the real
+  game, launched only after Claude asks Kyler in chat and Kyler says yes, every time (CLAUDE.md,
+  Standing rules). A step whose gate is a probe batch waits for it.
 - **Effort** is the recommended Claude effort level for building the milestone: **xhigh** for
   architecture-setting or algorithm-heavy work, **high** for the rest.
 
@@ -735,8 +738,14 @@ the stages replace its order, and its premises become recipes inside the system 
     same bytes for the same seed in Node and Chrome; 0 disagreements with the Python oracle; the
     budgets (128² under 3 s, 256² within its budget); every editor test still passes, generated
     fields added to the incremental-rebuild property test.
-  - Release: **M9a must pass Kyler's play test of at least two of its maps before it's released
-    publicly, and before any public beta.**
+  - Release: **M9a's in-game gate is a DGM Probe batch** (Kyler, 2026-09-25; PLAN §20 D116,
+    amending D112's play test). The batch runs M9a's maps unattended in the real game and must
+    pass: the maps load, their pre-filled water holds, their objects load, and droughts and
+    badtides behave as the models predict, within the tolerances the batch states before it runs.
+    The probe's own review of its in-game screenshots must find nothing visibly broken. M9a is
+    released publicly, and any public beta opened, only after it passes. The orchestrator asks
+    Kyler before launching it (the probe rule, D117). PR #18 (`investigation/probe`) is merged at
+    a boundary when it is ready, and its INTEGRATION.md adopted as proposals.
 - **M9b: composition and variety** (tag `m9b-done`).
   - Delivers: the recipes (the named premises as forced parts), Variety (`vy`) and Surprise me, the
     8 flow directions (all appear in 100 seeds of each theme, none over 25%), river-network variety

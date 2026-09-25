@@ -26,7 +26,7 @@ If any of these is missing, stop and tell me.
 
 **Working rules.**
 - Build one milestone at a time. Each ends with its acceptance criteria met, tests passing, and a short summary of what changed.
-- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate.
+- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate. The exception is a DGM Probe batch, which plays maps in the real game unattended; it launches Timberborn only after Claude asks Kyler in chat and Kyler says yes, every time (`PLAN.md` §20, D117; `CLAUDE.md`).
 - The editor must never be able to export a file that breaks the game. Load problems block export. Playability and design problems warn. The classes are defined in `PLAN.md` §19.5.
 - Everything works without Claude. Claude features are an add-on.
 

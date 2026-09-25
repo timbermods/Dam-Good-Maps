@@ -4,8 +4,17 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 
 ## Standing rules
 
-- Never launch or drive Timberborn, and never touch installed mods or saves. The maintainer (Kyler) tests in game
-  himself.
+- Claude never launches or drives Timberborn, with one exception: the DGM Probe runner may launch it for an
+  automated probe batch, but only after asking Kyler explicitly and getting Kyler's yes in chat, every time (PLAN
+  §20, D117).
+  - Before each batch, ask in one message: how many maps, which checks, roughly how long it will take, and that it
+    will launch Timberborn. Wait for the yes. Never treat an earlier yes as covering a new batch.
+  - Once Kyler says yes, the batch runs unattended to the end.
+  - Never while Timberborn is already running; never touching Kyler's saves, settings or other mods (probe games
+    never autosave into Kyler's folders, and any file they create is removed afterwards); and only when no other
+    heavy work is running on this machine.
+  - While waiting for the yes, carry on with any work that doesn't need the batch.
+- Never touch installed mods or saves otherwise. The maintainer (Kyler) tests in game himself.
 
 ## Writing README and website text
 
