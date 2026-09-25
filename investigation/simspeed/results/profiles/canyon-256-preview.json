@@ -1,0 +1,65 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "canyon-256-preview",
+  "method": "instrumented-method-wall-v1",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 3,
+  "workloadMs": 553.4290000000001,
+  "workloadCpuMs": 359,
+  "functions": [
+    {
+      "name": "WaterSim.substep",
+      "calls": 1280,
+      "selfUs": 369134.1000000357,
+      "inclusiveUs": 417452.0000000265
+    },
+    {
+      "name": "WaterSim.computeWn",
+      "calls": 641,
+      "selfUs": 49087.70000005461,
+      "inclusiveUs": 49087.70000005461
+    },
+    {
+      "name": "WaterSim.buildActive",
+      "calls": 1280,
+      "selfUs": 48317.899999990914,
+      "inclusiveUs": 48317.899999990914
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 45995.80000001518,
+      "inclusiveUs": 45995.80000001518
+    },
+    {
+      "name": "WaterSim.updateEvapMod",
+      "calls": 640,
+      "selfUs": 39523.799999984476,
+      "inclusiveUs": 88559.60000004052
+    },
+    {
+      "name": "WaterSim.run",
+      "calls": 10,
+      "selfUs": 749.0999999572523,
+      "inclusiveUs": 506944.2999999955
+    },
+    {
+      "name": "WaterSim.volume",
+      "calls": 11,
+      "selfUs": 376.9999999894935,
+      "inclusiveUs": 376.9999999894935
+    },
+    {
+      "name": "WaterSim.updateSeeps",
+      "calls": 640,
+      "selfUs": 183.59999997119303,
+      "inclusiveUs": 183.59999997119303
+    },
+    {
+      "name": "WaterSim.saturation",
+      "calls": 1,
+      "selfUs": 60.00000000130967,
+      "inclusiveUs": 111.89999999987776
+    }
+  ]
+}

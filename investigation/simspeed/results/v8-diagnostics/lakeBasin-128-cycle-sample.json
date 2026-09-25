@@ -1,0 +1,158 @@
+{
+  "id": "lakeBasin-128-cycle-sample",
+  "samplingIntervalUs": 1000,
+  "durationUs": 5459681,
+  "samples": 3222,
+  "functions": [
+    {
+      "name": "substep",
+      "selfUs": 3635483,
+      "inclusiveUs": 3637044
+    },
+    {
+      "name": "updateEvapMod",
+      "selfUs": 697586,
+      "inclusiveUs": 697586
+    },
+    {
+      "name": "moisture",
+      "selfUs": 684551,
+      "inclusiveUs": 738692
+    },
+    {
+      "name": "soilContamination",
+      "selfUs": 109617,
+      "inclusiveUs": 113133
+    },
+    {
+      "name": "updateLife",
+      "selfUs": 92371,
+      "inclusiveUs": 946120
+    },
+    {
+      "name": "post",
+      "selfUs": 88735,
+      "inclusiveUs": 180066
+    },
+    {
+      "name": "CycleModel",
+      "selfUs": 41456,
+      "inclusiveUs": 67118
+    },
+    {
+      "name": "clusterSaturation",
+      "selfUs": 40148,
+      "inclusiveUs": 40148
+    },
+    {
+      "name": "push",
+      "selfUs": 17517,
+      "inclusiveUs": 17517
+    },
+    {
+      "name": "(anonymous)",
+      "selfUs": 10839,
+      "inclusiveUs": 5565681
+    },
+    {
+      "name": "tick",
+      "selfUs": 10738,
+      "inclusiveUs": 5299290
+    },
+    {
+      "name": "WaterSim",
+      "selfUs": 5157,
+      "inclusiveUs": 5157
+    },
+    {
+      "name": "badtideContamination",
+      "selfUs": 3115,
+      "inclusiveUs": 3115
+    },
+    {
+      "name": "sourceScale",
+      "selfUs": 3076,
+      "inclusiveUs": 4653
+    },
+    {
+      "name": "encode",
+      "selfUs": 3071,
+      "inclusiveUs": 4131
+    },
+    {
+      "name": "(garbage collector)",
+      "selfUs": 3059,
+      "inclusiveUs": 3059
+    },
+    {
+      "name": "encodeUtf8String",
+      "selfUs": 2134,
+      "inclusiveUs": 2134
+    },
+    {
+      "name": "curve",
+      "selfUs": 1577,
+      "inclusiveUs": 1577
+    },
+    {
+      "name": "murmur3",
+      "selfUs": 1573,
+      "inclusiveUs": 1573
+    },
+    {
+      "name": "hash32",
+      "selfUs": 1568,
+      "inclusiveUs": 2642
+    },
+    {
+      "name": "buildActive",
+      "selfUs": 1561,
+      "inclusiveUs": 1561
+    },
+    {
+      "name": "pop",
+      "selfUs": 1550,
+      "inclusiveUs": 1550
+    },
+    {
+      "name": "num",
+      "selfUs": 1320,
+      "inclusiveUs": 1320
+    },
+    {
+      "name": "dispatch",
+      "selfUs": 1298,
+      "inclusiveUs": 1298
+    },
+    {
+      "name": "move",
+      "selfUs": 366,
+      "inclusiveUs": 366
+    },
+    {
+      "name": "updateSeeps",
+      "selfUs": 34,
+      "inclusiveUs": 34
+    },
+    {
+      "name": "profile",
+      "selfUs": 0,
+      "inclusiveUs": 5456441
+    },
+    {
+      "name": "(root)",
+      "selfUs": 0,
+      "inclusiveUs": 5459500
+    },
+    {
+      "name": "run",
+      "selfUs": 0,
+      "inclusiveUs": 1117056
+    },
+    {
+      "name": "specifiedStrength",
+      "selfUs": 0,
+      "inclusiveUs": 1320
+    }
+  ]
+}

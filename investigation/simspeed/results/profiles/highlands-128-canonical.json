@@ -1,0 +1,65 @@
+{
+  "buildId": "8087039090477fad7181436702980d513161270779c6cdf69bbf87492ae44726",
+  "id": "highlands-128-canonical",
+  "method": "instrumented-method-wall-v1",
+  "cpuAccounting": "thread",
+  "matrixWorkers": 3,
+  "workloadMs": 731.4405999999999,
+  "workloadCpuMs": 391,
+  "functions": [
+    {
+      "name": "WaterSim.substep",
+      "calls": 3328,
+      "selfUs": 542013.500000003,
+      "inclusiveUs": 600889.8000000133
+    },
+    {
+      "name": "WaterSim.computeWn",
+      "calls": 1665,
+      "selfUs": 80487.39999999452,
+      "inclusiveUs": 80487.39999999452
+    },
+    {
+      "name": "WaterSim.buildActive",
+      "calls": 3328,
+      "selfUs": 58876.300000010815,
+      "inclusiveUs": 58876.300000010815
+    },
+    {
+      "name": "WaterSim.updateEvapMod",
+      "calls": 1664,
+      "selfUs": 40805.20000006436,
+      "inclusiveUs": 119339.80000005795
+    },
+    {
+      "name": "uninstrumented remainder",
+      "calls": 1,
+      "selfUs": 6778.1999999971595,
+      "inclusiveUs": 6778.1999999971595
+    },
+    {
+      "name": "WaterSim.run",
+      "calls": 13,
+      "selfUs": 1785.0999999354826,
+      "inclusiveUs": 722366.5
+    },
+    {
+      "name": "WaterSim.updateSeeps",
+      "calls": 1664,
+      "selfUs": 351.79999999309075,
+      "inclusiveUs": 351.79999999309075
+    },
+    {
+      "name": "WaterSim.volume",
+      "calls": 14,
+      "selfUs": 308.4000000017113,
+      "inclusiveUs": 308.4000000017113
+    },
+    {
+      "name": "WaterSim.saturation",
+      "calls": 1,
+      "selfUs": 34.70000000015716,
+      "inclusiveUs": 1987.5000000010914
+    }
+  ]
+}
