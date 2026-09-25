@@ -1,0 +1,30 @@
+{
+  "fixtures": 12,
+  "settleMaxError": 0,
+  "drought": [
+    {
+      "fixture": "lake_sill",
+      "analytic": 216.14975999999962,
+      "simulated": 217.72924164173514,
+      "relativeError": 0.007307348579686275
+    },
+    {
+      "fixture": "weir",
+      "analytic": 7.560076799999979,
+      "simulated": 7.3557895108806735,
+      "relativeError": 0.02702185368266442
+    },
+    {
+      "fixture": "valley_basin",
+      "analytic": 143.24136959999973,
+      "simulated": 143.7625827961923,
+      "relativeError": 0.003638705756919664
+    }
+  ],
+  "soilSensitivity": {
+    "moistureMax": 0,
+    "soilMax": 0,
+    "dead16": 687,
+    "dead1": 687
+  }
+}

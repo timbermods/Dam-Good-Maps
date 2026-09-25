@@ -1,0 +1,11 @@
+{
+  "name": "dam-good-maps-cycles",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node run.cjs test.ts",
+    "batch": "node run.cjs batch.ts",
+    "serve": "node serve.mjs"
+  },
+  "dependencies": { "ajv": "^8.20.0", "fflate": "^0.8.3", "tsx": "^4.23.15", "typescript": "~5.9.3" }
+}
