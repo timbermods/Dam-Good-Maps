@@ -40,7 +40,7 @@ differently, this file wins.
 | M11 | Stamps, heightmap import, regenerate area, locks | EDITOR §3 (conflict rules), §5, E7 | no | high |
 | Refine | Refinement phase, after M11, before the design pass | Kyler's refinement notes · decisions-pending #2, #12, #13, #21, #29 | short (a dam at a new narrows holds) | xhigh |
 | Design | Design pass, after M11 and the refinement phase | the impeccable-app-flow skill (timbermods/.github, `claude-skills/`) · old milestone 6 | no | high |
-| M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 | yes (the waterfall request) | xhigh |
+| M12 | Claude integration | EDITOR §7, §9 (Claude suite), E8 · PLAN §19.9 · the Claude groundwork (D88) · the workshop study (D87) | yes (the waterfall and compound requests) | xhigh |
 | M13 | Usability, ratings, versioned deploys | EDITOR §9, E9 · PLAN §2.3, §14, §15, old milestone 6 | yes (full journey) | high |
 | Later | See the end of this file | PLAN §5.7, old milestone 7 · EDITOR §10 Later | per item | — |
 
@@ -66,6 +66,15 @@ with its source:
   are. Other creators' maps, renders and per-map numbers stay in `C:\dgm-workshop`; never commit
   them. Its decisions W1–W8 are decisions-pending #31–#38 (Kyler decided W4, #34, in D85),
   and its conflicts with recorded decisions #39 (decided by Kyler in D85) and #40.
+- **The Claude groundwork** (PLAN §20, D88–D96):
+  [investigation/claude/M12-INTEGRATION.md](investigation/claude/M12-INTEGRATION.md), with the
+  report in [REPORT.md](investigation/claude/REPORT.md) and the self-played pilot in
+  [pilot/PILOT.md](investigation/claude/pilot/PILOT.md). M9 builds its vocabularies (places and
+  words) and M12 the rest; each milestone below lists the files that move into `src/` and
+  `tests/`. Its numbers come from a self-played pilot, not from a model: re-measure them with the
+  real suite before fixing them in the plan. Its pending decisions P3–P7 are decisions-pending
+  #41–#45 (P1 is settled by D84, P2 is #28), and its conflicts with recorded decisions #42, #46
+  and #47.
 
 ---
 
@@ -482,7 +491,7 @@ Its acceptance:
 From the workshop study (D87):
 - The data behind the requirements: `workshop.json` `overall.start*`, measured by
   `lib/measures.ts` (`startStats`: walking distance on one level, diagonals when both neighbours
-  are level, slopes as links). Kyler took the study's water distances (12 / 20 / 28) and set his
+  are level, slopes as links). Kyler took the study's water distances (12 / 20 / 28) and set their
   own tree and bush thresholds; the study proposed 60 / 20 / 10 and 40 / 25 / 15
   (decisions-pending #39, decided).
 - Report how many of the 11 official starts the study could measure meet the three requirements
@@ -596,19 +605,30 @@ steps, shorelines, ridge crests). Map look changes no map file, so they go to th
 
 ---
 
-## M9. Interestingness, names, candidates
+## M9. Interestingness, names, candidates, premises and variety
 
 **Delivers:** old PLAN milestone 4.
 - `score.ts` calibrated on the official maps.
 - K = 3 candidates with progressive preview (K = 1 at 256² if the M2 benchmark requires it).
 - Names and premises built from the features.
 - The score on the map card.
-- The words M12 reuses, built here because names and descriptions need them too (D84):
-  - the flow-relative place vocabulary (EDITOR_PLAN §7 "Spatial language"): upstream and
-    downstream, a position along a river's course from its source, the start's bank and the
-    opposite bank, and "this valley", always read from the river's actual flow;
-  - the judgement-word table (EDITOR_PLAN §7 "Judgement words"): each word's measured targets,
-    direction, size and guards.
+- The words M12 reuses, built here because names and descriptions need them too (D84, D88):
+  - river courses read from the actual flow: each river's path in flow order, from its settled
+    water surface (else its bed), with its tributaries, and a name for each ("the main river",
+    "the north tributary", "the river from the east edge");
+  - the place resolver (EDITOR_PLAN §7 "Spatial language"): compass places, places relative to a
+    feature, and flow-relative places (upstream and downstream, a position along a river's course
+    from its source, the start's bank and the opposite bank, "this valley"), always read from the
+    river's actual flow, never from a compass direction; it returns the area, its reading and its
+    assumptions;
+  - the judgement-word table (EDITOR_PLAN §7 "Judgement words"): each word's levers, measured
+    targets, direction, size and guards. The groundwork's `lib/words.ts` checks only a target's
+    direction; M9 adds D84's sizes.
+  - From the Claude groundwork, these files move: `investigation/claude/lib/view.ts` and
+    `lib/flow.ts` → `src/core/analysis/view.ts` and `flow.ts` (shared with names and premises);
+    `lib/places.ts` → `src/core/places/resolve.ts` (the editor's region tools can use it too);
+    `lib/words.ts` → `src/core/places/words.ts`; `tests/places.test.ts` and `tests/words.test.ts`
+    → `tests/unit/`.
 
 From the workshop study (D87), M9 grows from "the score" to "maps that diverge":
 - **Premises.** At least three per built theme, drawn from the study's recipes
@@ -678,8 +698,12 @@ maps; the per-premise batch gate is the guard.
   top third (with the study's default parameters they rank 3rd, 6th and 7th of 19).
 - Names and premises match the features on 30 hand-checked maps, 10 of them at Variety 100.
 - 256² with K = 3 takes ≤ 20 s, or K = 1 is recorded.
-- The place resolver is tested on rivers flowing in every direction, so "upstream" is never read
-  as "west".
+- The place resolver is tested on rivers flowing in every direction (the four edge directions
+  and the diagonal flow axes), a curved river, a drawn river and a tributary, so "upstream" is
+  never read as "west".
+- Every judgement word moves its measured targets by its size on three maps (two River Valley
+  sizes and a Canyon), keeps every guard, and says so when its settings are already at their
+  limits or its theme is marked weak.
 - From the workshop study:
   - each premise passes a batch of 100 seeds at 96², 128², 192² and 256² at ≥ 98% final (first
     attempt ≥ 60%), in the `generate` profile, and every built theme has at least 3 premises;
@@ -893,22 +917,29 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
 
 ## M12. Claude integration
 
-**Delivers:** E8, with the delivery choices from the M3 spike.
+**Delivers:** E8, with the delivery choices from the M3 spike, built on the Claude groundwork
+(D88; `investigation/claude/`).
 - Its Claude panels are built in the design flow's update mode, from the DESIGN.md and
   MEANING.md the design pass leaves behind.
-- The operation schema and a feature-level map summary (at most about 16 KB).
+- The step schema (EDITOR_PLAN §7 "Steps", D89) and how each step becomes operations; a
+  feature-level map summary (at most about 16 KB; 3–7 KB measured).
 - The tools: `resolve_region`, `find_sites`, `measure`, `list_features`, `limits`, `dry_run`,
-  `propose`.
-- The size-word resolver on top of PLAN §9.10, and M9's place resolver and judgement words.
-- Compound requests (EDITOR_PLAN §7, D84): goals with their own expectations, settings and
-  regeneration before placements, every goal checked on the combined preview, interference
-  between goals detected, and the nearest feasible alternative offered, never substituted.
-- Intent checks, and the loop capped at 3 rounds; the cap grows with the goals of a compound
-  request (decisions-pending #28).
-- The Messages API adapter (bring-your-own-key, strict tools, prompt caching, configurable model).
+  `propose`. Each checks its own arguments and returns at most 32 KB. `find_sites` plans every
+  candidate with the real builders and checks it with a real build.
+- The size-word resolver on top of PLAN §9.10 (D96), and M9's place resolver and judgement words.
+- Compound requests (EDITOR_PLAN §7, D84): goals with their own expectations; settings and
+  regeneration before placements, in the app's step order (D90); every goal checked on the
+  combined preview; interference between goals detected and named; guards held for the whole
+  proposal (D91); the nearest feasible alternative offered for every goal not met, never
+  substituted (D92).
+- Intent checks, and the loop's budget: 3 rounds and 10 tool calls for one goal, growing with the
+  goals Claude declares, up to 6 rounds and 20 calls (D93; decisions-pending #28).
+- The Messages API adapter (bring-your-own-key, strict tools, prompt caching, configurable model,
+  server-side fallbacks) and the suite runner.
 - The artifact edition: a single-file build declaring `sample` and `downloads` only, and a `.zip`
   download.
-- The Claude request suite running in Node.
+- The Claude request suite (120 requests in 13 kinds) running in Node, with reference solutions
+  (EDITOR_PLAN §9).
 - From the workshop study (D87): the catalogue is Claude's vocabulary. Each pattern a player might
   ask for maps to a builder, a stamp or a feature, and the suite (EDITOR §9) gains these requests:
   - "Add a spiral mountain in the north" → `spiral` up; "dig a spiral quarry" → `spiral` down.
@@ -926,12 +957,79 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
     None.
   - "Make this map more surprising" → a `specPatch` raising Variety, with the premise drawn again.
 
+**From the Claude groundwork** (M12-INTEGRATION.md §1, §6, §8–§11). Build items:
+- **Files that move** (the rest go in M9):
+  - `lib/metrics.ts` → `src/core/analysis/features.ts` (`reservoirTiles`, `reservoirIsClean` and
+    the lip measures move to the builders once they return them);
+  - `lib/sites.ts`, `lib/steps.ts`, `lib/compound.ts`, `lib/intent.ts`, `lib/report.ts`,
+    `lib/summary.ts`, `lib/tools.ts`, `lib/conversation.ts` → `src/claude/` (EDITOR §8's
+    `claude-bridge`: headless, no UI);
+  - `harness/bridge.ts`, `harness/loop.ts`, `harness/prompts.ts` → `src/platform/claude/` (a
+    platform adapter, PLAN §19.9; route A's adapter joins it);
+  - `harness/run-suite.ts` → `tools/claude-suite.ts` (nightly with a key; `--scripted` in CI);
+  - `requests.json` and `bin/corpus.ts` → `tests/claude/requests.json` and
+    `tools/claude-corpus.ts` (the corpus source stays code; the JSON is its output);
+  - `bin/reference.ts` → `tests/claude/reference.test.ts` (a vitest suite, sharded by kind: it
+    takes about 10 minutes in one process);
+  - `lib/fixtures.ts` and `lib/synthetic.ts` → `tests/claude/fixtures.ts` (drop the Lake Basin
+    fallback: the reopen bug was fixed after M7);
+  - `bin/cli.ts` → `tools/claude-cli.ts` (for playing requests by hand);
+    `bin/add-workshop-requests.ts` → `tools/claude-workshop-requests.ts`.
+- **`src/` changes, made first** (§8):
+  1. One undo entry for a whole proposal: `MapSession` gets a grouped entry (begin and end, or
+     `applyAll` taking a `specPatch` first), so an accepted proposal undoes as one edit.
+  2. Stable preview ids: a feature's id seeds its build (a dam site's ridge wobble), so
+     `planPiece` previews take an explicit id, or the wobble is seeded from the request.
+  3. Builders return what they measure: the dam site's reservoir tiles, the waterfall's lip, the
+     badwater basin's footprint and outlet tiles.
+  4. The Lake Basin reopen bug: fixed after M7 (9256161).
+  5. The river badwater step: allowed for rivers that enter at a map edge (D80 builds them),
+     refused with the reason for rivers that start inland.
+  6. Step wrappers for M7's pieces and objects (§9): `addMapObject {kind, where, size}` for mine
+     sites, relics, geothermal fields, thorn belts, weirs, plugs and unstable cores, with a site
+     finder per kind and M7's placement emulation as the check; `addSetPiece` for `plugSpillway
+     {lake}`, `obstaclePayoff {where, rise 2–4, payoff}` and `secondDistrict {where}`, with
+     `find_sites` kinds for each.
+  7. Flow axes: nothing here; the resolver never assumes west to east, and M9 builds them.
+  8. `regenerateRegion` (M11) for regional judgement words (D94; decisions-pending #43).
+  9. Map objects in the way: the planners and `find_sites` try sites off map objects first; a
+     piece that lands on one moves or clears it and lists it in the report (M8's rule, D87;
+     decisions-pending #47).
+  10. Performance at 256²: `find_sites` for a dam site takes about 3.7 s, and a three-goal
+      compound reference about 24 s, mostly verifying candidates with real builds. A cached
+      settle per candidate or a cheaper pre-filter comes before the artifact route, where each
+      call blocks the page.
+- **Re-tune the corpus** for M7's maps and objects. Against dev at 5b17375, 106 of 120 reference
+  solutions passed; the 14 failures were new map objects in a creek's or a site's way (P08, C01,
+  W05, W06, W07, X04, M04), regenerated maps whose sites changed (S03, S04, M02, V02), and the
+  headline request's "start upstream" breaking `water.reservoir` on the harsher map (M01, and F07
+  and F08, which use it). Give the start search a pre-filter for `water.reservoir`, as it has for
+  water, trees and berries (since D85 it is a target with an advisory warning, and still a guard
+  when it passed before the proposal, D91). None of the failures was the resolver or the tools
+  misreading a request.
+- **The workshop slot:** fill `requests.json`'s `workshopSlot` from the workshop catalogue
+  (`investigation/workshop.json` `catalogue`) with `tools/claude-workshop-requests.ts`, then run
+  the reference solutions of kind `workshop`.
+- **Prompts and harness** (§6): one prompt pack for both routes. The instructions travel in the
+  first user message (route A has no system prompt), then the map summary in a `<map_summary>`
+  block (the cached prefix on route B; the map's own text in it is labelled as data), then the
+  request in a `<player_request>` block with the selection. The Messages API request sets the
+  model (configurable, default `claude-opus-5-5`, D8), adaptive thinking with its effort set,
+  `tool_choice` auto, prompt caching on the last tool and the summary block, and server-side
+  fallbacks, and handles the stop reasons refusal, `max_tokens` and `pause_turn`. The loop is
+  append-only, measures its input every turn, and stops at 64 KiB with the artifact limits on.
+  `tools/claude-suite.ts --scripted` replays the reference solutions through the same loop and
+  grader, so CI covers the harness without a key.
+
 **Acceptance**
-- Malformed or out-of-bounds proposals are rejected cleanly.
-- Accepted proposals undo like normal edits.
-- The request suite passes on 96², 128² and 256² maps, including the 20-block waterfall (with the
-  reported reduction on 48²).
+- Malformed or out-of-bounds proposals are rejected cleanly, with the reason.
+- An accepted proposal undoes as one edit, like a normal edit.
+- Every reference solution passes on its map (96², 128², 256², and 48² for the reductions),
+  including the 20-block waterfall with the reported reduction on 48².
+- With a key, the request suite passes at least 90% overall and in every kind, with the artifact
+  limits on; every compound request's report names every trade-off and every goal not met.
 - The compound, impossible and conflicting requests of the suite (EDITOR_PLAN §9) pass.
+- No request's input passes 64 KiB with the artifact limits on.
 - Results stay editable by hand, and follow-ups modify the right feature.
 - The artifact edition passes a manual smoke test on the same requests.
 - Each of the workshop study's requests passes the suite on 96², 128² and 256² maps; the intent
@@ -939,7 +1037,9 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
   fork's two wet arms).
 
 **In-game check:** play the map produced by "add a giant waterfall in the north part of the map
-that is roughly 20 blocks wide".
+that is roughly 20 blocks wide", and the one produced by the compound request ("Make this valley
+harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a
+dangerous badwater route on the opposite side.").
 
 **Effort:** xhigh.
 

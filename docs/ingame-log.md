@@ -261,6 +261,7 @@ What the file should show (from `checks.txt`):
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
 | M12-1 | Play the map produced by "add a giant waterfall in the north part of the map that is roughly 20 blocks wide". | The waterfall is there, about 20 wide, in the north, and it flows. | set by M12 | pending |
+| M12-2 | Play the map produced by the compound request: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." | The start stands upstream and reaches its water; a dam at the site halfway down holds its reservoir; the badwater runs on the far bank and stays out of the start's water and the reservoir. | set by M12 | pending |
 
 ## M13: usability, design pass, ratings, versioned deploys
 

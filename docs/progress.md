@@ -771,8 +771,11 @@ On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
   decisions wait for Kyler (#31–#33, #35–#38): W1 Reservoir help (#31) and part of W7 (#37) keep
   the recorded decisions until Kyler answers, and #40 logs where the study conflicts with Map look.
 - **PR #5 merged** (`investigation/claude`): the Claude groundwork for M12
-  ([REPORT.md](../investigation/claude/REPORT.md)) and its integration plan
-  ([M12-INTEGRATION.md](../investigation/claude/M12-INTEGRATION.md)).
+  ([REPORT.md](../investigation/claude/REPORT.md)), and its integration plan
+  ([M12-INTEGRATION.md](../investigation/claude/M12-INTEGRATION.md)) adopted into ROADMAP, PLAN
+  and EDITOR_PLAN (D88–D96), merged with Kyler's M12 update: the vocabularies in M9, the rest in
+  M12. P3, P5, P6 and P7 wait for Kyler (#41, #43–#45); P1 is settled by D84, and P2 is #28. #42,
+  #46 and #47 log where it conflicts with D84 and D87.
 - **M12 plan update** (Kyler, D84): compound requests, flow-relative places and a judgement-word
   table (both built in M9), and new suite requests; the loop's budget waits for Kyler (#28).
 - **Refinement note** (Kyler): containment should look natural. A new Refinement phase in
@@ -790,6 +793,9 @@ On `dev` after `m7-done`. Plans only: no code, tests or tools changed.
 - **Part B, Map look** (Kyler, D86): a new step after M8, before M9. The 3D view moves closer to
   the game's look, its ground coloured by moisture; no map file changes. Released with M9 or as
   `map-look-done`.
+- **New pending decisions:** #28–#47 (20 rows). #34 (W4) and #39 (the start thresholds) are
+  already decided by Kyler (D85); the rest wait for Kyler, each with the default the plans follow.
+  #31, #37 (in part), #40, #42, #46 and #47 are conflicts where the recorded decision stays.
 
 ---
 
