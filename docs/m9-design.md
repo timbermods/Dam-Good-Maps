@@ -457,7 +457,7 @@ instead of planned before it:
   and Claude's places. They are not separate features: they are part of the field. Reshaping one
   is a sculpt, a regenerate-area or, from M11, a stamp of the field region.
 
-**Every existing capability** (EDITOR_PLAN §3–§6, progress M3–M8):
+**Every existing capability** (EDITOR_PLAN §3–§6, [progress](progress/README.md) M3–M8):
 
 | Capability | With a field |
 |---|---|

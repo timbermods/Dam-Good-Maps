@@ -301,7 +301,7 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 | M12-1 | Play the map produced by "add a giant waterfall in the north part of the map that is roughly 20 blocks wide". | The waterfall is there, about 20 wide, in the north, and it flows. | set by M12 | pending |
 | M12-2 | Play the map produced by the compound request: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." | The start stands upstream and reaches its water; a dam at the site halfway down holds its reservoir; the badwater runs on the far bank and stays out of the start's water and the reservoir. | set by M12 | pending |
 
-## M13: usability, design pass, ratings, versioned deploys
+## M13: usability, problem reports, versioned deploys
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
@@ -335,4 +335,4 @@ still a draft.
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| T7 | Play two high-verticality maps before 3D-b's public release (D127; investigation/terrain3d/DESIGN.md §8). | They play: the start works, the heights are reachable as planned, the caves and overhangs hold. | set by 3D-b | pending |
+| T7 | A DGM Probe batch of high-verticality maps before 3D-b's public release (D127, as amended by D145: a probe batch, like M9a's gate, instead of Kyler playing two maps; ask Kyler before launching). | They load and play: the start works, the heights are reachable as planned, the caves and overhangs hold. | set by 3D-b | pending |
