@@ -51,7 +51,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from "three";
-import { GROUND, HATCH, HEIGHT_RAMP, LIGHT, WALL, WATER, type Rgb } from "./palette";
+import { GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, type Rgb } from "./palette";
 import { SHADOW_OFFSET, SHADOW_RES, SHADOW_SCALE } from "./light";
 
 const az = LIGHT.sunAzimuth;
@@ -77,6 +77,8 @@ export interface SceneUniforms {
   /** Hatched overlay tiles and their neighbours (`hatchMarks`), and whether there are any. */
   marks: { value: DataTexture };
   hatching: { value: number };
+  /** The information layer (**Markers**): 1 on, 0 off (the clean view). */
+  markers: { value: number };
   mapSize: { value: Vector2 };
   /** The tiling patterns (drawPatterns). */
   patternTex: { value: Texture | null };
@@ -98,6 +100,7 @@ export function sceneUniforms(W: number, H: number, tile: DataTexture, light: Da
     overlay: { value: overlay },
     marks: { value: marks },
     hatching: { value: 0 },
+    markers: { value: 0 },
     mapSize: { value: new Vector2(W, H) },
     patternTex: { value: null },
     viewHeight: { value: 800 },
@@ -266,6 +269,7 @@ const COMMON = /* glsl */ `
   uniform sampler2D overlay;
   uniform sampler2D marks;
   uniform float hatching;
+  uniform float markers;
   uniform vec2 mapSize;
   uniform sampler2D patternTex;
 
@@ -293,18 +297,20 @@ const COMMON = /* glsl */ `
     float lo = s.g * ${f(255 / SHADOW_SCALE)} - ${f(SHADOW_OFFSET)};
     return clamp((z - hi) / max(0.05, lo - hi), 0.0, 1.0);
   }
-  /** Sky light and sun light on a surface: shadows keep about four fifths of the light on the
-   *  ground, with a violet cast, so moist ground in shadow stays lighter than dry ground in sun. */
+  /** Sky light and sun light on a surface: shadows keep about three fifths of the light on the
+   *  ground, with a violet cast (moist ground in shadow still stays lighter than dry ground in
+   *  sun), so shadows read from afar as in the game. */
   vec3 lightOf(vec3 n, float sky, float ao, float lit) {
     float ndl = max(dot(n, sunDir), 0.0);
-    return skyColor * 1.25 * (0.7 + 0.3 * n.y) * ao * sky + sunColor * 0.28 * ndl * lit * mix(1.0, ao, 0.35);
+    return skyColor * 1.0 * (0.7 + 0.3 * n.y) * ao * sky + sunColor * 0.55 * ndl * lit * mix(1.0, ao, 0.35);
   }
   /** A hatched overlay (dam sites) at tile position g: inside, light stripes in the tile's
    *  overlay colour and dark stripes (solid light where a stripe would be under two pixels); just
    *  outside, a dark rim at least a pixel wide. Returns the colour and its weight. */
   vec4 hatchAt(vec2 g, vec3 col) {
-    // (the light look draws a hatched tile plain, in its colour: the overlay's own mix)
-    if (LITE == 1 || hatching < 0.5) return vec4(0.0);
+    // (the light look draws a hatched tile plain, in its colour: the overlay's own mix; the clean
+    // view, with Markers off, none at all)
+    if (LITE == 1 || hatching < 0.5 || markers < 0.5) return vec4(0.0);
     vec2 tile = floor(g);
     vec4 m = texture2D(marks, (tile + 0.5) / mapSize);
     float r = floor(m.r * 255.0 + 0.5);
@@ -334,9 +340,9 @@ const COMMON = /* glsl */ `
   vec3 finish(vec3 c, vec3 world) {
     float d = distance(world, cameraPosition);
     c = mix(c, hazeColor, hazeAmount * smoothstep(hazeRange.x, hazeRange.y, d));
-    c *= vec3(1.04, 1.0, 0.94);
+    c *= vec3(1.01, 1.0, 0.98);
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    c = mix(vec3(l), c, 1.06);
+    c = mix(vec3(l), c, 1.03);
     return clamp(c, 0.0, 1.0);
   }
 `;
@@ -404,20 +410,31 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         float n1 = vnoise(g * 1.3);
         float n2 = vnoise(g * 4.1 + 17.0);
         float n3 = vnoise(g * 19.0 + 5.0) - 0.5;
-        vec2 dry = cracks(g * 1.35);
+        // broad patches, a few tiles to a dozen across, that read from afar
+        float b1 = vnoise(g * 0.09 + 31.0);
+        float b2 = vnoise(g * 0.23 + 57.0);
+        float b3 = vnoise(g * 0.55 + 83.0);
+        vec2 dry = cracks(g * 1.9);
         vec2 rust = cracks(g * 1.2 + 11.3);
-        float edge = (n1 - 0.5) * 0.45 + (n2 - 0.5) * 0.45;
-        float moist = smoothstep(0.4, 0.6, s.x + edge);
+        // grass bleeds onto the earth in ragged patches
+        float edge = (n1 - 0.5) * 0.5 + (n2 - 0.5) * 0.45 + (b3 - 0.5) * 0.4;
+        float moist = smoothstep(0.42, 0.58, s.x + edge);
         float bad = smoothstep(0.4, 0.6, s.z + edge * 0.6);
         float wet = smoothstep(0.4, 0.6, s.w + (n1 - 0.5) * 0.2);
-        // dry: cracked earth, warm grey-brown in greyer patches, each plate its own shade
-        // the crack network is broken here and there, as real cracks are
+        // dry: cracked earth, grey-brown, drifting in broad patches to a cooler grey and a warmer
+        // brown and in lightness; each plate its own shade; the crack network is broken here and
+        // there, as real cracks are, and fainter from afar
         float open = smoothstep(0.2, 0.55, vnoise(g * 0.8 + 3.7));
-        vec3 c = mix(${glColor(GROUND.dryCool)}, ${glColor(GROUND.dry)}, smoothstep(0.25, 0.75, n1 * 0.6 + n2 * 0.4)) * (0.96 + 0.05 * (dry.y - 0.5) + detail * 0.07 * n3);
-        c = mix(c, ${glColor(GROUND.crack)}, dry.x * open * 0.7);
-        // moist: grass, a little darker by the water, with blades up close
+        vec3 c = mix(${glColor(GROUND.dryCool)}, ${glColor(GROUND.dry)}, smoothstep(0.28, 0.68, b1));
+        c = mix(c, ${glColor(GROUND.dryWarm)}, smoothstep(0.5, 0.8, b2) * 0.6);
+        c *= (0.97 + 0.16 * (b3 - 0.5) + 0.08 * (n1 - 0.5)) * (0.96 + 0.05 * (dry.y - 0.5) + detail * 0.07 * n3);
+        c = mix(c, ${glColor(GROUND.crack)}, dry.x * open * (0.4 + 0.25 * detail));
+        // moist: grass, deeper green by the water, in lighter and deeper patches and darker
+        // blotches, with blades up close
         vec3 grass = mix(${glColor(GROUND.moistLow)}, ${glColor(GROUND.moistHigh)}, clamp((s.y - 1.0) / 9.0, 0.0, 1.0));
-        c = mix(c, grass * (0.95 + 0.12 * (n1 - 0.5) + 0.1 * (n2 - 0.5) + detail * 0.2 * n3), moist);
+        grass = mix(grass, grass * vec3(0.84, 0.93, 0.86), smoothstep(0.45, 0.75, b2));
+        float blot = smoothstep(0.62, 0.82, vnoise(g * 0.7 + 5.3));
+        c = mix(c, grass * (0.84 + 0.18 * b1 + 0.1 * (n1 - 0.5) + 0.08 * (n2 - 0.5) + detail * 0.2 * n3) * (1.0 - 0.12 * blot), moist);
         // contaminated: rusty cracked earth; its cracks glow (added after the light)
         c = mix(c, ${glColor(GROUND.contaminated)} * (0.94 + 0.08 * (rust.y - 0.5) + detail * 0.08 * n3), bad);
         glow = bad * rust.x * (1.0 - wet) * (0.35 + 0.65 * open);
@@ -481,8 +498,8 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
           float ox = min(max(hx - h0, 0.0), 2.0) * 0.5 * rx;
           float oy = min(max(hy - h0, 0.0), 2.0) * 0.5 * ry;
           float od = min(max(hd - h0, 0.0), 2.0) * 0.5 * rx * ry * (1.0 - max(step(0.5, hx - h0), step(0.5, hy - h0)));
-          float ao = 1.0 - 0.4 * clamp(ox + oy + od - ox * oy, 0.0, 1.0);
-          light = lightOf(n, mix(0.72, 1.0, sky), ao, sunLit(g, h0));
+          float ao = 1.0 - 0.55 * clamp(ox + oy + od - ox * oy, 0.0, 1.0);
+          light = lightOf(n, mix(0.55, 1.0, sky), ao, sunLit(g, h0));
           if (vWorld.y < h0 - 0.5) {
             // a floor under an overhang (a cave's or a ledge's): the top's soil, never its water,
             // in the overhang's shade
@@ -495,9 +512,9 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
           c = ${glColor(WALL.mortar)};
           light = lightOf(n, 0.5, 0.6, 0.0);
         } else {
-          // a wall: stone in faint cobbles, every other level a shade darker, a pale ledge at the top
-          // of each level over a dark groove at the foot of the next (each at least a pixel wide,
-          // and gone where a level is under three pixels), and a lip of the top's ground
+          // a wall: dark cobbled stone, every other level a shade darker; with Markers, a pale ledge
+          // at the top of each level over a dark groove at the foot of the next (each at least a
+          // pixel wide, and gone where a level is under three pixels); a lip of the top's ground
           vec2 out2 = vec2(n.x, -n.z);
           vec2 air = floor(g + out2 * 0.5);
           float base = heightOf(tileAt(air));
@@ -511,9 +528,9 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
             float k = cobble(vec2(along * 2.0, y * 2.0));
           #endif
           float shade = mix(${f(WALL.low)}, ${f(WALL.high)}, clamp(level / 16.0, 0.0, 1.0)) * (mod(level, 2.0) > 0.5 ? ${f(WALL.alternate)} : 1.0);
-          vec3 wc = ${glColor(WALL.stone)} * shade * (0.93 + 0.07 * smoothstep(0.1, 0.4, k)) * (0.97 + 0.08 * (k - 0.5));
+          vec3 wc = mix(${glColor(WALL.mortar)}, ${glColor(WALL.stone)} * shade * (0.78 + 0.44 * (k - 0.5)), smoothstep(0.1, 0.4, k));
           float py = fwidth(y);
-          float lines = 1.0 - smoothstep(0.22, 0.34, py);
+          float lines = (1.0 - smoothstep(0.22, 0.34, py)) * markers;
           float lw = max(0.09, 1.2 * py);
           float gw = max(0.035, 0.8 * py);
           wc = mix(wc, ${glColor(WALL.ledge)} * shade, smoothstep(1.0 - lw - py * 0.5, 1.0 - lw + py * 0.5, fy) * lines);
@@ -530,7 +547,7 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         c += ${glColor(GROUND.contaminatedGlow)} * glow * 0.42;
         vec4 o = texture2D(overlay, (tile + 0.5) / mapSize);
         if (o.a < 0.998) c = mix(c, o.rgb * (0.8 + 0.2 * min(light.g, 1.0)), o.a);
-        else c = mix(c, o.rgb, n.y > 0.5 ? float(LITE) : 0.5);
+        else c = mix(c, o.rgb, (n.y > 0.5 ? float(LITE) : 0.5) * markers);
         if (n.y > 0.5) {
           vec4 hatch = hatchAt(g, o.rgb * (0.88 + 0.12 * min(light.g, 1.0)));
           c = mix(c, hatch.rgb, hatch.a);
@@ -673,7 +690,9 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         foam = clamp(foam, 0.0, 1.0);
         vec3 c = mix(clean, murky, bad);
         float lit = sunLit(g, vWorld.y);
-        vec3 light = skyColor * 1.2 + sunColor * 0.3 * max(dot(N, sunDir), 0.0) * lit;
+        // (a little brighter than the ground's light: the bed shows through darker in the clean
+        // look's deeper shade, and clean water stays lighter than dry ground)
+        vec3 light = skyColor * 1.34 + sunColor * 0.3 * max(dot(N, sunDir), 0.0) * lit;
         c *= light;
         // the sky's reflection, stronger at low angles; pale ripples; the sun's glint and glints
         // (none on a fall: a sheet seen edge-on would mirror the sky in patches)
@@ -688,10 +707,9 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         if (n.y > 0.5) alpha = mix(alpha, 0.95, max(foam, glints * 0.6));
         if (n.y > 0.5) {
           vec4 o = texture2D(overlay, (floor(g) + 0.5) / mapSize);
-          if (o.a < 0.998 || LITE == 1) {
-            c = mix(c, o.rgb, o.a * 0.85);
-            alpha = mix(alpha, 1.0, o.a * 0.6);
-          }
+          float oa = o.a < 0.998 ? o.a : o.a * markers * float(LITE);
+          c = mix(c, o.rgb, oa * 0.85);
+          alpha = mix(alpha, 1.0, oa * 0.6);
           vec4 hatch = hatchAt(g, o.rgb);
           c = mix(c, hatch.rgb, hatch.a);
           alpha = mix(alpha, 1.0, hatch.a);
@@ -702,6 +720,45 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
     transparent: true,
     depthWrite: false,
     side: DoubleSide,
+  });
+}
+
+/** The sky round the map, drawn behind everything: blue overhead, paler toward the horizon, a
+ *  hazy blue below it, where the map floats, with soft clouds above and below. */
+export function skyMaterial(): ShaderMaterial {
+  return new ShaderMaterial({
+    vertexShader: /* glsl */ `
+      varying vec3 vDir;
+      void main() {
+        vec4 v = inverse(projectionMatrix) * vec4(position.xy, 1.0, 1.0);
+        vDir = transpose(mat3(viewMatrix)) * (v.xyz / v.w);
+        gl_Position = vec4(position.xy, 0.9999, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      varying vec3 vDir;
+      float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y);
+      }
+      void main() {
+        vec3 d = normalize(vDir);
+        vec3 up = mix(${glColor(SKY.horizon)}, ${glColor(SKY.zenith)}, pow(smoothstep(0.0, 0.5, d.y), 0.7));
+        vec3 down = mix(${glColor(SKY.horizon)}, ${glColor(SKY.below)}, smoothstep(0.0, 0.4, -d.y));
+        vec3 c = d.y > 0.0 ? up : down;
+        // soft clouds on a layer above and one below (the map floats in the sky)
+        vec2 q = d.xz / max(abs(d.y), 0.08) * 1.6;
+        float n = vn(q) * 0.55 + vn(q * 2.3 + 7.1) * 0.3 + vn(q * 5.1 + 3.3) * 0.15;
+        float cloud = smoothstep(0.52, 0.8, n) * smoothstep(0.02, 0.2, abs(d.y));
+        c = mix(c, ${glColor(SKY.cloud)}, cloud * 0.75);
+        gl_FragColor = vec4(c, 1.0);
+      }
+    `,
+    depthTest: false,
+    depthWrite: false,
   });
 }
 
@@ -718,6 +775,7 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
       attribute vec3 pcolor;
       attribute vec3 grow;
       uniform float viewHeight;
+      uniform float markers;
       varying vec3 vColor;
       varying vec3 vNormal;
       varying vec3 vWorld;
@@ -732,7 +790,7 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
         vFoot = position.y;
         vec3 p = position;
         #if !LITE
-        if (grow.x > 0.0) {
+        if (grow.x > 0.0 && markers > 0.5) {
           vec4 o = projectionMatrix * viewMatrix * m * vec4(0.0, 0.0, 0.0, 1.0);
           float perUnit = 0.5 * viewHeight * projectionMatrix[1][1] / max(o.w, 0.001);
           float k = clamp(grow.x / perUnit, 1.0, grow.z);
@@ -752,11 +810,11 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
       ${COMMON}
       void main() {
         vec3 n = normalize(vNormal);
-        float ao = mix(0.6, 1.0, smoothstep(0.0, 0.45, vFoot));
+        float ao = mix(0.72, 1.0, smoothstep(0.0, 0.45, vFoot));
         float lit = sunLit(vec2(vWorld.x, -vWorld.z), vWorld.y);
         // soft (wrapped) sun light, kinder to leaves
         float ndl = clamp(dot(n, sunDir) * 0.75 + 0.25, 0.0, 1.0);
-        vec3 light = skyColor * 1.25 * (0.72 + 0.28 * n.y) * ao + sunColor * 0.45 * ndl * lit;
+        vec3 light = skyColor * 1.15 * (0.8 + 0.2 * n.y) * ao + sunColor * 0.5 * ndl * lit;
         gl_FragColor = vec4(finish(vColor * light, vWorld), 1.0);
       }
     `,

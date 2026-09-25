@@ -1,7 +1,9 @@
 // The 3D view on the page (PLAN §14.2, EDITOR_PLAN §4): the shared renderer on a canvas, with the
-// view buttons (orbit, top-down, reset, height colours), a compass that always shows north, the
-// hover readout and a legend of what the colours mean (Map look, D86). The generator's 3D preview
-// and the editor both use it; the editor puts its handles on top.
+// view buttons (orbit, top-down, reset, height colours, markers), a compass that always shows
+// north, the hover readout and a legend of what the colours mean (Map look, D86). The view is
+// clean by default, close to the game; **Markers** turns on the information layer (dam sites,
+// slope arrows, level lines, small far-off objects drawn larger), and so does a tool that needs it.
+// The generator's 3D preview and the editor both use it; the editor puts its handles on top.
 
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
@@ -21,19 +23,16 @@ export interface View3DProps {
   onReady?(r: MapRenderer, stats: BuildStats): void;
   onHover?(hit: TileHit | null): void;
   hoverText?: string | null;
-  /** More legend lines for what the page draws on the map (a dam site, say). */
+  /** More legend lines for what the page draws on the map (a dam site, say; `markers` for the
+   *  lines that show only with **Markers** on). */
   legendExtra?: LegendEntry[];
+  /** Turn **Markers** on while true (a tool that needs them, or a layer the player turned on). */
+  markersWanted?: boolean;
   /** Whether the legend starts open (the editor starts it closed, to keep its map clear). */
   legendOpen?: boolean;
   children?: ComponentChildren;
   /** Extra class on the frame (the editor fills its area). */
   class?: string;
-}
-
-function backgroundColor(): number {
-  const v = getComputedStyle(document.documentElement).getPropertyValue("--map-bg").trim();
-  const m = /^#([0-9a-f]{6})$/i.exec(v);
-  return m ? parseInt(m[1], 16) : 0xe9dfc8;
 }
 
 const GROUND_KEY = "dgm.groundColours";
@@ -55,12 +54,32 @@ function saveGround(mode: GroundMode): void {
   }
 }
 
+const MARKERS_KEY = "dgm.markers";
+
+/** Whether the viewer last turned **Markers** on (off unless they did). */
+function savedMarkers(): boolean {
+  try {
+    return localStorage.getItem(MARKERS_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function saveMarkers(on: boolean): void {
+  try {
+    localStorage.setItem(MARKERS_KEY, on ? "on" : "off");
+  } catch {
+    // the choice lasts for this view only
+  }
+}
+
 export function View3D(props: View3DProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const compass = useRef<HTMLDivElement>(null);
   const renderer = useRef<MapRenderer | null>(null);
   const [mode, setMode] = useState<ViewMode>("orbit");
   const [ground, setGround] = useState<GroundMode>(savedGround);
+  const [markers, setMarkers] = useState<boolean>(() => savedMarkers() || !!props.markersWanted);
   const [error, setError] = useState<string | null>(null);
   const onHover = useRef(props.onHover);
   onHover.current = props.onHover;
@@ -68,7 +87,7 @@ export function View3D(props: View3DProps) {
   useEffect(() => {
     let r: MapRenderer;
     try {
-      r = new MapRenderer(canvas.current!, backgroundColor());
+      r = new MapRenderer(canvas.current!);
     } catch (e) {
       setError("The 3D view needs WebGL, which this browser has turned off. The 2D view still works.");
       console.warn(e);
@@ -76,16 +95,13 @@ export function View3D(props: View3DProps) {
     }
     renderer.current = r;
     r.setGroundMode(ground);
+    r.setMarkers(markers);
     r.onHover = (hit) => onHover.current?.(hit);
     r.onView = (v) => {
       const el = compass.current;
       if (el) el.style.transform = `rotate(${v.mode === "top" ? 0 : (v.yaw * 180) / Math.PI}deg)`;
     };
-    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const recolor = () => r.setBackground(backgroundColor());
-    media?.addEventListener?.("change", recolor);
     return () => {
-      media?.removeEventListener?.("change", recolor);
       renderer.current = null;
       if (window.dgm3d?.renderer === r) delete window.dgm3d;
       r.dispose();
@@ -107,6 +123,27 @@ export function View3D(props: View3DProps) {
     renderer.current?.setMode(m);
   };
 
+  // a tool or layer that needs the markers turns them on; when it is done, the viewer's own choice
+  // comes back
+  const wanted = !!props.markersWanted;
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const on = wanted || savedMarkers();
+    setMarkers(on);
+    renderer.current?.setMarkers(on);
+  }, [wanted]);
+
+  const toggleMarkers = () => {
+    const next = !markers;
+    setMarkers(next);
+    saveMarkers(next);
+    renderer.current?.setMarkers(next);
+  };
+
   const toggleGround = () => {
     const next: GroundMode = ground === "height" ? "moisture" : "height";
     setGround(next);
@@ -114,7 +151,15 @@ export function View3D(props: View3DProps) {
     renderer.current?.setGroundMode(next);
   };
 
-  const legend = [...legendEntries(ground), ...objectLegend(), ...(props.legendExtra ?? [])];
+  const all = [...legendEntries(ground), ...objectLegend(), ...(props.legendExtra ?? [])];
+  const clean = all.filter((e) => !e.markers);
+  const marked = all.filter((e) => e.markers);
+  const item = (e: LegendEntry) => (
+    <li key={e.label}>
+      <span class="swatch" style={{ background: e.swatch }} aria-hidden="true" />
+      {e.label}
+    </li>
+  );
 
   return (
     <div class={`view3d ${props.class ?? ""}`}>
@@ -133,6 +178,9 @@ export function View3D(props: View3DProps) {
         <button type="button" aria-pressed={ground === "height"} onClick={toggleGround} title="Colour the ground by height instead of by soil">
           Height colours
         </button>
+        <button type="button" aria-pressed={markers} onClick={toggleMarkers} title="Show dam sites, slope arrows and a line at every level, and draw small far-off objects larger">
+          Markers
+        </button>
       </div>
       <div class="compass" aria-label="Compass: north is the top of the top-down view" role="img">
         <div ref={compass} class="needle">
@@ -142,14 +190,11 @@ export function View3D(props: View3DProps) {
       {error ? null : (
         <details class="view3d-legend" open={props.legendOpen ?? true}>
           <summary>Legend</summary>
-          <ul>
-            {legend.map((e) => (
-              <li key={e.label}>
-                <span class="swatch" style={{ background: e.swatch }} aria-hidden="true" />
-                {e.label}
-              </li>
-            ))}
-          </ul>
+          <ul>{clean.map(item)}</ul>
+          <p class="legend-head">
+            With <b>Markers</b> on:
+          </p>
+          <ul>{marked.map(item)}</ul>
           <p class="note">From afar, dead trees, slope arrows and the start are drawn larger, and dam sites wider.</p>
         </details>
       )}

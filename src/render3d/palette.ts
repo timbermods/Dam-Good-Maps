@@ -1,16 +1,18 @@
-// The 3D view's colours (ROADMAP "Map look", PLAN §20 D86, D110, D114), in one place: the shaders
-// and models read them and the legend shows the same swatches, so the legend always says what the
-// scene shows. The ground is coloured by soil, as in the game (Kyler's reference screenshots):
-// moist ground a vivid yellow-green grass (living plants grow), dry ground cracked earth, warm
-// grey-brown, contaminated ground rusty red-brown with glowing cracks, and ground under water a
-// dark wet bed; a toggle switches the ground back to height colours. Walls are stone, a band per
-// level with a pale ledge between levels. Colours are display values (the renderer outputs them
-// without conversion).
+// The 3D view's colours (ROADMAP "Map look", PLAN §20 D86, D110, D114 and Kyler's clean look), in
+// one place: the shaders and models read them and the legend shows the same swatches, so the legend
+// always says what the scene shows. The clean view is as close to the game as we can make it with
+// our own shaders (Kyler's reference screenshots): moist ground a vivid yellow-green grass (living
+// plants grow), dry ground cracked earth in a cool grey-brown, contaminated ground rusty red-brown
+// with glowing cracks, and ground under water a dark wet bed; a toggle switches the ground to
+// height colours. Walls are dark cobbled stone, every other level a shade darker. Colours are
+// display values (the renderer outputs them without conversion).
 //
-// Every meaning differs in lightness too, so it reads in greyscale and with any colour blindness
-// (the review's fix round, D114): from light to dark, dead trees, moist ground, clean water, the
-// walls, dry ground, contaminated ground, badwater. Living trees are dark, dead trees nearly white.
-// Dam sites are hatched light and dark with a dark rim, so they show on any ground or water.
+// Every meaning differs in lightness too, so it reads in greyscale and with any colour blindness:
+// from light to dark, dead trees, moist ground, clean water, dry ground, contaminated ground,
+// badwater (the walls, in the side light, are darker than the ground above them). Living trees are
+// dark, dead trees pale. The information layer (**Markers**)
+// adds dam sites, hatched light and dark with a dark rim so they show on any ground or water,
+// slope arrows and a pale line at every level.
 //
 // Pure TypeScript, no three.js: the unit tests and the page's legend read it too.
 
@@ -23,62 +25,67 @@ export type GroundMode = "moisture" | "height";
 export type GroundKind = "moist" | "dry" | "contaminated" | "underwater";
 
 export const GROUND = {
-  /** Dry ground: cracked earth, warm grey-brown, with dark cracks; plants die there. */
-  dry: [0.48, 0.38, 0.29] as Rgb,
+  /** Dry ground: cracked earth, the grey-brown of Kyler's reference (never reddish), with dark
+   *  cracks; plants die there. Broad patches drift between it, a cooler grey and a warmer brown. */
+  dry: [0.44, 0.395, 0.34] as Rgb,
   /** Dry ground's cooler, greyer patches. */
-  dryCool: [0.43, 0.38, 0.33] as Rgb,
+  dryCool: [0.39, 0.38, 0.37] as Rgb,
+  /** Dry ground's warmer, browner patches. */
+  dryWarm: [0.47, 0.39, 0.31] as Rgb,
   /** The cracks in dry ground. */
-  crack: [0.2, 0.16, 0.16] as Rgb,
+  crack: [0.19, 0.17, 0.17] as Rgb,
   /** Moist ground at the edge of the moist area (the least moisture). */
-  moistLow: [0.7, 0.78, 0.3] as Rgb,
+  moistLow: [0.62, 0.72, 0.28] as Rgb,
   /** Moist ground by the water (the most moisture). */
-  moistHigh: [0.56, 0.71, 0.22] as Rgb,
+  moistHigh: [0.52, 0.68, 0.21] as Rgb,
   /** Contaminated ground: badwater spoils the soil and plants die. Rusty cracked earth... */
-  contaminated: [0.39, 0.15, 0.09] as Rgb,
+  contaminated: [0.4, 0.2, 0.14] as Rgb,
   /** ...its cracks glowing. */
-  contaminatedGlow: [0.98, 0.56, 0.2] as Rgb,
+  contaminatedGlow: [0.96, 0.52, 0.2] as Rgb,
   /** Ground under water (seen through it). */
-  underwater: [0.44, 0.45, 0.38] as Rgb,
+  underwater: [0.36, 0.38, 0.34] as Rgb,
 } as const;
 
 /** Height colours (the toggle): the low and high ends of the ramp, as before Map look. */
 export const HEIGHT_RAMP = { low: [0.478, 0.588, 0.329] as Rgb, high: [0.769, 0.698, 0.549] as Rgb } as const;
 
-/** The block walls: grey-green stone in faint cobbles, every other level a shade darker, with a
- *  pale ledge and a dark groove between levels so levels can be counted; a little lighter higher
- *  up. Lighter than Kyler's reference (dark charcoal) so the bands read (D114). */
+/** The block walls: dark grey-green cobbled stone, as in Kyler's reference, every other level a
+ *  shade darker and a little lighter higher up. With **Markers** on, a pale ledge over a dark
+ *  groove between levels, so levels can be counted. */
 export const WALL = {
-  stone: [0.42, 0.41, 0.35] as Rgb,
-  mortar: [0.2, 0.2, 0.17] as Rgb,
-  ledge: [0.84, 0.81, 0.7] as Rgb,
-  groove: [0.1, 0.1, 0.09] as Rgb,
-  alternate: 0.74,
+  stone: [0.36, 0.38, 0.35] as Rgb,
+  mortar: [0.15, 0.16, 0.15] as Rgb,
+  ledge: [0.8, 0.78, 0.68] as Rgb,
+  groove: [0.08, 0.08, 0.07] as Rgb,
+  alternate: 0.86,
   low: 0.92,
   high: 1.12,
 } as const;
 
 export const WATER = {
-  /** Clean water: light teal where shallow (and see-through), blue where deep; lighter than dry
-   *  ground at any depth, darker than moist ground. */
-  shallow: [0.42, 0.7, 0.74] as Rgb,
-  deep: [0.28, 0.52, 0.66] as Rgb,
-  foam: [0.93, 0.97, 0.97] as Rgb,
+  /** Clean water: teal where shallow (and see-through), a deeper blue-teal where deep; lighter than
+   *  dry ground at any depth (darker in the game, but then it would read as dry ground in
+   *  greyscale), darker than moist ground. */
+  shallow: [0.36, 0.6, 0.64] as Rgb,
+  deep: [0.26, 0.5, 0.62] as Rgb,
+  foam: [0.9, 0.94, 0.95] as Rgb,
   /** The sky the water reflects. */
-  sky: [0.62, 0.74, 0.84] as Rgb,
+  sky: [0.6, 0.72, 0.84] as Rgb,
   /** Badwater: much darker than clean water at any depth, a murky red-black liquid with slow
    *  glowing bubbles. Water mixed with badwater is murkier than clean water all over, and
    *  streaked with badwater as densely as it is bad. */
-  bad: [0.16, 0.06, 0.05] as Rgb,
-  badDeep: [0.1, 0.035, 0.03] as Rgb,
+  bad: [0.2, 0.1, 0.08] as Rgb,
+  badDeep: [0.13, 0.06, 0.05] as Rgb,
   badVein: [0.98, 0.5, 0.16] as Rgb,
   badFoam: [0.66, 0.5, 0.36] as Rgb,
 } as const;
 
-/** Dead trees: bare, nearly white wood (no crown), so they read as dead in any colours. */
-export const DEAD_TREE: Rgb = [0.95, 0.94, 0.9];
+/** Dead trees: bare, pale wood (no crown), so they read as dead in any colours; the models use a
+ *  greyer tone of it, so dead trees sit back in the landscape. */
+export const DEAD_TREE: Rgb = [0.82, 0.78, 0.72];
 
 /** Living trees' crowns (the legend; each species has its own shade in the models). */
-export const LIVING_TREE: Rgb = [0.15, 0.36, 0.2];
+export const LIVING_TREE: Rgb = [0.11, 0.27, 0.15];
 
 /** A hatched overlay (dam sites): light stripes in the overlay's colour, dark stripes, and a
  *  dark rim round the hatched tiles. */
@@ -99,16 +106,26 @@ export const START = {
   banner: [1.0, 0.82, 0.16] as Rgb,
 } as const;
 
-/** Ruins: towers of weathered grey-brown metal with rusty posts and beige panels, one storey per
- *  level (grey-brown, so they stand apart from rusty contaminated ground). */
-export const RUIN = { body: [0.46, 0.41, 0.35] as Rgb, rust: [0.42, 0.19, 0.09] as Rgb, panel: [0.84, 0.77, 0.6] as Rgb } as const;
+/** Ruins: open scaffold towers, one storey per level: weathered posts, rusty rails and braces,
+ *  grey-brown decks (so they stand apart from rusty contaminated ground), beige crates and sheets. */
+export const RUIN = { body: [0.5, 0.46, 0.42] as Rgb, frame: [0.68, 0.5, 0.3] as Rgb, rust: [0.52, 0.26, 0.12] as Rgb, panel: [0.8, 0.72, 0.54] as Rgb } as const;
 
-/** Slopes: a ramp with pale arrows, rimmed dark, pointing uphill. */
-export const SLOPE = { ramp: [0.62, 0.52, 0.38] as Rgb, side: [0.46, 0.37, 0.26] as Rgb, arrow: [0.97, 0.93, 0.78] as Rgb, rim: [0.14, 0.1, 0.07] as Rgb } as const;
+/** Slopes: a stone ramp; with **Markers** on, a pale arrow rimmed dark points uphill. */
+export const SLOPE = { ramp: [0.5, 0.46, 0.4] as Rgb, side: [0.3, 0.31, 0.28] as Rgb, arrow: [0.97, 0.93, 0.78] as Rgb, rim: [0.14, 0.1, 0.07] as Rgb } as const;
 
-/** Geothermal fields: orange blocks (their footprint's blocks, as every template without a model
- *  of its own). */
+/** Geothermal fields: a mound of dark rock with vents glowing orange. */
 export const GEOTHERMAL: Rgb = [0.82, 0.48, 0.16];
+export const GEOTHERMAL_ROCK: Rgb = [0.27, 0.26, 0.25];
+
+/** Relics: weathered pale stone, broken columns on a plinth. */
+export const RELIC_STONE: Rgb = [0.66, 0.62, 0.54];
+
+/** Thorns: a low, dark red-brown bramble. */
+export const THORNS: Rgb = [0.34, 0.16, 0.14];
+
+/** The sky round the map: blue overhead, paler toward the horizon (the haze is the horizon's
+ *  colour, so distant ground fades into it). */
+export const SKY = { zenith: [0.36, 0.55, 0.8] as Rgb, horizon: [0.64, 0.75, 0.87] as Rgb, below: [0.46, 0.6, 0.77] as Rgb, cloud: [0.93, 0.95, 0.97] as Rgb } as const;
 
 /** Mine sites: a dark pit in an orange frame. */
 export const MINE = { pit: [0.06, 0.06, 0.06] as Rgb, frame: [0.88, 0.45, 0.14] as Rgb } as const;
@@ -121,9 +138,9 @@ export const LIGHT = {
   sunElevation: (50 * Math.PI) / 180,
   /** The sun's disc and the sky's scatter soften shadows: two sweeps, this far either side. */
   penumbra: (6 * Math.PI) / 180,
-  sun: [1.0, 0.92, 0.78] as Rgb,
-  sky: [0.63, 0.63, 0.7] as Rgb,
-  haze: [0.63, 0.7, 0.78] as Rgb,
+  sun: [1.0, 0.95, 0.86] as Rgb,
+  sky: [0.63, 0.64, 0.72] as Rgb,
+  haze: [0.68, 0.77, 0.87] as Rgb,
 } as const;
 
 /** Soil moisture (the game's levels, 0–16) and contamination (0–1) as bytes: 0 stays 0, and any
@@ -186,6 +203,8 @@ export interface LegendEntry {
   /** CSS background for the swatch (a colour, a gradient or a small picture). */
   swatch: string;
   label: string;
+  /** Shown only with **Markers** on (the information layer). */
+  markers?: boolean;
 }
 
 /** A small picture (24 × 16) as a CSS background. */
@@ -206,11 +225,9 @@ export function legendEntries(mode: GroundMode): LegendEntry[] {
           { swatch: cracks(GROUND.contaminated, GROUND.contaminatedGlow, 1), label: "Contaminated ground: plants die" },
         ]
       : [{ swatch: `linear-gradient(90deg, ${c(HEIGHT_RAMP.low)}, ${c(HEIGHT_RAMP.high)})`, label: "Ground by height: low to high" }];
-  // walls: two levels, each with its pale ledge at the top and a dark groove below it
-  const walls = icon(
-    `<rect width="24" height="8" fill="${c(wallColor(11))}"/><rect y="8" width="24" height="8" fill="${c(wallColor(10))}"/>` +
-      `<rect y="0" width="24" height="2" fill="${c(WALL.ledge)}"/><rect y="6" width="24" height="2" fill="${c(WALL.ledge)}"/><rect y="8" width="24" height="0.8" fill="${c(WALL.groove)}"/>`,
-  );
+  // walls: two levels of cobbled stone, one a shade darker
+  const cobbles = (y: number) => [2, 9, 16].map((x, k) => `<rect x="${x + (y % 2) * 3}" y="${y + 1 + (k % 2)}" width="5" height="3" rx="1" fill="${c(WALL.mortar)}" opacity="0.5"/>`).join("");
+  const walls = icon(`<rect width="24" height="8" fill="${c(wallColor(11))}"/><rect y="8" width="24" height="8" fill="${c(wallColor(10))}"/>` + cobbles(0) + cobbles(9));
   return [
     ...ground,
     { swatch: `linear-gradient(90deg, ${c(WATER.foam)} 0 2px, ${c(mixRgb(WATER.shallow, WATER.foam, 0.35))} 2px, ${c(WATER.shallow)})`, label: "Water: darker is deeper" },
@@ -244,12 +261,16 @@ export function objectLegend(): LegendEntry[] {
       label: "The start: district center",
     },
     {
-      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(SLOPE.ramp)}"/><path d="M12 2 L18 8 L14.2 8 L14.2 14 L9.8 14 L9.8 8 L6 8Z" fill="${c(SLOPE.arrow)}" stroke="${c(SLOPE.rim)}" stroke-width="1.2"/>`, dry),
-      label: "Slopes: arrows point uphill",
+      swatch: icon(`<path d="M3 14 L12 3 L21 14Z" fill="${c(SLOPE.ramp)}"/><path d="M3 14 L21 14 L21 15 L3 15Z" fill="${c(SLOPE.side)}"/>`, dry),
+      label: "Slopes: stone ramps",
     },
     {
-      swatch: icon(`<rect x="7" y="1" width="10" height="14" fill="${c(RUIN.body)}" stroke="${c(RUIN.rust)}" stroke-width="1.2"/><rect x="8.5" y="3" width="7" height="4" fill="${c(RUIN.panel)}"/><rect x="8.5" y="9" width="7" height="4" fill="${c(RUIN.panel)}"/>`, c(GROUND.contaminated)),
-      label: "Ruins: metal towers, a storey per level",
+      swatch: icon(
+        `<rect x="7" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="15.6" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="7" y="7" width="10" height="1.4" fill="${c(RUIN.rust)}"/><rect x="7" y="13.6" width="10" height="1.4" fill="${c(RUIN.rust)}"/><path d="M8 2 L16 7" stroke="${c(RUIN.frame)}" stroke-width="1"/>` +
+          `<rect x="9" y="3" width="4" height="4" fill="${c(RUIN.panel)}"/><rect x="11" y="10" width="4" height="3.6" fill="${c(RUIN.panel)}"/>`,
+        dry,
+      ),
+      label: "Ruins: scaffold towers, a storey per level",
     },
     { swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="6.5" y="3.5" width="11" height="9" fill="${c(MINE.pit)}"/>`, dry), label: "Mine site" },
     {
@@ -261,12 +282,26 @@ export function objectLegend(): LegendEntry[] {
       label: "Badwater source",
     },
     {
-      swatch: icon([2, 9, 16].flatMap((x) => [2, 9].map((y) => `<rect x="${x}" y="${y}" width="6" height="5" fill="${c(GEOTHERMAL)}"/>`)).join(""), dry),
-      label: "Geothermal field",
+      swatch: icon(`<ellipse cx="12" cy="9" rx="10" ry="5" fill="${c(GEOTHERMAL_ROCK)}"/><circle cx="8" cy="8" r="1.6" fill="${c(GEOTHERMAL)}"/><circle cx="15" cy="10" r="1.6" fill="${c(GEOTHERMAL)}"/>`, dry),
+      label: "Geothermal field: dark rock with glowing vents",
     },
     {
-      swatch: icon(`<rect x="2" y="4" width="6" height="8" fill="#c9a64a"/><rect x="9" y="4" width="6" height="8" fill="#7a2e2e"/><rect x="16" y="4" width="6" height="8" fill="#858380"/>`, dry),
-      label: "Relics, thorns and other objects: blocks",
+      swatch: icon(`<rect x="3" y="11" width="18" height="3" fill="${c(RELIC_STONE)}"/><rect x="6" y="3" width="3" height="8" fill="${c(RELIC_STONE)}"/><rect x="14" y="6" width="3" height="5" fill="${c(RELIC_STONE)}"/>`, dry),
+      label: "Relic: broken stone columns",
+    },
+    { swatch: icon(`<path d="M4 13 L7 5 L9 12 L12 3 L14 12 L17 6 L20 13Z" fill="${c(THORNS)}"/>`, dry), label: "Thorns: dark brambles" },
+    { swatch: icon(`<circle cx="9" cy="10" r="4" fill="#858380"/><circle cx="15" cy="11" r="3.5" fill="#6f6d6a"/><circle cx="12" cy="6" r="3" fill="#9a9894"/>`, dry), label: "Blockage: a heap of stones" },
+    { swatch: icon(`<rect x="7" y="4" width="10" height="9" fill="#858380"/>`, dry), label: "Other objects: blocks" },
+    // the information layer
+    {
+      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(SLOPE.ramp)}"/><path d="M12 2 L18 8 L14.2 8 L14.2 14 L9.8 14 L9.8 8 L6 8Z" fill="${c(SLOPE.arrow)}" stroke="${c(SLOPE.rim)}" stroke-width="1.2"/>`, dry),
+      label: "Slopes: arrows point uphill",
+      markers: true,
+    },
+    {
+      swatch: icon(`<rect width="24" height="16" fill="${c(wallColor(5))}"/><rect y="5" width="24" height="1.6" fill="${c(WALL.ledge)}"/><rect y="6.6" width="24" height="0.8" fill="${c(WALL.groove)}"/><rect y="12" width="24" height="1.6" fill="${c(WALL.ledge)}"/><rect y="13.6" width="24" height="0.8" fill="${c(WALL.groove)}"/>`),
+      label: "Walls: a pale line at every level",
+      markers: true,
     },
   ];
 }

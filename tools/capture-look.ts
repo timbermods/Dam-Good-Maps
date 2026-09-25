@@ -1,8 +1,12 @@
-// Map look captures (ROADMAP "Map look", PLAN §20 D86, D110 and D114): the same maps from the same
-// camera poses, before and after the new look, so the two can be compared, plus greyscale and
-// colour-blind versions of the after captures for the readability review.
+// Map look captures (ROADMAP "Map look", PLAN §20 D86, D110 and D114, and Kyler's clean look): the
+// same maps from the same camera poses, before and after the new look, so the two can be compared,
+// plus greyscale and colour-blind versions of the later captures for the readability review.
 //
-//   npx tsx tools/capture-look.ts --label before|after [--only riverValley,beavertopia] [--quality 80] [--dir .scratch/try]
+//   npx tsx tools/capture-look.ts --label before|after|clean [--markers] [--only riverValley,beavertopia] [--poses overview,start] [--quality 80] [--dir .scratch/try]
+//
+// The view is captured as the page opens it: the clean view, the information layer off. With
+// --markers, the dam sites are shown (**Show dam sites**) and **Markers** is on; those captures'
+// names end in "-markers".
 //
 // Maps: seed 4242 in every theme at 128², seed 4242 River Valley at 256², and Beavertopia (a local
 // workshop map; skipped when investigation/raw is absent). Each map is opened in the editor (the
@@ -27,9 +31,10 @@
 // away from objects that could stand in front, and each is checked by picking the tile under its
 // position in the view: an example whose pick lands on another kind is dropped.
 //
-// With --label after it also writes, for each capture, a greyscale version and the three
-// colour-blindness simulations (Machado, Oliveira and Fernandes 2009, severity 1, in linear RGB).
-// --doc writes docs/map-look/captures.md from the two runs' records.
+// Every run but the before run also writes, for each capture, a greyscale version and the three
+// colour-blindness simulations (Machado, Oliveira and Fernandes 2009, severity 1, in linear RGB),
+// and takes each pose's camera from the before run's record. --doc writes docs/map-look/captures.md
+// from the before and after runs' records; --doc clean writes docs/map-look/clean/captures.md.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -49,6 +54,9 @@ const arg = (name: string) => {
   return i >= 0 ? process.argv[i + 1] : undefined;
 };
 const LABEL = arg("label") ?? "after";
+/** The information layer on: dam sites shown, **Markers** on. */
+const MARKERS = process.argv.includes("--markers");
+const SUFFIX = MARKERS ? "-markers" : "";
 const ONLY = arg("only")?.split(",");
 const QUALITY = Number(arg("quality") ?? 80);
 /** The greyscale and colour-blind versions: a little more compressed (they are many). */
@@ -326,9 +334,10 @@ function candidatesOf(v: ViewData, dam: Tile[]): { cands: Record<Meaning, Candid
     if (t === "Slope") {
       const [dx, dy] = slopeHighSide(o);
       const dir = dx ? (dx > 0 ? "east" : "west") : dy > 0 ? "north" : "south";
-      // the arrow's middle: just above the slope's top, and 0.7 higher for each time it grows
-      // (the point is 0.7 lower, as `rise` counts from it)
-      cands.slope.push({ tile: [x, y], point: [x + 0.5, z + SLOPE_ARROW_HEIGHT - 0.7, -(y + 0.5)], grow: 25, rise: 0.7, cap: 6, note: `rises toward the ${dir}` });
+      // with Markers, the arrow's middle: just above the slope's top, and 0.7 higher for each time
+      // it grows (the point is 0.7 lower, as `rise` counts from it); else the ramp's middle
+      if (MARKERS) cands.slope.push({ tile: [x, y], point: [x + 0.5, z + SLOPE_ARROW_HEIGHT - 0.7, -(y + 0.5)], grow: 25, rise: 0.7, cap: 6, note: `rises toward the ${dir}` });
+      else cands.slope.push({ tile: [x, y], point: [x + 0.5, z + 0.5, -(y + 0.5)], grow: 0, rise: 0, note: `rises toward the ${dir}` });
     }
     if (t === "StartingLocation") {
       const [dx, dy] = rotate(o, 1, 1);
@@ -401,7 +410,7 @@ function posesOf(id: string, v: ViewData, dam: Tile[], before: Shot[]): Pose[] {
   return worked
     .filter((p) => !only || only.includes(p.id))
     .map((p) => {
-      const rec = LABEL === "after" ? before.find((s) => s.map === id && s.pose === p.id) : undefined;
+      const rec = LABEL !== "before" ? before.find((s) => s.map === id && s.pose === p.id) : undefined;
       return rec ? { id: p.id, view: rec.view } : p;
     });
 }
@@ -603,11 +612,15 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
   await page.keyboard.press("Escape");
   // show the dam sites (the editor's Water tab)
   await page.getByRole("tab", { name: "Water" }).click();
-  if (!process.argv.includes("--no-dams")) await page.getByLabel("Show dam sites").check();
+  // (with --markers; the before and after runs showed them too, unless --no-dams)
+  if (MARKERS || (LABEL !== "clean" && !process.argv.includes("--no-dams"))) await page.getByLabel("Show dam sites").check();
+  if (MARKERS) await page.evaluate(() => (window.dgm3d!.renderer as unknown as { setMarkers?: (on: boolean) => void }).setMarkers?.(true));
   await page.waitForTimeout(300);
   await settle(page);
   const sites = (await page.evaluate(() => window.dgmEditor!.worker.damSites())) as { sites: { tiles: Tile[] }[] };
   const dam: Tile[] = sites.sites.flatMap((s) => s.tiles);
+  /** The dam sites the view shows (none in the clean view). */
+  const shown: Tile[] = MARKERS || LABEL !== "clean" ? dam : [];
   // wait for the background check (it may replace the water once)
   await page.waitForTimeout(2500);
   await settle(page);
@@ -628,16 +641,16 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
     await settle(page);
     await page.waitForTimeout(250);
     const png = await page.locator(".editor-view").screenshot({ type: "png" });
-    const file = `${m.id}-default-ui.jpg`;
+    const file = `${m.id}-default-ui${SUFFIX}.jpg`;
     writeFileSync(join(dir, file), await toJpeg(tool, png, QUALITY));
     const view = (await page.evaluate(() => window.dgm3d!.renderer.getView())) as Pose["view"];
-    shots.push({ map: m.id, name: m.name, pose: "default-ui", file, variants: [], size: [0, 0], view, where: {}, notes: ["the page's own view: its default camera, buttons and legend (opened)"] });
+    shots.push({ map: m.id, name: m.name, pose: `default-ui${SUFFIX}`, file, variants: [], size: [0, 0], view, where: {}, notes: ["the page's own view: its default camera, buttons and legend (opened)"] });
     console.log(`  ${file}`);
   }
   // then only the scene: the view's buttons, the inspector and the handles hidden
   await page.addStyleTag({ content: ".view3d > :not(canvas), .editor-map > :not(.view3d) { visibility: hidden !important; }" });
-  const { cands, kind, tall, nearDam } = candidatesOf(data, dam);
-  const damTiles = new Set(dam.map(([x, y]) => y * data.W + x));
+  const { cands, kind, tall, nearDam } = candidatesOf(data, shown);
+  const damTiles = new Set(shown.map(([x, y]) => y * data.W + x));
   const poses = posesOf(m.id, data, dam, before);
   const canvas = page.locator(".editor-view canvas");
   for (const pose of poses) {
@@ -646,13 +659,13 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
     await page.waitForTimeout(250);
     const png = await canvas.screenshot({ type: "png" });
     const box = (await canvas.boundingBox())!;
-    const file = `${m.id}-${pose.id}.jpg`;
+    const file = `${m.id}-${pose.id}${SUFFIX}.jpg`;
     writeFileSync(join(dir, file), await toJpeg(tool, png, QUALITY));
     const vs: string[] = [];
-    if (LABEL === "after") {
+    if (LABEL !== "before") {
       const v = await variants(tool, png, VARIANT_QUALITY);
       for (const [k, buf] of Object.entries(v)) {
-        const f = `${m.id}-${pose.id}-${k}.jpg`;
+        const f = `${m.id}-${pose.id}${SUFFIX}-${k}.jpg`;
         writeFileSync(join(dir, f), buf);
         vs.push(f);
       }
@@ -675,7 +688,10 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
       return true;
     };
     // the start as drawn from here (larger from afar): nothing else is listed under it
-    const project = async (list: Candidate[]) => (await page.evaluate(`(${PROJECT_JS})(${JSON.stringify(list.map((c) => [...c.point, c.grow, c.rise, c.cap ?? 3]))})`)) as [number, number, number, number, number, number, number][];
+    // (objects grow from afar only with Markers on, since the clean look; the before and after
+    // runs' code always grew them)
+    const grows = MARKERS || LABEL !== "clean";
+    const project = async (list: Candidate[]) => (await page.evaluate(`(${PROJECT_JS})(${JSON.stringify(list.map((c) => [...c.point, grows ? c.grow : 0, c.rise, c.cap ?? 3]))})`)) as [number, number, number, number, number, number, number][];
     const startAt = cands["the start"].length ? (await project(cands["the start"]))[0] : null;
     const underStart = (px: number, py: number) => !!startAt && Math.hypot(px - startAt[0], py - startAt[1]) < startAt[5] * startAt[6] * 1.9 + 6;
     const overview = pose.id === "overview";
@@ -729,7 +745,7 @@ async function captureMap(page: Page, tool: Page, m: MapSource, dir: string, bef
       if (meaning === "tall cliff" && !found.length)
         notes.push(tooSmall ? "tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose" : "no dry cliff of three levels or more faces the camera here: count levels in the cliff pose");
     }
-    shots.push({ map: m.id, name: m.name, pose: pose.id, file, variants: vs, size: [Math.round(box.width), Math.round(box.height)], view: pose.view, where, notes });
+    shots.push({ map: m.id, name: m.name, pose: `${pose.id}${SUFFIX}`, file, variants: vs, size: [Math.round(box.width), Math.round(box.height)], view: pose.view, where, notes });
     console.log(`  ${file}: ${Object.keys(where).length} meanings in view`);
   }
   return shots;
@@ -879,5 +895,62 @@ function writeDoc(): void {
   console.log("wrote docs/map-look/captures.md");
 }
 
-if (process.argv.includes("--doc")) writeDoc();
-else await main();
+/** docs/map-look/clean/captures.md: the clean view's captures, each beside the third round's, and
+ *  for each capture where to look for each meaning. */
+function writeCleanDoc(): void {
+  const read = (label: string) => JSON.parse(readFileSync(join("docs/map-look", label, `${label}.json`), "utf8")) as { date: string; viewport: { width: number; height: number }; shots: Shot[] };
+  const after = read("after");
+  const clean = read("clean");
+  const link = (file: string) => (file.startsWith("docs/map-look/") ? `[${file.slice("docs/map-look/".length).replace(/^clean\//, "")}](${file.startsWith("docs/map-look/clean/") ? file.slice("docs/map-look/clean/".length) : `../${file.slice("docs/map-look/".length)}`})` : `\`${file}\` (local only)`);
+  const out: string[] = [];
+  out.push("# Clean look captures");
+  out.push("");
+  out.push("The clean view's captures for Kyler's clean-look round ([CLEAN.md](../CLEAN.md)): the same maps from the");
+  out.push("same camera poses as the third round's after captures, each also in greyscale and in three");
+  out.push("colour-blindness simulations (protanopia, deuteranopia, tritanopia; Machado, Oliveira and");
+  out.push("Fernandes 2009, full severity, in linear RGB), and a few with **Markers** on (names ending in");
+  out.push("`-markers`).");
+  out.push("");
+  out.push(`Made with \`npx tsx tools/capture-look.ts --label clean\` and \`--label clean --markers --poses overview,start\` on ${clean.date}, in the installed Chrome, headed, at ${clean.viewport.width}×${clean.viewport.height} CSS pixels and a device pixel ratio of 1. Each map is opened in the editor as the page opens it: the clean view, **Markers** off, no dam sites shown. The markers captures show the dam sites (**Show dam sites**) with **Markers** on. Every pose's camera comes from the before run's record, as in the third round. The water is held at one moment of its movement. Beavertopia's captures are not ours to share: they stay in \`.scratch/map-look/clean/\` and are never committed.`);
+  out.push("");
+  out.push("For each capture, up to three example tiles of each meaning in view: the tile (x east, y north,");
+  out.push("from the map's south-west corner) and its position in the image, in pixels from the top-left");
+  out.push("corner, found and checked as for the third round (docs/map-look/captures.md). In the clean view");
+  out.push("nothing grows from afar, so a dead tree's or the start's position is where it stands; a slope's");
+  out.push("is the middle of its ramp.");
+  out.push("");
+  const maps = [...new Set(clean.shots.map((s) => s.map))];
+  for (const map of maps) {
+    const shots = clean.shots.filter((s) => s.map === map);
+    out.push(`## ${shots[0].name}`);
+    out.push("");
+    for (const s of shots) {
+      const base = s.pose.replace(/-markers$/, "");
+      const r3 = after.shots.find((x) => x.map === s.map && x.pose === base);
+      out.push(`**${s.pose}** (${POSE_NAMES[base] ?? base}${s.pose.endsWith("-markers") ? ", with Markers on" : ""}):`);
+      out.push("");
+      out.push(`- clean: ${link(s.file)}`);
+      if (!s.pose.endsWith("-markers")) out.push(`- third round: ${r3 ? link(r3.file) : "none"}`);
+      if (s.variants.length) out.push(`- clean, ${s.variants.map((v) => `${VARIANT_NAMES[v.replace(/^.*-(\w+)\.jpg$/, "$1")] ?? v}: ${link(v)}`).join("; ")}`);
+      out.push("");
+      for (const n of s.notes) if (!/the page's own view/.test(n)) out.push(`- ${n[0].toUpperCase()}${n.slice(1)}.`);
+      if (s.notes.some((n) => !/the page's own view/.test(n))) out.push("");
+      if (!Object.keys(s.where).length) continue;
+      out.push("| Meaning | Tile → position in the image |");
+      out.push("|---|---|");
+      for (const meaning of MEANINGS) {
+        const w = s.where[meaning];
+        if (meaning === "dam site" && !s.pose.endsWith("-markers")) continue;
+        out.push(`| ${meaning} | ${w ? w.map((e) => `(${e.tile[0]}, ${e.tile[1]}) → ${e.screen[0]}, ${e.screen[1]}${e.note ? ` (${e.note})` : ""}`).join("; ") : "not in view"} |`);
+      }
+      out.push("");
+    }
+  }
+  writeFileSync("docs/map-look/clean/captures.md", out.join("\n").replace(/\n{3,}/g, "\n\n"));
+  console.log("wrote docs/map-look/clean/captures.md");
+}
+
+if (process.argv.includes("--doc")) {
+  if (arg("doc") === "clean") writeCleanDoc();
+  else writeDoc();
+} else await main();

@@ -6,28 +6,29 @@
 //
 // - Trees by species: pine (tiers of dark cones), birch (a white trunk with dark marks and a light
 //   crown), oak (a thick trunk and a broad crown), succulent (a rosette of fleshy leaves). Dead
-//   trees are ashen: a nearly white trunk, a pale grey body of bare wood and spiky bare branches
-//   poking out of it, so they read as dead in any colours, far lighter than the dark living crowns.
+//   trees are bare: a pale grey-brown trunk and bare branches at the tree's true size, far lighter
+//   than the dark living crowns.
 // - Berry bushes: dark green, dotted with blue flowers.
-// - Ruins: grey-brown metal towers with beige panels and rusty corner posts, one solid storey per level of the
-//   ruin's height, so from afar they read as blocks, never as bare trees; ivy where the ground is
-//   moist.
+// - Ruins: rusty scaffold towers, one storey per level of the ruin's height: rusty posts and
+//   rails, a grey-brown deck, beige crates and sheets; ivy where the ground is moist.
 // - The start: a district center of our own, a lodge with pale walls, a dark roof and a yellow
 //   banner on a pale deck, its door facing the entrance, and a lit post on the entrance tile.
-// - Slopes: a ramp, and a level pale arrow rimmed dark floating just above it, pointing uphill (it
-//   reads from any camera angle). Water sources: a stone ring
-//   round a spring; badwater sources: a brown swirl in a dark pit. Mine sites: a square pit in an
-//   orange frame.
+// - Slopes: a stone ramp; with Markers, a level pale arrow rimmed dark floating just above it,
+//   pointing uphill (it reads from any camera angle). Water sources: a stone ring round a spring;
+//   badwater sources: a brown swirl in a dark pit. Mine sites: a square pit in an orange frame.
+//   Geothermal fields: dark rock with glowing vents. Relics: broken stone columns on a plinth.
+//   Thorns: dark brambles. Blockages and natural dams: heaps of stones.
 // - Every other template: a box on each block its footprint occupies.
-// Dead trees, the slopes' arrows and the start have a minimum size on screen: from afar they grow
-// (the object shader: dead trees up to 2.5 times, the start 3, the arrows 6) so they stay readable in
-// a view of the whole map.
+// With Markers on (the information layer), dead trees, the slopes' arrows and the start have a
+// minimum size on screen: from afar they grow (the object shader: dead trees up to 2.5 times, the
+// start 3, the arrows 6) so they stay readable in a view of the whole map. The clean view draws
+// every object at its true size.
 // Jitter, turn and tint come from each object's tile, so a redraw looks the same.
 
 import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedBufferAttribute, InstancedMesh, OctahedronGeometry, type ShaderMaterial } from "three";
 import { FOOTPRINTS, rotate, startEntranceTile, worldBlocks, type Orientation } from "../core/format/footprints";
 import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView } from "./model";
-import { DEAD_TREE, GEOTHERMAL, MINE, RUIN, SLOPE, START } from "./palette";
+import { GEOTHERMAL, GEOTHERMAL_ROCK, MINE, RELIC_STONE, RUIN, SLOPE, START, THORNS } from "./palette";
 
 type Rgb = readonly [number, number, number];
 
@@ -85,15 +86,18 @@ class Model {
 
 const cone = (r: number, h: number, sides: number) => new ConeGeometry(r, h, sides, 1, true);
 const cyl = (r0: number, r1: number, h: number, sides: number) => new CylinderGeometry(r1, r0, h, sides, 1, true);
+/** A cylinder with its ends closed (a trunk seen from above). */
+const post = (r0: number, r1: number, h: number, sides: number) => new CylinderGeometry(r1, r0, h, sides, 1, false);
 const box = (x: number, y: number, z: number) => new BoxGeometry(x, y, z);
 const ico = (r: number) => new IcosahedronGeometry(r, 0);
 
 const BARK: Rgb = [0.36, 0.25, 0.16];
-const DEAD_WOOD: Rgb = [...DEAD_TREE];
-const DEAD_DARK: Rgb = [0.84, 0.82, 0.78];
-/** A dead tree's body of bare wood: bleached white, so it stays nearly white in shade too (the
- *  shader clamps the lit side), lighter than moist ground in greyscale. */
-const DEAD_FAR: Rgb = [1.1, 1.08, 1.04];
+/** Bare dead wood: a pale grey-brown tan, far lighter than the living crowns; a dead birch stays
+ *  white, a dead oak's thick trunk darker. */
+const DEAD_WOOD: Rgb = [0.78, 0.69, 0.56];
+const DEAD_DARK: Rgb = [0.7, 0.62, 0.5];
+const DEAD_BIRCH: Rgb = [0.9, 0.88, 0.84];
+const DEAD_BARK: Rgb = [0.6, 0.54, 0.45];
 
 /** A bare branch from the trunk at height y, outward along `angle`, tilted up by `tilt`: a spike
  *  tapering to a point. */
@@ -129,11 +133,10 @@ const MODELS: Record<string, () => Model> = {
       .add(cone(0.3, 0.56, 6), [0.13, 0.32, 0.19], { y: 0.62 + 0.28, ry: 0.5 })
       .add(cone(0.2, 0.5, 6), [0.15, 0.36, 0.21], { y: 0.95 + 0.25, ry: 1.0 }),
   "Pine.dead": () => {
-    // a tall bare trunk, whorls of spiky bare branches shorter toward the top
-    const m = new Model().add(cyl(0.085, 0.03, 1.2, 5), DEAD_WOOD, { y: 0.6 })
-      .add(cone(0.3, 0.9, 5), DEAD_FAR, { y: 0.8 });
-    const whorls: [number, number, number][] = [[0.34, 0.2, 0.44], [0.48, 2.3, 0.4], [0.6, 4.2, 0.34], [0.72, 1.2, 0.3], [0.84, 3.3, 0.24], [0.95, 5.3, 0.18]];
-    for (const [y, a, l] of whorls) branch(m, y, a, 0.75, l, 0.055, y < 0.6 ? DEAD_DARK : DEAD_WOOD);
+    // a tall bare pole, its top broken off askew, a few stubs of branches
+    const m = new Model().add(post(0.075, 0.05, 1.25, 6), DEAD_WOOD, { y: 0.625 }).add(post(0.05, 0.03, 0.22, 5), DEAD_DARK, { x: 0.03, y: 1.33, rz: -0.35 });
+    branch(m, 0.78, 1.0, 0.5, 0.13, 0.03, DEAD_DARK);
+    branch(m, 1.02, 3.7, 0.55, 0.1, 0.025, DEAD_DARK);
     return m;
   },
   Birch: () =>
@@ -142,14 +145,11 @@ const MODELS: Record<string, () => Model> = {
       .add(cyl(0.052, 0.05, 0.07, 4), [0.18, 0.16, 0.15], { y: 0.36 })
       .add(ico(0.31), [0.34, 0.52, 0.19], { y: 0.96, sy: 1.4 }),
   "Birch.dead": () => {
-    // a white trunk forking into bare arms that spread up and out
-    const m = new Model().add(cyl(0.07, 0.05, 0.55, 5), [0.93, 0.91, 0.87], { y: 0.275 })
-      .add(new OctahedronGeometry(0.3, 0), DEAD_FAR, { y: 0.8, sy: 1.4 });
-    branch(m, 0.5, 0.8, 1.0, 0.55, 0.06, DEAD_WOOD);
-    branch(m, 0.5, 2.9, 0.95, 0.5, 0.055, DEAD_WOOD);
-    branch(m, 0.5, 5.0, 1.05, 0.48, 0.055, DEAD_DARK);
-    branch(m, 0.72, 1.9, 0.6, 0.3, 0.04, DEAD_WOOD);
-    branch(m, 0.72, 4.1, 0.6, 0.28, 0.04, DEAD_WOOD);
+    // a white trunk forking into two bare arms, and a twig
+    const m = new Model().add(post(0.06, 0.045, 0.5, 5), DEAD_BIRCH, { y: 0.25 });
+    branch(m, 0.46, 0.3, 1.2, 0.55, 0.045, DEAD_BIRCH);
+    branch(m, 0.46, 3.4, 1.15, 0.5, 0.04, DEAD_BIRCH);
+    branch(m, 0.62, 1.9, 0.8, 0.2, 0.025, DEAD_WOOD);
     return m;
   },
   Oak: () =>
@@ -158,11 +158,9 @@ const MODELS: Record<string, () => Model> = {
       .add(ico(0.44), [0.22, 0.42, 0.16], { y: 0.95, sy: 0.85 })
       .add(ico(0.28), [0.26, 0.47, 0.18], { x: 0.2, y: 0.8, z: 0.12 }),
   "Oak.dead": () => {
-    // a thick pale trunk and a broad crown of bare, spiky limbs
-    const m = new Model().add(cyl(0.14, 0.09, 0.6, 5), DEAD_WOOD, { y: 0.3 })
-      .add(new OctahedronGeometry(0.4, 0), DEAD_FAR, { y: 0.84, sy: 0.9 });
-    for (let k = 0; k < 5; k++) branch(m, 0.52 + 0.06 * (k % 2), 0.4 + (k * Math.PI * 2) / 5, 0.8 + 0.12 * (k % 2), 0.55, 0.07, k % 2 ? DEAD_DARK : DEAD_WOOD);
-    branch(m, 0.6, 0, Math.PI / 2 - 0.1, 0.4, 0.06, DEAD_WOOD);
+    // a thick bare trunk, its limbs broken off short, pale where they broke
+    const m = new Model().add(post(0.15, 0.11, 0.62, 6), DEAD_BARK, { y: 0.31 }).add(new CylinderGeometry(0.1, 0.1, 0.02, 6), DEAD_WOOD, { y: 0.62 });
+    for (let k = 0; k < 3; k++) branch(m, 0.56, 0.5 + (k * Math.PI * 2) / 3, 1.05, 0.26, 0.06, DEAD_WOOD);
     return m;
   },
   Succulent: () => {
@@ -243,24 +241,86 @@ const MODELS: Record<string, () => Model> = {
     for (const [x, z] of [[2.2, 2.2], [2.2, -2.2], [-2.2, 2.2], [-2.2, -2.2]] as const) m.add(box(0.3, 0.45, 0.3), [0.62, 0.3, 0.1], { x, y: 0.22, z });
     return m;
   },
+  GeothermalField: () => {
+    // a low mound of dark rock over its 3 × 3 footprint, cracked by vents glowing orange
+    const m = new Model().add(cyl(1.45, 1.2, 0.22, 7), GEOTHERMAL_ROCK, { y: 0.11 }).add(new CylinderGeometry(1.2, 1.2, 0.02, 7), [0.22, 0.21, 0.2], { y: 0.22 });
+    const rocks: [number, number, number, number][] = [[0.9, 0.5, 0.34, 0.2], [-0.8, 0.7, 0.3, 0.25], [-0.4, -0.95, 0.36, 0.2], [0.75, -0.8, 0.26, 0.2], [0.1, 0.2, 0.3, 0.35]];
+    for (const [x, z, r, sy] of rocks) m.add(ico(r), [0.3, 0.29, 0.28], { x, y: 0.2, z, sy: sy / r });
+    const vents: [number, number, number][] = [[-0.35, 0.2, 0.2], [0.45, -0.25, 0.16], [-0.1, -0.6, 0.13], [0.35, 0.65, 0.12]];
+    for (const [x, z, r] of vents) {
+      m.add(cyl(r * 1.5, r, 0.12, 6), [0.2, 0.19, 0.18], { x, y: 0.28, z });
+      m.add(new CylinderGeometry(r, r, 0.02, 6), GLOW, { x, y: 0.33, z });
+    }
+    return m;
+  },
+  SmallRelic: () => relic(2, 1, [[-0.5, 0, 0.9], [0.5, 0, 0.45]], [], false),
+  MediumRelic: () => relic(3, 2, [[-1, -0.5, 1.2], [0, -0.5, 0.5], [1, -0.5, 0.95], [-1, 0.5, 0.35], [1, 0.5, 1.4]], [[0.1, 0.45, 1.0]], false),
+  LargeRelic: () => relic(3, 3, [[-1, -1, 1.9], [1, -1, 1.5], [-1, 1, 1.2], [1, 1, 0.7], [0, -1, 0.4]], [[0.2, 0.6, 1.3]], true),
+  Thorns: () => {
+    // a low, dark bramble with thorny canes sticking out
+    const m = new Model().add(ico(0.34), THORNS, { y: 0.2, sy: 0.6 }).add(ico(0.24), [0.28, 0.14, 0.12], { x: 0.18, y: 0.3, z: -0.1, sy: 0.8 });
+    for (let k = 0; k < 6; k++) branch(m, 0.14 + 0.06 * (k % 2), (k * Math.PI) / 3 + 0.3, 0.5 + 0.25 * (k % 3), 0.34, 0.035, k % 2 ? [0.4, 0.2, 0.16] : [0.25, 0.12, 0.1]);
+    return m;
+  },
 };
+
+/** A vent's glow: brighter than any lit colour, so it shines in shade too. */
+const GLOW: Rgb = [GEOTHERMAL[0] * 1.3, GEOTHERMAL[1] * 1.3, GEOTHERMAL[2] * 1.3];
+
+/** A relic over its sx × sy footprint (centred on it): a worn plinth, broken columns [x, z,
+ *  height] and fallen drums [x, z, turn]; a large relic stands on a second step. */
+function relic(sx: number, sy: number, columns: [number, number, number][], fallen: [number, number, number][], step: boolean): Model {
+  const m = new Model().add(box(sx - 0.1, 0.16, sy - 0.1), [RELIC_STONE[0] * 0.8, RELIC_STONE[1] * 0.8, RELIC_STONE[2] * 0.8], { y: 0.08 });
+  let base = 0.16;
+  if (step) {
+    m.add(box(sx - 0.6, 0.18, sy - 0.6), [RELIC_STONE[0] * 0.9, RELIC_STONE[1] * 0.9, RELIC_STONE[2] * 0.9], { y: base + 0.09 });
+    base += 0.18;
+  }
+  const inset = step ? 0.65 : 0.8;
+  for (const [x, z, h] of columns) {
+    const px = x * inset;
+    const pz = z * inset;
+    m.add(cyl(0.2, 0.17, h, 6), RELIC_STONE, { x: px, y: base + h / 2, z: pz });
+    // a broken top, tilted
+    m.add(cyl(0.18, 0.14, 0.12, 6), [RELIC_STONE[0] * 1.08, RELIC_STONE[1] * 1.08, RELIC_STONE[2] * 1.08], { x: px + 0.02, y: base + h + 0.04, z: pz, rz: 0.35 });
+  }
+  for (const [x, z, turn] of fallen) m.add(cyl(0.17, 0.17, 0.7, 6), [RELIC_STONE[0] * 0.92, RELIC_STONE[1] * 0.92, RELIC_STONE[2] * 0.92], { rz: Math.PI / 2, ry: turn, x, y: base + 0.17, z });
+  return m;
+}
+
+/** A heap of stones on a block (blockages and natural dams), tinted by its template. */
+function rubble(): Model {
+  const m = new Model();
+  const stones: [number, number, number, number, number][] = [[-0.18, 0.2, -0.15, 0.32, 1], [0.22, 0.17, 0.12, 0.28, 0.86], [-0.05, 0.14, 0.26, 0.24, 0.78], [0.16, 0.44, -0.1, 0.22, 0.94], [-0.2, 0.42, 0.14, 0.2, 0.9]];
+  for (const [x, y, z, r, shade] of stones) m.add(ico(r), [shade, shade, shade], { x, y, z, sy: 0.8 });
+  return m;
+}
+const RUBBLE = new Set(["Blockage", "NaturalDam"]);
 
 /** The light look's models, for browsers that render in software (a few triangles each; D110). */
 const LITE_MODELS: Record<string, () => Model> = {
   Pine: () => new Model().add(cone(0.36, 1.25, 4), [0.13, 0.32, 0.19], { y: 0.2 + 0.625 }),
   Birch: () => new Model().add(cone(0.06, 0.8, 3), [0.93, 0.91, 0.86], { y: 0.4 }).add(new OctahedronGeometry(0.32, 0), [0.34, 0.52, 0.19], { y: 0.95, sy: 1.3 }),
   Oak: () => new Model().add(cone(0.11, 0.7, 3), [0.34, 0.23, 0.14], { y: 0.35 }).add(new OctahedronGeometry(0.44, 0), [0.24, 0.45, 0.17], { y: 0.92, sy: 0.85 }),
-  // dead trees: a pale trunk and a bleached body (a few triangles each)
-  "Pine.dead": () => new Model().add(cone(0.09, 1.2, 3), DEAD_WOOD, { y: 0.6 }).add(cone(0.3, 0.9, 3), DEAD_FAR, { y: 0.8 }),
-  "Birch.dead": () => new Model().add(cone(0.08, 1.0, 3), DEAD_WOOD, { y: 0.5 }).add(cone(0.3, 0.8, 3), DEAD_FAR, { y: 0.8 }),
-  "Oak.dead": () => new Model().add(cone(0.13, 0.95, 3), DEAD_WOOD, { y: 0.47 }).add(cone(0.4, 0.7, 3), DEAD_FAR, { y: 0.84 }),
+  // dead trees: a pale trunk and two bare branches (a few triangles each)
+  "Pine.dead": () => liteDead(0.08, 1.35, 0.12, DEAD_WOOD),
+  "Birch.dead": () => liteDead(0.07, 0.95, 0.4, DEAD_BIRCH),
+  "Oak.dead": () => liteDead(0.14, 0.7, 0.26, DEAD_BARK),
   Succulent: () => new Model().add(cone(0.2, 0.5, 4), [0.4, 0.6, 0.5], { y: 0.25 }),
   BlueberryBush: () => new Model().add(new OctahedronGeometry(0.28, 0), [0.14, 0.29, 0.14], { y: 0.2, sy: 0.75 }),
 };
 const LITE_RUIN = () => new Model().add(box(0.8, 1, 0.8), RUIN.body, { y: 0.5 });
 
-/** Templates whose model stands in the middle of a footprint: the local tile it is centred on. */
-const CENTRED: Record<string, [number, number]> = { BadwaterSource: [1, 1], UndergroundRuins: [2, 2] };
+/** The light look's dead tree: a trunk and two bare branches. */
+function liteDead(r: number, h: number, length: number, color: Rgb): Model {
+  const m = new Model().add(cone(r, h, 3), color, { y: h / 2 });
+  branch(m, h * 0.55, 0.6, 0.9, length, r * 0.6, DEAD_DARK);
+  branch(m, h * 0.7, 3.5, 0.9, length * 0.8, r * 0.5, color);
+  return m;
+}
+
+/** Templates whose model stands in the middle of a footprint: the local point it is centred on. */
+const CENTRED: Record<string, [number, number]> = { BadwaterSource: [1, 1], UndergroundRuins: [2, 2], GeothermalField: [1, 1], SmallRelic: [0.5, 0], MediumRelic: [1, 0.5], LargeRelic: [1, 1] };
 
 /** The district center, its door toward +Z (south, a Cw0 start's entrance side), centred on its
  *  3 × 3 footprint: pale walls under a dark roof on a pale deck, so it stands out on any ground. */
@@ -302,23 +362,28 @@ function entrance(): Model {
     .add(box(0.12, 0.12, 0.12), [1.0, 0.85, 0.42], { x: 0.24, y: 0.6, z: 0.18 });
 }
 
-/** Ruins: storeys of a rusty tower, one level high each: a solid rusty body (so from afar a ruin
- *  reads as a block, never as a bare tree), dark corner posts and rails, and beige panels; a ruin
- *  stacks one per level. Ivy grows on them where the ground is moist. */
+/** Ruins: storeys of an old scaffold tower, one level high each, a ruin stacks one per level:
+ *  weathered posts, rusty rails and braces, a grey-brown deck on some storeys and beige crates and
+ *  sheets. Ivy grows on them where the ground is moist. */
 const IVY: Rgb = [0.2, 0.38, 0.15];
 function storey(variant: number, ivy: boolean): Model {
   const m = new Model();
-  const e = 0.38;
-  m.add(box(0.72, 0.92, 0.72), RUIN.body, { y: 0.46 });
-  // rusty corner posts, and a darker rim on top of the storey
-  for (const [x, z] of [[e, e], [e, -e], [-e, e], [-e, -e]] as const) m.add(cyl(0.06, 0.06, 1.0, 4), RUIN.rust, { x, y: 0.5, z, ry: Math.PI / 4 });
-  m.add(box(0.86, 0.08, 0.86), [RUIN.body[0] * 0.8, RUIN.body[1] * 0.8, RUIN.body[2] * 0.8], { y: 0.96 });
-  // beige panels on some sides, a diagonal brace on another
+  const e = 0.36;
+  const frame = RUIN.frame;
+  // weathered corner posts
+  for (const [x, z] of [[e, e], [e, -e], [-e, e], [-e, -e]] as const) m.add(cyl(0.045, 0.04, 1.0, 4), frame, { x, y: 0.5, z, ry: Math.PI / 4 });
+  // rusty rails round the top of the storey
   const sides: [number, number, number][] = [[0, e, 0], [e, 0, Math.PI / 2], [0, -e, Math.PI], [-e, 0, -Math.PI / 2]];
+  for (const [x, z, ry] of sides) m.add(box(0.78, 0.05, 0.05), RUIN.rust, { x, y: 0.97, z, ry });
+  // a cross brace on two sides
   const [a, b, c] = [sides[variant % 4], sides[(variant + 1) % 4], sides[(variant + 2) % 4]];
-  m.add(box(0.58, 0.42, 0.04), RUIN.panel, { x: a[0], y: 0.38, z: a[1], ry: a[2] });
-  if (variant % 2) m.add(box(0.5, 0.3, 0.04), RUIN.panel, { x: b[0], y: 0.7, z: b[1], ry: b[2] });
-  m.add(box(0.05, 1.05, 0.05), RUIN.rust, { x: c[0], y: 0.5, z: c[1], ry: c[2], rz: 0.72 });
+  m.add(box(1.0, 0.045, 0.045), frame, { x: a[0], y: 0.5, z: a[1], ry: a[2], rz: 0.9 });
+  m.add(box(1.0, 0.045, 0.045), RUIN.rust, { x: c[0], y: 0.5, z: c[1], ry: c[2], rz: -0.9 });
+  // a plank deck, a sheet hanging on one side, crates stacked on the floor
+  if (variant !== 1) m.add(box(0.76, 0.05, 0.76), RUIN.body, { y: 0.93 });
+  m.add(box(0.5, 0.38, 0.03), RUIN.panel, { x: b[0] * 1.02, y: 0.62, z: b[1] * 1.02, ry: b[2] });
+  m.add(box(0.3, 0.26, 0.3), RUIN.panel, { x: 0.12, y: 0.13, z: -0.1, ry: 0.3 * variant });
+  if (variant === 2) m.add(box(0.22, 0.2, 0.22), [RUIN.panel[0] * 0.85, RUIN.panel[1] * 0.85, RUIN.panel[2] * 0.85], { x: -0.12, y: 0.1, z: 0.14, ry: 0.5 });
   if (ivy) {
     m.add(ico(0.2), IVY, { x: a[0] * 1.05, y: 0.25, z: a[1] * 1.05, sy: 1.3 });
     m.add(ico(0.16), [0.24, 0.44, 0.17], { x: -e, y: 0.55 + 0.1 * (variant % 2), z: e, sy: 1.6 });
@@ -459,7 +524,7 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
     if (key === "block") {
       const fp = FOOTPRINTS[template];
       const color = genericColor(template);
-      const b = batch("block", () => new Model().add(box(0.92, 0.92, 0.92), [1, 1, 1], { y: 0.46 }));
+      const b = RUBBLE.has(template) ? batch("block.rubble", rubble) : batch("block", () => new Model().add(box(0.92, 0.92, 0.92), [1, 1, 1], { y: 0.46 }));
       const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
       if (fp) for (const bl of worldBlocks(fp, { template, x, y, z, orientation: o, flipped: !!(flags & FLIPPED) })) put(b, bl.x + 0.5, bl.z, -(bl.y + 0.5), 0, 1, color);
       else put(b, x + 0.5, z, -(y + 0.5), 0, 1, color);
