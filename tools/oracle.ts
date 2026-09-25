@@ -1,7 +1,7 @@
 // The Python oracle (ROADMAP M1 and M2 acceptance): generate maps with the TypeScript core, then
 // check them with the independent Python implementation.
 //
-//   npx tsx tools/oracle.ts --seeds 1-50 --sizes 96,128,256 [--themes riverValley,canyon,lakeBasin]
+//   npx tsx tools/oracle.ts --seeds 1-50 --sizes 96,128,256 [--themes riverValley,canyon,…] (default: all six)
 //                           [--out .scratch/oracle] [--report file.md] [--parity-seeds 1-50] [--no-official]
 //
 // 1. Load and round trip (M1): every map must pass `prototype/validate.py --load-only` (the load
@@ -25,7 +25,7 @@ import { encodeProject, projectFileName, toDocument } from "../src/core/doc/docu
 import { readTimber } from "../src/core/format/timber";
 import { generate } from "../src/core/gen/generate";
 import { fileName } from "../src/core/gen/pack";
-import { makeSpec, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
+import { AVAILABLE_THEMES, makeSpec, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 import { validateMap } from "../src/core/validate/checks";
 import type { CheckResult } from "../src/core/validate/report";
 
@@ -49,7 +49,7 @@ const sizes = arg("sizes", "96,128,256").split(",").map(Number);
 const paritySeeds = parseSeeds(arg("parity-seeds", arg("seeds", "1-50")));
 const outDir = arg("out", ".scratch/oracle");
 const difficulty = arg("difficulty", "normal") as Difficulty;
-const themes = arg("themes", "riverValley,canyon,lakeBasin").split(",") as ThemeId[];
+const themes = arg("themes", AVAILABLE_THEMES.join(",")).split(",") as ThemeId[];
 const themeOf = (seed: number): ThemeId => themes[Math.floor((seed - 1) / 3) % themes.length];
 const report = arg("report", "");
 const python = process.env.PYTHON ?? "python";

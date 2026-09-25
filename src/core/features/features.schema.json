@@ -6,7 +6,13 @@
   "type": "array",
   "items": { "$ref": "#/$defs/feature" },
   "$defs": {
-    "point": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": -1, "maximum": 257 } },
+    "point": {
+      "description": "A point in tile coordinates. It may lie up to one map side (256 tiles, the largest side) beyond each edge: Lake Basin's and Islands' terrace rings reach past the map, and outlines are never clamped (that would change the terrain).",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number", "minimum": -256, "maximum": 512 }
+    },
     "runs": {
       "type": "array",
       "items": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 0, "maximum": 255 } }
@@ -33,6 +39,7 @@
         { "if": { "properties": { "kind": { "const": "forest" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/forest" } } } },
         { "if": { "properties": { "kind": { "const": "berryPatch" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/berryPatch" } } } },
         { "if": { "properties": { "kind": { "const": "ruinField" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/ruinField" } } } },
+        { "if": { "properties": { "kind": { "const": "mapObject" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/mapObject" } } } },
         { "if": { "properties": { "kind": { "const": "start" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/start" } } } }
       ]
     },
@@ -97,7 +104,20 @@
         },
         "inflow": { "type": "object" },
         "planned": { "type": "boolean" },
-        "river": { "type": "string" }
+        "river": { "type": "string" },
+        "islands": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["outline", "height"],
+            "properties": {
+              "outline": { "type": "array", "minItems": 3, "items": { "$ref": "#/$defs/point" } },
+              "height": { "type": "integer", "minimum": 0, "maximum": 16 }
+            }
+          }
+        }
       }
     },
     "landform": {
@@ -198,6 +218,33 @@
         "scrapTarget": { "type": "integer", "minimum": 0 },
         "heightMix": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "number", "minimum": 0 } },
         "centerBias": { "type": "number", "minimum": 0, "maximum": 2 }
+      }
+    },
+    "mapObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "placement"],
+      "properties": {
+        "kind": { "enum": ["mineSite", "relicSmall", "relicMedium", "relicLarge", "geothermal", "thornBelt", "weir", "plug", "bridge", "unstableCore"] },
+        "placement": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "y": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "orientation": { "$ref": "#/$defs/orientation" },
+            "area": { "$ref": "#/$defs/runs" }
+          }
+        },
+        "core": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["radius", "cycles"],
+          "properties": {
+            "radius": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "cycles": { "type": "integer", "minimum": 1, "maximum": 99 }
+          }
+        }
       }
     },
     "start": {

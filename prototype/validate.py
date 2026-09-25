@@ -47,6 +47,8 @@ REQUIRED_COMPONENTS = {
     "WaterSource": ("WaterSource",), "BadwaterSource": ("WaterSource",), "Aquifer": ("WaterSource",),
     "BadtideDrain": ("WaterSource",), "WaterSeep": ("WaterSource", "WaterDepthStrengthModifier"),
     "BadwaterSeep": ("WaterSource", "WaterDepthStrengthModifier"),
+    "UnstableCore": ("UnstableCore",), "ReservePile": ("FixedStockpile",), "ReserveTank": ("FixedStockpile",),
+    "ReserveWarehouse": ("FixedStockpile",),
 }
 ROT = {"Cw0": lambda x, y: (x, y), "Cw90": lambda x, y: (y, -x),
        "Cw180": lambda x, y: (-x, -y), "Cw270": lambda x, y: (-y, x)}

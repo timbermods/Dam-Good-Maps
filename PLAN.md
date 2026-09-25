@@ -282,8 +282,8 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 |---|---|---|---|
 | Badwater | Off, Low, Normal, High | Normal | Badwater-to-clean strength ratio 0 / 0.3 / 0.65 / 1.2 (official 0.18–2.2, median 0.65). Sources are BadwaterSource 3×3 at strength 1–3, inland on mid-height ground (as in official maps: none are on the edge). As built (M6, D62): the total is split into basins of 1–3 each (§9.5), so High is higher than Normal on every map size. |
 | Badwater distance | 12 – 60 | 30 (Easy 40, Hard 15) | Minimum distance from the start to badwater or contaminated soil (official p10 12, median 30). The basins are placed about 14 tiles beyond it (D62). The start rule "No badwater within" (§5.6) is the same value: the panel sets both, and validation uses the larger. |
-| Thorn belts | Off, Some | Some (Highlands, River Valley) | 1–3 belts of 13–40 thorns across corridors or plateaus, never within 20 tiles of the start. |
-| Unstable cores | Off, On | Off | Advanced. 1–4 cores, 40+ tiles from the start, first countdown at cycle 5+, radius 2–3, never within radius + 2 of each other or of a dam site (no chain reactions). |
+| Thorn belts | Off, Some | Some (Highlands, River Valley) | 1–3 belts of 13–40 thorns across corridors or plateaus, never within 20 tiles of the start. As built (M7, D75, D81): each belt crosses the way from the start to a relic or a geothermal field, 5–8 tiles in front of it (with none left, a stretch of dry ground), 9–17 tiles across and 2–3 deep, every thorn 22+ tiles from the start; a belt that would cut the colony's land in two is left out. |
+| Unstable cores | Off, On | Off | Advanced. 1–4 cores, 40+ tiles from the start, first countdown at cycle 5+, radius 2–3, never within radius + 2 of each other or of a dam site (no chain reactions). As built (M7, D81): countdown in cycle 5–12, 10.5 days in (the official maps' value). |
 
 ### 5.5 Resources
 
@@ -295,9 +295,12 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Berries near start | 20 – 100 | by difficulty (Easy 20, Normal 48, Hard 60): the generation target; §5.6 gives the lower minimum that validation enforces | Living bushes within 20 tiles of the start, in 2–3 patches beside water. |
 | Berry bushes elsewhere | 50% – 300% | 100% | Bushes per 10k tiles, size-aware (medium 92, large 40), in patches of about 20–40 beside water. |
 | Ruins and scrap | 25% – 300% | 100% | Scrap per 1k tiles, size-aware (small 840, medium 705, large and max 236). |
-| Relics | Off, Some | Some | 0–3 small (13–70 tiles out), 0–2 medium (40–140), 0–1 large (140+, maps ≥ 192²). |
-| Geothermal fields | Off, Some | Some | 1–3 per map, 30–120 tiles out, flat, dry, outside flood reach. |
+| Relics | Off, Some | Some | 0–3 small (13–70 tiles out), 0–2 medium (40–140), 0–1 large (140+, maps ≥ 192²). As built (M7, D81): 1–3 small, 1–2 medium from 128² (0–1 below), one large from 192². |
+| Geothermal fields | Off, Some | Some | 1–3 per map, 30–120 tiles out, flat, dry, outside flood reach. As built: 1 / 2 / 3 by size (under 128², from 128², from 192²). |
 | Mine sites (UndergroundRuins) | 0 – 4 | 1 / 2 / 3 / 3 by size | Flat 5×5, no cave below, 60+ tiles out (official 24–173, median 89). |
+
+On maps under 128² the distance bands of relics, geothermal fields and mine sites shrink by the
+map's longer side ÷ 128 (a 96² map has no tile 140 out); thorn belts and cores keep theirs (D75).
 
 ### 5.6 Start and difficulty
 
@@ -323,8 +326,8 @@ The difficulty preset sets these; each can be overridden under "Start rules".
 | Feature | Decision | Why |
 |---|---|---|
 | Slopes | **Always**, generated (§7.5) | Required for walking between levels. |
-| NaturalDam | Theme ingredient: the "pre-built weir" variant of the dam site (Lake Basin, River Valley) | A 0.65 weir across a 1-deep channel; the heightfield water model supports partial obstacles. |
-| Blockage | Theme ingredient: "plugged spillway" set piece (§9.6) | A demolish-to-release water event; simple full-height obstacle. |
+| NaturalDam | Theme ingredient: the "pre-built weir" variant of the dam site (Lake Basin, River Valley). As built (M7, D72): on half the maps, where the river's water per tile stays in its channel over the weir: the dam site, else a tributary, Highlands' stream or a Lake Basin inflow | A 0.65 weir across a 1-deep channel; the heightfield water model supports partial obstacles. |
+| Blockage | Theme ingredient: "plugged spillway" set piece (§9.6). As built (M7, D71): Lake Basin and Islands | A demolish-to-release water event; simple full-height obstacle. |
 | Thorns | Setting (Thorn belts) | A cheap, readable soft wall with a cost to clear. |
 | Relics | Setting | A science reward scaled by distance; pure payoff for exploring. |
 | GeothermalField | Setting | Free 400 hp power; a strong mid-map objective. |
@@ -545,7 +548,9 @@ overlap.
    - Dead trees: `LivingNaturalResource.IsDead`.
 4. **Ruins**: §9.7.
 5. **Extras**: mine sites, relics, geothermal fields and thorn belts, by distance band from the
-   start, on flat dry ground outside flood reach.
+   start, on flat dry ground outside flood reach. As built (M7, D69, D75): they are planned on the
+   layout's settled water before the resources, stand at build step 9, and keep a ring of level
+   ground round them; an object that cuts the colony's land in two is left out.
 
 ### 7.8 Validate and retry
 
@@ -604,7 +609,9 @@ tuned from rating data without code changes. As built (M6): River Valley and Can
 planner with a typed table (`gen/valley.ts`, D59, D63), Lake Basin has its own (`gen/lakeBasin.ts`,
 D64). Each theme builds one premise until names and premises (M9): River Valley's gorge-dammed
 basin, Canyon's Narrows, Lake Basin's Rising lake. River Valley and Canyon still flow west to east,
-and Lake Basin's outlet runs east (D67).
+and Lake Basin's outlet runs east (D67). As built (M7): Highlands and Delta are rows of the valley
+planner's table (D73, D74), and Islands is the Lake Basin planner with a sea (D70); each builds one
+premise until M9 (Staircase, Many mouths, Archipelago).
 
 **Canyon as built (M6, D63):** a canyon floor 18–25 tiles wide; walls 4–6 levels by the relief,
 then one-level rim terraces up to the plateau; the dam site in a narrows (a gorge 3–5 wide round
@@ -618,6 +625,23 @@ terraces from the shore up to the highest terrain at the map's edges; inflows fr
 and south edges falling to the lake's level, one on each side at most; the outlet to the east edge
 through a narrow gap with the dam site (crest 1, so the shore bench stays dry when the lake rises);
 the start on the shore bench one level above the lake, away from the rivers' mouths.
+
+**Highlands as built (M7, D73):** the valley planner with 2–4 round plateaus on the terraces, each
+2–4 levels above the ground under it with a cliff all round and at least 8 + its radius from the
+river; a stream from a spring on the highest plateau, planned as the editor plans a drawn river,
+falls over its cliff and the terraces to the main river; ruins on a plateau (§9.4). The start is on
+a bench in the valley, not on a mid plateau.
+
+**Delta as built (M7, D74):** the valley planner with the dam site's gorge 30–40% of the way across;
+below it the river ends in a head pool 2 deep, and 2–4 channels leave the pool at its level and fan
+out across a plain one level above them to the east edge, their mouths over 30–60% of it. The start
+is on a bench between the dam site's ridge and the head pool. Badwater basins drain to a map edge.
+Braided (§5.3) builds this delta in any valley theme but Canyon.
+
+**Islands as built (M7, D70):** the Lake Basin planner with a sea of 40–48% of a 128² map (a
+smaller share beyond), a ring of land round it, 6–25 islands of 100+ tiles rising 1–3 levels above
+the sea, clear of the rivers' mouths, and a second outlet to another edge. The start is on the shore
+bench.
 
 ---
 
@@ -739,6 +763,11 @@ what the map allows are reduced to the nearest achievable value, and the reducti
 - **Thorn-barred valley:** a thorn belt across a corridor to a relic or geothermal field.
 - **Validated:** the payoff is reachable from the start *if* the player builds one stairs (a
   region graph check with one allowed 2-level edge), and unreachable otherwise.
+- **As built (M7, D76):** ruins on a plateau (River Valley, Highlands, Delta) and the thorn-barred
+  valley (§5.4). The plateau is a disc of radius 4–5 exactly 2 levels above the highest ground
+  round it, with a cliff all round, 35–70% of the way from the start to the farthest ground, and a
+  ruin field on top. The one-stair rule holds by construction and is a contract test, not a
+  validation check. The ridge worth tunnelling waits for M9's premises.
 
 ### 9.5 Badwater with counterplay
 
@@ -777,6 +806,13 @@ flush with the banks. Demolishing it drains or diverts the basin: a strategic ch
 proves the map with the plug is valid. The map card notes the effect of removing it; that is
 simulated once.
 
+As built (M7, D71): a channel 3 wide from a lake to a map edge or lower ground, its bed one level
+below the lake's sill; the plug is every channel tile beside the lake's water, its top at the sill,
+so the lake spills over it as over its own outlet. The report's release is the lake's area × one
+level, not a second settle. Lake Basin and Islands place one beside a river's mouth, far from the
+start, where it leaves the colony's land whole; the editor's **Plugged spillway** tool places one
+from a click on a lake's shore.
+
 ### 9.7 Ruin fields
 
 - **Totals:**
@@ -809,6 +845,14 @@ On maps of 128² and up: a zone 60–120 tiles from the start. It has its own cl
 or a river reach with pump reach), 600+ tiles of same-level land, 40+ trees, 20+ bushes and a dam
 site or natural basin. It is connected to the start's region by slopes, and it is the anchor for the
 premise "a second valley beyond the ridge".
+
+As built (M7, D77): a set piece that marks the site and changes no terrain: 60–120 tiles from the
+start's middle, on 600+ tiles of level land, with clean water a pump reaches within 16 tiles; the
+derived slopes join it to the start's network, and the generator plants a grove (48 trees) and
+berries (24 bushes) within 20 tiles of it. It has no dam site or basin of its own yet. The generator
+places it only where such a site exists (of 20 maps at 128², Delta 20, Lake Basin 13, River Valley
+8, Highlands 7, Islands 7, Canyon 0; of 10 at 192², Delta and Lake Basin 10, Islands 9, River Valley
+and Highlands 6, Canyon 3).
 
 ### 9.9 Gorge
 
@@ -1071,7 +1115,7 @@ These use the difficulty rules from §5.6. "Near" means reachable by walking.
 | `resources.scrap`, `resources.trees`, `resources.bushes` | Totals ≥ 0.5 × the size-aware official median × the setting multiplier (about the official p10). |
 | `ruins.fields` | ≥ 80% of columns in fields of 10+ touching columns (official median 97%). |
 | `ruins.access` | Every column has an 8-neighbour on ground at its level, not blocked. |
-| `extras.placement` | Relics, geothermal fields and mine sites sit on flat dry ground outside flood reach, at their distance bands. |
+| `extras.placement` | Relics, geothermal fields and mine sites sit on flat dry ground outside flood reach, at their distance bands. As built (M7, D75), in both validators: level ground; no water within 2 tiles (Chebyshev) and outside every planned reservoir; the generated ones in their bands (§5.5, scaled under 128²); generated thorn belts 20+ and unstable cores 40+ from the start, and cores their radius + 2 apart. Not applicable when the map has none, or on an import. |
 
 **Stored water needed** (from `calibrated.reservoir_needed`):
 
@@ -1485,7 +1529,7 @@ planner emits features, the build pipeline (§19.8) rasterizes them, and the edi
 | `forest` | area, density, species mix, grove size, life (auto / alive / dead) | Alive only on moist, dry-footed, clean tiles. Succulents live only on dry soil. Common species only. |
 | `berryPatch` | area, density, ripe share | As forests (BlueberryBush). |
 | `ruinField` | area, scrap target, height mix | One level. Each column needs an 8-neighbour at its level. `RuinModels.VariantId` A–E. |
-| `mapObject` | kind (mineSite / relic small, medium, large / geothermal / thornBelt / weir, a NaturalDam line / plug, a Blockage line / bridge, a NaturalOverhang pair / unstableCore), placement | Footprints, OccupyAllBelow and first-column rules (§11.2). |
+| `mapObject` | kind (mineSite / relic small, medium, large / geothermal / thornBelt / weir, a NaturalDam line / plug, a Blockage line / bridge, a NaturalOverhang pair / unstableCore), placement (a single object: its footprint's south-west corner and facing; a line: its tiles as runs), core (an unstable core's radius 0–5 and countdown cycle) | Footprints, OccupyAllBelow and first-column rules (§11.2). As built (M7, D69): one placement rule for the generator, the tools and the preview: level ground for single objects, dry and off rivers (weirs and plugs go across them), free of other objects, caves, locks and the start. The bridge waits (§5.7). |
 | `start` | position (centre tile), orientation, bench radius, player (0–3, default 0) | A flat 3×3 with 5 free layers, and the entrance tile free at the same level. Exactly one per map in vanilla. `player` is reserved for Timber Together maps (D5): one start per colony, numbered from 0. |
 
 - **Derived layers** are rebuilt every time and never edited as features: slopes (pinned or
@@ -1646,9 +1690,10 @@ Generation and editing use one pipeline (`core/features/build.ts`):
 6. sculpt edits, in order;
 7. integrity pass: remove pits and spikes, keep beds non-increasing downstream;
 8. slopes: derived, plus pinned and removed overrides;
-9. water sources, then the entity edits whose targets exist by now (D38);
+9. water sources and map objects (their tiles are taken before the slopes of step 8, D69), then the
+   entity edits whose targets exist by now (D38);
 10. water settle, soil moisture and soil contamination (canonical for export);
-11. resources: berries, forests, ruin fields, map objects, placed using moisture;
+11. resources: berries, forests, ruin fields, placed using moisture;
 12. the start entity;
 13. the remaining entity edits, on resources and the start (place, move, delete, set properties);
 14. validation.
@@ -1743,9 +1788,24 @@ list, and implementation adds to it.
 | D63 | Canyon as built (§8): the valley planner with a canyon floor 9–12.5 tiles each side of the river, walls 4–6 levels (3 + 0.04·relief), then one-level rim terraces up to the plateau (terracing does not apply to Canyon's rims), band edges wandering 0.45× as much, a gorge 3–5 wide round the dam site (its walls one above the crest), and a basin reach at least 34 tiles long so the start and its stair fit on one level of the floor. The stair is the terraced cliffs builder's new `stair` variant: 2–8 steps 1–5 deep, 1–12 wide, a slope on each; Canyon's runs one tile wide along the wall's foot beside the start's bench, one level per tile. One premise (Narrows) until M9; tributaries run in side canyons, dry side canyons wait. | §8's "slope chains up the walls near the start". Derived slopes stand 12 tiles apart, so a stair needs its own slopes; terraced cliffs 6+ deep dug a trench whose top step met higher rim ground. With rim cliffs (terracing 75) the start's region ended at the first cliff (reach 700 against 750); the canyon floor between falls is too small alone. | M6; pending Kyler |
 | D64 | Lake Basin as built (§8): premise Rising lake only (Crater lakes with M9, the NaturalDam weir with M7). The lake is a lake feature of its own at its outlet's sill (18–24% of the map up to 128², × (128² ÷ area)^0.75 beyond), floor 2 deep (3 with Plenty, 4 on Hard); the highlands and the rings of terraces are nested landforms (the whole map at the highest terrain, then each ring lower, one per band rise); inflow and outlet rivers cut valleys through the rings; the outlet's dam site has crest 1. | A lake fills by its outlet's head over its whole area: at 256² a lake of a fifth of the map took nearly all of the canonical settle's 3,072 ticks and often failed `water.settles`; at the smaller share (about 5,000 tiles) it settles in about 2,000. Crest 1 raises the lake to the shore bench's level, so the start stays dry. | M6; pending Kyler |
 | D65 | The URL codec (§14.5) as built in `core/spec/codec.ts`, with Copy link and Copy seed + settings on the page. Share links carry the spec only (D7). | One fragment per spec, readable keys, and room for Timber Together's colonies (D5). | M6 |
-| D66 | The settings panel (§14.1) as built: the theme strip (Highlands, Delta and Islands marked "Coming later"), Basics, Terrain, Water, Hazards, Resources, Advanced start rules, a Limits note for the map size, and "Reset to the theme's settings". Each control shows its band from the official maps. Guards: a drought reserve whose reservoir (need × reserve ÷ 2 deep, 3 on Hard) would cover more than 15% of the map is disabled with the reason; Hard with a Scarce reserve warns (D13); Many waterfalls says how many fit under the highest terrain. Thorn belts, unstable cores, relics, geothermal fields and mine sites are not offered ("come in a later version"): their objects arrive in M7, and until then those settings do not change a map. The colonies are not shown (D5). Changing the theme resets every setting to its preset; changing the difficulty resets the start rules, badwater distance and berries target. | PLAN §5.7 and ROADMAP M7 put the map objects in M7, so their settings cannot move a target in M6. | M6 |
+| D66 | The settings panel (§14.1) as built: the theme strip (Highlands, Delta and Islands marked "Coming later"), Basics, Terrain, Water, Hazards, Resources, Advanced start rules, a Limits note for the map size, and "Reset to the theme's settings". Each control shows its band from the official maps. Guards: a drought reserve whose reservoir (need × reserve ÷ 2 deep, 3 on Hard) would cover more than 15% of the map is disabled with the reason; Hard with a Scarce reserve warns (D13); Many waterfalls says how many fit under the highest terrain. Thorn belts, unstable cores, relics, geothermal fields and mine sites are not offered ("come in a later version"): their objects arrive in M7, and until then those settings do not change a map. The colonies are not shown (D5). Changing the theme resets every setting to its preset; changing the difficulty resets the start rules, badwater distance and berries target. Updated in M7 (D81): the three themes and the map objects' settings are offered. | PLAN §5.7 and ROADMAP M7 put the map objects in M7, so their settings cannot move a target in M6. | M6 |
 | D67 | River Valley and Canyon still flow west to east (D19), and Lake Basin's outlet runs east. The eight flow axes of §7.1 wait for M9's premises. | Rotating a layout needs every planner and set piece in a common frame; the themes' batches and settings came first. | M6 |
 | D68 | Lake Basin's canonical settle is over the §10 budget: a median 1.15 s at 128² (budget 0.6 s) and 3.0 s at 256² (budget 3 s); a whole Lake Basin generation takes a median 0.9 s at 128² and 3.0 s at 256² in Node. Accepted for M6; CI's settle gate stays on River Valley. | The pre-fill fills the lake to its outlet's sill, and the sim then raises the whole lake by the head its outlet's flow needs, over a long flat reach to the dam site: 1,400–2,000 ticks, each over 3,000–5,000 wet tiles. Faster options change the layout or the shared pre-fill (Python too): a short lip at the lake's mouth with the dam site on it, or a pre-fill that adds the outlet's head. The lake already shrinks on large maps (D64). Decisions-pending #22. | M6; pending Kyler |
+| D69 | Map objects (§5.4–5.5, §5.7) are `mapObject` features. A single object (mine site, relic, geothermal field, unstable core) is placed by its footprint's south-west corner and a facing; a line (thorn belt, weir, plug) by its tiles, one object on each, turned and flipped by a tile hash as the in-game editor does. They stand at build step 9 with the water sources, and take their tiles before the derived slopes of step 8 and the resources of step 11. One rule (`features/objects.ts`, `fitProblems`) places them for the generator, the editor's tools and the footprint preview: on the map, level ground for single objects, dry and off rivers (weirs and plugs go across them), free of other objects, caves, locks and the start. A set piece may place objects of its own (`blocks`: the spillway's plug). | §19.8 put map objects with the resources at step 11, after the water settle. A weir and a plug hold water and thorns keep the soil under them dry, so they must stand before the settle, and a derived slope must not land under one. One rule keeps the preview, the refusal and the generator in agreement. | M7 |
+| D70 | Islands as built (§8): the Lake Basin planner with a sea of 40–48% of a 128² map, × (128² ÷ area)^0.5 beyond, its radius at most 0.44 of the side, a ring of land 0.09 of the side round it; 6–25 islands (one per 900 tiles of sea) of radius 6.5 to 6.5 + 0.03 × the side, rising 1–3 levels above the sea, clear of the rivers' mouths; a second outlet to another edge carries half the sea's water. The start is on the shore bench. Premise Archipelago only. | A sea this size rises by its outlet's head over its whole area; with one outlet the head, and the settle, grew with the sea. Two outlets halve it. The sea shrinks more slowly than Lake Basin's lake on big maps, so the theme keeps its character (at 256² it is still about a fifth to a quarter of the map). | M7; pending Kyler |
+| D71 | The plugged spillway (§9.6) as built: a channel 3 wide from a lake to a map edge or lower ground, its bed one level below the lake's sill, routed from the lake's water out through the shore near the point asked for; the plug is every channel tile beside the lake's water (2–9 Blockage tiles, or the plan fails), its top at the sill, so the lake spills over it as over its own outlet. The report's release is the lake's area × one level, an estimate. Lake Basin and Islands place one on nearly every map: from shore points 8–16 tiles from a river's mouth, the farthest from the start first, at most half the map's side long, kept only when the land the colony walks on from the start stays at 90% or more. | A plug one row across the channel leaked round its ends where the route ran along the shore, so the plug meets the lake along the whole mouth. The lake is flat, so the volume above the new sill is the release; a second canonical settle would double the water time of a Lake Basin map (already over budget, D68). In-game check D5 measures it. | M7; pending Kyler |
+| D72 | NaturalDam weirs (§5.7) as built: on half the maps the generator tries a weir where its river's water per tile stays in the channel (0.65 + 0.35 × flow ÷ tiles ≤ 0.93): across the dam site's channel (River Valley, Highlands, Delta), else a tributary or Highlands' stream 8 or 14 tiles above its mouth; Lake Basin and Islands try each inflow. Not in a canyon's narrows, and not on a delta's channels. It is left out when its water floods the floodplain within 60 tiles upstream, or it cuts more than 60 tiles off the land the colony walks on. Weirs on generated maps (20 seeds, Normal): 96² (20 seeds): River Valley 1, Highlands 2, Lake Basin 9; 128² (20): Highlands 4, Lake Basin 7; 192² (10): Highlands 2; none in Canyon, Delta or Islands. The editor's **Weir** tool places one anywhere across a river. | A river's channel is sized for water about 0.55 deep, so a 0.65 weir raises it to about bank height, and at the dam site the weir also closes the only way through the ridge (a natural dam blocks walking). A weir fits where the river carries less water per tile than its channel was sized for: smaller rivers. A weir on one channel of a delta only stops it (the head pool sends the water down the others). Decisions-pending #23. | M7; pending Kyler |
+| D73 | Highlands as built (§8): the valley planner (terracing, the dam site, falls, badwater) with 2–4 round plateaus on the terraces, radius 0.06 × the side × 0.8–1.2 (at least 5), each 2–4 levels above the ground under it with a cliff all round, 8 tiles plus its radius beyond the river's banks; a stream (a quarter of the river's flow) from a spring on the highest plateau, planned as the editor plans a drawn river, falls over its cliff and the terraces to the main river; ruins on a plateau (D76). The start is on a bench in the valley. Premise Staircase only. | The valley planner's start rules (water in reach, food, the drought reserve behind the dam site) hold in the valley, and every batch passes. A start on a mid plateau needs its own water and reservoir up there: the Twin plateaus premise (M9). Decisions-pending #24. | M7; pending Kyler |
+| D74 | Delta as built (§8): the valley planner with the dam site's gorge 30–40% of the way across; below it the river ends in a head pool 2 deep, and 2–4 channels leave the pool at its level and fan out across a plain one level above them to the east edge, their mouths over 30–60% of it, each sized for its share of the water. The start is on a bench between the dam site's ridge and the head pool. Badwater basins drain to a map edge (a basin joined to a channel would carry badwater past the start). Braided (§5.3) builds the same delta in River Valley and Highlands; Canyon keeps its narrows. Premise Many mouths only, with one dam site. | Channels at the pool's level share the water by how it flows, as a braided river does, and the plain one level above keeps them apart. The canonical pre-fill spreads badwater along a flat reach, and the delta's channels are level with the start's pool. | M7 |
+| D75 | `extras.placement` (§11.4) as built, in both validators: relics, geothermal fields and mine sites stand on level ground with no water within 2 tiles (Chebyshev) and outside every planned reservoir; the generated ones in their distance bands from the start (small relic 13–70, medium 40–140, large 140+, geothermal 30–120, mine site 60+; on maps under 128² × the longer side ÷ 128); generated thorn belts 20+ and unstable cores 40+ tiles from the start, and cores their radius + 2 apart. Objects the player places are held to the ground rules only. Not applicable when the map has none, or on imports. The generator places each object inside its band by a tile, with a ring of level ground round it, biggest first, and leaves out any that cuts the colony's land in two (thorn belts first). | A 96² map has no tile 140 out and few 60 out, so fixed bands would leave small maps without mine sites. The player may put a relic anywhere; the bands are the generator's promise. | M7 |
+| D76 | Obstacle with payoff (§9.4) as built: ruins on a plateau (River Valley, Highlands, Delta): a disc of radius 4 (5 from 128²) exactly 2 levels above the highest ground round it, a cliff all round, 35–70% of the way from the start to the farthest ground it walks on, with a ruin field on top. One flight of player stairs reaches it, and no derived slope does. The thorn-barred valley is the thorn belts (§5.4). The one-stair rule holds by construction and is a contract test (`tests/contract/objects.test.ts`), not a validation check. The ridge worth tunnelling waits for M9's premises. | A region-graph check for "reachable with one stair" belongs with the premises that need it; the builder already guarantees the geometry. | M7 |
+| D77 | The second district site (§9.8) as built: a set piece that marks a site and changes no terrain, 60–120 tiles from the start's middle, on 600+ tiles of level land, with clean water a pump reaches within 16 tiles; the derived slopes join it to the start's network, and the generator plants 48 trees and 24 berry bushes within 20 tiles of it. It has no dam site or basin of its own. Maps of 128² and up, where such a site exists: of 20 maps at 128², Delta 20, Lake Basin 13, River Valley 8, Highlands 7, Islands 7, Canyon 0; of 10 at 192², Delta and Lake Basin 10, Islands 9, River Valley and Highlands 6, Canyon 3. It is also where a second colony could start on a Timber Together map (D5). | Forcing a site where none fits would bend the layout, and a site the rules don't allow would mislead. The dam site near it comes with the premise "a second valley beyond the ridge" (M9). Decisions-pending #25. | M7; pending Kyler |
+| D78 | Editor resources (EDITOR_PLAN §4) as built: forests, berry patches and ruin fields are drawn as areas (drag a rectangle or click the corners) and planned first. The preview shows where plants live (moist, clean soil, not water or objects), where trees would stand dead (with **Only where trees live** off) and what stays bare; the placed trees are exactly the preview's. A ruin area becomes fields of the calibrated shape (§9.7): one level each, 10+ columns, the official size factors, 5% holes, a one-tile moat, at least 30% of its box filled; free tiles only, off the start's zone. Resources placed earlier keep their tiles (berries, then forests, then ruins). M4's rectangle features are still accepted by the engine. | "Forests show where they'll survive" (EDITOR_PLAN §4) and the M7 acceptance (moisture reach and the calibrated clustering). A blob squeezed along a narrow ledge is not a field. | M7 |
+| D79 | Editor map objects and advanced mode as built: mine sites, relics and geothermal fields (Resources), thorn belts (Land), weirs, plugs and the plugged spillway (Water). Every object shows its footprint under the pointer before the click, green or red with the reason, from the same rule that refuses the click (D69); `placeEntity` and `moveEntity` refuse what the game's loader would delete ("it can't stand there: …"). **Advanced** adds unstable cores and **Object** (the common templates by hand), and a click on the map opens the objects on that tile: move by a tile, turn, delete, a water source's strength (up to 8 per tile it covers), **Turns on later** (TimeActivatedComponent on, cycle and day, 10.5 days by default; CurrentStrength 0 while it waits, as official maps store it), and a core's radius and countdown. In advanced mode a click opens objects instead of selecting features. Brushes, locks and overlays come with their milestones. | EDITOR_PLAN §4 and the M7 acceptance "invalid placements are previewed and refused". The inspector changes an object in place with `setEntityProps`, so an edit survives regeneration like any entity edit (D38). | M7 |
+| D80 | The badwater toggle as built: **Make it badwater** in a river's inspector, for rivers that enter at a map edge. Its mouth is split into groups of 3 edge tiles whose 3×3 inland is level, each a BadwaterSource of the river's flow ÷ groups (at most 72, 8 per tile); the mouth's other tiles keep a WaterSource of strength 0 to seal it (§7.6). The preview comes first, with its warnings: beavers can't drink it; the soil along it is contaminated and its trees and bushes die; the start is beside it (when it is within 24 tiles). A spring's badwater stays the Badwater spring tool (M5). | "Switching it on warns that the river will stop moistening the soil and that forests along it will die" (EDITOR_PLAN §4). A BadwaterSource is 3×3, so a mouth under 3 wide, or not level, is refused with the reason. | M7 |
+| D81 | The settings panel (§14.1) as built in M7: Highlands, Delta and Islands are on the theme strip; Braided is offered in River style; Hazards gains **Thorn belts** and, under Advanced, **Unstable cores**; Resources gains **Relics**, **Geothermal fields** and **Mine sites**, each with its band from the official maps. Counts: thorn belts 1–3; cores 1–4, radius 2–3, countdown in cycle 5–12, 10.5 days in; relics 1–3 small, 1–2 medium from 128² (0–1 below), one large from 192²; geothermal fields 1 / 2 / 3 (under 128², from 128², from 192²); mine sites as set. `tools/settings-suite.ts` adds an experiment for each (thorns, cores, relics, geothermal, mine sites, braided); all move their target. Updates D66. | Their objects arrived in M7 (decisions-pending #20). | M7 |
+| D82 | Generator 0.5.0: every map changes (the map objects, the resources planted round them, the second district, the obstacles, the new themes, weirs and spillways). A share link made with 0.4.0 opens with a note that the map may differ. | PLAN §19.7: a version bump whenever generated bytes change. | M7 |
+| D83 | Islands' canonical settle is over the §10 budget: a median 0.92 s at 128² (budget 0.6 s) and 3.7 s at 256² (budget 3 s); a whole Islands map generates in a median 1.35 s at 128² and 5.3 s at 256² in Node. The other themes are within the budget: at 256² their settle takes a median 0.3–1.7 s (Lake Basin 1.7 s, down from 3.0 s in D68) and their generation 2.3–4.2 s; at 128² every theme but Islands generates in under 0.9 s. Accepted for M7; CI's settle gate stays on River Valley. | The sea rises by its outlets' head over a fifth to a half of the map: 1,150–2,200 ticks, each over many wet tiles. The faster options are D68's: a pre-fill that adds the outlets' head (shared with the Python oracle), or M8's warm-started preview; both change every Islands map. Decisions-pending #27. | M7; pending Kyler |
 
 ---
 

@@ -342,7 +342,93 @@ def check_playability(m, rep, fps, difficulty="normal", spec=None, features=None
     else:
         rep.add("ruins.fields", True, "no ruins on this map", na=True)
         rep.add("ruins.access", True, "no ruins on this map", na=True)
-    rep.add("extras.placement", True, "no relics, geothermal fields or mine sites are checked yet", na=True)
+    _extras(rep, h, D, sd, features, fps, X, Y)
+
+
+# ---- extras.placement (PLAN §11.4; src/core/validate/playability.ts checkExtras)
+OBJECT_TEMPLATE = {"mineSite": "UndergroundRuins", "relicSmall": "SmallRelic", "relicMedium": "MediumRelic",
+                   "relicLarge": "LargeRelic", "geothermal": "GeothermalField", "thornBelt": "Thorns",
+                   "weir": "NaturalDam", "plug": "Blockage", "bridge": "NaturalOverhang3x1",
+                   "unstableCore": "UnstableCore"}
+INF = float("inf")
+EXTRA_BANDS = {  # (lo, hi, scaled): tiles from the start on maps of 128² and up
+    "relicSmall": (13, 70, True), "relicMedium": (40, 140, True), "relicLarge": (140, INF, True),
+    "geothermal": (30, 120, True), "mineSite": (60, INF, True), "thornBelt": (20, INF, False),
+    "unstableCore": (40, INF, False),
+}
+FLAT_EXTRAS = ("mineSite", "relicSmall", "relicMedium", "relicLarge", "geothermal")
+FLOOD_MARGIN = 2
+
+
+def band_scale(X, Y):
+    side = X if X > Y else Y
+    return 1 if side >= 128 else side / 128
+
+
+def coordinates_for_min_corner(sx, sy, mx, my, o):
+    if o == "Cw0":
+        return mx, my
+    if o == "Cw90":
+        return mx, my + sx - 1
+    if o == "Cw180":
+        return mx + sx - 1, my + sy - 1
+    return mx + sy - 1, my
+
+
+def object_tiles(fps, f):
+    """The 2-D tiles of a map-object feature (src/core/features/objects.ts objectTiles)."""
+    p = f["params"]
+    pl = p["placement"]
+    if "area" in pl:
+        return [(x, y) for y, x0, x1 in pl["area"] for x in range(x0, x1 + 1)]
+    from tbmap import Placement
+    t = OBJECT_TEMPLATE[p["kind"]]
+    sx, sy = fps[t]["size"][0], fps[t]["size"][1]
+    cx, cy = coordinates_for_min_corner(sx, sy, pl["x"], pl["y"], pl["orientation"])
+    return footprint_tiles(fps, Placement(t, cx, cy, 0, pl["orientation"], False))
+
+
+def _extras(rep, h, D, sd, features, fps, X, Y):
+    if features is None:
+        rep.add("extras.placement", True, "distance bands are generator rules; imported maps keep their objects", na=True)
+        return
+    extras = [f for f in features if f["kind"] == "mapObject" and f["params"]["kind"] in EXTRA_BANDS]
+    if not extras:
+        rep.add("extras.placement", True, "no relics, geothermal fields, mine sites, thorn belts or unstable cores", na=True)
+        return
+    wet = D > WET
+    flood = np.zeros((Y, X), bool)
+    for y, x in zip(*np.nonzero(wet)):
+        flood[max(0, y - FLOOD_MARGIN):y + FLOOD_MARGIN + 1, max(0, x - FLOOD_MARGIN):x + FLOOD_MARGIN + 1] = True
+    for f in features:
+        if f["kind"] == "lake" and f["params"].get("planned"):
+            flood |= polygon_mask(f["params"]["outline"], X, Y)
+    scale = band_scale(X, Y)
+    bad = 0
+    cores = []
+    for f in extras:
+        k = f["params"]["kind"]
+        tiles = object_tiles(fps, f)
+        on = [(x, y) for x, y in tiles if 0 <= x < X and 0 <= y < Y]
+        problem = len(on) < len(tiles)
+        if not problem and k in FLAT_EXTRAS:
+            lv = h[on[0][1], on[0][0]]
+            problem = any(h[y, x] != lv for x, y in on) or any(flood[y, x] for x, y in on)
+        if not problem and f["origin"] == "generated" and on:
+            lo, hi, scaled = EXTRA_BANDS[k]
+            if scaled:
+                lo, hi = lo * scale, hi * scale
+            d = min(float(sd[y, x]) for x, y in on)
+            problem = d < lo or d > hi
+        if not problem and k == "unstableCore" and f["origin"] == "generated":
+            cores.append((on, (f["params"].get("core") or {}).get("radius", 2)))
+        bad += bool(problem)
+    for a in range(len(cores)):
+        for b in range(a + 1, len(cores)):
+            gap = min(max(abs(ax - bx), abs(ay - by)) for ax, ay in cores[a][0] for bx, by in cores[b][0])
+            if gap < max(cores[a][1], cores[b][1]) + 2:
+                bad += 1
+    rep.add("extras.placement", bad == 0, f"{bad} map objects out of place", bad, 0)
 
 
 def channel_tiles(tiles, levels, width, X, Y):

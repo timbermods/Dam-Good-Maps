@@ -5,6 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Three jobs run side by side: the tests, the Python oracle, and generation (timings and pass rates).
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,18 +27,6 @@ jobs:
         run: npm run typecheck
       - name: Unit and contract tests
         run: npm test
-      - name: Python oracle (load checks, round trip, validator parity; every theme)
-        run: npm run oracle -- --seeds 1-9 --sizes 96,128,256
-      - name: Generation time (128² under 3 s)
-        run: npm run bench
-      - name: Water settle time (256² under 3 s, PLAN §10)
-        run: npm run bench:water
-      - name: Pass rates (100 seeds at 128² Normal, final ≥ 98%, first attempt ≥ 60%)
-        run: npm run batch -- --seeds 1-100 --size 128
-      - name: Pass rates, Canyon (100 seeds at 128² Normal)
-        run: npm run batch -- --seeds 1-100 --size 128 --theme canyon
-      - name: Pass rates, Lake Basin (100 seeds at 128² Normal)
-        run: npm run batch -- --seeds 1-100 --size 128 --theme lakeBasin
       - name: Build
         run: npm run build
       - name: Install Chromium for Playwright
@@ -50,3 +39,51 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: prototype/requirements.txt
+      - run: npm ci
+      - run: pip install -r prototype/requirements.txt
+      - name: Python oracle (load checks, round trip, validator parity; every theme)
+        run: npm run oracle -- --seeds 1-18 --sizes 96,128,256
+
+  generation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Generation time (128² under 3 s)
+        run: npm run bench
+      - name: Water settle time (256² under 3 s, PLAN §10)
+        run: npm run bench:water
+      # the six themes at once, one process each (the other sizes and difficulties run locally,
+      # docs/progress.md)
+      - name: Pass rates, every theme (100 seeds at 128² Normal, final ≥ 98%, first attempt ≥ 60%)
+        run: |
+          mkdir -p .scratch
+          pids=()
+          for t in riverValley canyon highlands lakeBasin delta islands; do
+            npx tsx tools/batch.ts --seeds 1-100 --size 128 --theme $t > .scratch/batch-$t.txt 2>&1 &
+            pids+=($!)
+          done
+          fail=0
+          for p in "${pids[@]}"; do wait "$p" || fail=1; done
+          cat .scratch/batch-*.txt
+          exit $fail

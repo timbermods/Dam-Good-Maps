@@ -33,7 +33,11 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   // the player's own features: a forest (Resources) and a plateau (Land), drawn on the map
   await page.getByRole("tab", { name: "Resources" }).click();
   await page.getByRole("button", { name: "Forest", exact: true }).click();
+  // trees on dry ground too (they stand dead there); the forest is planned and shown first
+  await page.getByLabel("Only where trees live").uncheck();
   await drag(page, [6, 82], [14, 90]);
+  await page.getByRole("complementary", { name: "Preview" }).getByRole("button", { name: "Place" }).click();
+  await page.evaluate(() => window.dgmEditor!.idle());
   await page.getByRole("tab", { name: "Land" }).click();
   await page.getByRole("button", { name: "Plateau", exact: true }).click();
   await drag(page, [80, 8], [88, 14]);
@@ -51,13 +55,15 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   await page.getByRole("button", { name: "Start", exact: true }).click();
   const before = i.features.find((f) => f.kind === "start")!.params as { position: [number, number] };
   await page.getByRole("button", { name: /^Move Start/ }).focus();
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
+  // (west: the berry bushes this map plants for its start stay within reach; two tiles east, 12
+  // of them fall outside the 20 tiles start.food counts, and export would warn)
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
   await expect.poll(async () => (await info(page)).history.length, { timeout: 30_000 }).toBe(3);
   await page.evaluate(() => window.dgmEditor!.idle());
   i = await info(page);
   const moved = i.features.find((f) => f.kind === "start")!.params as { position: [number, number] };
-  expect(moved.position).toEqual([before.position[0] + 2, before.position[1]]);
+  expect(moved.position).toEqual([before.position[0] - 2, before.position[1]]);
 
   // undo and redo, and the history list
   await page.keyboard.press("Escape");

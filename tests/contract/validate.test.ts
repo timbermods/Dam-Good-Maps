@@ -78,8 +78,14 @@ describe("validation profiles (PLAN §19.5)", () => {
     const adv = r.report.checks.find((c) => c.id === "plants.drought")!;
     expect(adv.advisory).toBe(true);
     for (const p of ["generate", "export", "import"] as const) expect(blocks(p, { ...adv, ok: false })).toBe(false);
-    // the map objects' placement check is not applicable until M7 places relics and mine sites
-    const na = r.report.checks.find((c) => c.id === "extras.placement")!;
+    // the map objects' placement check applies to a map with relics, fields and mine sites (M7), and
+    // is not applicable, never blocking, on a map without them
+    const ex = r.report.checks.find((c) => c.id === "extras.placement")!;
+    expect(ex.applicable).not.toBe(false);
+    expect(ex.ok).toBe(true);
+    const none = { ...spec.settings, hazards: { ...spec.settings.hazards, thornBelts: "off" as const }, resources: { ...spec.settings.resources, relics: "off" as const, geothermal: "off" as const, mineSites: 0 } };
+    const bare = generate({ ...makeSpec({ seed: 4242, size: { x: 96, y: 96 } }), settings: none });
+    const na = bare.report.checks.find((c) => c.id === "extras.placement")!;
     expect(na.applicable).toBe(false);
     expect(na.ok).toBe(true);
     for (const p of ["generate", "export", "import"] as const) expect(blocks(p, na)).toBe(false);

@@ -7,8 +7,8 @@ The website is in progress, following [ROADMAP.md](ROADMAP.md). Once Pages is on
 <https://timbermods.github.io/dam-good-maps/>.
 
 The generator:
-- Pick a theme: **River Valley**, **Canyon** or **Lake Basin**. Then pick the size and the
-  difficulty.
+- Pick a theme: **River Valley**, **Canyon**, **Highlands**, **Lake Basin**, **Delta** or
+  **Islands**. Then pick the size and the difficulty.
 - Open **Terrain**, **Water**, **Hazards**, **Resources** or **Advanced: start rules** to change the
   map. Each setting shows what the official maps use.
 - **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
@@ -21,11 +21,19 @@ The editor:
 - **Refine this map** opens the map in 3D.
 - **Land**: draw a **Hill**, **Plateau**, **Ridge**, **Canyon**, **Valley** or **Island**, and pick
   its height and edges. Add **Terraced cliffs**. Click a step to add a **Slope**, or a slope to
-  remove it.
+  remove it. Draw a **Thorn belt**.
 - **Water**: click a **River** from its source to where it ends. Draw a **Lake** by its shore. Add
-  a **Waterfall**, a **Dam site**, a **Gorge** or a **Badwater spring**. **Show dam sites** marks
-  the best places for a dam.
-- **Resources**: draw a **Forest**, **Berry patch** or **Ruin field**.
+  a **Waterfall**, a **Dam site**, a **Gorge** or a **Badwater spring**. Click a river to add a
+  **Weir** or a **Plug**. Click a lake's shore to add a **Plugged spillway**. **Show dam sites**
+  marks the best places for a dam. Select a river and click **Make it badwater** to turn its
+  water bad.
+- **Resources**: draw a **Forest**, **Berry patch** or **Ruin field**. Green shows where trees and
+  bushes live. Click to place a **Mine site**, **Relic** or **Geothermal field**.
+- Objects show under the pointer before you click. Green means the game keeps them there. Red
+  means it would delete them, and says why.
+- Tick **Advanced** to add **Unstable core** and **Object** to **Resources**. **Object** places any
+  object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
+  them, set a water source's strength, or make it turn on in a later cycle.
 - **Start**: drag the start. Green means the district center fits.
 - Each tool shows what it will do first. **Place** adds it.
 - Select a feature to move it, change it or delete it. This works on most of what the generator

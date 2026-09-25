@@ -36,6 +36,14 @@
 //                                   slopes orange with their high side brown, badwater sources magenta
 //       checks.txt                  sha256, coordinates and what should happen
 //
+//   npx tsx tools/ingame-files.ts --milestone m7 [--seed 4242] [--size 128] [--out out/m7]
+//     D (the 1.0 objects load, and a spillway's plug releases its water), one map: the generated
+//     Lake Basin map, which has a plugged spillway, mine sites, geothermal fields and relics, with a
+//     weir (NaturalDam) and a thorn belt added with the M7 editor tools:
+//       Lake Basin (4242) D objects.timber   the map
+//       Lake Basin (4242) D objects.png      where each object is (see checks.txt for the colours)
+//       checks.txt                           sha256, coordinates and what should happen
+//
 // Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.
 
 import { createHash } from "node:crypto";
@@ -44,6 +52,9 @@ import { join } from "node:path";
 import type { BuildResult } from "../src/core/features/build";
 import { MapSession } from "../src/core/doc/session";
 import { planContextOf, planPiece, planRiver, type PlannedEdit } from "../src/core/doc/tools";
+import { planObject } from "../src/core/doc/placing";
+import { entityTiles } from "../src/core/features/edits";
+import type { SpillwayPlan } from "../src/core/features/setpieces/plugSpillway";
 import { pointAtArc } from "../src/core/features/geometry";
 import type { RiverFeature, SetPieceFeature } from "../src/core/features/schema";
 import { lipTiles, measureLip, type StandalonePlan } from "../src/core/features/setpieces/waterfall";
@@ -174,6 +185,8 @@ if (milestone === "m1") {
   m5();
 } else if (milestone === "m6") {
   m6();
+} else if (milestone === "m7") {
+  m7();
 } else {
   // ---- B: pre-filled water, tree survival, the empty-water A/B file, badwater downstream
   const emptyBytes = writeTimber(toTimberFile(r.spec, b, { emptyWater: true }));
@@ -493,4 +506,141 @@ function m6(): void {
       "",
     );
   }
+}
+
+function m7(): void {
+  lines.length = 0;
+  const g = generate(makeSpec({ seed, size: { x: size, y: size }, theme: "lakeBasin" }));
+  if (!g.report.passed) throw new Error(`lakeBasin ${seed} failed`);
+  const name = `${fileName(g.spec).replace(/\.timber$/, "")} D objects`;
+  const s = MapSession.fromGenerated(g);
+  const id = (k: number) => `00000000-0000-4000-8000-${String(700 + k).padStart(12, "0")}`;
+  const apply = (p: PlannedEdit) => {
+    if (!p.ok) throw new Error(p.errors.join("; "));
+    const a = s.applyAll(p.ops, "user", p.label);
+    if (!a.ok) throw new Error(a.errors.join("; "));
+    return p;
+  };
+  const Wm = s.size.x;
+  const Hm = s.size.y;
+  const st = s.built.entities.find((e) => e.template === "StartingLocation")!;
+  const dist = (x: number, y: number) => Math.sqrt((x - st.x - 1) * (x - st.x - 1) + (y - st.y - 1) * (y - st.y - 1));
+
+  // a weir across an inflow river, as the Weir tool places it (a click on the river)
+  let weir: PlannedEdit | null = null;
+  for (const f of s.features) {
+    if (f.kind !== "river" || f.params.badwater || !f.role?.startsWith("river/inflow") || weir) continue;
+    const len = f.params.path.reduce((a, q, k, ps) => (k ? a + Math.hypot(q[0] - ps[k - 1][0], q[1] - ps[k - 1][1]) : 0), 0);
+    for (let at = Math.round(len * 0.4); at < len * 0.85 && !weir; at += 2) {
+      const p = planObject(s, { kind: "weir", river: { id: f.id, at } }, id(1));
+      if (p.ok) weir = p;
+    }
+  }
+  if (!weir || !weir.ok) throw new Error("no place for the weir");
+  apply(weir);
+  // a thorn belt drawn on dry land 24–40 tiles from the start (the Thorn belt tool, 60% of the area)
+  let belt: PlannedEdit | null = null;
+  search: for (let r = 24; r <= 40; r += 4)
+    for (let a = 0; a < 16; a++) {
+      const cx = Math.round(st.x + 1 + r * Math.cos((a * Math.PI) / 8));
+      const cy = Math.round(st.y + 1 + r * Math.sin((a * Math.PI) / 8));
+      if (cx < 8 || cy < 8 || cx > Wm - 9 || cy > Hm - 9) continue;
+      const tiles: number[] = [];
+      for (let y = cy - 2; y <= cy + 2; y++) for (let x = cx - 5; x <= cx + 5; x++) tiles.push(y * Wm + x);
+      const p = planObject(s, { kind: "thornBelt", tiles, density: 0.6 }, id(2));
+      if (!p.ok || p.report.some((l) => l.includes("stay free"))) continue;
+      let near = Infinity;
+      for (const i of p.tiles) near = Math.min(near, dist(i % Wm, Math.floor(i / Wm)));
+      if (near >= 22) {
+        belt = p;
+        break search;
+      }
+    }
+  if (!belt) throw new Error("no place for the thorn belt");
+  apply(belt);
+
+  const { bytes } = s.exportTimber();
+  writeFileSync(join(outDir, `${name}.timber`), bytes);
+  const v = s.validate("export");
+  const failing = v.report.checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false);
+  if (failing.some((c) => c.class === "load")) throw new Error(`load problems: ${failing.map((c) => c.id).join(", ")}`);
+  const placement = v.report.checks.find((c) => c.id === "entities.placement")!;
+  const extras = v.report.checks.find((c) => c.id === "extras.placement")!;
+
+  const b2 = s.built;
+  const ents = (t: string) => b2.entities.filter((e) => e.template === t);
+  const marks = startMarks(b2);
+  const COLOURS: [string, [number, number, number]][] = [
+    ["Blockage", [230, 0, 200]],
+    ["NaturalDam", [0, 230, 255]],
+    ["Thorns", [120, 20, 30]],
+    ["SmallRelic", [255, 230, 0]],
+    ["MediumRelic", [255, 230, 0]],
+    ["GeothermalField", [255, 120, 0]],
+    ["UndergroundRuins", [150, 60, 220]],
+  ];
+  for (const [t, rgb] of COLOURS) for (const e of ents(t)) for (const [x, y] of entityTiles(e)) marks.push({ x, y, rgb });
+  const spill = s.features.find((f): f is SetPieceFeature => f.kind === "setPiece" && f.params.kind === "plugSpillway")!;
+  const sp = spill.params.plan as unknown as SpillwayPlan;
+  const plugAt = new Set<string>();
+  for (let k = 0; k + 1 < sp.plug.length; k += 2) plugAt.add(`${sp.plug[k]},${sp.plug[k + 1]}`);
+  for (let k = 0; k + 1 < sp.outlet.length; k += 2) if (!plugAt.has(`${sp.outlet[k]},${sp.outlet[k + 1]}`)) marks.push({ x: sp.outlet[k], y: sp.outlet[k + 1], rgb: [40, 90, 200], inset: 1 });
+  writeFileSync(join(outDir, `${name}.png`), preview(b2, marks, true));
+
+  const at = (e: { x: number; y: number }) => `(${e.x}, ${e.y})`;
+  const box = (t: string) =>
+    ents(t).map((e) => {
+      const ts = entityTiles(e);
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (const [x, y] of ts) {
+        x0 = Math.min(x0, x);
+        y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x);
+        y1 = Math.max(y1, y);
+      }
+      return `(${x0}, ${y0})–(${x1}, ${y1}), ${Math.round(dist(x0, y0))} tiles from the start`;
+    });
+  const dams = ents("NaturalDam");
+  const thorns = ents("Thorns");
+  const plug = ents("Blockage");
+  const lake = s.features.find((f) => f.kind === "lake" && f.id === sp.lake);
+  const door2 = startEntranceTile(st.x, st.y, st.orientation as Orientation);
+  let tx0 = Infinity;
+  let ty0 = Infinity;
+  let tx1 = -Infinity;
+  let ty1 = -Infinity;
+  for (const e of thorns) {
+    tx0 = Math.min(tx0, e.x);
+    ty0 = Math.min(ty0, e.y);
+    tx1 = Math.max(tx1, e.x);
+    ty1 = Math.max(ty1, e.y);
+  }
+  const count = ["Blockage", "NaturalDam", "Thorns", "SmallRelic", "MediumRelic", "GeothermalField", "UndergroundRuins"].reduce((a, t) => a + ents(t).length, 0);
+  lines.push(
+    `Generator ${GENERATOR_VERSION}; ${size}×${size}, seed ${seed}, Lake Basin, designed for Normal, every setting at its theme's preset; two edits with the M7 tools (a weir and a thorn belt).`,
+    "",
+    "Tile coordinates: x runs west to east, y runs south to north, (0, 0) is the south-west corner.",
+    "PNG: north up, 5 px per tile, dotted grid every 16 tiles; water blue (badwater brown); start white (door red); Blockage (the plug) magenta; NaturalDam (the weir) cyan; Thorns dark red; relics yellow; geothermal fields orange; mine sites (UndergroundRuins) purple; the spillway's channel dark blue dots.",
+    "",
+    `sha256 ${sha(bytes)}  ${name}.timber`,
+    `StartingLocation at ${at(st)}, z ${st.z}, ${st.orientation}; door tile (${door2.join(", ")}).`,
+    `Validation (export profile): entities.placement ${placement.ok ? "passes" : "FAILS"} (the loader's rules for every object); extras.placement ${extras.ok ? "passes" : "fails"}; warnings: ${failing.map((c) => c.id).join(", ") || "none"}.`,
+    "",
+    `Objects (${count} entities):`,
+    `  Blockage (the spillway's plug), ${plug.length} tiles: ${plug.map(at).join(" ")}.`,
+    `  NaturalDam (the weir), ${dams.length} tiles across a river: ${dams.map(at).join(" ")}. ${weir.report.join("; ")}.`,
+    `  Thorns, ${thorns.length} in a belt within (${tx0}, ${ty0})–(${tx1}, ${ty1}).`,
+    `  Small relic: ${box("SmallRelic").join("; ")}.`,
+    `  Medium relic: ${box("MediumRelic").join("; ")}.`,
+    `  Geothermal fields: ${box("GeothermalField").join("; ")}.`,
+    `  Mine sites (UndergroundRuins): ${box("UndergroundRuins").join("; ")}.`,
+    "",
+    `The plugged spillway: the lake${lake && lake.kind === "lake" ? ` (sill at level ${lake.params.outlet.sill})` : ""} has a side channel ${sp.outletWidth} wide, its bed one level below the sill (level ${sp.level - 1}), running ${sp.outlet.length / 2} tiles to ${sp.outletTo === "edge" ? "the map edge" : "lower ground"}. The plug's top stands at the sill, so the lake keeps its level and spills over it as over its own outlet.`,
+    `  Its report: ${spill.params.report.join("; ")}.`,
+    `  Demolish the ${plug.length} Blockage tiles: the lake should drain about one level (to about level ${sp.level - 1}) down the channel, about ${sp.release.toLocaleString("en-US")} water, and then keep that level.`,
+    "",
+  );
 }

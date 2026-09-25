@@ -1,7 +1,7 @@
 // MapSpec v1 (PLAN §19.1): everything that determines a generated map. The settings panel, the
 // URL codec, the editor's SpecPatch and Claude all produce one. Complete, never a diff.
 
-export const GENERATOR_VERSION = "0.4.0";
+export const GENERATOR_VERSION = "0.5.0";
 export const SPEC_VERSION = 1;
 
 export type ThemeId = "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
@@ -10,8 +10,8 @@ export type Difficulty = "easy" | "normal" | "hard";
 export type SizePreset = "small" | "medium" | "large" | "max";
 
 export const THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
-/** Themes the generator can build today (M6: River Valley, Canyon and Lake Basin; the rest in M7). */
-export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "lakeBasin"];
+/** Themes the generator can build (all six since M7). */
+export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
 export const THEME_NAMES: Record<ThemeId, string> = {
   riverValley: "River Valley",
   canyon: "Canyon",

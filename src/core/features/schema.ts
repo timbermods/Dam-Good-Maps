@@ -77,6 +77,9 @@ export interface LakeParams {
   planned: boolean;
   /** The river whose bed profile sets the floor level. */
   river?: string;
+  /** Islands in the lake (the Islands theme's sea): each rises from the lake's floor to its height,
+   *  with a cliff round it. */
+  islands?: { outline: Point[]; height: number }[];
 }
 
 // --------------------------------------------------------------------------------------- landform
@@ -171,9 +174,16 @@ export interface RuinFieldParams {
   centerBias: number;
 }
 
+export type MapObjectKind = "mineSite" | "relicSmall" | "relicMedium" | "relicLarge" | "geothermal" | "thornBelt" | "weir" | "plug" | "bridge" | "unstableCore";
+
+/** A map object (PLAN §19.2, objects.ts). Single objects (mine sites, relics, geothermal fields,
+ *  unstable cores) stand with their rotated footprint's south-west corner at (x, y). Lines and belts
+ *  (thorn belts, NaturalDam weirs, Blockage plugs) put one object on every tile of their area. */
 export interface MapObjectParams {
-  kind: "mineSite" | "relicSmall" | "relicMedium" | "relicLarge" | "geothermal" | "thornBelt" | "weir" | "plug" | "bridge" | "unstableCore";
+  kind: MapObjectKind;
   placement: { x: number; y: number; orientation: Orientation } | { area: Runs };
+  /** An unstable core: its explosion radius (0–5) and the cycle its countdown starts (1–99). */
+  core?: { radius: number; cycles: number };
 }
 
 // ------------------------------------------------------------------------------------------ start

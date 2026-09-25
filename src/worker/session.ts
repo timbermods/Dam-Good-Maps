@@ -14,6 +14,7 @@ import { MapSession, type DocOrphan, type HistoryItem, type SessionMode } from "
 import type { EditOp, OpOrigin } from "../core/doc/ops";
 import {
   deleteEdit,
+  kindName,
   moveEdit,
   moveStartNear,
   planContextOf,
@@ -30,11 +31,15 @@ import {
   type RiverRequest,
 } from "../core/doc/tools";
 import type { PlanRecord } from "../core/features/setpieces";
+import { footprintCheck as checkFootprint, lakeAt, moveObject, planArea, planEntity, planObject, planRiverBadwater, type AreaPreview, type AreaRequest, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
 import type { SetPieceKind } from "../core/features/schema";
 import { distanceFrom } from "../core/math/grid";
 import { toTimberFile } from "../core/gen/pack";
 import { thumbnailJpeg } from "../core/render/shade";
 import type { EntitySpec } from "../core/format/entities";
+import { JsonFloat } from "../core/format/json";
+import type { Orientation } from "../core/format/footprints";
+import { entityTiles } from "../core/features/edits";
 import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
@@ -537,7 +542,12 @@ export type ToolRequest =
   | ({ tool: "river" } & RiverRequest)
   | ({ tool: "lake" } & LakeRequest)
   | ({ tool: "landform" } & LandformRequest)
-  | { tool: "setPiece"; piece: SetPieceKind; request: PlanRecord };
+  | { tool: "setPiece"; piece: SetPieceKind; request: PlanRecord }
+  | ({ tool: "object" } & ObjectRequest)
+  | ({ tool: "area" } & AreaRequest)
+  | ({ tool: "entity" } & EntityRequest)
+  | { tool: "spillway"; at: [number, number]; width?: number }
+  | { tool: "riverBadwater"; river: string; on: boolean };
 
 export interface ToolPlan {
   ok: boolean;
@@ -548,12 +558,14 @@ export interface ToolPlan {
   ops: EditOp[];
   /** The tiles the planned feature covers, for the preview. */
   tiles: number[];
+  /** A resource area's preview: where plants live, where they would stand dead, what stays bare. */
+  area?: AreaPreview;
   featureId: string | null;
 }
 
-function toolPlan(r: PlannedEdit): ToolPlan {
+function toolPlan(r: PlannedEdit | PlannedOps, area?: AreaPreview): ToolPlan {
   if (!r.ok) return { ok: false, errors: r.errors, report: [], label: "", ops: [], tiles: [], featureId: null };
-  return { ok: true, errors: [], report: r.report, label: r.label, ops: r.ops, tiles: r.tiles, featureId: r.feature.id };
+  return { ok: true, errors: [], report: r.report, label: r.label, ops: r.ops, tiles: r.tiles, ...(area ? { area } : {}), featureId: "feature" in r ? r.feature.id : null };
 }
 
 /** Plan a tool's edit on the open map without applying it (the preview). `id` is the new
@@ -561,6 +573,25 @@ function toolPlan(r: PlannedEdit): ToolPlan {
 export function planTool(req: ToolRequest, id: string): ToolPlan {
   const s = need();
   if (req.tool === "setPiece") return toolPlan(planPiece(s, req.piece, req.request, id));
+  if (req.tool === "object") {
+    const { tool: _t, ...r } = req;
+    return toolPlan(planObject(s, r, id));
+  }
+  if (req.tool === "area") {
+    const { tool: _t, ...r } = req;
+    const p = planArea(s, r, id);
+    return toolPlan(p, p.ok ? p.preview : undefined);
+  }
+  if (req.tool === "entity") {
+    const { tool: _t, ...r } = req;
+    return toolPlan(planEntity(s, r, id));
+  }
+  if (req.tool === "riverBadwater") return toolPlan(planRiverBadwater(s, req.river, req.on));
+  if (req.tool === "spillway") {
+    const lake = lakeAt(s, req.at[0], req.at[1]);
+    if (!lake) return toolPlan({ ok: false, errors: ["click a lake's shore: a spillway drains a lake"] });
+    return toolPlan(planPiece(s, "plugSpillway", { lake, at: req.at, width: req.width ?? 3 }, id));
+  }
   // a feature on the map is planned again on the map without it, and changed in place
   const existing = s.features.find((f) => f.id === id) ?? null;
   const ctx = planContextOf(s, existing ? id : null);
@@ -585,7 +616,7 @@ export function applyTool(req: ToolRequest, id: string): SessionUpdate & { plan:
 export function moveFeature(id: string, dx: number, dy: number): SessionUpdate {
   const t0 = performance.now();
   const s = need();
-  const r = moveEdit(s, id, dx, dy);
+  const r = s.features.find((f) => f.id === id)?.kind === "mapObject" ? moveObject(s, id, dx, dy) : moveEdit(s, id, dx, dy);
   if (!r.ok) return changed(s, false, r.errors, t0);
   const a = s.applyAll(r.ops, "user", r.label);
   return changed(s, a.ok, a.errors, t0);
@@ -616,6 +647,56 @@ export function deleteFeature(id: string): SessionUpdate {
   if (!r.ok) return changed(s, false, r.errors, t0);
   const a = s.applyAll(r.ops, "user", r.label);
   return changed(s, a.ok, a.errors, t0);
+}
+
+// ------------------------------------------------------------------------------ entities (advanced)
+
+export interface EntityInfo {
+  id: string;
+  template: string;
+  x: number;
+  y: number;
+  z: number;
+  orientation: Orientation;
+  flipped: boolean;
+  /** What placed it: a feature's plain name, "placed by hand", "slopes" or "the imported map". */
+  from: string;
+  /** Its components other than BlockObject, as plain JSON. */
+  components: Record<string, unknown>;
+}
+
+function plainJson(v: unknown): unknown {
+  if (v instanceof JsonFloat) return v.value;
+  if (Array.isArray(v)) return v.map(plainJson);
+  if (v !== null && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(v)) out[k] = plainJson((v as Record<string, unknown>)[k]);
+    return out;
+  }
+  return v;
+}
+
+/** The entities whose footprint covers tile (x, y), topmost last (advanced mode's inspector). */
+export function entitiesAt(x: number, y: number): EntityInfo[] {
+  const s = need();
+  const names = new Map(s.features.map((f) => [f.id, kindName(f)]));
+  const out: EntityInfo[] = [];
+  for (const e of s.built.entities) {
+    if (e.raw && !placementOf(e.raw)) continue;
+    if (!entityTiles(e).some(([tx, ty]) => tx === x && ty === y)) continue;
+    const comps = (e.raw ? e.raw.Components : { ...(e.before ?? {}), ...e.components }) as Record<string, unknown>;
+    const { BlockObject: _bo, ...rest } = comps;
+    const from = names.get(e.owner) ?? (e.owner === "placed" ? "placed by hand" : e.owner.startsWith("derived:") || e.owner.startsWith("pinned:") ? "slopes" : "the imported map");
+    out.push({ id: e.id, template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, flipped: e.flipped, from, components: plainJson(rest) as Record<string, unknown> });
+  }
+  return out;
+}
+
+/** The hover preview of a single object or an entity: its tiles, and why it can't stand there. */
+export function footprintCheck(req: ToolRequest): { tiles: number[]; problem: string | null } {
+  const s = need();
+  if (req.tool !== "object" && req.tool !== "entity") return { tiles: [], problem: null };
+  return checkFootprint(s, req);
 }
 
 // ------------------------------------------------------------------------------ the dam-site layer

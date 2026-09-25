@@ -5,7 +5,7 @@
 //
 // Steps: 1 base terrain (the fill, or an imported map's surface), 2 landforms, 3 set-piece terrain,
 // 4 rivers and lakes, 5 the start bench, 6 sculpt edits, 7 integrity pass, 8 slopes (derived, then
-// pinned and removed), 9 water sources, then the first pass of entity edits, 10 the canonical water
+// pinned and removed), 9 water sources and map objects, then the first pass of entity edits, 10 the canonical water
 // settle with soil moisture and soil contamination, 11 resources placed on the simulated moisture,
 // 12 the start, 13 the second pass of entity edits.
 //
@@ -15,8 +15,8 @@
 // moisture and each resource feature are reused when their inputs are unchanged. The property
 // tests check that it equals a full build.
 
-import { coordinatesForMinCorner, footprintTiles, rotate, slopeHighSide } from "../format/footprints";
-import { startingLocation, waterSource, slope, type EntitySpec } from "../format/entities";
+import { coordinatesForMinCorner, footprintTiles, ORIENTATIONS, rotate, slopeHighSide } from "../format/footprints";
+import { blockObject, startingLocation, waterSource, slope, type EntitySpec } from "../format/entities";
 import type { MapSpec } from "../spec/mapspec";
 import { soilContamination } from "../sim/contamination";
 import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
@@ -25,7 +25,7 @@ import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
 import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
-import { BUILDERS, orientationForHigh, type SetPieceSource } from "./setpieces";
+import { BUILDERS, orientationForHigh, type SetPieceBlock, type SetPieceSource } from "./setpieces";
 import { applyEntityEdits, applySlopeEdits, entityTiles, orphansOf, type EntityEdit, type Orphan, type SlopeEdit } from "./edits";
 import {
   applySculpt,
@@ -44,8 +44,10 @@ import {
   type SculptEdit,
 } from "./raster/terrain";
 import { rasterizeResource, resourceOrder, type Placed } from "./raster/resources";
+import { objectTiles, rasterizeObjects } from "./objects";
+import type { DistrictPlan } from "./setpieces/secondDistrict";
 import { BuildTarget, clipRect, fullRegion, type FieldCache, type Rect, type TileRegion } from "./target";
-import type { Feature, SetPieceFeature, StartFeature } from "./schema";
+import type { Feature, MapObjectFeature, SetPieceFeature, StartFeature } from "./schema";
 
 export { BuildTarget } from "./target";
 export { assignRuinHeights } from "./raster/resources";
@@ -471,6 +473,9 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     const tiles = mouthTiles(f, target);
     mouths.set(f.id, tiles);
     for (const i of tiles) reserved[i] = 1;
+    // a badwater river's sources reach two tiles inland
+    if (f.params.badwater && "edge" in f.params.entry)
+      for (const [x, y] of badwaterMouth(tiles, f.params.entry.edge, W, H, heights).groups) for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) reserved[(y + dy) * W + x + dx] = 1;
   }
   //    springs: a river that starts inland, a lake fed by a spring
   const springs = new Map<string, number[]>();
@@ -485,6 +490,20 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     if (!tiles.length) continue;
     springs.set(f.id, tiles);
     for (const i of tiles) reserved[i] = 1;
+  }
+  //    map objects (mine sites, relics, thorn belts, weirs, plugs, ...) take their tiles now, so the
+  //    derived slopes go round them (PLAN §20, D69)
+  const objectFeatures = features.filter((f): f is MapObjectFeature => f.kind === "mapObject" && live(f));
+  for (const f of objectFeatures) for (const [x, y] of objectTiles(f, W, H)) if (x >= 0 && x < W && y >= 0 && y < H) reserved[y * W + x] = 1;
+  //    and the objects set pieces place themselves (a spillway's plug)
+  const pieceBlocks: { feature: SetPieceFeature; block: SetPieceBlock }[] = [];
+  for (const f of features) {
+    if (f.kind !== "setPiece" || !live(f)) continue;
+    for (const block of BUILDERS[f.params.kind]?.blocks?.(f) ?? []) {
+      if (block.x < 0 || block.x >= W || block.y < 0 || block.y >= H) continue;
+      pieceBlocks.push({ feature: f, block });
+      reserved[block.y * W + block.x] = 1;
+    }
   }
   const pieceSources: { feature: SetPieceFeature; src: SetPieceSource }[] = [];
   for (const f of features) {
@@ -555,6 +574,24 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     if (f.kind !== "river" || !live(f)) continue;
     const tiles = mouths.get(f.id)!;
     if (!tiles.length) continue;
+    // a badwater river: BadwaterSources (3×3) along its mouth, and a source at strength 0 on any
+    // mouth tile left over, so the mouth stays sealed (EDITOR_PLAN §4's badwater toggle)
+    const bad = f.params.badwater && "edge" in f.params.entry ? badwaterMouth(tiles, f.params.entry.edge, W, H, heights) : null;
+    if (bad && bad.groups.length) {
+      const each = Math.min(72, Math.round((f.params.flow / bad.groups.length) * 1000) / 1000);
+      for (const [x, y] of bad.groups) {
+        const i = y * W + x;
+        sources.push({ x, y, z: heights[i], strength: each, owner: f.id, template: "BadwaterSource" });
+        entities.push(waterSource({ id: entityId(f.id, "BadwaterSource", i), owner: f.id, x, y, z: heights[i], strength: each, bad: true }));
+      }
+      for (const i of bad.seals) {
+        const x = i % W;
+        const y = (i - x) / W;
+        sources.push({ x, y, z: heights[i], strength: 0, owner: f.id, template: "WaterSource" });
+        entities.push(waterSource({ id: entityId(f.id, "WaterSource", i), owner: f.id, x, y, z: heights[i], strength: 0 }));
+      }
+      continue;
+    }
     const each = Math.min(8, Math.round((f.params.flow / tiles.length) * 1000) / 1000);
     for (const i of tiles) {
       const x = i % W;
@@ -583,6 +620,13 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     const bad = src.template === "BadwaterSource";
     sources.push({ x: src.x, y: src.y, z: heights[i], strength: src.strength, owner: feature.id, template: src.template });
     entities.push(waterSource({ id: entityId(feature.id, src.template, i), owner: feature.id, x: src.x, y: src.y, z: heights[i], strength: src.strength, bad }));
+  }
+  //    map objects: they hold water (a weir, a plug) and stop moisture (thorns), so they stand
+  //    before the water settles
+  for (const f of objectFeatures) entities.push(...rasterizeObjects(f, W, H, heights, input.locked?.mask ?? null));
+  for (const { feature, block: b } of pieceBlocks) {
+    const i = b.y * W + b.x;
+    entities.push(blockObject({ id: entityId(feature.id, b.template, i), owner: feature.id, x: b.x, y: b.y, z: heights[i], template: b.template, orientation: ORIENTATIONS[b.turn & 3], flipped: b.flipped }));
   }
   //    what a regeneration kept in locked regions, and the imported map's own objects (snapped to
   //    the ground where an edit changed the surface under them)
@@ -694,8 +738,8 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
     return { ...withWater, dirty: null, cache: makeCache({ settle: settleEntry, barrierKey, moisture: settle ? moist : null, soil: settle ? soil : null }) };
   }
 
-  // 11. resources: berries, forests, ruin fields (map objects arrive in M7). Each feature's output
-  //     is reused when it and the ground under its area are unchanged.
+  // 11. resources: berries, forests, ruin fields (map objects stood at step 9, D69). Each feature's
+  //     output is reused when it and the ground under its area are unchanged.
   const occBefore = occupied.slice();
   const resources = new Map<string, ResourceEntry>();
   const order = resourceFeatures.map((f) => f.id);
@@ -770,6 +814,14 @@ function landformTargets(features: readonly Feature[], t: BuildTarget): { mask: 
   let mask: Uint8Array | null = null;
   const keys: string[] = [];
   for (const f of features) {
+    // a second district's site joins the start's network wherever it is (PLAN §7.5, §9.8)
+    if (f.kind === "setPiece" && f.params.kind === "secondDistrict") {
+      const p = f.params.plan as unknown as DistrictPlan;
+      mask ??= new Uint8Array(t.W * t.H);
+      if (p.x >= 0 && p.y >= 0 && p.x < t.W && p.y < t.H) mask[p.y * t.W + p.x] = 1;
+      keys.push(f.id);
+      continue;
+    }
     if (f.kind !== "landform" || !f.params.outline || f.params.height === undefined || !edgeStep(f.params)) continue;
     const inward = t.inward(f.params.outline);
     mask ??= new Uint8Array(t.W * t.H);
@@ -777,6 +829,38 @@ function landformTargets(features: readonly Feature[], t: BuildTarget): { mask: 
     keys.push(f.id);
   }
   return { mask, key: keys.join(",") };
+}
+
+/** A badwater river's sources on its mouth: BadwaterSources (3×3, placed Cw0 with their minimum
+ *  corner at each group) covering the mouth's border tiles three at a time and reaching two tiles
+ *  inland, and the tiles left over (fewer than three), which get a source at strength 0 so the
+ *  mouth stays sealed. */
+export function badwaterMouth(tiles: readonly number[], edge: "west" | "east" | "south" | "north", W: number, H: number, heights: ArrayLike<number>): { groups: [number, number][]; seals: number[] } {
+  const sorted = [...tiles].sort((a, b) => a - b);
+  const groups: [number, number][] = [];
+  const seals: number[] = [];
+  let k = 0;
+  const level = (x: number, y: number) => {
+    const lv = heights[y * W + x];
+    for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 3; dx++) if (heights[(y + dy) * W + x + dx] !== lv) return false;
+    return true;
+  };
+  while (k < sorted.length) {
+    // three consecutive border tiles, their 3×3 level (a BadwaterSource stands on flat ground)
+    const a = sorted[k];
+    const step = edge === "west" || edge === "east" ? W : 1;
+    const x = a % W;
+    const y = (a - x) / W;
+    const at: [number, number] = edge === "west" ? [0, y] : edge === "east" ? [W - 3, y] : edge === "south" ? [x, 0] : [x, H - 3];
+    if (k + 2 < sorted.length && sorted[k + 1] === a + step && sorted[k + 2] === a + 2 * step && level(at[0], at[1])) {
+      groups.push(at);
+      k += 3;
+    } else {
+      seals.push(a);
+      k++;
+    }
+  }
+  return { groups, seals };
 }
 
 /** The centre of an imported map's start, when it has exactly one. */

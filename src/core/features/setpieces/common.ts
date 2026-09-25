@@ -4,6 +4,7 @@
 // achievable value, and the reduction is reported in plain words.
 
 import { density } from "../../gen/calibrated";
+import featuresSchema from "../features.schema.json" with { type: "json" };
 import type { Feature, Point } from "../schema";
 
 /** The map a plan is made on (PLAN §19.3 `BuildContext`): the macro layout's terrain during
@@ -30,6 +31,9 @@ export interface PlanContext {
   protect?: Uint8Array | null;
   /** Objects standing on the map (x, y, template), for the report of what a piece clears. */
   objects?: readonly { x: number; y: number; template: string }[] | null;
+  /** The settled water, when the map has it (a second district's site looks for water to pump). */
+  water?: ArrayLike<number> | null;
+  contamination?: ArrayLike<number> | null;
 }
 
 /** A value a plan resolved, or asked for: numbers, words, flags and flat lists of numbers. */
@@ -153,6 +157,9 @@ export function clearsText(ctx: PlanContext, tiles: ReadonlySet<number>): string
   if (!parts.length) return "";
   return parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
+
+/** A request's point (a tile it is asked at): the feature schema's own point, with the same bounds. */
+export const POINT_SCHEMA: Record<string, unknown> = featuresSchema.$defs.point;
 
 export function pointOf(v: PlanValue | undefined): Point | null {
   return Array.isArray(v) && v.length === 2 && v.every((n) => typeof n === "number" && Number.isFinite(n)) ? [v[0], v[1]] : null;

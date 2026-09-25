@@ -1,8 +1,7 @@
 // The full settings panel (PLAN §5, §14.1): a theme strip on top, then Basics, and Terrain, Water,
 // Hazards and Resources as collapsible sections, with Start rules under Advanced. Every control
 // shows its reference band from the official maps, and the feasibility guards (PLAN §5.3) disable
-// what cannot fit and say why. Map objects (thorn belts, relics, geothermal fields, mine sites)
-// arrive with roadmap M7, so the panel says so instead of offering them.
+// what cannot fit and say why.
 
 import type { JSX } from "preact";
 import { clone } from "../core/spec/mergepatch";
@@ -23,12 +22,14 @@ import {
   BADWATER,
   band,
   BUILDABLE,
+  CORES,
   FALLS,
   fallsRoom,
   FLOWS,
   GROVES,
   LAKE_CHOICES,
   limitsText,
+  OFF_SOME,
   reserveGuard,
   RESERVES,
   STYLES,
@@ -290,7 +291,7 @@ export function SettingsPanel(p: SettingsPanelProps) {
 
       <Section title="Water">
         <Slider id="rivers" label="Rivers" value={s.water.rivers} min={0} max={3} band={band("rivers", spec)} onChange={(v) => set((c) => (c.water.rivers = v))} />
-        <Pick id="river-style" label="River style" value={s.water.riverStyle} choices={STYLES} onChange={(v) => set((c) => (c.water.riverStyle = v))} />
+        <Pick id="river-style" label="River style" value={s.water.riverStyle} choices={STYLES} band={band("riverStyle", spec)} onChange={(v) => set((c) => (c.water.riverStyle = v))} />
         <Pick id="river-flow" label="River flow" value={s.water.riverFlow} choices={FLOWS} band={band("riverFlow", spec)} onChange={(v) => set((c) => (c.water.riverFlow = v))} />
         <Pick
           id="reserve"
@@ -322,7 +323,8 @@ export function SettingsPanel(p: SettingsPanelProps) {
             })
           }
         />
-        <p class="note">Thorn belts and unstable cores come in a later version.</p>
+        <Pick id="thorns" label="Thorn belts" value={s.hazards.thornBelts} choices={OFF_SOME} band={band("thornBelts", spec)} onChange={(v) => set((c) => (c.hazards.thornBelts = v))} />
+        <Pick id="cores" label="Unstable cores (advanced)" value={s.hazards.unstableCores} choices={CORES} band={band("unstableCores", spec)} onChange={(v) => set((c) => (c.hazards.unstableCores = v))} />
       </Section>
 
       <Section title="Resources">
@@ -338,7 +340,9 @@ export function SettingsPanel(p: SettingsPanelProps) {
         <Slider id="berries-start" label="Berries near start" value={s.resources.berriesNearStart} min={20} max={100} band={band("berriesNearStart", spec)} onChange={(v) => set((c) => (c.resources.berriesNearStart = v))} />
         <Slider id="berries" label="Berry bushes elsewhere" value={s.resources.berryBushes} min={50} max={300} step={5} unit="%" band={band("berryBushes", spec)} onChange={(v) => set((c) => (c.resources.berryBushes = v))} />
         <Slider id="ruins" label="Ruins and scrap" value={s.resources.ruins} min={25} max={300} step={5} unit="%" band={band("ruins", spec)} onChange={(v) => set((c) => (c.resources.ruins = v))} />
-        <p class="note">Relics, geothermal fields and mine sites come in a later version.</p>
+        <Pick id="relics" label="Relics" value={s.resources.relics} choices={OFF_SOME} band={band("relics", spec)} onChange={(v) => set((c) => (c.resources.relics = v))} />
+        <Pick id="geothermal" label="Geothermal fields" value={s.resources.geothermal} choices={OFF_SOME} band={band("geothermal", spec)} onChange={(v) => set((c) => (c.resources.geothermal = v))} />
+        <Slider id="mines" label="Mine sites" value={s.resources.mineSites} min={0} max={4} band={band("mineSites", spec)} onChange={(v) => set((c) => (c.resources.mineSites = v))} />
       </Section>
 
       <Section title="Advanced: start rules">

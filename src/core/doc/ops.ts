@@ -17,6 +17,7 @@ import { FOOTPRINTS, ORIENTATIONS, type Orientation } from "../format/footprints
 import { hasDefaults, type PlaceEntityParams } from "../features/edits";
 import { checkChannel } from "../features/route";
 import { checkSetPiece } from "../features/setpieces";
+import { BUILT_OBJECTS, isLine, OBJECT_NAMES, objectTiles } from "../features/objects";
 import { REQUIRED } from "../validate/checks";
 import type { Feature, FeatureKind } from "../features/schema";
 import type { Runs } from "../math/grid";
@@ -127,7 +128,7 @@ export function dependenciesOf(f: Feature): string[] {
       const r = f.params.plan.river;
       if (typeof r === "string") out.push(r);
       // the river or lake a standalone piece's channel drains into
-      for (const k of ["outflowTo", "outletTo"]) {
+      for (const k of ["outflowTo", "outletTo", "lake"]) {
         const to = f.params.plan[k];
         if (typeof to === "string" && to !== "edge" && to !== r) out.push(to);
       }
@@ -376,10 +377,13 @@ export interface OpContext {
   buildableKinds?: readonly FeatureKind[];
   /** Starts on the map that are not a start feature (an imported map's own StartingLocation). */
   otherStarts?: number;
+  /** Why the game would not keep an entity placed (or moved, by id) there, or null: the loader's
+   *  rules on the current map (placing.ts `entityProblem`). */
+  placement?: (p: { template?: string; id?: string; x: number; y: number; orientation?: Orientation; flipped?: boolean }) => string | null;
 }
 
-/** Kinds a player can add in this version. Map objects arrive with roadmap M7. */
-export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "start"];
+/** Kinds a player can add in this version. */
+export const ADDABLE_KINDS: readonly FeatureKind[] = ["river", "lake", "landform", "setPiece", "forest", "berryPatch", "ruinField", "mapObject", "start"];
 
 /** Templates a player may place by hand: the common set, minus the start (it is a feature). */
 export const PLACEABLE = new Set([
@@ -447,6 +451,14 @@ function featureGeometryProblems(f: Feature, W: number, H: number): string[] {
     }
     case "setPiece":
       return checkSetPiece(f, W, H);
+    case "mapObject": {
+      const m = f.params;
+      if (!BUILT_OBJECTS.includes(m.kind)) return [`${OBJECT_NAMES[m.kind].toLowerCase()}s come in a later version`];
+      if (isLine(m.kind) !== "area" in m.placement) return [isLine(m.kind) ? `a ${OBJECT_NAMES[m.kind].toLowerCase()} covers an area of tiles` : `a ${OBJECT_NAMES[m.kind].toLowerCase()} stands at one place, with an orientation`];
+      if (m.core && m.kind !== "unstableCore") return ["only an unstable core has a countdown and a radius"];
+      if ("area" in m.placement) return runsProblems(m.placement.area, W, H, `${OBJECT_NAMES[m.kind].toLowerCase()} tiles`);
+      return objectTiles(f, W, H).every(([x, y]) => x >= 0 && y >= 0 && x < W && y < H) ? [] : [`the ${OBJECT_NAMES[m.kind].toLowerCase()} does not fit on the map there`];
+    }
     default:
       return p ? [] : ["no params"];
   }
@@ -481,7 +493,7 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (errors.length) return errors;
       const missing = dependenciesOf(after).filter((d) => !featureById(d));
       if (missing.length) return [`it would build on ${missing.join(", ")}, which does not exist`];
-      if (f.kind === "mapObject") return ["map objects are edited with their tools (roadmap M7)"];
+      if (after.kind === "mapObject" && f.kind === "mapObject" && after.params.kind !== f.params.kind) return ["a map object keeps its kind: delete it and add another"];
       if (after.kind === "setPiece" && f.kind === "setPiece" && after.params.kind !== f.params.kind) return ["a set piece keeps its kind: delete it and add another"];
       return featureGeometryProblems(after, W, H);
     }
@@ -515,14 +527,21 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       if (!PLACEABLE.has(p.template) || !FOOTPRINTS[p.template]) return [`${p.template} cannot be placed by hand`];
       if (!inMap(p.x, p.y)) return [`(${p.x}, ${p.y}) is outside the map`];
       if (!ORIENTATIONS.includes(p.orientation)) return [`bad orientation ${String(p.orientation)}`];
-      if (!p.components) return hasDefaults(p.template) ? [] : [`${p.template} needs its components`];
-      const missing = (REQUIRED[p.template] ?? []).filter((c) => !(c in p.components!));
-      if (missing.length) return [`${p.template} needs the components ${missing.join(", ")}`];
-      return "BlockObject" in p.components ? ["BlockObject comes from the operation's position"] : [];
+      if (!p.components && !hasDefaults(p.template)) return [`${p.template} needs its components`];
+      if (p.components) {
+        const missing = (REQUIRED[p.template] ?? []).filter((c) => !(c in p.components!));
+        if (missing.length) return [`${p.template} needs the components ${missing.join(", ")}`];
+        if ("BlockObject" in p.components) return ["BlockObject comes from the operation's position"];
+      }
+      // an object the game would delete on load is refused
+      const why = ctx.placement?.({ template: p.template, x: p.x, y: p.y, orientation: p.orientation, flipped: p.flipped });
+      return why ? [`it can't stand there: ${why}`] : [];
     }
     case "moveEntity": {
       if (!ctx.entityIds.has(op.params.id)) return [`entity ${op.params.id} does not exist`];
-      return inMap(op.params.x, op.params.y) ? [] : [`(${op.params.x}, ${op.params.y}) is outside the map`];
+      if (!inMap(op.params.x, op.params.y)) return [`(${op.params.x}, ${op.params.y}) is outside the map`];
+      const why = ctx.placement?.({ id: op.params.id, x: op.params.x, y: op.params.y, orientation: op.params.orientation });
+      return why ? [`it can't stand there: ${why}`] : [];
     }
     case "deleteEntities": {
       const missing = op.params.entities.filter((id) => !ctx.entityIds.has(id));
