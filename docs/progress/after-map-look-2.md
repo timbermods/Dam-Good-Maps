@@ -42,3 +42,5 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 - The heavy vitest suites, the full oracle and the 100-seed batches run nightly (`.github/workflows/nightly.yml`); a failure opens or updates a `nightly` issue. PR checks take about 6 minutes instead of about 12.5.
 - `investigation/README.md` indexes every investigation, with its status, PR and where its adopted pieces live; `tests/unit/boundaries.test.ts` keeps `src/` from importing any of them.
 - Dependabot (weekly npm and GitHub Actions updates, into `dev`) and CodeQL code scanning are added; both start on their schedules once these files reach `main` with the next release.
+
+- Kyler's roadmap decisions: a Map quality checkpoint after the M9 build (D146) and Map look 2: high fidelity before the Frame pass (D147, `map-look-2-done`).

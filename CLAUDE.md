@@ -54,7 +54,8 @@ text.
   - Map look (after M8, before M9) is tagged `map-look-done` once Kyler approves the look, or ships inside the M9
     release;
   - Real places (right after Map look) is tagged `real-places-done`;
-  - the Frame pass (after the M9 build, before the 3D stages) is tagged `frame-pass-done`;
+  - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
+  - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
   - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
   - the Weather view (after the 3D stages, before M10) is tagged `weather-view-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
