@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
+import { PNG } from "pngjs";
 const index = JSON.parse(readFileSync("library/index.json", "utf8"));
 const patches = gunzipSync(readFileSync("data/patch-manifest.jsonl.gz"))
   .toString()
@@ -103,6 +104,16 @@ for (const item of index.items) {
   const f = JSON.parse(gunzipSync(data).toString());
   if (f.heights.some((h: number) => h > 16) || !f.validation.passed)
     throw Error("Invalid library member");
+  if (
+    !f.name ||
+    !f.attribution ||
+    !Number.isFinite(f.location?.lat) ||
+    !Number.isFinite(f.location?.lon)
+  )
+    throw Error("Fixture lacks its name, coordinates or attribution");
+  const preview = PNG.sync.read(readFileSync("library/" + item.preview));
+  if (preview.width !== f.W || preview.height !== f.H)
+    throw Error("Fixture preview dimensions differ from its terrain");
   const py = JSON.parse(
     readFileSync(`.work/oracle/${item.id}.python.json`, "utf8"),
   );
