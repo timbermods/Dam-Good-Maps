@@ -64,8 +64,8 @@ with its source:
   inputs), `lib/naturalness.ts`, `lib/variety.ts`, `lib/score.ts` and `obviousness.ts`. The recipes
   are reference implementations for the premises, builders and stamps, not code to ship as they
   are. Other creators' maps, renders and per-map numbers stay in `C:\dgm-workshop`; never commit
-  them. Its decisions W1–W8 are decisions-pending #31–#38, and its conflicts with recorded
-  decisions #39–#40.
+  them. Its decisions W1–W8 are decisions-pending #31–#38 (Kyler decided W4, #34, in D85),
+  and its conflicts with recorded decisions #39 (decided by Kyler in D85) and #40.
 
 ---
 
@@ -413,75 +413,80 @@ in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–
 
 ## M8. Water preview and background validation in the editor
 
-**Start requirements, built first** (Kyler, 2026-09-24; PLAN §5.6, §11.4, §20 D85). Released with
-`m8-done`.
+**Start requirements, built first** (Kyler, 2026-09-24, amended the same day; PLAN §5.6, §11.4,
+§20 D85). Released with `m8-done`.
 
-New start requirements, the same on every difficulty. They replace the start rules as reasons to
-reject a map:
-1. **Water without stairs.** Clean water (depth ≥ 0.3, contamination < 0.05, as now) touches a
-   shore tile at the start's own level, and that shore tile is walkable from the start without
-   any slope: the same level all the way. Rivers, lakes and ponds all count. A pump on that shore
-   must reach the water surface (0–2 levels below), as now, so the colony can actually drink it.
-   No distance limit.
-2. **Starting trees:** at least **Minimum starting trees** living trees within 20 tiles' walk of
-   the start (slopes allowed), counted across any number of groves. Default 50.
-3. **Starting bushes:** at least **Minimum starting bushes** living berry bushes within 20 tiles'
-   walk of the start (slopes allowed), counted across any number of patches. Default 20.
+Three start requirements, with thresholds by difficulty (Easy / Normal / Hard). They replace the
+start rules as reasons to reject a map:
+1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05, as now)
+   touches a shore tile at the start's own level, and that shore tile is within 12 / 20 / 28
+   tiles' walk of the start without any slope: the same level all the way. Rivers, lakes and ponds
+   all count. A pump on that shore must reach the water surface (0–2 levels below), as now, so
+   the colony can actually drink it.
+2. **Starting trees:** at least 60 / 40 / 20 living trees within 20 tiles' walk of the start
+   (slopes allowed), counted across any number of groves.
+3. **Starting bushes:** at least 40 / 30 / 20 living berry bushes within 20 tiles' walk of the
+   start (slopes allowed), counted across any number of patches.
 
 "Living" means the plant survives at steady state, as now.
 
-- **The two minimums are player settings:** the existing Advanced start rules controls for trees
-  within 20 and living bushes within 20, renamed **Minimum starting trees** and **Minimum
-  starting bushes**. They keep their current ranges (0–400, 0–200) and share-link keys (`st`,
-  `sb`), so old links still decode. The defaults are 50 and 20 on every difficulty. Changing
-  **Designed for** no longer resets these two (D66 updated). The generator never aims below
-  either minimum; if a player raises one above a difficulty's target, the target rises with it.
-  Imported maps, which have no settings, use the defaults.
-- **Everything else:** the other start rules stop rejecting maps: the difficulty's water
-  distance, badwater and ruin distances, stored drought water near the start (`water.reservoir`,
-  including Hard's 3-deep rule) and walkable land from the start (`start.reach`). They stay as
-  settings and generation targets: the generator still aims for them, their controls and
-  share-link keys keep working, and the map card shows an advisory warning when a map misses one.
+- **The thresholds are player settings,** with these defaults for each difficulty: the existing
+  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls for trees and
+  living bushes within 20, renamed **Minimum starting trees** (`st`, 0–400) and **Minimum
+  starting bushes** (`sb`, 0–200). They keep their ranges and share-link keys, so old links still
+  decode. Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
+  Imported maps, which have no settings, use their difficulty's defaults (Normal unless the
+  document says otherwise).
+- **The generator never aims below a minimum.** Any target that sits lower rises to it: Easy's
+  Berries near start target goes from 20 to 40.
+- **The start reaches water on its own level.** The workshop study found none on 82 of 180
+  generated maps at 128²: the bench stands one level above the floodplain, 6–10 tiles from the
+  channel (D26), and its level region is the bench alone (median 113 tiles; official starts stand
+  on level land of median 980 tiles that reaches the water). Move the bench to the bank, or the
+  start onto the floodplain (D26 changes). Batches stay ≥ 98% per theme with the new rules.
+- **Everything else:** the other start rules stop rejecting maps: the badwater and ruin
+  distances, stored drought water near the start (`water.reservoir`, including Hard's 3-deep
+  rule) and walkable land from the start (`start.reach`). They stay as settings and generation
+  targets: the generator still aims for them, their controls and share-link keys keep working,
+  and the map card shows an advisory warning when a map misses one.
+- **Badwater distance defaults become 30 / 15 / 8** (the workshop study's W4, decided by Kyler),
+  as generation targets with an advisory warning; they never reject a map. The range widens from
+  12–60 to 8–60 (the Hazards setting `bd` and the start rule `sx`), so Hard's 8 fits and old
+  links still decode.
 - **Unchanged:** the load checks the game needs (the start's footprint on flat ground, a free
   entrance, exactly one start), and the water checks that aren't about the start (settling,
   outflow, badwater containment).
 - **Build rules:**
   - Change both validators together (TypeScript and the Python oracle), with 0 disagreements.
-  - A unit test for each requirement: water reachable only by a slope fails; only badwater fails;
-    trees or bushes below the minimum, or too far away, fail; changing either setting moves the
-    result.
-  - Both settings join `tools/settings-suite.ts` with a measured target, like the M6 settings.
+  - A unit test for each requirement: water reachable only by a slope fails; water beyond the
+    walking distance fails; only badwater fails; trees or bushes below the minimum, or too far
+    away, fail; changing any of the three settings moves the result.
+  - The three settings have a measured target in `tools/settings-suite.ts`, like the M6 settings
+    (the water distance's experiment measures the walk on the start's level).
   - The editor's start indicators and its green or red footprint follow the three requirements,
     using the map's settings. The map card lists them.
-  - This changes which attempt wins: bump the generator version and note that old share links
-    change.
+  - This changes which attempt wins and where the start stands: bump the generator version and
+    note that old share links change.
   - Report batch pass rates per theme at the defaults; first-attempt rates should rise.
 
 Its acceptance:
 - Both validators apply the three requirements and the advisory targets, with 0 disagreements on
   the full oracle (50 generated and 19 official maps).
-- The unit tests above pass, and both settings move their measured target.
-- Batch per theme ≥ 98% final at the defaults, with the first-attempt rates per theme reported
-  beside M7's.
+- The unit tests above pass, and the three settings move their measured targets.
+- Every accepted map's start reaches water on its own level, and batches per theme are ≥ 98%
+  final at the defaults (100 seeds at 96², 128², 192² and 256²), with the first-attempt rates per
+  theme reported beside M7's.
 - The editor's start indicators, its footprint and the map card follow the requirements (a
   browser test).
 
 From the workshop study (D87):
-- **Badwater distance** defaults become Easy 30, Normal 15, Hard 8 (decisions-pending #34, W4),
-  as targets with the other start targets. Official maps: nearest badwater to the start median
-  14.8, p25 10; generated maps today 36.
-- **The start must reach water on its own level.** On 82 of 180 generated maps at 128² the
-  start's own level holds no water: the bench stands one level above the floodplain, 6–10 tiles
-  from the channel (D26), and its level region is the bench alone (median 113 tiles; official
-  starts stand on level land of median 980 tiles that reaches the water). Requirement 1 needs the
-  bench to run to the bank, or the start to stand on the floodplain. Expect the batches to drop
-  until it does. Data: `workshop.json` `overall.start*`, measured by `lib/measures.ts`
-  (`startStats`: walking distance on one level, diagonals when both neighbours are level, slopes
-  as links).
-- **Report** how many of the 11 official starts the study could measure meet the three
-  requirements. The study's own thresholds by difficulty (water within 12 / 20 / 28 tiles' walk,
-  trees 60 / 20 / 10, bushes 40 / 25 / 15) are not used: they conflict with D85
-  (decisions-pending #39).
+- The data behind the requirements: `workshop.json` `overall.start*`, measured by
+  `lib/measures.ts` (`startStats`: walking distance on one level, diagonals when both neighbours
+  are level, slopes as links). Kyler took the study's water distances (12 / 20 / 28) and set his
+  own tree and bush thresholds; the study proposed 60 / 20 / 10 and 40 / 25 / 15
+  (decisions-pending #39, decided).
+- Report how many of the 11 official starts the study could measure meet the three requirements
+  at Normal.
 
 **Also first: editing generated outlines that leave the map** (decisions-pending #30). Generated
 features' outlines may run up to one map side past each edge (the schema's bound since the Lake
