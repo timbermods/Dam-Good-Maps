@@ -1,0 +1,8997 @@
+{
+ "method": "docs/m9-design.md §10 (version 2). V: investigation/workshop/lib/variety.ts with variety-scale.json; clusters UPGMA cut at the workshop's p10 nearest-peer distance on each measure's own scale; no-approximation: the share of a theme's maps closer to their nearest workshop map than that p10 (D128).",
+ "workshop": {
+  "maps": 130,
+  "vNearestP10": 0.591,
+  "vNearestMedian": 0.671,
+  "goodNaturalDam": {
+   "workshop": 0.463,
+   "official": 0.364
+  },
+  "vertical": {
+   "official": {
+    "maps": 19,
+    "withStart": 11,
+    "range": {
+     "p10": 10,
+     "median": 13,
+     "p90": 15
+    },
+    "levels": {
+     "p10": 12,
+     "median": 16,
+     "p90": 17
+    },
+    "maxHeight": {
+     "p10": 16,
+     "median": 16,
+     "p90": 16
+    },
+    "above16": {
+     "p10": 0,
+     "median": 0,
+     "p90": 0
+    },
+    "tallestFall": {
+     "p10": 0.97,
+     "median": 3.94,
+     "p90": 6.96
+    },
+    "flatShare": {
+     "p10": 0.343,
+     "median": 0.52,
+     "p90": 0.593
+    },
+    "cliffShare": {
+     "p10": 0.086,
+     "median": 0.158,
+     "p90": 0.181
+    },
+    "onFoot": {
+     "p10": 0.032,
+     "median": 0.086,
+     "p90": 0.262
+    },
+    "stairsOnly": {
+     "p10": 0.738,
+     "median": 0.914,
+     "p90": 0.968
+    },
+    "oneStep": {
+     "p10": 0.031,
+     "median": 0.436,
+     "p90": 0.874
+    }
+   },
+   "workshop": {
+    "maps": 130,
+    "withStart": 67,
+    "range": {
+     "p10": 8,
+     "median": 14,
+     "p90": 18
+    },
+    "levels": {
+     "p10": 9,
+     "median": 16,
+     "p90": 17
+    },
+    "maxHeight": {
+     "p10": 16,
+     "median": 16,
+     "p90": 22
+    },
+    "above16": {
+     "p10": 0,
+     "median": 0,
+     "p90": 0.226
+    },
+    "tallestFall": {
+     "p10": 1.99,
+     "median": 5.74,
+     "p90": 10.87
+    },
+    "flatShare": {
+     "p10": 0.251,
+     "median": 0.44,
+     "p90": 0.57
+    },
+    "cliffShare": {
+     "p10": 0.046,
+     "median": 0.109,
+     "p90": 0.209
+    },
+    "onFoot": {
+     "p10": 0.019,
+     "median": 0.07,
+     "p90": 0.166
+    },
+    "stairsOnly": {
+     "p10": 0.833,
+     "median": 0.93,
+     "p90": 0.974
+    },
+    "oneStep": {
+     "p10": 0.047,
+     "median": 0.172,
+     "p90": 0.472
+    }
+   }
+  },
+  "natural": {
+   "official": {
+    "straightShare8": {
+     "p10": 0.024,
+     "median": 0.066,
+     "p90": 0.095
+    },
+    "longestRun": {
+     "p10": 9,
+     "median": 18,
+     "p90": 24
+    }
+   },
+   "workshop": {
+    "straightShare8": {
+     "p10": 0.01,
+     "median": 0.031,
+     "p90": 0.098
+    },
+    "longestRun": {
+     "p10": 11,
+     "median": 17,
+     "p90": 34
+    }
+   }
+  },
+  "shape": {
+   "official": {
+    "waterShare": {
+     "p10": 0.088,
+     "median": 0.152,
+     "p90": 0.456
+    },
+    "waterfalls": {
+     "p10": 0,
+     "median": 4,
+     "p90": 9
+    }
+   },
+   "workshop": {
+    "waterShare": {
+     "p10": 0.152,
+     "median": 0.265,
+     "p90": 0.554
+    },
+    "waterfalls": {
+     "p10": 1,
+     "median": 6,
+     "p90": 18
+    }
+   }
+  },
+  "M2a": {
+   "clusters": 125,
+   "largest": 2,
+   "largestShare": 0.015
+  }
+ },
+ "sets": {
+  "v2-128": {
+   "maps": 1200,
+   "all": {
+    "vertical": {
+     "range": {
+      "p10": 11,
+      "median": 13,
+      "p90": 14
+     },
+     "levels": {
+      "p10": 9,
+      "median": 15,
+      "p90": 17
+     },
+     "maxHeight": {
+      "p10": 14,
+      "median": 15,
+      "p90": 16
+     },
+     "above16": {
+      "p10": 0,
+      "median": 0,
+      "p90": 0
+     },
+     "tallestFall": {
+      "p10": 2.04,
+      "median": 5.35,
+      "p90": 9.1
+     },
+     "flatShare": {
+      "p10": 0.298,
+      "median": 0.41,
+      "p90": 0.564
+     },
+     "cliffShare": {
+      "p10": 0.075,
+      "median": 0.15,
+      "p90": 0.298
+     },
+     "onFoot": {
+      "p10": 0.031,
+      "median": 0.151,
+      "p90": 0.413
+     },
+     "stairsOnly": {
+      "p10": 0.585,
+      "median": 0.849,
+      "p90": 0.968
+     },
+     "oneStep": {
+      "p10": 0.065,
+      "median": 0.653,
+      "p90": 0.971
+     }
+    },
+    "shape": {
+     "waterShare": {
+      "p10": 0.053,
+      "median": 0.116,
+      "p90": 0.212
+     },
+     "lakeShare": {
+      "p10": 0.009,
+      "median": 0.085,
+      "p90": 0.191
+     },
+     "islandsAny": 0.076,
+     "waterfalls": {
+      "p10": 1,
+      "median": 4,
+      "p90": 8
+     },
+     "plateaus": {
+      "p10": 4,
+      "median": 7,
+      "p90": 9
+     },
+     "flows": {
+      "N": 144,
+      "E": 181,
+      "S": 153,
+      "SE": 135,
+      "NE": 156,
+      "local": 57,
+      "NW": 125,
+      "SW": 125,
+      "W": 122,
+      "closed": 2
+     }
+    },
+    "M5": {
+     "maps": 1200,
+     "goodNaturalDam": 0.601,
+     "within12": 0.775
+    },
+    "M6": {
+     "maps": 1200,
+     "flagged": 0
+    },
+    "speed": {
+     "ms": {
+      "p10": 1273,
+      "median": 2432,
+      "p90": 7304
+     },
+     "firstLook": {
+      "p10": 173,
+      "median": 311,
+      "p90": 5184
+     },
+     "firstWater": {
+      "p10": 781,
+      "median": 1758,
+      "p90": 6611
+     },
+     "settles": {
+      "p10": 1,
+      "median": 1,
+      "p90": 2
+     }
+    },
+    "startDrought": 0.401,
+    "M3c": {
+     "maps": 1200,
+     "groups": 56,
+     "largestGroupShare": 0.245,
+     "nearestPeerMedian": 0.014,
+     "longRetention": {
+      "p10": 0,
+      "median": 0.086,
+      "p90": 0.397
+     },
+     "startDays": {
+      "p10": 0,
+      "median": 0,
+      "p90": 9
+     },
+     "startFirstDrought": 0.401
+    },
+    "M3d": {
+     "maps": 1200,
+     "jointSignatures": 1008,
+     "largestJointShare": 0.007,
+     "nearestPeerMedian": 0.042,
+     "bins": {
+      "storageRatio": {
+       "0": 0.415,
+       "1": 0.195,
+       "2": 0.182,
+       "3": 0.208
+      },
+      "peakAxialFlow64": {
+       "0": 0.271,
+       "1": 0.305,
+       "2": 0.338,
+       "3": 0.087
+      },
+      "flatDry40": {
+       "0": 0.203,
+       "1": 0.573,
+       "2": 0.197,
+       "3": 0.028
+      },
+      "fertilityPersistence": {
+       "0": 0.698,
+       "1": 0.233,
+       "2": 0.068
+      },
+      "badwaterDistance": {
+       "0": 0.107,
+       "1": 0.199,
+       "2": 0.233,
+       "3": 0.192,
+       "none": 0.27
+      },
+      "logs20": {
+       "0": 0.174,
+       "1": 0.303,
+       "2": 0.385,
+       "3": 0.138
+      },
+      "frontierComponents": {
+       "0": 0.296,
+       "1": 0.506,
+       "2": 0.198
+      },
+      "deepPumpExtraShore": {
+       "0": 0.673,
+       "1": 0.273,
+       "2": 0.054,
+       "3": 0.001
+      }
+     }
+    }
+   },
+   "byTheme": {
+    "canyon": {
+     "attempts": {
+      "n": 200,
+      "first": 117,
+      "final": 200
+     },
+     "failedAttempts": {
+      "water.storage_possible": 154,
+      "start.count": 107,
+      "no start": 71,
+      "water.clean_exists": 19,
+      "start water moved": 28,
+      "slopes.connect": 16,
+      "start.food": 11,
+      "start.wood": 33,
+      "water.clean_reach": 8,
+      "no rivers": 8,
+      "entities.placement": 2,
+      "terrain changed in the build": 5,
+      "water.settles": 6,
+      "water.outflow": 2,
+      "terrain.dam_wall": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.376,
+      "nearestMedian": 0.478,
+      "nearestP10": 0.418,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 50,
+      "largest": 30,
+      "largestShare": 0.15,
+      "drivers": {
+       "maps": 200,
+       "largest": 30,
+       "largestShare": 0.15,
+       "clusters": 50,
+       "within": {
+        "V": 0.551,
+        "layoutHalf": 0.338,
+        "featureHalf": 0.213,
+        "planarity": 0.406
+       },
+       "rest": {
+        "planarity": 0.19
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.104,
+         "workshop": 1.162,
+         "ratio": 0.089,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "waterShare",
+         "within": 0.176,
+         "workshop": 1.108,
+         "ratio": 0.158,
+         "clusterMedian": 0.067,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.188,
+         "workshop": 1.13,
+         "ratio": 0.166,
+         "clusterMedian": 0.026,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "relief",
+         "within": 0.322,
+         "workshop": 1.049,
+         "ratio": 0.307,
+         "clusterMedian": 13,
+         "workshopMedian": 14
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.45,
+         "workshop": 1.223,
+         "ratio": 0.368,
+         "clusterMedian": 7.305,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.486,
+         "workshop": 1.246,
+         "ratio": 0.39,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.525,
+         "workshop": 1.308,
+         "ratio": 0.402,
+         "clusterMedian": 0.225,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "basins",
+         "within": 0.499,
+         "workshop": 1.195,
+         "ratio": 0.417,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.455,
+         "workshop": 1.083,
+         "ratio": 0.42,
+         "clusterMedian": 2.377,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "flatShare",
+         "within": 0.468,
+         "workshop": 1.101,
+         "ratio": 0.425,
+         "clusterMedian": 0.61,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.63,
+         "workshop": 1.291,
+         "ratio": 0.488,
+         "clusterMedian": 4.861,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "step1Share",
+         "within": 0.697,
+         "workshop": 1.176,
+         "ratio": 0.593,
+         "clusterMedian": 0.266,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.897,
+         "workshop": 1.184,
+         "ratio": 0.758,
+         "clusterMedian": 6.595,
+         "workshopMedian": 5.941
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 65,
+      "largest": 25,
+      "largestShare": 0.125,
+      "codes": 144
+     },
+     "M2c": {
+      "clusters": 132,
+      "largest": 4,
+      "largestShare": 0.02,
+      "codes": 19
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 164,
+      "largest": 4,
+      "largestShare": 0.02,
+      "spread": 0.911
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 29,
+      "largestGroupShare": 0.47,
+      "nearestPeerMedian": 0.01,
+      "longRetention": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.23
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.385
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 189,
+      "largestJointShare": 0.015,
+      "nearestPeerMedian": 0.042,
+      "bins": {
+       "storageRatio": {
+        "0": 0.645,
+        "1": 0.195,
+        "2": 0.11,
+        "3": 0.05
+       },
+       "peakAxialFlow64": {
+        "0": 0.255,
+        "1": 0.195,
+        "2": 0.445,
+        "3": 0.105
+       },
+       "flatDry40": {
+        "0": 0.145,
+        "1": 0.475,
+        "2": 0.32,
+        "3": 0.06
+       },
+       "fertilityPersistence": {
+        "0": 0.755,
+        "1": 0.165,
+        "2": 0.08
+       },
+       "badwaterDistance": {
+        "0": 0.085,
+        "1": 0.265,
+        "2": 0.26,
+        "3": 0.15,
+        "none": 0.24
+       },
+       "logs20": {
+        "0": 0.18,
+        "1": 0.26,
+        "2": 0.43,
+        "3": 0.13
+       },
+       "frontierComponents": {
+        "0": 0.3,
+        "1": 0.54,
+        "2": 0.16
+       },
+       "deepPumpExtraShore": {
+        "0": 0.795,
+        "1": 0.175,
+        "2": 0.03
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.558,
+      "below": 1,
+      "share": 0.005,
+      "close": {
+       "V": 0.558,
+       "layoutHalf": 0.388,
+       "featureHalf": 0.17
+      },
+      "all": {
+       "V": 0.776,
+       "layoutHalf": 0.412,
+       "featureHalf": 0.364
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.333,
+        "ratio": 0
+       },
+       {
+        "name": "caveShare",
+        "close": 0,
+        "all": 0.144,
+        "ratio": 0
+       },
+       {
+        "name": "basins",
+        "close": 0.035,
+        "all": 1.098,
+        "ratio": 0.032
+       },
+       {
+        "name": "step1Share",
+        "close": 0.449,
+        "all": 1.924,
+        "ratio": 0.233
+       },
+       {
+        "name": "bushesPer10k",
+        "close": 0.293,
+        "all": 0.61,
+        "ratio": 0.481
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.426,
+        "all": 0.884,
+        "ratio": 0.482
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.395,
+      "within12": 0.68
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 12,
+       "median": 13,
+       "p90": 15
+      },
+      "levels": {
+       "p10": 7,
+       "median": 10,
+       "p90": 15
+      },
+      "maxHeight": {
+       "p10": 14,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 2.27,
+       "median": 5.95,
+       "p90": 10.09
+      },
+      "flatShare": {
+       "p10": 0.389,
+       "median": 0.526,
+       "p90": 0.626
+      },
+      "cliffShare": {
+       "p10": 0.194,
+       "median": 0.26,
+       "p90": 0.354
+      },
+      "onFoot": {
+       "p10": 0.029,
+       "median": 0.153,
+       "p90": 0.557
+      },
+      "stairsOnly": {
+       "p10": 0.416,
+       "median": 0.845,
+       "p90": 0.97
+      },
+      "oneStep": {
+       "p10": 0.018,
+       "median": 0.327,
+       "p90": 0.739
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.008,
+       "median": 0.018,
+       "p90": 0.037
+      },
+      "longestRun": {
+       "p10": 10,
+       "median": 13,
+       "p90": 22
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.492
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.18,
+       "median": 0.326,
+       "p90": 0.452
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.038,
+       "median": 0.072,
+       "p90": 0.141
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.039,
+       "p90": 0.125
+      },
+      "islandsAny": 0.07,
+      "waterfalls": {
+       "p10": 1,
+       "median": 4,
+       "p90": 7
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 7,
+       "p90": 10
+      },
+      "flows": {
+       "N": 21,
+       "E": 24,
+       "S": 33,
+       "SE": 24,
+       "NE": 24,
+       "local": 4,
+       "NW": 22,
+       "SW": 28,
+       "W": 18,
+       "closed": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1242,
+       "median": 2331,
+       "p90": 7928
+      },
+      "firstLook": {
+       "p10": 268,
+       "median": 414,
+       "p90": 6513
+      },
+      "firstWater": {
+       "p10": 764,
+       "median": 1755,
+       "p90": 7385
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.385
+    },
+    "delta": {
+     "attempts": {
+      "n": 200,
+      "first": 150,
+      "final": 200
+     },
+     "failedAttempts": {
+      "water.storage_possible": 55,
+      "terrain changed in the build": 7,
+      "start.count": 40,
+      "no start": 14,
+      "start.food": 7,
+      "start.wood": 23,
+      "water.settles": 13,
+      "water.clean_exists": 5,
+      "start water moved": 23,
+      "terrain.dam_wall": 1,
+      "slopes.connect": 2,
+      "water.clean_reach": 3,
+      "no rivers": 3
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.354,
+      "nearestMedian": 0.494,
+      "nearestP10": 0.443,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 55,
+      "largest": 23,
+      "largestShare": 0.115,
+      "drivers": {
+       "maps": 200,
+       "largest": 23,
+       "largestShare": 0.115,
+       "clusters": 55,
+       "within": {
+        "V": 0.555,
+        "layoutHalf": 0.382,
+        "featureHalf": 0.173,
+        "planarity": 0.251
+       },
+       "rest": {
+        "planarity": 0.223
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.07,
+         "workshop": 1.162,
+         "ratio": 0.06,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "waterShare",
+         "within": 0.186,
+         "workshop": 1.108,
+         "ratio": 0.168,
+         "clusterMedian": 0.081,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.206,
+         "workshop": 1.13,
+         "ratio": 0.182,
+         "clusterMedian": 0.039,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.314,
+         "workshop": 1.308,
+         "ratio": 0.24,
+         "clusterMedian": 0.073,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "relief",
+         "within": 0.287,
+         "workshop": 1.049,
+         "ratio": 0.274,
+         "clusterMedian": 13,
+         "workshopMedian": 14
+        },
+        {
+         "name": "step1Share",
+         "within": 0.332,
+         "workshop": 1.176,
+         "ratio": 0.282,
+         "clusterMedian": 0.858,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "flatShare",
+         "within": 0.326,
+         "workshop": 1.101,
+         "ratio": 0.296,
+         "clusterMedian": 0.393,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.355,
+         "workshop": 1.184,
+         "ratio": 0.3,
+         "clusterMedian": 7.077,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.419,
+         "workshop": 1.223,
+         "ratio": 0.342,
+         "clusterMedian": 7.449,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "basins",
+         "within": 0.471,
+         "workshop": 1.195,
+         "ratio": 0.394,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.541,
+         "workshop": 1.246,
+         "ratio": 0.434,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.627,
+         "workshop": 1.291,
+         "ratio": 0.486,
+         "clusterMedian": 5.219,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.677,
+         "workshop": 1.083,
+         "ratio": 0.625,
+         "clusterMedian": 1.96,
+         "workshopMedian": 2.016
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 68,
+      "largest": 16,
+      "largestShare": 0.08,
+      "codes": 131
+     },
+     "M2c": {
+      "clusters": 112,
+      "largest": 6,
+      "largestShare": 0.03,
+      "codes": 33
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 163,
+      "largest": 3,
+      "largestShare": 0.015,
+      "spread": 0.798
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 35,
+      "largestGroupShare": 0.32,
+      "nearestPeerMedian": 0.018,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.036,
+       "p90": 0.385
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 7
+      },
+      "startFirstDrought": 0.33
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 191,
+      "largestJointShare": 0.015,
+      "nearestPeerMedian": 0.063,
+      "bins": {
+       "storageRatio": {
+        "0": 0.48,
+        "1": 0.205,
+        "2": 0.145,
+        "3": 0.17
+       },
+       "peakAxialFlow64": {
+        "0": 0.19,
+        "1": 0.36,
+        "2": 0.34,
+        "3": 0.11
+       },
+       "flatDry40": {
+        "0": 0.22,
+        "1": 0.625,
+        "2": 0.145,
+        "3": 0.01
+       },
+       "fertilityPersistence": {
+        "0": 0.8,
+        "1": 0.195,
+        "2": 0.005
+       },
+       "badwaterDistance": {
+        "0": 0.115,
+        "1": 0.175,
+        "2": 0.22,
+        "3": 0.24,
+        "none": 0.25
+       },
+       "logs20": {
+        "0": 0.165,
+        "1": 0.325,
+        "2": 0.38,
+        "3": 0.13
+       },
+       "frontierComponents": {
+        "0": 0.21,
+        "1": 0.465,
+        "2": 0.325
+       },
+       "deepPumpExtraShore": {
+        "0": 0.77,
+        "1": 0.195,
+        "2": 0.035
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.516,
+      "below": 23,
+      "share": 0.115,
+      "close": {
+       "V": 0.566,
+       "layoutHalf": 0.367,
+       "featureHalf": 0.199
+      },
+      "all": {
+       "V": 0.642,
+       "layoutHalf": 0.4,
+       "featureHalf": 0.243
+      },
+      "features": [
+       {
+        "name": "step1Share",
+        "close": 0.245,
+        "all": 0.419,
+        "ratio": 0.584
+       },
+       {
+        "name": "bushesPer10k",
+        "close": 0.295,
+        "all": 0.484,
+        "ratio": 0.608
+       },
+       {
+        "name": "waterfalls",
+        "close": 0.356,
+        "all": 0.558,
+        "ratio": 0.638
+       },
+       {
+        "name": "basins",
+        "close": 0.54,
+        "all": 0.717,
+        "ratio": 0.752
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.346,
+        "all": 0.457,
+        "ratio": 0.758
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.453,
+        "all": 0.593,
+        "ratio": 0.764
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.46,
+      "within12": 0.675
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 12,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 13,
+       "median": 15,
+       "p90": 17
+      },
+      "maxHeight": {
+       "p10": 13,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.99,
+       "median": 4.99,
+       "p90": 9
+      },
+      "flatShare": {
+       "p10": 0.327,
+       "median": 0.404,
+       "p90": 0.494
+      },
+      "cliffShare": {
+       "p10": 0.058,
+       "median": 0.085,
+       "p90": 0.137
+      },
+      "onFoot": {
+       "p10": 0.051,
+       "median": 0.196,
+       "p90": 0.397
+      },
+      "stairsOnly": {
+       "p10": 0.593,
+       "median": 0.804,
+       "p90": 0.947
+      },
+      "oneStep": {
+       "p10": 0.231,
+       "median": 0.803,
+       "p90": 0.977
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.031,
+       "median": 0.047,
+       "p90": 0.063
+      },
+      "longestRun": {
+       "p10": 12,
+       "median": 15,
+       "p90": 20
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.49
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.204,
+       "median": 0.36,
+       "p90": 0.496
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.059,
+       "median": 0.124,
+       "p90": 0.195
+      },
+      "lakeShare": {
+       "p10": 0.017,
+       "median": 0.091,
+       "p90": 0.174
+      },
+      "islandsAny": 0.065,
+      "waterfalls": {
+       "p10": 1,
+       "median": 3,
+       "p90": 6
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 6,
+       "p90": 9
+      },
+      "flows": {
+       "SW": 18,
+       "E": 39,
+       "NW": 24,
+       "NE": 25,
+       "SE": 14,
+       "S": 22,
+       "local": 14,
+       "W": 25,
+       "N": 19
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1139,
+       "median": 2126,
+       "p90": 6183
+      },
+      "firstLook": {
+       "p10": 158,
+       "median": 223,
+       "p90": 3721
+      },
+      "firstWater": {
+       "p10": 689,
+       "median": 1537,
+       "p90": 5441
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.33
+    },
+    "highlands": {
+     "attempts": {
+      "n": 200,
+      "first": 135,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.food": 18,
+      "start.wood": 39,
+      "start.count": 36,
+      "water.settles": 12,
+      "water.storage_possible": 57,
+      "start water moved": 19,
+      "water.clean_exists": 6,
+      "no start": 13,
+      "terrain changed in the build": 7,
+      "terrain.dam_wall": 2,
+      "slopes.connect": 13,
+      "entities.placement": 1,
+      "water.clean_reach": 4,
+      "no rivers": 4,
+      "water.outflow": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.417,
+      "nearestMedian": 0.498,
+      "nearestP10": 0.463,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 62,
+      "largest": 14,
+      "largestShare": 0.07,
+      "drivers": {
+       "maps": 200,
+       "largest": 14,
+       "largestShare": 0.07,
+       "clusters": 62,
+       "within": {
+        "V": 0.56,
+        "layoutHalf": 0.363,
+        "featureHalf": 0.197,
+        "planarity": 0.176
+       },
+       "rest": {
+        "planarity": 0.184
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.115,
+         "workshop": 1.162,
+         "ratio": 0.099,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.163,
+         "workshop": 1.13,
+         "ratio": 0.144,
+         "clusterMedian": 0.028,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.165,
+         "workshop": 1.108,
+         "ratio": 0.149,
+         "clusterMedian": 0.074,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "flatShare",
+         "within": 0.354,
+         "workshop": 1.101,
+         "ratio": 0.322,
+         "clusterMedian": 0.516,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "relief",
+         "within": 0.343,
+         "workshop": 1.049,
+         "ratio": 0.327,
+         "clusterMedian": 14,
+         "workshopMedian": 14
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.387,
+         "workshop": 1.083,
+         "ratio": 0.357,
+         "clusterMedian": 2.626,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.478,
+         "workshop": 1.308,
+         "ratio": 0.365,
+         "clusterMedian": 0.235,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.475,
+         "workshop": 1.291,
+         "ratio": 0.368,
+         "clusterMedian": 5.383,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.457,
+         "workshop": 1.184,
+         "ratio": 0.386,
+         "clusterMedian": 7.106,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.558,
+         "workshop": 1.223,
+         "ratio": 0.456,
+         "clusterMedian": 7.281,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "basins",
+         "within": 0.608,
+         "workshop": 1.195,
+         "ratio": 0.509,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.66,
+         "workshop": 1.246,
+         "ratio": 0.53,
+         "clusterMedian": 1.871,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "step1Share",
+         "within": 0.714,
+         "workshop": 1.176,
+         "ratio": 0.607,
+         "clusterMedian": 0.433,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 65,
+      "largest": 19,
+      "largestShare": 0.095,
+      "codes": 101
+     },
+     "M2c": {
+      "clusters": 143,
+      "largest": 6,
+      "largestShare": 0.03,
+      "codes": 30
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 184,
+      "largest": 2,
+      "largestShare": 0.01,
+      "spread": 0.931
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 37,
+      "largestGroupShare": 0.18,
+      "nearestPeerMedian": 0.025,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.094,
+       "p90": 0.388
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 14
+      },
+      "startFirstDrought": 0.48
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 194,
+      "largestJointShare": 0.01,
+      "nearestPeerMedian": 0.083,
+      "bins": {
+       "storageRatio": {
+        "0": 0.41,
+        "1": 0.21,
+        "2": 0.175,
+        "3": 0.205
+       },
+       "peakAxialFlow64": {
+        "0": 0.365,
+        "1": 0.255,
+        "2": 0.285,
+        "3": 0.095
+       },
+       "flatDry40": {
+        "0": 0.145,
+        "1": 0.525,
+        "2": 0.27,
+        "3": 0.06
+       },
+       "fertilityPersistence": {
+        "0": 0.685,
+        "1": 0.25,
+        "2": 0.065
+       },
+       "badwaterDistance": {
+        "0": 0.075,
+        "1": 0.18,
+        "2": 0.185,
+        "3": 0.18,
+        "none": 0.38
+       },
+       "logs20": {
+        "0": 0.185,
+        "1": 0.29,
+        "2": 0.37,
+        "3": 0.155
+       },
+       "frontierComponents": {
+        "0": 0.345,
+        "1": 0.55,
+        "2": 0.105
+       },
+       "deepPumpExtraShore": {
+        "0": 0.595,
+        "1": 0.355,
+        "2": 0.05
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.555,
+      "below": 9,
+      "share": 0.045,
+      "close": {
+       "V": 0.579,
+       "layoutHalf": 0.385,
+       "featureHalf": 0.193
+      },
+      "all": {
+       "V": 0.717,
+       "layoutHalf": 0.425,
+       "featureHalf": 0.292
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.209,
+        "ratio": 0
+       },
+       {
+        "name": "step1Share",
+        "close": 0.206,
+        "all": 1.223,
+        "ratio": 0.169
+       },
+       {
+        "name": "flatShare",
+        "close": 0.344,
+        "all": 0.774,
+        "ratio": 0.445
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.362,
+        "all": 0.779,
+        "ratio": 0.465
+       },
+       {
+        "name": "relief",
+        "close": 0.228,
+        "all": 0.415,
+        "ratio": 0.549
+       },
+       {
+        "name": "bushesPer10k",
+        "close": 0.268,
+        "all": 0.48,
+        "ratio": 0.558
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.66,
+      "within12": 0.805
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 12,
+       "median": 13,
+       "p90": 15
+      },
+      "levels": {
+       "p10": 8,
+       "median": 15,
+       "p90": 17
+      },
+      "maxHeight": {
+       "p10": 15,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 3,
+       "median": 6,
+       "p90": 9.86
+      },
+      "flatShare": {
+       "p10": 0.278,
+       "median": 0.451,
+       "p90": 0.581
+      },
+      "cliffShare": {
+       "p10": 0.13,
+       "median": 0.236,
+       "p90": 0.333
+      },
+      "onFoot": {
+       "p10": 0.024,
+       "median": 0.129,
+       "p90": 0.441
+      },
+      "stairsOnly": {
+       "p10": 0.537,
+       "median": 0.871,
+       "p90": 0.974
+      },
+      "oneStep": {
+       "p10": 0.058,
+       "median": 0.519,
+       "p90": 0.92
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.013,
+       "median": 0.025,
+       "p90": 0.045
+      },
+      "longestRun": {
+       "p10": 10,
+       "median": 13,
+       "p90": 21
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0.26,
+       "p90": 0.657
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.21,
+       "median": 0.351,
+       "p90": 0.472
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.057,
+       "median": 0.105,
+       "p90": 0.176
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.068,
+       "p90": 0.151
+      },
+      "islandsAny": 0.035,
+      "waterfalls": {
+       "p10": 2,
+       "median": 6,
+       "p90": 11
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 7,
+       "p90": 10
+      },
+      "flows": {
+       "W": 17,
+       "E": 32,
+       "SE": 28,
+       "N": 34,
+       "NW": 17,
+       "S": 28,
+       "NE": 18,
+       "local": 11,
+       "SW": 15
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1413,
+       "median": 2418,
+       "p90": 6988
+      },
+      "firstLook": {
+       "p10": 216,
+       "median": 332,
+       "p90": 5423
+      },
+      "firstWater": {
+       "p10": 893,
+       "median": 1796,
+       "p90": 6308
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.48
+    },
+    "islands": {
+     "attempts": {
+      "n": 200,
+      "first": 140,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.count": 42,
+      "water.clean_exists": 9,
+      "water.clean_reach": 7,
+      "water.storage_possible": 61,
+      "no rivers": 7,
+      "terrain changed in the build": 4,
+      "entities.placement": 2,
+      "start.wood": 33,
+      "no start": 14,
+      "start water moved": 21,
+      "water.settles": 18,
+      "start.food": 15,
+      "slopes.connect": 3,
+      "resources.bushes": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.424,
+      "nearestMedian": 0.513,
+      "nearestP10": 0.455,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 75,
+      "largest": 15,
+      "largestShare": 0.075,
+      "drivers": {
+       "maps": 200,
+       "largest": 15,
+       "largestShare": 0.075,
+       "clusters": 75,
+       "within": {
+        "V": 0.559,
+        "layoutHalf": 0.369,
+        "featureHalf": 0.19,
+        "planarity": 0.364
+       },
+       "rest": {
+        "planarity": 0.219
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.108,
+         "workshop": 1.162,
+         "ratio": 0.093,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.237,
+         "workshop": 1.223,
+         "ratio": 0.194,
+         "clusterMedian": 7.489,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.277,
+         "workshop": 1.13,
+         "ratio": 0.245,
+         "clusterMedian": 0.126,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.284,
+         "workshop": 1.108,
+         "ratio": 0.256,
+         "clusterMedian": 0.153,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "relief",
+         "within": 0.288,
+         "workshop": 1.049,
+         "ratio": 0.274,
+         "clusterMedian": 13,
+         "workshopMedian": 14
+        },
+        {
+         "name": "step1Share",
+         "within": 0.384,
+         "workshop": 1.176,
+         "ratio": 0.327,
+         "clusterMedian": 0.817,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.449,
+         "workshop": 1.308,
+         "ratio": 0.343,
+         "clusterMedian": 0.087,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.375,
+         "workshop": 1.083,
+         "ratio": 0.347,
+         "clusterMedian": 2.789,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.491,
+         "workshop": 1.291,
+         "ratio": 0.381,
+         "clusterMedian": 5.212,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "basins",
+         "within": 0.498,
+         "workshop": 1.195,
+         "ratio": 0.417,
+         "clusterMedian": 1.399,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.589,
+         "workshop": 1.246,
+         "ratio": 0.473,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "flatShare",
+         "within": 0.547,
+         "workshop": 1.101,
+         "ratio": 0.497,
+         "clusterMedian": 0.381,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.824,
+         "workshop": 1.184,
+         "ratio": 0.696,
+         "clusterMedian": 6.808,
+         "workshopMedian": 5.941
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 70,
+      "largest": 21,
+      "largestShare": 0.105,
+      "codes": 131
+     },
+     "M2c": {
+      "clusters": 125,
+      "largest": 11,
+      "largestShare": 0.055,
+      "codes": 38
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 158,
+      "largest": 5,
+      "largestShare": 0.025,
+      "spread": 0.785
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 33,
+      "largestGroupShare": 0.155,
+      "nearestPeerMedian": 0.023,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.11,
+       "p90": 0.387
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.38
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 194,
+      "largestJointShare": 0.01,
+      "nearestPeerMedian": 0.083,
+      "bins": {
+       "storageRatio": {
+        "0": 0.265,
+        "1": 0.235,
+        "2": 0.23,
+        "3": 0.27
+       },
+       "peakAxialFlow64": {
+        "0": 0.195,
+        "1": 0.415,
+        "2": 0.33,
+        "3": 0.06
+       },
+       "flatDry40": {
+        "0": 0.225,
+        "1": 0.66,
+        "2": 0.1,
+        "3": 0.015
+       },
+       "fertilityPersistence": {
+        "0": 0.605,
+        "1": 0.305,
+        "2": 0.09
+       },
+       "badwaterDistance": {
+        "0": 0.115,
+        "1": 0.15,
+        "2": 0.195,
+        "3": 0.205,
+        "none": 0.335
+       },
+       "logs20": {
+        "0": 0.15,
+        "1": 0.38,
+        "2": 0.32,
+        "3": 0.15
+       },
+       "frontierComponents": {
+        "0": 0.31,
+        "1": 0.465,
+        "2": 0.225
+       },
+       "deepPumpExtraShore": {
+        "0": 0.655,
+        "1": 0.265,
+        "2": 0.08
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.52,
+      "below": 30,
+      "share": 0.15,
+      "close": {
+       "V": 0.566,
+       "layoutHalf": 0.376,
+       "featureHalf": 0.19
+      },
+      "all": {
+       "V": 0.647,
+       "layoutHalf": 0.412,
+       "featureHalf": 0.236
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0.047,
+        "all": 0.163,
+        "ratio": 0.286
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.587,
+        "all": 0.932,
+        "ratio": 0.629
+       },
+       {
+        "name": "step1Share",
+        "close": 0.31,
+        "all": 0.482,
+        "ratio": 0.643
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.327,
+        "all": 0.493,
+        "ratio": 0.662
+       },
+       {
+        "name": "waterShare",
+        "close": 0.241,
+        "all": 0.32,
+        "ratio": 0.752
+       },
+       {
+        "name": "flatShare",
+        "close": 0.44,
+        "all": 0.582,
+        "ratio": 0.756
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.71,
+      "within12": 0.845
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 11,
+       "median": 12,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 13,
+       "median": 15,
+       "p90": 17
+      },
+      "maxHeight": {
+       "p10": 13,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 2,
+       "median": 5.85,
+       "p90": 9.98
+      },
+      "flatShare": {
+       "p10": 0.272,
+       "median": 0.362,
+       "p90": 0.463
+      },
+      "cliffShare": {
+       "p10": 0.07,
+       "median": 0.112,
+       "p90": 0.202
+      },
+      "onFoot": {
+       "p10": 0.038,
+       "median": 0.157,
+       "p90": 0.403
+      },
+      "stairsOnly": {
+       "p10": 0.585,
+       "median": 0.841,
+       "p90": 0.961
+      },
+      "oneStep": {
+       "p10": 0.255,
+       "median": 0.762,
+       "p90": 0.97
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.024,
+       "median": 0.04,
+       "p90": 0.062
+      },
+      "longestRun": {
+       "p10": 12,
+       "median": 15,
+       "p90": 19
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0.391,
+       "p90": 0.554
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.224,
+       "median": 0.378,
+       "p90": 0.481
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.071,
+       "median": 0.151,
+       "p90": 0.239
+      },
+      "lakeShare": {
+       "p10": 0.041,
+       "median": 0.122,
+       "p90": 0.207
+      },
+      "islandsAny": 0.115,
+      "waterfalls": {
+       "p10": 1,
+       "median": 4,
+       "p90": 7
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 7,
+       "p90": 10
+      },
+      "flows": {
+       "E": 36,
+       "local": 9,
+       "NE": 29,
+       "SW": 21,
+       "N": 25,
+       "SE": 17,
+       "S": 24,
+       "NW": 17,
+       "W": 22
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1187,
+       "median": 2194,
+       "p90": 6257
+      },
+      "firstLook": {
+       "p10": 131,
+       "median": 205,
+       "p90": 4025
+      },
+      "firstWater": {
+       "p10": 743,
+       "median": 1547,
+       "p90": 5283
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.38
+    },
+    "lakeBasin": {
+     "attempts": {
+      "n": 200,
+      "first": 143,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.food": 5,
+      "start.wood": 30,
+      "start.count": 32,
+      "water.storage_possible": 57,
+      "start water moved": 23,
+      "slopes.connect": 7,
+      "start.entrance": 1,
+      "water.clean_exists": 5,
+      "water.clean_reach": 5,
+      "no rivers": 5,
+      "water.settles": 19,
+      "terrain changed in the build": 6,
+      "no start": 4,
+      "water.outflow": 3,
+      "entities.placement": 2
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.365,
+      "nearestMedian": 0.516,
+      "nearestP10": 0.473,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 79,
+      "largest": 17,
+      "largestShare": 0.085,
+      "drivers": {
+       "maps": 200,
+       "largest": 17,
+       "largestShare": 0.085,
+       "clusters": 79,
+       "within": {
+        "V": 0.56,
+        "layoutHalf": 0.363,
+        "featureHalf": 0.197,
+        "planarity": 0.166
+       },
+       "rest": {
+        "planarity": 0.191
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.095,
+         "workshop": 1.162,
+         "ratio": 0.082,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "waterShare",
+         "within": 0.214,
+         "workshop": 1.108,
+         "ratio": 0.193,
+         "clusterMedian": 0.052,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.24,
+         "workshop": 1.13,
+         "ratio": 0.213,
+         "clusterMedian": 0.024,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.355,
+         "workshop": 1.308,
+         "ratio": 0.272,
+         "clusterMedian": 0.075,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.388,
+         "workshop": 1.291,
+         "ratio": 0.301,
+         "clusterMedian": 5.307,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "step1Share",
+         "within": 0.374,
+         "workshop": 1.176,
+         "ratio": 0.318,
+         "clusterMedian": 0.851,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "relief",
+         "within": 0.433,
+         "workshop": 1.049,
+         "ratio": 0.413,
+         "clusterMedian": 11,
+         "workshopMedian": 14
+        },
+        {
+         "name": "flatShare",
+         "within": 0.47,
+         "workshop": 1.101,
+         "ratio": 0.427,
+         "clusterMedian": 0.423,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.506,
+         "workshop": 1.184,
+         "ratio": 0.427,
+         "clusterMedian": 7.142,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.524,
+         "workshop": 1.223,
+         "ratio": 0.428,
+         "clusterMedian": 7.166,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.668,
+         "workshop": 1.246,
+         "ratio": 0.536,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "basins",
+         "within": 0.649,
+         "workshop": 1.195,
+         "ratio": 0.543,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.622,
+         "workshop": 1.083,
+         "ratio": 0.575,
+         "clusterMedian": 1.662,
+         "workshopMedian": 2.016
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 63,
+      "largest": 22,
+      "largestShare": 0.11,
+      "codes": 122
+     },
+     "M2c": {
+      "clusters": 124,
+      "largest": 8,
+      "largestShare": 0.04,
+      "codes": 41
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 160,
+      "largest": 4,
+      "largestShare": 0.02,
+      "spread": 0.804
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 37,
+      "largestGroupShare": 0.125,
+      "nearestPeerMedian": 0.028,
+      "longRetention": {
+       "p10": 0.003,
+       "median": 0.222,
+       "p90": 0.504
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.47
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 194,
+      "largestJointShare": 0.01,
+      "nearestPeerMedian": 0.083,
+      "bins": {
+       "storageRatio": {
+        "0": 0.225,
+        "1": 0.17,
+        "2": 0.255,
+        "3": 0.35
+       },
+       "peakAxialFlow64": {
+        "0": 0.34,
+        "1": 0.295,
+        "2": 0.295,
+        "3": 0.07
+       },
+       "flatDry40": {
+        "0": 0.215,
+        "1": 0.645,
+        "2": 0.14
+       },
+       "fertilityPersistence": {
+        "0": 0.65,
+        "1": 0.265,
+        "2": 0.085
+       },
+       "badwaterDistance": {
+        "0": 0.115,
+        "1": 0.195,
+        "2": 0.285,
+        "3": 0.2,
+        "none": 0.205
+       },
+       "logs20": {
+        "0": 0.18,
+        "1": 0.27,
+        "2": 0.425,
+        "3": 0.125
+       },
+       "frontierComponents": {
+        "0": 0.28,
+        "1": 0.51,
+        "2": 0.21
+       },
+       "deepPumpExtraShore": {
+        "0": 0.635,
+        "1": 0.3,
+        "2": 0.065
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.48,
+      "below": 23,
+      "share": 0.115,
+      "close": {
+       "V": 0.567,
+       "layoutHalf": 0.378,
+       "featureHalf": 0.189
+      },
+      "all": {
+       "V": 0.653,
+       "layoutHalf": 0.421,
+       "featureHalf": 0.232
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.113,
+        "ratio": 0
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.509,
+        "all": 0.917,
+        "ratio": 0.556
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.322,
+        "all": 0.517,
+        "ratio": 0.624
+       },
+       {
+        "name": "lakeShare",
+        "close": 0.192,
+        "all": 0.303,
+        "ratio": 0.632
+       },
+       {
+        "name": "relief",
+        "close": 0.2,
+        "all": 0.308,
+        "ratio": 0.649
+       },
+       {
+        "name": "step1Share",
+        "close": 0.336,
+        "all": 0.489,
+        "ratio": 0.688
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.78,
+      "within12": 0.865
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 11,
+       "median": 12,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 13,
+       "median": 15,
+       "p90": 17
+      },
+      "maxHeight": {
+       "p10": 13,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.98,
+       "median": 5,
+       "p90": 8.08
+      },
+      "flatShare": {
+       "p10": 0.277,
+       "median": 0.36,
+       "p90": 0.476
+      },
+      "cliffShare": {
+       "p10": 0.075,
+       "median": 0.122,
+       "p90": 0.227
+      },
+      "onFoot": {
+       "p10": 0.03,
+       "median": 0.158,
+       "p90": 0.339
+      },
+      "stairsOnly": {
+       "p10": 0.651,
+       "median": 0.842,
+       "p90": 0.967
+      },
+      "oneStep": {
+       "p10": 0.207,
+       "median": 0.849,
+       "p90": 0.988
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.023,
+       "median": 0.041,
+       "p90": 0.06
+      },
+      "longestRun": {
+       "p10": 12,
+       "median": 15,
+       "p90": 19
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0.4,
+       "p90": 0.526
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.278,
+       "median": 0.403,
+       "p90": 0.507
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.066,
+       "median": 0.157,
+       "p90": 0.265
+      },
+      "lakeShare": {
+       "p10": 0.034,
+       "median": 0.129,
+       "p90": 0.237
+      },
+      "islandsAny": 0.075,
+      "waterfalls": {
+       "p10": 1,
+       "median": 3,
+       "p90": 7
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 6,
+       "p90": 9
+      },
+      "flows": {
+       "N": 26,
+       "NE": 28,
+       "E": 27,
+       "W": 21,
+       "NW": 25,
+       "local": 13,
+       "S": 19,
+       "SE": 28,
+       "SW": 13
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1434,
+       "median": 2975,
+       "p90": 8655
+      },
+      "firstLook": {
+       "p10": 174,
+       "median": 287,
+       "p90": 6242
+      },
+      "firstWater": {
+       "p10": 878,
+       "median": 2238,
+       "p90": 7734
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.47
+    },
+    "riverValley": {
+     "attempts": {
+      "n": 200,
+      "first": 144,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.count": 38,
+      "water.storage_possible": 47,
+      "no start": 13,
+      "start water moved": 22,
+      "start.wood": 35,
+      "water.settles": 9,
+      "start.food": 7,
+      "slopes.connect": 7,
+      "terrain changed in the build": 7,
+      "water.clean_exists": 7,
+      "water.clean_reach": 3,
+      "no rivers": 3,
+      "water.outflow": 1,
+      "terrain.dam_wall": 1,
+      "water.no_flood": 1,
+      "entities.placement": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.421,
+      "nearestMedian": 0.508,
+      "nearestP10": 0.459,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 71,
+      "largest": 10,
+      "largestShare": 0.05,
+      "drivers": {
+       "maps": 200,
+       "largest": 10,
+       "largestShare": 0.05,
+       "clusters": 71,
+       "within": {
+        "V": 0.551,
+        "layoutHalf": 0.357,
+        "featureHalf": 0.193,
+        "planarity": 0.158
+       },
+       "rest": {
+        "planarity": 0.204
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.148,
+         "workshop": 1.13,
+         "ratio": 0.131,
+         "clusterMedian": 0.049,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "basins",
+         "within": 0.233,
+         "workshop": 1.195,
+         "ratio": 0.195,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "waterShare",
+         "within": 0.226,
+         "workshop": 1.108,
+         "ratio": 0.204,
+         "clusterMedian": 0.08,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.349,
+         "workshop": 1.223,
+         "ratio": 0.285,
+         "clusterMedian": 7.373,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.428,
+         "workshop": 1.291,
+         "ratio": 0.332,
+         "clusterMedian": 5.325,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "relief",
+         "within": 0.364,
+         "workshop": 1.049,
+         "ratio": 0.347,
+         "clusterMedian": 13,
+         "workshopMedian": 14
+        },
+        {
+         "name": "flatShare",
+         "within": 0.427,
+         "workshop": 1.101,
+         "ratio": 0.388,
+         "clusterMedian": 0.425,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.499,
+         "workshop": 1.184,
+         "ratio": 0.422,
+         "clusterMedian": 6.755,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.572,
+         "workshop": 1.246,
+         "ratio": 0.459,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.705,
+         "workshop": 1.308,
+         "ratio": 0.539,
+         "clusterMedian": 0.123,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.638,
+         "workshop": 1.083,
+         "ratio": 0.589,
+         "clusterMedian": 2.043,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "step1Share",
+         "within": 0.833,
+         "workshop": 1.176,
+         "ratio": 0.709,
+         "clusterMedian": 0.762,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 77,
+      "largest": 18,
+      "largestShare": 0.09,
+      "codes": 137
+     },
+     "M2c": {
+      "clusters": 142,
+      "largest": 5,
+      "largestShare": 0.025,
+      "codes": 37
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 175,
+      "largest": 4,
+      "largestShare": 0.02,
+      "spread": 0.879
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 36,
+      "largestGroupShare": 0.27,
+      "nearestPeerMedian": 0.024,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.09,
+       "p90": 0.374
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.36
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 196,
+      "largestJointShare": 0.01,
+      "nearestPeerMedian": 0.083,
+      "bins": {
+       "storageRatio": {
+        "0": 0.465,
+        "1": 0.155,
+        "2": 0.175,
+        "3": 0.205
+       },
+       "peakAxialFlow64": {
+        "0": 0.28,
+        "1": 0.31,
+        "2": 0.33,
+        "3": 0.08
+       },
+       "flatDry40": {
+        "0": 0.265,
+        "1": 0.51,
+        "2": 0.205,
+        "3": 0.02
+       },
+       "fertilityPersistence": {
+        "0": 0.695,
+        "1": 0.22,
+        "2": 0.085
+       },
+       "badwaterDistance": {
+        "0": 0.135,
+        "1": 0.23,
+        "2": 0.25,
+        "3": 0.175,
+        "none": 0.21
+       },
+       "logs20": {
+        "0": 0.185,
+        "1": 0.295,
+        "2": 0.385,
+        "3": 0.135
+       },
+       "frontierComponents": {
+        "0": 0.33,
+        "1": 0.505,
+        "2": 0.165
+       },
+       "deepPumpExtraShore": {
+        "0": 0.585,
+        "1": 0.345,
+        "2": 0.065,
+        "3": 0.005
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.517,
+      "below": 16,
+      "share": 0.08,
+      "close": {
+       "V": 0.57,
+       "layoutHalf": 0.362,
+       "featureHalf": 0.208
+      },
+      "all": {
+       "V": 0.672,
+       "layoutHalf": 0.407,
+       "featureHalf": 0.265
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0.05,
+        "all": 0.184,
+        "ratio": 0.275
+       },
+       {
+        "name": "step1Share",
+        "close": 0.35,
+        "all": 0.724,
+        "ratio": 0.483
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.375,
+        "all": 0.623,
+        "ratio": 0.601
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.555,
+        "all": 0.84,
+        "ratio": 0.66
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.419,
+        "all": 0.605,
+        "ratio": 0.693
+       },
+       {
+        "name": "basins",
+        "close": 0.617,
+        "all": 0.831,
+        "ratio": 0.743
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.6,
+      "within12": 0.78
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 11,
+       "median": 13,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 10,
+       "median": 15,
+       "p90": 17
+      },
+      "maxHeight": {
+       "p10": 14,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 2.08,
+       "median": 5.08,
+       "p90": 8.99
+      },
+      "flatShare": {
+       "p10": 0.303,
+       "median": 0.408,
+       "p90": 0.56
+      },
+      "cliffShare": {
+       "p10": 0.095,
+       "median": 0.154,
+       "p90": 0.264
+      },
+      "onFoot": {
+       "p10": 0.025,
+       "median": 0.128,
+       "p90": 0.269
+      },
+      "stairsOnly": {
+       "p10": 0.727,
+       "median": 0.872,
+       "p90": 0.972
+      },
+      "oneStep": {
+       "p10": 0.065,
+       "median": 0.675,
+       "p90": 0.974
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.014,
+       "median": 0.028,
+       "p90": 0.049
+      },
+      "longestRun": {
+       "p10": 11,
+       "median": 13,
+       "p90": 19
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0.304,
+       "p90": 0.496
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.204,
+       "median": 0.353,
+       "p90": 0.467
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.056,
+       "median": 0.11,
+       "p90": 0.189
+      },
+      "lakeShare": {
+       "p10": 0.013,
+       "median": 0.083,
+       "p90": 0.159
+      },
+      "islandsAny": 0.095,
+      "waterfalls": {
+       "p10": 1,
+       "median": 4,
+       "p90": 9
+      },
+      "plateaus": {
+       "p10": 3,
+       "median": 6,
+       "p90": 9
+      },
+      "flows": {
+       "SE": 24,
+       "S": 27,
+       "N": 19,
+       "W": 19,
+       "E": 23,
+       "SW": 30,
+       "NE": 32,
+       "NW": 20,
+       "local": 6
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1384,
+       "median": 2524,
+       "p90": 6959
+      },
+      "firstLook": {
+       "p10": 224,
+       "median": 342,
+       "p90": 4261
+      },
+      "firstWater": {
+       "p10": 853,
+       "median": 1702,
+       "p90": 5934
+      },
+      "settles": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      }
+     },
+     "startDrought": 0.36
+    }
+   },
+   "intentions": {
+    "perMap": [
+     289,
+     620,
+     291
+    ],
+    "byIntention": {
+     "under-cliff": {
+      "drawn": 189,
+      "emerged": 141,
+      "reSteered": 2,
+      "dropped": 46,
+      "dropRate": 0.243,
+      "themes": {
+       "canyon": 39,
+       "delta": 12,
+       "highlands": 32,
+       "islands": 23,
+       "lakeBasin": 21,
+       "riverValley": 16
+      },
+      "M1": {
+       "nearestMin": 0.393,
+       "nearestMedian": 0.516
+      },
+      "M2a": {
+       "clusters": 60,
+       "largest": 9,
+       "largestShare": 0.063
+      }
+     },
+     "landmark": {
+      "drawn": 169,
+      "emerged": 157,
+      "reSteered": 0,
+      "dropped": 12,
+      "dropRate": 0.071,
+      "themes": {
+       "canyon": 18,
+       "delta": 22,
+       "highlands": 13,
+       "islands": 46,
+       "lakeBasin": 31,
+       "riverValley": 27
+      },
+      "M1": {
+       "nearestMin": 0.423,
+       "nearestMedian": 0.524
+      },
+      "M2a": {
+       "clusters": 65,
+       "largest": 11,
+       "largestShare": 0.07
+      }
+     },
+     "farmland-past-gorge": {
+      "drawn": 127,
+      "emerged": 26,
+      "reSteered": 0,
+      "dropped": 101,
+      "dropRate": 0.795,
+      "themes": {
+       "canyon": 1,
+       "delta": 8,
+       "highlands": 6,
+       "islands": 3,
+       "lakeBasin": 3,
+       "riverValley": 5
+      },
+      "M1": {
+       "nearestMin": 0.437,
+       "nearestMedian": 0.572
+      },
+      "M2a": {
+       "clusters": 18,
+       "largest": 4,
+       "largestShare": 0.154
+      }
+     },
+     "safe-water-uphill": {
+      "drawn": 86,
+      "emerged": 4,
+      "reSteered": 0,
+      "dropped": 82,
+      "dropRate": 0.953,
+      "themes": {
+       "highlands": 1,
+       "islands": 1,
+       "lakeBasin": 2
+      },
+      "M1": {
+       "nearestMin": 0.574,
+       "nearestMedian": 0.574
+      },
+      "M2a": {
+       "clusters": 3,
+       "largest": 2,
+       "largestShare": 0.5
+      }
+     },
+     "falls-shield": {
+      "drawn": 112,
+      "emerged": 36,
+      "reSteered": 1,
+      "dropped": 75,
+      "dropRate": 0.67,
+      "themes": {
+       "canyon": 7,
+       "delta": 1,
+       "highlands": 8,
+       "islands": 6,
+       "lakeBasin": 7,
+       "riverValley": 8
+      },
+      "M1": {
+       "nearestMin": 0.393,
+       "nearestMedian": 0.546
+      },
+      "M2a": {
+       "clusters": 24,
+       "largest": 6,
+       "largestShare": 0.162
+      }
+     },
+     "hidden-valley": {
+      "drawn": 129,
+      "emerged": 66,
+      "reSteered": 0,
+      "dropped": 63,
+      "dropRate": 0.488,
+      "themes": {
+       "canyon": 24,
+       "delta": 4,
+       "highlands": 13,
+       "islands": 10,
+       "lakeBasin": 4,
+       "riverValley": 11
+      },
+      "M1": {
+       "nearestMin": 0.418,
+       "nearestMedian": 0.548
+      },
+      "M2a": {
+       "clusters": 38,
+       "largest": 10,
+       "largestShare": 0.152
+      }
+     },
+     "high-lake": {
+      "drawn": 119,
+      "emerged": 72,
+      "reSteered": 0,
+      "dropped": 47,
+      "dropRate": 0.395,
+      "themes": {
+       "canyon": 6,
+       "delta": 6,
+       "highlands": 17,
+       "islands": 27,
+       "lakeBasin": 12,
+       "riverValley": 4
+      },
+      "M1": {
+       "nearestMin": 0.437,
+       "nearestMedian": 0.541
+      },
+      "M2a": {
+       "clusters": 39,
+       "largest": 5,
+       "largestShare": 0.069
+      }
+     },
+     "meeting-waters": {
+      "drawn": 150,
+      "emerged": 22,
+      "reSteered": 3,
+      "dropped": 125,
+      "dropRate": 0.833,
+      "themes": {
+       "canyon": 2,
+       "delta": 6,
+       "highlands": 2,
+       "islands": 5,
+       "lakeBasin": 6,
+       "riverValley": 4
+      },
+      "M1": {
+       "nearestMin": 0.475,
+       "nearestMedian": 0.554
+      },
+      "M2a": {
+       "clusters": 16,
+       "largest": 3,
+       "largestShare": 0.12
+      }
+     },
+     "long-view": {
+      "drawn": 121,
+      "emerged": 38,
+      "reSteered": 0,
+      "dropped": 83,
+      "dropRate": 0.686,
+      "themes": {
+       "canyon": 2,
+       "delta": 4,
+       "highlands": 8,
+       "islands": 14,
+       "lakeBasin": 4,
+       "riverValley": 6
+      },
+      "M1": {
+       "nearestMin": 0.47,
+       "nearestMedian": 0.572
+      },
+      "M2a": {
+       "clusters": 26,
+       "largest": 6,
+       "largestShare": 0.158
+      }
+     }
+    }
+   }
+  },
+  "v1-128": {
+   "maps": 1200,
+   "all": {
+    "vertical": {
+     "range": {
+      "p10": 6,
+      "median": 8,
+      "p90": 12
+     },
+     "levels": {
+      "p10": 8,
+      "median": 11,
+      "p90": 14
+     },
+     "maxHeight": {
+      "p10": 12,
+      "median": 15,
+      "p90": 16
+     },
+     "above16": {
+      "p10": 0,
+      "median": 0,
+      "p90": 0
+     },
+     "tallestFall": {
+      "p10": 1,
+      "median": 3,
+      "p90": 6.94
+     },
+     "flatShare": {
+      "p10": 0.443,
+      "median": 0.561,
+      "p90": 0.668
+     },
+     "cliffShare": {
+      "p10": 0.031,
+      "median": 0.058,
+      "p90": 0.153
+     },
+     "onFoot": {
+      "p10": 0.057,
+      "median": 0.401,
+      "p90": 0.766
+     },
+     "stairsOnly": {
+      "p10": 0.233,
+      "median": 0.598,
+      "p90": 0.942
+     },
+     "oneStep": {
+      "p10": 0.04,
+      "median": 0.449,
+      "p90": 0.944
+     }
+    },
+    "shape": {
+     "waterShare": {
+      "p10": 0.053,
+      "median": 0.102,
+      "p90": 0.214
+     },
+     "lakeShare": {
+      "p10": 0.009,
+      "median": 0.076,
+      "p90": 0.201
+     },
+     "islandsAny": 0.101,
+     "waterfalls": {
+      "p10": 0,
+      "median": 1,
+      "p90": 4
+     },
+     "plateaus": {
+      "p10": 3,
+      "median": 6,
+      "p90": 10
+     },
+     "flows": {
+      "E": 132,
+      "SW": 156,
+      "S": 140,
+      "SE": 161,
+      "NW": 124,
+      "N": 146,
+      "W": 154,
+      "NE": 156,
+      "local": 31
+     }
+    },
+    "M5": {
+     "maps": 1200,
+     "goodNaturalDam": 0.479,
+     "within12": 0.672
+    },
+    "M6": {
+     "maps": 1200,
+     "flagged": 0
+    },
+    "speed": {
+     "ms": {
+      "p10": 1286,
+      "median": 2551,
+      "p90": 5726
+     },
+     "firstLook": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     },
+     "firstWater": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     },
+     "settles": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     }
+    },
+    "startDrought": null,
+    "M3c": {
+     "maps": 1200,
+     "groups": 44,
+     "largestGroupShare": 0.362,
+     "nearestPeerMedian": 0.008,
+     "longRetention": {
+      "p10": 0,
+      "median": 0.019,
+      "p90": 0.368
+     },
+     "startDays": {
+      "p10": 0,
+      "median": 0,
+      "p90": 9
+     },
+     "startFirstDrought": 0.292
+    },
+    "M3d": {
+     "maps": 1200,
+     "jointSignatures": 846,
+     "largestJointShare": 0.015,
+     "nearestPeerMedian": 0.042,
+     "bins": {
+      "storageRatio": {
+       "0": 0.535,
+       "1": 0.199,
+       "2": 0.106,
+       "3": 0.16
+      },
+      "peakAxialFlow64": {
+       "0": 0.156,
+       "1": 0.261,
+       "2": 0.498,
+       "3": 0.085
+      },
+      "flatDry40": {
+       "0": 0.078,
+       "1": 0.428,
+       "2": 0.404,
+       "3": 0.09
+      },
+      "fertilityPersistence": {
+       "0": 0.795,
+       "1": 0.189,
+       "2": 0.016
+      },
+      "badwaterDistance": {
+       "0": 0.034,
+       "1": 0.492,
+       "2": 0.169,
+       "none": 0.305
+      },
+      "logs20": {
+       "0": 0.079,
+       "1": 0.247,
+       "2": 0.405,
+       "3": 0.269
+      },
+      "frontierComponents": {
+       "0": 0.143,
+       "1": 0.398,
+       "2": 0.458
+      },
+      "deepPumpExtraShore": {
+       "0": 0.687,
+       "1": 0.232,
+       "2": 0.082
+      }
+     }
+    }
+   },
+   "byTheme": {
+    "canyon": {
+     "attempts": {
+      "n": 200,
+      "first": 125,
+      "final": 200
+     },
+     "failedAttempts": {
+      "water.storage_possible": 103,
+      "start.water": 15,
+      "start.food": 16,
+      "start.wood": 35,
+      "start.count": 48,
+      "no start": 48,
+      "water.clean_exists": 5,
+      "resources.bushes": 1,
+      "water.settles": 6,
+      "start.dry": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.328,
+      "nearestMedian": 0.451,
+      "nearestP10": 0.401,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 34,
+      "largest": 52,
+      "largestShare": 0.26,
+      "drivers": {
+       "maps": 200,
+       "largest": 52,
+       "largestShare": 0.26,
+       "clusters": 34,
+       "within": {
+        "V": 0.558,
+        "layoutHalf": 0.327,
+        "featureHalf": 0.231,
+        "planarity": 0.459
+       },
+       "rest": {
+        "planarity": 0.336
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.061,
+         "workshop": 1.162,
+         "ratio": 0.052,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "waterShare",
+         "within": 0.155,
+         "workshop": 1.108,
+         "ratio": 0.14,
+         "clusterMedian": 0.06,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.181,
+         "workshop": 1.13,
+         "ratio": 0.16,
+         "clusterMedian": 0.026,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.431,
+         "workshop": 1.308,
+         "ratio": 0.329,
+         "clusterMedian": 0.109,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.542,
+         "workshop": 1.223,
+         "ratio": 0.443,
+         "clusterMedian": 7.283,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.533,
+         "workshop": 1.184,
+         "ratio": 0.45,
+         "clusterMedian": 6.955,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.6,
+         "workshop": 1.291,
+         "ratio": 0.465,
+         "clusterMedian": 5.103,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.605,
+         "workshop": 1.246,
+         "ratio": 0.486,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "relief",
+         "within": 0.556,
+         "workshop": 1.049,
+         "ratio": 0.53,
+         "clusterMedian": 11,
+         "workshopMedian": 14
+        },
+        {
+         "name": "basins",
+         "within": 0.673,
+         "workshop": 1.195,
+         "ratio": 0.563,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "step1Share",
+         "within": 0.704,
+         "workshop": 1.176,
+         "ratio": 0.599,
+         "clusterMedian": 0.732,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.662,
+         "workshop": 1.083,
+         "ratio": 0.611,
+         "clusterMedian": 2.043,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "flatShare",
+         "within": 0.732,
+         "workshop": 1.101,
+         "ratio": 0.665,
+         "clusterMedian": 0.534,
+         "workshopMedian": 0.442
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 60,
+      "largest": 16,
+      "largestShare": 0.08,
+      "codes": 125
+     },
+     "M2c": {
+      "clusters": 153,
+      "largest": 4,
+      "largestShare": 0.02,
+      "codes": 42
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 132,
+      "largest": 11,
+      "largestShare": 0.055,
+      "spread": 0.788
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 20,
+      "largestGroupShare": 0.51,
+      "nearestPeerMedian": 0.007,
+      "longRetention": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.076
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 7
+      },
+      "startFirstDrought": 0.35
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 162,
+      "largestJointShare": 0.035,
+      "nearestPeerMedian": 0.042,
+      "bins": {
+       "storageRatio": {
+        "0": 0.745,
+        "1": 0.215,
+        "2": 0.03,
+        "3": 0.01
+       },
+       "peakAxialFlow64": {
+        "0": 0.305,
+        "1": 0.18,
+        "2": 0.42,
+        "3": 0.095
+       },
+       "flatDry40": {
+        "0": 0.135,
+        "1": 0.595,
+        "2": 0.205,
+        "3": 0.065
+       },
+       "fertilityPersistence": {
+        "0": 0.8,
+        "1": 0.17,
+        "2": 0.03
+       },
+       "badwaterDistance": {
+        "0": 0.035,
+        "1": 0.44,
+        "2": 0.21,
+        "none": 0.315
+       },
+       "logs20": {
+        "0": 0.14,
+        "1": 0.355,
+        "2": 0.37,
+        "3": 0.135
+       },
+       "frontierComponents": {
+        "0": 0.31,
+        "1": 0.485,
+        "2": 0.205
+       },
+       "deepPumpExtraShore": {
+        "0": 0.745,
+        "1": 0.21,
+        "2": 0.045
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.488,
+      "below": 18,
+      "share": 0.09,
+      "close": {
+       "V": 0.567,
+       "layoutHalf": 0.311,
+       "featureHalf": 0.256
+      },
+      "all": {
+       "V": 0.689,
+       "layoutHalf": 0.368,
+       "featureHalf": 0.321
+      },
+      "features": [
+       {
+        "name": "basins",
+        "close": 0.422,
+        "all": 0.987,
+        "ratio": 0.428
+       },
+       {
+        "name": "step1Share",
+        "close": 0.68,
+        "all": 1.381,
+        "ratio": 0.492
+       },
+       {
+        "name": "islands",
+        "close": 0.179,
+        "all": 0.351,
+        "ratio": 0.511
+       },
+       {
+        "name": "caveShare",
+        "close": 0.172,
+        "all": 0.293,
+        "ratio": 0.587
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.608,
+        "all": 0.857,
+        "ratio": 0.71
+       },
+       {
+        "name": "flatShare",
+        "close": 0.482,
+        "all": 0.671,
+        "ratio": 0.718
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.33,
+      "within12": 0.64
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 8,
+       "median": 11,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 9,
+       "median": 12,
+       "p90": 15
+      },
+      "maxHeight": {
+       "p10": 14,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 0.99,
+       "median": 3.61,
+       "p90": 8.82
+      },
+      "flatShare": {
+       "p10": 0.419,
+       "median": 0.563,
+       "p90": 0.674
+      },
+      "cliffShare": {
+       "p10": 0.084,
+       "median": 0.146,
+       "p90": 0.225
+      },
+      "onFoot": {
+       "p10": 0.022,
+       "median": 0.089,
+       "p90": 0.425
+      },
+      "stairsOnly": {
+       "p10": 0.569,
+       "median": 0.911,
+       "p90": 0.978
+      },
+      "oneStep": {
+       "p10": 0.012,
+       "median": 0.065,
+       "p90": 0.701
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.01,
+       "median": 0.019,
+       "p90": 0.036
+      },
+      "longestRun": {
+       "p10": 10,
+       "median": 13,
+       "p90": 21
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.347
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.1,
+       "median": 0.289,
+       "p90": 0.476
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.042,
+       "median": 0.07,
+       "p90": 0.111
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.039,
+       "p90": 0.087
+      },
+      "islandsAny": 0.03,
+      "waterfalls": {
+       "p10": 0,
+       "median": 2,
+       "p90": 5
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 7,
+       "p90": 10
+      },
+      "flows": {
+       "E": 25,
+       "SW": 31,
+       "S": 18,
+       "SE": 31,
+       "NW": 24,
+       "N": 22,
+       "W": 20,
+       "NE": 22,
+       "local": 7
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1131,
+       "median": 2203,
+       "p90": 5020
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "delta": {
+     "attempts": {
+      "n": 200,
+      "first": 181,
+      "final": 200
+     },
+     "failedAttempts": {
+      "water.settles": 4,
+      "start.dry": 1,
+      "water.storage_possible": 13,
+      "start.food": 1,
+      "start.wood": 1,
+      "water.outflow": 1,
+      "start.count": 1,
+      "water.clean_exists": 1,
+      "no start": 1,
+      "start.water": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.335,
+      "nearestMedian": 0.416,
+      "nearestP10": 0.356,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 19,
+      "largest": 136,
+      "largestShare": 0.68,
+      "drivers": {
+       "maps": 200,
+       "largest": 136,
+       "largestShare": 0.68,
+       "clusters": 19,
+       "within": {
+        "V": 0.556,
+        "layoutHalf": 0.343,
+        "featureHalf": 0.213,
+        "planarity": 0.567
+       },
+       "rest": {
+        "planarity": 0.35
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.046,
+         "workshop": 1.162,
+         "ratio": 0.04,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.216,
+         "workshop": 1.308,
+         "ratio": 0.165,
+         "clusterMedian": 0.037,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "waterShare",
+         "within": 0.221,
+         "workshop": 1.108,
+         "ratio": 0.199,
+         "clusterMedian": 0.103,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.252,
+         "workshop": 1.13,
+         "ratio": 0.223,
+         "clusterMedian": 0.077,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "step1Share",
+         "within": 0.338,
+         "workshop": 1.176,
+         "ratio": 0.287,
+         "clusterMedian": 0.868,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "relief",
+         "within": 0.372,
+         "workshop": 1.049,
+         "ratio": 0.354,
+         "clusterMedian": 7,
+         "workshopMedian": 14
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.555,
+         "workshop": 1.291,
+         "ratio": 0.43,
+         "clusterMedian": 5.133,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "flatShare",
+         "within": 0.532,
+         "workshop": 1.101,
+         "ratio": 0.484,
+         "clusterMedian": 0.639,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.674,
+         "workshop": 1.246,
+         "ratio": 0.541,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.678,
+         "workshop": 1.223,
+         "ratio": 0.555,
+         "clusterMedian": 7.166,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.659,
+         "workshop": 1.184,
+         "ratio": 0.556,
+         "clusterMedian": 6.777,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "basins",
+         "within": 0.674,
+         "workshop": 1.195,
+         "ratio": 0.564,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.64,
+         "workshop": 1.083,
+         "ratio": 0.591,
+         "clusterMedian": 2.043,
+         "workshopMedian": 2.016
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 61,
+      "largest": 22,
+      "largestShare": 0.11,
+      "codes": 108
+     },
+     "M2c": {
+      "clusters": 97,
+      "largest": 10,
+      "largestShare": 0.05,
+      "codes": 16
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 117,
+      "largest": 8,
+      "largestShare": 0.04,
+      "spread": 0.735
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 15,
+      "largestGroupShare": 0.625,
+      "nearestPeerMedian": 0.004,
+      "longRetention": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.078
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 7
+      },
+      "startFirstDrought": 0.22
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 149,
+      "largestJointShare": 0.035,
+      "nearestPeerMedian": 0.042,
+      "bins": {
+       "storageRatio": {
+        "0": 0.725,
+        "1": 0.165,
+        "2": 0.085,
+        "3": 0.025
+       },
+       "peakAxialFlow64": {
+        "0": 0.06,
+        "1": 0.215,
+        "2": 0.62,
+        "3": 0.105
+       },
+       "flatDry40": {
+        "0": 0.06,
+        "1": 0.28,
+        "2": 0.52,
+        "3": 0.14
+       },
+       "fertilityPersistence": {
+        "0": 0.9,
+        "1": 0.09,
+        "2": 0.01
+       },
+       "badwaterDistance": {
+        "0": 0.035,
+        "1": 0.52,
+        "2": 0.115,
+        "none": 0.33
+       },
+       "logs20": {
+        "0": 0.07,
+        "1": 0.135,
+        "2": 0.43,
+        "3": 0.365
+       },
+       "frontierComponents": {
+        "0": 0.05,
+        "1": 0.265,
+        "2": 0.685
+       },
+       "deepPumpExtraShore": {
+        "0": 0.725,
+        "1": 0.215,
+        "2": 0.06
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.511,
+      "below": 33,
+      "share": 0.165,
+      "close": {
+       "V": 0.563,
+       "layoutHalf": 0.284,
+       "featureHalf": 0.279
+      },
+      "all": {
+       "V": 0.642,
+       "layoutHalf": 0.343,
+       "featureHalf": 0.3
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0.098,
+        "all": 0.262,
+        "ratio": 0.373
+       },
+       {
+        "name": "caveShare",
+        "close": 0.126,
+        "all": 0.279,
+        "ratio": 0.45
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.408,
+        "all": 0.765,
+        "ratio": 0.534
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.213,
+        "all": 0.381,
+        "ratio": 0.559
+       },
+       {
+        "name": "step1Share",
+        "close": 0.387,
+        "all": 0.575,
+        "ratio": 0.672
+       },
+       {
+        "name": "lakeShare",
+        "close": 0.183,
+        "all": 0.26,
+        "ratio": 0.704
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.27,
+      "within12": 0.48
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 6,
+       "median": 7,
+       "p90": 9
+      },
+      "levels": {
+       "p10": 7,
+       "median": 9,
+       "p90": 12
+      },
+      "maxHeight": {
+       "p10": 10,
+       "median": 12,
+       "p90": 14
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 0.99,
+       "median": 1.93,
+       "p90": 4.86
+      },
+      "flatShare": {
+       "p10": 0.543,
+       "median": 0.635,
+       "p90": 0.721
+      },
+      "cliffShare": {
+       "p10": 0.024,
+       "median": 0.038,
+       "p90": 0.056
+      },
+      "onFoot": {
+       "p10": 0.261,
+       "median": 0.524,
+       "p90": 0.806
+      },
+      "stairsOnly": {
+       "p10": 0.19,
+       "median": 0.474,
+       "p90": 0.734
+      },
+      "oneStep": {
+       "p10": 0.085,
+       "median": 0.533,
+       "p90": 0.963
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.021,
+       "median": 0.041,
+       "p90": 0.062
+      },
+      "longestRun": {
+       "p10": 11,
+       "median": 14,
+       "p90": 19
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0,
+       "median": 0.221,
+       "p90": 0.406
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.069,
+       "median": 0.108,
+       "p90": 0.161
+      },
+      "lakeShare": {
+       "p10": 0.02,
+       "median": 0.08,
+       "p90": 0.137
+      },
+      "islandsAny": 0.08,
+      "waterfalls": {
+       "p10": 0,
+       "median": 1,
+       "p90": 3
+      },
+      "plateaus": {
+       "p10": 2,
+       "median": 5,
+       "p90": 8
+      },
+      "flows": {
+       "E": 22,
+       "N": 33,
+       "SE": 22,
+       "SW": 23,
+       "W": 20,
+       "NE": 25,
+       "S": 31,
+       "NW": 22,
+       "local": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1254,
+       "median": 2129,
+       "p90": 4145
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "highlands": {
+     "attempts": {
+      "n": 200,
+      "first": 172,
+      "final": 200
+     },
+     "failedAttempts": {
+      "water.clean_exists": 2,
+      "start.water": 4,
+      "start.food": 6,
+      "start.wood": 12,
+      "water.storage_possible": 16,
+      "water.settles": 6,
+      "water.no_flood": 1,
+      "start.count": 1,
+      "no start": 1,
+      "water.outflow": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.355,
+      "nearestMedian": 0.468,
+      "nearestP10": 0.417,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 36,
+      "largest": 58,
+      "largestShare": 0.29,
+      "drivers": {
+       "maps": 200,
+       "largest": 58,
+       "largestShare": 0.29,
+       "clusters": 36,
+       "within": {
+        "V": 0.561,
+        "layoutHalf": 0.349,
+        "featureHalf": 0.212,
+        "planarity": 0.432
+       },
+       "rest": {
+        "planarity": 0.25
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.028,
+         "workshop": 1.162,
+         "ratio": 0.024,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.2,
+         "workshop": 1.13,
+         "ratio": 0.177,
+         "clusterMedian": 0.045,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.197,
+         "workshop": 1.108,
+         "ratio": 0.178,
+         "clusterMedian": 0.089,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.471,
+         "workshop": 1.308,
+         "ratio": 0.36,
+         "clusterMedian": 0.087,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.404,
+         "workshop": 1.083,
+         "ratio": 0.373,
+         "clusterMedian": 2.484,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "relief",
+         "within": 0.426,
+         "workshop": 1.049,
+         "ratio": 0.406,
+         "clusterMedian": 10,
+         "workshopMedian": 14
+        },
+        {
+         "name": "basins",
+         "within": 0.528,
+         "workshop": 1.195,
+         "ratio": 0.442,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.61,
+         "workshop": 1.291,
+         "ratio": 0.473,
+         "clusterMedian": 5.111,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.582,
+         "workshop": 1.223,
+         "ratio": 0.475,
+         "clusterMedian": 7.191,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "flatShare",
+         "within": 0.541,
+         "workshop": 1.101,
+         "ratio": 0.492,
+         "clusterMedian": 0.509,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "step1Share",
+         "within": 0.581,
+         "workshop": 1.176,
+         "ratio": 0.494,
+         "clusterMedian": 0.783,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.658,
+         "workshop": 1.184,
+         "ratio": 0.556,
+         "clusterMedian": 6.657,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.761,
+         "workshop": 1.246,
+         "ratio": 0.611,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.041
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 61,
+      "largest": 40,
+      "largestShare": 0.2,
+      "codes": 122
+     },
+     "M2c": {
+      "clusters": 151,
+      "largest": 4,
+      "largestShare": 0.02,
+      "codes": 49
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 161,
+      "largest": 4,
+      "largestShare": 0.02,
+      "spread": 0.839
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 30,
+      "largestGroupShare": 0.3,
+      "nearestPeerMedian": 0.014,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.025,
+       "p90": 0.338
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.36
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 190,
+      "largestJointShare": 0.01,
+      "nearestPeerMedian": 0.063,
+      "bins": {
+       "storageRatio": {
+        "0": 0.51,
+        "1": 0.265,
+        "2": 0.115,
+        "3": 0.11
+       },
+       "peakAxialFlow64": {
+        "0": 0.225,
+        "1": 0.29,
+        "2": 0.395,
+        "3": 0.09
+       },
+       "flatDry40": {
+        "0": 0.065,
+        "1": 0.4,
+        "2": 0.445,
+        "3": 0.09
+       },
+       "fertilityPersistence": {
+        "0": 0.795,
+        "1": 0.19,
+        "2": 0.015
+       },
+       "badwaterDistance": {
+        "0": 0.02,
+        "1": 0.435,
+        "2": 0.195,
+        "none": 0.35
+       },
+       "logs20": {
+        "0": 0.085,
+        "1": 0.295,
+        "2": 0.39,
+        "3": 0.23
+       },
+       "frontierComponents": {
+        "0": 0.235,
+        "1": 0.485,
+        "2": 0.28
+       },
+       "deepPumpExtraShore": {
+        "0": 0.625,
+        "1": 0.245,
+        "2": 0.13
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.519,
+      "below": 31,
+      "share": 0.155,
+      "close": {
+       "V": 0.563,
+       "layoutHalf": 0.349,
+       "featureHalf": 0.214
+      },
+      "all": {
+       "V": 0.648,
+       "layoutHalf": 0.385,
+       "featureHalf": 0.263
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.192,
+        "ratio": 0
+       },
+       {
+        "name": "caveShare",
+        "close": 0.408,
+        "all": 0.635,
+        "ratio": 0.642
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.319,
+        "all": 0.479,
+        "ratio": 0.667
+       },
+       {
+        "name": "basins",
+        "close": 0.544,
+        "all": 0.805,
+        "ratio": 0.676
+       },
+       {
+        "name": "step1Share",
+        "close": 0.485,
+        "all": 0.707,
+        "ratio": 0.686
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.457,
+        "all": 0.616,
+        "ratio": 0.743
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.55,
+      "within12": 0.74
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 7,
+       "median": 10,
+       "p90": 12
+      },
+      "levels": {
+       "p10": 10,
+       "median": 12,
+       "p90": 14
+      },
+      "maxHeight": {
+       "p10": 15,
+       "median": 15,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 2.02,
+       "median": 5,
+       "p90": 8.01
+      },
+      "flatShare": {
+       "p10": 0.423,
+       "median": 0.531,
+       "p90": 0.62
+      },
+      "cliffShare": {
+       "p10": 0.06,
+       "median": 0.094,
+       "p90": 0.188
+      },
+      "onFoot": {
+       "p10": 0.059,
+       "median": 0.206,
+       "p90": 0.469
+      },
+      "stairsOnly": {
+       "p10": 0.528,
+       "median": 0.793,
+       "p90": 0.941
+      },
+      "oneStep": {
+       "p10": 0.05,
+       "median": 0.302,
+       "p90": 0.894
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.016,
+       "median": 0.031,
+       "p90": 0.051
+      },
+      "longestRun": {
+       "p10": 11,
+       "median": 14,
+       "p90": 19
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.403
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.121,
+       "median": 0.334,
+       "p90": 0.464
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.052,
+       "median": 0.086,
+       "p90": 0.149
+      },
+      "lakeShare": {
+       "p10": 0.008,
+       "median": 0.049,
+       "p90": 0.13
+      },
+      "islandsAny": 0.035,
+      "waterfalls": {
+       "p10": 1,
+       "median": 4,
+       "p90": 7
+      },
+      "plateaus": {
+       "p10": 3,
+       "median": 6,
+       "p90": 9
+      },
+      "flows": {
+       "W": 25,
+       "E": 15,
+       "NE": 32,
+       "N": 23,
+       "S": 19,
+       "SW": 25,
+       "SE": 26,
+       "local": 9,
+       "NW": 26
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1340,
+       "median": 2372,
+       "p90": 5016
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "islands": {
+     "attempts": {
+      "n": 200,
+      "first": 179,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.wood": 5,
+      "start.dry": 1,
+      "start.food": 2,
+      "water.settles": 8,
+      "water.storage_possible": 9,
+      "start.count": 3,
+      "water.clean_exists": 3,
+      "water.clean_reach": 3,
+      "no rivers": 3,
+      "entities.placement": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.354,
+      "nearestMedian": 0.451,
+      "nearestP10": 0.395,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 30,
+      "largest": 111,
+      "largestShare": 0.555,
+      "drivers": {
+       "maps": 200,
+       "largest": 111,
+       "largestShare": 0.555,
+       "clusters": 30,
+       "within": {
+        "V": 0.558,
+        "layoutHalf": 0.356,
+        "featureHalf": 0.202,
+        "planarity": 0.262
+       },
+       "rest": {
+        "planarity": 0.199
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.21,
+         "workshop": 1.308,
+         "ratio": 0.161,
+         "clusterMedian": 0.039,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "step1Share",
+         "within": 0.291,
+         "workshop": 1.176,
+         "ratio": 0.247,
+         "clusterMedian": 0.888,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "relief",
+         "within": 0.323,
+         "workshop": 1.049,
+         "ratio": 0.308,
+         "clusterMedian": 7,
+         "workshopMedian": 14
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.373,
+         "workshop": 1.13,
+         "ratio": 0.33,
+         "clusterMedian": 0.201,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.378,
+         "workshop": 1.108,
+         "ratio": 0.341,
+         "clusterMedian": 0.215,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.461,
+         "workshop": 1.291,
+         "ratio": 0.357,
+         "clusterMedian": 5.165,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "islands",
+         "within": 0.424,
+         "workshop": 1.162,
+         "ratio": 0.365,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.403,
+         "workshop": 1.083,
+         "ratio": 0.373,
+         "clusterMedian": 2.669,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.471,
+         "workshop": 1.246,
+         "ratio": 0.378,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.565,
+         "workshop": 1.184,
+         "ratio": 0.477,
+         "clusterMedian": 6.918,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "flatShare",
+         "within": 0.567,
+         "workshop": 1.101,
+         "ratio": 0.515,
+         "clusterMedian": 0.562,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.654,
+         "workshop": 1.223,
+         "ratio": 0.535,
+         "clusterMedian": 7.116,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "basins",
+         "within": 0.662,
+         "workshop": 1.195,
+         "ratio": 0.554,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 47,
+      "largest": 17,
+      "largestShare": 0.085,
+      "codes": 136
+     },
+     "M2c": {
+      "clusters": 84,
+      "largest": 9,
+      "largestShare": 0.045,
+      "codes": 12
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 96,
+      "largest": 15,
+      "largestShare": 0.075,
+      "spread": 0.684
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 24,
+      "largestGroupShare": 0.285,
+      "nearestPeerMedian": 0.015,
+      "longRetention": {
+       "p10": 0.036,
+       "median": 0.238,
+       "p90": 0.392
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 7
+      },
+      "startFirstDrought": 0.26
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 174,
+      "largestJointShare": 0.025,
+      "nearestPeerMedian": 0.042,
+      "bins": {
+       "storageRatio": {
+        "0": 0.22,
+        "1": 0.19,
+        "2": 0.155,
+        "3": 0.435
+       },
+       "peakAxialFlow64": {
+        "0": 0.05,
+        "1": 0.32,
+        "2": 0.575,
+        "3": 0.055
+       },
+       "flatDry40": {
+        "0": 0.025,
+        "1": 0.43,
+        "2": 0.48,
+        "3": 0.065
+       },
+       "fertilityPersistence": {
+        "0": 0.68,
+        "1": 0.295,
+        "2": 0.025
+       },
+       "badwaterDistance": {
+        "0": 0.035,
+        "1": 0.455,
+        "2": 0.09,
+        "none": 0.42
+       },
+       "logs20": {
+        "0": 0.05,
+        "1": 0.185,
+        "2": 0.425,
+        "3": 0.34
+       },
+       "frontierComponents": {
+        "0": 0.05,
+        "1": 0.325,
+        "2": 0.625
+       },
+       "deepPumpExtraShore": {
+        "0": 0.785,
+        "1": 0.15,
+        "2": 0.065
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.559,
+      "below": 4,
+      "share": 0.02,
+      "close": {
+       "V": 0.572,
+       "layoutHalf": 0.33,
+       "featureHalf": 0.242
+      },
+      "all": {
+       "V": 0.71,
+       "layoutHalf": 0.408,
+       "featureHalf": 0.302
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0.149,
+        "all": 0.509,
+        "ratio": 0.292
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.248,
+        "all": 0.726,
+        "ratio": 0.341
+       },
+       {
+        "name": "step1Share",
+        "close": 0.257,
+        "all": 0.675,
+        "ratio": 0.38
+       },
+       {
+        "name": "lakeShare",
+        "close": 0.163,
+        "all": 0.412,
+        "ratio": 0.396
+       },
+       {
+        "name": "basins",
+        "close": 0.385,
+        "all": 0.683,
+        "ratio": 0.564
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.434,
+        "all": 0.759,
+        "ratio": 0.572
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.735,
+      "within12": 0.82
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 5,
+       "median": 7,
+       "p90": 8
+      },
+      "levels": {
+       "p10": 8,
+       "median": 10,
+       "p90": 12
+      },
+      "maxHeight": {
+       "p10": 11,
+       "median": 13,
+       "p90": 15
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 0.93,
+       "median": 1.89,
+       "p90": 6
+      },
+      "flatShare": {
+       "p10": 0.451,
+       "median": 0.551,
+       "p90": 0.641
+      },
+      "cliffShare": {
+       "p10": 0.026,
+       "median": 0.041,
+       "p90": 0.058
+      },
+      "onFoot": {
+       "p10": 0.356,
+       "median": 0.659,
+       "p90": 0.853
+      },
+      "stairsOnly": {
+       "p10": 0.146,
+       "median": 0.341,
+       "p90": 0.631
+      },
+      "oneStep": {
+       "p10": 0.134,
+       "median": 0.487,
+       "p90": 0.826
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.022,
+       "median": 0.037,
+       "p90": 0.055
+      },
+      "longestRun": {
+       "p10": 11,
+       "median": 13,
+       "p90": 17
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.122,
+       "median": 0.317,
+       "p90": 0.454
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.139,
+       "median": 0.212,
+       "p90": 0.304
+      },
+      "lakeShare": {
+       "p10": 0.121,
+       "median": 0.201,
+       "p90": 0.294
+      },
+      "islandsAny": 0.355,
+      "waterfalls": {
+       "p10": 0,
+       "median": 1,
+       "p90": 2
+      },
+      "plateaus": {
+       "p10": 5,
+       "median": 8,
+       "p90": 11
+      },
+      "flows": {
+       "SW": 28,
+       "W": 35,
+       "SE": 28,
+       "NE": 26,
+       "N": 17,
+       "E": 19,
+       "S": 31,
+       "NW": 14,
+       "local": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1732,
+       "median": 3525,
+       "p90": 7354
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "lakeBasin": {
+     "attempts": {
+      "n": 200,
+      "first": 150,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.dry": 1,
+      "water.storage_possible": 42,
+      "start.water": 4,
+      "water.clean_exists": 9,
+      "water.settles": 14,
+      "start.count": 11,
+      "water.clean_reach": 8,
+      "no rivers": 8,
+      "no start": 3,
+      "terrain.dam_wall": 2,
+      "start.wood": 5,
+      "entities.placement": 1,
+      "water.outflow": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.377,
+      "nearestMedian": 0.475,
+      "nearestP10": 0.422,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 36,
+      "largest": 23,
+      "largestShare": 0.115,
+      "drivers": {
+       "maps": 200,
+       "largest": 23,
+       "largestShare": 0.115,
+       "clusters": 36,
+       "within": {
+        "V": 0.553,
+        "layoutHalf": 0.361,
+        "featureHalf": 0.193,
+        "planarity": 0.287
+       },
+       "rest": {
+        "planarity": 0.188
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.163,
+         "workshop": 1.308,
+         "ratio": 0.124,
+         "clusterMedian": 0.035,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.205,
+         "workshop": 1.13,
+         "ratio": 0.181,
+         "clusterMedian": 0.04,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.211,
+         "workshop": 1.108,
+         "ratio": 0.191,
+         "clusterMedian": 0.055,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.334,
+         "workshop": 1.246,
+         "ratio": 0.268,
+         "clusterMedian": 0,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "step1Share",
+         "within": 0.323,
+         "workshop": 1.176,
+         "ratio": 0.275,
+         "clusterMedian": 0.883,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "flatShare",
+         "within": 0.398,
+         "workshop": 1.101,
+         "ratio": 0.362,
+         "clusterMedian": 0.642,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "basins",
+         "within": 0.487,
+         "workshop": 1.195,
+         "ratio": 0.407,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.555,
+         "workshop": 1.223,
+         "ratio": 0.454,
+         "clusterMedian": 6.977,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "relief",
+         "within": 0.496,
+         "workshop": 1.049,
+         "ratio": 0.473,
+         "clusterMedian": 5,
+         "workshopMedian": 14
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.667,
+         "workshop": 1.291,
+         "ratio": 0.517,
+         "clusterMedian": 4.981,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.644,
+         "workshop": 1.083,
+         "ratio": 0.595,
+         "clusterMedian": 1.662,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.705,
+         "workshop": 1.184,
+         "ratio": 0.596,
+         "clusterMedian": 6.9,
+         "workshopMedian": 5.941
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 62,
+      "largest": 16,
+      "largestShare": 0.08,
+      "codes": 126
+     },
+     "M2c": {
+      "clusters": 122,
+      "largest": 7,
+      "largestShare": 0.035,
+      "codes": 24
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 145,
+      "largest": 6,
+      "largestShare": 0.03,
+      "spread": 0.769
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 32,
+      "largestGroupShare": 0.205,
+      "nearestPeerMedian": 0.02,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.149,
+       "p90": 0.559
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 9
+      },
+      "startFirstDrought": 0.285
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 189,
+      "largestJointShare": 0.015,
+      "nearestPeerMedian": 0.083,
+      "bins": {
+       "storageRatio": {
+        "0": 0.37,
+        "1": 0.165,
+        "2": 0.15,
+        "3": 0.315
+       },
+       "peakAxialFlow64": {
+        "0": 0.13,
+        "1": 0.285,
+        "2": 0.48,
+        "3": 0.105
+       },
+       "flatDry40": {
+        "0": 0.08,
+        "1": 0.435,
+        "2": 0.375,
+        "3": 0.11
+       },
+       "fertilityPersistence": {
+        "0": 0.78,
+        "1": 0.215,
+        "2": 0.005
+       },
+       "badwaterDistance": {
+        "0": 0.045,
+        "1": 0.53,
+        "2": 0.2,
+        "none": 0.225
+       },
+       "logs20": {
+        "0": 0.08,
+        "1": 0.23,
+        "2": 0.355,
+        "3": 0.335
+       },
+       "frontierComponents": {
+        "0": 0.105,
+        "1": 0.345,
+        "2": 0.55
+       },
+       "deepPumpExtraShore": {
+        "0": 0.62,
+        "1": 0.28,
+        "2": 0.1
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.469,
+      "below": 8,
+      "share": 0.04,
+      "close": {
+       "V": 0.563,
+       "layoutHalf": 0.315,
+       "featureHalf": 0.248
+      },
+      "all": {
+       "V": 0.683,
+       "layoutHalf": 0.394,
+       "featureHalf": 0.289
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.303,
+        "ratio": 0
+       },
+       {
+        "name": "step1Share",
+        "close": 0.235,
+        "all": 0.71,
+        "ratio": 0.331
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.246,
+        "all": 0.57,
+        "ratio": 0.431
+       },
+       {
+        "name": "basins",
+        "close": 0.321,
+        "all": 0.693,
+        "ratio": 0.464
+       },
+       {
+        "name": "caveShare",
+        "close": 0.22,
+        "all": 0.468,
+        "ratio": 0.469
+       },
+       {
+        "name": "treesPer10k",
+        "close": 0.455,
+        "all": 0.759,
+        "ratio": 0.6
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.575,
+      "within12": 0.71
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 5,
+       "median": 7,
+       "p90": 9
+      },
+      "levels": {
+       "p10": 8,
+       "median": 10,
+       "p90": 12
+      },
+      "maxHeight": {
+       "p10": 13,
+       "median": 15,
+       "p90": 15
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 0.96,
+       "median": 2,
+       "p90": 5.98
+      },
+      "flatShare": {
+       "p10": 0.47,
+       "median": 0.566,
+       "p90": 0.656
+      },
+      "cliffShare": {
+       "p10": 0.032,
+       "median": 0.052,
+       "p90": 0.081
+      },
+      "onFoot": {
+       "p10": 0.144,
+       "median": 0.526,
+       "p90": 0.775
+      },
+      "stairsOnly": {
+       "p10": 0.223,
+       "median": 0.474,
+       "p90": 0.846
+      },
+      "oneStep": {
+       "p10": 0.138,
+       "median": 0.707,
+       "p90": 0.995
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.026,
+       "median": 0.045,
+       "p90": 0.072
+      },
+      "longestRun": {
+       "p10": 12,
+       "median": 15,
+       "p90": 20
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.137
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.114,
+       "median": 0.306,
+       "p90": 0.479
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.054,
+       "median": 0.12,
+       "p90": 0.198
+      },
+      "lakeShare": {
+       "p10": 0.029,
+       "median": 0.094,
+       "p90": 0.192
+      },
+      "islandsAny": 0.05,
+      "waterfalls": {
+       "p10": 0,
+       "median": 1,
+       "p90": 3
+      },
+      "plateaus": {
+       "p10": 3,
+       "median": 6,
+       "p90": 9
+      },
+      "flows": {
+       "W": 30,
+       "SW": 26,
+       "SE": 30,
+       "E": 22,
+       "S": 18,
+       "N": 27,
+       "NE": 20,
+       "NW": 18,
+       "local": 9
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1560,
+       "median": 3289,
+       "p90": 7730
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "riverValley": {
+     "attempts": {
+      "n": 200,
+      "first": 174,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.wood": 10,
+      "water.storage_possible": 19,
+      "start.count": 8,
+      "water.clean_exists": 7,
+      "water.clean_reach": 3,
+      "no rivers": 3,
+      "water.settles": 6,
+      "no start": 5,
+      "terrain.dam_wall": 1,
+      "start.food": 2,
+      "start.water": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.326,
+      "nearestMedian": 0.441,
+      "nearestP10": 0.387,
+      "below025": 0
+     },
+     "M2a": {
+      "clusters": 30,
+      "largest": 93,
+      "largestShare": 0.465,
+      "drivers": {
+       "maps": 200,
+       "largest": 93,
+       "largestShare": 0.465,
+       "clusters": 30,
+       "within": {
+        "V": 0.555,
+        "layoutHalf": 0.34,
+        "featureHalf": 0.216,
+        "planarity": 0.492
+       },
+       "rest": {
+        "planarity": 0.3
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.051,
+         "workshop": 1.162,
+         "ratio": 0.044,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "waterShare",
+         "within": 0.172,
+         "workshop": 1.108,
+         "ratio": 0.156,
+         "clusterMedian": 0.082,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.212,
+         "workshop": 1.13,
+         "ratio": 0.188,
+         "clusterMedian": 0.044,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.332,
+         "workshop": 1.308,
+         "ratio": 0.254,
+         "clusterMedian": 0.055,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.503,
+         "workshop": 1.291,
+         "ratio": 0.389,
+         "clusterMedian": 5.081,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.535,
+         "workshop": 1.246,
+         "ratio": 0.429,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "step1Share",
+         "within": 0.515,
+         "workshop": 1.176,
+         "ratio": 0.438,
+         "clusterMedian": 0.843,
+         "workshopMedian": 0.81
+        },
+        {
+         "name": "relief",
+         "within": 0.476,
+         "workshop": 1.049,
+         "ratio": 0.454,
+         "clusterMedian": 9,
+         "workshopMedian": 14
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.513,
+         "workshop": 1.083,
+         "ratio": 0.474,
+         "clusterMedian": 2.189,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.606,
+         "workshop": 1.184,
+         "ratio": 0.512,
+         "clusterMedian": 6.777,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.699,
+         "workshop": 1.223,
+         "ratio": 0.571,
+         "clusterMedian": 7.045,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "flatShare",
+         "within": 0.631,
+         "workshop": 1.101,
+         "ratio": 0.574,
+         "clusterMedian": 0.558,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "basins",
+         "within": 0.725,
+         "workshop": 1.195,
+         "ratio": 0.607,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 58,
+      "largest": 16,
+      "largestShare": 0.08,
+      "codes": 137
+     },
+     "M2c": {
+      "clusters": 129,
+      "largest": 5,
+      "largestShare": 0.025,
+      "codes": 35
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 153,
+      "largest": 5,
+      "largestShare": 0.025,
+      "spread": 0.827
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 22,
+      "largestGroupShare": 0.48,
+      "nearestPeerMedian": 0.008,
+      "longRetention": {
+       "p10": 0,
+       "median": 0.005,
+       "p90": 0.229
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 7
+      },
+      "startFirstDrought": 0.275
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 177,
+      "largestJointShare": 0.02,
+      "nearestPeerMedian": 0.042,
+      "bins": {
+       "storageRatio": {
+        "0": 0.64,
+        "1": 0.195,
+        "2": 0.1,
+        "3": 0.065
+       },
+       "peakAxialFlow64": {
+        "0": 0.165,
+        "1": 0.275,
+        "2": 0.5,
+        "3": 0.06
+       },
+       "flatDry40": {
+        "0": 0.1,
+        "1": 0.43,
+        "2": 0.4,
+        "3": 0.07
+       },
+       "fertilityPersistence": {
+        "0": 0.815,
+        "1": 0.175,
+        "2": 0.01
+       },
+       "badwaterDistance": {
+        "0": 0.035,
+        "1": 0.57,
+        "2": 0.205,
+        "none": 0.19
+       },
+       "logs20": {
+        "0": 0.05,
+        "1": 0.28,
+        "2": 0.46,
+        "3": 0.21
+       },
+       "frontierComponents": {
+        "0": 0.11,
+        "1": 0.485,
+        "2": 0.405
+       },
+       "deepPumpExtraShore": {
+        "0": 0.62,
+        "1": 0.29,
+        "2": 0.09
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.494,
+      "below": 40,
+      "share": 0.2,
+      "close": {
+       "V": 0.567,
+       "layoutHalf": 0.31,
+       "featureHalf": 0.258
+      },
+      "all": {
+       "V": 0.634,
+       "layoutHalf": 0.352,
+       "featureHalf": 0.282
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0.061,
+        "all": 0.125,
+        "ratio": 0.484
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.291,
+        "all": 0.437,
+        "ratio": 0.666
+       },
+       {
+        "name": "step1Share",
+        "close": 0.382,
+        "all": 0.534,
+        "ratio": 0.716
+       },
+       {
+        "name": "flatShare",
+        "close": 0.41,
+        "all": 0.557,
+        "ratio": 0.736
+       },
+       {
+        "name": "basins",
+        "close": 0.556,
+        "all": 0.708,
+        "ratio": 0.785
+       },
+       {
+        "name": "scrapPer1k",
+        "close": 0.583,
+        "all": 0.739,
+        "ratio": 0.789
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.415,
+      "within12": 0.64
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 7,
+       "median": 9,
+       "p90": 11
+      },
+      "levels": {
+       "p10": 10,
+       "median": 12,
+       "p90": 14
+      },
+      "maxHeight": {
+       "p10": 13,
+       "median": 15,
+       "p90": 15
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.03,
+       "median": 3.84,
+       "p90": 6.99
+      },
+      "flatShare": {
+       "p10": 0.424,
+       "median": 0.531,
+       "p90": 0.648
+      },
+      "cliffShare": {
+       "p10": 0.039,
+       "median": 0.058,
+       "p90": 0.086
+      },
+      "onFoot": {
+       "p10": 0.093,
+       "median": 0.355,
+       "p90": 0.644
+      },
+      "stairsOnly": {
+       "p10": 0.355,
+       "median": 0.641,
+       "p90": 0.907
+      },
+      "oneStep": {
+       "p10": 0.093,
+       "median": 0.562,
+       "p90": 0.954
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.016,
+       "median": 0.036,
+       "p90": 0.057
+      },
+      "longestRun": {
+       "p10": 11,
+       "median": 14,
+       "p90": 22
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.372
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.099,
+       "median": 0.268,
+       "p90": 0.413
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.049,
+       "median": 0.087,
+       "p90": 0.147
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.054,
+       "p90": 0.129
+      },
+      "islandsAny": 0.055,
+      "waterfalls": {
+       "p10": 0,
+       "median": 2,
+       "p90": 3
+      },
+      "plateaus": {
+       "p10": 3,
+       "median": 5,
+       "p90": 8
+      },
+      "flows": {
+       "SE": 24,
+       "W": 24,
+       "S": 23,
+       "NE": 31,
+       "SW": 23,
+       "NW": 20,
+       "E": 29,
+       "N": 24,
+       "local": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1106,
+       "median": 2055,
+       "p90": 4141
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    }
+   },
+   "intentions": null
+  },
+  "cur-128": {
+   "maps": 1200,
+   "all": {
+    "vertical": {
+     "range": {
+      "p10": 10,
+      "median": 10,
+      "p90": 13
+     },
+     "levels": {
+      "p10": 8,
+      "median": 10,
+      "p90": 14
+     },
+     "maxHeight": {
+      "p10": 16,
+      "median": 16,
+      "p90": 16
+     },
+     "above16": {
+      "p10": 0,
+      "median": 0,
+      "p90": 0
+     },
+     "tallestFall": {
+      "p10": 0.95,
+      "median": 1.98,
+      "p90": 5
+     },
+     "flatShare": {
+      "p10": 0.587,
+      "median": 0.681,
+      "p90": 0.765
+     },
+     "cliffShare": {
+      "p10": 0.06,
+      "median": 0.107,
+      "p90": 0.147
+     },
+     "onFoot": {
+      "p10": 0.144,
+      "median": 0.346,
+      "p90": 0.657
+     },
+     "stairsOnly": {
+      "p10": 0.343,
+      "median": 0.654,
+      "p90": 0.856
+     },
+     "oneStep": {
+      "p10": 0.05,
+      "median": 0.28,
+      "p90": 0.448
+     }
+    },
+    "shape": {
+     "waterShare": {
+      "p10": 0.043,
+      "median": 0.083,
+      "p90": 0.335
+     },
+     "lakeShare": {
+      "p10": 0,
+      "median": 0.025,
+      "p90": 0.315
+     },
+     "islandsAny": 0.168,
+     "waterfalls": {
+      "p10": 0,
+      "median": 2,
+      "p90": 6
+     },
+     "plateaus": {
+      "p10": 3,
+      "median": 8,
+      "p90": 11
+     },
+     "flows": {
+      "E": 894,
+      "SE": 118,
+      "NE": 109,
+      "S": 46,
+      "N": 31,
+      "local": 2
+     }
+    },
+    "M5": {
+     "maps": 1200,
+     "goodNaturalDam": 0.6,
+     "within12": 0.858
+    },
+    "M6": {
+     "maps": 1200,
+     "flagged": 765
+    },
+    "speed": {
+     "ms": {
+      "p10": 554,
+      "median": 1628,
+      "p90": 3403
+     },
+     "firstLook": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     },
+     "firstWater": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     },
+     "settles": {
+      "p10": null,
+      "median": null,
+      "p90": null
+     }
+    },
+    "startDrought": null,
+    "M3c": {
+     "maps": 1200,
+     "groups": 5,
+     "largestGroupShare": 0.348,
+     "nearestPeerMedian": 0.001,
+     "longRetention": {
+      "p10": 0,
+      "median": 0.07,
+      "p90": 0.468
+     },
+     "startDays": {
+      "p10": 0,
+      "median": 0,
+      "p90": 14
+     },
+     "startFirstDrought": 0.334
+    },
+    "M3d": {
+     "maps": 1200,
+     "jointSignatures": 130,
+     "largestJointShare": 0.063,
+     "nearestPeerMedian": 0,
+     "bins": {
+      "storageRatio": {
+       "0": 0.358,
+       "1": 0.306,
+       "2": 0.003,
+       "3": 0.333
+      },
+      "peakAxialFlow64": {
+       "0": 0.066,
+       "1": 0.102,
+       "2": 0.779,
+       "3": 0.053
+      },
+      "flatDry40": {
+       "0": 0.667,
+       "1": 0.003,
+       "2": 0.33
+      },
+      "fertilityPersistence": {
+       "0": 0.646,
+       "1": 0.188,
+       "2": 0.167
+      },
+      "badwaterDistance": {
+       "1": 0.998,
+       "none": 0.002
+      },
+      "logs20": {
+       "0": 0.125,
+       "1": 0.331,
+       "2": 0.446,
+       "3": 0.098
+      },
+      "frontierComponents": {
+       "0": 0.127,
+       "1": 0.534,
+       "2": 0.339
+      },
+      "deepPumpExtraShore": {
+       "0": 0.888,
+       "1": 0.113
+      }
+     }
+    }
+   },
+   "byTheme": {
+    "canyon": {
+     "attempts": {
+      "n": 200,
+      "first": 200,
+      "final": 200
+     },
+     "failedAttempts": {},
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.035,
+      "nearestMedian": 0.06,
+      "nearestP10": 0.048,
+      "below025": 200
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.154,
+        "layoutHalf": 0.066,
+        "featureHalf": 0.088,
+        "planarity": 0.002
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.005,
+         "workshop": 1.223,
+         "ratio": 0.004,
+         "clusterMedian": 6.745,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterShare",
+         "within": 0.017,
+         "workshop": 1.108,
+         "ratio": 0.016,
+         "clusterMedian": 0.042,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.028,
+         "workshop": 1.13,
+         "ratio": 0.025,
+         "clusterMedian": 0.007,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.054,
+         "workshop": 1.308,
+         "ratio": 0.041,
+         "clusterMedian": 0.06,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.067,
+         "workshop": 1.184,
+         "ratio": 0.057,
+         "clusterMedian": 6.687,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.129,
+         "workshop": 1.291,
+         "ratio": 0.1,
+         "clusterMedian": 4.604,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.159,
+         "workshop": 1.083,
+         "ratio": 0.147,
+         "clusterMedian": 1.662,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.188,
+         "workshop": 1.246,
+         "ratio": 0.151,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "basins",
+         "within": 0.234,
+         "workshop": 1.195,
+         "ratio": 0.195,
+         "clusterMedian": 0,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "relief",
+         "within": 0.253,
+         "workshop": 1.049,
+         "ratio": 0.241,
+         "clusterMedian": 12,
+         "workshopMedian": 14
+        },
+        {
+         "name": "flatShare",
+         "within": 0.339,
+         "workshop": 1.101,
+         "ratio": 0.308,
+         "clusterMedian": 0.725,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "step1Share",
+         "within": 0.438,
+         "workshop": 1.176,
+         "ratio": 0.373,
+         "clusterMedian": 0.733,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "codes": 4
+     },
+     "M2c": {
+      "clusters": 16,
+      "largest": 57,
+      "largestShare": 0.285,
+      "codes": 10
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 11,
+      "largest": 110,
+      "largestShare": 0.55,
+      "spread": 0.376
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 2,
+      "largestGroupShare": 0.995,
+      "nearestPeerMedian": 0,
+      "longRetention": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "startFirstDrought": 0
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 23,
+      "largestJointShare": 0.22,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "0": 1
+       },
+       "peakAxialFlow64": {
+        "1": 0.045,
+        "2": 0.955
+       },
+       "flatDry40": {
+        "0": 1
+       },
+       "fertilityPersistence": {
+        "0": 1
+       },
+       "badwaterDistance": {
+        "1": 0.995,
+        "none": 0.005
+       },
+       "logs20": {
+        "0": 0.255,
+        "1": 0.39,
+        "2": 0.33,
+        "3": 0.025
+       },
+       "frontierComponents": {
+        "0": 0.085,
+        "1": 0.615,
+        "2": 0.3
+       },
+       "deepPumpExtraShore": {
+        "0": 0.91,
+        "1": 0.09
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.577,
+      "below": 5,
+      "share": 0.025,
+      "close": {
+       "V": 0.583,
+       "layoutHalf": 0.311,
+       "featureHalf": 0.272
+      },
+      "all": {
+       "V": 0.649,
+       "layoutHalf": 0.309,
+       "featureHalf": 0.34
+      },
+      "features": [
+       {
+        "name": "islands",
+        "close": 0,
+        "all": 0.044,
+        "ratio": 0
+       },
+       {
+        "name": "step1Share",
+        "close": 0.386,
+        "all": 1.024,
+        "ratio": 0.377
+       },
+       {
+        "name": "basins",
+        "close": 0.565,
+        "all": 0.832,
+        "ratio": 0.679
+       },
+       {
+        "name": "flatShare",
+        "close": 1.619,
+        "all": 2.324,
+        "ratio": 0.697
+       },
+       {
+        "name": "caveShare",
+        "close": 0.471,
+        "all": 0.564,
+        "ratio": 0.835
+       },
+       {
+        "name": "lakeShare",
+        "close": 0.212,
+        "all": 0.242,
+        "ratio": 0.876
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 1,
+      "within12": 1
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 170
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 11,
+       "p90": 13
+      },
+      "levels": {
+       "p10": 10,
+       "median": 12,
+       "p90": 13
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.91,
+       "median": 1.96,
+       "p90": 2.02
+      },
+      "flatShare": {
+       "p10": 0.715,
+       "median": 0.725,
+       "p90": 0.792
+      },
+      "cliffShare": {
+       "p10": 0.056,
+       "median": 0.06,
+       "p90": 0.064
+      },
+      "onFoot": {
+       "p10": 0.472,
+       "median": 0.483,
+       "p90": 0.498
+      },
+      "stairsOnly": {
+       "p10": 0.501,
+       "median": 0.517,
+       "p90": 0.527
+      },
+      "oneStep": {
+       "p10": 0.432,
+       "median": 0.445,
+       "p90": 0.457
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.301,
+       "median": 0.366,
+       "p90": 0.434
+      },
+      "longestRun": {
+       "p10": 23,
+       "median": 30,
+       "p90": 42
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.157,
+       "median": 0.301,
+       "p90": 0.456
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.04,
+       "median": 0.042,
+       "p90": 0.046
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.007,
+       "p90": 0.01
+      },
+      "islandsAny": 0,
+      "waterfalls": {
+       "p10": 3,
+       "median": 4,
+       "p90": 5
+      },
+      "plateaus": {
+       "p10": 2,
+       "median": 3,
+       "p90": 4
+      },
+      "flows": {
+       "E": 200
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 441,
+       "median": 534,
+       "p90": 711
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "delta": {
+     "attempts": {
+      "n": 200,
+      "first": 198,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.wood": 2
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.088,
+      "nearestMedian": 0.154,
+      "nearestP10": 0.123,
+      "below025": 198
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.324,
+        "layoutHalf": 0.22,
+        "featureHalf": 0.104,
+        "planarity": 0.048
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "relief",
+         "within": 0,
+         "workshop": 1.049,
+         "ratio": 0,
+         "clusterMedian": 10,
+         "workshopMedian": 14
+        },
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.009,
+         "workshop": 1.223,
+         "ratio": 0.008,
+         "clusterMedian": 7.15,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterShare",
+         "within": 0.058,
+         "workshop": 1.108,
+         "ratio": 0.052,
+         "clusterMedian": 0.094,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.07,
+         "workshop": 1.184,
+         "ratio": 0.059,
+         "clusterMedian": 6.683,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.119,
+         "workshop": 1.291,
+         "ratio": 0.092,
+         "clusterMedian": 4.598,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.106,
+         "workshop": 1.13,
+         "ratio": 0.094,
+         "clusterMedian": 0.076,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.193,
+         "workshop": 1.246,
+         "ratio": 0.155,
+         "clusterMedian": 0,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.177,
+         "workshop": 1.083,
+         "ratio": 0.164,
+         "clusterMedian": 1.87,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.277,
+         "workshop": 1.308,
+         "ratio": 0.212,
+         "clusterMedian": 0.085,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "basins",
+         "within": 0.285,
+         "workshop": 1.195,
+         "ratio": 0.238,
+         "clusterMedian": 1.041,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "flatShare",
+         "within": 0.276,
+         "workshop": 1.101,
+         "ratio": 0.251,
+         "clusterMedian": 0.617,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "step1Share",
+         "within": 0.676,
+         "workshop": 1.176,
+         "ratio": 0.575,
+         "clusterMedian": 0.704,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 3,
+      "largest": 186,
+      "largestShare": 0.93,
+      "codes": 12
+     },
+     "M2c": {
+      "clusters": 21,
+      "largest": 48,
+      "largestShare": 0.24,
+      "codes": 6
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 5,
+      "largest": 105,
+      "largestShare": 0.525,
+      "spread": 0.347
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 2,
+      "largestGroupShare": 0.68,
+      "nearestPeerMedian": 0.001,
+      "longRetention": {
+       "p10": 0.035,
+       "median": 0.046,
+       "p90": 0.057
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "startFirstDrought": 0
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 33,
+      "largestJointShare": 0.15,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "0": 0.155,
+        "1": 0.83,
+        "2": 0.015
+       },
+       "peakAxialFlow64": {
+        "2": 0.96,
+        "3": 0.04
+       },
+       "flatDry40": {
+        "0": 1
+       },
+       "fertilityPersistence": {
+        "0": 0.95,
+        "1": 0.05
+       },
+       "badwaterDistance": {
+        "1": 1
+       },
+       "logs20": {
+        "0": 0.11,
+        "1": 0.34,
+        "2": 0.495,
+        "3": 0.055
+       },
+       "frontierComponents": {
+        "0": 0.125,
+        "1": 0.46,
+        "2": 0.415
+       },
+       "deepPumpExtraShore": {
+        "0": 0.99,
+        "1": 0.01
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.584,
+      "below": 5,
+      "share": 0.025,
+      "close": {
+       "V": 0.587,
+       "layoutHalf": 0.306,
+       "featureHalf": 0.281
+      },
+      "all": {
+       "V": 0.631,
+       "layoutHalf": 0.329,
+       "featureHalf": 0.302
+      },
+      "features": [
+       {
+        "name": "caveShare",
+        "close": 0.094,
+        "all": 0.276,
+        "ratio": 0.341
+       },
+       {
+        "name": "relief",
+        "close": 0.512,
+        "all": 0.69,
+        "ratio": 0.742
+       },
+       {
+        "name": "waterfalls",
+        "close": 0.354,
+        "all": 0.434,
+        "ratio": 0.816
+       },
+       {
+        "name": "step1Share",
+        "close": 0.58,
+        "all": 0.704,
+        "ratio": 0.825
+       },
+       {
+        "name": "cliffShare",
+        "close": 0.508,
+        "all": 0.586,
+        "ratio": 0.867
+       },
+       {
+        "name": "islands",
+        "close": 0.646,
+        "all": 0.715,
+        "ratio": 0.904
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.965,
+      "within12": 0.99
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 200
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 10,
+       "p90": 10
+      },
+      "levels": {
+       "p10": 9,
+       "median": 10,
+       "p90": 11
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 0.81,
+       "median": 0.92,
+       "p90": 1.17
+      },
+      "flatShare": {
+       "p10": 0.58,
+       "median": 0.617,
+       "p90": 0.654
+      },
+      "cliffShare": {
+       "p10": 0.069,
+       "median": 0.084,
+       "p90": 0.108
+      },
+      "onFoot": {
+       "p10": 0.57,
+       "median": 0.66,
+       "p90": 0.744
+      },
+      "stairsOnly": {
+       "p10": 0.254,
+       "median": 0.34,
+       "p90": 0.429
+      },
+      "oneStep": {
+       "p10": 0.309,
+       "median": 0.368,
+       "p90": 0.426
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.091,
+       "median": 0.127,
+       "p90": 0.167
+      },
+      "longestRun": {
+       "p10": 22,
+       "median": 34,
+       "p90": 52
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.019,
+       "median": 0.181,
+       "p90": 0.268
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.082,
+       "median": 0.094,
+       "p90": 0.103
+      },
+      "lakeShare": {
+       "p10": 0.058,
+       "median": 0.076,
+       "p90": 0.088
+      },
+      "islandsAny": 0,
+      "waterfalls": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "plateaus": {
+       "p10": 9,
+       "median": 10,
+       "p90": 12
+      },
+      "flows": {
+       "E": 196,
+       "SE": 2,
+       "NE": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1254,
+       "median": 1599,
+       "p90": 2045
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "highlands": {
+     "attempts": {
+      "n": 200,
+      "first": 192,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.water": 4,
+      "water.settles": 1,
+      "start.wood": 2,
+      "start.dry": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.137,
+      "nearestMedian": 0.207,
+      "nearestP10": 0.177,
+      "below025": 193
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.352,
+        "layoutHalf": 0.221,
+        "featureHalf": 0.131,
+        "planarity": 0.091
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "islands",
+         "within": 0.008,
+         "workshop": 1.162,
+         "ratio": 0.007,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.01,
+         "workshop": 1.223,
+         "ratio": 0.008,
+         "clusterMedian": 6.862,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterShare",
+         "within": 0.042,
+         "workshop": 1.108,
+         "ratio": 0.038,
+         "clusterMedian": 0.076,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.045,
+         "workshop": 1.13,
+         "ratio": 0.039,
+         "clusterMedian": 0.007,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.13,
+         "workshop": 1.291,
+         "ratio": 0.1,
+         "clusterMedian": 4.604,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "relief",
+         "within": 0.139,
+         "workshop": 1.049,
+         "ratio": 0.133,
+         "clusterMedian": 14,
+         "workshopMedian": 14
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.226,
+         "workshop": 1.083,
+         "ratio": 0.209,
+         "clusterMedian": 2.043,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.248,
+         "workshop": 1.184,
+         "ratio": 0.209,
+         "clusterMedian": 6.826,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.337,
+         "workshop": 1.308,
+         "ratio": 0.257,
+         "clusterMedian": 0.15,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.348,
+         "workshop": 1.246,
+         "ratio": 0.28,
+         "clusterMedian": 1.539,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "flatShare",
+         "within": 0.331,
+         "workshop": 1.101,
+         "ratio": 0.3,
+         "clusterMedian": 0.6,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "basins",
+         "within": 0.5,
+         "workshop": 1.195,
+         "ratio": 0.418,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "step1Share",
+         "within": 0.718,
+         "workshop": 1.176,
+         "ratio": 0.611,
+         "clusterMedian": 0.519,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 11,
+      "largest": 107,
+      "largestShare": 0.535,
+      "codes": 25
+     },
+     "M2c": {
+      "clusters": 49,
+      "largest": 18,
+      "largestShare": 0.09,
+      "codes": 14
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 46,
+      "largest": 43,
+      "largestShare": 0.215,
+      "spread": 0.565
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 3,
+      "largestGroupShare": 0.605,
+      "nearestPeerMedian": 0.003,
+      "longRetention": {
+       "p10": 0.034,
+       "median": 0.055,
+       "p90": 0.081
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "startFirstDrought": 0.005
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 44,
+      "largestJointShare": 0.09,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "0": 0.53,
+        "1": 0.47
+       },
+       "peakAxialFlow64": {
+        "1": 0.025,
+        "2": 0.965,
+        "3": 0.01
+       },
+       "flatDry40": {
+        "0": 1
+       },
+       "fertilityPersistence": {
+        "0": 0.97,
+        "1": 0.03
+       },
+       "badwaterDistance": {
+        "1": 1
+       },
+       "logs20": {
+        "0": 0.17,
+        "1": 0.43,
+        "2": 0.34,
+        "3": 0.06
+       },
+       "frontierComponents": {
+        "0": 0.085,
+        "1": 0.43,
+        "2": 0.485
+       },
+       "deepPumpExtraShore": {
+        "0": 0.69,
+        "1": 0.31
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.591,
+      "below": 0,
+      "share": 0,
+      "close": {
+       "V": null,
+       "layoutHalf": null,
+       "featureHalf": null
+      },
+      "all": {
+       "V": 0.696,
+       "layoutHalf": 0.36,
+       "featureHalf": 0.336
+      },
+      "features": [
+       {
+        "name": "relief",
+        "close": null,
+        "all": 0.39,
+        "ratio": null
+       },
+       {
+        "name": "cliffShare",
+        "close": null,
+        "all": 0.528,
+        "ratio": null
+       },
+       {
+        "name": "step1Share",
+        "close": null,
+        "all": 1.623,
+        "ratio": null
+       },
+       {
+        "name": "flatShare",
+        "close": null,
+        "all": 0.887,
+        "ratio": null
+       },
+       {
+        "name": "waterShare",
+        "close": null,
+        "all": 0.586,
+        "ratio": null
+       },
+       {
+        "name": "lakeShare",
+        "close": null,
+        "all": 0.49,
+        "ratio": null
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.83,
+      "within12": 0.945
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 197
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 0.99
+     },
+     "vertical": {
+      "range": {
+       "p10": 13,
+       "median": 14,
+       "p90": 14
+      },
+      "levels": {
+       "p10": 13,
+       "median": 15,
+       "p90": 16
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.99,
+       "median": 5.87,
+       "p90": 7.69
+      },
+      "flatShare": {
+       "p10": 0.554,
+       "median": 0.6,
+       "p90": 0.643
+      },
+      "cliffShare": {
+       "p10": 0.125,
+       "median": 0.15,
+       "p90": 0.173
+      },
+      "onFoot": {
+       "p10": 0.125,
+       "median": 0.163,
+       "p90": 0.464
+      },
+      "stairsOnly": {
+       "p10": 0.532,
+       "median": 0.836,
+       "p90": 0.873
+      },
+      "oneStep": {
+       "p10": 0.026,
+       "median": 0.054,
+       "p90": 0.296
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.066,
+       "median": 0.105,
+       "p90": 0.15
+      },
+      "longestRun": {
+       "p10": 17,
+       "median": 24,
+       "p90": 33
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.075,
+       "median": 0.173,
+       "p90": 0.258
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.069,
+       "median": 0.076,
+       "p90": 0.084
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.007,
+       "p90": 0.014
+      },
+      "islandsAny": 0.005,
+      "waterfalls": {
+       "p10": 4,
+       "median": 6,
+       "p90": 9
+      },
+      "plateaus": {
+       "p10": 6,
+       "median": 9,
+       "p90": 11
+      },
+      "flows": {
+       "E": 190,
+       "NE": 5,
+       "SE": 5
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1089,
+       "median": 1818,
+       "p90": 2924
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "islands": {
+     "attempts": {
+      "n": 200,
+      "first": 200,
+      "final": 200
+     },
+     "failedAttempts": {},
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.16,
+      "nearestMedian": 0.216,
+      "nearestP10": 0.19,
+      "below025": 181
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.378,
+        "layoutHalf": 0.215,
+        "featureHalf": 0.163,
+        "planarity": 0.034
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "relief",
+         "within": 0,
+         "workshop": 1.049,
+         "ratio": 0,
+         "clusterMedian": 10,
+         "workshopMedian": 14
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.016,
+         "workshop": 1.223,
+         "ratio": 0.013,
+         "clusterMedian": 6.967,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.073,
+         "workshop": 1.184,
+         "ratio": 0.062,
+         "clusterMedian": 6.499,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.12,
+         "workshop": 1.291,
+         "ratio": 0.093,
+         "clusterMedian": 4.61,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.127,
+         "workshop": 1.13,
+         "ratio": 0.112,
+         "clusterMedian": 0.32,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.128,
+         "workshop": 1.108,
+         "ratio": 0.115,
+         "clusterMedian": 0.339,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "flatShare",
+         "within": 0.128,
+         "workshop": 1.101,
+         "ratio": 0.116,
+         "clusterMedian": 0.726,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "islands",
+         "within": 0.166,
+         "workshop": 1.162,
+         "ratio": 0.143,
+         "clusterMedian": 1.792,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.219,
+         "workshop": 1.083,
+         "ratio": 0.203,
+         "clusterMedian": 1.96,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.326,
+         "workshop": 1.308,
+         "ratio": 0.249,
+         "clusterMedian": 0.119,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "basins",
+         "within": 0.436,
+         "workshop": 1.195,
+         "ratio": 0.365,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.515,
+         "workshop": 1.246,
+         "ratio": 0.413,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "step1Share",
+         "within": 1.186,
+         "workshop": 1.176,
+         "ratio": 1.009,
+         "clusterMedian": 0.515,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "codes": 8
+     },
+     "M2c": {
+      "clusters": 24,
+      "largest": 37,
+      "largestShare": 0.185,
+      "codes": 9
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 7,
+      "largest": 97,
+      "largestShare": 0.485,
+      "spread": 0.343
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 1,
+      "largestGroupShare": 1,
+      "nearestPeerMedian": 0.001,
+      "longRetention": {
+       "p10": 0.46,
+       "median": 0.463,
+       "p90": 0.466
+      },
+      "startDays": {
+       "p10": 14,
+       "median": 14,
+       "p90": 14
+      },
+      "startFirstDrought": 1
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 31,
+      "largestJointShare": 0.105,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "3": 1
+       },
+       "peakAxialFlow64": {
+        "0": 0.31,
+        "1": 0.14,
+        "2": 0.28,
+        "3": 0.27
+       },
+       "flatDry40": {
+        "1": 0.02,
+        "2": 0.98
+       },
+       "fertilityPersistence": {
+        "2": 1
+       },
+       "badwaterDistance": {
+        "1": 0.995,
+        "none": 0.005
+       },
+       "logs20": {
+        "0": 0.015,
+        "1": 0.305,
+        "2": 0.555,
+        "3": 0.125
+       },
+       "frontierComponents": {
+        "0": 0.335,
+        "1": 0.65,
+        "2": 0.015
+       },
+       "deepPumpExtraShore": {
+        "0": 1
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.683,
+      "below": 0,
+      "share": 0,
+      "close": {
+       "V": null,
+       "layoutHalf": null,
+       "featureHalf": null
+      },
+      "all": {
+       "V": 0.781,
+       "layoutHalf": 0.45,
+       "featureHalf": 0.331
+      },
+      "features": [
+       {
+        "name": "relief",
+        "close": null,
+        "all": 0.772,
+        "ratio": null
+       },
+       {
+        "name": "cliffShare",
+        "close": null,
+        "all": 0.339,
+        "ratio": null
+       },
+       {
+        "name": "step1Share",
+        "close": null,
+        "all": 1.176,
+        "ratio": null
+       },
+       {
+        "name": "flatShare",
+        "close": null,
+        "all": 1.304,
+        "ratio": null
+       },
+       {
+        "name": "waterShare",
+        "close": null,
+        "all": 0.612,
+        "ratio": null
+       },
+       {
+        "name": "lakeShare",
+        "close": null,
+        "all": 0.578,
+        "ratio": null
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0,
+      "within12": 0.52
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 10,
+       "p90": 10
+      },
+      "levels": {
+       "p10": 7,
+       "median": 8,
+       "p90": 9
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1,
+       "median": 2.15,
+       "p90": 3.87
+      },
+      "flatShare": {
+       "p10": 0.709,
+       "median": 0.726,
+       "p90": 0.746
+      },
+      "cliffShare": {
+       "p10": 0.093,
+       "median": 0.118,
+       "p90": 0.146
+      },
+      "onFoot": {
+       "p10": 0.132,
+       "median": 0.159,
+       "p90": 0.193
+      },
+      "stairsOnly": {
+       "p10": 0.807,
+       "median": 0.841,
+       "p90": 0.866
+      },
+      "oneStep": {
+       "p10": 0.148,
+       "median": 0.195,
+       "p90": 0.4
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.1,
+       "median": 0.135,
+       "p90": 0.161
+      },
+      "longestRun": {
+       "p10": 22,
+       "median": 28,
+       "p90": 35
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0,
+       "median": 0.115,
+       "p90": 0.275
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.313,
+       "median": 0.339,
+       "p90": 0.359
+      },
+      "lakeShare": {
+       "p10": 0.293,
+       "median": 0.32,
+       "p90": 0.343
+      },
+      "islandsAny": 1,
+      "waterfalls": {
+       "p10": 0,
+       "median": 1,
+       "p90": 2
+      },
+      "plateaus": {
+       "p10": 8,
+       "median": 10,
+       "p90": 12
+      },
+      "flows": {
+       "S": 46,
+       "SE": 54,
+       "NE": 42,
+       "N": 31,
+       "E": 27
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 2879,
+       "median": 3443,
+       "p90": 4181
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "lakeBasin": {
+     "attempts": {
+      "n": 200,
+      "first": 200,
+      "final": 200
+     },
+     "failedAttempts": {},
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.107,
+      "nearestMedian": 0.161,
+      "nearestP10": 0.136,
+      "below025": 200
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.311,
+        "layoutHalf": 0.157,
+        "featureHalf": 0.153,
+        "planarity": 0.028
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "relief",
+         "within": 0,
+         "workshop": 1.049,
+         "ratio": 0,
+         "clusterMedian": 10,
+         "workshopMedian": 14
+        },
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.014,
+         "workshop": 1.223,
+         "ratio": 0.011,
+         "clusterMedian": 6.968,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.078,
+         "workshop": 1.184,
+         "ratio": 0.066,
+         "clusterMedian": 6.508,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.111,
+         "workshop": 1.13,
+         "ratio": 0.099,
+         "clusterMedian": 0.243,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "waterShare",
+         "within": 0.111,
+         "workshop": 1.108,
+         "ratio": 0.1,
+         "clusterMedian": 0.268,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.13,
+         "workshop": 1.291,
+         "ratio": 0.101,
+         "clusterMedian": 4.61,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.183,
+         "workshop": 1.083,
+         "ratio": 0.169,
+         "clusterMedian": 2.043,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.268,
+         "workshop": 1.246,
+         "ratio": 0.215,
+         "clusterMedian": 0.476,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.298,
+         "workshop": 1.308,
+         "ratio": 0.227,
+         "clusterMedian": 0.1,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "flatShare",
+         "within": 0.28,
+         "workshop": 1.101,
+         "ratio": 0.255,
+         "clusterMedian": 0.733,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "basins",
+         "within": 0.492,
+         "workshop": 1.195,
+         "ratio": 0.412,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "step1Share",
+         "within": 1.176,
+         "workshop": 1.176,
+         "ratio": 1.001,
+         "clusterMedian": 0.553,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 16,
+      "largest": 85,
+      "largestShare": 0.425,
+      "codes": 6
+     },
+     "M2c": {
+      "clusters": 34,
+      "largest": 41,
+      "largestShare": 0.205,
+      "codes": 11
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 6,
+      "largest": 129,
+      "largestShare": 0.645,
+      "spread": 0.354
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 2,
+      "largestGroupShare": 0.975,
+      "nearestPeerMedian": 0.001,
+      "longRetention": {
+       "p10": 0.463,
+       "median": 0.469,
+       "p90": 0.473
+      },
+      "startDays": {
+       "p10": 14,
+       "median": 14,
+       "p90": 14
+      },
+      "startFirstDrought": 1
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 22,
+      "largestJointShare": 0.21,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "3": 1
+       },
+       "peakAxialFlow64": {
+        "0": 0.085,
+        "1": 0.295,
+        "2": 0.62
+       },
+       "flatDry40": {
+        "2": 1
+       },
+       "fertilityPersistence": {
+        "1": 1
+       },
+       "badwaterDistance": {
+        "1": 1
+       },
+       "logs20": {
+        "0": 0.01,
+        "1": 0.185,
+        "2": 0.585,
+        "3": 0.22
+       },
+       "frontierComponents": {
+        "0": 0.025,
+        "1": 0.655,
+        "2": 0.32
+       },
+       "deepPumpExtraShore": {
+        "0": 1
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.666,
+      "below": 0,
+      "share": 0,
+      "close": {
+       "V": null,
+       "layoutHalf": null,
+       "featureHalf": null
+      },
+      "all": {
+       "V": 0.733,
+       "layoutHalf": 0.382,
+       "featureHalf": 0.352
+      },
+      "features": [
+       {
+        "name": "relief",
+        "close": null,
+        "all": 0.518,
+        "ratio": null
+       },
+       {
+        "name": "cliffShare",
+        "close": null,
+        "all": 0.425,
+        "ratio": null
+       },
+       {
+        "name": "step1Share",
+        "close": null,
+        "all": 0.903,
+        "ratio": null
+       },
+       {
+        "name": "flatShare",
+        "close": null,
+        "all": 0.958,
+        "ratio": null
+       },
+       {
+        "name": "waterShare",
+        "close": null,
+        "all": 0.723,
+        "ratio": null
+       },
+       {
+        "name": "lakeShare",
+        "close": null,
+        "all": 0.651,
+        "ratio": null
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.025,
+      "within12": 0.745
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 0
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 10,
+       "p90": 10
+      },
+      "levels": {
+       "p10": 7,
+       "median": 8,
+       "p90": 9
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 2.87,
+       "median": 3.86,
+       "p90": 3.96
+      },
+      "flatShare": {
+       "p10": 0.687,
+       "median": 0.733,
+       "p90": 0.77
+      },
+      "cliffShare": {
+       "p10": 0.085,
+       "median": 0.1,
+       "p90": 0.123
+      },
+      "onFoot": {
+       "p10": 0.154,
+       "median": 0.223,
+       "p90": 0.332
+      },
+      "stairsOnly": {
+       "p10": 0.667,
+       "median": 0.776,
+       "p90": 0.846
+      },
+      "oneStep": {
+       "p10": 0.148,
+       "median": 0.199,
+       "p90": 0.472
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.113,
+       "median": 0.15,
+       "p90": 0.184
+      },
+      "longestRun": {
+       "p10": 18,
+       "median": 25,
+       "p90": 40
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0.27
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.22,
+       "median": 0.261,
+       "p90": 0.298
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.246,
+       "median": 0.268,
+       "p90": 0.288
+      },
+      "lakeShare": {
+       "p10": 0.22,
+       "median": 0.243,
+       "p90": 0.263
+      },
+      "islandsAny": 0,
+      "waterfalls": {
+       "p10": 1,
+       "median": 1,
+       "p90": 2
+      },
+      "plateaus": {
+       "p10": 4,
+       "median": 6,
+       "p90": 7
+      },
+      "flows": {
+       "E": 88,
+       "NE": 55,
+       "SE": 55,
+       "local": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 1386,
+       "median": 1724,
+       "p90": 2239
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    },
+    "riverValley": {
+     "attempts": {
+      "n": 200,
+      "first": 199,
+      "final": 200
+     },
+     "failedAttempts": {
+      "start.dry": 1
+     },
+     "maps": 200,
+     "M1": {
+      "nearestMin": 0.109,
+      "nearestMedian": 0.161,
+      "nearestP10": 0.13,
+      "below025": 198
+     },
+     "M2a": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "drivers": {
+       "maps": 200,
+       "largest": 200,
+       "largestShare": 1,
+       "clusters": 1,
+       "within": {
+        "V": 0.314,
+        "layoutHalf": 0.208,
+        "featureHalf": 0.106,
+        "planarity": 0.098
+       },
+       "rest": {
+        "planarity": null
+       },
+       "workshopPair": {
+        "V": 1.038,
+        "layoutHalf": 0.512,
+        "featureHalf": 0.526,
+        "planarity": 0.219
+       },
+       "features": [
+        {
+         "name": "islands",
+         "within": 0,
+         "workshop": 1.162,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.693
+        },
+        {
+         "name": "caveShare",
+         "within": 0,
+         "workshop": 1.066,
+         "ratio": 0,
+         "clusterMedian": 0,
+         "workshopMedian": 0.047
+        },
+        {
+         "name": "treesPer10k",
+         "within": 0.006,
+         "workshop": 1.223,
+         "ratio": 0.005,
+         "clusterMedian": 6.968,
+         "workshopMedian": 7.127
+        },
+        {
+         "name": "waterShare",
+         "within": 0.03,
+         "workshop": 1.108,
+         "ratio": 0.027,
+         "clusterMedian": 0.066,
+         "workshopMedian": 0.268
+        },
+        {
+         "name": "lakeShare",
+         "within": 0.043,
+         "workshop": 1.13,
+         "ratio": 0.038,
+         "clusterMedian": 0.007,
+         "workshopMedian": 0.21
+        },
+        {
+         "name": "relief",
+         "within": 0.061,
+         "workshop": 1.049,
+         "ratio": 0.058,
+         "clusterMedian": 11,
+         "workshopMedian": 14
+        },
+        {
+         "name": "scrapPer1k",
+         "within": 0.084,
+         "workshop": 1.184,
+         "ratio": 0.071,
+         "clusterMedian": 6.835,
+         "workshopMedian": 5.941
+        },
+        {
+         "name": "bushesPer10k",
+         "within": 0.127,
+         "workshop": 1.291,
+         "ratio": 0.099,
+         "clusterMedian": 4.604,
+         "workshopMedian": 5.226
+        },
+        {
+         "name": "waterfalls",
+         "within": 0.157,
+         "workshop": 1.246,
+         "ratio": 0.126,
+         "clusterMedian": 0.798,
+         "workshopMedian": 1.041
+        },
+        {
+         "name": "basins",
+         "within": 0.211,
+         "workshop": 1.195,
+         "ratio": 0.176,
+         "clusterMedian": 1.236,
+         "workshopMedian": 1.279
+        },
+        {
+         "name": "cliffShare",
+         "within": 0.281,
+         "workshop": 1.308,
+         "ratio": 0.215,
+         "clusterMedian": 0.111,
+         "workshopMedian": 0.11
+        },
+        {
+         "name": "flatShare",
+         "within": 0.257,
+         "workshop": 1.101,
+         "ratio": 0.233,
+         "clusterMedian": 0.647,
+         "workshopMedian": 0.442
+        },
+        {
+         "name": "damSitesPer10k",
+         "within": 0.259,
+         "workshop": 1.083,
+         "ratio": 0.239,
+         "clusterMedian": 1.96,
+         "workshopMedian": 2.016
+        },
+        {
+         "name": "step1Share",
+         "within": 0.758,
+         "workshop": 1.176,
+         "ratio": 0.645,
+         "clusterMedian": 0.576,
+         "workshopMedian": 0.81
+        }
+       ]
+      }
+     },
+     "M2b": {
+      "clusters": 1,
+      "largest": 200,
+      "largestShare": 1,
+      "codes": 9
+     },
+     "M2c": {
+      "clusters": 21,
+      "largest": 59,
+      "largestShare": 0.295,
+      "codes": 7
+     },
+     "M3": {
+      "maps": 200,
+      "clusters": 41,
+      "largest": 43,
+      "largestShare": 0.215,
+      "spread": 0.554
+     },
+     "M3c": {
+      "maps": 200,
+      "groups": 2,
+      "largestGroupShare": 0.975,
+      "nearestPeerMedian": 0.001,
+      "longRetention": {
+       "p10": 0.062,
+       "median": 0.081,
+       "p90": 0.093
+      },
+      "startDays": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "startFirstDrought": 0
+     },
+     "M3d": {
+      "maps": 200,
+      "jointSignatures": 48,
+      "largestJointShare": 0.07,
+      "nearestPeerMedian": 0,
+      "bins": {
+       "storageRatio": {
+        "0": 0.465,
+        "1": 0.535
+       },
+       "peakAxialFlow64": {
+        "1": 0.105,
+        "2": 0.895
+       },
+       "flatDry40": {
+        "0": 1
+       },
+       "fertilityPersistence": {
+        "0": 0.955,
+        "1": 0.045
+       },
+       "badwaterDistance": {
+        "1": 1
+       },
+       "logs20": {
+        "0": 0.19,
+        "1": 0.335,
+        "2": 0.37,
+        "3": 0.105
+       },
+       "frontierComponents": {
+        "0": 0.105,
+        "1": 0.395,
+        "2": 0.5
+       },
+       "deepPumpExtraShore": {
+        "0": 0.735,
+        "1": 0.265
+       }
+      }
+     },
+     "M4": {
+      "nearestMin": 0.592,
+      "below": 0,
+      "share": 0,
+      "close": {
+       "V": null,
+       "layoutHalf": null,
+       "featureHalf": null
+      },
+      "all": {
+       "V": 0.676,
+       "layoutHalf": 0.343,
+       "featureHalf": 0.334
+      },
+      "features": [
+       {
+        "name": "relief",
+        "close": null,
+        "all": 0.842,
+        "ratio": null
+       },
+       {
+        "name": "cliffShare",
+        "close": null,
+        "all": 0.312,
+        "ratio": null
+       },
+       {
+        "name": "step1Share",
+        "close": null,
+        "all": 1.16,
+        "ratio": null
+       },
+       {
+        "name": "flatShare",
+        "close": null,
+        "all": 0.667,
+        "ratio": null
+       },
+       {
+        "name": "waterShare",
+        "close": null,
+        "all": 0.532,
+        "ratio": null
+       },
+       {
+        "name": "lakeShare",
+        "close": null,
+        "all": 0.538,
+        "ratio": null
+       }
+      ]
+     },
+     "M5": {
+      "maps": 200,
+      "goodNaturalDam": 0.78,
+      "within12": 0.945
+     },
+     "M6": {
+      "maps": 200,
+      "flagged": 198
+     },
+     "M7": {
+      "maps": 200,
+      "pass": 1
+     },
+     "vertical": {
+      "range": {
+       "p10": 10,
+       "median": 11,
+       "p90": 11
+      },
+      "levels": {
+       "p10": 12,
+       "median": 12,
+       "p90": 13
+      },
+      "maxHeight": {
+       "p10": 16,
+       "median": 16,
+       "p90": 16
+      },
+      "above16": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "tallestFall": {
+       "p10": 1.82,
+       "median": 1.9,
+       "p90": 1.97
+      },
+      "flatShare": {
+       "p10": 0.605,
+       "median": 0.647,
+       "p90": 0.679
+      },
+      "cliffShare": {
+       "p10": 0.092,
+       "median": 0.111,
+       "p90": 0.132
+      },
+      "onFoot": {
+       "p10": 0.192,
+       "median": 0.479,
+       "p90": 0.629
+      },
+      "stairsOnly": {
+       "p10": 0.37,
+       "median": 0.519,
+       "p90": 0.808
+      },
+      "oneStep": {
+       "p10": 0.031,
+       "median": 0.227,
+       "p90": 0.366
+      }
+     },
+     "natural": {
+      "straightShare8": {
+       "p10": 0.069,
+       "median": 0.119,
+       "p90": 0.16
+      },
+      "longestRun": {
+       "p10": 18,
+       "median": 27,
+       "p90": 41
+      },
+      "ridgeHeightStd": {
+       "p10": 0,
+       "median": 0,
+       "p90": 0
+      },
+      "basinRimThicknessCV": {
+       "p10": 0.024,
+       "median": 0.113,
+       "p90": 0.177
+      }
+     },
+     "shape": {
+      "waterShare": {
+       "p10": 0.06,
+       "median": 0.066,
+       "p90": 0.071
+      },
+      "lakeShare": {
+       "p10": 0,
+       "median": 0.007,
+       "p90": 0.013
+      },
+      "islandsAny": 0,
+      "waterfalls": {
+       "p10": 2,
+       "median": 2,
+       "p90": 3
+      },
+      "plateaus": {
+       "p10": 5,
+       "median": 7,
+       "p90": 8
+      },
+      "flows": {
+       "E": 193,
+       "NE": 5,
+       "SE": 2
+      }
+     },
+     "speed": {
+      "ms": {
+       "p10": 970,
+       "median": 1308,
+       "p90": 2399
+      },
+      "firstLook": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "firstWater": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      },
+      "settles": {
+       "p10": null,
+       "median": null,
+       "p90": null
+      }
+     },
+     "startDrought": null
+    }
+   },
+   "intentions": null
+  }
+ }
+}

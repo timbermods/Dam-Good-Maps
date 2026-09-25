@@ -41,7 +41,11 @@ export interface NarrowsPlan {
 
 function arc(p: Point[]): number {
   let l = 0;
-  for (let k = 0; k + 1 < p.length; k++) l += Math.sqrt((p[k + 1][0] - p[k][0]) ** 2 + (p[k + 1][1] - p[k][1]) ** 2);
+  for (let k = 0; k + 1 < p.length; k++) {
+    const dx = p[k + 1][0] - p[k][0];
+    const dy = p[k + 1][1] - p[k][1];
+    l += Math.sqrt(dx * dx + dy * dy);
+  }
   return l;
 }
 
@@ -59,7 +63,7 @@ function pointAt(p: Point[], s: number): { p: Point; t: Point } {
   }
   const a = p[p.length - 2];
   const b = p[p.length - 1];
-  const l = Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) || 1;
+  const l = Math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])) || 1;
   return { p: b, t: [(b[0] - a[0]) / l, (b[1] - a[1]) / l] };
 }
 
@@ -115,7 +119,7 @@ export function planNarrows(h: Uint8Array, W: number, H: number, water: ArrayLik
         for (let yy = Math.floor(cy - r); yy <= Math.ceil(cy + r); yy++)
           for (let xx = Math.floor(cx - r); xx <= Math.ceil(cx + r); xx++) {
             if (xx < 1 || yy < 1 || xx >= W - 1 || yy >= H - 1) continue;
-            const dd = Math.sqrt((xx - cx) ** 2 + (yy - cy) ** 2);
+            const dd = Math.sqrt((xx - cx) * (xx - cx) + (yy - cy) * (yy - cy));
             if (dd > w) continue;
             const i = yy * W + xx;
             if (water[i] > 0.05) continue;

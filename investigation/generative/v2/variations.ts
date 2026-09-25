@@ -32,8 +32,11 @@ let total = 0;
 for (const theme of AVAILABLE_THEMES as readonly ThemeId[])
   for (const seed of seeds) {
     const fam: { k: number; inp: any; intentions: string[] }[] = [];
+    let intentions: any = undefined;
     for (let k = 0; k <= siblings; k++) {
-      const r = generateV2(theme, seed, 128, "normal", { variation: k });
+      // siblings keep the map's intentions (D143: the same theme, settings and intentions)
+      const r = generateV2(theme, seed, 128, "normal", { variation: k, ...(k ? { intentions } : {}) });
+      if (k === 0) intentions = r.genome.intentions.slice();
       if (!r.bytes.length) continue;
       const { m } = measureFile(r.file, { spec: r.spec, features: r.features, water: { model: r.built.waterModel, settled: r.built.settle } });
       fam.push({ k, inp: { key: `${theme}-${seed}-${k}`, layout: m.layout, features: featureVector(m) }, intentions: r.genome.intentions.slice().sort() });

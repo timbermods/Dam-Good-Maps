@@ -835,25 +835,37 @@ a little noise, and two maps must play differently, not only look different.
      (D139).
    - The techniques playbook as proposals (D131), and the corrected no-approximation measure
      (D128).
-   - A contact-sheet image of its prototypes, `docs/sheets/m9-design-v2.png` (D144).
-   Version 2 is built on branch `investigation/generative-v2` (not yet started).
+   - A contact-sheet image of its prototypes, `docs/sheets/design-v2.png` (D144).
+   Version 2 is built on branch `investigation/generative-v2`: `docs/m9-design.md` (version 2),
+   `investigation/generative/REPORT-v2.md`, ten briefs in `investigation/generative/briefs/v2/`.
 
 M9, M10 and M11 wait for that approval.
 
 **Staging: M9a, M9b and M9c, approved by Kyler** (2026-09-25; PLAN §20 D145). From design version 1
 (`docs/m9-design.md` §16). M9 is built in three stages, each with its own deliverables, acceptance
 and release, tagged and released like a milestone. What goes into each stage waits for Kyler's
-approval of design version 2; the lists below are design version 1's. The text under the stages
+approval of design version 2; the lists below are design version 2's proposal
+(`docs/m9-design.md` §18). The text under the stages
 ("Delivers" and below) is M9 as first planned; the stages replace its order, and its premises
 become recipes inside the system (design §3).
 
 - **M9a: terrain and water from processes** (tag `m9a-done`).
-  - Delivers: the genome and the themes as priors; the field (uplift, erosion, levels) and the
-    hydrology (rivers from the drainage, lakes, falls, pools, splits, deltas) in `src/core`;
-    features read back out of the field (rivers, natural lakes, badwater hollows, the start,
-    objects, resources); the settler; `water.storage_possible` in place of `water.reservoir` and the
-    dam-wall check, in both validators; the document model (a stored field, project format 3); the
-    generator version 0.7.0; K = 1.
+  - Delivers: the genome and the themes as priors, drawn as wide as design version 2's (a regional
+    field beside the tilt, every part in every theme, water over the workshop's range); the field
+    (uplift, caprock, erosion, weathering, levels with benches) and the hydrology (rivers from the
+    drainage, lakes, spring lakes, falls, pools, splits, deltas, hanging valleys, knickpoints) in
+    `src/core`; natural ramps, with the derived-slope rule joining a ramp's steps wherever it is
+    (decisions-pending #57); features read back out of the field (rivers, natural lakes, badwater
+    hollows, the start, objects, resources); the settler with reach and the drought-aware start
+    water (#54); `water.storage_possible` in place of `water.reservoir` and the dam-wall check, in
+    both validators; the document model (a stored field, project format 3); the generator version
+    0.7.0; K = 1.
+  - **One settle and a progressive preview** (design version 2 §13): the badwater hollow planned
+    before the settle, the start chosen on the settled water, the field kept for re-plans; the page
+    shows the land and its planned water first, then the settled water, then the checked map.
+  - **The Dam site tool rebuilt as a natural narrows** (D111; design version 2 §8): two uneven
+    hillside spurs, refused with a reason where they would read as a wall; the generator never
+    calls it.
   - **Format 3's terrain holds runs** (I-1, D119; time-sensitive): the document's `field` and
     `base` store heights plus runs: the surface per tile, and the solid runs of every tile that is
     not one plain run from z = 0 (investigation/terrain3d/DESIGN.md §2.2). It replaces
@@ -883,6 +895,8 @@ become recipes inside the system (design §3).
   - **Keep M12 ready** (D134): generating from the processes, and "make it more vertical"
     (Verticality), as tool entries with their limits and refusal reasons; the read-back features
     as a query ("what's on this map?"); suite requests for them; every reference solution re-run.
+    The entries, as design version 2 §16 names them: `generate`, `landmarks`, `reach` and
+    `place_narrows`.
   - **The techniques playbook as proposals** (D131; investigation/techniques/): independent
     spatial controls, protected contours and channels before snapping, starts chosen by
     guarantees and opportunity vectors, catchments and spill levels kept. Each is tried against
@@ -930,8 +944,14 @@ become recipes inside the system (design §3).
     version 2), and the measures as permanent measures (information, D115; the dam-wall check
     blocks). Surprise me and high Variety may reach high Verticality now and then; most maps
     never do (D132).
+  - **Intentions** (D138; design version 2 §6): the set (eight after "the only safe water is
+    uphill" left it), the steering (the prior and the settler), the checks on the finished map, one
+    re-steer for a start intention, drop rates recorded, and the no-clone and no-archetype measures
+    within each intention. **Difficulty as positions on the strategy axes** (#60): a preference
+    among a seed's candidates, never a rejection.
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
-    direction as tool entries; suite requests for them; every reference solution re-run.
+    direction as tool entries; suite requests for them; every reference solution re-run. The
+    entries `steer` (intentions and settings, then regenerate) and `check_intention`.
   - Acceptance (D115): blocking: M6, the dam-wall check, finds no built wall; information: the
     design's measures M1–M5 on 200 seeds per theme at 128², against their targets.
 - **M9c: score, names and candidates** (tag `m9c-done`).
@@ -939,7 +959,10 @@ become recipes inside the system (design §3).
     seed's candidates and for ordering a contact sheet, never a gate on quality (D137; how
     candidates are chosen first is decisions-pending #53); K = 3 candidates with progressive
     preview; names and descriptions from the read-back features and the opening ("how it
-    plays"); the place resolver and judgement words (D84, D88); the settings bands.
+    plays"), by the names study's lexicon, patterns and forbidden list (branch
+    `investigation/names`), with premise roles emitted only where the built map passes a shape
+    check, and the forbidden list grown from the whole workshop catalogue; the place resolver and
+    judgement words (D84, D88); the settings bands.
   - **Variations of this map** (Kyler, 2026-09-25; D143): a button on the generator page and in
     the editor makes several siblings of the current map: the same theme, settings and
     intentions, with a genome close to the original but different land. Each is its own map with
@@ -951,7 +974,8 @@ become recipes inside the system (design §3).
     setting, not a general score. It pairs with Variations.
   - **Keep M12 ready** (D134): "describe this map" and "how does it play?" (names, descriptions,
     the opening) as query tool entries, and "show me variations of this map" as an operation;
-    suite requests for them; every reference solution re-run.
+    suite requests for them; every reference solution re-run. The entries `describe_map`,
+    `how_it_plays` and `variations`.
   - Acceptance: the rest of M9's acceptance below that the stages do not cover.
 
 

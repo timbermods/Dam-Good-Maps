@@ -30,6 +30,7 @@ import { checkIntention, INTENTION_TEXT, type IntentionId } from "./intentions";
 import { nameOf, readBack } from "./names";
 import { exactCycle } from "./simplay";
 import { fallsOf } from "./vertical";
+import { V2_ROOT } from "./refs";
 
 const HERE = join(process.cwd(), "investigation", "generative");
 const vs = JSON.parse(readFileSync(join(process.cwd(), "investigation", "workshop", "variety-scale.json"), "utf8"));
@@ -141,15 +142,21 @@ const AXIS_NAMES: Record<string, [string, string]> = {
   deepPumpExtraShore: ["Faction opportunity", "extra shore tiles an Iron Teeth deep pump reaches"],
 };
 
-/** Difficulty as positions on the axes (docs/m9-design.md §10, a proposal). */
-export const DIFFICULTY_POSITIONS: Record<string, Record<string, number>> = {
-  Easy: { storageRatio: 1, badwaterDistance: 30, logs20: 160, flatDry40: 500, fertilityPersistence: 0.25 },
-  Normal: { storageRatio: 0.25, badwaterDistance: 15, logs20: 80, flatDry40: 150 },
-  Hard: { logs20: 40 },
+/** Difficulty as positions on the axes (docs/m9-design.md §11, a proposal): each condition an axis,
+ *  a bound, its side, and whether "none on the map" (a null) meets it. */
+export const DIFFICULTY_POSITIONS: Record<string, [string, number, "min" | "max", boolean][]> = {
+  Easy: [["storageRatio", 0.5, "min", false], ["badwaterDistance", 30, "min", true], ["logs20", 160, "min", false], ["flatDry40", 250, "min", false]],
+  Normal: [["storageRatio", 0.1, "min", false], ["badwaterDistance", 15, "min", true], ["logs20", 80, "min", false], ["flatDry40", 150, "min", false]],
+  Hard: [["storageRatio", 1, "max", false], ["badwaterDistance", 60, "max", false], ["logs20", 40, "min", false]],
 };
 export function suits(values: Record<string, number | null>): string[] {
+  const meets = ([k, b, side, noneOk]: [string, number, "min" | "max", boolean]) => {
+    const v = values[k];
+    if (v === null || v === undefined) return noneOk;
+    return side === "min" ? v >= b : v < b;
+  };
   return Object.entries(DIFFICULTY_POSITIONS)
-    .filter(([, need]) => Object.entries(need).every(([k, min]) => (k === "badwaterDistance" && values[k] === null ? true : (values[k] ?? -Infinity) >= min)))
+    .filter(([, conds]) => conds.every(meets))
     .map(([d]) => d);
 }
 
@@ -162,7 +169,11 @@ picked.slice(0, 10).forEach((c, k) => {
   const same = sha(r.bytes) === sha(batch);
   const b = r.built;
   // the exact cycle model, the worst of three weather seeds (least water kept through the Hard drought)
-  const runs = WEATHER.map((ws) => ({ ws, ...exactCycle(r, ws) }));
+  // the exact runs are slow (30–100 s each on the shared machine): kept locally by map and seed
+  const cachePath = join(V2_ROOT, "export-cycles", `${c.set}-${c.key}.json`);
+  const runs: ({ ws: number } & ReturnType<typeof exactCycle>)[] = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf8")) : WEATHER.map((ws) => ({ ws, ...exactCycle(r, ws) }));
+  mkdirSync(join(V2_ROOT, "export-cycles"), { recursive: true });
+  writeFileSync(cachePath, JSON.stringify(runs));
   const worst = runs.reduce((a, x) => (x.values.longRetention < a.values.longRetention ? x : a));
   const t = worst.timeline;
   const days = (id: string) => t[id].days.filter((d: any) => d.phase !== "normal").length;
@@ -184,6 +195,8 @@ picked.slice(0, 10).forEach((c, k) => {
     H: b.H,
     D: b.water,
     parts: r.genome.parts.map((p) => p.kind),
+    calderas: r.genome.parts.filter((p) => p.kind === "caldera").map((p) => ({ cx: p.at[0] * (b.W - 1), cy: p.at[1] * (b.H - 1), r: p.size })),
+    lakeTiles: r.hydro.lakes.map((lk) => lk.tiles),
     terrace: { step: r.genome.terrace.step, share: r.genome.terrace.share },
     theme: c.theme,
     badwater: r.info.badwater,
@@ -253,7 +266,7 @@ ${lines.map((l) => `- ${l}`).join("\n")}
 - **Relief:** ${v.range} levels (p5–p95), ${v.levels} levels in use, highest ${v.maxHeight}; ${Math.round(v.cliffShare * 100)}% cliff, ${Math.round(v.flatShare * 100)}% flat; tallest fall ${v.tallestFall} levels.
 - **Water:** ${r.info.hydro.rivers} river${r.info.hydro.rivers === 1 ? "" : "s"} (${m.water.inflows} from the edge, ${m.water.springs} from springs), ${m.water.lakes} lake${m.water.lakes === 1 ? "" : "s"}, ${m.metrics.waterfalls} fall${m.metrics.waterfalls === 1 ? "" : "s"}${r.info.hydro.splits ? ", a river island" : ""}${r.info.hydro.deltas ? ", a delta" : ""}; water covers ${Math.round(m.metrics.waterShare * 100)}% of the map.
 - **Reach:** ${Math.round(v.onFoot * 100)}% of the dry land is reached on foot from the start; ${Math.round(v.stairsOnly * 100)}% needs stairs (${r.info.ramps.cut} natural ramp${r.info.ramps.cut === 1 ? "" : "s"}, ${r.info.ramps.leftToStairs} upland${r.info.ramps.leftToStairs === 1 ? "" : "s"} left to stairs).
-- **Start:** ${r.info.start?.kind ?? "?"} place; badwater: ${r.info.badwater === "pit" ? "a hollow on high ground" : "none"}.
+- **Badwater:** ${r.info.badwater === "pit" ? "a hollow on high ground, draining by its own ditch" : "none"}.
 
 ## Cycle timeline
 
@@ -273,7 +286,7 @@ The verified mechanics study's eight axes (branch \`investigation/mechanics-veri
 |---|---|---|
 ${axisRows}
 
-Its position suits: ${suit.length ? suit.join(", ") : "none of the proposed difficulty positions"} (docs/m9-design.md §10, a proposal).
+Its position suits: ${suit.length ? suit.join(", ") : "none of the proposed difficulty positions"} (docs/m9-design.md §11, a proposal).
 
 ## Name
 

@@ -109,8 +109,11 @@ const meanAbs = (a: number[], b: number[]) => a.reduce((s, v, k) => s + Math.abs
 const maxBin = AXIS_BINS.map(([, c]) => c.length);
 const axisDist = (a: number[], b: number[]) => a.reduce((s, v, k) => s + (v === -1 || b[k] === -1 ? (v === b[k] ? 0 : 1) : Math.abs(v - b[k]) / maxBin[k]), 0) / a.length;
 
-function measureMaps(maps: MapRec[], withDrivers = true) {
+const LIGHT = new Set(arg("light", "").split(",").filter(Boolean));
+
+function measureMaps(maps: MapRec[], withDrivers = true, light = false) {
   const n = maps.length;
+  if (light) return lightMeasures(maps);
   const V = maps.map((m) => input(m.key, m.rec));
   const nn = V.map((a, i) => V.reduce((best, b, j) => (i === j ? best : Math.min(best, distance(a, b, V_SCALE))), Infinity));
   const rv = maps.map((m) => riverVector(m.rec));
@@ -183,6 +186,30 @@ function measureMaps(maps: MapRec[], withDrivers = true) {
   };
 }
 
+/** The cheap part only (pass rates, relief, speed, the start's drought water): for the size,
+ *  Verticality and drought sets, where clustering adds nothing the default set does not show. */
+function lightMeasures(maps: MapRec[]) {
+  const vOut: Record<string, unknown> = {};
+  for (const k of VKEYS) vOut[k] = band(maps.filter((m) => m.rec.vertical).map((m) => m.rec.vertical[k]));
+  const withX = maps.filter((m) => m.x);
+  const cyc = maps.filter((m) => m.rec.cheapCycle);
+  return {
+    maps: maps.length,
+    M6: withX.length ? { maps: withX.length, flagged: withX.filter((m) => m.x.walls?.length).length } : null,
+    M3c: cyc.length ? { maps: cyc.length, startFirstDrought: r3(cyc.filter((m) => m.rec.cheapCycle.startFirstDrought).length / cyc.length) } : null,
+    vertical: vOut,
+    shape: { waterShare: band(maps.map((m) => m.rec.metrics.waterShare)), lakeShare: band(maps.map((m) => m.rec.water.lakeShare)), islandsAny: r3(maps.filter((m) => m.rec.water.islands100 > 0).length / Math.max(1, maps.length)), waterfalls: band(maps.map((m) => m.rec.metrics.waterfalls)), flows: {} },
+    speed: {
+      ms: band(maps.map((m) => m.rec.ms)),
+      firstLook: band(maps.map((m) => m.rec.timings?.firstLook ?? NaN)),
+      firstWater: band(maps.map((m) => m.rec.timings?.firstWater ?? NaN)),
+      settles: band(maps.map((m) => m.rec.info?.settles ?? NaN)),
+    },
+    startDrought: r3(maps.filter((m) => m.rec.info?.startDrought === true).length / Math.max(1, maps.length)),
+    vtJumps: r3(maps.filter((m) => (m.rec.genome?.vt ?? 0) >= 70).length / Math.max(1, maps.length)),
+  };
+}
+
 /** Intentions: how often each was drawn, emerged, was re-steered or dropped, and the no-clone and
  *  no-archetype measures among the maps where it emerged (all themes together, D138's third
  *  principle). */
@@ -230,15 +257,18 @@ const out: any = {
 };
 out.workshop.M2a = clusterStats(W.length, (i, j) => distance(W[i], W[j], V_SCALE), vCut);
 
+const prevPath = join(HERE, "measures-v2.json");
+if (existsSync(prevPath) && !process.argv.includes("--fresh")) out.sets = JSON.parse(readFileSync(prevPath, "utf8")).sets ?? {};
 const sets = arg("sets", "v2-128,v1-128,cur-128,v2-128-vt85,v2-128-vt85u,v2-128-v100").split(",").filter(Boolean);
 for (const s of sets) {
   const dir = join(MAPS, s);
   if (!existsSync(dir)) continue;
   const { maps, attempts, failedBy } = loadSet(dir);
   const byTheme: Record<string, unknown> = {};
-  for (const t of [...new Set(maps.map((m) => m.theme))].sort()) byTheme[t] = { attempts: attempts[t], failedAttempts: failedBy[t], ...measureMaps(maps.filter((x) => x.theme === t)) };
-  const all = measureMaps(maps, false);
-  out.sets[s] = { maps: maps.length, all: { vertical: all.vertical, shape: all.shape, M5: all.M5, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d }, byTheme, intentions: maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
+  const light = LIGHT.has(s);
+  for (const t of [...new Set(maps.map((m) => m.theme))].sort()) byTheme[t] = { attempts: attempts[t], failedAttempts: failedBy[t], ...measureMaps(maps.filter((x) => x.theme === t), true, light) };
+  const all: any = light ? lightMeasures(maps) : measureMaps(maps, false);
+  out.sets[s] = { maps: maps.length, light, all: { vertical: all.vertical, shape: all.shape, M5: all.M5 ?? null, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d ?? null, vtJumps: all.vtJumps ?? null }, byTheme, intentions: !light && maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
   console.log(`measured ${s}: ${maps.length} maps`);
 }
 writeFileSync(join(HERE, "measures-v2.json"), JSON.stringify(out, null, 1) + "\n");

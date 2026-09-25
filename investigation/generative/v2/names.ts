@@ -12,7 +12,7 @@
 // - roles: great-scarp (a cliff of 4+ levels crossed by a fall), mesa-field (4+ standing forms),
 //   hanging-lake (the high-lake intention realized), chain-lakes (3+ lakes on the rivers),
 //   twin-falls (two falls of 2+ levels), moat-island (a river island of 100+ tiles), many-mouths
-//   (a delta with 2+ mouths), crater-lake (a caldera part holding a lake), volcano-island and
+//   (a delta with 2+ mouths), crater-lake (a lake with most of its tiles inside a caldera's ring), volcano-island and
 //   badwater-volcano (a cone part standing, with the sea or a badwater hollow), staircase.
 // The pick: the highest-priority rule that holds, then the fallback, never random; a title that
 // matches a known map or place, or another title in the batch, moves on to the next.
@@ -157,6 +157,9 @@ export interface ReadBack {
   H: number;
   D: ArrayLike<number>;
   parts: string[];
+  /** Caldera parts (centre and ring radius, tiles) and the lakes' tiles, for the crater-lake role. */
+  calderas?: { cx: number; cy: number; r: number }[];
+  lakeTiles?: number[][];
   terrace: { step: number; share: number };
   theme: string;
   badwater: string;
@@ -230,7 +233,8 @@ export function readBack(r: ReadBack): { features: NameInput["features"]; roles:
   if (tall.length >= 2) roles.add("premise/twin-falls");
   if (r.splits > 0 && (r.water.islands100 ?? 0) >= 1) roles.add("premise/moat-island");
   if (r.deltas > 0 && (r.metrics.edgeExits ?? 0) >= 2) roles.add("premise/many-mouths");
-  if (r.parts.includes("caldera") && lakes >= 1) roles.add("premise/crater-lake");
+  // a crater lake: a lake with most of its tiles inside a caldera's ring
+  if ((r.calderas ?? []).some((c) => (r.lakeTiles ?? []).some((t) => t.length >= 30 && t.filter((i) => Math.sqrt(((i % W) - c.cx) ** 2 + (Math.floor(i / W) - c.cy) ** 2) <= c.r).length >= 0.6 * t.length))) roles.add("premise/crater-lake");
   if (r.parts.includes("cone") && r.theme === "islands" && (r.water.islands100 ?? 0) >= 1) roles.add("premise/volcano-island");
   if (r.parts.includes("cone") && r.badwater === "pit") roles.add("premise/badwater-volcano");
   if (r.terrace.step >= 2 && r.terrace.share >= 0.5) roles.add("premise/staircase");

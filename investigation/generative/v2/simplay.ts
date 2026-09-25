@@ -1,6 +1,7 @@
 // Simulated play with the exact cycle model (investigation/cycles, PR #15; task d): the full
-// simulation as the validation of the generator's cheap signature (cycle.ts), on seeds 1–30 of
-// each theme at 128² for design version 2 and version 1. The current generator's signatures are
+// simulation as the validation of the generator's cheap signature (cycle.ts), on seeds 1–15 of
+// each theme at 128² for design version 2 and version 1 (15, not 30: each map takes 30–100 s on
+// the shared machine). The current generator's signatures are
 // the cycles study's own (results/signatures.json: the same model, the same seeds and weather seed).
 //
 // Three probes, as the study's summarize.ts: the first Normal drought, the first Normal badtide and
@@ -140,12 +141,14 @@ function summary(): void {
   };
   const files = existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith(".json") && !f.includes("-w.")) : [];
   const recs = files.map((f) => JSON.parse(readFileSync(join(DIR, f), "utf8")));
-  const res: any = { note: "exact cycle model (investigation/cycles), weather seed 1729, probes first-normal, first-badtide, late-hard; seeds 1–30 per theme at 128²; current: the study's own results/signatures.json", gens: {} };
+  const res: any = { note: `exact cycle model (investigation/cycles), weather seed 1729, probes first-normal, first-badtide, late-hard; seeds ${arg("seeds", "1-15")} per theme at 128²; current: the study's own results/signatures.json for the same seeds`, gens: {} };
   const byGen: Record<string, any[]> = {};
-  for (const r of recs) (byGen[r.gen] ??= []).push({ theme: r.theme, seed: r.seed, exact: r.worst, cheap: r.cheap });
+  // the same seeds for every generator (the sample the prototypes ran)
+  const seeds = new Set(parseSeeds(arg("seeds", "1-15")));
+  for (const r of recs) if (seeds.has(r.seed)) (byGen[r.gen] ??= []).push({ theme: r.theme, seed: r.seed, exact: r.worst, cheap: r.cheap });
   try {
     const cur = JSON.parse(readFileSync(join(process.cwd(), "investigation", "cycles", "results", "signatures.json"), "utf8"));
-    byGen.current = cur.map((x: any) => ({ theme: x.theme, seed: x.seed, exact: { values: x, vector: x.vector, group: x.group }, cheap: null }));
+    byGen.current = cur.filter((x: any) => seeds.has(x.seed)).map((x: any) => ({ theme: x.theme, seed: x.seed, exact: { values: x, vector: x.vector, group: x.group }, cheap: null }));
   } catch {
     /* none */
   }
