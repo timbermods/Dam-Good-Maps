@@ -21,18 +21,25 @@ The page runs locally. It needs no build, account or network connection. A curre
 Use Node 22 or later. Install only this folder's dependencies:
 
 ```sh
-npm --prefix investigation/cycles install
+npm --prefix investigation/cycles ci --ignore-scripts
 npm --prefix investigation/cycles test
 npm --prefix investigation/cycles run typecheck
 npm --prefix investigation/cycles run batch -- --sizes 96,128,256 --seeds 1,2
 npm --prefix investigation/cycles run batch -- --study survey --sizes 128 --seeds 1-30
 node investigation/cycles/run.cjs investigation/cycles/journey.ts
 node investigation/cycles/run.cjs investigation/cycles/summarize.ts
+npm --prefix investigation/cycles run verify-data
 ```
 
 The batch resumes from completed map records. Add `--force` after changing the model. Run the gallery before journeys; it supplies their display files. Keep the base revision fixed when reproducing hashes. A new generator version can change the maps.
 
 `batch.ts` uses `generate(makeSpec(...))`, the same path as `tools/gen.ts`. The existing CLI only accepts its default theme, so this wrapper adds the six-theme loop. The existing CLI was also run at all three sizes, with its output inside this folder. Generated `.timber` files are ignored; regenerate the named seeds for calibration. No game files are inputs.
+
+For calibration, this two-map command generates the files without rerunning any timelines:
+
+```sh
+npm --prefix investigation/cycles run batch -- --maps-only --themes riverValley,lakeBasin --sizes 128 --seeds 2
+```
 
 Standard checkouts with root dependencies installed can run the TypeScript entry points with `npx tsx`. `run.cjs` is an in-process fallback for hosts that block esbuild's subprocess. It resolves this folder's own dependencies for the read-only `src/` imports.
 

@@ -1,0 +1,789 @@
+{
+  "complete": true,
+  "maps": 204,
+  "passed": 204,
+  "failed": [],
+  "survey": 180,
+  "timings": [
+    {
+      "size": 96,
+      "n": 12,
+      "generationMedian": 0.45197000000000004,
+      "settleMedian": 0.11406150000000001,
+      "settleMax": 0.491678,
+      "timelineMedian": 9.320841,
+      "timelineMax": 30.792123,
+      "dayMedian": 0.12768275342465754
+    },
+    {
+      "size": 128,
+      "n": 12,
+      "generationMedian": 0.8779045000000001,
+      "settleMedian": 0.257306,
+      "settleMax": 1.37475,
+      "timelineMedian": 12.792899,
+      "timelineMax": 54.344567000000005,
+      "dayMedian": 0.17524519178082193
+    },
+    {
+      "size": 256,
+      "n": 12,
+      "generationMedian": 3.3346459999999998,
+      "settleMedian": 1.3381435000000002,
+      "settleMax": 10.771403,
+      "timelineMedian": 69.2294895,
+      "timelineMax": 762.281804,
+      "dayMedian": 0.9483491712328767
+    }
+  ],
+  "themeStats": [
+    {
+      "theme": "riverValley",
+      "n": 30,
+      "retentionRange": [
+        0.05750904328302357,
+        0.12043051325589124
+      ],
+      "exposureRange": [
+        0.8172866520787746,
+        0.9042995839112344
+      ],
+      "startRange": [
+        0,
+        1
+      ],
+      "largestGroup": 0.7333333333333333,
+      "groups": 2,
+      "nearestMedian": 0.012250117837504095,
+      "pumpLostFirst": 30
+    },
+    {
+      "theme": "canyon",
+      "n": 30,
+      "retentionRange": [
+        0,
+        0
+      ],
+      "exposureRange": [
+        1,
+        1
+      ],
+      "startRange": [
+        0,
+        0
+      ],
+      "largestGroup": 1,
+      "groups": 1,
+      "nearestMedian": 0.000005548650568181818,
+      "pumpLostFirst": 30
+    },
+    {
+      "theme": "highlands",
+      "n": 30,
+      "retentionRange": [
+        0,
+        0.12034263309348658
+      ],
+      "exposureRange": [
+        0.8538306451612904,
+        1
+      ],
+      "startRange": [
+        0,
+        1
+      ],
+      "largestGroup": 0.5,
+      "groups": 4,
+      "nearestMedian": 0.021295474441360103,
+      "pumpLostFirst": 30
+    },
+    {
+      "theme": "lakeBasin",
+      "n": 30,
+      "retentionRange": [
+        0.48773066602230675,
+        0.5065630676901747
+      ],
+      "exposureRange": [
+        0.29129061371841153,
+        0.45314109165808447
+      ],
+      "startRange": [
+        20,
+        20
+      ],
+      "largestGroup": 0.6666666666666666,
+      "groups": 2,
+      "nearestMedian": 0.016175242767851435,
+      "pumpLostFirst": 0
+    },
+    {
+      "theme": "delta",
+      "n": 30,
+      "retentionRange": [
+        0,
+        0.06932764120118251
+      ],
+      "exposureRange": [
+        0.919774011299435,
+        1
+      ],
+      "startRange": [
+        0,
+        1
+      ],
+      "largestGroup": 0.6666666666666666,
+      "groups": 4,
+      "nearestMedian": 0.009267004168086047,
+      "pumpLostFirst": 30
+    },
+    {
+      "theme": "islands",
+      "n": 30,
+      "retentionRange": [
+        0.48327610878229693,
+        0.4919970039076169
+      ],
+      "exposureRange": [
+        0.4535644790376791,
+        0.5795601552393272
+      ],
+      "startRange": [
+        19,
+        20
+      ],
+      "largestGroup": 0.6333333333333333,
+      "groups": 2,
+      "nearestMedian": 0.009574632147587124,
+      "pumpLostFirst": 0
+    }
+  ],
+  "settleMaxError": 0,
+  "drought": {
+    "comparisons": 408,
+    "withinFivePercent": 353,
+    "failures": [
+      {
+        "id": "delta-128-1",
+        "days": 25,
+        "analytic": 59.854,
+        "simulated": 65.065,
+        "relativeError": 0.087,
+        "absoluteError": 5.211,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.045,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-10",
+        "days": 25,
+        "analytic": 50.658,
+        "simulated": 53.319,
+        "relativeError": 0.053,
+        "absoluteError": 2.661,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.026,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-11",
+        "days": 25,
+        "analytic": 59.17,
+        "simulated": 64.388,
+        "relativeError": 0.088,
+        "absoluteError": 5.217,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.045,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-12",
+        "days": 25,
+        "analytic": 60.378,
+        "simulated": 65.054,
+        "relativeError": 0.077,
+        "absoluteError": 4.676,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.037,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-14",
+        "days": 25,
+        "analytic": 70.336,
+        "simulated": 74.517,
+        "relativeError": 0.059,
+        "absoluteError": 4.181,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.038,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-15",
+        "days": 25,
+        "analytic": 57.169,
+        "simulated": 60.813,
+        "relativeError": 0.064,
+        "absoluteError": 3.643,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.03,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-16",
+        "days": 25,
+        "analytic": 67.548,
+        "simulated": 71.083,
+        "relativeError": 0.052,
+        "absoluteError": 3.535,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.028,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-17",
+        "days": 25,
+        "analytic": 48.311,
+        "simulated": 51.153,
+        "relativeError": 0.059,
+        "absoluteError": 2.842,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.028,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-18",
+        "days": 25,
+        "analytic": 59.173,
+        "simulated": 63.667,
+        "relativeError": 0.076,
+        "absoluteError": 4.494,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.038,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-19",
+        "days": 25,
+        "analytic": 60.909,
+        "simulated": 64.216,
+        "relativeError": 0.054,
+        "absoluteError": 3.307,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.033,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-2",
+        "days": 25,
+        "analytic": 47.011,
+        "simulated": 49.781,
+        "relativeError": 0.059,
+        "absoluteError": 2.77,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.026,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-20",
+        "days": 25,
+        "analytic": 70.864,
+        "simulated": 75.67,
+        "relativeError": 0.068,
+        "absoluteError": 4.806,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.041,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-21",
+        "days": 25,
+        "analytic": 73.211,
+        "simulated": 78.621,
+        "relativeError": 0.074,
+        "absoluteError": 5.41,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.036,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-22",
+        "days": 25,
+        "analytic": 72.531,
+        "simulated": 77.721,
+        "relativeError": 0.072,
+        "absoluteError": 5.19,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.038,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-23",
+        "days": 25,
+        "analytic": 41.536,
+        "simulated": 44.031,
+        "relativeError": 0.06,
+        "absoluteError": 2.496,
+        "initialVolumeError": 0.002,
+        "maxDepthError": 0.027,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-24",
+        "days": 25,
+        "analytic": 61.745,
+        "simulated": 65.287,
+        "relativeError": 0.057,
+        "absoluteError": 3.542,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.029,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-25",
+        "days": 25,
+        "analytic": 45.587,
+        "simulated": 49.466,
+        "relativeError": 0.085,
+        "absoluteError": 3.879,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.04,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-27",
+        "days": 25,
+        "analytic": 60.736,
+        "simulated": 65.346,
+        "relativeError": 0.076,
+        "absoluteError": 4.61,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.035,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-28",
+        "days": 25,
+        "analytic": 69.692,
+        "simulated": 75.582,
+        "relativeError": 0.085,
+        "absoluteError": 5.89,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.043,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-29",
+        "days": 25,
+        "analytic": 54.235,
+        "simulated": 58.068,
+        "relativeError": 0.071,
+        "absoluteError": 3.833,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.037,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-3",
+        "days": 25,
+        "analytic": 68.736,
+        "simulated": 72.448,
+        "relativeError": 0.054,
+        "absoluteError": 3.712,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.028,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-30",
+        "days": 25,
+        "analytic": 63.766,
+        "simulated": 67.394,
+        "relativeError": 0.057,
+        "absoluteError": 3.628,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.028,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-4",
+        "days": 25,
+        "analytic": 61.42,
+        "simulated": 64.863,
+        "relativeError": 0.056,
+        "absoluteError": 3.443,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.033,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-5",
+        "days": 25,
+        "analytic": 35.076,
+        "simulated": 37.179,
+        "relativeError": 0.06,
+        "absoluteError": 2.103,
+        "initialVolumeError": 0.002,
+        "maxDepthError": 0.03,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-6",
+        "days": 25,
+        "analytic": 58.183,
+        "simulated": 62.204,
+        "relativeError": 0.069,
+        "absoluteError": 4.021,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.035,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-7",
+        "days": 25,
+        "analytic": 63.335,
+        "simulated": 69.564,
+        "relativeError": 0.098,
+        "absoluteError": 6.228,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.048,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-128-9",
+        "days": 25,
+        "analytic": 67.89,
+        "simulated": 72.577,
+        "relativeError": 0.069,
+        "absoluteError": 4.687,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.039,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-256-1",
+        "days": 25,
+        "analytic": 59.282,
+        "simulated": 63.171,
+        "relativeError": 0.066,
+        "absoluteError": 3.889,
+        "initialVolumeError": 0.001,
+        "maxDepthError": 0.039,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-256-2",
+        "days": 25,
+        "analytic": 307.891,
+        "simulated": 327.374,
+        "relativeError": 0.063,
+        "absoluteError": 19.483,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.045,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-96-1",
+        "days": 25,
+        "analytic": 34.446,
+        "simulated": 36.194,
+        "relativeError": 0.051,
+        "absoluteError": 1.748,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.024,
+        "withinFivePercent": false
+      },
+      {
+        "id": "delta-96-2",
+        "days": 25,
+        "analytic": 27.034,
+        "simulated": 28.835,
+        "relativeError": 0.067,
+        "absoluteError": 1.801,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.022,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-1",
+        "days": 25,
+        "analytic": 10.672,
+        "simulated": 11.401,
+        "relativeError": 0.068,
+        "absoluteError": 0.729,
+        "initialVolumeError": 0.001,
+        "maxDepthError": 0.029,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-10",
+        "days": 25,
+        "analytic": 45.58,
+        "simulated": 47.863,
+        "relativeError": 0.05,
+        "absoluteError": 2.283,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.027,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-2",
+        "days": 9,
+        "analytic": 3.281,
+        "simulated": 3.574,
+        "relativeError": 0.089,
+        "absoluteError": 0.293,
+        "initialVolumeError": 0.001,
+        "maxDepthError": 0.027,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-20",
+        "days": 25,
+        "analytic": 36.154,
+        "simulated": 38.556,
+        "relativeError": 0.066,
+        "absoluteError": 2.401,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.031,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-26",
+        "days": 25,
+        "analytic": 31.828,
+        "simulated": 33.793,
+        "relativeError": 0.062,
+        "absoluteError": 1.965,
+        "initialVolumeError": 0.002,
+        "maxDepthError": 0.032,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-27",
+        "days": 25,
+        "analytic": 27.401,
+        "simulated": 28.982,
+        "relativeError": 0.058,
+        "absoluteError": 1.581,
+        "initialVolumeError": 0.002,
+        "maxDepthError": 0.032,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-4",
+        "days": 25,
+        "analytic": 55.552,
+        "simulated": 59.216,
+        "relativeError": 0.066,
+        "absoluteError": 3.664,
+        "initialVolumeError": 0.003,
+        "maxDepthError": 0.034,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-128-5",
+        "days": 25,
+        "analytic": 53.206,
+        "simulated": 56.246,
+        "relativeError": 0.057,
+        "absoluteError": 3.041,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.036,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-256-1",
+        "days": 25,
+        "analytic": 246.941,
+        "simulated": 264.175,
+        "relativeError": 0.07,
+        "absoluteError": 17.234,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.051,
+        "withinFivePercent": false
+      },
+      {
+        "id": "highlands-256-2",
+        "days": 25,
+        "analytic": 281.516,
+        "simulated": 304.291,
+        "relativeError": 0.081,
+        "absoluteError": 22.775,
+        "initialVolumeError": 0.007,
+        "maxDepthError": 0.05,
+        "withinFivePercent": false
+      },
+      {
+        "id": "islands-256-1",
+        "days": 25,
+        "analytic": 19015.198,
+        "simulated": 20000.934,
+        "relativeError": 0.052,
+        "absoluteError": 985.736,
+        "initialVolumeError": 0.024,
+        "maxDepthError": 0.085,
+        "withinFivePercent": false
+      },
+      {
+        "id": "islands-256-2",
+        "days": 25,
+        "analytic": 20771.341,
+        "simulated": 21931.391,
+        "relativeError": 0.056,
+        "absoluteError": 1160.05,
+        "initialVolumeError": 0.025,
+        "maxDepthError": 0.092,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-1",
+        "days": 25,
+        "analytic": 77.984,
+        "simulated": 81.929,
+        "relativeError": 0.051,
+        "absoluteError": 3.945,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.037,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-13",
+        "days": 25,
+        "analytic": 82.071,
+        "simulated": 86.973,
+        "relativeError": 0.06,
+        "absoluteError": 4.902,
+        "initialVolumeError": 0.006,
+        "maxDepthError": 0.033,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-15",
+        "days": 25,
+        "analytic": 69.157,
+        "simulated": 73.176,
+        "relativeError": 0.058,
+        "absoluteError": 4.019,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.033,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-16",
+        "days": 25,
+        "analytic": 75.967,
+        "simulated": 79.831,
+        "relativeError": 0.051,
+        "absoluteError": 3.864,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.034,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-17",
+        "days": 25,
+        "analytic": 82.702,
+        "simulated": 87.477,
+        "relativeError": 0.058,
+        "absoluteError": 4.774,
+        "initialVolumeError": 0.006,
+        "maxDepthError": 0.046,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-2",
+        "days": 25,
+        "analytic": 91.295,
+        "simulated": 96.099,
+        "relativeError": 0.053,
+        "absoluteError": 4.804,
+        "initialVolumeError": 0.006,
+        "maxDepthError": 0.029,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-21",
+        "days": 25,
+        "analytic": 72.436,
+        "simulated": 76.217,
+        "relativeError": 0.052,
+        "absoluteError": 3.781,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.03,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-3",
+        "days": 25,
+        "analytic": 62.374,
+        "simulated": 66.11,
+        "relativeError": 0.06,
+        "absoluteError": 3.736,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.032,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-6",
+        "days": 25,
+        "analytic": 62.204,
+        "simulated": 65.38,
+        "relativeError": 0.051,
+        "absoluteError": 3.175,
+        "initialVolumeError": 0.004,
+        "maxDepthError": 0.026,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-128-9",
+        "days": 25,
+        "analytic": 70.244,
+        "simulated": 73.816,
+        "relativeError": 0.051,
+        "absoluteError": 3.572,
+        "initialVolumeError": 0.005,
+        "maxDepthError": 0.036,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-256-1",
+        "days": 25,
+        "analytic": 269.472,
+        "simulated": 289.512,
+        "relativeError": 0.074,
+        "absoluteError": 20.04,
+        "initialVolumeError": 0.007,
+        "maxDepthError": 0.051,
+        "withinFivePercent": false
+      },
+      {
+        "id": "riverValley-96-2",
+        "days": 9,
+        "analytic": 3.281,
+        "simulated": 3.481,
+        "relativeError": 0.061,
+        "absoluteError": 0.201,
+        "initialVolumeError": 0.001,
+        "maxDepthError": 0.018,
+        "withinFivePercent": false
+      }
+    ],
+    "maxInitialVolumeError": 0.025,
+    "maxDepthError": 0.104,
+    "generatedToleranceFailures": [
+      {
+        "id": "lakeBasin-128-14",
+        "days": 9,
+        "analytic": 8426.411,
+        "simulated": 8588.392,
+        "relativeError": 0.019,
+        "absoluteError": 161.981,
+        "initialVolumeError": 0.014,
+        "maxDepthError": 0.104,
+        "withinFivePercent": true
+      }
+    ]
+  },
+  "normalDriftMax": 0.03400000000000003
+}
