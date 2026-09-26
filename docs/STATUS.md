@@ -1,7 +1,7 @@
 # Status
 
-One page, rewritten at every step and stop. Updated 2026-09-25, after recording Kyler's answers to
-the eight flags (D145). The decisions' full text is in
+One page, rewritten at every step and stop. Updated 2026-09-25, after the tall-maps probe batch and
+the Live editing preview. The decisions' full text is in
 [PLAN.md §20](../PLAN.md#20-editor-decisions), and the order of work in [ROADMAP.md](../ROADMAP.md).
 
 ## Decisions since M8
@@ -61,7 +61,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **D144** A contact-sheet image at every map-changing step, in `docs/sheets/`.
 - **D145** Kyler's answers to the eight flags, folded into the lines above. Also: M9a, M9b and M9c
   are approved as M9's stages; what goes into each waits for design version 2.
-- **Design version 2** is built on `investigation/generative-v2` (not started).
+- **Design version 2** is being built on `investigation/generative-v2` (PR #32).
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
 - D147: **Map look 2: water and shadows** before the Frame pass: a High mode with a proper water shader and soft sun shadows only; today's textures stay; AO, grading, richer textures and models later, optional.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
@@ -88,9 +88,14 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D173: #33's exact-weather speedups and scheduling, adopted as Weather view proposals.
 - D174: Real places review: 3D thumbnails with a crisp 2D top-down (two layouts to pick from), tighter framing, the survey patches may be re-downloaded, credits confirmed, three titles changed.
 - D176: design timing: new interface uses the existing shared styles and components until the Frame pass; after it, the design records; M12 and M13 get the finish review, no second full design pass.
+- D172 (1) confirmed: the tall-maps probe batch passed, so both validators allow heights up to 22 (built in the start and edge rules).
+- D177: in the Standard look, badwater blends smoothly into clean water by contamination (toward #4B3C37), a soft gradient over several tiles, distinct in greyscale; consistent with #38's High look.
+- D178: mine sites and ruins get models of our own: a sunken pit with a rusty frame and corner scaffolding; ruined scaffold towers with braces, panels and ivy on moist ground.
 
 ## Done and released
 
+- **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
+  <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
 - **#33** (exact-weather speedups) is merged; its proposals are adopted (D173).
 - **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
@@ -109,32 +114,40 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **The start and edge rules** (D151–D153), on branch `feature/start-edge-rules`.
+- **The start and edge rules** (D151–D153, and D172 (1)'s height limit of 22), on branch
+  `feature/start-edge-rules`.
 - **Resources like the official maps** (D167–D170), on branch `feature/resources`.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
-- **Live editing** (D158), on branch `feature/live-editing`: the triage first, then a playable
-  version for Kyler on the preview address.
-- Dependabot: the GitHub Actions updates (#26–#30) merge when CI is green; the majors (#24, #25)
-  wait for the deliberate upgrade step (D150).
+- **Live editing** (D158), on branch `feature/live-editing`: the triage and the terrain brushes
+  are on the preview address; the live shape tools come next.
+- **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
+  `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
+- Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
+  deliberate upgrade step (D150).
+- Queued for the next boundary, each merged once green: #34 (Pick a place, D166), then
+  `investigation/pickplace-water2`, `feature/save-to-timberborn` and #38 (Map look 2) when their PRs are open.
 
 ## Waiting on Kyler
 
-1. Whether two older look tests should compare the water's body, not its ripple crests, with
-   badwater (they pass through an alias today; see `docs/progress/map-look.md`).
+1. Try Live editing on <https://timbermods.github.io/dam-good-maps/preview/> and say what feels
+   wrong; it is released when it feels right.
 2. Kyler's own one-sentence intentions, for design version 2.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-4. A yes before each probe batch; the first is M9a's.
-5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
+4. The before and after captures of the Map look fixes (D177, D178), when they're ready.
+5. A yes before each probe batch; the next is M9a's.
+6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
    #51–#53.
-6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), and the M3 spike page
-   ([What Kyler needs to do](progress/kyler-todo.md), item 4).
+7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+   ([What Kyler needs to do](progress/kyler-todo.md), item 4), and deleting
+   `Documents\Timberborn\DGMProbe` (208 MB, left by an earlier probe runner) and the empty
+   PerformanceLog folders.
 
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D145.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D178.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.

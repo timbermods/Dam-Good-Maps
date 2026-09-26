@@ -727,6 +727,12 @@ The deviations are PLAN §20 D110, D114 and D115; decisions-pending #49 (the def
 **The clean-look round** (D135) is being built on branch `look/clean`: the clean default view and
 the information layer. Kyler approves the look from its captures; `map-look-done` waits for it.
 
+**Fix rounds after the clean look,** each on its own branch, judged by Kyler from before and after
+captures and released under its own tag; rendering only, so the map files don't change:
+contaminated ground as a layer (D154, `look-contamination-done`, released); badwater blending
+smoothly into clean water (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
+ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`).
+
 ---
 
 ## Real places
