@@ -1193,6 +1193,11 @@ become recipes inside the system (design §3).
     version 2), and the measures as permanent measures (information, D115; the dam-wall check
     blocks). Surprise me and high Variety may reach high Verticality now and then; most maps
     never do (D132).
+  - **Themes become optional leanings** (D208): the default is "Any" (Surprise me), combining
+    landforms, water features and intentions freely across the whole space; choosing a theme only
+    leans toward that kind of land, still varied by Variety and intentions. Measured: "Any" maps stay
+    coherent and playable (the batches' ≥98% rule blocks), and no theme's maps cluster into an
+    archetype (information, with the no-clone measure).
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
     direction as tool entries; suite requests for them; every reference solution re-run.
   - Acceptance (D115): blocking: M6, the dam-wall check, finds no built wall; information: the
