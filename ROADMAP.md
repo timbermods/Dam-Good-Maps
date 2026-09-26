@@ -840,6 +840,35 @@ the advanced extras.
 
 ---
 
+## Save to Timberborn
+
+A small step, soon (Kyler, 2026-09-25; PLAN §20 D162), the first half of one-click play. A **Save
+to Timberborn** button: using the browser's folder access (Chrome and Edge), the player picks
+`Documents\Timberborn\Maps` once, the site remembers it, and the button saves the map straight
+there, from the generator page, the editor's export and the Real places gallery. Other browsers
+keep the normal download with install help. Released as `save-to-timberborn-done`.
+
+**Blocking:** breakage (the saved file is the same bytes as the download; nothing else in the folder
+is touched) and what a player feels (one click, clear feedback, a plain fallback).
+
+---
+
+## Pick a place
+
+Right after Live editing, alongside M9: it doesn't touch the generator (Kyler, 2026-09-25; PLAN §20
+D160, moved from Later). Choose any spot on a world map (or paste coordinates, for example from
+Google Earth), pick size and scale, and get a playable map built from open elevation data with
+attribution, through the landscape survey's conversion pipeline (as M11's heightmap import, D159):
+vertical mapping, rivers from the drainage, water sources, a start by Kyler's rules, the current
+water rules (no walls or rims; draining allowed). Never Google's own data. If a place converts
+poorly, say so plainly and suggest a larger area or a different scale. It is the first step of the
+north-star journey (D161). Released as `pick-a-place-done`.
+
+**Blocking:** breakage (the map passes the validators and exports; attribution present; no edge
+walls, D151) and what a player feels (progress while it converts; never a frozen page).
+
+---
+
 ## M9. Interestingness, names, candidates, premises and variety
 
 **M9 design step first** (Kyler, 2026-09-25; PLAN §20 D108, D109). M9 is not built as written
@@ -1894,11 +1923,10 @@ export, load in Timberborn.
 
 ## Later
 
-**After M11: "Pick a place"** (Kyler, 2026-09-25; D160). Choose any spot on a world map (or paste
-coordinates, for example from Google Earth), pick size and scale, and get a playable map built from
-open elevation data with attribution, through the same conversion pipeline as the heightmap import
-and Real places. Never Google's own data. If a place converts poorly, say so plainly and suggest a
-larger area or a different scale.
+**Later, proposed: a companion mod for one-click play** (Kyler, 2026-09-25; D163). A small mod
+that lists newly saved Dam Good Maps maps in the game's main menu and starts one in one click,
+building on what the DGM Probe mod already does to open a map. For Kyler's approval before it's
+built.
 
 **After M12: a Dam Good Maps MCP server** (Kyler, 2026-09-25; D141). M12's tools (generate, steer
 with intentions, regenerate area, edit, validate, export) packaged as an MCP server, so Claude

@@ -63,6 +63,7 @@ text.
   - Real places (right after Map look) is tagged `real-places-done`;
   - Live editing is tagged `live-editing-done` once Kyler says it feels right; its preview is built from its
     branch into `/preview/` (noindex) by the deploy workflow;
+  - Save to Timberborn is tagged `save-to-timberborn-done`, and Pick a place `pick-a-place-done`;
   - the start and edge rules are tagged `start-edge-rules-done`; the Real places second round
     `real-places-2-done`; contaminated ground as a layer `look-contamination-done`, once Kyler approves it;
   - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;

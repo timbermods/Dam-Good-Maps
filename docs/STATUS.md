@@ -76,6 +76,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
 - D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
 - D161: the north-star journey: a striking place → Pick a place → the Weather view → Live editing → play; each step smooth, no gaps.
+- D160 (moved): Pick a place right after Live editing, alongside M9.
+- D162: Save to Timberborn, soon: pick the Maps folder once, then save straight into it (Chrome, Edge).
+- D163: later, proposed: a companion mod that lists and starts new Dam Good Maps maps from the game's menu.
 
 ## Done and released
 
