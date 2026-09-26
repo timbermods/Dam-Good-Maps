@@ -911,6 +911,7 @@ they conflict):
    or under placed objects.
    Flatten (D204) starts from the stroke's own height, cuts and fills, has Cliff or Ramped edges,
    hints where the start fits, and carries trees and objects with the ground.
+   Hold F to resize the brush by dragging (D205).
 2. **Water:** a reflection of the land being painted.
    - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
@@ -947,6 +948,9 @@ they conflict):
    clustered at official-like densities.
 4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
    (moisture, contamination, drought). The legend appears only while an overlay is on.
+   Also (D205): a corner minimap (on by default at 256², a toggle among the view buttons), small
+   satisfying feedback on every action with optional quiet sounds and reduced-motion support, and
+   camera bookmarks (Ctrl+Shift+1–9 to save, Shift+1–9 to glide back).
 5. **Header:** Undo and Redo icons with their shortcuts; one primary button, **Save to Timberborn**
    (merged in #40; in browsers that can't save to a folder, **Download .timber** takes its place);
    everything else (Open, Save project, Download .timber, History, New map) in one small menu.
@@ -2220,6 +2224,17 @@ the new screens; no second full design pass.
 refine, ask Claude, export, load in Timberborn.
 
 **Effort:** high.
+
+---
+
+## Build time-lapse
+
+Near M13, with the sharing features (Kyler, 2026-09-26; PLAN §20 D205): replay a map's edit history
+at speed from the generated map, with a camera that glides to each edit, and save it as a WebM video
+to share. The history is already a list of operations that replay exactly (D158), so this reads it;
+it adds nothing to the editor's screen until used.
+
+**Blocking:** the replay matches the map exactly at its end; the page never freezes while recording.
 
 ---
 

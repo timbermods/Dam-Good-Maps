@@ -45,6 +45,13 @@ editor is desktop-first (D185).
   natural clusters.
 - **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers, Clear water and the
   overlays (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The minimap** (D205): a small top-down view of the whole map in a corner, refreshed after edits
+  settle, with an outline of what the camera sees; click or drag on it to move there. On by default
+  for 256² maps, off for smaller ones, with a toggle among the view buttons.
+- **Juice** (D205): small satisfying feedback on every action (a soft thud as land rises, a puff of
+  dust when it's lowered, a pop and a wiggle when something is placed, a splash when a source starts,
+  fitting touches for the forces). Sounds are quiet and optional, with a volume and an off switch;
+  micro-animations follow the reduced-motion setting. Nothing new stays on screen unless in use.
 - **The hover readout:** a quiet corner line for what's under the cursor ("Height 11, dry soil"); over
   water, its depth, the bed level and its contamination (D196).
 - **The header:** Undo and Redo; one primary button, **Save to Timberborn** (**Download .timber** in
@@ -155,7 +162,10 @@ mode with the water shader and soft shadows (Map look 2, D147).
 Like the game: WASD and the arrow keys move (Shift moves faster), Q and E rotate, scroll zooms,
 Alt+scroll slices the visible layers from the top down, Alt+click jumps to a tile's layer, and T
 toggles clear water. Shift+scroll sets strength (brushes and a hovered source), [ and ] set size, Esc
-backs out. Every tool is reachable by keyboard, with labels for screen readers. (D180, D184, D196.)
+backs out. Hold F and move the mouse to resize the brush live, then click to set. Ctrl+Shift+1 to 9
+saves a camera bookmark (position, angle, zoom), and Shift+1 to 9 glides back to it; the number keys
+alone stay the brush shortcuts; bookmarks are saved with the project. Every tool is reachable by
+keyboard, with labels for screen readers. (D180, D184, D196, D205.)
 
 ## 8. The generator, Claude and the first run
 
@@ -168,6 +178,8 @@ backs out. Every tool is reachable by keyboard, with labels for screen readers. 
 
 ## 9. The future
 
+A time-lapse of how a map was built, near M13 with the sharing features: the edit history replayed
+at speed from the generated map, a camera gliding to each edit, saved as a WebM video to share (D205).
 Every future editing tool is brush-first and follows these principles: symmetry mirrors strokes live
 (M10), stamps are painted onto the land (M11), and cave carving is a brush (the 3D stages). (D179,
 D182.)
