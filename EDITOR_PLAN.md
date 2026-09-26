@@ -103,8 +103,9 @@ Make a valley, drop a source, and there's a river.
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).
 - **Carve, a force of nature** (D194): its own top-bar button next to Source. Unleash and Aim modes,
-  Defy gravity, and a Power slider from creek to catastrophe; the water cuts its own gorge or valley,
-  with floodplains and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
+  Defy gravity, a Power slider from creek to catastrophe, Width separate from Power, Wander, variation
+  within each carve, and "Try another path"; the water cuts its own gorge or valley, with floodplains
+  and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
   until Kyler says it's ready).
 - **Optional water sounds,** our own.
 - **What you watch is what you'll play:** the final water always matches the game's settled result.

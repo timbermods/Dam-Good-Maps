@@ -160,7 +160,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
+- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
+  round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
+  merged when he says it's ready.
 
 ## Waiting on Kyler
 
