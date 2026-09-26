@@ -6,8 +6,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
-const home = path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'DGMProbe');
+// the probe's folder comes with the launch, as for the real mod (-dgmprobe -dgmprobeHome <folder>)
+const at = process.argv.indexOf('-dgmprobeHome');
+if (!process.argv.includes('-dgmprobe') || at < 0) process.exit(4);
+const home = process.argv[at + 1];
 const job = JSON.parse(fs.readFileSync(path.join(home, 'job.json'), 'utf8'));
+// a mod of the player's rewrites its own data file at launch (Late Game Performance does)
+const modData = path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'SomeModData', 'markers.txt');
+if (fs.existsSync(modData)) fs.writeFileSync(modData, `rewritten by the game ${process.pid}`);
+// Steam Cloud rewrites its bookkeeping file at every launch
+const vdf = path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Saves', 'steam_autocloud.vdf');
+if (fs.existsSync(vdf)) fs.writeFileSync(vdf, `steam ${process.pid}`);
 const results = path.join(home, 'results', job.runId);
 fs.mkdirSync(results, { recursive: true });
 const once = (name) => {
@@ -25,6 +34,13 @@ fs.mkdirSync(path.dirname(save), { recursive: true });
 fs.writeFileSync(save, 'save');
 fs.mkdirSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Error reports'), { recursive: true });
 fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Error reports', `report-${process.pid}.zip`), 'report');
+// a stray DGMProbe folder (older runners kept their results there), and a player mod's own folder: a new
+// file and a rewritten one
+fs.mkdirSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'DGMProbe', 'shots'), { recursive: true });
+fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'DGMProbe', 'shots', `shot-${process.pid}.jpg`), 'shot');
+fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Mods', 'SomeMod', `session-${process.pid}.log`), 'session');
+const modConfig = path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Mods', 'SomeMod', 'config.txt');
+if (fs.existsSync(modConfig)) fs.writeFileSync(modConfig, `rewritten by the game ${process.pid}`);
 execFileSync('reg.exe', ['add', process.env.DGM_PROBE_REGISTRY_KEY, '/v', 'FakeSetting_h1', '/t', 'REG_DWORD', '/d', String(process.pid), '/f'], { stdio: 'ignore' });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

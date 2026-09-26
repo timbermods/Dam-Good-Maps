@@ -39,7 +39,7 @@ import {
 import { BrushCursor, type BrushCursorState } from "./brushCursor";
 import { buildEntities, disposeGroup } from "./entities3d";
 import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
-import { drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
+import { contaminationEdges, drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
 import { columnMap, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
 import { SKY, type GroundMode } from "./palette";
@@ -159,6 +159,8 @@ export class MapRenderer {
   private objectsMoved = false;
   private overlay: DataTexture | null = null;
   private marks: DataTexture | null = null;
+  /** Where the contamination outline runs (**Markers**): `contaminationEdges` of the tile data. */
+  private edges: DataTexture | null = null;
   private tileTex: DataTexture | null = null;
   private lightTex: DataTexture | null = null;
   private uniforms: SceneUniforms;
@@ -324,6 +326,8 @@ export class MapRenderer {
     }
     this.overlay = overlayTexture(W, H);
     this.marks = overlayTexture(W, H);
+    this.edges = overlayTexture(W, H);
+    contaminationEdges(W, H, tiles, this.edges.image.data as Uint8Array);
     this.tileTex = tileTexture(W, H, tiles);
     this.casters = objectCasters(W, H, v.entities);
     this.tops = { hi: new Float32Array(0), lo: new Float32Array(0) };
@@ -331,6 +335,7 @@ export class MapRenderer {
     const u = this.uniforms;
     u.overlay.value = this.overlay;
     u.marks.value = this.marks;
+    u.contamEdges.value = this.edges;
     u.hatching.value = 0;
     u.tileTex.value = this.tileTex;
     u.lightTex.value = this.lightTex;
@@ -408,9 +413,10 @@ export class MapRenderer {
     }
     this.overlay?.dispose();
     this.marks?.dispose();
+    this.edges?.dispose();
     this.tileTex?.dispose();
     this.lightTex?.dispose();
-    this.overlay = this.marks = this.tileTex = this.lightTex = null;
+    this.overlay = this.marks = this.edges = this.tileTex = this.lightTex = null;
     this.map = null;
   }
 
@@ -493,6 +499,10 @@ export class MapRenderer {
     if (!m || !this.tileTex) return;
     tileData(m.W, m.H, m.heights, m.sky, m.soil, m.surface, m.tiles);
     this.tileTex.needsUpdate = true;
+    if (this.edges) {
+      contaminationEdges(m.W, m.H, m.tiles, this.edges.image.data as Uint8Array);
+      this.edges.needsUpdate = true;
+    }
   }
 
   private setEntitiesInner(e: EntityView): number {
@@ -530,6 +540,11 @@ export class MapRenderer {
     if (this.tileTex) {
       tileDataRect(m.W, m.H, heights, m.sky, m.soil, m.surface, m.tiles, rect.x0 - r, rect.y0 - r, rect.x1 + r, rect.y1 + r);
       this.tileTex.needsUpdate = true;
+      // (the contamination outline reads the tile data)
+      if (this.edges) {
+        contaminationEdges(m.W, m.H, m.tiles, this.edges.image.data as Uint8Array);
+        this.edges.needsUpdate = true;
+      }
     }
     if (this.tops && this.lightTex && this.casters !== undefined) {
       shadowPairRect(this.tops, this.lightTex.image.data as Uint8Array, m.W, m.H, heights, this.casters, rect.x0, rect.y0, rect.x1, rect.y1);

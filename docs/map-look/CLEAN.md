@@ -38,8 +38,8 @@ listed in [clean/captures.md](clean/captures.md).
 - Nothing grows from afar, and dam sites are not drawn.
 
 **The information layer** (**Markers**, off by default): dam sites (hatched light and dark), slope
-arrows, a pale line at every wall level, and dead trees, slope arrows and the start drawn larger
-from afar. The **Markers** button beside **Height colours** turns it on; the choice is remembered.
+arrows, a pale line at every wall level, an outline where contaminated ground ends (since the
+contamination round), and dead trees, slope arrows and the start drawn larger from afar. The **Markers** button beside **Height colours** turns it on; the choice is remembered.
 In the editor, the **Dam site** tool shows the dam sites with the markers while it is out, and puts
 them away after; the **Slope** tool turns the markers on while it is out; **Show dam sites** turns
 them on too. The legend lists the clean view's meanings, then the lines that show "With **Markers**
@@ -59,6 +59,64 @@ clearly darker than clean water, which has shore foam, glints and see-through sh
 crests' colour is `WATER.crest` (its old name `deep` stays as an alias for two older tests); the
 water's body uses `WATER.teal` and `WATER.navy`.
 
+## Contamination round: contaminated ground as a layer
+
+Kyler, 2026-09-25: contaminated ground works as in the game, a layer on top of the ground, not a
+replacement.
+
+- **The ground keeps its own look.** Moist ground stays grass and dry ground stays cracked earth;
+  close up, the soil between the veins is only a little stained (at most a fifth of the way to
+  rust or to a sickly brown).
+- **Red-orange veins run over it, denser and brighter as contamination rises.** At the least
+  contamination a fifth of the vein network shows, at the most nearly all of it, and a second,
+  finer network joins from about half-way; the veins glow brighter too. On dry earth its own cracks
+  become the veins: rust rims round glowing orange cores. Through grass run dark red veins.
+- **Wet and dry contaminated ground differ.** Grass with dark red veins against earth with glowing
+  orange cracks.
+- **It reads through the vein pattern.** In greyscale the veins are light lines on earth, where
+  clean earth has dark cracks, and dark lines through grass. From afar, where the veins are too fine
+  to see, they tint the ground instead: rust on earth, dark red on grass, the more the more
+  contaminated. With protanopia and deuteranopia the veins stay dark lines through yellow grass and
+  light lines on grey earth; with tritanopia the whole contaminated area turns pink-red.
+- **No solid rust fill,** also in the light look for software rendering, which draws no patterns:
+  there contamination tints the ground a quarter to a half of the way, rust on earth, dark red on
+  grass.
+
+**With Markers on, an outline where contaminated ground ends** (Kyler, after approving the
+layer): a thin light line between dark edges traces the exact edge, so it shows on demand; the
+clean view keeps its gradual fade. It uses the hover text's rule (any contamination at all is
+contaminated ground), runs on the contaminated side of each edge (on the clean side where the
+contaminated ground is under water, never along the map's edge), follows the terrain, and is
+traced again whenever the soil or the water updates (`contaminationEdges`, from the terrain's tile
+data). It is a few pixels wide, at most a quarter of a tile. The legend lists it under "With
+**Markers** on". Captures: `docs/map-look/clean/contamination/edge-after-markers.jpg` and
+`area-after-markers.jpg`, with greyscale versions; the Markers captures of the clean set were made
+again with it. The walls' lip, the band of the top's ground along a wall's top edge, now shows the
+top's own ground under contamination too (it was the rust).
+
+The terrain shader reads the layer's settings (`CONTAMINATION` in `palette.ts`), and
+`contaminationVeins`, `contaminationVein` and `contaminatedGround` say what it draws, for the
+tests. Captures, before and after, with the after ones in greyscale and colour blindness:
+`docs/map-look/clean/contamination/` (`<scene>-before.jpg`, `<scene>-after.jpg`,
+`<scene>-after-<variant>.jpg`). The scenes: `wet` (contaminated grass), `dry` (contaminated dry
+earth), `edge` (where contamination thins out), `badside` (badwater beside contaminated ground),
+`area` (a contaminated area from further off) and `wide` (a wide band, wet and dry, from afar).
+The clean captures were made again with the layer.
+
+Three tests checked the old rust fill and were updated to the new rule (D148; logged in
+`docs/progress/map-look.md`):
+
+- `tests/unit/look-readable.test.ts`: "keep their order: dead trees, moist, dry, contaminated
+  ground, badwater" is now "keep their order: dead trees, moist, dry ground, badwater", and a new
+  test, "is a layer: the ground's own look stays under it, its veins grow denser and brighter with
+  contamination, wet and dry contaminated ground differ, and it reads in greyscale", holds the
+  contamination checks.
+- `tests/unit/look.test.ts`: "maps soil to moist, dry, contaminated or under water, in the
+  shader's order" now also checks that the colour under contamination is the soil's own ("...,
+  keeping the ground's own colour under contamination"), and "keeps the meanings apart in
+  brightness too (greyscale)" checks the veins instead of the rust fill ("...: grass, earth and its
+  cracks, contamination's veins, water").
+
 ## Where to look for each core meaning
 
 Positions are in pixels from the top-left corner of the capture (in `docs/map-look/clean/`); they
@@ -72,31 +130,30 @@ listed example in the clean captures of our maps.
 | Badwater meeting clean water | riverValley-256-meets, 482, 341 and 765, 353 | dark brown streaks and blotches drifting into the teal | between the two |
 | Moist ground | riverValley-128-badwater, 515, 546 | muted yellowish grass with clumps | 60 |
 | Dry ground | riverValley-128-badwater, 634, 411 | grey-brown cracked earth | 40 |
-| Contaminated ground | riverValley-128-badwater, 474, 403 | rust-red cracked earth with glowing cracks | 30 |
+| Contaminated ground | riverValley-128-badwater, 474, 403 (earth); 511, 498 (grass) | the ground's own look under red-orange veins: glowing orange cracks on earth, dark red veins through grass | its ground's (40 earth, 55 grass); the veins light on earth, dark on grass |
 | Living trees | riverValley-128-start, 382, 288 (oak) and 512, 247 (pine) | dark green crowns with shadows | dark |
 | Dead trees | riverValley-128-badwater, 393, 309 (pines); riverValley-128-start, 197, 184 (oaks) | pale bare trunks and stumps, far lighter than living crowns | pale |
 | The start | riverValley-128-start, 490, 355; riverValley-128-overview, 379, 409 | the lodge: red roof, pale walls and deck, yellow banner | light and dark together |
 
-From light to dark in greyscale: dead trees, moist ground, dry ground, then clean water and
-contaminated ground about alike, then badwater; living trees are dark. Clean water and
-contaminated ground differ in texture: water has light foam at its banks, glints and ripple
-crests, and contaminated ground a network of light cracks. With protanopia and deuteranopia grass
-turns yellow, contaminated ground dark olive, dry ground grey and clean water blue-grey; with
-tritanopia grass turns a pale grey-green, dry ground a greyish mauve, contaminated ground red and
-clean water teal. The markers captures (`*-markers.jpg`) show the information layer: dam sites at
+From light to dark in greyscale: dead trees, moist ground, dry ground, clean water, badwater;
+living trees are dark. Contaminated ground keeps its ground's lightness and reads by its veins:
+light lines on earth, dark lines through grass, and a darker tint from afar. With protanopia and
+deuteranopia grass turns yellow, dry ground grey, clean water blue-grey and contamination's veins
+dark olive; with tritanopia grass turns a pale grey-green, dry ground a greyish mauve,
+contaminated ground pink-red and clean water teal. The markers captures (`*-markers.jpg`) show the information layer: dam sites at
 riverValley-128-overview-markers 505, 408, slope arrows and the enlarged start and dead trees.
 
 ## Where readability needed a compromise
 
 - **In greyscale, clean water reads by texture, not lightness.** Since the second round it is as
-  dark as the game's: about as dark as contaminated ground (L\* 31 against 30) and darker than dry
-  ground (40). Up close its foam, glints and ripples tell it apart; in a view of the whole map a
+  dark as the game's: darker than dry ground (L\* 31 against 40). Up close its foam, glints and ripples tell it apart; in a view of the whole map a
   river reads by its shape and banks. Badwater stays about 18 L\* darker than clean water.
 - **Grass is lighter than in the game.** The game's grass and dry ground are about as light as each
   other; ours differ by about 20 L\* (60 against 40), so moist and dry ground read in greyscale and
   with colour blindness. It is now muted and yellower, as in the game.
-- **Contaminated ground is a brighter rust-red than the game's**, and a step darker than dry
-  ground, so it reads apart from dry ground and ruins in greyscale and with colour blindness.
+- **Contaminated ground reads by its veins, not its lightness.** Close up the vein pattern shows
+  it in any colours. From afar the veins merge into a tint, clear at high contamination and faint
+  where contamination is low: a lightly contaminated edge seen from afar reads only in colour.
 - **Dead trees at their true size are specks in a view of the whole map.** They read as pale
   poles and stumps from the game's usual distance; from afar only **Markers** draws them larger.
   The same holds for the start on a 256 map: a small red and pale spot in the overview.
@@ -111,6 +168,6 @@ riverValley-128-overview-markers 505, 408, slope arrows and the enlarged start a
 A local page, never committed, shows each of Kyler's reference screenshots beside the clean view
 of a comparable scene of our maps, the same scene in the third round's look, and a place for the
 DGM Probe's in-game shot of our map: `C:\dgm-workshop\look\compare.html`. Its first section shows
-the second round's water and grass before and after, beside the matching screenshots, with the
-water scenes in greyscale too. It links the screenshots where they are (`C:\dgm-reference\`) and
+the contamination round's scenes before and after, beside the matching screenshots, with the after
+scenes in greyscale and colour blindness; the next shows the second round's water and grass. It links the screenshots where they are (`C:\dgm-reference\`) and
 copies none.

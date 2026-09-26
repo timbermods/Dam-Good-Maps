@@ -61,12 +61,20 @@ text.
   - Map look (after M8, before M9) is tagged `map-look-done` once Kyler approves the look, or ships inside the M9
     release;
   - Real places (right after Map look) is tagged `real-places-done`;
+  - Live editing is tagged `live-editing-done` once Kyler says it feels right; its preview is built from its
+    branch into `/preview/` (noindex) by the deploy workflow;
+  - Save to Timberborn is tagged `save-to-timberborn-done`, and Pick a place `pick-a-place-done`;
   - the start and edge rules are tagged `start-edge-rules-done`; the Real places second round
     `real-places-2-done`; contaminated ground as a layer `look-contamination-done`, once Kyler approves it;
+  - the Map look fixes, once Kyler approves each: badwater blending `look-badwater-done`; mine sites and ruins
+    `look-mine-ruins-done`;
   - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
   - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
   - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
   - the Weather view (after the 3D stages, before M10) is tagged `weather-view-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
+- The deploy workflow can publish a branch at `/preview/` (noindex): run it by hand with `preview_ref=<branch>`
+  (Live editing's preview, refreshed after every iteration). Small changes to the deploy workflow itself are
+  released as their own tag, like `preview-workflow-done`.
 - Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
 - Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.
