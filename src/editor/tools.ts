@@ -348,7 +348,8 @@ export function featureFromRect(kind: ToolKind, r: Rect, o: ToolOptions, W: numb
 
 export type Rgba = [number, number, number, number];
 
-export const SELECTED: Rgba = [255, 208, 90, 105];
+/** The selected feature: its outline only, so its own ground shows through. */
+export const SELECTED: Rgba = [255, 208, 90, 190];
 export const MOVING: Rgba = [110, 214, 255, 150];
 export const DRAWING: Rgba = [150, 235, 120, 140];
 export const PREVIEW: Rgba = [90, 170, 255, 150];
@@ -368,6 +369,8 @@ export interface OverlayLayer {
   /** Shift the tiles by (dx, dy) (a move preview). */
   dx?: number;
   dy?: number;
+  /** Tint only the tiles on the edge of the set (a selection's outline). */
+  outline?: boolean;
 }
 
 /** Paint the overlay texture: tint the tiles of each layer (later layers on top). */
@@ -376,8 +379,19 @@ export function paintOverlay(data: Uint8Array, W: number, H: number, layers: rea
   for (const l of layers) {
     const dx = l.dx ?? 0;
     const dy = l.dy ?? 0;
+    let inSet: Uint8Array | null = null;
+    if (l.outline) {
+      inSet = new Uint8Array(W * H);
+      for (let k = 0; k < l.tiles.length; k++) inSet[l.tiles[k]] = 1;
+    }
     for (let k = 0; k < l.tiles.length; k++) {
       const i = l.tiles[k];
+      if (inSet) {
+        const ox = i % W;
+        const oy = (i - ox) / W;
+        const inner = ox > 0 && oy > 0 && ox < W - 1 && oy < H - 1 && inSet[i - 1] && inSet[i + 1] && inSet[i - W] && inSet[i + W];
+        if (inner) continue;
+      }
       const x = (i % W) + dx;
       const y = Math.floor(i / W) + dy;
       if (x < 0 || y < 0 || x >= W || y >= H) continue;

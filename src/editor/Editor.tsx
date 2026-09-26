@@ -27,7 +27,7 @@ import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
+import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import {
@@ -142,6 +142,8 @@ export default function Editor(props: EditorProps) {
   const [layer, setLayer] = useState<LayerKind>("none");
   const [waterLayers, setLayers] = useState<WaterLayers | null>(null);
   const [waterTick, setWaterTick] = useState(0);
+  /** The water is flowing into an edit's new shape (how far it has come, 0–1), or null. */
+  const [flowing, setFlowing] = useState<number | null>(null);
   const [instant, setInstant] = useState<CheckItem[]>([]);
   const [damSites, setDamSites] = useState<DamSiteView[] | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -306,6 +308,25 @@ export default function Editor(props: EditorProps) {
 
   useEffect(() => props.onChange(info), []);
 
+  // the worker's own news between its answers: the water as it flows after an edit, then the
+  // settled water with the soil and plants on it (live editing: an edit never waits on the water)
+  useEffect(() => {
+    void api.listen(
+      proxy((e: EditorEvent) => {
+        if (e.version !== infoRef.current.version) return;
+        if (e.kind === "water") {
+          mirror.current.water = surfaceWater(infoRef.current.W, infoRef.current.H, e.water);
+          renderer.current?.updateWater(e.water);
+          setFlowing(e.done);
+        } else if (e.kind === "settled") {
+          applyView(e.view);
+          setFlowing(null);
+        } else setInstant(e.instant.items.filter((c) => c.here && c.class === "load"));
+      }),
+    );
+    return () => void api.listen(null);
+  }, []);
+
   // ------------------------------------------------------------------------------- the view
 
   const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: mirror.current.entitiesAt, index: indexed, soil: mirror.current.soil });
@@ -335,7 +356,7 @@ export default function Editor(props: EditorProps) {
     if (damSites) for (const d of damSites) layers.push({ tiles: d.tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < info.W && y < info.H).map(([x, y]) => y * info.W + x), color: DAM });
     if (feature) {
       const tiles = indexed.tilesOf(feature);
-      layers.push({ tiles, color: SELECTED });
+      layers.push({ tiles, color: SELECTED, outline: true });
       if (drag && drag.id === feature.id && (drag.dx || drag.dy) && feature.kind !== "start") layers.push({ tiles, color: MOVING, dx: drag.dx, dy: drag.dy });
     }
     if (drawing) layers.push({ tiles: rectTiles(drawing, info.W), color: DRAWING });
@@ -821,6 +842,11 @@ export default function Editor(props: EditorProps) {
     saveFile(p.bytes, p.fileName, "application/gzip");
   }
 
+  // the dam sites' line in the legend, with their tiles (a click on it points to them)
+  const legendExtra = useMemo(
+    () => (damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites", markers: true, tiles: damSites.flatMap((d) => d.tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < info.W && y < info.H).map(([x, y]) => y * info.W + x)) }] : []),
+    [damSites, info.W, info.H],
+  );
   const notices = [...info.notices, ...(info.importReport?.changes.filter((c) => c.level === "warning").map((c) => c.message) ?? [])];
   const flags = info.importReport?.flags ?? [];
   const importChanges = info.importReport?.changes.length ?? 0;
@@ -859,7 +885,7 @@ export default function Editor(props: EditorProps) {
           <button type="button" class="ghost" aria-expanded={showHistory} onClick={() => setShowHistory(!showHistory)}>
             History{info.orphans.length ? ` (${info.orphans.length} to review)` : ""}
           </button>
-          <StatusPill check={check} busy={busy > 0} progress={progress} onOpen={() => setExporting(true)} />
+          <StatusPill check={check} busy={busy > 0} progress={progress} flowing={flowing} onOpen={() => setExporting(true)} />
           <label class="button ghost">
             Open
             <input
@@ -930,9 +956,9 @@ export default function Editor(props: EditorProps) {
             class="editor-view"
             label={`3D view of ${info.name}. Click a feature to select it. Drag to turn, right-drag to move, wheel to zoom.`}
             onReady={onReady}
-            legendExtra={damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites", markers: true }] : []}
+            legendExtra={legendExtra}
             markersWanted={damSites !== null || tool === "damSite" || tool === "slope"}
-            legendOpen={false}
+
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
               if (draftRef.current.length) setHoverTile(hit ? [hit.x, hit.y] : null);

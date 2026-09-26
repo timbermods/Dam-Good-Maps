@@ -2,7 +2,8 @@
 // responsive on 256² maps (PLAN §2.2, EDITOR_PLAN §8). The same core runs in Node for tests and
 // batch runs.
 
-import { expose, transfer } from "comlink";
+import { expose, proxy, transfer, wrap } from "comlink";
+import type { ChecksApi } from "./checks.worker";
 import type { EditOp, OpOrigin } from "../core/doc/ops";
 import { decodePlaceFile, placeTimber } from "../core/places/place";
 import type { MapSpec } from "../core/spec/mapspec";
@@ -21,6 +22,14 @@ function sendUpdate<T extends ed.SessionUpdate>(u: T): T {
 function sendOpen(o: ed.SessionOpen): ed.SessionOpen {
   return transfer(o, viewBuffers(o.view) as Transferable[]);
 }
+
+function eventBuffers(e: ed.EditorEvent): Transferable[] {
+  if (e.kind === "instant") return [];
+  return viewBuffers(e.kind === "water" ? { water: e.water } : e.view) as Transferable[];
+}
+
+// the page's worker settles the water by itself after each edit, and tells the page as it flows
+ed.setAutoWater(true);
 
 const api = {
   async generate(spec: MapSpec): Promise<GenerateResponse> {
@@ -43,6 +52,22 @@ const api = {
     return sendOpen(ed.openTimber(r.bytes, r.fileName));
   },
   sessionView: () => sendOpen(ed.sessionView()),
+  /** Where the worker sends the live water and the settled water after each edit. */
+  listen(fn: ((e: ed.EditorEvent) => void) | null) {
+    ed.listen(fn ? (e) => void fn(transfer(e, eventBuffers(e))) : null);
+  },
+  /** Hold the background water while the player paints (the option for very large maps). */
+  holdWater: (on: boolean) => ed.holdWater(on),
+  /** Resolves when the water has settled after the latest edit (tests and benchmarks). */
+  whenWaterSettles: () => ed.whenWaterSettles(),
+  /** The checks worker (a port to it): the checks run there, on a replica of the open map. */
+  connectChecks(port: MessagePort) {
+    const c = wrap<ChecksApi>(port);
+    ed.useChecksWorker({
+      follow: (p) => c.follow(p),
+      check: (v, onProgress) => c.check(v, onProgress ? proxy(onProgress) : undefined),
+    });
+  },
   sessionInfo: () => (ed.hasSession() ? ed.sessionInfo() : null),
   closeSession: () => ed.closeSession(),
   check: (op: EditOp) => ed.check(op),

@@ -15,6 +15,7 @@ import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
 import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
+import { plain } from "./words";
 import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
 
 // ------------------------------------------------------------------------------------- the tabs
@@ -881,8 +882,8 @@ export function HistoryPanel({ info, onJump, onClose }: { info: SessionInfo; onJ
 
 // ------------------------------------------------------------------------------ health and export
 
-export function StatusPill({ check, busy, progress, onOpen }: { check: ExportCheck | null; busy: boolean; progress?: CheckProgress | null; onOpen(): void }) {
-  let text = progress?.stage === "water" ? `Settling water ${Math.round(progress.done * 100)}%` : "Checking…";
+export function StatusPill({ check, busy, progress, flowing, onOpen }: { check: ExportCheck | null; busy: boolean; progress?: CheckProgress | null; flowing?: number | null; onOpen(): void }) {
+  let text = flowing !== null && flowing !== undefined ? "Water flowing…" : progress?.stage === "water" ? `Settling water ${Math.round(progress.done * 100)}%` : "Checking…";
   let tone = "wait";
   if (check && !busy) {
     if (check.blocking.length) {
@@ -1118,7 +1119,4 @@ export function ExportDialog(p: ExportDialogProps) {
   );
 }
 
-/** Engine messages name ids; the player sees plain words. */
-export function plain(text: string): string {
-  return text.replace(/\b(f-[a-z0-9]{6,}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/g, "it").replace(/^./, (c) => c.toUpperCase());
-}
+export { plain };

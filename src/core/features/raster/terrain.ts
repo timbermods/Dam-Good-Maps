@@ -55,10 +55,15 @@ export function rasterizeLandform(f: LandformFeature, t: BuildTarget): void {
   if (p.outline && p.height !== undefined) {
     const level = Math.min(MAX_TERRAIN, p.height);
     const step = edgeStep(p);
+    // a landform the player drew stands on the ground: it raises it, or lowers it, never both
+    const lowers = p.kind === "canyon" || p.kind === "valley";
+    const put = (i: number, v: number) => {
+      heights[i] = !p.onGround ? v : lowers ? Math.min(heights[i], v) : Math.max(heights[i], v);
+    };
     if (!step) {
       const mask = polygonMask(p.outline, t.W, t.H);
       t.forEach((i) => {
-        if (mask[i] && t.writable(i, f)) heights[i] = level;
+        if (mask[i] && t.writable(i, f)) put(i, level);
       });
       return;
     }
@@ -69,13 +74,20 @@ export function rasterizeLandform(f: LandformFeature, t: BuildTarget): void {
     t.forEach((i) => {
       const d = inward[i];
       if (d <= 0 || !t.writable(i, f)) return;
-      const k = Math.floor((d - 1) / step);
-      heights[i] = level >= base ? Math.min(level, base + 1 + k) : Math.max(level, base - 1 - k);
+      put(i, landformLevel(level, base, step, d));
     });
     return;
   }
   t.note(`landform ${f.id} (${p.kind}) has no shape this version can build`);
 }
+
+/** A gentle or terraced landform's level `d` tiles in from its outline (d ≥ 1): one level more
+ *  (or less) every `step` tiles from the base, up (or down) to its height. */
+export function landformLevel(level: number, base: number, step: number, d: number): number {
+  const k = Math.floor((d - 1) / step);
+  return level >= base ? Math.min(level, base + 1 + k) : Math.max(level, base - 1 - k);
+}
+
 
 /** Tiles between 1-level steps of a landform's edge: gentle 3, terraced its band depth (6–12);
  *  0 for a cliff (or a landform with no base). */

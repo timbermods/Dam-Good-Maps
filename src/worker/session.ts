@@ -9,9 +9,9 @@
 // blamed on the player's edits, so an unedited import always exports unchanged (PLAN §20, D43).
 
 import { damSites as findDamSites } from "../core/analysis/damsites";
-import { decodeProject, documentFileName } from "../core/doc/document";
+import { decodeProject, documentFileName, type MapDocument } from "../core/doc/document";
 import { MapSession, type DocOrphan, type HistoryItem, type SessionMode } from "../core/doc/session";
-import type { EditOp, OpOrigin } from "../core/doc/ops";
+import type { AppliedOp, EditOp, OpOrigin } from "../core/doc/ops";
 import {
   deleteEdit,
   kindName,
@@ -48,6 +48,7 @@ import type { Difficulty, MapSpec } from "../core/spec/mapspec";
 import { applyMergePatch } from "../core/spec/mergepatch";
 import { validateMap, type Validation } from "../core/validate/checks";
 import { canonicalRun, canonicalSettle, type CanonicalWater } from "../core/sim/prefill";
+import { PreviewJob, TICKS_PER_DAY, type WarmState } from "../core/sim/preview";
 import { droughtStorage } from "../core/sim/drought";
 import { rulesFor } from "../core/validate/playability";
 import { mapObjects, waterModel } from "../core/sim/model";
@@ -200,8 +201,8 @@ function entityInputs(list: readonly EntitySpec[]) {
   return out;
 }
 
-function waterOf(s: MapSession): WaterView {
-  const b = s.built;
+function waterOf(s: MapSession, live?: { depth: ArrayLike<number>; contamination: ArrayLike<number> }): WaterView {
+  const b = live ? { ...s.built, water: live.depth, contamination: live.contamination } : s.built;
   const roofed = s.roofedTiles;
   if (!s.showsStoredWater && !roofed.size) return waterFromDepth(b.heights, b.water, b.contamination);
   const w = s.storedWater();
@@ -311,8 +312,239 @@ function changed(s: MapSession, ok: boolean, errors: string[], t0: number): Sess
     lastCheck = null;
   }
   const view = ok ? viewUpdate(s) : {};
-  const instant = ok ? instantCheck(s) : null;
+  // with a checks worker the instant checks come as an event a moment later, off this worker
+  const instant = ok && !checks ? instantCheck(s) : null;
+  if (ok) {
+    kickWater();
+    syncChecks();
+  }
   return { ok, errors, info: sessionInfo(s), view, ms: Math.round(performance.now() - t0), instant };
+}
+
+// ------------------------------------------------------------------------------ the checks worker
+
+/** The page's checks run in a worker of their own on a replica of the open map (live editing:
+ *  the editor's worker never waits on a check). It follows this worker's map: the document when
+ *  the generation changes, otherwise the log. Without one (Node tests) they run here. */
+export interface ChecksWorker {
+  follow(p: FollowPayload): Promise<InstantCheck | null>;
+  check(version: number, onProgress?: (p: CheckProgress) => void): Promise<ReplicaCheck | null>;
+}
+
+/** What the replica needs to follow the open map. */
+export interface FollowPayload {
+  version: number;
+  /** The whole document, when the generation changed (or the replica has none yet). */
+  doc?: MapDocument;
+  /** Otherwise: keep the first `keep` operations of the replica's log and apply `add`. */
+  keep: number;
+  add: AppliedOp[];
+}
+
+/** The replica's check, with the canonical water it settled (for this worker to put in place). */
+export interface ReplicaCheck {
+  check: ExportCheck;
+  water: { model: WaterModel; water: CanonicalWater } | null;
+  /** An unedited import's water layers (its build keeps the file's water): the check's settle. */
+  layers?: { depth: Float64Array; contamination: Float64Array; moist: Float64Array; soil: Float64Array; model: WaterModel };
+}
+
+let checks: ChecksWorker | null = null;
+/** What the replica has: the generation it follows and the seqs of its log. */
+let followed: { gen: object; seqs: number[] } | null = null;
+
+export function useChecksWorker(c: ChecksWorker | null): void {
+  checks = c;
+  followed = null;
+  syncChecks();
+}
+
+/** Tell the checks worker what changed; its instant checks come back as an event. */
+function syncChecks(): void {
+  const s = session;
+  const c = checks;
+  if (!s || !c) return;
+  const log = s.logOps;
+  const seqs = log.map((o) => o.seq);
+  let p: FollowPayload;
+  if (!followed || followed.gen !== s.generationKey) {
+    p = { version, doc: s.document, keep: 0, add: [] };
+  } else {
+    let keep = 0;
+    while (keep < seqs.length && keep < followed.seqs.length && seqs[keep] === followed.seqs[keep]) keep++;
+    p = { version, keep, add: log.slice(keep) as AppliedOp[] };
+  }
+  followed = { gen: s.generationKey, seqs };
+  const v = version;
+  void c.follow(p).then(
+    (instant) => {
+      if (instant && v === version && session === s) listener?.({ kind: "instant", version: v, instant });
+    },
+    () => {
+      // the replica lost track: send the whole document next time
+      followed = null;
+    },
+  );
+}
+
+// the replica's side (the checks worker)
+
+/** Follow the editor's map (the checks worker's replica), and run the instant checks on it. */
+export function follow(p: FollowPayload): InstantCheck | null {
+  if (p.doc) {
+    const s = MapSession.open(p.doc);
+    s.setWaterMode("defer");
+    session = s;
+    sent = null;
+    originalFull = null;
+  } else {
+    const s = need();
+    const all = [...s.logOps.slice(0, p.keep), ...p.add];
+    s.followLog(all, all.reduce((m, o) => Math.max(m, o.seq + 1), 0));
+  }
+  version = p.version;
+  lastCheck = null;
+  return instantCheck(need());
+}
+
+/** The background check on the replica, with the canonical water it settled. */
+export async function replicaCheck(v: number, onProgress?: (p: CheckProgress) => void): Promise<ReplicaCheck | null> {
+  if (v !== version) return null;
+  const r = await backgroundCheck(onProgress);
+  if (!r) return null;
+  const s = need();
+  const water = !s.waterPending && !s.showsStoredWater && !s.built.waterFromFile ? { model: s.built.waterModel, water: s.built.settle } : null;
+  const lw = lastWater && lastWater.version === version ? lastWater : null;
+  return { check: r.check, water, ...(lw ? { layers: { depth: lw.depth, contamination: lw.contamination, moist: lw.moist, soil: lw.soil, model: lw.model } } : {}) };
+}
+
+// ------------------------------------------------------------------------------ the live water
+
+/** What the worker tells the page by itself, between its answers (`listen`). */
+export type EditorEvent =
+  /** The water as it flows after an edit (D133's live water): the whole view, a few times a
+   *  second. `done` is how far the settle has come (0–1). */
+  | { kind: "water"; version: number; water: WaterView; done: number }
+  /** The water has settled after an edit: the water, the soil and the plants on it. */
+  | { kind: "settled"; version: number; view: ViewUpdate; info: SessionInfo }
+  /** The instant checks of an edit (with a checks worker, they come a moment after the edit). */
+  | { kind: "instant"; version: number; instant: InstantCheck };
+
+let listener: ((e: EditorEvent) => void) | null = null;
+
+/** Where the worker sends its events (the page's editor, through the worker's entry). */
+export function listen(fn: ((e: EditorEvent) => void) | null): void {
+  listener = fn;
+}
+
+/** How the open map's edits treat the water: "defer" in the page (edits never wait on it), or
+ *  "preview" (each edit re-settles before it answers; tests of the older flow). */
+let waterMode: "defer" | "preview" = "defer";
+export function setEditorWaterMode(mode: "defer" | "preview"): void {
+  waterMode = mode;
+  session?.setWaterMode(mode);
+}
+
+/** Whether the worker settles the water by itself after each edit (the page's worker). Node tests
+ *  run `settleWater()` themselves. */
+let autoWater = false;
+export function setAutoWater(on: boolean): void {
+  autoWater = on;
+}
+
+/** The water settling in the background, and a token that a newer edit changes. */
+let waterJob: { token: number; job: PreviewJob; version: number; session: MapSession } | null = null;
+let waterToken = 0;
+/** The page holds the water while the player paints, when it asks to (a very large map). */
+let waterHeld = false;
+/** Ticks per slice, and how often the page gets the water as it flows. */
+const WATER_SLICE_MS = 10;
+const WATER_FRAME_MS = 150;
+
+export function holdWater(on: boolean): void {
+  waterHeld = on;
+}
+
+function stopWater(): void {
+  waterToken++;
+  waterJob = null;
+}
+
+/** Start settling the open map's water again, from the water in flight when there is one (so it
+ *  keeps flowing), else from the last settled water. */
+function kickWater(): void {
+  const s = session;
+  if (!s || !s.waterStale) {
+    stopWater();
+    return;
+  }
+  const inflight = waterJob && waterJob.session === s ? waterJob.job.state() : null;
+  const from: WarmState | null = inflight ?? s.lastSettled();
+  if (!from) return;
+  const token = ++waterToken;
+  waterJob = { token, job: new PreviewJob(from, s.built.waterModel), version, session: s };
+  if (autoWater) setTimeout(() => void runWater(token), 0);
+}
+
+/** The background settle: a slice at a time, the water to the page as it flows, then the settled
+ *  water in place (the plants follow it). Stops when a newer edit takes over. */
+async function runWater(token: number): Promise<void> {
+  let lastFrame = performance.now();
+  for (;;) {
+    const j = waterJob;
+    if (!j || j.token !== token || session !== j.session) return;
+    if (waterHeld) {
+      await new Promise((r) => setTimeout(r, 50));
+      continue;
+    }
+    const t0 = performance.now();
+    let r: CanonicalWater | null = null;
+    while (!r && performance.now() - t0 < WATER_SLICE_MS) r = j.job.advance(4);
+    if (r) {
+      finishWater(j, r);
+      return;
+    }
+    if (performance.now() - lastFrame > WATER_FRAME_MS && listener) {
+      lastFrame = performance.now();
+      const done = Math.min(0.99, j.job.ticks / TICKS_PER_DAY);
+      listener({ kind: "water", version, water: waterOf(j.session, { depth: j.job.sim.D, contamination: j.job.sim.C }), done });
+    }
+    await breathe();
+  }
+}
+
+function finishWater(j: NonNullable<typeof waterJob>, water: CanonicalWater): void {
+  waterJob = null;
+  const s = j.session;
+  if (session !== s || !s.adoptWater(j.job.model, water)) return;
+  const view = viewUpdate(s);
+  listener?.({ kind: "settled", version, view, info: sessionInfo(s) });
+}
+
+/** Settle the open map's water now (Node tests, and anything that must not wait for the
+ *  background): the same settle the background runs, in one go. */
+export function settleWater(): ViewUpdate {
+  const j = waterJob;
+  if (!j || session !== j.session) return {};
+  let r = j.job.advance(Infinity);
+  while (!r) r = j.job.advance(Infinity);
+  waterJob = null;
+  if (!j.session.adoptWater(j.job.model, r)) return {};
+  return viewUpdate(j.session);
+}
+
+/** Whether the water is still settling after an edit. */
+export function waterSettling(): boolean {
+  return !!waterJob && waterJob.session === session;
+}
+
+/** Resolves once the water has settled after the latest edit (at once when it has): tests and
+ *  benchmarks time the live water with it. */
+export function whenWaterSettles(): Promise<void> {
+  return new Promise((resolve) => {
+    const poll = () => (waterSettling() ? setTimeout(poll, 20) : resolve());
+    poll();
+  });
 }
 
 // ---------------------------------------------------------------------------------- instant checks
@@ -325,7 +557,7 @@ export function instantCheck(s: MapSession = need()): InstantCheck {
   // what the edit touched: the features it changed, old and new, and the ground that changed
   const parts = d ? [d.region, d.terrain].filter((r): r is NonNullable<typeof r> => !!r) : [];
   const region = parts.length ? { x0: Math.min(...parts.map((r) => r.x0)), y0: Math.min(...parts.map((r) => r.y0)), x1: Math.max(...parts.map((r) => r.x1)), y1: Math.max(...parts.map((r) => r.y1)) } : null;
-  const file = s.mode === "live" ? toTimberFile(s.spec!, s.built, { thumbnail: blankThumbnail() }) : s.exportFile();
+  const file = s.mode === "live" ? toTimberFile(s.spec!, s.built, { thumbnail: blankThumbnail() }) : s.exportFile(s.built, { thumbnail: false });
   const v = validateMap(file, { profile: "export", external: s.mode !== "live", spec: s.spec, designedFor: s.meta.designedFor, features: s.features, loadOnly: true });
   const items: CheckItem[] = [];
   const at = entityPositions(s);
@@ -363,14 +595,18 @@ function inRegion(where: CheckResult["where"], r: { x0: number; y0: number; x1: 
 // ------------------------------------------------------------------------------------ opening
 
 function opened(s: MapSession): SessionOpen {
-  // the editor previews water from its previous state; the canonical settle follows in the
-  // background, and always before an export (EDITOR_PLAN §6)
-  s.setPreviewWater(true);
+  // an edit never waits on the water (live editing): it shows the last settled water on the new
+  // ground at once, the water settles again in the background and flows into the new shape
+  // (`kickWater`), and the canonical settle follows, always before an export (EDITOR_PLAN §6)
+  s.setWaterMode(waterMode);
+  stopWater();
   session = s;
   sent = null;
   originalFull = null;
   lastCheck = null;
   version++;
+  followed = null;
+  syncChecks();
   return sessionView();
 }
 
@@ -393,6 +629,7 @@ export function openProject(bytes: Uint8Array): SessionOpen {
 }
 
 export function closeSession(): void {
+  stopWater();
   session = null;
   sent = null;
   originalFull = null;
@@ -460,6 +697,8 @@ export async function settingsResponse(): Promise<GenerateResponse> {
   const t0 = performance.now();
   const s = need();
   if (!s.spec) throw new Error("an imported map has no settings");
+  // the canonical water from the checks worker, when it has it, spares settling it here
+  if (checks && s.waterPending) await backgroundCheck().catch(() => null);
   const v = s.validate("export");
   return responseOf({
     spec: s.spec,
@@ -477,7 +716,7 @@ export async function settingsResponse(): Promise<GenerateResponse> {
 }
 
 /** Change the settings and regenerate, keeping the player's edits (a `specPatch`, PLAN §19.1). */
-export async function regenerate(target: MapSpec): Promise<{ ok: boolean; errors: string[]; response: GenerateResponse | null; info: SessionInfo; orphans: DocOrphan[]; unfit: { id: string; reason: string }[] }> {
+export async function regenerate(target: MapSpec): Promise<{ ok: boolean; errors: string[]; response: GenerateResponse | null; info: SessionInfo; orphans: DocOrphan[]; unfit: { id: string; reason: string }[]; editProblems: { id: string; message: string }[] }> {
   const t0 = performance.now();
   const s = need();
   const old = s.spec;
@@ -487,6 +726,8 @@ export async function regenerate(target: MapSpec): Promise<{ ok: boolean; errors
   if (r.ok) {
     version++;
     lastCheck = null;
+    stopWater();
+    syncChecks();
   }
   const response = r.ok
     ? await responseOf({
@@ -503,7 +744,7 @@ export async function regenerate(target: MapSpec): Promise<{ ok: boolean; errors
         edits: s.editCount,
       })
     : null;
-  return { ok: r.ok, errors: r.errors, response, info: sessionInfo(s), orphans: r.orphans, unfit: r.unfit };
+  return { ok: r.ok, errors: r.errors, response, info: sessionInfo(s), orphans: r.orphans, unfit: r.unfit, editProblems: r.editProblems };
 }
 
 /** The merge patch that turns the document's settings into the settings page's (seed, size,
@@ -659,6 +900,7 @@ async function settleInSlices(model: WaterModel, current: () => boolean, onProgr
  *  compare with the map as it was opened, checked the same way). Null when a newer edit made it
  *  stale. */
 export async function backgroundCheck(onProgress?: (p: CheckProgress) => void): Promise<BackgroundResult | null> {
+  if (checks) return remoteCheck(checks, onProgress);
   const s = need();
   const v0 = version;
   const token = ++bgToken;
@@ -671,6 +913,8 @@ export async function backgroundCheck(onProgress?: (p: CheckProgress) => void): 
     const w = await settleInSlices(run.model, current, onProgress);
     if (!w) return null;
     s.adoptWater(run.model, w);
+    // the canonical water replaces the preview's: the background preview has nothing left to do
+    stopWater();
     view = viewUpdate(s);
   }
   onProgress?.({ stage: "checks", done: 1 });
@@ -700,6 +944,24 @@ export async function backgroundCheck(onProgress?: (p: CheckProgress) => void): 
     v = s.validate("export");
   }
   return { check: grouped(s, v, t0), view, info: sessionInfo(s) };
+}
+
+/** The background check in the checks worker: its canonical water goes in place here (the view
+ *  and the export need it), with an unedited import's water layers. */
+async function remoteCheck(c: ChecksWorker, onProgress?: (p: CheckProgress) => void): Promise<BackgroundResult | null> {
+  const s = need();
+  const v0 = version;
+  if (lastCheck && lastCheck.version === version && !s.waterPending) return { check: lastCheck, view: {}, info: sessionInfo(s) };
+  const r = await c.check(v0, onProgress);
+  if (!r || version !== v0 || session !== s) return null;
+  let view: ViewUpdate = {};
+  if (r.water && s.waterPending && s.adoptWater(r.water.model, r.water.water)) {
+    stopWater();
+    view = viewUpdate(s);
+  }
+  if (r.layers) lastWater = { version: v0, ...r.layers };
+  lastCheck = r.check;
+  return { check: r.check, view, info: sessionInfo(s) };
 }
 
 /** Export the open map. Refused while load problems block it, or while warnings are not

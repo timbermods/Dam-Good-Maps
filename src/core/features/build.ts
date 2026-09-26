@@ -22,7 +22,7 @@ import { soilContamination } from "../sim/contamination";
 import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
 import { moisture } from "../sim/moisture";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
-import { previewSettle } from "../sim/preview";
+import { previewSettle, staleWater } from "../sim/preview";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
 import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
@@ -74,6 +74,10 @@ export interface BaseLayer {
   entities: readonly EntitySpec[];
   /** Features the base already contains (a stored generation): not rasterized again. */
   frozen?: ReadonlySet<string>;
+  /** The water the file stores on each tile's top (an imported map's own water): what the editor's
+   *  water warm-starts from after the first edit (marked `preview`, so a canonical build never
+   *  takes it for a settle). */
+  water?: CanonicalWater;
 }
 
 /** What a regeneration kept of the previous generation inside locked regions (EDITOR_PLAN §3). */
@@ -151,8 +155,10 @@ export interface BuildOptions {
   /** "preview": a rebuild whose water changed warm-starts from the previous build's water
    *  (sim/preview.ts, the editor's preview) instead of running the canonical settle. The result is
    *  marked `settle.preview`; `rebuild` without it replaces preview water with the canonical settle
-   *  (EDITOR_PLAN §6, PLAN §19.7). */
-  water?: "canonical" | "preview";
+   *  (EDITOR_PLAN §6, PLAN §19.7). "defer" (live editing): no settle at all; the last settled water
+   *  is carried over to the new ground (`staleWater`, marked `stale` and `preview`) and the editor
+   *  settles it in the background, so an edit never waits on the water. */
+  water?: "canonical" | "preview" | "defer";
 }
 
 /** The last canonical settle and the model it ran on. The settle depends only on the water model,
@@ -702,22 +708,34 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let settle: CanonicalWater | null = null;
   let settleEntry = prev?.settle ?? null;
   if (needWater) {
-    const preview = opts.water === "preview";
+    const preview = opts.water === "preview" || opts.water === "defer";
     // the previous water serves when nothing that moves water changed; preview water only in a
     // preview build (anything else gets the canonical settle)
     if (settleEntry && sameModel(settleEntry.model, settleEntry.emitters, model) && (preview || !settleEntry.water.preview)) settle = settleEntry.water;
     else {
       settle = opts.settleCache?.get(model) ?? null;
+      let carried = false;
       if (!settle) {
-        if (preview && settleEntry && settleEntry.model.W === W && settleEntry.model.H === H) settle = previewSettle({ model: settleEntry.model, water: settleEntry.water }, model);
+        const warm = settleEntry && settleEntry.model.W === W && settleEntry.model.H === H;
+        if (opts.water === "defer" && warm) {
+          // the last settled water on the new ground; the entry stays the last settled state, so
+          // the background settle (and an undo back to it) start from there
+          settle = staleWater({ model: settleEntry!.model, water: settleEntry!.water }, model);
+          carried = true;
+        } else if (preview && warm) settle = previewSettle({ model: settleEntry!.model, water: settleEntry!.water }, model);
         else {
           settle = canonicalSettle(model);
           opts.settleCache?.set(model, settle);
         }
       }
-      settleEntry = { model: { ...model, floor: model.floor.slice(), dam: model.dam ? model.dam.slice() : null }, emitters, water: settle };
+      if (!carried) settleEntry = { model: { ...model, floor: model.floor.slice(), dam: model.dam ? model.dam.slice() : null }, emitters, water: settle };
     }
   } else settleEntry = null;
+  // an imported map that keeps its file's water: that water is where the editor's next settle
+  // starts from (the file's water is not a canonical settle, so only preview builds take it)
+  if (fileWater && !settle && base?.water && (!settleEntry || !sameModel(settleEntry.model, settleEntry.emitters, model))) {
+    settleEntry = { model: { ...model, floor: model.floor.slice(), dam: model.dam ? model.dam.slice() : null }, emitters, water: base.water };
+  }
   const none = new Float64Array(N);
   const water = settle?.depth ?? none;
   const contamination = settle?.contamination ?? none;

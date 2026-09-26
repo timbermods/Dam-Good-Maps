@@ -158,6 +158,10 @@ export interface CanonicalWater extends SettleResult {
   /** The editor's warm-started preview (sim/preview.ts), not the canonical settle: never written
    *  to a file, and replaced by the canonical settle in the background (EDITOR_PLAN §6). */
   preview?: boolean;
+  /** The last settled water carried over to changed ground while the water settles again in the
+   *  background (sim/preview.ts `staleWater`): shown at once after an edit, never written to a
+   *  file. Always `preview` too. */
+  stale?: boolean;
 }
 
 /** The canonical settle: the pre-fill, then the exact simulation until it settles (at most 4 game

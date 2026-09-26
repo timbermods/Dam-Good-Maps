@@ -102,6 +102,11 @@ export interface LandformParams {
    *  terraced every `bandDepth` tiles (6–12). Without it, every edge is a cliff. */
   base?: number;
   bandDepth?: number;
+  /** The landform stands on the ground under it (the ones the player draws): it only ever raises
+   *  the ground (a hill, a plateau, a ridge, an island) or only ever lowers it (a canyon, a valley),
+   *  so ground higher than a hill's steps stays, and nothing is dug into the ground beside it.
+   *  Without it (generated layouts), the landform sets the ground to its levels. */
+  onGround?: boolean;
   /** Landforms of a generated layout follow a river: the valley floor and the terrace bands on
    *  each side of it. */
   along?: {

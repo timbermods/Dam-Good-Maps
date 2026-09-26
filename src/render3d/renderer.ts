@@ -182,7 +182,13 @@ export class MapRenderer {
   onHover: ((hit: TileHit | null) => void) | null = null;
   /** A left click (a press and release without dragging) on the map. */
   onClick: ((hit: TileHit | null, ev: PointerEvent) => void) | null = null;
+  /** The map drawn changed (its terrain, water, soil or objects): the legend reads it again. */
+  onMapChange: (() => void) | null = null;
   lastBuild: BuildStats | null = null;
+  /** Tiles the page points to (the legend's highlight), drawn over the page's own overlay. */
+  private highlight: Uint8Array | null = null;
+  /** The page's overlay as it painted it, without the highlight. */
+  private pageOverlay: Uint8Array | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -321,7 +327,16 @@ export class MapRenderer {
     ctx.readPixels(0, 0, 1, 1, ctx.RGBA, ctx.UNSIGNED_BYTE, new Uint8Array(4));
     const ms = performance.now() - t0;
     this.lastBuild = { ms, meshMs, chunks: nx * ny, terrainQuads, waterQuads, instances };
+    this.highlight = null;
+    this.pageOverlay = null;
+    this.onMapChange?.();
     return this.lastBuild;
+  }
+
+  /** The map as drawn (read only): the legend reads what is on it. */
+  mapState(): { W: number; H: number; heights: Uint8Array; surface: SurfaceWater; soil: SoilView | null; entities: EntityView } | null {
+    const m = this.map;
+    return m ? { W: m.W, H: m.H, heights: m.heights, surface: m.surface, soil: m.soil, entities: m.entities } : null;
   }
 
   /** The map's sides carried from level 0 down to three levels below its lowest ground, and its
@@ -482,6 +497,7 @@ export class MapRenderer {
       for (const [cx, cy] of chunks) this.meshWater(cx, cy, lower);
     }
     this.requestRender();
+    this.onMapChange?.();
     return chunks.length;
   }
 
@@ -500,6 +516,7 @@ export class MapRenderer {
     }
     this.bakeTiles();
     this.requestRender();
+    this.onMapChange?.();
     return changed.size;
   }
 
@@ -510,6 +527,7 @@ export class MapRenderer {
     m.soil = soil;
     this.bakeTiles();
     this.requestRender();
+    this.onMapChange?.();
   }
 
   updateEntities(e: EntityView): void {
@@ -517,6 +535,7 @@ export class MapRenderer {
     this.setEntitiesInner(e);
     this.bakeShadows();
     this.requestRender();
+    this.onMapChange?.();
   }
 
   /** Remesh every terrain chunk the renderer would touch for the tiles in rect (tests). */
@@ -540,6 +559,11 @@ export class MapRenderer {
   commitOverlay(): void {
     const m = this.map;
     if (!this.overlay || !this.marks || !m) return;
+    const data = this.overlay.image.data as Uint8Array;
+    // the page's own paint, kept apart from the highlight drawn over it
+    if (!this.pageOverlay || this.pageOverlay.length !== data.length) this.pageOverlay = new Uint8Array(data.length);
+    this.pageOverlay.set(data);
+    if (this.highlight) paintHighlight(data, m.W, m.H, this.highlight);
     this.overlay.needsUpdate = true;
     const marks = hatchMarks(m.W, m.H, this.overlay.image.data as Uint8Array, this.marks.image.data as Uint8Array);
     let any = 0;
@@ -547,6 +571,29 @@ export class MapRenderer {
     this.uniforms.hatching.value = any ? 1 : 0;
     this.marks.needsUpdate = true;
     this.requestRender();
+  }
+
+  /** Point to tiles on the map (the legend: "these are the dam sites"), until cleared with null.
+   *  Drawn over the page's overlay: a light tint, their edge brighter. */
+  setHighlight(tiles: ArrayLike<number> | null): void {
+    const m = this.map;
+    if (!m || !this.overlay) return;
+    const data = this.overlay.image.data as Uint8Array;
+    if (!this.pageOverlay) {
+      this.pageOverlay = new Uint8Array(data.length);
+      this.pageOverlay.set(data);
+    }
+    if (tiles && tiles.length) {
+      const h = new Uint8Array(m.W * m.H);
+      for (let k = 0; k < tiles.length; k++) h[tiles[k]] = 1;
+      this.highlight = h;
+    } else this.highlight = null;
+    data.set(this.pageOverlay);
+    this.commitOverlay();
+  }
+
+  get highlighted(): boolean {
+    return this.highlight !== null;
   }
 
   setHoverTile(x: number | null, y = 0): void {
@@ -949,6 +996,21 @@ export class MapRenderer {
     this.gl.dispose();
     // free the context now: browsers keep only a few, and the editor opens a view per map
     this.gl.forceContextLoss();
+  }
+}
+
+/** The legend's highlight over the overlay: the tiles lightly tinted, their edge strongly. */
+function paintHighlight(data: Uint8Array, W: number, H: number, h: Uint8Array): void {
+  for (let i = 0; i < h.length; i++) {
+    if (!h[i]) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    const edge = x === 0 || y === 0 || x === W - 1 || y === H - 1 || !h[i - 1] || !h[i + 1] || !h[i - W] || !h[i + W];
+    const o = i * 4;
+    data[o] = 40;
+    data[o + 1] = edge ? 150 : 200;
+    data[o + 2] = 255;
+    data[o + 3] = edge ? 230 : 120;
   }
 }
 

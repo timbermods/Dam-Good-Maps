@@ -71,6 +71,15 @@ button[aria-pressed="true"] {
   flex: 1 1 260px;
 }
 
+.preview-caption {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.banner.editing {
+  border-color: var(--accent);
+}
+
 .view-bar {
   display: flex;
   flex-wrap: wrap;
@@ -101,14 +110,21 @@ button[aria-pressed="true"] {
   margin-left: -1px;
 }
 
-/* the 3D view */
+/* the 3D view: the map, and its legend beside it */
 
-.view3d {
-  position: relative;
+.view3d-frame {
+  display: flex;
   border: 1px solid var(--rule);
   border-radius: 6px;
   overflow: hidden;
   background: var(--map-bg);
+}
+
+.view3d {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .view3d canvas {
@@ -148,6 +164,10 @@ button[aria-pressed="true"] {
 .view3d-controls button {
   padding: 5px 10px;
   font-size: 0.85rem;
+}
+
+.tool-hint button {
+  pointer-events: auto;
 }
 
 .view3d-controls button[aria-pressed="true"] {
@@ -387,6 +407,12 @@ button[aria-pressed="true"] {
   position: relative;
   min-width: 0;
   min-height: 0;
+  /* the legend's width beside the map: the panels on the map's right keep clear of it */
+  --legend-space: 34px;
+}
+
+.editor-map:has(.view3d-frame.legend-open) {
+  --legend-space: 214px;
 }
 
 .editor-view {
@@ -433,6 +459,8 @@ button[aria-pressed="true"] {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.9rem;
+  /* the map under it still takes clicks (the map's north edge often lies there) */
+  pointer-events: none;
 }
 
 .working {
@@ -444,7 +472,7 @@ button[aria-pressed="true"] {
 .inspector {
   position: absolute;
   top: 64px;
-  right: 10px;
+  right: calc(var(--legend-space, 0px) + 10px);
   width: 250px;
   padding: 12px;
   border-radius: 8px;
@@ -588,7 +616,7 @@ button[aria-pressed="true"] {
 
 .instant {
   left: auto;
-  right: 10px;
+  right: calc(var(--legend-space, 0px) + 10px);
   bottom: 52px;
   border-color: var(--bad);
 }
@@ -799,44 +827,103 @@ button[aria-pressed="true"] {
   }
 }
 
-/* the 3D view's legend (Map look): what the colours mean */
+/* the 3D view's legend (Map look): what the colours on this map mean, beside the map. Folded, it
+   is a strip that stays on screen. (Its look waits for the design pass.) */
 
 .view3d-legend {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  max-width: min(580px, calc(100% - 20px));
-  max-height: calc(100% - 20px);
-  overflow: hidden;
-  /* the map stays usable under the legend: only its summary takes the pointer */
-  pointer-events: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--overlay);
-  box-shadow: var(--shadow);
+  flex: none;
+  display: flex;
+  width: 214px;
+  border-left: 1px solid var(--rule);
+  background: var(--panel, var(--overlay));
+  font-size: 0.8rem;
+  min-height: 0;
+}
+
+.legend-folded .view3d-legend {
+  width: 34px;
+}
+
+.legend-fold {
+  flex: none;
+  width: 33px;
+  padding: 8px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.legend-fold span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.legend-body {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px 8px 8px 2px;
+}
+
+.legend-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.legend-toggles button {
+  padding: 4px 8px;
   font-size: 0.8rem;
 }
 
-.view3d-legend summary {
-  pointer-events: auto;
-  width: fit-content;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 2px 0;
+.legend-toggles button[aria-pressed="true"] {
+  background: var(--accent);
 }
 
 .view3d-legend ul {
   list-style: none;
   margin: 2px 0 4px;
   padding: 0;
-  display: grid;
-  grid-template-columns: auto auto;
-  column-gap: 14px;
+}
+
+.legend-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+button.legend-line {
+  cursor: pointer;
+}
+
+button.legend-line:hover,
+button.legend-line[aria-pressed="true"] {
+  background: rgba(40, 150, 255, 0.18);
+}
+
+button.legend-line[aria-pressed="true"] {
+  color: inherit;
+  border-color: transparent;
+  box-shadow: inset 0 0 0 2px rgba(40, 150, 255, 0.8);
 }
 
 @media (max-width: 760px) {
-  .view3d-legend ul {
-    grid-template-columns: auto;
+  .view3d-legend {
+    width: 180px;
   }
 }
 
@@ -852,10 +939,7 @@ button[aria-pressed="true"] {
 }
 
 .view3d-legend li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 3px 0;
+  margin: 1px 0;
 }
 
 .view3d-legend .swatch {

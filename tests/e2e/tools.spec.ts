@@ -54,10 +54,21 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   const drawn = i.features.find((f) => f.kind === "river" && f.origin === "user") as Extract<Feature, { kind: "river" }>;
   expect(drawn.params.entry).toEqual({ edge: "north" });
   expect(drawn.params.exit).toEqual({ river: main.id });
-  // its channel carries water: hover a tile of it
+  // its channel carries water: hover a tile of it. The river appears at once and its water flows
+  // in a moment later (live editing: an edit never waits on the water)
+  // (the new river is selected, and its inspector may lie over that tile: put it away first)
+  await page.getByRole("complementary", { name: /River, selected/ }).getByRole("button", { name: "Close" }).click();
   const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), [far, W - 6]);
-  await page.mouse.move(q.x, q.y);
-  await expect(page.locator(".readout")).toContainText(/water \d/);
+  await expect
+    .poll(
+      async () => {
+        await page.mouse.move(q.x + 2, q.y);
+        await page.mouse.move(q.x, q.y);
+        return (await page.locator(".readout").textContent().catch(() => "")) ?? "";
+      },
+      { timeout: 30_000 },
+    )
+    .toMatch(/water \d/);
 
   // a dam site: one click on the generated river, then Place
   await page.locator(".tools").getByRole("button", { name: "Dam site", exact: true }).click();

@@ -68,6 +68,11 @@ window.dgm = {
   },
 };
 
+/** What the page says when the new map is fine but the player's edits fail a check on it. */
+export function editProblemsNote(n: number): string {
+  return `The new map is ready. Your edits leave ${n === 1 ? "a problem" : `${n} problems`} on it, listed in the map's checks below. Refine the map to fix ${n === 1 ? "it" : "them"}.`;
+}
+
 function randomSeed(): number {
   const a = new Uint32Array(1);
   crypto.getRandomValues(a);
@@ -209,7 +214,8 @@ export function App() {
         setResult(r.response);
         scheduleSave();
         history.replaceState(null, "", "#" + encodeSpecFragment(r.response.spec));
-        if (!r.response.passed) setError(`No layout passed every check after ${r.response.attempts} attempts; this is the last one. Try another seed.`);
+        if (r.editProblems.length) setNote(editProblemsNote(r.editProblems.length));
+        else if (!r.response.passed) setError(`No layout passed every check after ${r.response.attempts} attempts; this is the last one. Try another seed.`);
         return;
       }
       if (session && session.kind === "generated" && session.edits === 0) {
@@ -508,12 +514,12 @@ export function App() {
         </div>
       ) : null}
       {session && session.kind === "import" ? (
-        <div class="banner" role="status">
+        <div class="banner editing" role="status">
           <span>
-            You are editing <strong>{session.name}</strong>.
+            You're editing <strong>{session.name}</strong>. The map below is a new one, made from these settings.
           </span>
           <button type="button" class="primary" onClick={() => void generator.sessionView().then(enterEditor)}>
-            Back to the editor
+            Back to editing
           </button>
         </div>
       ) : null}
@@ -584,6 +590,20 @@ export function App() {
               {error}
             </p>
           )}
+          {result ? (
+            <p class="preview-caption" data-shows={fromSession ? "edited" : "new"}>
+              {fromSession ? (
+                <>
+                  Your map: <strong>{result.name}</strong>
+                  {session && session.edits ? `, with your ${session.edits} edit${session.edits > 1 ? "s" : ""}` : ""}
+                </>
+              ) : (
+                <>
+                  {session && session.kind === "import" ? "New map from these settings" : "This map"}: <strong>{result.name}</strong>, seed {result.spec.seed}
+                </>
+              )}
+            </p>
+          ) : null}
           {result ? (
             preview === "3d" ? (
               Preview3D ? (
