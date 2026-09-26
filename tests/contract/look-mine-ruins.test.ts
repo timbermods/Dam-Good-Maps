@@ -48,12 +48,12 @@ describe("mine sites and ruins, models of our own", () => {
     const { group } = buildEntities(v, new ShaderMaterial());
     const W = page.W;
     const cut = mineCutout(v, W, page.H);
-    expect(cut.size).toBe(9 * mines.length);
+    expect(cut.size).toBe(25 * mines.length);
     for (let k = 0; k < v.count; k++) {
       const t = v.templates[v.template[k]];
       if (t !== "UndergroundRuins") continue;
       const tiles = footprintTiles(t, { template: t, x: v.x[k], y: v.y[k], z: v.z[k], orientation: ORIENTATION_NAMES[v.orientation[k]] as Orientation, flipped: false });
-      // the pit's tiles are the footprint's, at the site's level (its ground)
+      // the cut tiles are the footprint's, at the site's level (its ground)
       const own = new Set(tiles.map(([x, y]) => y * W + x));
       let inPit = 0;
       for (const [i, z] of cut) {
@@ -62,7 +62,7 @@ describe("mine sites and ruins, models of our own", () => {
         expect(z).toBe(v.z[k]);
         expect(page.heights[i]).toBe(v.z[k]);
       }
-      expect(inPit).toBe(9);
+      expect(inPit).toBe(25);
     }
     const mesh = group.children.find((c) => c.name === "UndergroundRuins") as unknown as { count: number; instanceMatrix: { array: ArrayLike<number> }; geometry: { getAttribute(n: string): { array: ArrayLike<number> } } };
     expect(mesh.count).toBe(mines.length);

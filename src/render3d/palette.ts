@@ -230,20 +230,19 @@ export const START = {
   banner: [1.0, 0.82, 0.16] as Rgb,
 } as const;
 
-/** Ruins (Kyler's round, D178; his colours, measured in the game): ruined scaffold towers, one
- *  storey per level: thin rusty posts, beams and braces (#8D5631), beige slab panels (#B8A775) and
- *  ivy (#405634) on moist ground. From afar each storey is a block: beige where it has panels, rust
- *  where it is open. Panels and posts are far lighter than rusty contaminated ground. */
+/** Ruins (Kyler's rounds, D178; his colours, measured in the game): ruined scaffold towers, one
+ *  storey per level: thin rusty posts, beams and braces (#8D5631), beige slab panels (#B8A775) and,
+ *  on moist ground, ivy (#405634 and a brighter green) over much of them. From afar each storey is
+ *  a block in the scaffolding's rust (what makes ruins read from afar), a pale panel set in where
+ *  it has one. The rust and the panels are lighter than rusty contaminated ground. */
 export const RUIN = {
   rust: [0.553, 0.337, 0.192] as Rgb,
   panel: [0.722, 0.655, 0.459] as Rgb,
   ivy: [0.251, 0.337, 0.204] as Rgb,
-  /** The ivy's lighter leaves. */
-  leaf: [0.34, 0.44, 0.26] as Rgb,
-  /** From afar: an open face (the rusty skeleton and what shows through it) and the top (the
-   *  skeleton's beams and the panels' edges): lighter than contaminated ground's rust. */
-  open: [0.49, 0.34, 0.21] as Rgb,
-  top: [0.6, 0.47, 0.32] as Rgb,
+  /** The ivy's brighter leaves. */
+  leaf: [0.36, 0.5, 0.24] as Rgb,
+  /** From afar: the top of a storey (its beams, lit from above), a brighter rust. */
+  top: [0.6, 0.38, 0.22] as Rgb,
 } as const;
 
 /** Slopes: a stone ramp; with **Markers** on, a pale arrow rimmed dark points uphill. */
@@ -263,11 +262,11 @@ export const THORNS: Rgb = [0.34, 0.16, 0.14];
  *  colour, so distant ground fades into it). */
 export const SKY = { zenith: [0.36, 0.55, 0.8] as Rgb, horizon: [0.64, 0.75, 0.87] as Rgb, below: [0.46, 0.6, 0.77] as Rgb, cloud: [0.93, 0.95, 0.97] as Rgb } as const;
 
-/** Mine sites (Kyler's round, D178; his colours, measured in the game): a pit with real depth sunk
- *  into the middle of the 5 × 5 footprint, its earth a dark grey-brown with roots, rubble and
- *  cracks; a rusty frame round it in a dull brown-orange (#844D2F); scaffolding at each corner with
- *  pale wooden platforms, crates and planks (#A78E65). With **Markers** on, an orange line between
- *  dark edges outlines the footprint, a few pixels wide from any distance. */
+/** Mine sites (Kyler's rounds, D178; his colours, measured in the game): a rusty frame in a dull
+ *  brown-orange (#844D2F) round the edge of the 5 × 5 footprint, and a pit with real depth filling
+ *  the rest, its earth a dark grey-brown with roots, rubble and cracks; scaffold towers on the
+ *  frame's corners with pale wooden platforms, crates and planks (#A78E65). With **Markers** on, an
+ *  orange line between dark edges outlines the footprint, a few pixels wide from any distance. */
 export const MINE = {
   /** The pit as it shows in its shade (about #373A34): the legend's colour. */
   pit: [0.216, 0.227, 0.204] as Rgb,
@@ -282,6 +281,8 @@ export const MINE = {
   floorEdge: [0.34, 0.35, 0.3] as Rgb,
   crack: [0.16, 0.16, 0.15] as Rgb,
   floorCrack: [0.24, 0.24, 0.21] as Rgb,
+  /** The shaft in the pit's floor. */
+  shaft: [0.2, 0.2, 0.18] as Rgb,
   root: [0.34, 0.25, 0.17] as Rgb,
   rootPale: [0.74, 0.64, 0.48] as Rgb,
   rubble: [[0.62, 0.58, 0.5], [0.44, 0.41, 0.36], [0.72, 0.67, 0.58]] as readonly Rgb[],
@@ -448,11 +449,12 @@ export function objectLegend(): LegendEntry[] {
       label: "Ruins: ruined scaffold towers, a storey per level",
     },
     {
-      // the pit in its rusty frame, pale crates on the corner platforms, a beam over the edge
+      // the rusty frame round the footprint, the pit filling it, pale platforms on the frame's
+      // corners, beams across
       swatch: icon(
-        `<rect x="5" y="1" width="14" height="14" fill="${c(MINE.frame)}"/><rect x="6.8" y="2.8" width="10.4" height="10.4" fill="${c(MINE.pit)}"/>` +
-          `<rect x="3.6" y="0" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.8" y="0" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="3.6" y="12.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.8" y="12.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/>` +
-          `<path d="M17.5 2.5 L12 8" stroke="${c(MINE.frame)}" stroke-width="1.2"/>`,
+        `<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="5.3" y="2.3" width="13.4" height="11.4" fill="${c(MINE.pit)}"/>` +
+          `<rect x="4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/>` +
+          `<rect x="4" y="6.2" width="16" height="0.9" fill="${c(MINE.frame)}"/><rect x="4" y="8.9" width="16" height="0.9" fill="${c(MINE.frame)}"/>`,
         dry,
       ),
       label: "Mine site: a pit in a rusty frame",

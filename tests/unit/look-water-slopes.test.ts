@@ -88,7 +88,8 @@ describe("ruins", () => {
   it("stand apart from rusty contaminated ground: rusty posts and beige panels far lighter, and lighter from afar", () => {
     expect(lum(RUIN.rust)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
     expect(lum(RUIN.panel)).toBeGreaterThan(lum(GROUND.contaminated) + 0.35);
-    for (const far of [RUIN.top, RUIN.open]) expect(lum(far)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
+    // from afar a storey is a block in the scaffolding's rust, its top a brighter rust
+    for (const far of [RUIN.top, RUIN.rust]) expect(lum(far)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
     // the panels are beige, not rust: far less red for their lightness
     const hue = (c: readonly number[]) => (c[0] - c[2]) / lum(c);
     expect(hue(RUIN.panel)).toBeLessThan(hue(GROUND.contaminated) - 0.5);

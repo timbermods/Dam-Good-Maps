@@ -9,25 +9,26 @@
 //   trees are bare: a pale grey-brown trunk and bare branches at the tree's true size, far lighter
 //   than the dark living crowns.
 // - Berry bushes: dark green, dotted with blue flowers.
-// - Ruins (Kyler's round, D178): ruined scaffold towers, one column per tile and one storey per
+// - Ruins (Kyler's rounds, D178): ruined scaffold towers, one column per tile and one storey per
 //   level of its height: a skeleton of thin rusty corner posts, a beam round every storey and
 //   diagonal braces on some faces; beige slab panels on some storeys and faces, some missing, a few
 //   tilted or broken; the top storey often only partly there. The five variants (A to E, the
 //   file's own) differ in bracing and panels, each in two layouts that alternate up the column.
-//   Ivy climbs the posts and hangs from the beams where the column stands on moist ground. A
-//   column is turned a quarter more than its east neighbour and a half more than its north one,
-//   and no layout looks the same turned, so neighbouring columns never look alike. From afar each
-//   storey is a solid block, its faces beige where it has panels and rusty where it is open.
+//   Where the column stands on moist ground, ivy covers much of every storey: leafy masses over
+//   every face, dark and brighter, climbing the posts and hanging from the beams. A column is
+//   turned a quarter more than its east neighbour and a half more than its north one, and no
+//   layout looks the same turned, so neighbouring columns never look alike. From afar each storey
+//   is a solid block in the scaffolding's rust, a pale panel set in where it has one, its ivy too.
 // - The start: a district center of our own, a lodge with pale walls, a dark roof and a yellow
 //   banner on a pale deck, its door facing the entrance, and a lit post on the entrance tile.
 // - Slopes: a stone ramp; with Markers, a level pale arrow rimmed dark floating just above it,
 //   pointing uphill (it reads from any camera angle). Water sources: a stone ring round a spring;
-//   badwater sources: a brown swirl in a dark pit. Mine sites (D178): a square pit sunk into the
-//   middle 3 × 3 tiles of the 5 × 5 footprint (the terrain leaves its tops out there, as the game
-//   hides the terrain under the site), with dark earthen walls and floor, roots, rubble, cracks and
-//   a ladder; a rusty frame round it; scaffolding at each corner with small platforms, pale crates
-//   and planks, and beams reaching over the edge, one with a bucket on a rope. With Markers, an
-//   outline round its footprint (the terrain shader). Geothermal fields: dark rock with glowing
+//   badwater sources: a brown swirl in a dark pit. Mine sites (D178): a rusty frame round the edge
+//   of the 5 × 5 footprint and a square pit filling the rest (the terrain leaves the footprint's
+//   tops out, as the game hides the terrain under the site), with dark earthen walls and floor,
+//   roots, rubble, cracks, a ladder and a shaft; scaffold towers on the frame's corners, joined
+//   into one structure, with beams across the pit and a bucket on a rope. With Markers, an outline
+//   round its footprint (the terrain shader). Geothermal fields: dark rock with glowing
 //   vents. Relics: broken stone columns on a plinth. Thorns: dark brambles. Blockages and natural
 //   dams: heaps of stones.
 // - Every other template: a box on each block its footprint occupies.
@@ -322,22 +323,23 @@ const MODELS: Record<string, () => Model> = {
 
 // ------------------------------------------------------------------------------ mine sites
 
-/** A mine site's pit: sunk into the middle 3 × 3 tiles of its 5 × 5 footprint (whose tops the
- *  terrain leaves out, `mineCutout`), `half` tiles either side of the footprint's middle and
- *  `depth` levels deep. */
-export const MINE_PIT = { half: 1.5, depth: 1.6 } as const;
+/** A mine site's pit: sunk into its whole 5 × 5 footprint (whose tops the terrain leaves out,
+ *  `mineCutout`, as the game hides the terrain under the site), `half` tiles either side of the
+ *  footprint's middle, inside the rusty frame round the footprint's edge, and `depth` levels deep. */
+export const MINE_PIT = { half: 2.18, depth: 1.6 } as const;
 
-/** A mine site, centred on its 5 × 5 footprint (Kyler's round, D178; our own model, true to the
- *  game's footprint): the pit with its earthen walls and floor, roots, rubble, cracks and a
- *  ladder; a rusty frame round the pit's edge; scaffolding at each corner, with a small platform,
- *  pale crates and planks, and a beam reaching over the edge (one with a bucket on a rope). Within
- *  ±2.5 of the middle: the footprint. */
+/** A mine site, centred on its 5 × 5 footprint (Kyler's rounds, D178; our own model, true to the
+ *  game's footprint): a rusty frame round the footprint's edge; inside it the pit, filling most of
+ *  the footprint, with its dark earthen walls and floor, roots hanging and running over the floor,
+ *  rubble, cracks, a ladder and a shaft in the middle; scaffold towers on the frame's corners, their
+ *  inner legs down in the pit, joined by rails into one structure, with beams across the pit and a
+ *  bucket on a rope. Within ±2.5 of the middle: the footprint. */
 function mineSite(): Model {
   const m = new Model();
   const p = MINE_PIT.half;
   const d = MINE_PIT.depth;
   // the pit's walls: a band of browner topsoil under a rusty lip, earth with a pale seam, darker
-  // toward the floor; the floor darker toward its edges
+  // toward the floor; the floor darker toward its edges, a shaft in its middle
   const soil = 0.38;
   const low = 0.34;
   for (let f = 0; f < 4; f++)
@@ -348,143 +350,148 @@ function mineSite(): Model {
       m.add(plane(2 * p, 0.05), MINE.seam, { y: -0.78 - 0.06 * (f % 2), z: -p + 0.006 });
       m.add(plane(2 * p, 0.2), shade(MINE.frame, 0.8), { y: -0.1, z: -p + 0.012 });
     });
-  m.add(plane(2 * p, 2 * p), MINE.floorEdge, { rx: -Math.PI / 2, y: -d });
-  m.add(plane(2 * p - 0.7, 2 * p - 0.7), MINE.floor, { rx: -Math.PI / 2, y: -d + 0.004 });
-  // cracks down the walls and across the floor: dark zigzags
+  const floor = (w: number, color: Rgb, y: number) => m.add(plane(w, w), color, { rx: -Math.PI / 2, y: -d + y });
+  floor(2 * p, MINE.floorEdge, 0);
+  floor(2 * p - 1.1, MINE.floor, 0.004);
+  floor(0.9, MINE.shaft, 0.012);
+  for (let f = 0; f < 4; f++) onFace(m, f, () => m.add(box(1.1, 0.1, 0.1), MINE.ladder, { y: -d + 0.05, z: -0.5 }));
+  // cracks down the walls and over the floor: dark zigzags
   const cracks: [number, number, number, number, number][] = [
     // face, x, top, length, lean
-    [0, -0.7, -0.25, 0.9, 0.25],
-    [0, 0.95, -0.5, 0.8, -0.3],
-    [1, -0.2, -0.3, 1.0, 0.2],
-    [2, 0.5, -0.2, 0.7, -0.2],
-    [3, -0.9, -0.4, 0.9, 0.3],
-    [3, 0.6, -0.6, 0.7, -0.25],
+    [0, -1.2, -0.25, 0.9, 0.25],
+    [0, 1.4, -0.5, 0.8, -0.3],
+    [1, -0.4, -0.3, 1.0, 0.2],
+    [1, 1.3, -0.55, 0.7, -0.2],
+    [2, 0.6, -0.2, 0.7, -0.2],
+    [2, -1.5, -0.45, 0.8, 0.25],
+    [3, -1.3, -0.4, 0.9, 0.3],
+    [3, 0.9, -0.6, 0.7, -0.25],
   ];
   for (const [f, x, top, len, lean] of cracks)
     onFace(m, f, () => {
       m.add(plane(0.05, len * 0.5), MINE.crack, { rz: lean, x, y: top - len * 0.25, z: -p + 0.01 });
       m.add(plane(0.04, len * 0.5), MINE.crack, { rz: -lean, x: x - Math.sin(lean) * len * 0.22, y: top - len * 0.72, z: -p + 0.01 });
     });
-  for (const [x, z, len, turn] of [[-0.55, 0.35, 0.8, 0.6], [-0.05, 0.62, 0.5, -0.5], [0.5, -0.35, 0.7, -0.9], [0.8, 0.05, 0.4, 0.4]] as const) m.add(box(len, 0.012, 0.018), MINE.floorCrack, { ry: turn, x, y: -d + 0.008, z });
-  // roots hanging from the edge, dark and pale
-  const roots: [number, number, number, number][] = [
-    // face, x, length, tilt
-    [0, -1.2, 0.6, 0.15],
-    [0, -0.95, 0.4, -0.2],
-    [0, -0.3, 0.45, -0.1],
-    [0, 1.05, 0.7, 0.2],
-    [1, -1.0, 0.55, -0.15],
-    [1, -0.45, 0.35, 0.2],
-    [1, 0.25, 0.8, 0.1],
-    [1, 1.1, 0.45, -0.2],
-    [2, -0.8, 0.6, 0.1],
-    [2, -0.1, 0.4, -0.2],
-    [2, 0.9, 0.7, -0.15],
-    [3, -1.1, 0.4, 0.15],
-    [3, -0.4, 0.65, 0.2],
-    [3, 0.7, 0.5, -0.1],
+  for (const [x, z, len, turn] of [[-1.1, 0.8, 0.9, 0.6], [0.9, 1.1, 0.7, -0.5], [1.2, -0.9, 0.8, -0.9], [-0.9, -1.2, 0.6, 0.4]] as const) m.add(plane(len, 0.022), MINE.floorCrack, { rx: -Math.PI / 2, ry: turn, x, y: -d + 0.008, z });
+  // roots: hanging from the rim down the walls, dark and pale, and running over the floor toward
+  // the shaft
+  const hanging: [number, number, number][] = [
+    // x, length, tilt
+    [-1.75, 0.9, 0.15],
+    [-1.2, 0.55, -0.2],
+    [-0.55, 1.05, 0.1],
+    [0.1, 0.6, -0.15],
+    [0.75, 0.95, 0.2],
+    [1.4, 0.5, -0.1],
+    [1.85, 0.8, 0.12],
   ];
-  roots.forEach(([f, x, len, tilt], k) =>
-    onFace(m, f, () => {
-      m.add(cone(0.045, len, 3), k % 3 ? MINE.root : MINE.rootPale, { rx: Math.PI, rz: tilt, x, y: -0.06 - len / 2, z: -p + 0.06 });
-    }),
-  );
-  // rubble along the walls and a heap in a corner
+  for (let f = 0; f < 4; f++)
+    hanging.forEach(([x, len, tilt], k) => {
+      if ((k + f) % 4 === 3) return;
+      const l = len * (0.8 + 0.1 * ((k * 3 + f) % 4));
+      onFace(m, f, () => m.add(cone(0.05, l, 3), (k + f) % 3 ? MINE.root : MINE.rootPale, { rx: Math.PI, rz: tilt, x: x * (f % 2 ? -1 : 1), y: -0.05 - l / 2, z: -p + 0.06 }));
+    });
+  for (let k = 0; k < 8; k++) {
+    // a root over the floor, from a wall toward the shaft
+    const a = (k * Math.PI) / 4 + 0.35;
+    const r0 = 0.75;
+    const r1 = p - 0.15;
+    const len = r1 - r0;
+    m.add(cone(0.035, len, 3), k % 2 ? MINE.root : MINE.rootPale, { rz: Math.PI / 2, ry: a, x: Math.cos(a) * (r0 + len / 2), y: -d + 0.03, z: -Math.sin(a) * (r0 + len / 2) });
+  }
+  // rubble along the walls and heaps in two corners
   const rubble: [number, number, number, number][] = [
     // x, z, radius, shade
-    [-1.12, -1.08, 0.32, 0],
-    [-0.72, -1.22, 0.22, 1],
-    [-1.22, -0.62, 0.24, 2],
-    [-0.88, -0.78, 0.17, 1],
-    [-0.5, -1.25, 0.14, 2],
-    [1.18, 0.4, 0.24, 0],
-    [1.2, 0.9, 0.18, 2],
-    [0.85, 1.2, 0.15, 1],
-    [0.3, 1.22, 0.2, 1],
-    [-0.4, 1.25, 0.15, 0],
-    [0.95, -1.18, 0.16, 2],
-    [0.15, -0.2, 0.12, 1],
-    [-0.35, 0.3, 0.1, 2],
+    [-1.8, -1.75, 0.34, 0],
+    [-1.35, -1.9, 0.24, 1],
+    [-1.9, -1.25, 0.26, 2],
+    [-1.45, -1.4, 0.18, 1],
+    [-0.8, -1.95, 0.15, 2],
+    [1.85, 0.7, 0.26, 0],
+    [1.9, 1.25, 0.2, 2],
+    [1.4, 1.85, 0.17, 1],
+    [0.5, 1.9, 0.22, 1],
+    [-0.6, 1.95, 0.16, 0],
+    [1.5, -1.85, 0.18, 2],
+    [-1.95, 0.4, 0.2, 1],
+    [0.7, -0.75, 0.12, 2],
+    [-0.6, 0.65, 0.1, 0],
   ];
   rubble.forEach(([x, z, r, s], k) => m.add(k % 2 ? oct(r) : ico(r), MINE.rubble[s], { x, y: -d + r * 0.4, z, sy: 0.6, ry: k }));
   // a ladder down the north wall (the far wall from the game's camera)
-  const lx = 0.45;
+  const lx = -0.5;
   const lz = -p + 0.07;
-  for (const sx of [-0.17, 0.17]) m.add(bar(0.025, d + 0.42), MINE.ladder, { x: lx + sx, y: (0.42 - d) / 2, z: lz });
+  for (const sx of [-0.17, 0.17]) m.add(bar(0.025, d + 0.45), MINE.ladder, { x: lx + sx, y: (0.45 - d) / 2, z: lz });
   for (let k = 0; k < 6; k++) m.add(box(0.36, 0.035, 0.04), MINE.ladder, { x: lx, y: -d + 0.2 + k * 0.28, z: lz });
-  // the rusty frame round the edge: four beams on the ground, a lighter strip along each
-  const fw = 0.22;
+  // the rusty frame round the footprint's edge: four beams, a lighter strip along each
+  const fw = 2.5 - p;
   for (let f = 0; f < 4; f++)
     onFace(m, f, () => {
-      m.add(box(2 * p + 2 * fw, 0.14, fw), MINE.frame, { y: 0.07, z: -p - fw / 2 });
-      m.add(box(2 * p + 2 * fw - 0.1, 0.03, 0.05), shade(MINE.frame, 1.12), { y: 0.155, z: -p - fw + 0.03 });
+      m.add(box(5, 0.2, fw), MINE.frame, { y: 0.05, z: -p - fw / 2 });
+      m.add(box(5 - 0.12, 0.03, 0.06), shade(MINE.frame, 1.12), { y: 0.16, z: -2.5 + 0.06 });
     });
-  // scaffolding at each corner
-  for (let k = 0; k < 4; k++) tower(m, k);
-  // planks and crates on the ground between the towers
-  m.add(box(1.5, 0.05, 0.16), MINE.wood, { x: 0.1, y: 0.03, z: 2.2, ry: 0.04 });
-  m.add(box(1.3, 0.05, 0.15), shade(MINE.wood, 0.9), { x: -0.05, y: 0.08, z: 2.05, ry: -0.06 });
-  m.add(box(0.34, 0.3, 0.34), MINE.wood, { x: -2.15, y: 0.15, z: 0.3, ry: 0.3 });
-  m.add(box(0.26, 0.24, 0.26), shade(MINE.wood, 0.86), { x: -2.12, y: 0.12, z: -0.2, ry: -0.2 });
-  m.add(box(0.28, 0.26, 0.28), shade(MINE.wood, 0.94), { x: 2.1, y: 0.13, z: -0.4, ry: 0.5 });
+  // scaffold towers on the frame's corners, joined at the top by rails along the west and east
+  // sides, which carry two beams across the pit: one structure; a crossbar and a bucket on a rope
+  const h = 1.3;
+  for (let k = 0; k < 4; k++) tower(m, k, h);
+  for (const f of [1, 3]) onFace(m, f, () => m.add(box(4.9, 0.07, 0.07), shade(MINE.frame, 0.92), { y: h - 0.04, z: -2.43 }));
+  for (const z of [-0.42, 0.42]) m.add(box(4.9, 0.09, 0.09), MINE.frame, { y: h - 0.02, z });
+  m.add(box(0.12, 0.08, 0.95), shade(MINE.frame, 0.85), { y: h + 0.06 });
+  const drop = h + 0.95;
+  m.add(bar(0.012, drop), MINE.rope, { y: h - drop / 2 });
+  m.add(post(0.12, 0.15, 0.22, 6), shade(MINE.frame, 0.7), { y: h - drop - 0.1 });
+  // planks lying on the frame
+  m.add(box(1.4, 0.05, 0.16), MINE.wood, { x: 0.2, y: 0.18, z: 2.34, ry: 0.03 });
+  m.add(box(1.1, 0.05, 0.15), shade(MINE.wood, 0.9), { x: -2.34, y: 0.18, z: -0.3, ry: Math.PI / 2 + 0.04 });
   return m;
 }
 
-/** A corner's scaffold tower of a mine site (corner k: 0 north-east, 1 south-east, 2 south-west,
- *  3 north-west): four rusty posts, a small platform of pale planks with crates on it, a rail, a
- *  brace, and a beam reaching from its top over the pit's edge. */
-function tower(m: Model, k: number): void {
+/** A scaffold tower on a corner of a mine site's frame (corner k: 0 north-east, 1 south-east, 2
+ *  south-west, 3 north-west), `h` high: four rusty posts, the inner one standing down in the pit;
+ *  a platform of pale planks with crates, overhanging the pit's corner; a rail and a brace on its
+ *  outer faces. */
+function tower(m: Model, k: number, h: number): void {
   const sx = k === 0 || k === 1 ? 1 : -1;
   const sz = k === 1 || k === 2 ? 1 : -1;
-  const c = 1.98;
+  const c = 2.02;
   const cx = sx * c;
   const cz = sz * c;
-  const e = 0.34;
-  const h = 1.42;
-  for (const [ax, az] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) m.add(bar(0.035, h), MINE.frame, { x: cx + ax * e, y: h / 2, z: cz + az * e });
-  // the platform, a rail on its two outer sides, and a brace on one
-  m.add(box(0.8, 0.06, 0.8), MINE.wood, { x: cx, y: 0.98, z: cz });
-  m.add(box(0.76, 0.02, 0.1), shade(MINE.wood, 0.8), { x: cx, y: 1.02, z: cz + 0.2 });
-  m.add(box(2 * e + 0.07, 0.05, 0.05), shade(MINE.frame, 0.9), { x: cx, y: h - 0.03, z: cz + sz * e });
-  m.add(box(0.05, 0.05, 2 * e + 0.07), shade(MINE.frame, 0.9), { x: cx + sx * e, y: h - 0.03, z: cz });
-  m.add(box(0.05, 0.05, 2 * e + 0.07), shade(MINE.frame, 0.9), { x: cx + sx * e, y: 0.55, z: cz });
-  // (the brace is built across x, then turned to run along z on the tower's outer x side)
+  const e = 0.41;
+  const p = MINE_PIT.half;
+  for (const [ax, az] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+    const x = cx + ax * e;
+    const z = cz + az * e;
+    // on the frame, or down in the pit
+    const foot = Math.abs(x) >= p || Math.abs(z) >= p ? 0.15 : -MINE_PIT.depth;
+    m.add(bar(0.04, h - foot), MINE.frame, { x, y: (h + foot) / 2, z });
+  }
+  m.add(box(0.9, 0.06, 0.9), MINE.wood, { x: cx, y: 0.95, z: cz });
+  m.add(box(0.86, 0.02, 0.1), shade(MINE.wood, 0.8), { x: cx, y: 0.99, z: cz - sz * 0.22 });
+  // a lower rail on the outer faces, and a brace on each
+  m.add(box(2 * e + 0.08, 0.05, 0.05), shade(MINE.frame, 0.9), { x: cx, y: 0.5, z: cz + sz * e });
+  m.add(box(0.05, 0.05, 2 * e + 0.08), shade(MINE.frame, 0.9), { x: cx + sx * e, y: 0.5, z: cz });
+  strut(m, cx - e, 0.18, cx + e, 0.92, cz + sz * e, 0.022, shade(MINE.frame, 0.85));
+  // (the second brace is built across x, then turned to run along z on the tower's outer x side)
   const before = m.pos.length / 3;
-  strut(m, -e, 0.06, e, 0.95, 0, 0.022, shade(MINE.frame, 0.85));
+  strut(m, -e, 0.18, e, 0.92, 0, 0.022, shade(MINE.frame, 0.85));
   rotateTail(m, m.pos.length / 3 - before, Math.PI / 2, 0);
   moveTail(m, m.pos.length / 3 - before, cx + sx * e, cz);
-  // crates on the platform, one or two, and one at the foot
-  m.add(box(0.3, 0.28, 0.3), MINE.wood, { x: cx + sx * 0.12, y: 1.15, z: cz + sz * 0.1, ry: 0.2 * k });
-  if (k % 2 === 0) m.add(box(0.22, 0.2, 0.22), shade(MINE.wood, 0.85), { x: cx - sx * 0.16, y: 1.11, z: cz + sz * 0.14, ry: -0.3 });
-  else m.add(box(0.6, 0.04, 0.14), shade(MINE.wood, 0.92), { x: cx - sx * 0.05, y: 1.03, z: cz - sz * 0.2, ry: 0.5 });
-  m.add(box(0.26, 0.24, 0.26), shade(MINE.wood, 0.9 + 0.05 * k), { x: cx + sx * 0.08, y: 0.12, z: cz + sz * 0.1, ry: 0.4 + k });
-  // a beam from the top over the pit's edge (longer from two corners), a bucket on a rope from one
-  const long = k % 2 === 0;
-  const len = long ? 1.45 : 0.95;
-  const a = Math.atan2(sz, -sx);
-  const x0 = cx - sx * e;
-  const z0 = cz - sz * e;
-  const ux = -sx * Math.SQRT1_2;
-  const uz = -sz * Math.SQRT1_2;
-  m.add(box(len, 0.08, 0.08), MINE.frame, { ry: a, x: x0 + (ux * len) / 2, y: h - 0.06, z: z0 + (uz * len) / 2 });
-  if (k === 0) {
-    const bx = x0 + ux * (len - 0.1);
-    const bz = z0 + uz * (len - 0.1);
-    const drop = h + 0.35;
-    m.add(bar(0.01, drop), MINE.rope, { x: bx, y: h - 0.08 - drop / 2, z: bz });
-    m.add(post(0.1, 0.12, 0.18, 6), shade(MINE.frame, 0.7), { x: bx, y: -0.52, z: bz });
-  }
+  // crates on the platform, and a plank
+  m.add(box(0.3, 0.28, 0.3), MINE.wood, { x: cx + sx * 0.14, y: 1.12, z: cz + sz * 0.12, ry: 0.2 * k });
+  if (k % 2 === 0) m.add(box(0.22, 0.2, 0.22), shade(MINE.wood, 0.85), { x: cx - sx * 0.16, y: 1.08, z: cz + sz * 0.16, ry: -0.3 });
+  else m.add(box(0.6, 0.04, 0.14), shade(MINE.wood, 0.92), { x: cx - sx * 0.05, y: 1.0, z: cz - sz * 0.05, ry: 0.5 });
 }
 
 /** Where the terrain leaves its tops out for mine sites' pits (mesh.ts `cutout`): tile index →
- *  the site's level, for the middle 3 × 3 tiles of each site's footprint. */
+ *  the site's level, for every tile of each site's 5 × 5 footprint (the model covers them all:
+ *  its frame the edge, its pit the rest). */
 export function mineCutout(v: EntityView, W: number, H: number): Map<number, number> {
   const out = new Map<number, number>();
   for (let k = 0; k < v.count; k++) {
     if (v.templates[v.template[k]] !== "UndergroundRuins") continue;
     const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
-    for (let ly = 1; ly <= 3; ly++)
-      for (let lx = 1; lx <= 3; lx++) {
+    for (let ly = 0; ly < 5; ly++)
+      for (let lx = 0; lx < 5; lx++) {
         const [dx, dy] = rotate(o, lx, ly);
         const x = v.x[k] + dx;
         const y = v.y[k] + dy;
@@ -494,31 +501,36 @@ export function mineCutout(v: EntityView, W: number, H: number): Map<number, num
   return out;
 }
 
-/** Where the outline round mine sites runs (**Markers**; the terrain shader), RGBA bytes (W × H):
- *  R bits 1, 2, 4, 8 the tile's east, west, north and south edge, on the edge of a site's 5 × 5
- *  footprint (on the footprint's side). */
+/** Where the outline round mine sites runs (**Markers**; the terrain shader), RGBA bytes (W × H),
+ *  on the tiles just outside each 5 × 5 footprint (the footprint's own tops are the pit's): R bits
+ *  1, 2, 4, 8 the tile's east, west, north and south edge, where it meets the footprint; G bits 1,
+ *  2, 4, 8 its north-east, north-west, south-east and south-west corner, where only that corner
+ *  meets the footprint (the outline turns round it). */
 export function mineOutline(v: EntityView, W: number, H: number, into?: Uint8Array): Uint8Array {
   const out = into ?? new Uint8Array(W * H * 4);
   out.fill(0);
   for (let k = 0; k < v.count; k++) {
     if (v.templates[v.template[k]] !== "UndergroundRuins") continue;
     const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
-    const tiles = new Set<number>();
-    const cells: [number, number][] = [];
+    const inside = new Set<number>();
+    let x0 = Infinity;
+    let y0 = Infinity;
     for (let ly = 0; ly < 5; ly++)
       for (let lx = 0; lx < 5; lx++) {
         const [dx, dy] = rotate(o, lx, ly);
-        const x = v.x[k] + dx;
-        const y = v.y[k] + dy;
-        tiles.add(y * 4096 + x);
-        cells.push([x, y]);
+        inside.add((v.y[k] + dy) * 4096 + v.x[k] + dx);
+        x0 = Math.min(x0, v.x[k] + dx);
+        y0 = Math.min(y0, v.y[k] + dy);
       }
-    for (const [x, y] of cells) {
-      if (x < 0 || y < 0 || x >= W || y >= H) continue;
-      let bits = 0;
-      for (const [dx, dy, bit] of [[1, 0, 1], [-1, 0, 2], [0, 1, 4], [0, -1, 8]] as const) if (!tiles.has((y + dy) * 4096 + x + dx)) bits |= bit;
-      out[(y * W + x) * 4] |= bits;
-    }
+    const at = (x: number, y: number) => inside.has(y * 4096 + x);
+    for (let y = y0 - 1; y <= y0 + 5; y++)
+      for (let x = x0 - 1; x <= x0 + 5; x++) {
+        if (x < 0 || y < 0 || x >= W || y >= H || at(x, y)) continue;
+        const edges = (at(x + 1, y) ? 1 : 0) | (at(x - 1, y) ? 2 : 0) | (at(x, y + 1) ? 4 : 0) | (at(x, y - 1) ? 8 : 0);
+        const corners = edges ? 0 : (at(x + 1, y + 1) ? 1 : 0) | (at(x - 1, y + 1) ? 2 : 0) | (at(x + 1, y - 1) ? 4 : 0) | (at(x - 1, y - 1) ? 8 : 0);
+        out[(y * W + x) * 4] |= edges;
+        out[(y * W + x) * 4 + 1] |= corners;
+      }
   }
   return out;
 }
@@ -683,9 +695,9 @@ const RUIN_E = 0.4;
 
 /** A storey of a ruin column (variant 0–4, A–E; kind 0 or 1 its layouts, 2 or 3 a top storey only
  *  partly there, in the first or second layout's form), one level high, within its tile. Close
- *  up: the rusty skeleton, its braces and beige panels, and with ivy climbing the posts and hanging
- *  from the beams; from afar: a solid block, its faces beige where it has panels and rusty where
- *  it is open (`farBlock`). */
+ *  up: the rusty skeleton, its braces and beige panels, and with ivy leafy masses over every face,
+ *  clumps climbing the posts and strands hanging from the beams; from afar: a solid block in rust
+ *  with its panels and ivy set in (`farBlock`). */
 function storey(variant: number, kind: number, ivy: boolean): Model {
   const m = new Model();
   const layout = RUIN_LAYOUTS[variant][kind % 2];
@@ -729,6 +741,12 @@ function storey(variant: number, kind: number, ivy: boolean): Model {
           m.add(box(0.6, 0.66, 0.03), col, { rx: 0.35, y: 0.32, z: -e + 0.035 });
         }
       }
+      if (ivy) {
+        // ivy spreading over every face: leafy masses, dark and brighter
+        const bright = (f + variant) % 2 === 1;
+        m.add(oct(0.13), bright ? RUIN.leaf : RUIN.ivy, { x: -0.16 + 0.08 * (f % 2), y: 0.36, z: -e - 0.035, sx: 2.2, sy: 2.6, sz: 0.45, rz: 0.3 });
+        if (top >= 0.8) m.add(oct(0.13), bright ? RUIN.ivy : RUIN.leaf, { x: 0.18 - 0.1 * ((f + variant) % 3 === 0 ? 1 : 0), y: 0.62, z: -e - 0.035, sx: 2.2, sy: 2.6, sz: 0.45, rz: -0.25 });
+      }
       if (ivy && (f + variant) % 2 === 0 && top >= 0.55) {
         // ivy hanging from the beam on two faces: a leafy mass along the beam and a curtain of
         // strands below it
@@ -755,25 +773,33 @@ function storey(variant: number, kind: number, ivy: boolean): Model {
   }
   // from afar: a solid block
   m.level = LOD_FAR;
-  farBlock(m, layout, partial ? 0.72 : 1);
+  farBlock(m, layout, partial ? 0.72 : 1, ivy ? variant : -1);
   m.level = LOD_ALL;
   return m;
 }
 
-/** A storey from afar: a block over its tile, its faces beige where the layout has panels (a
- *  little rust showing where they are halves or broken), rusty where it is open, and its top a rusty tan. */
-function farBlock(m: Model, layout: Layout, height: number): void {
+/** A storey from afar: a block over its tile in the rust of its scaffolding (what makes ruins
+ *  read from afar, Kyler), a pale panel set into each face that has one, a patch of ivy on each
+ *  face with ivy (`ivyVariant`: the storey's variant, or −1 without ivy), and a rusty top. */
+function farBlock(m: Model, layout: Layout, height: number, ivyVariant = -1): void {
   const w = 0.86;
   for (let f = 0; f < 4; f++) {
     const panels = layout.panels.filter(([g]) => g === f).map(([, p]) => p);
-    const full = panels.some((p) => p === "full" || p === "tilt");
-    const color = full ? RUIN.panel : panels.length ? mix(RUIN.panel, RUIN.open, 0.45) : RUIN.open;
-    onFace(m, f, () => m.add(plane(w, height), color, { ry: Math.PI, y: height / 2, z: -w / 2 }));
+    onFace(m, f, () => {
+      m.add(plane(w, height), RUIN.rust, { ry: Math.PI, y: height / 2, z: -w / 2 });
+      if (panels.length) {
+        // (a half or broken panel is smaller)
+        const p = panels[0];
+        const ph = (p === "low" || p === "high" ? 0.4 : 0.66) * height;
+        const pw = p === "broken" ? 0.36 : 0.6;
+        const py = p === "high" ? height * 0.7 : p === "low" ? height * 0.3 : height * 0.5;
+        m.add(plane(pw, ph), RUIN.panel, { ry: Math.PI, x: p === "broken" ? 0.12 : 0, y: py, z: -w / 2 - 0.004 });
+      }
+      if (ivyVariant >= 0) m.add(plane(0.52, 0.66 * height), (f + ivyVariant) % 2 ? RUIN.leaf : RUIN.ivy, { ry: Math.PI, x: -0.12 + 0.2 * (f % 2), y: 0.36 * height, z: -w / 2 - 0.008 });
+    });
   }
   m.add(plane(w, w), RUIN.top, { rx: -Math.PI / 2, y: height });
 }
-
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 /** A column's quarter turns: one more than its west neighbour and two more than its south one, so
  *  no two neighbouring columns (the eight round one) are turned alike. */
@@ -923,13 +949,13 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       continue;
     }
     if (key === "ruin") {
-      // a storey per level, turned as the column is (`ruinTurn`); ivy on the lower three where the
+      // a storey per level, turned as the column is (`ruinTurn`); ivy on every storey where the
       // column stands on moist ground (the soil the ground's colour shows)
       const n = Number(template.slice(-1));
       const ivy = !!soil && W > 0 && x >= 0 && y >= 0 && y * W + x < soil.moisture.length && soil.moisture[y * W + x] > 0;
       const angle = ruinTurn(x, y) * (Math.PI / 2);
       ruinStoreys(x, y, n, v.variant?.[k] ?? NO_VARIANT).forEach(({ variant, kind }, lv) => {
-        const green = ivy && lv < 3;
+        const green = ivy;
         const b = batch(`scaffold.${RUIN_VARIANT_IDS[variant]}${kind}${green ? ".ivy" : ""}`, () => storey(variant, kind, green));
         put(b, x + 0.5, z + lv, -(y + 0.5), angle, 1, 0.93 + 0.12 * jitter(x, y, 20 + lv));
       });

@@ -31,8 +31,8 @@
 //   be smaller on screen than their minimum size, up to a limit of their own. A model's parts for
 //   close up and for afar (ruins: the skeleton, panels and ivy close up, a solid block per storey
 //   from afar) are drawn by the instance's size on screen.
-// - With **Markers** on, an orange line between dark edges outlines each mine site's footprint, a
-//   few pixels wide from any distance (entities3d.ts `mineOutline`).
+// - With **Markers** on, an orange line between dark edges outlines each mine site's footprint from
+//   just outside it, a few pixels wide from any distance (entities3d.ts `mineOutline`).
 // Colours are display values: the renderer outputs them without conversion.
 
 import {
@@ -637,17 +637,24 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
             c = mix(c, ${glColor(OUTLINE.dark)}, 1.0 - smoothstep(3.1, 3.7, s));
             c = mix(c, ${glColor(OUTLINE.light)}, smoothstep(0.7, 1.2, s) * (1.0 - smoothstep(2.3, 2.8, s)));
           }
-          // the outline round a mine site's footprint (mineOutline): an orange line between dark
-          // edges, a few pixels wide from any distance (from afar it fills most of the footprint's
-          // outer ring, so the site reads in a view of the whole map)
-          float sb = floor(texture2D(siteEdges, (tile + 0.5) / mapSize).r * 255.0 + 0.5);
-          if (sb > 0.5) {
+          // the outline round a mine site's footprint (mineOutline), on the tiles just outside it
+          // (the footprint's own tops are the pit's): an orange line between dark edges, a few
+          // pixels wide from any distance (from afar it fills most of a tile's width round the
+          // site, so the site reads in a view of the whole map), turning round its corners
+          vec4 st = texture2D(siteEdges, (tile + 0.5) / mapSize);
+          float sb = floor(st.r * 255.0 + 0.5);
+          float sc = floor(st.g * 255.0 + 0.5);
+          if (sb > 0.5 || sc > 0.5) {
             vec2 fo = fract(g);
             float e = 9.0;
             if (bitOf(sb, 1.0) > 0.5) e = min(e, 1.0 - fo.x);
             if (bitOf(sb, 2.0) > 0.5) e = min(e, fo.x);
             if (bitOf(sb, 4.0) > 0.5) e = min(e, 1.0 - fo.y);
             if (bitOf(sb, 8.0) > 0.5) e = min(e, fo.y);
+            if (bitOf(sc, 1.0) > 0.5) e = min(e, length(vec2(1.0) - fo));
+            if (bitOf(sc, 2.0) > 0.5) e = min(e, length(vec2(fo.x, 1.0 - fo.y)));
+            if (bitOf(sc, 4.0) > 0.5) e = min(e, length(vec2(1.0 - fo.x, fo.y)));
+            if (bitOf(sc, 8.0) > 0.5) e = min(e, length(fo));
             float s = e / min(max(max(fwidth(g.x), fwidth(g.y)), 0.004), 0.25);
             c = mix(c, ${glColor(MINE.outlineDark)}, 1.0 - smoothstep(3.3, 3.9, s));
             c = mix(c, ${glColor(MINE.outline)}, smoothstep(0.7, 1.2, s) * (1.0 - smoothstep(2.5, 3.0, s)));

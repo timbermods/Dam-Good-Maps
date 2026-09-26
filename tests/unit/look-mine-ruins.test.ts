@@ -1,10 +1,11 @@
-// Kyler's mine site and ruins round (PLAN §20 D178): our own models, true to the game's footprints.
-// A mine site is a pit with real depth sunk into the middle of its 5 × 5 footprint (the terrain
-// leaves its tops out there and the model closes the hole), in a rusty frame, with scaffolding at
-// its corners; with Markers on, an outline round the footprint. Ruins are ruined scaffold towers, a
-// storey per level, in the file's five variants, with ivy on moist ground; neighbouring columns
-// never look alike, and from afar each storey is a solid block. Kyler's colours, measured in the
-// game, hold.
+// Kyler's mine site and ruins rounds (PLAN §20 D178): our own models, true to the game's
+// footprints. A mine site is a rusty frame round the edge of its 5 × 5 footprint and a pit with
+// real depth filling the rest (the terrain leaves the footprint's tops out and the model closes the
+// hole), with scaffold towers on the frame's corners and beams across; with Markers on, an outline
+// round the footprint. Ruins are ruined scaffold towers, a storey per level, in the file's five
+// variants, with ivy over much of them on moist ground; neighbouring columns never look alike, and
+// from afar each storey is a block in the scaffolding's rust. Kyler's colours, measured in the game,
+// hold.
 
 import { describe, expect, it } from "vitest";
 import { ShaderMaterial } from "three";
@@ -13,7 +14,7 @@ import { buildEntities, LOD_ALL, LOD_FAR, LOD_NEAR, MINE_PIT, mineCutout, mineOu
 import { objectMaterial, RUIN_NEAR_PX, sceneUniforms, terrainMaterial, overlayTexture } from "../../src/render3d/materials";
 import { chunkCount, meshChunk, type TerrainSource } from "../../src/render3d/mesh";
 import { entityView, variantIndex, type EntityInput } from "../../src/render3d/model";
-import { cssColor, GROUND, LIGHT, MINE, objectLegend, RUIN, WATER } from "../../src/render3d/palette";
+import { cssColor, GROUND, LIGHT, MINE, objectLegend, RUIN, WATER, type Rgb } from "../../src/render3d/palette";
 import { variantOf } from "../../src/worker/api";
 
 const lum = (c: readonly number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
@@ -40,8 +41,8 @@ describe("mine sites", () => {
   it("stay within the game's 5 × 5 footprint in every orientation, centred on it", () => {
     const m = modelOf("UndergroundRuins");
     for (let k = 0; k < m.pos.length; k += 3) {
-      expect(Math.abs(m.pos[k])).toBeLessThanOrEqual(2.5);
-      expect(Math.abs(m.pos[k + 2])).toBeLessThanOrEqual(2.5);
+      expect(Math.abs(m.pos[k])).toBeLessThanOrEqual(2.5 + 1e-9);
+      expect(Math.abs(m.pos[k + 2])).toBeLessThanOrEqual(2.5 + 1e-9);
     }
     expect(FOOTPRINTS.UndergroundRuins.size).toEqual([5, 5, 1]);
     for (const o of ORIENTATIONS) {
@@ -59,16 +60,12 @@ describe("mine sites", () => {
     }
   });
 
-  it("sink a pit with real depth into the middle 3 × 3 tiles: the terrain leaves their tops out, and nothing else", () => {
-    // every orientation's pit is its footprint's middle 3 × 3, at the site's level
+  it("fill the footprint with a pit of real depth inside a frame: the terrain leaves the footprint's tops out, and nothing else", () => {
+    // every orientation's cutout is its whole footprint (as the game's), at the site's level
     for (const o of ORIENTATIONS) {
       const cut = mineCutout(entityView([site(o)]), 32, 32);
       const tiles = footprintTiles("UndergroundRuins", { template: "UndergroundRuins", x: 10, y: 10, z: 4, orientation: o, flipped: false });
-      const xs = tiles.map(([x]) => x).sort((a, b) => a - b);
-      const ys = tiles.map(([, y]) => y).sort((a, b) => a - b);
-      const inner = new Set<number>();
-      for (let y = ys[0] + 1; y <= ys[ys.length - 1] - 1; y++) for (let x = xs[0] + 1; x <= xs[xs.length - 1] - 1; x++) inner.add(y * 32 + x);
-      expect(new Set(cut.keys())).toEqual(inner);
+      expect(new Set(cut.keys())).toEqual(new Set(tiles.map(([x, y]) => y * 32 + x)));
       for (const z of cut.values()) expect(z).toBe(4);
     }
     // the mesh: every other top stays, and every wall; a top at another level is not cut
@@ -77,14 +74,14 @@ describe("mine sites", () => {
     const heights = new Uint8Array(W * H).fill(4);
     for (let x = 0; x < W; x++) heights[20 * W + x] = 6; // a ridge, walls on both sides
     heights[3 * W + 3] = 5; // a tile under a site whose level differs: its top stays
-    // two sites, the second reaching past the map's west edge (3 of its pit's tiles are on the map)
+    // two sites, the second reaching past the map's west edge (10 of its tiles are on the map)
     const cutout = mineCutout(entityView([site("Cw0", 29, 8), site("Cw90", -3, 5)]), W, H);
-    expect(cutout.size).toBe(12);
+    expect(cutout.size).toBe(35);
     cutout.set(3 * W + 3, 4);
     const with_ = faces({ W, H, heights, columns: new Map(), cutout });
     const without = faces({ W, H, heights, columns: new Map() });
     expect(without.top).toBe(W * H);
-    expect(with_.top).toBe(W * H - 12);
+    expect(with_.top).toBe(W * H - 35);
     for (const side of ["east", "west", "north", "south", "bottom"]) expect(with_[side], side).toBe(without[side]);
     // the model closes the hole: a floor over the whole pit, and four walls facing in, from the
     // ground down to the floor
@@ -110,8 +107,14 @@ describe("mine sites", () => {
     }
     expect(floor).toBeGreaterThanOrEqual(4 * p * p - 1e-6);
     for (const w of walls) expect(w).toBeGreaterThanOrEqual(2 * p * d - 1e-6);
-    // the hole is the pit's: 3 tiles across
-    expect(2 * p).toBe(3);
+    // the pit fills most of the footprint; the frame covers the rest, to its edge, above the ground
+    expect(2 * p).toBeGreaterThanOrEqual(4.3);
+    let frameTop = 0;
+    for (let k = 0; k < m.lod.length; k++) {
+      const [x, y, z] = [m.pos[k * 3], m.pos[k * 3 + 1], m.pos[k * 3 + 2]];
+      if (Math.max(Math.abs(x), Math.abs(z)) > 2.5 - 1e-6 && y > 0) frameTop = Math.max(frameTop, y);
+    }
+    expect(frameTop).toBeGreaterThan(0.1);
   });
 
   it("have Kyler's colours: the pit's earth shows about #373A34 in its shade, a dull rusty frame, pale wood", () => {
@@ -150,21 +153,30 @@ describe("mine sites", () => {
   });
 
   it("are outlined with Markers on: an orange line between dark edges round the footprint, a few pixels from any distance", () => {
+    // the footprint's own tops are the pit's: the outline runs on the tiles just outside it, and
+    // turns round its corners
     const W = 12;
     const e = mineOutline(entityView([site("Cw0", 2, 3)]), W, 10);
     const at = (x: number, y: number) => e[(y * W + x) * 4];
+    const corner = (x: number, y: number) => e[(y * W + x) * 4 + 1];
     const [E, Wst, N, S] = [1, 2, 4, 8];
-    expect(at(2, 3)).toBe(Wst | S);
-    expect(at(6, 7)).toBe(E | N);
-    expect(at(4, 3)).toBe(S);
-    expect(at(6, 5)).toBe(E);
-    expect(at(4, 5)).toBe(0); // the pit
-    expect(at(1, 3)).toBe(0); // outside
-    expect(at(7, 5)).toBe(0);
-    // a site at the map's edge keeps its outline on its tiles in the map
-    const edge = mineOutline(entityView([site("Cw0", -2, 0)]), W, 10);
-    expect(edge[(0 * W + 0) * 4]).toBe(S);
-    expect(edge[(4 * W + 2) * 4]).toBe(E | N);
+    // the footprint is (2..6, 3..7)
+    expect(at(1, 3)).toBe(E);
+    expect(at(1, 7)).toBe(E);
+    expect(at(7, 5)).toBe(Wst);
+    expect(at(4, 2)).toBe(N);
+    expect(at(4, 8)).toBe(S);
+    for (const [x, y] of [[4, 5], [2, 3], [6, 7], [0, 5], [9, 5]]) expect(at(x, y) + corner(x, y), `${x},${y}`).toBe(0);
+    // the four corners outside: north-east of (1, 2) is the footprint's south-west corner, and so on
+    expect(corner(1, 2)).toBe(1);
+    expect(corner(7, 2)).toBe(2);
+    expect(corner(1, 8)).toBe(4);
+    expect(corner(7, 8)).toBe(8);
+    expect(at(1, 2) + at(7, 8)).toBe(0);
+    // a site at the map's edge keeps its outline on the sides in the map
+    const edge = mineOutline(entityView([site("Cw0", 0, 0)]), W, 10);
+    expect(edge[(0 * W + 5) * 4]).toBe(Wst);
+    expect(edge[(5 * W + 2) * 4]).toBe(S);
     // the terrain shader draws it only with Markers on, in the outline's colours, and its width
     // is set in pixels (never below a pixel, up to a quarter of a tile from afar)
     const t = () => overlayTexture(1, 1);
@@ -172,6 +184,7 @@ describe("mine sites", () => {
     const block = shader.slice(shader.indexOf("if (markers > 0.5 && n.y > 0.5"), shader.indexOf("if (hover.z"));
     expect(block).toContain("siteEdges");
     expect(block).toContain("0.25)");
+    expect(block).toContain("length(fo)");
     expect(lum(MINE.outline) - lum(MINE.outlineDark)).toBeGreaterThan(0.4);
     const legend = objectLegend().find((l) => /Mine sites: an orange outline/.test(l.label))!;
     expect(legend.markers).toBe(true);
@@ -181,7 +194,7 @@ describe("mine sites", () => {
 
   it("are a modest model, not grown from afar (their 5 × 5 footprint reads in a view of the whole map)", () => {
     // (a few sites a map: about a thousand triangles each)
-    expect(modelTriangles("UndergroundRuins")).toBeLessThanOrEqual(1300);
+    expect(modelTriangles("UndergroundRuins")).toBeLessThanOrEqual(1400);
     const mesh = meshesOf([site("Cw0")]).find((c) => c.name === "UndergroundRuins")!;
     expect(Array.from(mesh.geometry.getAttribute("grow")!.array)[0]).toBe(0);
     // every part is drawn at every distance
@@ -207,7 +220,7 @@ describe("ruins", () => {
     expect(FOOTPRINTS.RuinColumnH3.size).toEqual([1, 1, 3]);
   });
 
-  it("are a rusty skeleton with beige panels close up (Kyler's colours), and solid blocks from afar", () => {
+  it("are a rusty skeleton with beige panels close up (Kyler's colours), and from afar solid blocks in the scaffolding's rust", () => {
     expect(cssColor(RUIN.rust)).toBe("#8d5631");
     expect(cssColor(RUIN.panel)).toBe("#b8a775");
     expect(cssColor(RUIN.ivy)).toBe("#405634");
@@ -217,6 +230,8 @@ describe("ruins", () => {
         const near: string[] = [];
         let farTris = 0;
         let farTop = 0;
+        let rustArea = 0;
+        let farArea = 0;
         for (let t = 0; t < m.lod.length / 3; t++) {
           const lod = m.lod[t * 3];
           expect([LOD_NEAR, LOD_FAR]).toContain(lod);
@@ -227,24 +242,36 @@ describe("ruins", () => {
             let y = 0;
             for (let j = 0; j < 3; j++) y = Math.max(y, m.pos[t * 9 + j * 3 + 1]);
             farTop = Math.max(farTop, y);
+            const v = [0, 1, 2].map((j) => [m.pos[t * 9 + j * 3], m.pos[t * 9 + j * 3 + 1], m.pos[t * 9 + j * 3 + 2]]);
+            const u = v[1].map((q, i) => q - v[0][i]);
+            const w = v[2].map((q, i) => q - v[0][i]);
+            const area = Math.hypot(u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]) / 2;
+            farArea += area;
+            if (c === cssColor(RUIN.rust) || c === cssColor(RUIN.top)) rustArea += area;
           }
         }
         expect(near).toContain(cssColor(RUIN.rust));
         // panels on every layout (shaded a little one from another)
         expect(near.some((c) => c !== cssColor(RUIN.rust) && /^#[a-c]/.test(c))).toBe(true);
-        // from afar: four sides and a top, the storey's height (a partial top storey lower)
-        expect(farTris).toBe(10);
+        // from afar: four sides and a top, the storey's height (a partial top storey lower), with
+        // a panel set into each face that has one; mostly the scaffolding's rust (Kyler: plain tan
+        // reads as sandstone), the panels under two fifths of it
+        expect(farTris).toBeGreaterThanOrEqual(10);
+        expect(farTris).toBeLessThanOrEqual(20);
         expect(farTop).toBeCloseTo(kind < 2 ? 1 : 0.72, 5);
+        expect(rustArea / farArea, `${v}${kind}`).toBeGreaterThan(0.6);
       }
     // modest: tens of thousands of storeys on a big map
     const t = ruinTriangles();
-    expect(t.near).toBeLessThanOrEqual(260);
-    expect(t.far).toBe(10);
-    expect(modelTriangles("ruin")).toBeLessThanOrEqual(280);
+    expect(t.near).toBeLessThanOrEqual(340);
+    expect(t.far).toBeLessThanOrEqual(24);
+    expect(modelTriangles("ruin")).toBeLessThanOrEqual(360);
   });
 
   it("from afar stand apart from rusty contaminated ground, in greyscale too", () => {
-    for (const c of [RUIN.panel, RUIN.top, RUIN.open, RUIN.rust]) expect(lum(c) - lum(GROUND.contaminated), cssColor(c)).toBeGreaterThan(0.12);
+    for (const c of [RUIN.panel, RUIN.top, RUIN.rust]) expect(lum(c) - lum(GROUND.contaminated), cssColor(c)).toBeGreaterThan(0.12);
+    // the rust is orange, the contaminated ground's red-brown: more yellow in it
+    expect(RUIN.rust[1] / RUIN.rust[0]).toBeGreaterThan(GROUND.contaminated[1] / GROUND.contaminated[0] + 0.05);
     expect(lum(RUIN.panel) - lum(GROUND.contaminated)).toBeGreaterThan(0.35);
   });
 
@@ -333,21 +360,35 @@ describe("ruins", () => {
     }
   });
 
-  it("grow ivy only where they stand on moist ground, on the lower three storeys", () => {
+  it("grow ivy only where they stand on moist ground, on every storey, dark and brighter, close up and from afar", () => {
     const W = 8;
     const moisture = new Uint8Array(W * 4);
     moisture[1 * W + 1] = 120;
     const soil = { moisture, contamination: new Uint8Array(W * 4) };
     const m = meshesOf([column(1, 1, 5, "C"), column(4, 1, 3, "C")], soil, W);
     const ivy = m.filter((c) => c.name.endsWith(".ivy")).reduce((s, c) => s + c.count, 0);
-    expect(ivy).toBe(3);
+    expect(ivy).toBe(5);
     const all = m.filter((c) => c.name.startsWith("scaffold.")).reduce((s, c) => s + c.count, 0);
     expect(all).toBe(8);
-    // the ivy is Kyler's green
-    const green = modelOf("scaffold.C", 0, true).col;
-    let found = false;
-    for (let k = 0; k < green.length; k += 3) if (cssColor([green[k], green[k + 1], green[k + 2]]) === cssColor(RUIN.ivy)) found = true;
-    expect(found).toBe(true);
+    // the ivy is Kyler's green and a brighter one, over much of the storey: more of its triangles
+    // than the bare storey's, and a patch of it from afar
+    expect(cssColor(RUIN.ivy)).toBe("#405634");
+    expect(lum(RUIN.leaf)).toBeGreaterThan(lum(RUIN.ivy) + 0.05);
+    for (const v of ["A", "C", "E"]) {
+      const green = modelOf(`scaffold.${v}`, 0, true);
+      const bare = modelOf(`scaffold.${v}`, 0, false);
+      const count = (c: Rgb) => {
+        let n = 0;
+        for (let k = 0; k < green.col.length; k += 9) if (cssColor([green.col[k], green.col[k + 1], green.col[k + 2]]) === cssColor(c)) n++;
+        return n;
+      };
+      expect(count(RUIN.ivy), v).toBeGreaterThan(20);
+      expect(count(RUIN.leaf), v).toBeGreaterThan(20);
+      expect(green.pos.length - bare.pos.length).toBeGreaterThan(bare.pos.length * 0.4);
+      let far = 0;
+      for (let k = 0; k < green.col.length; k += 9) if (green.lod[k / 3] === LOD_FAR && [cssColor(RUIN.ivy), cssColor(RUIN.leaf)].includes(cssColor([green.col[k], green.col[k + 1], green.col[k + 2]]))) far++;
+      expect(far, v).toBeGreaterThanOrEqual(4);
+    }
   });
 
   it("the legend shows both as small pictures that differ in greyscale", () => {
