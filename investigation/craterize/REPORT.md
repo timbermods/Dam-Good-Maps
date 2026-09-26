@@ -76,10 +76,10 @@ Unchanged sources then flood **777** previously dry upstream tiles.
 Water settles after 2,176 repository simulation ticks.
 
 The 256² model measured **36–52 ms** total, planned in four-row slices.
-The final browser run measured **163 FPS**, **6.2 ms p95**, and **0.8 ms**
+The final browser run measured **162 FPS**, **6.2 ms p95**, and **1.0 ms**
 for cached Undo at 256². These are local headless-browser measurements, not a
 guarantee for every GPU. The demo's live readout is the useful check on yours.
-Initial generation of the 256² River Valley seed took about 18 seconds here,
+Initial generation of the 256² River Valley seed took about 20 seconds here,
 in the worker; subsequent impacts do not regenerate it.
 
 ## Decisions
@@ -104,3 +104,4 @@ in the worker; subsequent impacts do not regenerate it.
 5. Replaced straight ray fences with curved, tapering, broken bands and scattered pits. Separated the wall profiles into near-vertical cliffs and broad terraces. Nineteen model checks and ten worker checks pass, including ray breakup, edge clearance, cliff height, terrace width, exact replay and unchanged river damming.
 6. Refreshed all seven sequences and the contact sheet to match the revised morphology, with dedicated ring/rays and side-by-side wall stills. Inspected the final renders; all eleven browser checks, typechecking and the production build pass. Captures and check reports total about 4.3 MB.
 7. Strengthened Heavy rays into coherent, curved starburst arms with visible raised relief and pit chains; Light and the accepted wall profiles stay unchanged. Twenty model checks and ten worker checks pass, including Heavy/Light contrast, all ten arms, distance fade, protected borders and exact replay. Tuned at the ring capture's original camera distance; refreshed only the ring and glancing ray sequences and their contact-sheet panels.
+8. Visually checked the refreshed ring at the original framing. All eleven browser checks, typechecking and the production build pass with the stronger rays; 256² rendering measured 162 FPS / 6.2 ms p95. The local demo remains on the same port.

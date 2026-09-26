@@ -1,11 +1,12 @@
 import { createCanvas,loadImage,type Canvas } from '@napi-rs/canvas';
 import { GIFEncoder,quantize,applyPalette } from 'gifenc';
-import { mkdirSync,writeFileSync } from 'node:fs';
+import { mkdirSync,readFileSync,writeFileSync } from 'node:fs';
 import { browserHarness } from './browser-harness';
 import { DEFAULTS,type Settings,type Intent } from './engine';
 const {page,idle,close,errors}=await browserHarness(1000,800);
 mkdirSync('captures',{recursive:true});mkdirSync('local',{recursive:true});
-const scenarios:Record<string,unknown>={},stills:{title:string;canvas:Canvas}[]=[];
+const raysOnly=process.argv.includes('--rays');
+const scenarios:Record<string,unknown>=raysOnly?JSON.parse(readFileSync('captures/scenarios.json','utf8')):{},stills:{title:string;canvas:Canvas}[]=[];
 interface Shot{png:string;label:string;age:number|null}
 async function shot(label:string):Promise<Shot>{return page.evaluate(label=>({png:(window as any).craterize.image(),label,age:(window as any).craterize.state.age}),label);}
 async function sequence(id:string,title:string,map:string,s:Partial<Settings>,intent:Intent,span:number,overlap=false,publish=true){
@@ -43,11 +44,14 @@ function gif(id:string,frames:Canvas[]){
  encoder.finish();writeFileSync('captures/'+id+'.gif',encoder.bytes());
 }
 try{
- await sequence('small-bowl','A small bowl','fixture:plain:128',{power:22,size:22,centre:'bowl',walls:'steep',debris:'light',seed:2},{origin:64*128+64},53);
- await sequence('peak','A mountain rebounds','fixture:plain:128',{power:62,size:52,centre:'peak',seed:5},{origin:64*128+64},104);
- const ring=await sequence('ring-rays','A ring crater with feathery rays','fixture:plain:256',{power:97,size:104,centre:'ring',rays:true,seed:7},{origin:128*256+128},230);
+ if(!raysOnly){
+  await sequence('small-bowl','A small bowl','fixture:plain:128',{power:22,size:22,centre:'bowl',walls:'steep',debris:'light',seed:2},{origin:64*128+64},53);
+  await sequence('peak','A mountain rebounds','fixture:plain:128',{power:62,size:52,centre:'peak',seed:5},{origin:64*128+64},104);
+ }
+ const ring=await sequence('ring-rays','A ring crater with a debris starburst','fixture:plain:256',{power:97,size:104,centre:'ring',rays:true,seed:7},{origin:128*256+128},230);
  writeFileSync('captures/ring-rays.png',ring.at(-1)!.toBuffer('image/png'));
  await sequence('glancing','A glancing strike throws downrange','fixture:plain:128',{power:66,size:38,mode:'aim',centre:'bowl',rays:true,seed:11},{origin:64*128+56,end:77*128+110},127);
+ if(!raysOnly){
  await sequence('river-dam','Debris dams the river','fixture:river:128',{power:75,size:34,centre:'bowl',seed:17},{origin:64*128+62},122);
  await sequence('overlap','The newest rim cuts through the old','fixture:plain:128',{power:58,size:42,centre:'peak',seed:9},{origin:67*128+78},112,true);
  const steep=await sequence('walls-steep','Steep walls','fixture:plain:128',{power:74,size:54,centre:'flat',walls:'steep',seed:6},{origin:64*128+64},98,false,false);
@@ -60,6 +64,12 @@ try{
  const contact=createCanvas(1120,1800),ctx=contact.getContext('2d');ctx.fillStyle='#1c2924';ctx.fillRect(0,0,1120,1800);
  stills.forEach((s,i)=>ctx.drawImage(s.canvas,(i%2)*560,Math.floor(i/2)*450,560,450));
  writeFileSync('captures/contact-sheet.jpg',contact.toBuffer('image/jpeg',82));
+ }else{
+  const contact=createCanvas(1120,1800),ctx=contact.getContext('2d');
+  ctx.drawImage(await loadImage('captures/contact-sheet.jpg'),0,0);
+  stills.forEach((s,i)=>ctx.drawImage(s.canvas,i*560,450));
+  writeFileSync('captures/contact-sheet.jpg',contact.toBuffer('image/jpeg',82));
+ }
  writeFileSync('captures/scenarios.json',JSON.stringify(scenarios,null,2)+'\n');
  if(errors.length)throw Error(errors.join('\n'));
 }finally{await close();}
