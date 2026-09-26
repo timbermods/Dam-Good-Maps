@@ -1,4 +1,4 @@
-import { QuakePlan,DEFAULTS,modelFor,snapshot,reveal,protectedGround,validateObjects,startProblem,type QuakeMap,type Settings,type Intent } from './engine';
+import { QuakePlan,DEFAULTS,modelFor,snapshot,reveal,paintWater,protectedGround,validateObjects,startProblem,type QuakeMap,type Settings,type Intent } from './engine';
 import { loadMap } from './maps';
 import { canonicalRun } from '../../src/core/sim/prefill';
 import { WaterSim } from '../../src/core/sim/water';
@@ -14,6 +14,8 @@ let busy=false,epoch=0,restore=false,step=0,settings={...DEFAULTS},intent:Intent
 let undo:QuakeOperation[]=[],redo:QuakeOperation[]=[];
 interface Variation {base:QuakeMap;settings:Settings;intent:Intent;nextSeed:number}
 let variations=new WeakMap<QuakeOperation,Variation>(),series:Variation|null=null;
+interface BrushSession {id:number;revision:number;applied:number;intent:Intent;released:boolean;offset:QuakePlan|null}
+let brush:BrushSession|null=null;
 const send=(m:Record<string,unknown>)=>postMessage({...m,epoch});
 // MessageChannel yields to incoming cancellation without the 4–16 ms timer floor
 // that accumulates into seconds when slicing a 256² map on Windows.
@@ -75,6 +77,25 @@ async function start(token:number){
  while(!plan.advance(4)){await yieldSlice();check(token);}
  check(token);await liveStep(token);
 }
+/** Latest input wins, but an in-flight slice finishes so rapid input cannot
+ * starve the visible ground. Every revision is planned from the same base. */
+async function paint(token:number){
+ while(brush&&brush.applied!==brush.revision){
+  const session=brush,revision=session.revision;intent=structuredClone(session.intent);
+  const p=new QuakePlan(base,settings,intent);plan=p;
+  while(!p.advance(4)){await yieldSlice();check(token);}
+  check(token);const old=map;map=snapshot(p.map);
+  map.water=paintWater(old,p,session.offset);
+  const sim=new WaterSim(modelFor(map),map.water);
+  for(let k=0;k<6;k++){check(token);sim.run(2);await yieldSlice();}
+  map.water={depth:sim.D,contamination:sim.C};step=session.released&&revision===session.revision?8:7;
+  await frame(false,token,true);check(token);session.offset=p;session.applied=revision;
+  send({type:'painted',revision,id:session.id});
+  if(session.released&&revision===session.revision){
+   series={base,settings,intent,nextSeed:settings.seed};await finish(token);brush=null;
+  }
+ }
+}
 export function storedMap(raw:any):QuakeMap{
  const N=raw?.W*raw?.H;
  if(!Number.isInteger(raw?.W)||!Number.isInteger(raw?.H)||raw.W<8||raw.H<8||raw.W>256||raw.H>256||![16,22].includes(raw.maxHeight)||
@@ -85,16 +106,26 @@ export function storedMap(raw:any):QuakeMap{
 }
 self.onmessage=async(event:MessageEvent)=>{
  const msg=event.data;
- if((msg.type==='cancel'||msg.type==='undo')&&plan){epoch++;map=snapshot(before);plan=null;restore=true;send({type:'cancelled'});if(busy)return;}
+ if(msg.type==='brush-update'||msg.type==='brush-end'){
+  if(!brush||msg.id!==brush.id)return;
+  brush.intent=structuredClone(msg.intent);brush.revision++;brush.released=msg.type==='brush-end';
+  if(busy)return;
+ }
+ if((msg.type==='cancel'||msg.type==='undo')&&(plan||brush)){epoch++;map=snapshot(before);plan=null;brush=null;restore=true;send({type:'cancelled'});if(busy)return;}
  if(busy){send({type:'error',text:'Land is still loading'});return;}
  busy=true;const token=epoch,t=performance.now();
  try{
   if(restore){restore=false;last=null;await frame(false,token);}
   else{
-   if(plan&&!['advance','snapshot'].includes(msg.type))throw Error('Esc reverts the current quake');
+   if(plan&&!['advance','snapshot','brush-update','brush-end'].includes(msg.type))throw Error('Esc reverts the current quake');
    switch(msg.type){
     case 'load':map=await loadMap(msg.id);plan=null;undo=[];redo=[];variations=new WeakMap();last=null;send({type:'status',text:'Loading land…'});if(msg.id.startsWith('place:'))await settle(token);await frame(true,token);break;
     case 'start':settings={...DEFAULTS,...msg.settings};intent=structuredClone(msg.intent);before=snapshot(map);base=before;series={base,settings,intent,nextSeed:settings.seed};await start(token);break;
+    case 'brush-begin':
+     settings={...DEFAULTS,...msg.settings};before=snapshot(map);base=before;intent=structuredClone(msg.intent);
+     brush={id:msg.id,revision:0,applied:-1,intent,released:false,offset:null};
+     send({type:'started',brush:true,settings,seed:settings.seed,path:intent.path});await paint(token);break;
+    case 'brush-update':case 'brush-end':await paint(token);break;
     case 'reroll':{
      const prior=variations.get(undo[undo.length-1]);if(!prior)throw Error('Make a fault first');before=snapshot(map);base=prior.base;prior.nextSeed=(prior.nextSeed+1)>>>0;
      settings={...prior.settings,seed:prior.nextSeed};intent=structuredClone(prior.intent);series=prior;await start(token);break;
@@ -114,6 +145,6 @@ self.onmessage=async(event:MessageEvent)=>{
     case 'snapshot':send({type:'snapshot',map});break;
    }
   }
- }catch(error){if(!(error instanceof Cancelled)){if(plan){map=snapshot(before);plan=null;restore=true;}send({type:'error',text:error instanceof Error?error.message:String(error)});}}
+ }catch(error){if(!(error instanceof Cancelled)){if(plan||brush){map=snapshot(before);plan=null;brush=null;restore=true;}send({type:'error',text:error instanceof Error?error.message:String(error)});}}
  finally{if(restore){restore=false;last=null;await frame(false,epoch);}busy=false;send({type:'ready',ms:performance.now()-t});}
 };

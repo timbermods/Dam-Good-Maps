@@ -6,7 +6,8 @@ import { sceneUniforms,terrainMaterial,waterMaterial,objectMaterial,tileTexture,
 import { MAPS } from './maps';
 import type { Chunk,Geometry } from './meshes';
 import type { QuakeOperation } from './operation';
-import { Fault,DEFAULTS,type Settings,type Point,type Intent } from './engine';
+import { strokeReason,clamp,type Settings,type Point,type Intent } from './engine';
+import { FaultBrush } from './brush';
 import { Rupture,type Head } from './effects';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 const input=(id:string)=>$<HTMLInputElement>(id),canvas=$<HTMLCanvasElement>('view'),notice=$('notice');
@@ -23,16 +24,39 @@ uniforms.patternTex.value=drawPatterns(gl).texture;uniforms.markers.value=0;
 const groundMat=terrainMaterial(uniforms,0,16),waterMat=waterMaterial(uniforms),objectsMat=objectMaterial(uniforms);
 groundMat.uniforms.rockBeds={value:new Array(23).fill(0)};
 groundMat.fragmentShader='uniform float rockBeds[23];\n'+groundMat.fragmentShader.replace('float py = fwidth(y);','wc *= mix(vec3(1.04,1.01,.95),vec3(.78,.85,.87),rockBeds[int(clamp(level,0.0,22.0))]); float py = fwidth(y);');
-const chunks=new Map<string,THREE.Group>(),uploads:(Chunk|{checkpoint:{heights:Uint8Array;lighting:Lighting}})[]=[];
+// The immediate local lurch follows the pen on the GPU; the worker supplies
+// lasting whole-level ground behind it. No per-vertex search along the path.
+const pen={value:new THREE.Vector4()},penForce={value:new THREE.Vector2()};
+for(const material of [groundMat,waterMat,objectsMat]){
+ material.uniforms.pen=pen;material.uniforms.penForce=penForce;
+ material.vertexShader='uniform vec4 pen; uniform vec2 penForce;\n'+material.vertexShader.replace('vWorld = w.xyz;',`
+ vec2 q=vec2(w.x,-w.z)-pen.xy;
+ float wake=(1.0-smoothstep(1.0,7.0,length(q)))*(1.0-smoothstep(0.0,2.0,dot(q,pen.zw)));
+ float side=smoothstep(-.4,.4,(pen.z*q.y-pen.w*q.x)*sign(penForce.x))-.35;
+ w.y+=wake*side*abs(penForce.x)*(1.0-penForce.y);
+ w.x+=wake*side*abs(penForce.x)*penForce.y*pen.z;
+ w.z-=wake*side*abs(penForce.x)*penForce.y*pen.w;
+ vWorld = w.xyz;`);
+}
+const chunks=new Map<string,THREE.Group>(),uploads:(Chunk|{checkpoint:{heights:Uint8Array}}|{lighting:Lighting})[]=[];
 const retained=new Set<THREE.BufferGeometry>(),retainedInstances=new Set<THREE.InstancedMesh>();
 const marker=new THREE.Mesh(new THREE.TorusGeometry(.9,.12,5,20),new THREE.MeshBasicMaterial({color:0xffeac2}));
 marker.rotation.x=Math.PI/2;marker.visible=false;scene.add(marker);
-const aimLine=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0xf8efd2,dashSize:1,gapSize:.6,depthTest:false}));scene.add(aimLine);aimLine.renderOrder=9;
+const linePositions=new Float32Array(12288*3),tintPositions=new Float32Array(12288*18);
+const lineGeometry=new THREE.BufferGeometry(),tintGeometry=new THREE.BufferGeometry();
+lineGeometry.setAttribute('position',new THREE.BufferAttribute(linePositions,3).setUsage(THREE.DynamicDrawUsage));
+tintGeometry.setAttribute('position',new THREE.BufferAttribute(tintPositions,3).setUsage(THREE.DynamicDrawUsage));
+const aimLine=new THREE.Line(lineGeometry,new THREE.LineBasicMaterial({color:0x443d30,depthTest:false}));
+const sideTint=new THREE.Mesh(tintGeometry,new THREE.MeshBasicMaterial({color:0xe9cf88,transparent:true,opacity:.12,depthTest:false,depthWrite:false,side:THREE.DoubleSide}));
+aimLine.frustumCulled=sideTint.frustumCulled=false;aimLine.visible=sideTint.visible=false;scene.add(aimLine,sideTint);aimLine.renderOrder=9;sideTint.renderOrder=8;
 const surge=new Rupture();scene.add(surge.group);
 let W=0,H=0,heights=new Uint8Array(),keep=new Uint8Array(),busy=true,active=false,mode:'lift'|'slide'='lift',path:Point[]=[],effectPath:Point[]=[];
 let steps=0,epoch=0,top=false,settling=false,head:Head|null=null,startedAt=0;
 let canReroll=false,historyIndex=0,cachedAfterIndex=-1;
 let savedRun:unknown=null,lastOperation:QuakeOperation|null=null,finishCache=false;
+interface Drawing {brush:FaultBrush;settings:Settings;id:number;started:boolean;ended:boolean;pickHeights:Uint8Array;keep:Uint8Array;refused:string|null;sentAt:number}
+let drawing:Drawing|null=null,painting:Drawing|null=null,strokeId=0,sideChoice:1|-1=1;
+const pendingStrokes:Drawing[]=[];
 interface Lighting {tiles:Uint8Array;light:Uint8Array;checks:any}
 let lighting:Lighting|null=null;
 interface Cache {groups:Map<string,THREE.Group>;heights:Uint8Array;lighting:Lighting}
@@ -95,6 +119,15 @@ function rollbackCaches(){
   priorCaches=null;pruneCaches();
 }
 function upload(c:Chunk){
+  // Match shader height/water bytes to the chunk on screen. Stale height bytes
+  // classify newly lowered ground as a cave and turn it almost black.
+  if(lighting&&allCaches().some(saved=>saved?.lighting===lighting))setLighting({...lighting,tiles:lighting.tiles.slice()});
+  const bytes=uniforms.tileTex.value.image.data as Uint8Array,[cx,cy]=c.key.split(',').map(Number);
+  for(let y=0;y<32;y++)for(let x=0;x<32;x++){
+    const xx=cx*32+x,yy=cy*32+y;if(xx>=W||yy>=H)continue;
+    const i=(yy*W+xx)*4,j=(y*32+x)*2;bytes[i]=c.surface[j];bytes[i+3]=c.surface[j+1];
+  }
+  uniforms.tileTex.value.needsUpdate=true;
   let group=chunks.get(c.key);
   if(group&&allCaches().some(saved=>saved?.groups.get(c.key)===group)){
     scene.remove(group);group=group.clone(true);scene.add(group);chunks.set(c.key,group);
@@ -115,27 +148,28 @@ function upload(c:Chunk){
     }group.add(objects);
   }
 }
-function instruction(){notice.textContent=path.length>1?'Click the side to '+(mode==='lift'?'lift.':'slide forward.') :path.length?'Shift-click for a straight fault, or drag from here.':'Drag a fault across the land.';}
+function instruction(){notice.textContent=drawing?'Keep painting · X flips the side · Esc reverts':'Paint a fault across the land.';}
 worker.onmessage=(event:MessageEvent)=>{
  const m=event.data;if(m.epoch<epoch)return;epoch=m.epoch;
  if(m.type==='reset'){W=m.W;H=m.H;releaseCaches();uploads.length=0;for(const g of chunks.values()){dispose(g);scene.remove(g);}chunks.clear();groundMat.uniforms.rockBeds.value=m.rockLayers;resetView();}
  if(m.type==='chunk')uploads.push(m.chunk);
- if(m.type==='checkpoint'&&lighting)uploads.push({checkpoint:{heights:heights.slice(),lighting}});
- if(m.type==='lighting')setLighting(m);
+ if(m.type==='checkpoint')uploads.push({checkpoint:{heights:heights.slice()}});
+ if(m.type==='lighting')uploads.push({lighting:m});
  if(m.type==='frame'){
   canReroll=!!m.canReroll;historyIndex=m.undo;heights=m.heights;keep=m.keep;head=m.head;effectPath=m.path;
   if(m.seed!==null)$('seed-label').textContent='Personality '+m.seed;
-  surge.set(head,effectPath,heights,W);
+  if(!drawing)surge.set(head,effectPath,heights,W);
   if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=m.metrics.changed.toLocaleString()+' tiles moved · '+m.metrics.toppled+' trees toppled';}
   else $('metrics').textContent='';
   $<HTMLButtonElement>('undo').disabled=!active&&!m.undo;$<HTMLButtonElement>('redo').disabled=active||!m.redo;
  }
  if(m.type==='status')notice.textContent=m.text;
  if(m.type==='settling'){settling=true;canvas.dataset.ruptureMs=String(performance.now()-startedAt);notice.textContent='Water finding its level · Esc reverts';}
- if(m.type==='started'){showSettings(m.settings);$('seed-label').textContent='Personality '+m.seed;active=true;settling=false;steps=0;effectPath=m.path;const p=m.path[0];head={...p,z:heights[Math.round(p.y)*W+Math.round(p.x)],progress:.02};surge.set(head,effectPath,heights,W);notice.textContent='The fault is moving · Esc reverts';}
- if(m.type==='cancelled'){rollbackCaches();active=false;settling=false;head=null;surge.set(null,[],heights,W);notice.textContent='Whole quake reverted.';}
+ if(m.type==='started'){showSettings(m.settings);$('seed-label').textContent='Personality '+m.seed;active=true;settling=false;steps=0;effectPath=m.path;const p=m.path[0];head={...p,z:heights[Math.round(p.y)*W+Math.round(p.x)],progress:.02};surge.set(head,effectPath,heights,W);notice.textContent=m.brush?'Keep painting · X flips the side · Esc reverts':'The fault is moving · Esc reverts';}
+ if(m.type==='painted'){canvas.dataset.paintedRevision=String(m.revision);if(drawing?.started&&!drawing.ended)canvas.dataset.paintedWhileHeld='true';}
+ if(m.type==='cancelled'){rollbackCaches();active=false;settling=false;head=null;surge.set(null,[],heights,W);notice.textContent=drawing?.refused??'Whole quake reverted.';}
  if(m.type==='finished'){
-  priorCaches=null;canReroll=true;historyIndex=m.undo;cachedAfterIndex=m.undo;active=false;settling=false;head=null;finishCache=true;surge.set(null,[],heights,W);
+  priorCaches=null;canReroll=true;historyIndex=m.undo;cachedAfterIndex=m.undo;active=false;settling=false;head=null;painting=null;finishCache=true;surge.set(null,[],heights,W);if(!drawing){path=[];aimLine.visible=sideTint.visible=false;}
   const sorted=measurements.slice().sort((a,b)=>a-b);canvas.dataset.eventP95Ms=String(sorted[Math.floor(sorted.length*.95)]??0);canvas.dataset.eventMaxMs=String(Math.max(0,...measurements));
   notice.textContent=m.settled?'A new piece of land. One undo brings it back.':'Quake saved. Water reached the repository’s settle limit.';$<HTMLButtonElement>('undo').disabled=false;
  }
@@ -145,7 +179,7 @@ worker.onmessage=(event:MessageEvent)=>{
   let option=select.querySelector<HTMLOptionElement>('option[value="saved"]');if(!option){option=document.createElement('option');option.value='saved';select.add(option);}option.textContent='Saved quake · '+W+' × '+H;select.value='saved';
   if(lastOperation)showSettings(lastOperation.params.settings);
  }
- if(m.type==='error'){notice.textContent=m.text;if(active){restoreView(beforeCache);rollbackCaches();}active=false;settling=false;head=null;}
+ if(m.type==='error'){notice.textContent=m.text;if(active){restoreView(beforeCache);rollbackCaches();}if(painting){painting.refused=m.text;if(drawing===painting)drawing.refused=m.text;drawLine(painting.brush.intent().path,painting.brush.side,true);}painting=null;active=false;settling=false;head=null;}
  if(m.type==='ready'){busy=false;stateControls();if(notice.textContent==='Loading land…')instruction();}
 };
 worker.onerror=e=>{notice.textContent='Worker error: '+e.message;busy=false;active=false;stateControls();};
@@ -153,7 +187,7 @@ const select=$<HTMLSelectElement>('map');for(const [id,name]of MAPS){const o=doc
 select.value='fixture:river:128';
 function load(){
  if(select.value==='saved'&&savedRun){send({type:'replay',bundle:savedRun});stateControls();return;}
- select.querySelector('option[value="saved"]')?.remove();canReroll=false;cachedAfterIndex=-1;path=[];marker.visible=false;aimLine.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';notice.textContent='Loading land…';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();
+ select.querySelector('option[value="saved"]')?.remove();canReroll=false;cachedAfterIndex=-1;path=[];drawing=painting=null;pendingStrokes.length=0;marker.visible=false;aimLine.visible=sideTint.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';notice.textContent='Loading land…';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();
 }
 select.onchange=load;$('reset').onclick=load;
 for(const value of ['lift','slide'] as const)$(value).onclick=()=>{mode=value;for(const a of ['lift','slide'])$(a).setAttribute('aria-pressed',String(a===mode));powerLabel();instruction();};
@@ -169,47 +203,90 @@ function begin(side:1|-1,explicit?:{settings:Settings;intent:Intent}){
  if(beforeCache)historyCaches.set(historyIndex,beforeCache);for(const k of historyCaches.keys())if(k>historyIndex)historyCaches.delete(k);measurements.length=0;
  const intent=explicit?.intent??{path:path.map(p=>({...p})),side};startedAt=performance.now();delete canvas.dataset.firstChangeMs;send({type:'start',settings:explicit?.settings??settings(),intent});path=[];notice.textContent='The fault is waking · Esc reverts';stateControls();
 }
+function startPaint(d:Drawing){
+ const intent=d.brush.intent(),reason=strokeReason(intent.path,keep,W);
+ if(reason){d.refused=reason;notice.textContent=reason;return;}
+ preserveCaches();beforeCache=cache();afterCache=null;quakeBaseCache=beforeCache;pruneCaches();
+ if(beforeCache)historyCaches.set(historyIndex,beforeCache);for(const k of historyCaches.keys())if(k>historyIndex)historyCaches.delete(k);
+ active=true;painting=d;d.started=true;d.sentAt=performance.now();startedAt=d.sentAt;measurements.length=0;
+ delete canvas.dataset.firstChangeMs;delete canvas.dataset.paintedWhileHeld;canvas.dataset.strokeId=String(d.id);
+ send({type:'brush-begin',id:d.id,settings:d.settings,intent});
+ if(d.ended)worker.postMessage({type:'brush-end',id:d.id,intent});stateControls();
+}
 function cancel(){
- if(!active){path=[];aimLine.visible=false;marker.visible=false;if(!busy&&historyIndex)$('undo').click();else instruction();return;}
- epoch++;active=false;settling=false;head=null;restoreView(beforeCache);rollbackCaches();surge.set(null,[],heights,W);busy=true;worker.postMessage({type:'cancel'});notice.textContent='Whole quake reverted.';stateControls();
+ pendingStrokes.length=0;drawing=null;controls.enabled=true;path=[];aimLine.visible=sideTint.visible=false;penForce.value.set(0,0);
+ if(!active){marker.visible=false;if(!busy&&historyIndex)$('undo').click();else instruction();return;}
+ epoch++;active=false;painting=null;settling=false;head=null;restoreView(beforeCache);rollbackCaches();surge.set(null,[],heights,W);busy=true;worker.postMessage({type:'cancel'});notice.textContent='Whole quake reverted.';stateControls();
 }
 $('undo').onclick=()=>{if(active){cancel();return;}if(busy)return;restoreView(historyCaches.get(historyIndex-1)??(historyIndex===cachedAfterIndex?beforeCache:null));send({type:'undo'});notice.textContent='Whole quake reverted.';};
 $('redo').onclick=()=>{if(busy)return;restoreView(historyCaches.get(historyIndex+1)??(historyIndex===cachedAfterIndex-1?afterCache:null));send({type:'redo'});notice.textContent='Stored result restored.';};
 $('save-run').onclick=()=>{if(!savedRun)return;const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v),a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.href=url;a.download='quake-run.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 input('replay-file').onchange=async()=>{const f=input('replay-file').files?.[0];if(!f||active||busy)return;if(f.size>32*1024*1024){notice.textContent='Quake file is too large.';return;}try{send({type:'replay',bundle:JSON.parse(await f.text())});}catch{notice.textContent='This quake file could not be read.';}};
 $('home').onclick=resetView;$('top').onclick=()=>{if(top){resetView();return;}camera.position.set(controls.target.x,Math.max(W,H)*1.55,controls.target.z+.01);controls.update();top=true;$('top').textContent='Orbit';};
-function hitAt(e:PointerEvent){const r=canvas.getBoundingClientRect(),ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);return pickHeightfield({origin:ray.ray.origin.toArray(),direction:ray.ray.direction.toArray()},W,H,heights);}
-function reason(points=path){if(points.length<2)return false;const f=new Fault({...DEFAULTS,seed:0},{path:points,side:1});for(let i=0;i<keep.length;i++)if(keep[i]){const d=f.at(i%W,Math.floor(i/W));if(Math.abs(d.d)<3.5&&d.end<3.5)return true;}return false;}
-function drawLine(points=path){
- const bad=reason(points),sample:THREE.Vector3[]=[];
- for(let k=1;k<points.length;k++){const a=points[k-1],b=points[k],n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)));for(let j=0;j<=n;j++){const x=a.x+(b.x-a.x)*j/n,y=a.y+(b.y-a.y)*j/n,i=Math.round(y)*W+Math.round(x);sample.push(new THREE.Vector3(x+.5,heights[i]+.35,-y-.5));}}
- aimLine.geometry.dispose();aimLine.geometry=new THREE.BufferGeometry().setFromPoints(sample);(aimLine.material as THREE.LineDashedMaterial).color.set(bad?0xd44c40:0xffedb4);aimLine.computeLineDistances();aimLine.visible=true;
- if(bad)notice.textContent='Start here';else instruction();return bad;
+function hitAt(e:PointerEvent){const r=canvas.getBoundingClientRect(),ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1),camera);
+ const h=pickHeightfield({origin:ray.ray.origin.toArray(),direction:ray.ray.direction.toArray()},W,H,drawing?.pickHeights??heights);
+ return h?{x:clamp(h.point[0]-.5,0,W-1),y:clamp(-h.point[2]-.5,0,H-1)}:null;
 }
-let down:Point|null=null,dragged=false,choosing=false;
+function drawLine(points:Point[],side:1|-1,bad:boolean){
+ let vertices=0,tints=0;const z=(x:number,y:number)=>heights[clamp(Math.round(y),0,H-1)*W+clamp(Math.round(x),0,W-1)]+.25;
+ const vertex=(x:number,y:number,buffer:Float32Array,at:number)=>{buffer[at]=x+.5;buffer[at+1]=z(x,y);buffer[at+2]=-y-.5;};
+ for(let k=1;k<points.length;k++){
+  const a=points[k-1],b=points[k],length=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(length*2)),nx=-(b.y-a.y)/(length||1)*side*7,ny=(b.x-a.x)/(length||1)*side*7;
+  for(let j=0;j<=n&&vertices<12288;j++){
+   const x=a.x+(b.x-a.x)*j/n,y=a.y+(b.y-a.y)*j/n;vertex(x,y,linePositions,vertices++*3);
+   if(j&&tints+6<12288*6){const px=a.x+(b.x-a.x)*(j-1)/n,py=a.y+(b.y-a.y)*(j-1)/n;
+    for(const [xx,yy]of [[px,py],[x,y],[x+nx,y+ny],[px,py],[x+nx,y+ny],[px+nx,py+ny]])vertex(clamp(xx,0,W-1),clamp(yy,0,H-1),tintPositions,tints++*3);
+   }
+  }
+ }
+ lineGeometry.setDrawRange(0,vertices);lineGeometry.attributes.position.needsUpdate=true;tintGeometry.setDrawRange(0,tints);tintGeometry.attributes.position.needsUpdate=true;
+ aimLine.material.color.set(bad?0xd44c40:0x443d30);aimLine.visible=true;sideTint.visible=!bad&&!!drawing;
+ canvas.dataset.penPoints=String(vertices);canvas.dataset.side=side===1?'left':'right';canvas.dataset.refused=String(bad);
+}
+function paintFrame(dt:number,t:number){
+ penForce.value.set(0,0);
+ if(!active&&!busy&&!uploads.length&&!finishCache){
+  const d=pendingStrokes.shift()??(drawing&&!drawing.started&&!drawing.refused?drawing:null);if(d)startPaint(d);
+ }
+ if(!drawing)return;const d=drawing;d.brush.advance(dt);const intent=d.brush.intent();path=intent.path;
+ const reason=d.refused??strokeReason(path,d.keep,W);
+ if(reason&&!d.refused){if(d.started){cancel();drawing=d;}d.refused=reason;notice.textContent=reason;}
+ drawLine(path,d.brush.side,!!d.refused);
+ if(d.refused)return;
+ const p=path.at(-1)!;let a=path.at(-2)!;
+ for(let k=path.length-2;k>=0&&Math.hypot(p.x-a.x,p.y-a.y)<.05;k--)a=path[k];
+ const len=Math.hypot(p.x-a.x,p.y-a.y)||1;
+ head={...p,z:heights[clamp(Math.round(p.y),0,H-1)*W+clamp(Math.round(p.x),0,W-1)],progress:1};
+ surge.moveHead(head);pen.value.set(p.x+.5,p.y+.5,(p.x-a.x)/len,(p.y-a.y)/len);
+ if(motion())penForce.value.set(d.brush.side*(.6+d.settings.power*.01),d.settings.mode==='slide'?1:0);
+ if(d.started&&t-d.sentAt>=70){worker.postMessage({type:'brush-update',id:d.id,intent});d.sentAt=t;}
+}
+// Primary pen/touch belongs to painting; OrbitControls owns right/middle only.
+canvas.addEventListener('pointerdown',e=>{if(e.button===0)controls.enabled=false;},{capture:true});
+canvas.addEventListener('pointerup',e=>{if(e.button===0)controls.enabled=true;});
+canvas.addEventListener('pointercancel',()=>{controls.enabled=true;});
 canvas.addEventListener('pointerdown',e=>{
- if(e.button!==0||active||busy||uploads.length||!W)return;const h=hitAt(e);if(!h)return;canvas.setPointerCapture(e.pointerId);down={x:e.clientX,y:e.clientY};dragged=false;
- if(e.shiftKey&&path.length===1){path.push({x:h.x,y:h.y});drawLine();down=null;return;}
- choosing=path.length>1;if(!choosing){path=[{x:h.x,y:h.y}];marker.visible=false;}canvas.focus();
+ if(e.button!==0||drawing||!W||heights.length!==W*H)return;const p=hitAt(e);if(!p)return;
+ if(e.isTrusted)canvas.setPointerCapture(e.pointerId);canvas.focus({preventScroll:true});
+ drawing={brush:new FaultBrush(p,W,H,sideChoice),settings:settings(),id:++strokeId,started:false,ended:false,pickHeights:heights.slice(),keep:keep.slice(),refused:null,sentAt:0};
+ path=drawing.brush.intent().path;notice.textContent='Keep painting · X flips the side · Esc reverts';paintFrame(0,performance.now());
 });
-canvas.addEventListener('pointermove',e=>{
- if(active||busy||!W)return;const h=hitAt(e);if(!h)return;
- if(down&&!choosing&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>3){dragged=true;const prev=path[path.length-1];if(Math.hypot(h.x-prev.x,h.y-prev.y)>=2&&path.length<512)path.push({x:h.x,y:h.y});drawLine();}
- else if(path.length===1&&!down)drawLine([path[0],{x:h.x,y:h.y}]);
- else if(path.length>1&&!down){marker.position.set(h.x+.5,heights[h.y*W+h.x]+.3,-h.y-.5);marker.visible=true;}
-});
+canvas.addEventListener('pointermove',e=>{if(!drawing)return;const h=hitAt(e);if(h)drawing.brush.aim(h);});
 canvas.addEventListener('pointerup',e=>{
- if(!down)return;down=null;const h=hitAt(e);if(!h)return;
- if(choosing&&!dragged){if(reason()){notice.textContent='Start here';return;}const f=new Fault(DEFAULTS,{path,side:1}),a=f.at(h.x,h.y);begin(a.d>=0?1:-1);}
- else if(dragged){drawLine();}else instruction();
+ if(!drawing||e.button!==0)return;const d=drawing,h=hitAt(e);if(h)d.brush.aim(h);d.brush.advance(0,true);paintFrame(0,performance.now());d.ended=true;
+ if(!d.refused){if(d.started)worker.postMessage({type:'brush-end',id:d.id,intent:d.brush.intent()});else pendingStrokes.push(d);notice.textContent='Finishing the rupture · Esc reverts';}
+ drawing=null;sideTint.visible=false;penForce.value.set(0,0);if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
 });
-canvas.addEventListener('pointercancel',()=>{down=null;path=[];aimLine.visible=false;});
+canvas.addEventListener('pointercancel',()=>{if(drawing){if(drawing.started&&!drawing.refused)cancel();else{drawing=null;path=[];aimLine.visible=sideTint.visible=false;}}});
+function flipSide(value:1|-1){sideChoice=value;$<HTMLSelectElement>('side').value=String(value);if(drawing){drawing.brush.side=value;if(drawing.started&&!drawing.refused){worker.postMessage({type:'brush-update',id:drawing.id,intent:drawing.brush.intent()});drawing.sentAt=performance.now();}}}
+$<HTMLSelectElement>('side').onchange=()=>flipSide(Number($<HTMLSelectElement>('side').value) as 1|-1);
 canvas.addEventListener('wheel',e=>{if(e.shiftKey&&!active&&!busy){e.preventDefault();e.stopImmediatePropagation();input('power').value=String(Math.max(0,Math.min(100,Number(input('power').value)+(e.deltaY<0?5:-5))));powerLabel();}},{capture:true,passive:false});
 const keys=new Set<string>();window.addEventListener('keydown',e=>{
- if(e.key==='Escape'){e.preventDefault();if(path.length){path=[];aimLine.visible=false;instruction();}else cancel();return;}
+ if(e.key==='Escape'){e.preventDefault();if(drawing&&(!drawing.started||drawing.refused)){drawing=null;path=[];aimLine.visible=sideTint.visible=false;notice.textContent='Stroke cancelled.';}else cancel();return;}
+ if(e.key.toLowerCase()==='x'&&!e.ctrlKey&&!e.metaKey&&!e.repeat&&!/INPUT|TEXTAREA/.test((e.target as HTMLElement).tagName)){e.preventDefault();flipSide(sideChoice===1?-1:1);return;}
  if((e.ctrlKey||e.metaKey)&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();$(e.key.toLowerCase()==='y'||e.shiftKey?'redo':'undo').click();return;}
  if(/INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName))return;keys.add(e.key.toLowerCase());
-});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());
+});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();if(drawing){if(drawing.started)cancel();else{drawing=null;path=[];aimLine.visible=sideTint.visible=false;}}});
 $('capture-view').onclick=async()=>{
  gl.render(scene,camera);const jpeg=canvas.toDataURL('image/jpeg',.85);
  const response=await fetch('/__quake_capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jpeg,metrics:{...canvas.dataset,fps:$('fps').textContent,map:select.value}})});
@@ -221,10 +298,11 @@ const measurements:number[]=[];
 function animate(t:number){
  requestAnimationFrame(animate);const dt=Math.min(.05,(t-previous)/1000);frameMs.push(t-previous);if(active)measurements.push(t-previous);previous=t;frames++;
  const hadUploads=uploads.length>0,at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){
-  const item=uploads.shift()!;if('checkpoint' in item){beforeCache={groups:new Map(chunks),...item.checkpoint};historyCaches.set(0,beforeCache);retain(beforeCache);}else upload(item);
+  const item=uploads.shift()!;if('lighting' in item)setLighting(item.lighting);else if('checkpoint' in item){if(lighting){beforeCache={groups:new Map(chunks),...item.checkpoint,lighting};historyCaches.set(0,beforeCache);retain(beforeCache);}}else upload(item);
   count++;if(active&&!canvas.dataset.firstChangeMs)canvas.dataset.firstChangeMs=String(performance.now()-startedAt);
  }
  if(hadUploads&&!uploads.length)stateControls();if(finishCache&&!uploads.length){afterCache=cache();if(afterCache)historyCaches.set(historyIndex,afterCache);retain(afterCache);finishCache=false;pruneCaches();stateControls();}
+ paintFrame(dt,t);
  const pan=Math.max(W,H)*.25*dt*(keys.has('shift')?3:1),x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),z=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
  if(x||z){camera.position.x+=x*pan;camera.position.z+=z*pan;controls.target.x+=x*pan;controls.target.z+=z*pan;}
  const turn=(keys.has('q')?1:0)-(keys.has('e')?1:0);if(turn){const off=camera.position.clone().sub(controls.target);off.applyAxisAngle(new THREE.Vector3(0,1,0),turn*dt);camera.position.copy(controls.target).add(off);}
@@ -234,10 +312,11 @@ function animate(t:number){
   g.position.y=motion()&&active&&!settling&&near?Math.sin(t*.04+cx+cy)*.12:0;}
  const shake=motion()&&input('shake').checked&&active&&!settling ? .12 : 0;camera.position.x+=Math.sin(t*.045)*shake;camera.position.y+=Math.cos(t*.061)*shake;gl.render(scene,camera);camera.position.x-=Math.sin(t*.045)*shake;camera.position.y-=Math.cos(t*.061)*shake;
  if(t-fpsAt>=1000){const sorted=frameMs.sort((a,b)=>a-b);$('fps').textContent=Math.round(frames*1000/(t-fpsAt))+' fps · p95 '+Math.round(sorted[Math.floor(sorted.length*.95)]??0)+' ms';frameMs=[];frames=0;fpsAt=t;}
- if(!busy&&!uploads.length&&active&&!settling&&t>=startedAt+Math.max(1,steps)*150)send({type:'advance'});
+ if(!painting&&!busy&&!uploads.length&&active&&!settling&&t>=startedAt+Math.max(1,steps)*150)send({type:'advance'});
 }
 requestAnimationFrame(animate);powerLabel();
-Object.assign(window,{quake:{get operation(){return lastOperation;},get bundle(){return savedRun;},get state(){return {steps,active,busy,settling,queued:uploads.length,W,H,mode,head,path,heights,measurements};},
+Object.assign(window,{quake:{get operation(){return lastOperation;},get bundle(){return savedRun;},get state(){return {steps,active,busy,settling,queued:uploads.length,finishCache,historyIndex,pending:pendingStrokes.length,drawing:!!drawing,W,H,mode,head,path,heights,measurements};},
+ capture:()=>{gl.render(scene,camera);const copy=document.createElement('canvas');copy.width=800;copy.height=Math.round(800*canvas.height/canvas.width);copy.getContext('2d')!.drawImage(canvas,0,0,copy.width,copy.height);return copy.toDataURL('image/jpeg',.78);},
  start:(settings:Settings,intent:Intent)=>begin(intent.side,{settings,intent}),
  project:(x:number,y:number)=>{const p=new THREE.Vector3(x+.5,heights[Math.floor(y)*W+Math.floor(x)]+.1,-y-.5).project(camera),r=canvas.getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};}
 }});load();

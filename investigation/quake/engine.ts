@@ -198,6 +198,21 @@ export class QuakePlan {
   }
 }
 export function quake(m:QuakeMap,s:Settings,i:Intent){const p=new QuakePlan(m,s,i);while(!p.advance(8)){}return p;}
+/** Move the warm water between successive brush plans without duplicating a
+ * volume, including when X reverses the chosen side. Shared with captures. */
+export function paintWater(old:QuakeMap,p:QuakePlan,offset:QuakePlan|null):WaterState{
+ const {W,H}=old,D=new Float64Array(W*H),C=new Float64Array(D.length);
+ for(let i=0;i<D.length;i++){
+  const x=i%W,y=Math.floor(i/W);let bx=x,by=y;
+  if(offset&&p.settings.mode==='slide')for(let k=0;k<3;k++){
+   const j=clamp(Math.round(by),0,H-1)*W+clamp(Math.round(bx),0,W-1);bx=x-offset.dx[j];by=y-offset.dy[j];
+  }
+  const b=clamp(Math.round(by),0,H-1)*W+clamp(Math.round(bx),0,W-1);
+  const j=p.settings.mode==='slide'?clamp(Math.round(by)+p.dy[b],0,H-1)*W+clamp(Math.round(bx)+p.dx[b],0,W-1):i;
+  D[j]+=old.water.depth[i];C[j]+=old.water.depth[i]*old.water.contamination[i];
+ }
+ return {depth:D,contamination:Float64Array.from(C,(v,i)=>D[i]?v/D[i]:0)};
+}
 /** Eight deterministic fronts. Timing and render frame rate never enter the output. */
 export function reveal(plan:QuakePlan,previous:QuakeMap,step:number,steps=8):QuakeMap{
   const out=snapshot(previous),progress=step/steps,{W,H}=out;

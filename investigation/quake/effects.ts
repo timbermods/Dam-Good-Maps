@@ -8,8 +8,9 @@ export class Rupture {
  private crack=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0x342f28,depthTest:false}));
  private dummy=new THREE.Object3D();private head:Head|null=null;
  constructor(){this.dust.frustumCulled=false;this.crack.renderOrder=8;this.group.add(this.crack,this.dust);}
+ moveHead(head:Head){this.head=head;this.crack.visible=false;}
  set(head:Head|null,path:Point[],heights:Uint8Array,W:number){
-  this.head=head;const pts=path.slice(0,Math.ceil((head?.progress??0)*path.length)).map(p=>new THREE.Vector3(p.x+.5,heights[Math.max(0,Math.min(heights.length-1,Math.round(p.y)*W+Math.round(p.x)))]+.16,-p.y-.5));
+  this.head=head;this.crack.visible=true;const pts=path.slice(0,Math.ceil((head?.progress??0)*path.length)).map(p=>new THREE.Vector3(p.x+.5,heights[Math.max(0,Math.min(heights.length-1,Math.round(p.y)*W+Math.round(p.x)))]+.16,-p.y-.5));
   this.crack.geometry.dispose();this.crack.geometry=new THREE.BufferGeometry().setFromPoints(pts);
  }
  update(time:number,on:boolean){

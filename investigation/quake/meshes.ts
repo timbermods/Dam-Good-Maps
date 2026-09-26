@@ -3,11 +3,12 @@ import { meshWaterChunk } from '../../src/render3d/waterMesh';
 import { waterFromDepth, surfaceWater, entityView } from '../../src/render3d/model';
 import { buildEntities, disposeGroup } from '../../src/render3d/entities3d';
 import { GROUND, WALL, WATER } from '../../src/render3d/palette';
+import { waterByte } from '../../src/render3d/light';
 import { ShaderMaterial, BoxGeometry, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three';
 import type { QuakeMap } from './engine';
 export interface Geometry { positions: Float32Array; normals: Int8Array | Float32Array; indices: Uint32Array | null; colors: Float32Array; data?:Float32Array; flags?:Float32Array; grow?:Float32Array }
 export interface ObjectMesh { geometry: Geometry; matrices: Float32Array; colors: Float32Array; count: number }
-export interface Chunk { key: string; terrain: Geometry; water: Geometry; objects: ObjectMesh[] | null }
+export interface Chunk { key: string; terrain: Geometry; water: Geometry; objects: ObjectMesh[] | null; surface:Uint8Array }
 const objectMaterial = new ShaderMaterial();
 export function frameContext(m: QuakeMap) {
   const view = waterFromDepth(m.heights, m.water.depth, m.water.contamination);
@@ -56,7 +57,12 @@ export function makeChunk(m: QuakeMap, cx: number, cy: number, context: ReturnTy
       g.dispose();
     }
   }
-  return {key:cx+','+cy,terrain:{...terrain,colors},water:{...water,colors:wc},objects};
+  const surface=new Uint8Array(CHUNK*CHUNK*2);
+  for(let y=0;y<CHUNK;y++)for(let x=0;x<CHUNK;x++){
+    const xx=cx*CHUNK+x,yy=cy*CHUNK+y;if(xx>=m.W||yy>=m.H)continue;
+    const i=yy*m.W+xx,j=(y*CHUNK+x)*2;surface[j]=m.heights[i];surface[j+1]=waterByte(context.surface,m.heights,i);
+  }
+  return {key:cx+','+cy,terrain:{...terrain,colors},water:{...water,colors:wc},objects,surface};
 }
 export function changedChunks(m:QuakeMap,old:QuakeMap|null): {cx:number;cy:number;objects:boolean}[] {
   const set=new Map<string,{cx:number;cy:number;objects:boolean}>();

@@ -8,7 +8,8 @@ npm --prefix investigation/quake run demo
 
 The launcher installs its own dependencies if needed and prints a free local port.
 
-Drag a fault, then click the side to move. Click then Shift-click makes a straight fault.
+Press and drag to paint a fault. The ground moves as you draw; release to finish.
+The left side moves by default. Press **X** mid-stroke to flip it, or choose **Side**.
 Choose Lift or Slide, Power, and Sheer or Stepped. Try another keeps the same stroke and changes its personality.
 
 Esc or Undo reverts the whole event, including water. Right-drag orbits, middle-drag pans, scroll zooms, and WASD moves the camera.

@@ -5,17 +5,22 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { writeFileSync } from 'node:fs';
 import { canonicalSettle } from '../../src/core/sim/prefill';
-import { quake,modelFor,DEFAULTS,type QuakeMap } from './engine';
+import { quake,modelFor,DEFAULTS,hash,faultReason,type QuakeMap,type Intent } from './engine';
 import { applyOperation,type QuakeOperation } from './operation';
 const workerFile=resolve('.cache/worker-test.mjs'),hostFile=resolve('.cache/worker-host.mjs');
 await build({entryPoints:[resolve('worker.ts')],outfile:workerFile,bundle:true,platform:'node',format:'esm',nodePaths:[resolve('node_modules')],absWorkingDir:process.cwd()});
 writeFileSync(hostFile,"import {parentPort} from 'node:worker_threads';\nglobalThis.self=globalThis;\nglobalThis.postMessage=(m,t)=>parentPort.postMessage(m,t);\nawait import("+JSON.stringify(pathToFileURL(workerFile).href)+");\nparentPort.on('message',data=>self.onmessage({data}));\nparentPort.postMessage({type:'boot'});\n");
 const worker=new Worker(hostFile);type Message={type:string;[k:string]:any};let receive:(m:Message)=>void=()=>{};
 worker.on('message',m=>receive(m));await new Promise<void>((yes,no)=>{receive=m=>{if(m.type==='boot')yes();};worker.once('error',no);});
-async function command(msg:Record<string,unknown>,interrupt?:{on:string;msg:Record<string,unknown>}){
+async function command(msg:Record<string,unknown>,interrupt?:{on:string;msg:Record<string,unknown>|Record<string,unknown>[]}){
  const messages:Message[]=[];return new Promise<Message[]>((yes,no)=>{
   const timer=setTimeout(()=>no(Error('Worker timeout '+msg.type)),90000);let sent=false;
-  receive=m=>{messages.push(m);if(interrupt&&!sent&&m.type===interrupt.on){sent=true;worker.postMessage(interrupt.msg);}if(m.type==='error'){clearTimeout(timer);no(Error(m.text));}if(m.type==='ready'){clearTimeout(timer);yes(messages);}};worker.postMessage(msg);
+  receive=m=>{messages.push(m);if(interrupt&&!sent&&m.type===interrupt.on){sent=true;for(const a of Array.isArray(interrupt.msg)?interrupt.msg:[interrupt.msg])worker.postMessage(a);}if(m.type==='error'){clearTimeout(timer);no(Error(m.text));}if(m.type==='ready'){
+   // A painted frame may be followed by its ready before the newly posted Esc
+   // reaches the worker. Await the cancellation's own acknowledgement.
+   if(sent&&!Array.isArray(interrupt?.msg)&&interrupt?.msg.type==='cancel'&&!messages.some(a=>a.type==='cancelled'))return;
+   clearTimeout(timer);yes(messages);
+  }};worker.postMessage(msg);
  });
 }
 const snap=async()=>(await command({type:'snapshot'})).find(m=>m.type==='snapshot')!.map as QuakeMap;
@@ -43,5 +48,33 @@ try{
  await command({type:'load',id:'fixture:river:256'});const bigBefore=await snap(),bigIntent={side:1,path:[{x:0,y:128},{x:255,y:128}]};
  const now=performance.now();await command({type:'start',settings,intent:bigIntent});let first=performance.now()-now;
  for(let k=0;k<6;k++)await command({type:'advance'});measurements.push({case:'256² rupture seven of eight fronts',firstMs:first,ms:performance.now()-now});await command({type:'cancel'});assert.deepEqual(await snap(),bigBefore);pass('256² real worker responds progressively and cancels exactly');
+ await command({type:'load',id:'fixture:river:128'});const brushBefore=await snap();
+ const short={side:1,path:[{x:38,y:64},{x:39,y:64}]},full={...intent,side:-1};
+ const held=await command({type:'brush-begin',id:1,settings,intent:short});assert.ok(held.some(m=>m.type==='painted'));assert.ok(!held.some(m=>m.type==='operation'));assert.notDeepEqual((await snap()).heights,brushBefore.heights);
+ await command({type:'brush-update',id:1,intent});assert.notDeepEqual((await snap()).heights,brushBefore.heights);
+ await command({type:'brush-update',id:1,intent:full});assert.deepEqual((await snap()).heights,quake(brushBefore,settings,full as Intent).map.heights);
+ const released=await command({type:'brush-end',id:1,intent:full});assert.equal(released.filter(m=>m.type==='operation').length,1);const brushAfter=await snap();
+ assert.deepEqual(brushAfter.water.depth,canonicalSettle(modelFor(brushAfter)).depth);
+ await command({type:'undo'});assert.deepEqual(await snap(),brushBefore);await command({type:'redo'});assert.deepEqual(await snap(),brushAfter);await command({type:'undo'});
+ pass('held pen changes ground before release; X replans from base; release creates one exact undo');
+ const burst=await command({type:'brush-begin',id:2,settings,intent:short},{on:'started',msg:[{type:'brush-update',id:2,intent},{type:'brush-update',id:2,intent:full},{type:'brush-end',id:2,intent:full}]});
+ assert.equal(burst.filter(m=>m.type==='operation').length,1);assert.deepEqual(await snap(),brushAfter);await command({type:'undo'});
+ pass('coalesced fast input and a release during preparation produce the same exact result');
+ for(const on of ['started','chunk','painted']){
+  const cancelled=await command({type:'brush-begin',id:3,settings,intent},{on,msg:{type:'cancel'}});
+  assert.ok(cancelled.some(m=>m.type==='cancelled'));assert.deepEqual(await snap(),brushBefore);
+ }
+ pass('Esc cancels held brush during planning, mesh upload and live water without a history entry');
+ await command({type:'load',id:'fixture:plain:32'});const randomBefore=await snap();let count=0,refused=0;
+ for(let seed=0;seed<128;seed++){
+  const x=hash(seed,1)*31,y=hash(seed,2)*31;
+  const stroke:Intent={side:seed%2?1:-1,path:seed%3?[{x,y},{x:hash(seed,3)*31,y:hash(seed,4)*31}]:[{x,y},{x:Math.min(31,x+.01),y}]};
+  if(faultReason(randomBefore,stroke)){refused++;continue;}
+  const s={...settings,seed,mode:seed%2?'lift' as const:'slide' as const,power:seed%101};
+  const result=await command({type:'brush-begin',id:100+seed,settings:s,intent:stroke},{on:'started',msg:{type:'brush-end',id:100+seed,intent:stroke}});
+  const op=result.find(m=>m.type==='operation')?.op;assert.ok(op?.params.terrain.length,`worker stroke ${seed} must quake`);assert.equal(result.filter(m=>m.type==='finished').length,1);
+  await command({type:'undo'});assert.deepEqual(await snap(),randomBefore);count++;
+ }
+ pass(`128 random real-worker strokes: ${count} completed quakes and exact undos, ${refused} visible start refusals`);
  writeFileSync('captures/worker-checks.json',JSON.stringify({passed,measurements},null,2)+'\n');console.log(JSON.stringify(measurements,null,2));
 }finally{await worker.terminate();}
