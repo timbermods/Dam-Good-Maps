@@ -45,3 +45,4 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 
 - Kyler's roadmap decisions: a Map quality checkpoint after the M9 build (D146) and Map look 2: high fidelity before the Frame pass (D147, `map-look-2-done`).
 - PR #18 (the DGM Probe) merged into `dev`; its INTEGRATION.md adopted as proposals (D149); two conflicts logged as pending #54 (where results go) and #55 (a manual play after the probe), with the recorded decisions as defaults.
+- Kyler's dependency rule (D150): Actions and minor or patch npm updates merged when CI is green; majors (TypeScript 7.0 #24, @types/node 26 #25) held for the deliberate upgrade step (refinement, item 10); Dependabot regrouped into one weekly pull request per ecosystem. CodeQL flagged `live-check.yml`'s privileged `workflow_run` checkout; the live check is now called by `deploy.yml` with the commit it deployed.

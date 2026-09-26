@@ -1516,6 +1516,9 @@ improve once every tool exists. Each note is its own item, with its own tests.
    key in an imported singleton is rewritten as forged sibling data (parse into null-prototype
    records, write own keys only); and the JSON parser accepts raw control characters inside
    strings (reject them, as `JSON.parse` does). Each with its round-trip test.
+10. The deliberate upgrade step (PLAN §20 D150): the held major dependency upgrades (TypeScript
+    7.0, @types/node 26, and any future major; list them with `npm outdated`), one at a time, each
+    with the full nightly suite, at a quiet time and never mid-milestone.
 
 **Containment should look natural** (Kyler's note, 2026-09-24)
 
