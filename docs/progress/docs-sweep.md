@@ -37,7 +37,7 @@ is not touched.
 - Overview: the From column of M9, 3D-c, Weather, M10–M13 and Later names EDITOR_PLAN's current sections, E1–E9 dropped.
 - Overview: new titles for Weather (the full cycle's timeline), M10 (symmetry and the brushes' extras) and M11 (stamps painted as brushes).
 - Overview: #13 marked moot in the Refinement row; a note that M1–M8 and Look use the pre-rewrite section numbers and record the old editor.
-- Live editing: Alt+scroll for strength and plain scroll zooms (#58), in the principles, the top bar and Source.
+- Live editing: plain scroll zooms and strength moves off plain scroll, in the principles, the top bar and Source: Alt+scroll (#58) at first, then Shift+scroll with Alt+scroll slicing layers once D196 merged from dev during the sweep.
 - Live editing: desktop-first (D185), and pen pressure "on a drawing tablet".
 - Live editing: the Drought and Badtide buttons each show one event; the Weather view is the full cycle (D186).
 - Live editing: the "Removed:" list between allow markers.
@@ -96,7 +96,7 @@ is not touched.
 **docs/STATUS.md**
 - The decisions list, "in the version in force": D158, D179, D180, D182, D183 and D184 no longer name the removed tools.
 - Running: the docs sweep, pointing here.
-- "Where to look next": every decision is D1–D195.
+- "Where to look next": every decision is D1–D197.
 
 **docs/progress/README.md**
 - Links this entry.
@@ -229,5 +229,6 @@ Found on `dev` and on `feature/live-editing` (9b75c93). Each contradicts D182 or
   Advanced, Show, the pill, Place, "Select a feature to move it"), which is right while `main` has
   that editor. The Live editing release PR rewrites it for the new editor, following CLAUDE.md's
   writing rules (D188).
-- Not contradictions: BrushBar's "Strength (Alt+wheel)", and WaterBar's Drought and Badtide
+- BrushBar's "Strength (Alt+wheel)" follows #58, which D196 replaces with Shift+scroll (Alt+scroll
+  slices layers). Not contradictions: WaterBar's Drought and Badtide
   buttons (D186).

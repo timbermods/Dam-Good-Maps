@@ -747,7 +747,8 @@ the information layer. Kyler approves the look from its captures; `map-look-done
 **Fix rounds after the clean look,** each on its own branch, judged by Kyler from before and after
 captures and released under its own tag; rendering only, so the map files don't change:
 contaminated ground as a layer (D154, `look-contamination-done`, released); badwater blending
-smoothly into clean water (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
+smoothly into clean water, with #38's approved crimson badwater and a warm tint for partly bad water,
+in one shared water palette (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
 ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`).
 
 ---
@@ -868,14 +869,14 @@ they conflict):
 - **Principles:** the land is the interface (feedback from the land itself, not from panels,
   dialogs or readouts); direct manipulation; few tools, each obvious; smart defaults, with options
   hidden until wanted; forgiveness (instant undo, Esc always backs out); one grammar (pick, paint or
-  place, see the result; [ and ] for size, Alt+scroll for strength, in every tool; plain scroll
-  always zooms, decisions-pending #58); things just work (painting never waits on water and keeps
+  place, see the result; [ and ] for size, Shift+scroll for strength, in every tool; plain scroll
+  always zooms, Alt+scroll slices the visible layers, as in the game, D196); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
 1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row
    beneath shows only the picked tool's options. The size ring is drawn on the land; strength shows
-   only while Alt+scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
-   lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
+   only while Shift+scrolling. Toggles, off by default: square shape, precise mode, straight lines,
+   level lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
    the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
    slot. Pen pressure sets strength on a drawing tablet.
    Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
@@ -886,16 +887,24 @@ they conflict):
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
      ordinary Lower.
    - **Source:** click to place, and water spreads at once; options: clean or bad, and strength.
-     Hover any source and Alt+scroll to change its strength live (a friendly note past the official
-     range, never a block); drag to move it. Anywhere in the editor (D171 is for generated maps).
+     Shift+scroll over any source changes its strength live (a friendly note past the official
+     range, never a block); drag to move it; Delete or Remove makes its water recede. Anywhere in
+     the editor (D171 is for generated maps). Always findable, even underwater (an upwelling; a
+     marker with its strength when near or with Source picked; Markers shows all) (D196).
+   - **Water is never an object** (D196): no river selection, panel or deletion; flow and clean or
+     bad belong to sources; generated rivers are their sources and land. Hovering water shows its
+     depth, bed level and contamination, and highlights the sources feeding it.
+   - **Seeing underwater** (D196): water turns transparent while a tool is picked; T or **Clear
+     water** toggles it otherwise; badwater stays distinct.
    - **Everything else emerges:** lakes fill hollows, waterfalls form at drops, rivers join where
      they meet, and branches form wherever the land is cut from water.
-   - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
-     follow, and the Drought and Badtide buttons, each showing what that event looks like on this
-     map (the game's badtide rules, from `investigation/cycles`; the whole cycle's timeline is the
-     separate Weather view, D186); moisture spreading as the land greens; optional sounds of our
-     own. Local first, then the rest of the map in the background; the final water is always the
-     game's settled result.
+   - **How water behaves:** water near an edit moves within a frame or two, then the rest of the
+     map; a speed control (slower, normal, faster, instant; brisk by default: small edits settle
+     nearby in a second or two) (D197); the journey with pause, skip, replay and follow; the
+     Drought and Badtide buttons, each showing what that event looks like on this map (the game's
+     badtide rules, from `investigation/cycles`; the whole cycle's timeline is the separate
+     Weather view, D186); moisture spreading as the land greens; optional sounds of our own. The
+     final water is always the game's settled result, at any speed.
    - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
      modes, Defy gravity, a Power slider from creek to catastrophe; it forms gorges and valleys
      (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready.
@@ -1331,6 +1340,8 @@ made smaller by Kyler the same day).
     shore and fall foam, badwater distinct; Kyler's direction: fewer, subtler sparkle flecks
     than the clean look, and more depth and transparency;
   - soft real-time shadows from a warm sun.
+- High's water reads the shared water palette (`src/render3d/waterPalette.ts`, D177): the same
+  colours, opacity, badwater blend and calibration as Standard, so the two never drift apart.
 - Today's grass and dirt textures stay exactly as they are (Kyler likes them).
 
 **Later, optional** (not part of this step): ambient occlusion, colour grading, richer or
@@ -1520,7 +1531,7 @@ while water settles). Budgets and measures are information.
 2. 3D picking and selections (the Select tool in 3D), and a level-slice cutaway.
 3. **Cave carving is a brush** (D182; EDITOR_PLAN.md Part 1, §9). D125's Carve cuts into the land
    under the cursor, into a cliff face or beneath the ground, and its Fill fills a hollow back in.
-   They keep the brushes' grammar: the size ring, Alt+scroll for strength, one undo step per
+   They keep the brushes' grammar: the size ring, Shift+scroll for strength, one undo step per
    stroke. Tunnels, arches, caves, ledge paths and overhangs come from carving, as hills and valleys
    come from the brushes, never from buttons (D184; D182 makes D125's feature tools brush-first).
    While painting, the stroke shows live what the support rule would drop (D125). The top bar's

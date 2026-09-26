@@ -97,7 +97,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
 - D182: **the brush kit is the core of the editor**: the landform objects and their handles removed, no presets; terraces and ramps (now Flatten and Smooth options, D184), pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted, carving is a brush).
 - D183: live dimensions: a selection's size in tiles, a straight stroke's length, the level while flattening (D184 removed the other cursor readouts).
-- D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; drawn rivers and lakes removed; plain scroll zooms and Alt+scroll sets strength (#58).
+- D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; drawn rivers and lakes removed; plain scroll zooms (strength on Shift+scroll since D196).
 - D185–D187: the editor is desktop-first; the editor's Drought and Badtide buttons show each event, and the Weather view is the separate full-cycle timeline; Claude is a summoned chat box.
 - D188: docs are part of done: living docs updated in the same PR, a drift check at each milestone boundary, a CI guard for retired terms, and a docs index (`docs/README.md`). EDITOR_PLAN.md now opens with the editor's vision.
 - D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
@@ -107,14 +107,17 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
 - D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
 - D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
+- D196: water is never an object (no river selection or panel; flow and clean or bad belong to sources); sources always findable; clear water while a tool is picked or with T; Alt+scroll slices layers and Shift+scroll sets strength, as in the game (replaces #58); water in the hover readout.
+- D197: water near an edit moves within a frame or two; a speed control (slower, normal, faster, instant), brisk by default; the final water is always the game's settled result.
 
 ## Done and released
 
 - **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
   proposals for their steps.
-- **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
-- **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
-  ship with the next release as `start-edge-rules-done`.
+- **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
+- **Mine sites and ruins** are live (`look-mine-ruins-done`, #42, D178).
+- **The start and edge rules** are live (`start-edge-rules-done`, #44, released in PR #48, live check passed):
+  no edge walls, start water over natural slopes, starting wood in logs, sources start rivers, heights up to 22.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
@@ -150,7 +153,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   editor vision, and CI's retired-terms guard. What the Live editing work must keep, and the
   editor text it still has to change: [progress/docs-sweep.md](progress/docs-sweep.md).
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
-  `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
+  `look/badwater-blend` (#41, approved: the warm-midpoint blend is in, ready to release as
+  `look-badwater-done`);
+  mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
 - **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
@@ -169,7 +174,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D195.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D197.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.
