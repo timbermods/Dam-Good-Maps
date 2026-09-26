@@ -46,7 +46,7 @@ Kyler's decided principles and what a player feels block (D115).
 | The start's water on its own level (D85) | Kyler's start water rule: a walk over the map's own terrain and slopes to a shore a pump reaches, within 12 / 20 / 28 tiles; 25% of starts now drink from another level | Kyler, 2026-09-25 |
 | Starting trees counted | Starting wood (D164): logs by species within 20 tiles' walk (Oak 8, Pine 2, Birch 1); the woods (oak-rich, mixed, birch-rich) are a composition lever and a strategy axis | D164 |
 | Thin bands left along the edges | No edge walls: the land runs on past the edge, and a blocking check finds none on any map | Kyler, extends D111 |
-| The start ignores droughts | The settler prefers water that lasts through the first Normal drought; requiring it is decisions-pending #56 | Task e |
+| The start ignores droughts | The settler prefers water that lasts through the first Normal drought; requiring it is decisions-pending #59 | Task e |
 | Two to four settles an attempt | One settle for 80% of maps, two for 20%; a first look at 0.2 s at 128² | Task f |
 | Heights only | Terrain kept as runs per column; format 3 stores runs; caves slot in with no format change | Task h, D118, I-1 |
 | The Dam site tool proposed as spurs | Built: a natural-narrows builder that never reads as a wall | Task g, D111 |
@@ -164,7 +164,7 @@ lakes, volcano island.
    every two tiles or more, three tiles wide, with the genome's chance (lower as Verticality rises).
    An upland left without one needs stairs: a reward. A ramp's steps get slopes (M9a extends the
    derived-slope rule to join a ramp's steps wherever it is; the prototype pins them;
-   decisions-pending #59).
+   decisions-pending #62).
 8. **Hazards found in the land** (version 1's): badwater rises in a pit dug two levels into high
    ground, draining by its own winding ditch to a river below the start's water; `water.badwater_contained`
    proves it holds. Thorn belts, relics, geothermal fields, mine sites and ruins come from the
@@ -325,7 +325,7 @@ itself (D138); Kyler's further one-sentence intentions join the same way.
 
 Fourteen drafts in the same form as Kyler's four: a plain sentence, the outcome, and a simple check.
 They are not in the set and not prototyped. Only the ones Kyler picks join it, under the same three
-principles (decisions-pending #63). Sources: the workshop catalogue (`investigation/WORKSHOP.md`), the landscape families
+principles (decisions-pending #66). Sources: the workshop catalogue (`investigation/WORKSHOP.md`), the landscape families
 (`investigation/landscapes/FAMILIES.md`) and the mechanics study (`investigation/mechanics/`:
 `CATALOGUE.md`, `AXES.md`).
 
@@ -407,7 +407,7 @@ place of the validators' `start.water` and `start.wood`:
 - **Starting wood** (D164): logs, not trees. Every Pine, Birch and Oak within 20 tiles' walk,
   living or dead, counts at its species' yield (Oak 8, Pine 2 plus resin, Birch 1). The prototype
   converts 60 / 40 / 20 trees to 170 / 110 / 55 logs at the default species mix's 2.8 logs a tree;
-  the core rule sets the final numbers (decisions-pending #65).
+  the core rule sets the final numbers (decisions-pending #68).
 - The berry bushes rule and D85's other requirements stay.
 
 **The settler** (`v2/start.ts`) reads the land with its water, as a player would:
@@ -438,7 +438,7 @@ place of the validators' `start.water` and `start.wood`:
   the settler weights up (×1.25) places whose clean water within the rule's walk stays pumpable
   through the first Normal drought (the analytic drought over 3 days: 2 in the game's schedule,
   after a day of ramp-down), and down (×0.8) the rest. A shore on another level now counts too.
-  Measured (REPORT-v2 §5): ⟨R_DROUGHT⟩ Requiring it is decisions-pending #56.
+  Measured (REPORT-v2 §5): ⟨R_DROUGHT⟩ Requiring it is decisions-pending #59.
 
 **Every guard stays**, as Kyler amended them:
 - both validators in the `generate` profile, but for `start.water` and `start.wood`, which his
@@ -447,7 +447,7 @@ place of the validators' `start.water` and `start.wood`:
 - `water.storage_possible` in place of `water.reservoir` (the workshop study's rule: running clean
   water at the start's pump shore, and storage possible within 40 tiles by a dam, natural pools or
   levees). It asks only that the land lets the player store a drought's water; whether it stays a
-  guard now that nothing else about water is guaranteed is decisions-pending #64;
+  guard now that nothing else about water is guaranteed is decisions-pending #67;
 - the dam-wall and edge-wall checks in the loop (§8);
 - determinism (exact arithmetic, D15; iteration in index order; heaps that break ties by index);
 - batches ≥ 98% final.
@@ -617,7 +617,7 @@ below 0.35 pine and birch (quick to regrow), 0.75 and above oak (plenty of wood,
 mixed between. The brief's card says it in words ("mostly oak: plenty of wood, slow to regrow").
 Play variety on them: REPORT-v2 §3.3 and §6.
 
-**Difficulty as positions on the axes** (a proposal; decisions-pending #62). Difficulty today is
+**Difficulty as positions on the axes** (a proposal; decisions-pending #65). Difficulty today is
 D85's start rules and the drought need. The axes let the generator prefer, among a seed's
 candidates, the one whose position suits the difficulty best (the most conditions met; a
 preference, never a rejection):
@@ -844,10 +844,10 @@ from M13's versioned deploys.
   the forced set), from its nudge's tall scarp; a tapered scarp is M9b's fix.
 - *Above 16*: confirmed in the game by the tall-maps probe (D172), but the build's cap at 16 must be
   lifted for Verticality 70+ (the prototype measured the land before the build).
-- *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#59).
+- *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#62).
 - *The core start and edge rules* land with their own definitions and numbers. The prototype's
   are approximations: starting wood's 170 / 110 / 55 logs, the planner's wood target, and the
-  edge-wall check's band (#65). M9a re-measures with the core rules.
+  edge-wall check's band (#68). M9a re-measures with the core rules.
 - *In-game behaviour*: M9a's probe batch (D116).
 
 ## 18. Staging (proposal)
@@ -859,7 +859,7 @@ version. The proposal (also in ROADMAP M9):
   the regional field, caprock, erosion, weathering, levels with benches) and the hydrology (hanging
   valleys, knickpoints, spring lakes); natural ramps and the derived-slope rule for them;
   Verticality (above 16 from 70, confirmed by the tall-maps probe, D172); the settler with reach and the drought-aware
-  start (#56); Kyler's start and edge rules on the generator's side (the settler's walk over the
+  start (#59); Kyler's start and edge rules on the generator's side (the settler's walk over the
   derived slopes, the planner's wood target from starting wood, the land running on past the
   edges), with the core rules from `feature/start-edge-rules`; the one-settle order and the
   progressive preview; the runs model and format 3 (§12);
@@ -867,7 +867,7 @@ version. The proposal (also in ROADMAP M9):
   and `place_narrows`.
 - **M9b, composition and variety**: intentions (the set, steering, checks, re-steer, drop records,
   the within-intention measures), Variety and Surprise me (with Verticality's jumps), recipes, the woods
-  (D164), the cycle signature and the axes in the openings, difficulty as positions (#62), the permanent
+  (D164), the cycle signature and the axes in the openings, difficulty as positions (#65), the permanent
   measures; tool entries `steer` and `check_intention`.
 - **M9c, score, names and candidates**: K = 3 with progressive preview; the score as a tiebreaker;
   names from the names study with read-back roles; "how it plays" cards; Variations (D143); the
@@ -883,7 +883,7 @@ Verticality 85, drawn from above in the clean look at 2 px a tile, labelled), be
 record [docs/sheets/design-v2.png](sheets/design-v2.png) (D144); a local page shows version 1,
 version 2 and high Verticality side by side. The ten maps to play are in
 [investigation/generative/out/v2/](../investigation/generative/out/v2/). This version's pending
-decisions are decisions-pending #56–#65.
+decisions are decisions-pending #59–#68.
 
 ## 20. Appendix: every one-height assumption in `src/`
 

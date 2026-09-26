@@ -3,7 +3,7 @@
 //   A place qualifies when a walk over the map's own terrain and slopes reaches a pump shore within
 //   the rule; the settler screens with an optimistic walk (steps of one level allowed anywhere) and
 //   then walks the best places over the slopes the build would derive.
-// - Drought-aware start water (task e, decisions-pending #56): with `drought`, a place counts as
+// - Drought-aware start water (task e, decisions-pending #59): with `drought`, a place counts as
 //   drought-safe when clean water within the water rule stays pumpable through the first Normal
 //   drought (the analytic drought over its days); "prefer" weights such places up, "require"
 //   takes only them.

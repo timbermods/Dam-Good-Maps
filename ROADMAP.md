@@ -962,7 +962,7 @@ a little noise, and two maps must play differently, not only look different.
    - **Kyler's own one-sentence intentions** become intentions under those principles (D139). Four
      so far: a start under a cliff with water below, a snaking river down a hill, a large crater
      where rivers converge, and a waterfall off a cliff into a large round lake. Fourteen more are
-     drafted for him to pick (design version 2 §6, decisions-pending #63).
+     drafted for him to pick (design version 2 §6, decisions-pending #66).
    - The techniques playbook as proposals (D131), and the corrected no-approximation measure
      (D128).
    - A contact-sheet image of its prototypes, `docs/sheets/design-v2.png` (D144).
@@ -985,9 +985,9 @@ become recipes inside the system (design §3).
     (uplift, caprock, erosion, weathering, levels with benches) and the hydrology (rivers from the
     drainage, lakes, spring lakes, falls, pools, splits, deltas, hanging valleys, knickpoints) in
     `src/core`; natural ramps, with the derived-slope rule joining a ramp's steps wherever it is
-    (decisions-pending #59); features read back out of the field (rivers, natural lakes, badwater
+    (decisions-pending #62); features read back out of the field (rivers, natural lakes, badwater
     hollows, the start, objects, resources); the settler with reach and the drought-aware start
-    water (#56); `water.storage_possible` in place of `water.reservoir` and the dam-wall check, in
+    water (#59); `water.storage_possible` in place of `water.reservoir` and the dam-wall check, in
     both validators; the document model (a stored field, project format 3); the generator version
     0.7.0; K = 1.
   - **One settle and a progressive preview** (design version 2 §13): the badwater hollow planned
@@ -1085,7 +1085,7 @@ become recipes inside the system (design §3).
   - **Intentions** (D138; design version 2 §6): the set (eleven, four of them Kyler's own; "the
     only safe water is uphill" left it), the steering (the prior and the settler), the checks on the finished map, one
     re-steer for a start intention, drop rates recorded, and the no-clone and no-archetype measures
-    within each intention. **Difficulty as positions on the strategy axes** (#62): a preference
+    within each intention. **Difficulty as positions on the strategy axes** (#65): a preference
     among a seed's candidates, never a rejection.
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
     direction as tool entries; suite requests for them; every reference solution re-run. The
