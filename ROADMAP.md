@@ -1265,6 +1265,10 @@ it's chosen for (blocking: what a player feels).
 
 ## Frame pass
 
+**Before and after it** (D176): until this step creates the design records, new interface is built
+with the existing shared styles and components, with no one-off styling, so the design pass
+restyles it rather than rebuilds it; after it, all new interface follows its records.
+
 After the M9 build (all its stages), the Map quality checkpoint and Map look 2, and before the
 3D stages and M10 (Kyler, 2026-09-25; PLAN §20 D113, D146, D147). It follows
 the impeccable-app-flow skill (timbermods/.github, `claude-skills/impeccable-app-flow/`) in
@@ -1802,6 +1806,10 @@ premise and its landmark. Copy uses the catalogue's words (M9's list).
 
 ## M12. Claude integration
 
+**Design** (D176): M12's new interface is built to the Frame pass's records (DESIGN.md and the
+tokens), with the impeccable-app-flow's finish review on the new screens; no second full design
+pass.
+
 **Delivers:** E8, with the delivery choices from the M3 spike, built on the Claude groundwork
 (D88; `investigation/claude/`).
 - Its Claude panels are built in the design flow's update mode, from the DESIGN.md and
@@ -1959,6 +1967,9 @@ dangerous badwater route on the opposite side.").
 ---
 
 ## M13. Usability, problem reports, versioned deploys
+
+**Design** (D176): M13's new interface is built to the design records, with the finish review on
+the new screens; no second full design pass.
 
 **Delivers**
 - E9: the usability tasks, onboarding hints, shortcuts reference, help page, accessibility pass
