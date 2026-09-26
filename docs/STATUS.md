@@ -100,6 +100,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; the river and lake tools removed.
 - D185–D187: the editor is desktop-first; the editor's Drought and Badtide buttons show each event, and the Weather view is the separate full-cycle timeline; Claude is a summoned chat box.
 - D188: docs are part of done: living docs updated in the same PR, a drift check at each milestone boundary, a CI guard for retired terms, and a docs index (`docs/README.md`). EDITOR_PLAN.md now opens with the editor's vision.
+- D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
 
 ## Done and released
 
@@ -148,15 +149,14 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 1. Try each Live editing push on <https://timbermods.github.io/dam-good-maps/preview/>; it is
    released when it feels right.
-2. Kyler's own one-sentence intentions, for design version 2.
-3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
+2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-4. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
+3. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
    Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
-5. A yes before each probe batch; the next is M9a's.
-6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
+4. A yes before each probe batch; the next is M9a's.
+5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
    #51–#53.
-7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
 
 ## Where to look next
