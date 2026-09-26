@@ -23,7 +23,7 @@ describe("validation profiles (PLAN §19.5)", () => {
   it("every result has the full shape", () => {
     for (const c of r.report.checks) {
       expect(typeof c.id).toBe("string");
-      expect(["load", "playability", "design"]).toContain(c.class);
+      expect(["load", "playability", "design", "principle"]).toContain(c.class);
       expect(["error", "warning", "info"]).toContain(c.severity);
       expect(typeof c.ok).toBe("boolean");
       expect(typeof c.message).toBe("string");

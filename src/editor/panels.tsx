@@ -14,6 +14,7 @@ import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
+import { woodDetail } from "../core/analysis/wood";
 import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
 import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
 
@@ -203,7 +204,7 @@ function TabNote({ tab, info }: { tab: Tab; info: SessionInfo }) {
   const imported = info.kind === "import";
   if (tab === "start") {
     if (imported) return <p class="note">Drag the start's handle to move it. The district center needs level ground and a free tile at its door.</p>;
-    return <p class="note">Select the start, then drag its handle. Green means the district center fits and meets the start requirements: water on its level without stairs, and enough trees and berry bushes within 20 tiles' walk.</p>;
+    return <p class="note">Select the start, then drag its handle. Green means the district center fits and meets the start requirements: clean water within a short walk, and enough wood and berry bushes within 20 tiles' walk.</p>;
   }
   if (imported && tab === "land") return <p class="note">Imported maps have no features to select yet. Draw new land on top of the map.</p>;
   return null;
@@ -450,10 +451,11 @@ export function PreviewCard({ plan, pending, onPlace, onCancel }: PreviewProps) 
 }
 
 /** The start's footprint check while it is dragged: whether it fits, the three start requirements
- *  (PLAN §5.6, D85) with the map's numbers, and the targets it misses as warnings. */
-export function StartIndicators({ check, rules }: { check: StartCheck; rules: { waterWithin: number; treesWithin20: number; bushesWithin20: number } }) {
+ *  (PLAN §5.6, D85, D164) with the map's numbers, and the targets it misses as warnings. */
+export function StartIndicators({ check, rules }: { check: StartCheck; rules: { waterWithin: number; woodWithin20: number; bushesWithin20: number } }) {
   const mark = (ok: boolean) => (ok ? "ok" : "low");
   const waterOk = check.water !== null && check.water <= rules.waterWithin;
+
   return (
     <div class="start-indicators" role="status">
       <p class={check.problem || !check.meets ? "bad" : "ok"}>
@@ -461,10 +463,10 @@ export function StartIndicators({ check, rules }: { check: StartCheck; rules: { 
       </p>
       <ul>
         <li class={mark(waterOk)} data-need="water">
-          Water without stairs: {check.water === null ? "none on this level" : `${check.water} tiles' walk`} (at most {rules.waterWithin})
+          Water without stairs: {check.water === null ? "none in reach" : `${check.water} tiles' walk`} (at most {rules.waterWithin})
         </li>
-        <li class={mark(check.trees >= rules.treesWithin20)} data-need="trees">
-          Starting trees: {check.trees} (at least {rules.treesWithin20})
+        <li class={mark(check.wood >= rules.woodWithin20)} data-need="wood">
+          Starting wood: {check.wood} logs{woodDetail(check.woodBySpecies, check.woodGrowing)} (at least {rules.woodWithin20})
         </li>
         <li class={mark(check.bushes >= rules.bushesWithin20)} data-need="bushes">
           Starting bushes: {check.bushes} (at least {rules.bushesWithin20})

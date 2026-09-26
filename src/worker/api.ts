@@ -2,6 +2,8 @@
 // downloads need, with the big arrays as typed arrays (transferred, not copied).
 
 import { encodeProject, projectFileName, toDocument } from "../core/doc/document";
+import { isSapling, type WoodBySpecies } from "../core/analysis/wood";
+import type { JsonObject } from "../core/format/json";
 import type { BuildResult } from "../core/features/build";
 import type { Feature } from "../core/features/schema";
 import { writeTimber } from "../core/format/timber";
@@ -39,8 +41,12 @@ export interface MapFacts {
   naturalStorage: number;
   /** Stored water the colony needs through the worst drought. */
   reservoirNeed: number;
-  /** Tiles from the start to pumpable clean water (null: none). */
+  /** Tiles' walk from the start to a shore a pump works from (null: none). */
   waterDistance: number | null;
+  /** Starting wood by species: the logs of the grown trees within 20 tiles' walk (D164); and the
+   *  saplings' logs there, still growing. */
+  woodBySpecies: WoodBySpecies | null;
+  woodGrowing: number;
   settle: { ticks: number; settled: boolean };
 }
 
@@ -87,14 +93,15 @@ export function lastGenerated(): GenerateResult | null {
   return last;
 }
 
-/** Whether an entity's components mark it dead, or a sapling. */
+/** Whether an entity's components mark it dead, or a sapling. The growth is read as the file
+ *  stores it (analysis/wood.ts `isSapling`: the parser keeps a float as a JsonFloat, which
+ *  `Number()` turned into NaN, so no sapling ever read as young). */
 export function lifeOf(components: Record<string, unknown> | undefined): { dead?: true; young?: true } {
   if (!components) return {};
   const out: { dead?: true; young?: true } = {};
   const lnr = components.LivingNaturalResource as { IsDead?: unknown } | undefined;
   if (lnr && lnr.IsDead === true) out.dead = true;
-  const g = components.Growable as { GrowthProgress?: unknown } | undefined;
-  if (g && Number(g.GrowthProgress) < 1) out.young = true;
+  if (isSapling(components as JsonObject)) out.young = true;
   return out;
 }
 
@@ -138,6 +145,8 @@ export async function responseOf(r: ResponseInput): Promise<GenerateResponse> {
     naturalStorage: a ? Math.round(a.naturalStorage) : 0,
     reservoirNeed: Math.round(rulesFor(r.spec).reservoirNeed),
     waterDistance: a && Number.isFinite(a.waterDistance) ? Math.round(a.waterDistance * 10) / 10 : null,
+    woodBySpecies: a ? { ...a.woodBySpecies } : null,
+    woodGrowing: a ? a.woodGrowing : 0,
     settle: { ticks: b.settle.ticks, settled: b.settle.settled },
   };
   return {

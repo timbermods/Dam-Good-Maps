@@ -98,9 +98,16 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D182: **the brush kit is the core of the editor**: every landform tool and its handles removed, no presets; new Terrace and Ramp brushes, pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted).
 - D183: live dimensions: selection size in tiles, straight-stroke length, the target level for Flatten and Terrace, the river's width and depth.
 - D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; the river and lake tools removed.
+- D185–D187: the editor is desktop-first; the editor's Drought and Badtide buttons show each event, and the Weather view is the separate full-cycle timeline; Claude is a summoned chat box.
+- D188: docs are part of done: living docs updated in the same PR, a drift check at each milestone boundary, a CI guard for retired terms, and a docs index (`docs/README.md`). EDITOR_PLAN.md now opens with the editor's vision.
+- D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
+- D190: #51–#53 decided (the defaults): world traits are candidate intentions; wet caves allowed in 3D-b; the no-clone distance picks candidates, the score breaks near ties.
+- D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
 
 ## Done and released
 
+- **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
+  ship with the next release as `start-edge-rules-done`.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
@@ -122,8 +129,6 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **The start and edge rules** (D151–D153, and D172 (1)'s height limit of 22), on branch
-  `feature/start-edge-rules`.
 - **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
   and edge rules, then the Real places are rebuilt through its planner.
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
@@ -138,24 +143,21 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40, finished and
-  reviewed; it becomes the editor's primary button), `investigation/pickplace-water2` and #38 (Map
-  look 2), when their PRs are open.
+- Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40; merged once its
+  cloud session lands the "Name (2)" change, D191, and CI is green; it becomes the editor's primary button), `investigation/pickplace-water2`, #38 (Map
+  look 2) and `investigation/carve` (the starting point for "Let the water carve", D180, as proposals),
+  when their PRs are open.
 
 ## Waiting on Kyler
 
 1. Try each Live editing push on <https://timbermods.github.io/dam-good-maps/preview/>; it is
    released when it feels right.
-2. Kyler's own one-sentence intentions, for design version 2.
-3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
+2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-4. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
-   Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
-5. A yes before each probe batch; the next is M9a's.
-6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
-7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
-   ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
+3. A yes before each probe batch; the next is M9a's.
+4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
+5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+   ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next
 
