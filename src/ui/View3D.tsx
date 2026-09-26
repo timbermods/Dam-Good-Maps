@@ -201,14 +201,18 @@ export function View3D(props: View3DProps) {
   const marked = present.filter((e) => e.markers);
 
   // a line points to its things on the map until the next click on the map, Esc, or the line again
+  // (the listeners are there from the start, reading a ref: an Esc right after the click counts)
+  const pointedRef = useRef<string | null>(null);
   const point = (e: PresentEntry | null) => {
-    const next = e && e.key !== pointed ? e : null;
-    setPointed(next?.key ?? null);
+    const next = e && e.key !== pointedRef.current ? e : null;
+    pointedRef.current = next?.key ?? null;
+    setPointed(pointedRef.current);
     renderer.current?.setHighlight(next ? next.tiles : null);
   };
   useEffect(() => {
-    if (!pointed) return;
-    const off = () => point(null);
+    const off = () => {
+      if (pointedRef.current) point(null);
+    };
     const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && off();
     const c = canvas.current;
     c?.addEventListener("pointerdown", off);
@@ -217,9 +221,12 @@ export function View3D(props: View3DProps) {
       c?.removeEventListener("pointerdown", off);
       window.removeEventListener("keydown", onKey);
     };
-  }, [pointed]);
+  }, []);
   // a new map drops the highlight
-  useEffect(() => setPointed(null), [props.view]);
+  useEffect(() => {
+    pointedRef.current = null;
+    setPointed(null);
+  }, [props.view]);
 
   const item = (e: PresentEntry) => (
     <li key={e.label}>
