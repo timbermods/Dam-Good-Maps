@@ -137,6 +137,6 @@ export class Effects {
     if (!this.shadows) this.b.uniforms.sunDir.value.copy(SUN);
     this.renderer.requestRender();
   }
-  dispose() { this.high.dispose(); this.target.dispose(); this.depth.dispose(); }
+  dispose() { this.standard.dispose(); this.high.dispose(); this.target.dispose(); this.depth.dispose(); }
 }
 

@@ -17,6 +17,7 @@ const effects=new Effects(high);
 effects.water=effects.shadows=true;
 effects.apply();
 let map: MapView | undefined, label='', worker:Worker|undefined, serial=0, ready=false;
+let waterView:ReturnType<typeof surfaceWater>|undefined;
 let syncing=false;
 function sync(other:MapRenderer,v:ViewState){if(syncing)return;syncing=true;other.setView(v);syncing=false;}
 standard.onView=v=>sync(high,v);high.onView=v=>sync(standard,v);
@@ -47,7 +48,7 @@ async function load(index=Number(select.value),seed=Number($<HTMLInputElement>('
       if(data.id!==serial)return;
       if(data.progress){status.textContent=data.progress;return;}
       if(data.error){status.textContent=data.error;reject(new Error(data.error));return;}
-      map=data.view;label=data.label;
+      map=data.view;label=data.label;waterView=surfaceWater(map!.W,map!.H,map!.water);
       try {
         standard.setMap(map!);high.setMap(map!);effects.fit(map!.W,map!.H);
         $<HTMLInputElement>('sun').value='0';
@@ -78,7 +79,7 @@ $('reset-sun').onclick=()=>{$<HTMLInputElement>('sun').value='0';effects.sunAngl
 for(const r of [standard,high])r.onHover=hit=>{
   if(!hit||!map)return;
   const i=hit.y*map.W+hit.x;
-  const sw=surfaceWater(map.W,map.H,map.water);
+  const sw=waterView!;
   $('inspection').textContent=`Tile ${hit.x}, ${hit.y} · water ${sw.depth[i].toFixed(2)} levels · badwater ${Math.round(sw.contamination[i]*100)}% · moisture ${map.soil?.moisture[i]??0}/255 · ground contamination ${map.soil?.contamination[i]??0}/255`;
 };
 

@@ -6,8 +6,15 @@ export function pose(view: MapView, kind: string): { camera: Partial<ViewState>;
   if (kind === 'overview') return { found: true, camera: { mode: 'orbit', target: [W/2, 7, -H/2], distance: Math.max(W,H)*1.9, yaw: -0.55, pitch: 0.91 } };
   const water = surfaceWater(W,H,view.water);
   let best = -Infinity, tile = -1, yaw = -0.55;
-  if (kind === 'start') {
-    for (let k=0;k<e.count;k++) if(e.templates[e.template[k]] === 'StartingLocation') tile=e.y[k]*W+e.x[k];
+  if (kind === 'start' || kind === 'ruins') {
+    for (let k=0;k<e.count;k++) {
+      const name=e.templates[e.template[k]];
+      if(kind==='start' && name==='StartingLocation')tile=e.y[k]*W+e.x[k];
+      if(kind==='ruins' && name.startsWith('RuinColumnH')) {
+        const score=Number(name.slice('RuinColumnH'.length));
+        if(score>best){best=score;tile=e.y[k]*W+e.x[k];}
+      }
+    }
   } else for (let y=2;y<H-2;y++) for(let x=2;x<W-2;x++) {
     const i=y*W+x, d=water.depth[i], c=water.contamination[i];
     let score=-Infinity, direction=yaw;

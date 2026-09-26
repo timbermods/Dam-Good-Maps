@@ -23,7 +23,7 @@ void main() {
   // Mixed water remains streaked with its actual contamination share.
   float stream = vnoise(vec2(g.x * 1.4 + sin(g.y * 0.8), g.y * 3.8 - t * 0.16));
   float bad = cont >= 0.95 ? 1.0 : (cont <= 0.05 ? cont :
-    mix(cont * 0.55, 1.0, smoothstep(1.0 - cont - 0.12, 1.0 - cont + 0.12, stream)));
+    mix(cont * 0.55, 1.0, smoothstep(1.0 - cont - 0.20, 1.0 - cont + 0.20, stream)));
   float shore = 1.0;
   float fall = 1.0;
   if (n.y > 0.5) {
@@ -63,6 +63,9 @@ void main() {
     c += sunColor * spec * 0.20 * aa * lit * (1.0 - bad * 0.85);
     // Broad low-contrast ripple light: visible water without sparkling noise.
     c += vec3(0.040, 0.065, 0.067) * smoothstep(-0.015, 0.065, N.x + N.z) * (1.0-bad*0.6);
+    // Slow broken brown ribbons keep murky water visibly liquid even from above.
+    float ribbon = smoothstep(0.48, 0.72, vnoise(vec2(g.x*0.8+g.y*0.25, g.y*4.3-g.x*0.6-t*0.35)));
+    c += vec3(0.080, 0.043, 0.025) * ribbon * bad;
     float noise = vnoise(g * 4.0 + vec2(t*0.1, -t*0.2));
     foam = (1.0-smoothstep(0.015, 0.18, shore)) * (0.20 + noise * 0.35);
     foam += (1.0-smoothstep(0.0, 0.65, fall)) * (0.23+0.45*noise);
