@@ -15,4 +15,4 @@ A separate impact tool. Work in progress; validation and captures follow.
 ## Progress
 
 1. Read the requested plans, format, simulation and Carve source. Created the isolated dev-based branch and standalone package.
-
+2. Built the deterministic impact model and exact result format. Seventeen model checks pass. In the river study, ejecta raises the sill from level 5 to 9; unchanged sources raise upstream water from 0.26 to 2.52 levels after 768 simulation ticks.
