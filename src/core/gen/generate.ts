@@ -22,7 +22,10 @@
 // drawn; a genome that has cost many settles is replaced (the time budget, counted in settles so
 // the map is the same on every machine).
 
+import { sourcesInFlow } from "../analysis/sources";
 import { straightness, tooStraight } from "../analysis/straight";
+import { entityJson } from "../format/entities";
+import { mapObjects } from "../sim/model";
 import { pumpShoreDistance, reachAt, walkDistance } from "../analysis/walk";
 import type { FieldData } from "../doc/document";
 import { buildMap, SettleCache, type BuildResult, type GeneratedField, type LockedLayer } from "../features/build";
@@ -574,6 +577,11 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   let base = build(layout, "resources");
   if (!(startWaterWalk(base) <= rule - 2) || wetRing(base, pick)) return fail("start water moved", base, true);
   if (badAsk.count > 0 && !bad.features.length) return fail("no place for badwater", base, true);
+  // D171: a source inside a flow fails the map (water.source_in_flow, blocking here); the objects and
+  // resources change no water, so it is found on this settle and the field planned again at once
+  // (not on the last attempt, whose map is the one kept when none passes)
+  const lastAttempt = attempt >= (opts.maxAttempts ?? MAX_ATTEMPTS) - 1;
+  if (!lastAttempt && sourcesInFlow(base.waterModel, mapObjects({ entities: base.entities.map(entityJson) }), base.water).inFlow.length) return fail("water.source_in_flow", base, true);
   const firstWater = Math.round(performance.now() - t0);
   info.start = pick;
   info.badwater = bad.count;
