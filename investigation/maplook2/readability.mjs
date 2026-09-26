@@ -7,7 +7,7 @@ process.chdir(fileURLToPath(new URL('.', import.meta.url)));
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
   const page=await browser.newPage();
-  for(const name of ['river-128-start','river-128-soil','river-256-meeting']){
+  for(const name of ['river-128-start','river-128-soil','river-128-badwater','river-256-meeting']){
     const image=readFileSync(`captures/${name}.jpg`).toString('base64');
     const result=await page.evaluate(async({image})=>{
       const img=new Image();img.src=`data:image/jpeg;base64,${image}`;await img.decode();

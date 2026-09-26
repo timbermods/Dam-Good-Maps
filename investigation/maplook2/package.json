@@ -8,6 +8,7 @@
     "check": "tsc --noEmit",
     "check:colour": "node colour-check.mjs",
     "check:surface": "node surface-check.mjs",
+    "check:badwater": "node badwater-check.mjs",
     "capture": "node capture.mjs"
   },
   "dependencies": { "three": "0.186.0", "fflate": "0.8.3" },

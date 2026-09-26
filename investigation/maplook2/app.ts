@@ -6,6 +6,7 @@ import { CHANGES, NOT_ENDORSED, PROVIDER_NOTICES } from '../../src/core/places/a
 import { bridge, Effects } from './effects';
 import { pose } from './poses';
 import { WaterFlow, surfaceContamination } from './flow';
+import { badwaterBed } from './badwater-bed';
 import type { MapRequest } from './maps.worker';
 
 const $ = <T extends HTMLElement>(id:string) => document.getElementById(id) as T;
@@ -18,6 +19,7 @@ const effects=new Effects(high);
 effects.water=effects.shadows=true;
 effects.apply();
 const flow = new WaterFlow(bridge(high).waterMat);
+const bed = badwaterBed(bridge(high).terrainMat,bridge(high).waterMat);
 let flowSource = '', velocity = new Float32Array(0);
 let map: MapView | undefined, label='', worker:Worker|undefined, serial=0, ready=false;
 let waterView:ReturnType<typeof surfaceWater>|undefined;
@@ -76,7 +78,7 @@ $('load').onclick=()=>{void load().catch(console.error);};
 select.onchange=()=>{void load().catch(console.error);};
 $<HTMLSelectElement>('pose').onchange=e=>setPose((e.target as HTMLSelectElement).value);
 $('angle').onclick=()=>{const v=standard.getView();standard.setView({yaw:v.yaw+Math.PI/2});};
-function toggle(){effects.water=$<HTMLInputElement>('water').checked;effects.shadows=$<HTMLInputElement>('shadows').checked;effects.apply();effects.sunAngle(Number($<HTMLInputElement>('sun').value));}
+function toggle(){effects.water=$<HTMLInputElement>('water').checked;effects.shadows=$<HTMLInputElement>('shadows').checked;bed.setEnabled(effects.water);effects.apply();effects.sunAngle(Number($<HTMLInputElement>('sun').value));}
 $('water').onchange=toggle;$('shadows').onchange=toggle;
 $('sun').oninput=()=>effects.sunAngle(Number($<HTMLInputElement>('sun').value));
 $('reset-sun').onclick=()=>{$<HTMLInputElement>('sun').value='0';effects.sunAngle(0);};
@@ -108,7 +110,7 @@ declare global { interface Window { maplook2: typeof api } }
 const api={
   get ready(){return ready;},get map(){return map;},get label(){return label;},options,
   load,setPose,standard,high,effects,
-  flow,get velocity(){return velocity;},get flowSource(){return flowSource;},
+  flow,bed,get velocity(){return velocity;},get flowSource(){return flowSource;},
   freeze(t=8){$<HTMLInputElement>('pause').checked=true;clock=t;standard.setClock(t);high.setClock(t);standard.renderNow();high.renderNow();},
   toggle(water:boolean,shadows:boolean){$<HTMLInputElement>('water').checked=water;$<HTMLInputElement>('shadows').checked=shadows;toggle();},
   camera(v:Partial<ViewState>){standard.setView(v);high.setView(v);},

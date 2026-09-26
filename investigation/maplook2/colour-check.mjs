@@ -39,7 +39,7 @@ try{
       function band(lo,hi){const s=pixels.slice(Math.floor(pixels.length*lo),Math.floor(pixels.length*hi));return [0,1,2].map(c=>s.reduce((sum,p)=>sum+p[c],0)/s.length);}
       return {body:band(.15,.40),streak:band(.96,.985)};
     }
-    const targets={mlShallow:[42,75,85],mlBody:[36,67,77],mlDeep:[29,50,62],mlStreakAbove:[47,84,95],mlStreakLow:[58,87,97],mlGrazing:[52,80,90],mlStreakGrazing:[80,123,129],mlBad:[75,60,55],mlMix:[46,68,76]};
+    const targets={mlShallow:[42,75,85],mlBody:[36,67,77],mlDeep:[29,50,62],mlStreakAbove:[47,84,95],mlStreakLow:[58,87,97],mlGrazing:[52,80,90],mlStreakGrazing:[80,123,129]};
     const measurements=[];
     for(const [depth,pitch,label]of [[.25,1.22,'shallow above'],[1.25,1.22,'body above'],[4.25,1.22,'deep above'],[1.25,Math.PI/6,'low 30 degrees'],[1.25,.18,'grazing 10.3 degrees']]){
       const height=bed(depth),s=sample(height,pitch);
@@ -70,10 +70,12 @@ try{
     const box=[Math.ceil(Math.min(corner1.x,corner2.x))+2,Math.ceil(Math.min(corner1.y,corner2.y))+2,Math.floor(Math.max(corner1.x,corner2.x))-2,Math.floor(Math.max(corner1.y,corner2.y))-2];
     const waterfallUnchanged=compare(renderWith(accepted),renderWith(material),box);
     accepted.dispose();
-    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,inputs:Object.fromEntries([...keys,'mlBad','mlMix'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
+    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,badwaterReference:{range:['#4C3935','#5A423C'],note:'Final request calls for a warmer material, visible poisoned bed and little cool reflection; these are references, not flat-colour equality targets.'},inputs:Object.fromEntries([...keys,'mlBad','mlMix'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
   });
   result.errors=errors;
-  const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing'],[5,'body','mlBad'],[6,'body','mlMix']];
+  // The final request deliberately warms badwater beyond a fixed screenshot swatch
+  // and exposes its poisoned bed. check:badwater checks that appearance response.
+  const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing']];
   result.maxTargetError=Math.max(...probes.flatMap(([i,part,key])=>result.measurements[i][part].map((v,c)=>Math.abs(v-result.targets[key][c]))));
   writeFileSync('captures/colour-check.json',JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result,null,2));

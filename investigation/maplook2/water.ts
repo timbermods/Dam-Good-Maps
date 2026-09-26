@@ -1,4 +1,5 @@
 import { Vector2, Vector3, type ShaderMaterial } from 'three';
+import { WATER } from '../../src/render3d/palette';
 
 // Display-space palette, calibrated through the renderer (see colour-check.mjs).
 // Targets are the user's measurements; these inputs also allow for the lit bed and finish.
@@ -7,7 +8,9 @@ export const CLEAN_PALETTE = {
   mlStreakAbove: [45, 83, 96], mlStreakLow: [56, 86, 98],
   mlGrazing: [51, 79, 91], mlStreakGrazing: [82.5, 127.5, 137],
 } as const;
-export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [73,58,54] } as const;
+// Badwater's material input is warmer than the reference pixels: its visible
+// colour includes the existing poisoned bed through the shallow water.
+export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [88,48,39] } as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
@@ -71,11 +74,12 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   // A continuous concentration gradient, never a stochastic red/blue mask.
   // The supplied warm mixing sample anchors a mostly-clean (25%) concentration.
   vec3 cleanBody=body;
-  vec3 mixedBody=mlMix+(body-mlBody)*0.55;
-  vec3 badBody=mlBad*(1.0-deep*0.12)+vec3(0.035,0.045,0.05)*grazing;
+  vec3 mixedBody=mlMix+(body-mlBody)*0.25;
+  vec3 badBody=mlBad*(1.0-deep*0.12)+vec3(0.012,0.008,0.006)*grazing;
   body=contamination<=0.25 ? mix(body,mixedBody,contamination/0.25) : mix(mixedBody,badBody,(contamination-0.25)/0.75);
   // Preserve the same crest/fleck field on both sides of the front.
-  streakColour=body+(streakColour-cleanBody)*mix(1.0,0.65,contamination);
+  vec3 badCrest=vec3(0.035,0.023,0.018)+vec3(0.008,0.006,0.004)*low;
+  streakColour=body+mix(streakColour-cleanBody,badCrest,contamination);
   vec2 velocity = (texture2D(mlFlow,g/mlFlowSize).rg*255.0-128.0)/63.5;
   float speed = smoothstep(0.02,1.2,length(velocity));
   // Still lakes retain a little slow wind motion; current dominates in channels.
@@ -93,15 +97,29 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   vec3 referenceLight = skyColor*1.05 + sunColor*0.42*max(sunDir.y, 0.0);
   vec3 rippleLight = skyColor*1.05 + sunColor*0.42*max(dot(normalize(mix(vec3(0.0,1.0,0.0),N,0.35)),sunDir),0.0)*lit;
   colour *= rippleLight / max(referenceLight, vec3(0.01));
-  // Many tiny facets, denser in fast flow. The accepted near-white colour stays fixed.
+  // Many tiny facets, denser in fast flow. Clean water keeps its accepted colour.
   float glint = mix(microFlecks(p,t,speed,pixel),microFlecks(p2,t,speed,pixel),blend);
   glint *= lit*(1.0-smoothstep(0.08,0.22,pixel));
-  colour = mix(colour, vec3(0.97,0.985,1.0), glint);
+  // Keep the facet positions and motion, but make polluted water duller
+  // even in greyscale. Its highlights catch warm light, not a cool sky lobe.
+  glint *= mix(1.0,0.35,contamination);
+  colour = mix(colour, mix(vec3(0.97,0.985,1.0),vec3(0.78,0.67,0.56),contamination), glint);
+  // Retain Standard's own slow glowing badwater bubbles as a distinct cue.
+  if(contamination>0.01) {
+    float bt=t*mix(1.0,0.55,contamination);
+    float fine=1.0-smoothstep(0.03,0.09,fwidth(g.x));
+    float bubbles=fine*smoothstep(0.83,0.93,vnoise(g*5.0+vec2(bt*0.05,-bt*0.08)))
+      *smoothstep(0.55,0.8,vnoise(g*1.3-vec2(0.0,bt*0.04)));
+    colour += vec3(${WATER.badVein.join(',')})*bubbles*contamination*0.55;
+  }
   // Faint real transmission, strongest over the shallow terrace and close to its bank.
   float alpha = mix(mix(0.86,0.96,bodyDepth),0.995,deep);
   alpha = mix(0.76,alpha,smoothstep(0.0,0.20,shore));
   alpha = max(alpha, grazing*0.98);
-  alpha = mix(alpha,max(alpha,0.94),contamination);
+  float badAlpha=mix(0.40,0.94,smoothstep(0.05,1.80,depth));
+  badAlpha=mix(0.30,badAlpha,smoothstep(0.0,0.20,shore));
+  badAlpha=max(badAlpha,grazing*0.62);
+  alpha = mix(alpha,badAlpha,contamination);
   return vec4(colour,alpha);
 }
 void main() {
