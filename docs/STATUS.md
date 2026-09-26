@@ -154,11 +154,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    released when it feels right.
 2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-3. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
-   Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
-4. A yes before each probe batch; the next is M9a's.
-5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
-6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+3. A yes before each probe batch; the next is M9a's.
+4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
+5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next
