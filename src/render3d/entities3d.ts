@@ -14,12 +14,14 @@
 //   diagonal braces on some faces; beige slab panels on some storeys and faces, some missing, a few
 //   tilted or broken; the top storey often only partly there. The five variants (A to E, the
 //   file's own) differ in bracing and panels, each in two layouts that alternate up the column.
-//   Where the column stands on moist ground, ivy drapes about half its storeys, the most at its
-//   foot: flat leaf clusters clinging beside the posts and along the faces' feet, a few strands
-//   hanging from the beams, the panels showing through. A column is turned a quarter more than its
+//   Where the column stands on moist ground, ivy drapes about the lower half of its storeys, the
+//   most at its foot, thinning upward: flat leaf clusters clinging beside the posts and spreading
+//   over the faces' lower parts, bright leaves on their edges, strands with leaves hanging from
+//   the beams, the panels' middles showing through. A column is turned a quarter more than its
 //   east neighbour and a half more than its north one, and no layout looks the same turned, so
 //   neighbouring columns never look alike. From afar each storey is a solid block in the
-//   scaffolding's rust, a pale panel set in where it has one, a little ivy low on a column's foot.
+//   scaffolding's rust, a pale panel set in where it has one, and a band of ivy low on the lower
+//   storeys of a column on moist ground.
 // - The start: a district center of our own, a lodge with pale walls, a dark roof and a yellow
 //   banner on a pale deck, its door facing the entrance, and a lit post on the entrance tile.
 // - Slopes: a stone ramp; with Markers, a level pale arrow rimmed dark floating just above it,
@@ -694,16 +696,18 @@ const BROKEN_POSTS: readonly (readonly [number, number, number, number])[] = [
 /** The corner posts' distance from the tile's middle. */
 const RUIN_E = 0.4;
 
-/** How much ivy a storey carries: none, a little (higher up a column), or the most (its foot). */
+/** How much ivy a storey carries: none, a little (the highest ivy on a column), clearly (the
+ *  storeys above the foot), or the most (the column's foot). */
 export const IVY_NONE = 0;
 export const IVY_LIGHT = 1;
-export const IVY_DENSE = 2;
+export const IVY_MEDIUM = 2;
+export const IVY_DENSE = 3;
 
 /** A storey of a ruin column (variant 0–4, A–E; kind 0 or 1 its layouts, 2 or 3 a top storey only
  *  partly there, in the first or second layout's form), one level high, within its tile, with
- *  `ivy` (IVY_NONE, IVY_LIGHT or IVY_DENSE). Close up: the rusty skeleton, its braces and beige
- *  panels, and ivy draped over it (`drape`); from afar: a solid block in rust with its panels set
- *  in, and a small patch of the densest ivy (`farBlock`). */
+ *  `ivy` (IVY_NONE to IVY_DENSE). Close up: the rusty skeleton, its braces and beige panels, and
+ *  ivy draped over it (`drape`); from afar: a solid block in rust with its panels set in, and a
+ *  band of ivy low on a column's lower storeys (`farBlock`). */
 function storey(variant: number, kind: number, ivy: number): Model {
   const m = new Model();
   const layout = RUIN_LAYOUTS[variant][kind % 2];
@@ -752,60 +756,76 @@ function storey(variant: number, kind: number, ivy: number): Model {
   }
   // from afar: a solid block
   m.level = LOD_FAR;
-  farBlock(m, layout, partial ? 0.72 : 1, ivy === IVY_DENSE ? variant : -1);
+  farBlock(m, layout, partial ? 0.72 : 1, ivy, variant);
   m.level = LOD_ALL;
   return m;
 }
 
 /** Ivy draped over a storey's north face (−Z; `onFace` turns it), as the game's clings: flat leaf
- *  clusters lying against the face, climbing beside a corner post and along the face's foot, fewer
- *  higher up, and a few strands hanging from the beam. The middle of the face stays clear, so its
- *  panel shows. Most leaves #405634, a few the brighter green. A dense storey (a column's foot) has
- *  leaves on every face and strands on two; a light one leaves on two neighbouring faces and
- *  strands on one. `top`: how high the face's skeleton stands. */
+ *  clusters lying against the face, climbing beside the corner posts and spreading from them over
+ *  the face's lower part, fewer higher up, and strands hanging from the beam with leaves along
+ *  them. Most leaves #405634, those on a cluster's edge often the brighter green, so the ivy reads
+ *  against the dark rust. The middle of the face stays clear above its lower part, so its panel
+ *  shows. A column's foot (IVY_DENSE) is clad on every face, with four strands; a storey above it
+ *  (IVY_MEDIUM) on three faces, a little on the fourth, with three strands; the highest ivy
+ *  (IVY_LIGHT) a few clusters on two faces and two strands. `top`: how high the face's skeleton
+ *  stands. */
 function drape(m: Model, f: number, variant: number, ivy: number, top: number): void {
-  const dense = ivy === IVY_DENSE;
   const turn = (f + variant) % 4;
-  if (!dense && turn >= 2) return;
+  /** How clad this face is: 2 fully, 1 a little, 0 not at all. */
+  const clad = ivy === IVY_DENSE ? 2 : ivy === IVY_MEDIUM ? (turn === 1 ? 1 : 2) : turn >= 2 ? 1 : 0;
+  if (!clad) return;
   const side = (f + variant) % 2 ? 1 : -1;
   const z = -RUIN_E - 0.04;
-  /** A cluster of `n` diamond leaves round (x, y), spread over `r` (`tall` times that upward). */
+  const roof = Math.min(top, 1) - 0.16;
+  /** A cluster of `n` diamond leaves round (x, y), spread over `r` (`tall` times that upward); the
+   *  outer leaves often the brighter green. */
   const cluster = (x: number, y: number, n: number, r: number, seed: number, tall = 1.3) => {
     for (let k = 0; k < n; k++) {
       const a = seed * 1.7 + k * 2.4;
-      const d = r * Math.sqrt((k + 0.5) / n);
-      const lx = Math.max(-0.38, Math.min(0.38, x + Math.cos(a) * d));
-      const ly = Math.max(0.14, Math.min(Math.min(top, 1) - 0.14, y + Math.sin(a) * d * tall));
-      const size = 0.12 + 0.035 * ((k + seed) % 2);
-      m.add(plane(size, size), (k + seed + variant) % 5 === 2 ? RUIN.leaf : RUIN.ivy, { rz: Math.PI / 4 + 0.35 * Math.sin(a * 3), rx: 0.18 * Math.sin(a * 5), ry: Math.PI, x: lx, y: ly, z: z - 0.003 * (k % 3) });
+      const t = (k + 0.5) / n;
+      const d = r * Math.sqrt(t);
+      const ly0 = Math.max(0.16, Math.min(roof, y + Math.sin(a) * d * tall));
+      // (larger low down; a leaf is a diamond, its half-width 0.72 of its side, kept in the tile)
+      const size = (0.185 - 0.065 * ly0) * (0.88 + 0.24 * ((k + seed) % 2));
+      const half = size * 0.72;
+      const lx = Math.max(-0.49 + half, Math.min(0.49 - half, x + Math.cos(a) * d));
+      const ly = Math.max(half + 0.01, Math.min(1 - half - 0.01, ly0));
+      const edge = t > 0.5 && (k + seed + variant) % 2 === 0;
+      m.add(plane(size, size), edge ? RUIN.leaf : RUIN.ivy, { rz: Math.PI / 4 + 0.35 * Math.sin(a * 3), rx: -0.2 + 0.08 * Math.sin(a * 5), ry: Math.PI, x: lx, y: ly, z: z - 0.003 * (k % 3) });
     }
   };
-  // climbing beside a corner post: most at the foot, fewer higher up
-  const counts = dense ? [3, 3, 2, 2] : [2, 2, 1];
-  counts.forEach((n, j) => {
-    const y = 0.15 + j * 0.2;
-    if (y <= top - 0.14) cluster(side * 0.31, y, n, 0.07, f * 3 + j);
-  });
-  // along the face's foot (dense storeys)
-  if (dense) cluster(-side * 0.16, 0.15, 2, 0.1, f * 5 + 1, 0.4);
-  // a few strands hanging from the beam, by the posts
-  if (turn % 2 === 0 && top >= 0.55 && (dense || turn === 0)) {
+  const band = (x: number, counts: readonly number[], seed: number) =>
+    counts.forEach((n, j) => {
+      const y = 0.15 + j * 0.19;
+      if (y <= roof) cluster(x, y, n, 0.075, seed + j);
+    });
+  const foot = ivy === IVY_DENSE;
+  if (clad === 2) {
+    // beside both posts, most beside one, and spreading from them over the face's lower part
+    band(side * 0.32, foot ? [3, 2, 2, 1] : [3, 2, 1], f * 3);
+    band(-side * 0.32, foot ? [2, 2, 1] : [2, 1], f * 3 + 7);
+    cluster(0, foot ? 0.2 : 0.16, 3, 0.2, f * 5 + 1, 0.5);
+  } else band(side * 0.32, ivy === IVY_LIGHT ? [2, 1] : [2, 2], f * 3);
+  // strands hanging from the beam, with leaves along them
+  const strands = foot ? 4 : ivy === IVY_MEDIUM ? 3 : 2;
+  if (turn >= 2 && top >= 0.55) {
     const y = top >= 0.97 ? 0.94 : 0.48;
-    const strands: [number, number][] = dense ? [[-0.3, 0.34], [-0.2, 0.46], [0.29, 0.3]] : [[-0.28, 0.3], [0.3, 0.22]];
-    strands.forEach(([x, reach], k) => {
-      const len = Math.min(reach, y * 0.7);
+    const mine = Math.ceil(strands / 2) - (turn === 3 && strands % 2 ? 1 : 0);
+    const xs = [-0.3, 0.28, -0.2, 0.2].slice(0, mine);
+    xs.forEach((x, k) => {
+      const len = Math.min(0.3 + 0.12 * ((k + f + variant) % 3), y * 0.72);
       m.add(cone(0.022, len, 3), RUIN.ivy, { rx: Math.PI, x, y: y - len / 2, z });
-      // a leaf at its tip
-      m.add(plane(0.11, 0.11), (k + variant) % 3 === 1 ? RUIN.leaf : RUIN.ivy, { rz: Math.PI / 4, ry: Math.PI, x, y: Math.max(0.14, y - len), z: z - 0.004 });
+      for (let j = 1; j * 0.13 <= len; j++) m.add(plane(0.12, 0.12), j % 3 === 2 ? RUIN.leaf : RUIN.ivy, { rz: Math.PI / 4 + 0.3 * (j % 2 ? 1 : -1), ry: Math.PI, x: x + 0.025 * (j % 2 ? 1 : -1), y: Math.max(0.13, y - j * 0.13), z: z - 0.004 });
     });
   }
 }
 
 /** A storey from afar: a block over its tile in the rust of its scaffolding (what makes ruins
- *  read from afar, Kyler), a pale panel set into each face that has one, a small patch of ivy low
- *  on two faces of a column's foot (`ivyVariant`: the storey's variant, or −1 for none), and a
- *  rusty top. */
-function farBlock(m: Model, layout: Layout, height: number, ivyVariant = -1): void {
+ *  read from afar, Kyler), a pale panel set into each face that has one, a band of ivy low on the
+ *  faces (all four at a column's foot, two above it, none on the highest ivy; `variant` picks the
+ *  two), and a rusty top. */
+function farBlock(m: Model, layout: Layout, height: number, ivy = IVY_NONE, variant = 0): void {
   const w = 0.86;
   for (let f = 0; f < 4; f++) {
     const panels = layout.panels.filter(([g]) => g === f).map(([, p]) => p);
@@ -819,7 +839,8 @@ function farBlock(m: Model, layout: Layout, height: number, ivyVariant = -1): vo
         const py = p === "high" ? height * 0.7 : p === "low" ? height * 0.3 : height * 0.5;
         m.add(plane(pw, ph), RUIN.panel, { ry: Math.PI, x: p === "broken" ? 0.12 : 0, y: py, z: -w / 2 - 0.004 });
       }
-      if (ivyVariant >= 0 && (f + ivyVariant) % 2 === 0) m.add(plane(0.26, 0.34 * height), RUIN.ivy, { ry: Math.PI, x: 0.26, y: 0.2 * height, z: -w / 2 - 0.008 });
+      if (ivy === IVY_DENSE) m.add(plane(0.74, 0.42 * height), RUIN.leaf, { ry: Math.PI, y: 0.21 * height, z: -w / 2 - 0.008 });
+      else if (ivy === IVY_MEDIUM && (f + variant) % 4 >= 2) m.add(plane(0.6, 0.3 * height), RUIN.leaf, { ry: Math.PI, y: 0.15 * height, z: -w / 2 - 0.008 });
     });
   }
   m.add(plane(w, w), RUIN.top, { rx: -Math.PI / 2, y: height });
@@ -831,12 +852,16 @@ export function ruinTurn(x: number, y: number): number {
   return (((x + 2 * y) % 4) + 4) % 4;
 }
 
-/** The ivy on a storey (level `lv`) of a column `height` high standing on moist ground: the most at
- *  its foot, a little on the storeys above, up to about half its height (from the tile, so the
- *  same map always looks the same), none higher. */
+/** The ivy on a storey (level `lv`) of a column `height` high standing on moist ground, over about
+ *  the lower half of its storeys: the most at its foot, clearly on the storeys above it, a few
+ *  clusters on the highest, none higher. A column 2 high: its foot clad, a little on the second; 4
+ *  high: the lower two clearly green, the third a little. From 5 up the reach varies by a storey
+ *  with the tile (the same map always looks the same). */
 export function ruinIvy(x: number, y: number, height: number, lv: number): number {
-  const reach = Math.max(1, Math.min(height, Math.round(height / 2 + (jitter(x, y, 44) - 0.5) * 1.2)));
-  return lv === 0 ? IVY_DENSE : lv < reach ? IVY_LIGHT : IVY_NONE;
+  const reach = Math.min(height, Math.floor(height / 2) + 1 - (height >= 5 && jitter(x, y, 44) < 0.35 ? 1 : 0));
+  if (lv === 0) return IVY_DENSE;
+  if (lv >= reach) return IVY_NONE;
+  return lv === reach - 1 ? IVY_LIGHT : IVY_MEDIUM;
 }
 
 /** A column's storeys as drawn: for each level, its variant (0–4) and kind (0 or 1: its layouts,
@@ -989,7 +1014,7 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       const angle = ruinTurn(x, y) * (Math.PI / 2);
       ruinStoreys(x, y, n, v.variant?.[k] ?? NO_VARIANT).forEach(({ variant, kind }, lv) => {
         const green = moist ? ruinIvy(x, y, n, lv) : IVY_NONE;
-        const b = batch(`scaffold.${RUIN_VARIANT_IDS[variant]}${kind}${green === IVY_DENSE ? ".ivy" : green === IVY_LIGHT ? ".ivy.light" : ""}`, () => storey(variant, kind, green));
+        const b = batch(`scaffold.${RUIN_VARIANT_IDS[variant]}${kind}${["", ".ivy.light", ".ivy.medium", ".ivy"][green]}`, () => storey(variant, kind, green));
         put(b, x + 0.5, z + lv, -(y + 0.5), angle, 1, 0.93 + 0.12 * jitter(x, y, 20 + lv));
       });
       continue;

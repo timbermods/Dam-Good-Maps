@@ -3,14 +3,14 @@
 // real depth filling the rest (the terrain leaves the footprint's tops out and the model closes the
 // hole), with scaffold towers on the frame's corners and beams across; with Markers on, an outline
 // round the footprint. Ruins are ruined scaffold towers, a storey per level, in the file's five
-// variants, with ivy draped over about half their storeys on moist ground; neighbouring columns
+// variants, with ivy draped over the lower half of their storeys on moist ground; neighbouring columns
 // never look alike, and from afar each storey is a block in the scaffolding's rust. Kyler's
 // colours, measured in the game, hold.
 
 import { describe, expect, it } from "vitest";
 import { ShaderMaterial } from "three";
 import { FOOTPRINTS, footprintTiles, ORIENTATIONS, type Orientation } from "../../src/core/format/footprints";
-import { buildEntities, IVY_DENSE, IVY_LIGHT, IVY_NONE, LOD_ALL, LOD_FAR, LOD_NEAR, MINE_PIT, mineCutout, mineOutline, modelOf, modelTriangles, RUIN_LAYOUTS, ruinIvy, ruinStoreys, ruinTriangles, ruinTurn } from "../../src/render3d/entities3d";
+import { buildEntities, IVY_DENSE, IVY_LIGHT, IVY_MEDIUM, IVY_NONE, LOD_ALL, LOD_FAR, LOD_NEAR, MINE_PIT, mineCutout, mineOutline, modelOf, modelTriangles, RUIN_LAYOUTS, ruinIvy, ruinStoreys, ruinTriangles, ruinTurn } from "../../src/render3d/entities3d";
 import { objectMaterial, RUIN_NEAR_PX, sceneUniforms, terrainMaterial, overlayTexture } from "../../src/render3d/materials";
 import { chunkCount, meshChunk, type TerrainSource } from "../../src/render3d/mesh";
 import { entityView, variantIndex, type EntityInput } from "../../src/render3d/model";
@@ -208,7 +208,7 @@ describe("ruins", () => {
   it("stay within their tile and their storey, in every variant and kind, with and without ivy", () => {
     for (const v of ["A", "B", "C", "D", "E"])
       for (let kind = 0; kind < 4; kind++)
-        for (const ivy of [IVY_NONE, IVY_LIGHT, IVY_DENSE]) {
+        for (const ivy of [IVY_NONE, IVY_LIGHT, IVY_MEDIUM, IVY_DENSE]) {
           const m = modelOf(`scaffold.${v}`, kind, ivy);
           for (let k = 0; k < m.pos.length; k += 3) {
             expect(Math.abs(m.pos[k]), `${v}${kind}`).toBeLessThanOrEqual(0.5);
@@ -263,7 +263,7 @@ describe("ruins", () => {
       }
     // modest: tens of thousands of storeys on a big map
     const t = ruinTriangles();
-    expect(t.near).toBeLessThanOrEqual(340);
+    expect(t.near).toBeLessThanOrEqual(310);
     expect(t.far).toBeLessThanOrEqual(24);
     expect(modelTriangles("ruin")).toBeLessThanOrEqual(360);
   });
@@ -360,30 +360,36 @@ describe("ruins", () => {
     }
   });
 
-  it("drape ivy over about half the storeys of a column on moist ground, the most at its foot, as flat leaves that leave the panels showing", () => {
+  it("drape ivy over the lower half of a column's storeys on moist ground, the most at its foot, thinning upward, as flat leaves that leave the panels' middles showing", () => {
     const W = 8;
     const moisture = new Uint8Array(W * 4);
     moisture[1 * W + 1] = 120;
     const soil = { moisture, contamination: new Uint8Array(W * 4) };
-    const m = meshesOf([column(1, 1, 5, "C"), column(4, 1, 3, "C")], soil, W);
+    const m = meshesOf([column(1, 1, 4, "C"), column(4, 1, 3, "C")], soil, W);
     const count = (re: RegExp) => m.filter((c) => re.test(c.name)).reduce((s, c) => s + c.count, 0);
-    // on moist ground only: the foot dense, a storey or two above it light
+    // on moist ground only: a column 4 high has its foot clad, the second storey clearly green, the
+    // third a little, the fourth bare
     expect(count(/\.ivy$/)).toBe(1);
-    expect(count(/\.ivy\.light$/)).toBe(ruinIvyReach(1, 1, 5) - 1);
-    expect(count(/^scaffold\./)).toBe(8);
-    // about half the storeys, from the foot up, the same every time
+    expect(count(/\.ivy\.medium$/)).toBe(1);
+    expect(count(/\.ivy\.light$/)).toBe(1);
+    expect(count(/^scaffold\./)).toBe(7);
+    expect([0, 1, 2, 3].map((lv) => ruinIvy(1, 1, 4, lv))).toEqual([IVY_DENSE, IVY_MEDIUM, IVY_LIGHT, IVY_NONE]);
+    expect([0, 1].map((lv) => ruinIvy(1, 1, 2, lv))).toEqual([IVY_DENSE, IVY_LIGHT]);
+    expect(ruinIvy(1, 1, 1, 0)).toBe(IVY_DENSE);
+    // about the lower half, from the foot up, thinning upward, the same every time
     for (let x = 0; x < 30; x++)
       for (const h of [1, 2, 3, 4, 5, 6, 7, 8]) {
         const levels = Array.from({ length: h }, (_, lv) => ruinIvy(x, 7, h, lv));
         expect(levels[0]).toBe(IVY_DENSE);
         const reach = levels.filter((l) => l !== IVY_NONE).length;
         expect(Math.abs(reach - h / 2), `${x} ${h}`).toBeLessThanOrEqual(1);
-        for (let lv = 1; lv < h; lv++) expect(levels[lv]).toBe(lv < reach ? IVY_LIGHT : IVY_NONE);
-        expect(ruinIvy(x, 7, h, 0)).toBe(levels[0]);
+        for (let lv = 1; lv < h; lv++) expect(levels[lv], `${x} ${h} ${lv}`).toBeLessThanOrEqual(levels[lv - 1]);
+        expect(Array.from({ length: h }, (_, lv) => ruinIvy(x, 7, h, lv))).toEqual(levels);
       }
-    // Kyler's green, a few leaves the brighter green; flat leaves clinging to the faces (no
-    // clumps inside the storey); more on the foot than above; the middle of each face clear, so
-    // its panel shows; a little ivy from afar, the rust still most of it
+    // Kyler's green, the brighter green on the clusters' edges; flat leaves clinging to the faces
+    // (no clumps inside the storey); the foot clearly clad, thinning upward; the middle of each
+    // face clear above its lower part, so the panel shows; a band of ivy from afar low on the lower
+    // storeys, the rust still most of each block
     expect(cssColor(RUIN.ivy)).toBe("#405634");
     expect(cssColor(RUIN.leaf)).toBe("#5c803d");
     for (const v of ["A", "B", "C", "D", "E"]) {
@@ -393,6 +399,7 @@ describe("ruins", () => {
         let bright = 0;
         let area = 0;
         let farIvy = 0;
+        let farRust = 0;
         let farArea = 0;
         for (let t = 0; t < md.lod.length / 3; t++) {
           const c = cssColor([md.col[t * 9], md.col[t * 9 + 1], md.col[t * 9 + 2]]);
@@ -404,6 +411,7 @@ describe("ruins", () => {
           if (md.lod[t * 3] === LOD_FAR) {
             farArea += a;
             if (isIvy) farIvy += a;
+            if (c === cssColor(RUIN.rust) || c === cssColor(RUIN.top)) farRust += a;
             continue;
           }
           if (!isIvy) continue;
@@ -413,24 +421,32 @@ describe("ruins", () => {
           for (const [x, y, z] of pts) {
             // on the outside of a face
             expect(Math.max(Math.abs(x), Math.abs(z)), `${v} ${ivy}`).toBeGreaterThan(0.38);
-            // never over the middle of a face, where its panel is
+            // never over the middle of a face above its lower part, where its panel shows
             const along = Math.abs(x) > Math.abs(z) ? z : x;
-            expect(Math.abs(along) < 0.1 && y > 0.3 && y < 0.8, `${v} ${ivy} ${x} ${y} ${z}`).toBe(false);
+            expect(Math.abs(along) < 0.12 && y > 0.45 && y < 0.8, `${v} ${ivy} ${x} ${y} ${z}`).toBe(false);
           }
         }
-        return { dark, bright, area, farIvy, farArea };
+        return { dark, bright, area, farIvy, farRust, farArea };
       };
-      const dense = green(IVY_DENSE);
-      const light = green(IVY_LIGHT);
-      expect(dense.dark, v).toBeGreaterThan(20);
-      expect(dense.bright, v).toBeGreaterThan(0);
-      expect(dense.bright, v).toBeLessThan(dense.dark * 0.4);
+      const [dense, medium, light] = [green(IVY_DENSE), green(IVY_MEDIUM), green(IVY_LIGHT)];
+      const sides = 4 * 0.86;
+      // the foot clearly clad (its leaves adding up to over a sixth of its sides and under three
+      // fifths: overlapping, they cover less),
+      // thinning upward
+      expect(dense.area, v).toBeGreaterThan(sides / 6);
+      expect(dense.area, v).toBeLessThan(sides * 0.6);
+      expect(medium.area, v).toBeGreaterThan(sides / 12);
+      expect(medium.area, v).toBeLessThan(dense.area);
       expect(light.area, v).toBeGreaterThan(0);
-      expect(light.area, v).toBeLessThan(dense.area * 0.6);
-      // the leaves add up to at most a third of the storey's four sides (overlapping, they cover
-      // less), and never the middle of a face (above)
-      expect(dense.area, v).toBeLessThan((4 * 0.86) / 3);
-      expect(dense.farIvy / dense.farArea, v).toBeLessThan(0.05);
+      expect(light.area, v).toBeLessThan(medium.area);
+      // the dark green most of it, the brighter a good share on the edges
+      expect(dense.bright, v).toBeGreaterThan(dense.dark * 0.15);
+      expect(dense.bright, v).toBeLessThan(dense.dark * 0.7);
+      // from afar: a band of ivy on the foot and the storey above, the rust still most of the block
+      expect(dense.farIvy / dense.farArea, v).toBeGreaterThan(0.12);
+      expect(dense.farRust / dense.farArea, v).toBeGreaterThan(0.5);
+      expect(medium.farIvy, v).toBeGreaterThan(0);
+      expect(medium.farIvy, v).toBeLessThan(dense.farIvy);
       expect(light.farIvy, v).toBe(0);
     }
   });
@@ -444,13 +460,6 @@ describe("ruins", () => {
     for (const c of [MINE.pit, MINE.frame, MINE.wood]) expect(mine).toContain(cssColor(c));
   });
 });
-
-/** How many storeys of a column carry ivy on moist ground. */
-function ruinIvyReach(x: number, y: number, h: number): number {
-  let n = 0;
-  for (let lv = 0; lv < h; lv++) if (ruinIvy(x, y, h, lv) !== IVY_NONE) n++;
-  return n;
-}
 
 /** Areas of a terrain's faces, by the way they face. */
 function faces(src: TerrainSource): Record<string, number> {
