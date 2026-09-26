@@ -139,4 +139,3 @@ export class Effects {
   }
   dispose() { this.standard.dispose(); this.high.dispose(); this.target.dispose(); this.depth.dispose(); }
 }
-
