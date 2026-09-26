@@ -109,6 +109,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
+- **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
+  proposals for their steps.
 - **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
 - **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
   ship with the next release as `start-edge-rules-done`.
@@ -147,9 +149,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
-  ESA WorldCover credited like the elevation data) and #38 (Map look 2). **Held:** #47 (`investigation/carve`,
-  Carve as a force of nature, D194) until Kyler says it's ready.
+- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
 
 ## Waiting on Kyler
 
