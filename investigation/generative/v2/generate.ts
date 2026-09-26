@@ -52,7 +52,10 @@ import { edgeWalls, sourcesInFlow, startingWood, startWalk, startWaterWalk, STAR
 import { fallsOf, reachWalk } from "./vertical";
 import { ColumnTerrain, type Format3Terrain } from "./terrain";
 
-export const PROTO2_VERSION = "0.7.0-proto2.1";
+/** 2.1 made the design's batches, briefs, maps and sheets (commit 07da086). 2.2 is the same
+ *  prototype on dev's core start and edge rules (#44) and resources planner: its maps differ in
+ *  their bytes (REPORT-v2 §10). */
+export const PROTO2_VERSION = "0.7.0-proto2.2";
 export const MAX_ATTEMPTS = 12;
 /** Re-plans on the same field before a new genome. */
 const REPLANS = 2;
@@ -134,13 +137,12 @@ function specFor(theme: ThemeId, seed: number, size: number, difficulty: Difficu
   s.resources.groveSize = g.resources.grove;
   // the woods (D164): the grove species the resources planner draws
   s.resources.speciesMix = { pine: g.woods.pine, birch: g.woods.birch, oak: g.woods.oak, succulent: g.woods.succulent };
-  // starting wood (D164) counts the logs of grown trees; until the core rule lands, the resources
-  // planner's near-start tree target (the old tree count's setting) is set from it: the logs asked
-  // for, over the logs a grown tree of these woods yields (a third of the planted trees are young),
-  // with a margin, since each grove is one species
-  const live = g.woods.pine + g.woods.birch + g.woods.oak;
-  const perTree = live > 0 ? (2 * g.woods.pine + g.woods.birch + 8 * g.woods.oak) / live : 2;
-  s.start.rules.treesWithin20 = Math.min(400, Math.max(20, Math.ceil((1.15 * STARTING_WOOD[difficulty]) / (perTree * 0.65))));
+  // starting wood (D164) counts the logs of grown trees. The design's batches ran before the core
+  // rule (dev, #44), when the resources planner's near-start target was a tree count, set from the
+  // logs asked for over the logs a grown tree of these woods yields. The core planner now aims at
+  // Minimum starting wood in logs by the species mix itself, so the prototype asks it for its own
+  // starting wood (the maps differ in their bytes from the batches'; REPORT-v2 §10)
+  s.start.rules.woodWithin20 = STARTING_WOOD[difficulty];
   s.hazards.thornBelts = g.hazards.thorns ? "some" : "off";
   s.hazards.badwater = g.hazards.badwater === "none" ? "off" : g.hazards.ratio < 0.5 ? "low" : g.hazards.ratio < 0.85 ? "normal" : "high";
   if (g.recipe) spec.premise = g.recipe;

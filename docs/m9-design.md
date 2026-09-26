@@ -6,7 +6,9 @@ intentions, a drought-aware start, a faster pipeline, a cave-ready terrain model
 investigations folded in. Version 1 is in git history (PR #14). The prototype is in
 [investigation/generative/v2/](../investigation/generative/v2/); every number is in
 [REPORT-v2.md](../investigation/generative/REPORT-v2.md). Measures are information: only breakage,
-Kyler's decided principles and what a player feels block (D115).
+Kyler's decided principles and what a player feels block (D115). The numbers, briefs and maps come
+from the prototype before dev's core start and edge rules (#44) were merged into its branch; at the
+branch's tip it runs on them, and its maps differ (REPORT-v2 §10).
 
 ## Contents
 
@@ -866,7 +868,10 @@ from M13's versioned deploys.
 - *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#62).
 - *The core start and edge rules* (on dev since #44) have their own definitions and numbers. The
   prototype's are approximations: starting wood's 170 / 110 / 55 logs, the planner's wood target,
-  and the edge-wall check's band (#68). M9a re-measures with the core rules.
+  and the edge-wall check's band (#68). M9a re-measures with the core rules. At the branch's tip
+  the prototype runs on them: on the 40 checked maps first attempts fall from 25 to 19, mostly
+  because the core's `water.source_in_flow` finds springs inside a flow that the prototype's own
+  check lets through.
 - *In-game behaviour*: M9a's probe batch (D116).
 
 ## 18. Staging (proposal)

@@ -61,7 +61,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **D144** A contact-sheet image at every map-changing step, in `docs/sheets/`.
 - **D145** Kyler's answers to the eight flags, folded into the lines above. Also: M9a, M9b and M9c
   are approved as M9's stages; what goes into each waits for design version 2.
-- **Design version 2** is being built on `investigation/generative-v2` (PR #32).
+- **Design version 2** is built on `investigation/generative-v2` (PR #32) and waits for Kyler's review.
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
 - D147: **Map look 2: water and shadows** before the Frame pass: a High mode with a proper water shader and soft sun shadows only; today's textures stay; AO, grading, richer textures and models later, optional.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
@@ -135,8 +135,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Running
 
-- **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
-  not merged).
+- **M9 design version 2** is built: PR #32 into `dev`, not merged until Kyler has read it (below).
 - **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
   and edge rules, then the Real places are rebuilt through its planner.
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
@@ -157,10 +156,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 1. Try each Live editing push on <https://timbermods.github.io/dam-good-maps/preview/>; it is
    released when it feels right.
-2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
-   feedback proposal (D137).
+2. Approve design version 2 (PR #32: `docs/m9-design.md`, REPORT-v2, the ten briefs and the
+   contact sheets), with what goes into each M9 stage; approve the feedback proposal (D137).
 3. A yes before each probe batch; the next is M9a's.
-4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
+4. Open decisions: 54 in [decisions-pending.md](decisions-pending.md), each with a default; design
+   version 2's are #59–#68.
 5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 

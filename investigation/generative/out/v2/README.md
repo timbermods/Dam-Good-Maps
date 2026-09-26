@@ -1,6 +1,6 @@
 # Ten maps to play: M9 design version 2
 
-Maps from the M9 design prototype, version 2 (0.7.0-proto2.1), 128², designed for Normal. They are our own maps. Each passes the product's checks in both validators, with Kyler's start water rule and starting wood in place of the old start water and tree rules, has no dam wall or edge wall, and comes back byte for byte from its seed. Three are at high Verticality (85), with heights kept within 16.
+Maps from the M9 design prototype, version 2 (0.7.0-proto2.1), 128², designed for Normal. They are our own maps. Each passes the product's checks in both validators, with Kyler's start water rule and starting wood in place of the old start water and tree rules, has no dam wall or edge wall, and comes back byte for byte from its seed with this prototype version (commit 07da086). Three are at high Verticality (85), with heights kept within 16.
 
 **To play one:** copy its `.timber` file to `Documents\Timberborn\Maps`, then pick it under **New game**.
 

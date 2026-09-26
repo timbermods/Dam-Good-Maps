@@ -1068,7 +1068,7 @@ become recipes inside the system (design §3).
     and Kyler's round-lake intentions; every Islands map a broad sea with islands scattered
     through it; the lake-shape and island-sea measures (REPORT-v2 §3.9).
   - **Kyler's start and edge rules on the generator's side** (design version 2 §7–§8; the core
-    rules come from `feature/start-edge-rules`): the settler walks to a pump shore over the slopes
+    rules are on dev since #44): the settler walks to a pump shore over the slopes
     the build derives, the resources planner aims at starting wood (D164), and the land runs on past
     the map's edges so no edge wall forms.
   - **The Dam site tool rebuilt as a natural narrows** (D111; design version 2 §8): two uneven

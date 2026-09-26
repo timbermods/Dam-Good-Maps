@@ -1,5 +1,6 @@
 // Kyler's start and edge rules (2026-09-25), applied by the prototype on top of the product's
-// validators until src/core carries them (branch feature/start-edge-rules; no src/ change here):
+// validators (no src/ change here). The design's batches ran before src/core carried them; the core
+// rules reached dev with #44 (D151–D153, D164, D171), and M9a builds the generator on those:
 // 1. No edge walls (extends D111): no map raises a wall along its edges to hold water. Blocking.
 // 2. Maps need not hold their water: rivers leave and lakes may drain; nothing but the start's
 //    requirements is guaranteed about water.
@@ -13,14 +14,14 @@
 //    Pine 2 plus resin, Birch 1). Saplings can't be cut until they grow, so they don't count; their
 //    future wood is reported apart ("plus about N logs growing"). The difficulty's 60 / 40 / 20 trees become logs at the default species
 //    mix's 2.8 logs a tree (Pine 47, Birch 27, Oak 20, Succulent 6): 170 / 110 / 55. The core rule
-//    (feature/start-edge-rules) sets the final numbers.
+//    on dev (#44) asks for 120 / 80 / 40, which M9a takes (decisions-pending #68).
 
-import { reachAt, walkDistance } from "../../../src/core/analysis/walk";
+import { PUMP_REACH, reachAt, walkDistance } from "../../../src/core/analysis/walk";
 import type { EntitySpec } from "../../../src/core/format/entities";
 import { footprintTiles, slopeHighSide, FOOTPRINTS } from "../../../src/core/format/footprints";
 import { MinHeap } from "../../../src/core/math/grid";
 import type { Difficulty } from "../../../src/core/spec/mapspec";
-import { BAD, NEAR, PUMP_REACH, WALK_BLOCKERS, WET } from "../../../src/core/validate/playability";
+import { BAD, NEAR, WALK_BLOCKERS, WET } from "../../../src/core/validate/playability";
 
 const N4: readonly [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 

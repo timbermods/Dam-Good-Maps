@@ -25,6 +25,11 @@ the installed Chrome), shared with other agents' jobs at full load throughout: e
 inflated. Workshop maps and their per-map numbers stay local (`C:\dgm-workshop`); only aggregates are
 here. `fit-score` and `ratings.json` are not used (D137).
 
+**Which code.** Every number, brief, map, render and sheet here comes from the prototype
+0.7.0-proto2.1 at commit 07da086, before dev's start and edge rules (#44) and mine sites and ruins
+(#42) were merged into this branch. At the branch's tip the prototype (0.7.0-proto2.2) runs on
+those core rules and dev's resources planner, and its maps differ in their bytes (§10).
+
 ## Summary: every measure against its target
 
 The first rows block (D115); the rest are information. The targets come from design §10, the
@@ -36,7 +41,7 @@ rivers, a mine site on every map) and the lake and island fixes.
 |---|---|---|---|---|
 | No dam walls, no edge walls (block) | none | **0 dam walls and 0 edge walls** on every batch map; 3,353 maps across every set, size and Verticality | 0 dam walls; edge walls on 51 of 1,200 | 765 dam walls; edge walls on 24 |
 | Batches (block) | ≥ 98% final per theme and size | 100% final in every theme at 96², 128², 192² and 256² but Canyon at 128² (99%); 98–100% at Verticality 85 | 100% | 100% |
-| Same bytes from a seed; both validators (block) | always; 0 disagreements | **40 of 40** maps give the same bytes twice and in a fresh process; **0 disagreements** in 1,720 checks, and both validators pass all 40 | 58 of 58; 0 | – |
+| Same bytes from a seed; both validators (block) | always; 0 disagreements | **40 of 40** maps give the same bytes twice and in a fresh process; **0 disagreements** in 1,720 checks, and both validators pass all 40; the same at the branch's tip, after merging dev (§10) | 58 of 58; 0 | – |
 | A first result quickly, no stall (block) | quickly | the page never waits (the product generates in a worker); one map at a time, the first look at 0.15 s (128²) and 0.6 s (256²), the whole map 1.3 s and 5.7 s (Node); a slow tail when many attempts fail (Islands seed 2 at 256²: 41 s, §7) | – | – |
 | First attempt | 60% (a target) | 63% at 128² (Canyon lowest, 49.5%) | 62.5–90.5% | 96–100% |
 | M1 no clones | nearest ≥ 0.25, median ≥ 0.40 | 0.35–0.42 / 0.44–0.50: **6 of 6** | 0.33–0.38 / 0.42–0.48: 6 of 6 | 0.04–0.16 / 0.06–0.22: 0 of 6 |
@@ -662,6 +667,12 @@ D8 channels meet square. The bench describes; it never gates (its README).
 - **Kyler's rules** hold on all 40: no dam wall, no edge wall, a mine site on every map, no spring
   inside a flow, and his start water and starting wood rules.
 - **The runs model** is exact on every one (§8).
+- **At the branch's tip** (0.7.0-proto2.2, after merging dev's #42 and #44), the same 40 maps
+  again: each gives the same bytes twice and in a fresh process, both validators pass all 40 with
+  0 disagreements in 1,800 checks, and Kyler's rules hold on all 40. Every map differs in its bytes
+  from the ones above, and first attempts fall from 25 to 19 of the 40. Mostly the core's
+  `water.source_in_flow` (D171) turns them down: it finds springs inside a flow that the
+  prototype's own check lets through. M9a builds the hydrology to the core's definition.
 
 ## 11. Briefs, renders and sheets
 
@@ -677,7 +688,7 @@ D8 channels meet square. The bench describes; it never gates (its README).
   names study.
 - **The maps** ([out/v2/](out/v2/), with a README): each passes both validators in the `generate`
   profile with Kyler's start rules, has no dam wall or edge wall, and comes back byte for byte from
-  its seed.
+  its seed with 0.7.0-proto2.1 (commit 07da086).
 - **Renders** ([renders/v2/](renders/v2/)): the app's own 3D view in the released clean look, at
   1600×900, from the default camera (the game's angle over the whole map) and from above.
 - **Contact sheets**:
@@ -722,7 +733,10 @@ M9c, not a change to version 2.
 
 ## 13. Reproducing it
 
-Local data goes to `C:\dgm-workshop\generative\` (`DGM_GENERATIVE` moves it).
+Local data goes to `C:\dgm-workshop\generative\` (`DGM_GENERATIVE` moves it); the batches' per-map
+records stay there, out of git (D195). Run at commit 07da086 to get these numbers exactly; at the
+branch's tip the maps differ (§10). On the shared machine v2-128's 1,200 maps took about an hour and
+a half with 8 jobs, and the sets of 300 maps or fewer under an hour each.
 
 ```sh
 npx tsx investigation/generative/v2/batch.ts --set v2-128 --seeds 1-200 --jobs 8
