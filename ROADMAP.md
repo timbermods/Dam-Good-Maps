@@ -862,12 +862,15 @@ they conflict):
   place, see the result; [ and ] for size, scroll for strength, in every tool); things just work
   (painting never waits on water and keeps full frame rate on 256²); landforms come from the
   brushes, never from buttons (D182).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove. A small row beneath
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row beneath
    shows only the picked tool's options. The size ring is drawn on the land; strength shows only
    while scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
    lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
    the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
    slot. Pen pressure sets strength on a tablet.
+   Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
+   with an optional "stop at" level (a faint plane, a pulse on arrival); never below the map's bottom
+   or under placed objects.
 2. **Water:** a reflection of the land being painted.
    - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
@@ -879,8 +882,10 @@ they conflict):
      they meet, and branches form wherever the land is cut from water.
    - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
      follow, drought and badtide (the game's badtide rules, from `investigation/cycles`); moisture
-     spreading as the land greens; optional sounds of our own; "Let the water carve", forming
-     valleys (D181). Local first, then the rest of the map in the background; the final water is
+     spreading as the land greens; optional sounds of our own.
+   - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
+     modes, Defy gravity, a Power slider from creek to catastrophe; it forms gorges and valleys
+     (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready. Local first, then the rest of the map in the background; the final water is
      always the game's settled result.
 3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
    start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
@@ -1716,7 +1721,8 @@ One smooth flow inside Dam Good Maps, from exploring the real world to a finishe
 7. **Phones** get a simpler version: a flatter view and a lighter preview.
 8. **Credits** as in Real places (D155): a short credit and link in each map's in-game description,
    the full notices on the credits page, and any region-specific notice the data's provider
-   requires.
+   requires; ESA WorldCover (observed water, CC BY 4.0, D192) is credited like the
+   elevation data, on the Pick a place credits and in each map's credits.
 
 It follows every current rule: designed water (sources only where water begins, D166, D171; the
 designed-water prototype from `investigation/pickplace`, PR #34, merged, its INTEGRATION.md adopted as

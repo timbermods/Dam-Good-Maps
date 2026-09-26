@@ -103,9 +103,13 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
 - D190: #51–#53 decided (the defaults): world traits are candidate intentions; wet caves allowed in 3D-b; the no-clone distance picks candidates, the score breaks near ties.
 - D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
+- D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
+- D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
+- D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
 
 ## Done and released
 
+- **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
 - **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
   ship with the next release as `start-edge-rules-done`.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
@@ -143,10 +147,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40, finished and
-  reviewed; it becomes the editor's primary button), `investigation/pickplace-water2`, #38 (Map
-  look 2) and `investigation/carve` (the starting point for "Let the water carve", D180, as proposals),
-  when their PRs are open.
+- Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
+  ESA WorldCover credited like the elevation data) and #38 (Map look 2). **Held:** #47 (`investigation/carve`,
+  Carve as a force of nature, D194) until Kyler says it's ready.
 
 ## Waiting on Kyler
 
@@ -154,11 +157,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    released when it feels right.
 2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-3. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
-   Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
-4. A yes before each probe batch; the next is M9a's.
-5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
-6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+3. A yes before each probe batch; the next is M9a's.
+4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
+5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next

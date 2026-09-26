@@ -31,8 +31,8 @@ editor is desktop-first (D185).
 
 ## 3. The screen
 
-- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove, with a small options
-  row for the picked tool.
+- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove, with a small
+  options row for the picked tool.
 - **The left shelf:** a clean grid of placeable objects (the start, trees, bushes, ruins, the mine
   site, relics, slopes and the rest), each a small render in the map's look. Picking one shows a live
   ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
@@ -57,12 +57,17 @@ editor is desktop-first (D185).
   levels by sampling (Ctrl-click; on water, the riverbed's level), a Select tool for big shaped edits
   (a key or a modifier-drag opens it), and live dimensions (a selection's size, a straight line's
   length, the level while flattening).
+- **Hold to dig:** in precise mode, holding Lower (or Raise) keeps working, one level at a time at a
+  steady pace tied to strength, with vertical walls, until let go; each hold is one undo step. An
+  optional "stop at" level (off by default; set by Ctrl-clicking a tile, or water for its riverbed)
+  makes it stop there, with a faint plane at that level and one pulse of the ring on arrival. It
+  never digs below the map's bottom or out from under the start or placed objects (D193).
 - **Hills, plateaus, ridges and valleys come from the brushes,** not buttons.
 - **Remove:** click one object or drag to remove many; filters; a red highlight on hover. It never
   changes terrain, and it refuses removals that would break a rule (such as deleting the start).
 - **Heights:** up to 16, or 22 on tall maps (D172); the game's own editor edits up to 16.
 
-(D180, D182, D183, D184.)
+(D180, D182, D183, D184, D193.)
 
 ## 5. Water
 
@@ -79,11 +84,14 @@ Make a valley, drop a source, and there's a river.
 - **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).
-- **"Let the water carve":** the river cuts its own gorge or valley, with floodplains and a delta.
+- **Carve, a force of nature** (D194): its own top-bar button next to Source. Unleash and Aim modes,
+  Defy gravity, and a Power slider from creek to catastrophe; the water cuts its own gorge or valley,
+  with floodplains and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
+  until Kyler says it's ready).
 - **Optional water sounds,** our own.
 - **What you watch is what you'll play:** the final water always matches the game's settled result.
 
-(D180, D181, D184, D186.)
+(D180, D181, D184, D186, D194.)
 
 ## 6. The look
 
