@@ -2,11 +2,23 @@ name: Deploy to GitHub Pages
 
 # Publishes the site at https://timbermods.github.io/dam-good-maps/ from main.
 # Needs Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#
+# A preview build can ride along at https://timbermods.github.io/dam-good-maps/preview/: set the
+# workflow input preview_ref (a run by hand) or the repository variable DGM_PREVIEW_REF to a branch
+# of this repository, and that branch is built with the base /dam-good-maps/preview/ and published
+# under dist/preview/, noindex like the rest. The main site is built from main as always, and the
+# live check never looks at /preview/.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      preview_ref:
+        description: A branch of this repository to publish at /dam-good-maps/preview/ (empty for none)
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -33,6 +45,40 @@ jobs:
         run: npm run build
         env:
           DGM_BASE: /dam-good-maps/
+      # the preview build: a branch of this repository, under /preview/ (none unless one is named)
+      - name: Which branch to preview
+        id: preview
+        env:
+          PREVIEW_REF: ${{ inputs.preview_ref || vars.DGM_PREVIEW_REF }}
+        run: |
+          if [ -z "$PREVIEW_REF" ]; then
+            echo "No preview branch."
+            exit 0
+          fi
+          if ! printf '%s' "$PREVIEW_REF" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
+            echo "::error::preview_ref must be a branch name"
+            exit 1
+          fi
+          if ! git ls-remote --exit-code --heads origin "refs/heads/$PREVIEW_REF" > /dev/null; then
+            echo "::error::$PREVIEW_REF is not a branch of this repository"
+            exit 1
+          fi
+          echo "ref=refs/heads/$PREVIEW_REF" >> "$GITHUB_OUTPUT"
+          echo "Previewing $PREVIEW_REF at /dam-good-maps/preview/"
+      - uses: actions/checkout@v7
+        if: steps.preview.outputs.ref != ''
+        with:
+          ref: ${{ steps.preview.outputs.ref }}
+          path: preview-src
+          persist-credentials: false
+      - name: Build the preview
+        if: steps.preview.outputs.ref != ''
+        working-directory: preview-src
+        run: |
+          npm ci
+          npx vite build --outDir ../dist/preview --emptyOutDir
+        env:
+          DGM_BASE: /dam-good-maps/preview/
       # The site is not public yet: search engines are asked not to index it until the repository
       # variable DGM_PUBLIC is "true" (at launch). Keep this step when changing this workflow.
       - name: Mark every page noindex (not public yet)
