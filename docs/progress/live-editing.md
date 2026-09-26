@@ -274,6 +274,12 @@ on a placed river.
   on a slow software renderer (CI's) it skips frames to keep pace, and still ends at the settled
   water. This was the waterFlow mismatch in CI since 3226de4.
 - **The time controls** moved to the map's top edge, out of the painting area.
+- **A source goes anywhere** (following D184): `water.source_in_flow` (D171, from the start and
+  edge rules) does not apply in the editor's export profile, in both validators (TypeScript and
+  `prototype/validate.py --profile export`). It still blocks a generated map and is information on
+  an import. `tests/contract/sources.test.ts` expected a warning in export; it now expects the
+  check not to apply there (D148), and a new case drops a source in a river and exports with no
+  new issue. The oracle keeps 0 disagreements.
 
 ### Claude's tools (M12 stays ready)
 

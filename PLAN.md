@@ -1241,7 +1241,8 @@ does (§19.5):
   `terrain.single_floor` (from 3D-a, `caves.headroom` in its place) and `water.source_in_flow`
   (sources start rivers, D171). They must pass in `generate`; in `export` they warn. For an
   imported map they are only information, because official and workshop maps with caves, or with
-  terrain up to 22, load fine in the game.
+  terrain up to 22, load fine in the game. `water.source_in_flow` does not apply in `export`:
+  in the editor sources go anywhere (D184).
 - **principle** (2026-09-25): a principle Kyler has decided about how a map is built (D115 (2)):
   `terrain.edge_wall` (no edge walls, D151), beside the dam-wall check M9a adds (D111). It must pass
   in `generate` and blocks the export in `export`; for an imported map it is information, and a
