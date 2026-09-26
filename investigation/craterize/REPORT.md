@@ -1,6 +1,67 @@
 # Craterize
 
-A separate impact tool. Work in progress; validation and captures follow.
+A working, separate impact tool. From the repository root:
+
+    npm --prefix investigation/craterize run demo
+
+The first run installs this folder's dependencies. Open the free local port
+printed at startup. Three.js is exactly **0.186.0**, matching the repository.
+
+**Strike:** click the land. **Aim:** drag from the hit along its travel.
+A longer drag makes a more glancing, oval impact. Right drag orbits; scroll
+zooms. The keyboard cursor uses arrows and Enter. Every setting is present;
+Size follows Power until unchecked. Try another replaces the last impact on
+its original ground, with the next recorded personality.
+
+Esc or Undo reverts the whole impact, including water and trees. Redo and
+saved replay assign the stored result exactly. The start turns the ring red
+with “Start here.” Edge strikes make partial craters, and newer craters cut
+through older ones. Existing sources stay unchanged; Craterize adds no water.
+
+## Captures
+
+Actual browser-rendered sequences on clearly labelled process studies.
+Each shows before, the moment and the kept result; the water-settling wait
+is compressed. [Settings, seeds and frame times](captures/scenarios.json).
+The [still contact sheet](captures/contact-sheet.jpg) is the reduced-motion alternative.
+
+![Small bowl](captures/small-bowl.gif)
+![Peak crater](captures/peak.gif)
+![Huge ring, heavy debris and rays](captures/ring-rays.gif)
+![Glancing oval impact](captures/glancing.gif)
+![Debris dams a river](captures/river-dam.gif)
+![Overlapping craters](captures/overlap.gif)
+![Steep and Terraced](captures/walls.gif)
+
+## Checks
+
+    npm --prefix investigation/craterize test
+    npm --prefix investigation/craterize run typecheck
+    npm --prefix investigation/craterize run build
+    npm --prefix investigation/craterize run browser
+    npm --prefix investigation/craterize run captures
+
+Browser checks/captures use installed Edge on Windows; elsewhere install the
+Playwright Chromium browser first. Large work files stay in ignored folders.
+
+[17 model checks](captures/checks.json),
+[10 worker checks](captures/worker-checks.json) and
+[11 browser checks](captures/browser-checks.json) pass. They cover all
+anatomies, deterministic slices, whole levels, source/start protection,
+exact history, cancellation during meshing/settling, saved alternatives,
+pointer gestures, reduced motion and all six generated/Real-place choices.
+Typechecking and the production build pass.
+
+In the river study, debris raises the channel sill from **5 to 9**.
+Unchanged sources then flood **777** previously dry upstream tiles.
+Water settles after 2,176 repository simulation ticks.
+
+The 256² model measured **27–35 ms** total, planned in four-row slices.
+The final browser run measured **127 FPS**, **8.4 ms p95**, and **0.6 ms**
+for cached Undo at 256². These are local headless-browser measurements, not a
+guarantee for every GPU. The demo's live readout is the useful check on yours.
+Initial generation of the 256² River Valley seed took about 15 seconds here,
+in the worker; subsequent impacts do not regenerate it.
 
 ## Decisions
 
@@ -11,9 +72,12 @@ A separate impact tool. Work in progress; validation and captures follow.
 - Geology stays fixed through successive impacts and personality changes. Try another replaces the last impact from its original ground; cancelling restores the kept version.
 - Existing water continues from its stored depth through the repository WaterSim. No source or prefilling is introduced by an impact.
 - Height limit is 22, with layer 22 empty. Start footprint and entrance margin remain untouched even when ejecta reaches them.
+- Auto chooses Bowl below diameter 28, Peak below 68, then Ring. These are deliberately compressed editing thresholds. The shape language follows [NASA's crater overview](https://www.nasa.gov/solar-system/asteroid-day-and-impact-craters/) and [secondary-chain observations](https://science.nasa.gov/photojournal/crater-ejecta-and-chains-of-secondary-impacts/); this is not calibrated shock physics or a material-conserving ejecta solver.
+- Fallen trees retain dead-tree components and radial preview poses. Native export of horizontal trees needs an explicit choice. This demo does not export .timber files or handle caves; [INTEGRATION.md](INTEGRATION.md) gives adoption proposals only.
 
 ## Progress
 
 1. Read the requested plans, format, simulation and Carve source. Created the isolated dev-based branch and standalone package.
 2. Built the deterministic impact model and exact result format. Seventeen model checks pass. In the river study, ejecta raises the sill from level 5 to 9; unchanged sources raise upstream water from 0.26 to 2.52 levels after 768 simulation ticks.
 3. Added the clean 3D demo, sliced worker, fixed effects pool, immediate view restoration, saved replay and browser checks. Ten worker lifecycle checks and eleven browser checks pass. The river study now includes an upstream floodplain; its 777 newly flooded tiles settle after 2,176 ticks. The earlier narrow-channel measurement above remains as the first model-step result.
+4. Recorded seven browser sequences and one still contact sheet (under 4 MB together). Frame inspection caught and fixed premature cave shading and rim shadows during deformation; old lighting now transitions with the land, and trees remain standing until impact. Refreshed browser checks, typechecking and the production build pass. Integration remains a proposal.

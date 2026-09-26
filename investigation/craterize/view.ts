@@ -17,6 +17,7 @@ export class View {
   heights:Uint8Array=new Uint8Array();keep:Uint8Array=new Uint8Array();lighting:Lighting|null=null;
   W=0;H=0;top=false;progress=1;activeMorph=0;private morphCounter=0;private batchMorph=0;
   private allGroups=new Set<THREE.Group>();
+  private morphLighting:{tiles:THREE.DataTexture;light:THREE.DataTexture}|null=null;
   constructor(readonly canvas:HTMLCanvasElement){
     this.scene.background=new THREE.Color('#b8cbd8');
     this.gl=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true});
@@ -27,9 +28,17 @@ export class View {
     const sun=new THREE.DirectionalLight(0xfff4d6,2);sun.position.set(-80,160,100);this.scene.add(sun);
     this.uniforms.patternTex.value=drawPatterns(this.gl).texture;this.uniforms.markers.value=0;
     this.ground.uniforms.craterProgress={value:1};this.ground.uniforms.rockLayers={value:new Float32Array(23)};
+    this.ground.uniforms.beforeTileTex={value:this.uniforms.tileTex.value};
+    this.ground.uniforms.beforeLightTex={value:this.uniforms.lightTex.value};
     this.ground.vertexShader='attribute vec3 grow; uniform float craterProgress;\n'+this.ground.vertexShader;
     this.ground.vertexShader=this.ground.vertexShader.replace('vec4(position, 1.0)','vec4(position + grow * (1.0 - smoothstep(0.0, 1.0, craterProgress)), 1.0)');
-    this.ground.fragmentShader='uniform float rockLayers[23];\n'+this.ground.fragmentShader;
+    this.ground.fragmentShader='uniform float rockLayers[23]; uniform float craterProgress; uniform sampler2D beforeTileTex; uniform sampler2D beforeLightTex;\n'+this.ground.fragmentShader;
+    this.ground.fragmentShader=this.ground.fragmentShader.replace('return texture2D(tileTex, (t + 0.5) / mapSize);',
+      'vec4 next = texture2D(tileTex, (t + 0.5) / mapSize); vec4 prior = texture2D(beforeTileTex, (t + 0.5) / mapSize); float blend = smoothstep(0.0, 1.0, craterProgress); next.r = mix(prior.r, next.r, blend); next.b = mix(prior.b, next.b, blend); return next;');
+    this.ground.fragmentShader=this.ground.fragmentShader.replace('vec4 s = texture2D(lightTex, g / mapSize);',
+      'vec4 s = mix(texture2D(beforeLightTex, g / mapSize), texture2D(lightTex, g / mapSize), smoothstep(0.0, 1.0, craterProgress));');
+    // Interpolated tops below their final tile texture are rising ground, not cave floors.
+    this.ground.fragmentShader=this.ground.fragmentShader.replace('if (vWorld.y < h0 - 0.5)', 'if (craterProgress >= 1.0 && vWorld.y < h0 - 0.5)');
     this.ground.fragmentShader=this.ground.fragmentShader.replace('gl_FragColor = vec4(finish(c, vWorld), 1.0);',
       'if (abs(vNormal.y) < 0.5) { float bed = rockLayers[int(clamp(floor(vWorld.y), 0.0, 22.0))]; c *= mix(vec3(1.08, 1.0, 0.88), vec3(0.67, 0.72, 0.77), bed); } gl_FragColor = vec4(finish(c, vWorld), 1.0);');
     new ResizeObserver(()=>{this.gl.setSize(canvas.clientWidth,canvas.clientHeight,false);this.camera.aspect=canvas.clientWidth/canvas.clientHeight;this.camera.updateProjectionMatrix();this.uniforms.viewHeight.value=canvas.clientHeight;}).observe(canvas);
@@ -40,7 +49,14 @@ export class View {
   }
   resetView(){this.controls.target.set(this.W*.5,5,-this.H*.5);this.camera.position.set(this.W*1.04,this.W*.93,this.H*.32);this.controls.update();this.top=false;}
   topView(){if(this.top){this.resetView();return;}this.camera.position.set(this.controls.target.x,Math.max(this.W,this.H)*1.53,this.controls.target.z+.001);this.controls.update();this.top=true;}
-  begin(transition:boolean){this.stage=new Map(this.groups);this.batchMorph=transition?++this.morphCounter:0;if(transition){this.activeMorph=this.batchMorph;this.progress=0;}}
+  begin(transition:boolean){
+    this.stage=new Map(this.groups);this.batchMorph=transition?++this.morphCounter:0;
+    if(transition){
+      this.activeMorph=this.batchMorph;this.progress=0;
+      this.morphLighting?.tiles.dispose();this.morphLighting?.light.dispose();
+      this.morphLighting=this.lighting?{tiles:tileTexture(this.W,this.H,this.lighting.tiles),light:lightTexture(this.W,this.H,this.lighting.light)}:null;
+    }
+  }
   private geometry(d:Geometry){
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(d.positions,3));g.setAttribute('normal',new THREE.BufferAttribute(d.normals,3,d.normals instanceof Int8Array));
     g.setAttribute('pcolor',new THREE.BufferAttribute(d.colors,3));g.setAttribute('grow',new THREE.BufferAttribute(d.grow??new Float32Array(d.positions.length),3));
@@ -51,7 +67,12 @@ export class View {
     const group=new THREE.Group(),prior=this.stage?.get(c.key);
     for(const name of ['terrain','water']){
       const mesh=new THREE.Mesh(this.geometry(name==='terrain'?c.terrain:c.water),name==='terrain'?this.ground:this.water);mesh.name=name;mesh.renderOrder=name==='water'?2:0;
-      if(name==='terrain'){const morph=this.batchMorph;mesh.onBeforeRender=()=>{this.ground.uniforms.craterProgress.value=morph&&morph===this.activeMorph?this.progress:1;};}
+      if(name==='terrain'){const morph=this.batchMorph;mesh.onBeforeRender=()=>{
+        const active=morph&&morph===this.activeMorph;
+        this.ground.uniforms.craterProgress.value=active?this.progress:1;
+        this.ground.uniforms.beforeTileTex.value=active&&this.morphLighting?this.morphLighting.tiles:this.uniforms.tileTex.value;
+        this.ground.uniforms.beforeLightTex.value=active&&this.morphLighting?this.morphLighting.light:this.uniforms.lightTex.value;
+      };}
       group.add(mesh);
     }
     const objects=new THREE.Group();objects.name='objects';
@@ -61,7 +82,13 @@ export class View {
     }else{
       const old=prior?.getObjectByName('objects');if(old)for(const obj of old.children)objects.add(obj.clone());
     }
-    group.add(objects);this.stage?.set(c.key,group);this.allGroups.add(group);
+    group.add(objects);
+    if(this.batchMorph){
+      const previous=prior?.getObjectByName('objects');
+      if(previous){const old=previous.clone(true);old.name='previous-objects';group.add(old);}
+      group.userData.morph=this.batchMorph;
+    }
+    this.stage?.set(c.key,group);this.allGroups.add(group);
   }
   commit(heights:Uint8Array,keep:Uint8Array,lighting:Lighting|null){
     for(const g of this.groups.values())this.scene.remove(g);this.groups=this.stage??this.groups;this.stage=null;
@@ -89,5 +116,12 @@ export class View {
     ray.setFromCamera(new THREE.Vector2((clientX-r.left)/r.width*2-1,-(clientY-r.top)/r.height*2+1),this.camera);
     return pickHeightfield({origin:ray.ray.origin.toArray(),direction:ray.ray.direction.toArray()},this.W,this.H,this.heights);
   }
-  render(time:number,motion:boolean){this.uniforms.time.value=motion?time:0;this.controls.update();this.gl.render(this.scene,this.camera);}
+  render(time:number,motion:boolean){
+    for(const group of this.groups.values()){
+      const previous=group.getObjectByName('previous-objects');
+      if(previous){const incoming=group.userData.morph===this.activeMorph&&this.progress<=.001;
+        previous.visible=incoming;group.getObjectByName('objects')!.visible=!incoming;}
+    }
+    this.uniforms.time.value=motion?time:0;this.controls.update();this.gl.render(this.scene,this.camera);
+  }
 }

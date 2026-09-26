@@ -83,7 +83,9 @@ drain through the same simulation.
 Reuse the actual clean terrain, object, lighting and water shaders. The worker
 builds dirty chunks and a union of before/after terrain faces. A shader morphs
 those faces for 1.35 seconds after the incoming streak; final map values remain
-integers. Main-thread uploads have a two-chunk / 3 ms scheduling target.
+integers. Lighting transitions with the land so rising ground does not acquire
+cave shading or cast its future rim shadows early. Trees switch poses at impact.
+Main-thread uploads have a two-chunk / 3 ms scheduling target.
 Cache transitions share geometry where possible and release abandoned history.
 
 The moment uses 64 dust instances, 32 chunks, a flash, a streak and a ring.
@@ -96,4 +98,3 @@ readout and the committed browser measurements.
 Before adopting: run model/worker checks, validate the gestures and instant
 history at 256², check the native export treatment of trees, and run the editor's
 existing checks. Keep generated map data and test output out of source control.
-
