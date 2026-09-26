@@ -5,7 +5,7 @@ import { buildEntities, disposeGroup } from '../../src/render3d/entities3d';
 import { GROUND, WALL, WATER } from '../../src/render3d/palette';
 import { ShaderMaterial, type InstancedMesh } from 'three';
 import type { CarveMap } from './engine';
-export interface Geometry { positions: Float32Array; normals: Int8Array | Float32Array; indices: Uint32Array | null; colors: Float32Array }
+export interface Geometry { positions: Float32Array; normals: Int8Array | Float32Array; indices: Uint32Array | null; colors: Float32Array; data?:Float32Array; flags?:Float32Array }
 export interface ObjectMesh { geometry: Geometry; matrices: Float32Array; colors: Float32Array; count: number }
 export interface Chunk { key: string; terrain: Geometry; water: Geometry; objects: ObjectMesh[] | null }
 const objectMaterial = new ShaderMaterial();
@@ -68,3 +68,4 @@ export function changedChunks(m:CarveMap,old:CarveMap|null): {cx:number;cy:numbe
 export function snapshot(m:CarveMap):CarveMap {
   return {...m,heights:m.heights.slice(),entities:m.entities.slice(),water:{depth:m.water.depth.slice(),contamination:m.water.contamination.slice()}};
 }
+

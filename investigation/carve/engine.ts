@@ -3,7 +3,7 @@ import type { EntitySpec } from '../../src/core/format/entities';
 import { waterSource } from '../../src/core/format/entities';
 import { waterModel, type MapObject, objectTile } from '../../src/core/sim/model';
 import { FOOTPRINTS } from '../../src/core/format/footprints';
-import type { WaterState } from '../../src/core/sim/water';
+import { WaterSim, type WaterState } from '../../src/core/sim/water';
 
 export interface CarveMap {
   name:string; W:number; H:number; heights:Uint8Array; entities:EntitySpec[];
@@ -59,12 +59,12 @@ export function hardness(level:number,layers:boolean,seed=0):number {
  * and then matures its banks; soft rock cuts at 1, hard at .15 (M9 v2 erodeHard).
  */
 export class CarveRun {
-  readonly map:CarveMap; readonly original:Uint8Array; readonly keep:Uint8Array;
+  readonly map:CarveMap; readonly original:Uint8Array; readonly initialWater:Float64Array; readonly keep:Uint8Array;
   readonly sign:Int8Array; readonly target:Uint8Array; readonly wear:Float64Array;
   readonly path:Station[]=[]; readonly seed:number; readonly intent:Intent;
   readonly metrics:Metrics={cut:0,deposited:0,exported:0,suspended:0,bankCuts:0,bendCuts:0,steps:0,stable:false,distance:0,reason:''};
   head:Head;
-  private active=new Set<number>();private channel=new Uint8Array();private visited=new Uint16Array();
+  private sim:WaterSim; private active=new Set<number>();private channel=new Uint8Array();private visited=new Uint16Array();
   private born=new Uint16Array();private heading=0;private bed=0;private energy=0;
   private ended=false;private tail=0;private quiet=0;private depositQueue:number[]=[];private depositDone=false;
   constructor(input:CarveMap,readonly settings:Settings,intent:Intent) {
@@ -73,13 +73,13 @@ export class CarveRun {
        !['unleash','aim'].includes(settings.mode)||!['steep','wide'].includes(settings.walls)||
        !Number.isFinite(settings.power)||settings.power<0||settings.power>100)throw new Error('Invalid carve settings');
     if(settings.mode==='aim'&&(!Number.isInteger(intent.end)||intent.end!<0||intent.end!>=N||intent.end===intent.origin))throw new Error('Choose a different end point');
-    this.intent={...intent};this.seed=mapSeed(input);this.original=input.heights.slice();this.keep=protectedGround(input);
+    this.initialWater=input.water.depth.slice();this.intent={...intent};this.seed=mapSeed(input);this.original=input.heights.slice();this.keep=protectedGround(input);
     if(this.keep[intent.origin]||(settings.mode==='aim'&&this.keep[intent.end!]))throw new Error('Choose a point outside the start’s protected ground');
     this.map={...input,heights:input.heights.slice(),entities:plainEntities(input.entities),water:{depth:input.water.depth.slice(),contamination:input.water.contamination.slice()}};
-    this.target=input.heights.slice();this.sign=new Int8Array(N);this.wear=new Float64Array(N);
+    this.sim=new WaterSim(modelFor(input),input.water);this.target=input.heights.slice();this.sign=new Int8Array(N);this.wear=new Float64Array(N);
     this.channel=new Uint8Array(N);this.visited=new Uint16Array(N);this.born=new Uint16Array(N);
     const x=intent.origin%input.W,y=Math.floor(intent.origin/input.W),p=settings.power/100;
-    this.bed=Math.max(0,input.heights[intent.origin]-Math.round(1+6*p));
+    this.bed=Math.max(Math.min(2,input.heights[intent.origin]),input.heights[intent.origin]-Math.round(1+6*p));
     this.energy=Math.max(input.W,input.H)*(1.2+4*p);
     this.heading=settings.mode==='aim'?Math.atan2(Math.floor(intent.end!/input.W)-y,intent.end!%input.W-x):this.downhill(x,y);
     this.head={x,y,z:input.heights[intent.origin],dx:Math.cos(this.heading),dy:Math.sin(this.heading),width:1.4+5*p,event:'surge',cut:0};
@@ -104,8 +104,9 @@ export class CarveRun {
     const {W,H}=this.map,p=this.settings.power/100,raw=this.original[this.at(x,y)];
     // Non-increasing channel floor. Hard lips delay the actual cutting; downsteps
     // at bed boundaries survive as falls. Defy cuts high destinations to this grade.
-    const grade=Math.max(0,this.original[this.intent.origin]-Math.round(1+6*p)-Math.floor(this.metrics.distance/18));
-    this.bed=Math.min(this.bed,grade,Math.max(0,raw-Math.round(1+6*p)));
+    const sourceBed=Math.max(Math.min(2,this.original[this.intent.origin]),this.original[this.intent.origin]-Math.round(1+6*p));
+    const grade=Math.max(0,sourceBed-Math.floor(this.metrics.distance/18));
+    this.bed=Math.min(this.bed,grade,Math.max(Math.min(2,raw),raw-Math.round(1+6*p)));
     const width=(1.4+5*p)*(1+.13*Math.sin(this.metrics.distance*.13+this.seed%11));
     const depth=Math.max(1,raw-this.bed),shoulder=this.settings.walls==='wide'?depth*.9:Math.min(2,depth*.15);
     const radius=width+shoulder+1;
@@ -127,7 +128,7 @@ export class CarveRun {
   }
   private advanceHead() {
     const {W,H}=this.map,{x,y}=this.head,p=this.settings.power/100;
-    if(this.settings.mode==='unleash'&&this.metrics.distance>5&&this.map.water.depth[this.at(x,y)]>1.1&&!this.channel[this.at(x,y)]){
+    if(this.settings.mode==='unleash'&&this.metrics.distance>5&&this.initialWater[this.at(x,y)]>1.1){
       this.end('lake');return;
     }
     const goal=this.settings.mode==='aim'?{x:this.intent.end!%W,y:Math.floor(this.intent.end!/W)}:null;
@@ -144,7 +145,7 @@ export class CarveRun {
       const far=this.original[this.at(nx+dx*5,ny+dy*5)],near=this.original[i],here=this.original[this.at(x,y)];
       const obstacle=Math.max(0,far-here),resist=obstacle*(1+this.hard(far)*2)*(1-p);
       let score=3.5*Math.cos(angleDelta(a,this.heading))+(here-far)*(.8+1.5*(1-p))-resist*1.2-this.visited[i]*9;
-      if(goal)score+=Math.cos(angleDelta(a,targetAngle))*8;
+      if(goal)score+=Math.cos(angleDelta(a,targetAngle+Math.sin(this.metrics.distance*.12+this.seed%7)*.25))*8;
       // Low force shies away from rock even when its top is at the same level.
       score-=this.hard(near)*(1-p)*1.3;
       if(score>best){best=score;bestA=a;bestX=nx;bestY=ny;}
@@ -159,7 +160,7 @@ export class CarveRun {
     this.energy-=1+climb*(1-p)*8;
     if(this.energy<=0||this.metrics.distance>3*(W+H)){this.end('power spent');return;}
     if(p<.28&&this.original[ahead]-this.bed>4&&this.hard(this.original[ahead])>.5){this.end('hard rock');return;}
-    const fall=this.original[this.at(x,y)]-this.original[ahead],lake=this.map.water.depth[ahead]>1.1&&!this.channel[ahead];
+    const fall=this.original[this.at(x,y)]-this.original[ahead],lake=this.initialWater[ahead]>1.1;
     const turn=Math.abs(angleDelta(bestA,this.heading));if(turn>.15)this.metrics.bendCuts++;
     this.heading=bestA;this.metrics.distance+=1.35;this.stamp(bestX,bestY);
     this.head.event=fall>1?'waterfall':climb>0?'breakthrough':'surge';
@@ -222,7 +223,8 @@ export class CarveRun {
       this.map.entities=this.map.entities.filter(e=>e.template==='StartingLocation'||e.id==='carve-source'||!entityTiles(this.map,e).some(i=>hit.has(i)))
         .map(e=>e.id==='carve-source'?{...e,z:this.map.heights[this.intent.origin]}:e);
     }
-    this.previewWater();
+    for(const i of changed)this.sim.F[i]=this.map.heights[i];
+    this.sim.run(2);this.map.water={depth:this.sim.D.slice(),contamination:this.sim.C.slice()};this.previewWater();
     this.quiet=changed.length?0:this.quiet+1;
     if(this.ended&&(!this.active.size||this.quiet>=24||this.tail>=220)){
       this.metrics.stable=true;this.metrics.exported=this.metrics.suspended;this.metrics.suspended=0;
@@ -258,3 +260,5 @@ export class CarveRun {
     }
   }
 }
+
+
