@@ -5,8 +5,8 @@
 // plants grow), dry ground cracked earth in a grey-brown, contamination a layer over either (red-
 // orange veins, more and brighter the more contaminated: dry earth's own cracks glow orange, dark
 // red veins run through grass), clean water a deep teal body darkening to navy with depth, clear in
-// the shallows, and ground under water a dark wet bed; a toggle switches the ground to height
-// colours.
+// the shallows (the water's own palette is waterPalette.ts, D177), and ground under water a dark
+// wet bed; a toggle switches the ground to height colours.
 // Walls are dark cobbled stone, every other level a shade darker. Colours are display values (the
 // renderer outputs them without conversion).
 //
@@ -15,14 +15,19 @@
 // light lines on dry earth, dark lines on grass, and a darker stain from afar. Clean water's body is
 // about as dark as the stained contaminated earth (Kyler, 2026-09-25: as in the game); it reads as
 // water by its light shore foam, glints and ripple crests and its see-through shallows, and in
-// colour by its blue. Badwater is darker still, brown and dull. Living trees are dark, dead trees
-// pale. The walls, in the side light, are darker than the ground above them. The information
+// colour by its blue. Badwater is darker than clean water of the same depth, and dull; water partly
+// bad turns smoothly from one to the other over a few tiles where they meet, through a teal-grey and
+// a warm brown to crimson, never in streaks, patches or purple (D177). Living trees are dark, dead trees pale. The walls, in the side light, are darker than the ground above them. The information
 // layer (**Markers**) adds dam sites, hatched light and dark with a dark rim so they show on any
 // ground or water, slope arrows and a pale line at every level.
 //
 // Pure TypeScript, no three.js: the unit tests and the page's legend read it too.
 
-export type Rgb = readonly [number, number, number];
+import { BADWATER, WATER, waterBody, type Rgb } from "./waterPalette";
+
+// The water's colours, opacity and blend live in waterPalette.ts (D177); they are re-exported here
+// for the pages and tests that read the palette.
+export { BADWATER, blendWater, badwaterBody, badwaterOpacity, cleanWaterBody, WATER, WATER_BLEND, WATER_CALIBRATION, WATER_SURFACE, waterBlend, waterBody, waterOpacity, type Rgb } from "./waterPalette";
 
 /** What colours the tops of the ground. */
 export type GroundMode = "moisture" | "height";
@@ -72,30 +77,6 @@ export const WALL = {
   alternate: 0.86,
   low: 0.92,
   high: 1.12,
-} as const;
-
-export const WATER = {
-  /** Clean water, as in the game (Kyler's clean look): clear in the shallows, where the bed shows
-   *  through a light teal tint, and a deep teal body darkening to navy with depth. The body may be
-   *  as dark as dry ground or darker; water reads as water by its shore foam, glints, ripples and
-   *  see-through shallows, and badwater stays darker still, brown and dull. */
-  shallow: [0.36, 0.6, 0.64] as Rgb,
-  /** The ripples' lit crests, where they catch the sky: the lightest the water gets. */
-  crest: [0.26, 0.5, 0.62] as Rgb,
-  /** The body of water a level or so deep. */
-  teal: [0.09, 0.23, 0.25] as Rgb,
-  /** The body of deep water. */
-  navy: [0.07, 0.15, 0.2] as Rgb,
-  foam: [0.9, 0.94, 0.95] as Rgb,
-  /** The sky the water reflects. */
-  sky: [0.6, 0.72, 0.84] as Rgb,
-  /** Badwater: much darker than clean water at any depth, a murky red-black liquid with slow
-   *  glowing bubbles. Water mixed with badwater is murkier than clean water all over, and
-   *  streaked with badwater as densely as it is bad. */
-  bad: [0.2, 0.1, 0.08] as Rgb,
-  badDeep: [0.13, 0.06, 0.05] as Rgb,
-  badVein: [0.98, 0.5, 0.16] as Rgb,
-  badFoam: [0.66, 0.5, 0.36] as Rgb,
 } as const;
 
 /** Contamination as a layer (Kyler, 2026-09-25: as in the game): red-orange veins over the ground's
@@ -153,56 +134,10 @@ export function contaminatedGround(moisture: number, level: number, afar: boolea
   return c;
 }
 
-/** Clean water's surface, as the water shader draws it: foam along the shore and broken foam
- *  just off it, glints on the ripples, and shallows clear enough to see the bed through, the more
- *  so toward the banks. */
-export const WATER_SURFACE = {
-  /** Foam: the line along the shore, and the broken foam just off it. */
-  shoreFoam: 0.7,
-  brokenFoam: 0.6,
-  /** Glints of light on the ripples (up close). */
-  glints: 0.6,
-  /** Opacity where the water is shallowest, and where it is deep. */
-  clearest: 0.3,
-  deepest: 0.93,
-  /** At a bank the water is this share of its depth, deepening over this far from it (tiles). */
-  bank: 0.3,
-  bankWidth: 0.45,
-  /** How quickly clean water turns from its clear shallows to its teal body (per level), and
-   *  between which depths the teal turns navy; how quickly badwater turns to its deep colour. */
-  absorb: 4,
-  navyFrom: 0.6,
-  navyTo: 2.8,
-  badAbsorb: 1.4,
-} as const;
-
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
-
-/** Clean water's depth as its colour and opacity see it, `fromBank` tiles from a bank. */
-function seenDepth(depth: number, fromBank: number): number {
-  const S = WATER_SURFACE;
-  return depth * (S.bank + (1 - S.bank) * smooth(0, S.bankWidth, fromBank));
-}
-
-/** The body colour of water `depth` levels deep, clean or bad, `fromBank` tiles from a bank (open
- *  water by default): before the light, the ripples, the foam and the glints (as the shader). */
-export function waterBody(depth: number, bad: boolean, fromBank = 1): Rgb {
-  const S = WATER_SURFACE;
-  if (bad) return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-depth * S.badAbsorb));
-  const d = seenDepth(depth, fromBank);
-  return mixRgb(mixRgb(WATER.shallow, WATER.teal, 1 - Math.exp(-d * S.absorb)), WATER.navy, smooth(S.navyFrom, S.navyTo, d));
-}
-
-/** Clean water's opacity, `depth` levels deep and `fromBank` tiles from a bank: see-through in
- *  the shallows and toward the banks (as the shader, before foam and glints). */
-export function waterOpacity(depth: number, fromBank = 1): number {
-  const S = WATER_SURFACE;
-  const absorb = 1 - Math.exp(-seenDepth(depth, fromBank) * S.absorb);
-  return S.clearest + (S.deepest - S.clearest) * absorb;
-}
 
 /** Dead trees: bare, pale wood (no crown), so they read as dead in any colours; the models use a
  *  greyer tone of it, so dead trees sit back in the landscape. */
@@ -406,7 +341,7 @@ export function legendEntries(mode: GroundMode): LegendEntry[] {
   return [
     ...ground,
     { swatch: `linear-gradient(90deg, ${c(WATER.foam)} 0 2px, ${c(WATER.shallow)} 2px, ${c(WATER.teal)} 45%, ${c(WATER.navy)})`, label: "Water: darker is deeper" },
-    { swatch: icon(`<path d="M0 7 Q6 4 12 7 T24 7" stroke="${c([0.55, 0.4, 0.38])}" stroke-width="1.2" fill="none"/><circle cx="17" cy="11" r="1.3" fill="${c(WATER.badVein)}"/>`, c(WATER.bad)), label: "Badwater" },
+    { swatch: icon(`<path d="M0 7 Q6 4 12 7 T24 7" stroke="${c(WATER.badStreak)}" stroke-width="1.2" fill="none"/><circle cx="17" cy="11" r="1.3" fill="${c(WATER.badVein)}"/>`, c(WATER.bad)), label: "Badwater" },
     { swatch: walls, label: "Walls: one band per level" },
     { swatch: cssColor(DEAD_TREE), label: "Bare pale trees: dead" },
   ];
@@ -420,8 +355,12 @@ export function objectLegend(): LegendEntry[] {
   const dry = c(GROUND.dry);
   return [
     {
-      swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.teal)),
-      label: "Water mixed with badwater: murkier, with dark streaks",
+      // clean water turning to badwater (teal-grey, warm brown, crimson, darker), with badwater's
+      // bubbles at its end
+      swatch:
+        icon(`<circle cx="18" cy="6" r="1.1" fill="${c(WATER.badVein)}"/><circle cx="21.5" cy="11" r="1.1" fill="${c(WATER.badVein)}"/>`) +
+        `, linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((share) => c(waterBody(BADWATER.shallow, share))).join(", ")})`,
+      label: "Water mixed with badwater: fades to murky brown",
     },
     {
       swatch: icon(`<circle cx="7" cy="8" r="5" fill="${c(LIVING_TREE)}"/><path d="M16 2 L21 14 H11Z" fill="${c([0.11, 0.28, 0.17])}"/>`, grass),

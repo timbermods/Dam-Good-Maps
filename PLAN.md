@@ -1509,7 +1509,9 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
   60 fps on a mid-range laptop at 256² (measured in M4, D46). The preview opens in 2D; 3D is a
   switch, loaded on demand. Map look (after M8, D86, D110, D114, D115) colours the 3D view's ground by
   moisture, as the game does, with a toggle back to height colours and a legend; the 2D preview
-  keeps its height colours.
+  keeps its height colours. The water's colours, its opacity and how badwater blends into clean water
+  (with their calibration on screen) live in one shared palette, `src/render3d/waterPalette.ts`,
+  that every look's water reads (D177).
 
 ### 14.3 Map card
 

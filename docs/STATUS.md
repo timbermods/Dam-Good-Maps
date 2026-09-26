@@ -150,7 +150,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   water part 1 are on the preview address; next water per D184 (smart Lower, Source, part 2's paced
   water), then the rest of D184's design in pushes.
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
-  `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
+  `look/badwater-blend` (#41, approved: the warm-midpoint blend is in, ready to release as
+  `look-badwater-done`);
+  mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
 - **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
