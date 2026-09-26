@@ -730,7 +730,8 @@ the information layer. Kyler approves the look from its captures; `map-look-done
 **Fix rounds after the clean look,** each on its own branch, judged by Kyler from before and after
 captures and released under its own tag; rendering only, so the map files don't change:
 contaminated ground as a layer (D154, `look-contamination-done`, released); badwater blending
-smoothly into clean water (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
+smoothly into clean water, with #38's approved crimson badwater and a warm tint for partly bad water,
+in one shared water palette (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
 ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`).
 
 ---
@@ -1295,6 +1296,8 @@ made smaller by Kyler the same day).
     shore and fall foam, badwater distinct; Kyler's direction: fewer, subtler sparkle flecks
     than the clean look, and more depth and transparency;
   - soft real-time shadows from a warm sun.
+- High's water reads the shared water palette (`src/render3d/waterPalette.ts`, D177): the same
+  colours, opacity, badwater blend and calibration as Standard, so the two never drift apart.
 - Today's grass and dirt textures stay exactly as they are (Kyler likes them).
 
 **Later, optional** (not part of this step): ambient occlusion, colour grading, richer or
