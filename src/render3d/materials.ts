@@ -22,8 +22,8 @@
 //   where falls come down, and falls as a see-through veil of streaks (the cliff shows through).
 //   Badwater is darker than clean water of the same depth and duller, with the same ripples and
 //   slow glowing bubbles. Water partly bad turns from clean water to badwater with its badwater
-//   share, blended over a few tiles by the water mesh: it takes a warm red tint early and darkens
-//   in proportion, so where they meet the colour changes in a soft gradient, never in streaks or
+//   share, blended over a few tiles by the water mesh: it darkens in proportion, and its hue turns
+//   early from teal through a teal-grey and a warm brown to crimson, never purple, so where they meet the colour changes in a soft gradient, never in streaks or
 //   patches, and a mixed river reads as poisoned; the dull surface and the bubbles come in with
 //   it. Every water colour and the water's opacity come from waterPalette.ts (`WATER_GLSL`, D177).
 // - A per-tile overlay (selection, previews, layers) and the hovered tile stay on top. An overlay

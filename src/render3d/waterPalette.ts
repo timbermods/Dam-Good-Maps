@@ -16,8 +16,7 @@
 
 export type Rgb = readonly [number, number, number];
 
-/** Badwater's crimson body (calibrated to #38's targets); the tint of water partly bad takes its
- *  hue, so mixed water and pure badwater agree. */
+/** Badwater's crimson body (calibrated to #38's targets). */
 const BAD_BODY: Rgb = [0.431, 0.204, 0.18];
 
 export const WATER = {
@@ -48,9 +47,12 @@ export const WATER = {
   badVein: [0.98, 0.5, 0.16] as Rgb,
   /** Foam on badwater: along its shores and below its falls. */
   badFoam: [0.66, 0.5, 0.36] as Rgb,
-  /** The warm red that water partly bad turns toward (only its hue: `WATER_BLEND`), so a mixed
-   *  river reads as poisoned at a glance, not as deeper blue: badwater's own crimson. */
-  tint: BAD_BODY,
+  /** The hues water partly bad passes through on its way from clean water's teal to badwater's
+   *  crimson (`WATER_BLEND`; only their hues count, not their lightness): the game's measured
+   *  mixing zone (#2E444C), a desaturated teal-grey, then a warm brown. The brown leans a little
+   *  yellow, so the way from the teal-grey to it never passes through purple or mauve. */
+  mixing: [0.18, 0.267, 0.298] as Rgb,
+  warm: [0.439, 0.314, 0.204] as Rgb,
 } as const;
 
 /** Clean water's surface, as the water shader draws it: foam along the shore and broken foam
@@ -119,13 +121,15 @@ export const BADWATER = {
  *  the water mesh), in parts that each follow their own curve (in linear light, so greyscale
  *  darkens at every step):
  *  - it darkens in proportion: its luminance goes from clean water's to badwater's by s^darken;
- *  - it takes the warm red tint early: its hue (the colour over its luminance) turns from clean
- *    water's toward `WATER.tint`'s by 1 - (1 - s)^tint (at a quarter bad over half way), then
- *    settles on badwater's own by s^settle, so pure badwater is exactly its body;
+ *  - its hue (the colour over its luminance) turns early, along a path 1 - (1 - s)^hue of the way:
+ *    from clean water's teal to the mixing zone's teal-grey (`WATER.mixing`, reached at `mixing` of
+ *    the way), to the warm brown (`WATER.warm`, at `warm`), then to badwater's crimson, so mixed
+ *    water goes teal, warm brownish, crimson, never purple; a tenth bad already reads warm, and pure
+ *    badwater is exactly its body;
  *  - it grows murky: opacity, by s^opacity;
  *  and badwater's dull surface (fewer glints and crests, its streaks, foam and bubbles) comes in
  *  by s^surface. Clean water (s = 0) is exactly clean water. */
-export const WATER_BLEND = { darken: 1, tint: 3, settle: 4, opacity: 0.5, surface: 0.75 } as const;
+export const WATER_BLEND = { darken: 1, hue: 6, mixing: 0.2, warm: 0.5, opacity: 0.5, surface: 0.75 } as const;
 
 /** How the water's colours are measured on screen, as #38's colour check does
  *  (investigation/maplook2/colour-check.mjs), and what they should measure. `npx tsx
@@ -196,32 +200,37 @@ export function badwaterBody(depth: number): Rgb {
   return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-Math.max(0, depth - BADWATER.shallow) * BADWATER.absorb));
 }
 
-/** The blend's curves at a badwater share (0–1): how far the lightness, the hue (toward the tint,
- *  then badwater's own), the opacity and the surface have turned toward badwater's. */
-export function waterBlend(share: number): { darken: number; tint: number; settle: number; opacity: number; surface: number } {
+/** The blend's curves at a badwater share (0–1): how far the lightness, the hue (along its path)
+ *  the opacity and the surface have turned toward badwater's. */
+export function waterBlend(share: number): { darken: number; hue: number; opacity: number; surface: number } {
   const s = Math.max(0, Math.min(1, share));
   const B = WATER_BLEND;
-  if (s === 0) return { darken: 0, tint: 0, settle: 0, opacity: 0, surface: 0 };
-  return { darken: s ** B.darken, tint: 1 - (1 - s) ** B.tint, settle: s ** B.settle, opacity: s ** B.opacity, surface: s ** B.surface };
+  if (s === 0) return { darken: 0, hue: 0, opacity: 0, surface: 0 };
+  return { darken: s ** B.darken, hue: 1 - (1 - s) ** B.hue, opacity: s ** B.opacity, surface: s ** B.surface };
 }
 
+/** A colour's hue in linear light: the colour over its luminance. */
+const hueOf = (c: Rgb): Rgb => {
+  const l = Math.max(luma(c), 1e-5);
+  return [c[0] / l, c[1] / l, c[2] / l];
+};
+
 /** Water between a clean colour and a bad one at a badwater share, as `WATER_BLEND` says, in
- *  linear light: its luminance darkens in proportion; its hue (the colour over its luminance)
- *  turns to the tint's early, then to badwater's. */
+ *  linear light: its luminance darkens in proportion; its hue goes from clean water's through the
+ *  mixing zone's and the warm brown's to badwater's. */
 export function blendWater(clean: Rgb, bad: Rgb, share: number): Rgb {
   if (!(share > 0)) return clean;
   if (share >= 1) return bad;
+  const B = WATER_BLEND;
   const k = waterBlend(share);
   const cl = toLinear(clean);
   const bl = toLinear(bad);
   const yc = luma(cl);
-  const yb = luma(bl);
-  const y = yc + (yb - yc) * k.darken;
-  const hue = (c: Rgb): Rgb => {
-    const l = Math.max(luma(c), 1e-5);
-    return [c[0] / l, c[1] / l, c[2] / l];
-  };
-  const h = mixRgb(mixRgb(hue(cl), hue(toLinear(WATER.tint)), k.tint), hue(bl), k.settle);
+  const y = yc + (luma(bl) - yc) * k.darken;
+  const p = k.hue;
+  const mixing = hueOf(toLinear(WATER.mixing));
+  const warm = hueOf(toLinear(WATER.warm));
+  const h = p < B.mixing ? mixRgb(hueOf(cl), mixing, p / B.mixing) : p < B.warm ? mixRgb(mixing, warm, (p - B.mixing) / (B.warm - B.mixing)) : mixRgb(warm, hueOf(bl), (p - B.warm) / (1 - B.warm));
   return toDisplay([Math.max(0, y * h[0]), Math.max(0, y * h[1]), Math.max(0, y * h[2])]);
 }
 
@@ -274,7 +283,8 @@ export const WATER_GLSL = /* glsl */ `
   #define BADWATER_STREAK ${glColor(WATER.badStreak)}
   #define BADWATER_VEIN ${glColor(WATER.badVein)}
   #define BADWATER_FOAM ${glColor(WATER.badFoam)}
-  #define WATER_TINT ${glColor(WATER.tint)}
+  #define WATER_MIXING ${glColor(WATER.mixing)}
+  #define WATER_WARM ${glColor(WATER.warm)}
   #define WATER_CREST_AMOUNT ${f(WATER_SURFACE.crest)}
   #define WATER_REFLECT ${f(WATER_SURFACE.reflect)}
   #define WATER_PALE_AMOUNT ${f(WATER_SURFACE.pale)}
@@ -330,20 +340,26 @@ export const WATER_GLSL = /* glsl */ `
   vec3 waterToDisplay(vec3 v) {
     return mix(v * 12.92, 1.055 * pow(v, vec3(1.0 / 2.4)) - 0.055, step(0.0031308, v));
   }
+  /** A colour's hue in linear light: the colour over its luminance. */
+  vec3 waterHue(vec3 lin) {
+    return lin / max(dot(lin, vec3(${LUMA.map(f).join(", ")})), 0.00001);
+  }
   /** Water between clean and bad at a badwater share, in linear light: it darkens in proportion,
-   *  and its hue turns to the warm tint early, then to badwater's own. */
+   *  and its hue goes early from clean water's through the mixing zone's teal-grey and a warm
+   *  brown to badwater's crimson, never through purple. */
   vec3 waterBlend(vec3 clean, vec3 bad, float s) {
     if (s <= 0.0) return clean;
     if (s >= 1.0) return bad;
-    vec3 luma = vec3(${LUMA.map(f).join(", ")});
     vec3 cl = waterToLinear(clean);
     vec3 bl = waterToLinear(bad);
-    vec3 tl = waterToLinear(WATER_TINT);
-    float yc = dot(cl, luma);
-    float yb = dot(bl, luma);
-    float y = mix(yc, yb, pow(s, ${f(WATER_BLEND.darken)}));
-    vec3 hue = mix(cl / max(yc, 0.00001), tl / dot(tl, luma), 1.0 - pow(1.0 - s, ${f(WATER_BLEND.tint)}));
-    hue = mix(hue, bl / max(yb, 0.00001), pow(s, ${f(WATER_BLEND.settle)}));
-    return waterToDisplay(max(y * hue, 0.0));
+    vec3 luma = vec3(${LUMA.map(f).join(", ")});
+    float y = mix(dot(cl, luma), dot(bl, luma), pow(s, ${f(WATER_BLEND.darken)}));
+    float p = 1.0 - pow(1.0 - s, ${f(WATER_BLEND.hue)});
+    vec3 mixing = waterHue(waterToLinear(WATER_MIXING));
+    vec3 warm = waterHue(waterToLinear(WATER_WARM));
+    vec3 h = p < ${f(WATER_BLEND.mixing)} ? mix(waterHue(cl), mixing, p / ${f(WATER_BLEND.mixing)})
+      : p < ${f(WATER_BLEND.warm)} ? mix(mixing, warm, (p - ${f(WATER_BLEND.mixing)}) / ${f(WATER_BLEND.warm - WATER_BLEND.mixing)})
+      : mix(warm, waterHue(bl), (p - ${f(WATER_BLEND.warm)}) / ${f(1 - WATER_BLEND.warm)});
+    return waterToDisplay(max(y * h, 0.0));
   }
 `;

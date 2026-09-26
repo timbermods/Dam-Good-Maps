@@ -386,3 +386,27 @@ approved; use its final colours and opacity for #41."
   They are thin: badwater sits just under each of them.
 - **Captures:** all made again. The tint views of River Valley 4242 are centred on the river above
   the ditches (37% bad). `deep-badwater-options.jpg` is gone, since Kyler chose A.
+
+**Kyler approved #41, with one change (2026-09-26):** "partly contaminated water leans wine-mauve,
+almost purple, because teal and crimson blend through purple. Blend through a warm midpoint instead
+(the game's measured mixing zone, about #2E444C, toward warm brown), so mixed water goes teal, then
+warm brownish, then crimson, and never looks purple or mauve-grey. Make the tint a little steeper,
+so 10–25% bad already reads warm."
+- **The hue now follows a path** in `waterBlend`: clean teal, then the mixing zone's teal-grey
+  (#2E444C, `WATER.mixing`, at a fifth of the way), then a warm brown (`WATER.warm`, half way), then
+  #38's crimson. It moves 1 - (1 - s)^6 of the way, steeper than before. The brown leans a little
+  yellow, so no step of the path is purple: blue drops below green before red rises above it.
+  Luminance still follows the share in proportion, and pure badwater is still exactly #38's body.
+- **On screen, 0.8 deep:** 5% bad #37434B (teal-grey), 10% #483D35 (warm brownish), 25% #4E332F
+  (red-brown), 50% #4A2B2A (crimson-brown). #38's targets still land exactly, and clean water is
+  unchanged.
+- **Tests:** `look-badwater.test.ts` checks the new path.
+  - New: no hue from violet to magenta (250°–350°) at any share, depth or distance from a bank; at
+    10% and 25% bad, red is above blue by 10 codes or more, with an orange-red hue; the path passes
+    the mixing zone's hue.
+  - Changed: the continuity bound for 1% more bad is 0.06 per channel (was 0.04). The steeper turn
+    Kyler asked for peaks at 0.048 in bright shallows.
+- **The dry-ground margin is fragile:** dry ground is 0.1501 lighter than badwater against the
+  accepted 0.15 (noted in `look-readable.test.ts`). The badwater body did not change, so it still
+  passes; any lighter badwater would fail it.
+- All captures made again.

@@ -16,8 +16,8 @@
 // about as dark as the stained contaminated earth (Kyler, 2026-09-25: as in the game); it reads as
 // water by its light shore foam, glints and ripple crests and its see-through shallows, and in
 // colour by its blue. Badwater is darker than clean water of the same depth, and dull; water partly
-// bad turns smoothly from one to the other over a few tiles where they meet, tinted warm red early,
-// never in streaks or patches (D177). Living trees are dark, dead trees pale. The walls, in the side light, are darker than the ground above them. The information
+// bad turns smoothly from one to the other over a few tiles where they meet, through a teal-grey and
+// a warm brown to crimson, never in streaks, patches or purple (D177). Living trees are dark, dead trees pale. The walls, in the side light, are darker than the ground above them. The information
 // layer (**Markers**) adds dam sites, hatched light and dark with a dark rim so they show on any
 // ground or water, slope arrows and a pale line at every level.
 //
@@ -313,7 +313,7 @@ export function objectLegend(): LegendEntry[] {
   const dry = c(GROUND.dry);
   return [
     {
-      // clean water turning to badwater (the warm tint early, then darker), with badwater's
+      // clean water turning to badwater (teal-grey, warm brown, crimson, darker), with badwater's
       // bubbles at its end
       swatch:
         icon(`<circle cx="18" cy="6" r="1.1" fill="${c(WATER.badVein)}"/><circle cx="21.5" cy="11" r="1.1" fill="${c(WATER.badVein)}"/>`) +

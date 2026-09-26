@@ -1,16 +1,17 @@
 // Map look, badwater blends into clean water (PLAN §20 D177): each water tile is coloured by its
 // badwater share, blended over the connected water a few tiles round and shared at the tops'
 // corners, so where badwater meets clean water the colour turns in a soft gradient over several
-// tiles, never in streaks or patches; clean water stays exactly as it was; water partly bad takes
-// a warm red tint early and darkens in proportion (Kyler's review of #41); badwater is #38's
-// approved crimson, matte and nearly opaque, and darkens with depth (option A).
+// tiles, never in streaks or patches; clean water stays exactly as it was; water partly bad darkens
+// in proportion and turns early from teal through a teal-grey and a warm brown to crimson, never
+// purple (Kyler's reviews of #41); badwater is #38's approved crimson, matte and nearly opaque, and
+// darkens with depth (option A).
 
 import { describe, expect, it } from "vitest";
 import { DataTexture } from "three";
 import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
 import { CHUNK } from "../../src/render3d/mesh";
 import { surfaceWater, waterFromDepth, type SurfaceWater } from "../../src/render3d/model";
-import { BADWATER, badwaterBody, badwaterOpacity, cleanWaterBody, WATER, WATER_CALIBRATION, WATER_GLSL, waterBlend, waterBody } from "../../src/render3d/waterPalette";
+import { BADWATER, badwaterBody, badwaterOpacity, cleanWaterBody, WATER, WATER_BLEND, WATER_CALIBRATION, WATER_GLSL, waterBlend, waterBody } from "../../src/render3d/waterPalette";
 import { blendedBadwater, changedWaterChunks, lowerByTile, meshWaterChunk, type WaterMeshData } from "../../src/render3d/waterMesh";
 
 /** CIE L* of a display colour (sRGB). */
@@ -105,12 +106,12 @@ describe("badwater meeting clean water", () => {
           if (y > 0) expect(Math.abs(c - shares.get(`${x},${y - 1}`)!)).toBeLessThan(0.3);
         }
     }
-    // the tongue still reads as badwater along its middle, well away from its tip: tinted all the
-    // way and darkened over half way
+    // the tongue still reads as badwater along its middle, well away from its tip: its hue all the
+    // way to badwater's and darkened over half way
     const { heights, view, sw } = flat(W, H, (x, y) => (y < 20 && x >= 18 && x < 21 ? 1 : 0));
     const shares = cornerShares(meshAll(W, H, heights, sw, view));
     const mid = waterBlend((shares.get("19,5")! + shares.get("20,5")!) / 2);
-    expect(mid.tint).toBeGreaterThan(0.95);
+    expect(mid.hue).toBeGreaterThan(0.95);
     expect(mid.darken).toBeGreaterThan(0.5);
   });
 
@@ -120,7 +121,7 @@ describe("badwater meeting clean water", () => {
     const H = 6;
     const { heights, view, sw } = flat(W, H, () => 0);
     for (const m of meshAll(W, H, heights, sw, view)) for (let k = 0; k < m.quads * 4; k++) expect(m.data[k * 2 + 1]).toBe(0);
-    expect(waterBlend(0)).toEqual({ darken: 0, tint: 0, settle: 0, opacity: 0, surface: 0 });
+    expect(waterBlend(0)).toEqual({ darken: 0, hue: 0, opacity: 0, surface: 0 });
     for (const d of [0.05, 0.25, 1, 3]) for (const fromBank of [0, 1]) expect(waterBody(d, 0, fromBank)).toEqual(waterBody(d, false, fromBank));
     // clean water far from badwater is 0 too, exactly
     const front = flat(W, H, (x) => (x < 3 ? 1 : 0));
@@ -188,8 +189,6 @@ describe("badwater's colour", () => {
     expect(WATER.bad[1]).toBeGreaterThan(WATER.bad[2]);
     expect(lightness(WATER.badTrough)).toBeLessThan(lightness(WATER.bad) - 2);
     expect(lightness(WATER.badStreak)).toBeGreaterThan(lightness(WATER.bad) + 2);
-    // water partly bad takes badwater's own hue
-    expect(WATER.tint).toEqual(WATER.bad);
     // nearly opaque in open water, see-through at its shallow edges, opaque at a grazing angle
     for (const d of [0.25, 0.5, 1, 3]) expect(badwaterOpacity(d)).toBeGreaterThanOrEqual(0.975);
     expect(badwaterOpacity(0.1, 0)).toBeLessThan(0.5);
@@ -204,23 +203,20 @@ describe("badwater's colour", () => {
     expect(lightness(badwaterBody(4))).toBeLessThan(lightness(WATER.bad) - 15);
   });
 
-  it("turns from clean water's by the badwater share: darker in proportion, the warm red tint early, both continuous", () => {
+  it("turns from clean water's by the badwater share: darker in proportion, its hue teal, teal-grey, warm brown, crimson, never purple", () => {
     const shares = Array.from({ length: 101 }, (_, k) => k / 100);
-    // the curves: the darkening in proportion; the tint early (over half way at a quarter bad),
-    // always ahead of the darkening; both rising at every step, never jumping
+    // the curves: the darkening in proportion; the hue early along its path, always ahead of the
+    // darkening; both rising at every step, never jumping
     for (let k = 1; k < shares.length; k++) {
       const a = waterBlend(shares[k - 1]);
       const b = waterBlend(shares[k]);
       expect(b.darken).toBeCloseTo(shares[k], 12);
-      expect(b.tint).toBeGreaterThan(a.tint);
-      expect(b.tint - a.tint).toBeLessThan(0.035);
-      if (shares[k] < 1) expect(b.tint).toBeGreaterThan(b.darken);
+      expect(b.hue).toBeGreaterThan(a.hue);
+      expect(b.hue - a.hue).toBeLessThan(0.06);
+      if (shares[k] < 1) expect(b.hue).toBeGreaterThan(b.darken);
     }
-    expect(waterBlend(0.25).tint).toBeGreaterThan(0.5);
-    expect(waterBlend(0.1).tint).toBeGreaterThan(0.2);
     const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
     const luma = (c: readonly number[]) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
-    const warmth = (c: readonly number[]) => (lin(c[0]) - lin(c[2])) / luma(c);
     for (const d of [0.1, 0.25, 0.5, 1, 2, 4]) {
       const clean = cleanWaterBody(d);
       const bad = badwaterBody(d);
@@ -233,19 +229,55 @@ describe("badwater's colour", () => {
         const c = waterBody(d, s);
         // its luminance goes from clean water's to badwater's in proportion to the share
         expect(luma(c)).toBeCloseTo(luma(clean) + (luma(bad) - luma(clean)) * s, 9);
-        // darker at every step in greyscale too, and no jump in any channel
+        // darker at every step in greyscale too, and no jump in any channel (0.048 at the most for
+        // 1% more bad, in bright shallows where the hue turns warm: Kyler asked for a steep turn)
         expect(lightness(c), `${d} deep, ${s} bad`).toBeLessThan(prevL);
-        // (0.031 at the most, where the tint starts in bright shallows)
-        for (let k = 0; k < 3; k++) expect(Math.abs(c[k] - prev[k]), `${d} deep, ${s} bad`).toBeLessThan(0.04);
+        for (let k = 0; k < 3; k++) expect(Math.abs(c[k] - prev[k]), `${d} deep, ${s} bad`).toBeLessThan(0.06);
         prevL = lightness(c);
         prev = c;
       }
-      // tainted at a glance: at a quarter bad the water is already warm (redder than it is blue),
-      // over half way from clean water's hue to the tint's, whatever its depth
-      const q = waterBody(d, 0.25);
-      expect(q[0], `${d} deep`).toBeGreaterThan(q[2]);
-      expect(warmth(q) - warmth(clean)).toBeGreaterThan(0.5 * (warmth(WATER.tint) - warmth(clean)));
     }
+  });
+
+  it("never looks purple or magenta, and reads warm from a tenth bad (Kyler's review of #41)", () => {
+    // HSV hue (degrees) and saturation of a display colour
+    const hsv = (c: readonly number[]) => {
+      const max = Math.max(...c);
+      const d = max - Math.min(...c);
+      let h = 0;
+      if (d > 0) h = max === c[0] ? 60 * (((c[1] - c[2]) / d) % 6) : max === c[1] ? 60 * ((c[2] - c[0]) / d + 2) : 60 * ((c[0] - c[1]) / d + 4);
+      return { h: h < 0 ? h + 360 : h, s: max > 0 ? d / max : 0 };
+    };
+    for (const d of [0.05, 0.1, 0.25, 0.5, 0.8, 1, 1.25, 2, 3, 4.25])
+      for (const fromBank of [0, 0.2, 1]) {
+        for (let k = 0; k <= 200; k++) {
+          const c = waterBody(d, k / 200, fromBank);
+          const { h, s } = hsv(c);
+          // no hue from violet to magenta (250°–350°) with any visible colour in it
+          if (s > 0.03) expect(h > 250 && h < 350, `${d} deep, ${fromBank} from a bank, ${k / 200} bad: hue ${Math.round(h)}°`).toBe(false);
+        }
+        // a tenth and a quarter bad read warm: red above blue by 10 codes or more, an orange-red hue
+        for (const share of [0.1, 0.25]) {
+          const c = waterBody(d, share, fromBank);
+          const { h } = hsv(c);
+          expect(c[0] - c[2], `${d} deep, ${share} bad`).toBeGreaterThan(10 / 255);
+          expect(h < 45 || h > 355, `${d} deep, ${share} bad: hue ${Math.round(h)}°`).toBe(true);
+        }
+      }
+    // on the way it passes the game's measured mixing zone's teal-grey (#2E444C)
+    const hueOf = (c: readonly number[]) => {
+      const l = luma(c);
+      return c.map((v) => lin(v) / l);
+    };
+    const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    const luma = (c: readonly number[]) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+    const atMixing = 1 - (1 - WATER_BLEND.mixing) ** (1 / WATER_BLEND.hue);
+    for (const d of [0.25, 1, 3]) {
+      const h = hueOf(waterBody(d, atMixing));
+      const m = hueOf(WATER.mixing);
+      for (let k = 0; k < 3; k++) expect(h[k]).toBeCloseTo(m[k], 2);
+    }
+    expect(WATER.mixing.map((v) => Math.round(v * 255))).toEqual([46, 68, 76]);
   });
 
   it("is drawn by the water shader from the shared palette, with no streaks", () => {

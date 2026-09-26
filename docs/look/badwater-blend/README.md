@@ -6,12 +6,14 @@ none is shown. Made with `tools/capture-badwater.ts`.
 
 Badwater is #38's crimson, as Kyler approved it: matte and nearly opaque, with darker troughs and
 subdued streaks. It is see-through only at its shallow edges, and darker with depth (option A).
-Partly bad water takes that crimson hue early and darkens in proportion to how bad it is. All the
-water's colours come from one shared palette, `src/render3d/waterPalette.ts`.
+Partly bad water darkens in proportion to how bad it is. Its hue turns early: teal, then the game's
+teal-grey mixing zone (#2E444C), then warm brown, then crimson. It is never purple or mauve, and at
+10% bad it already reads warm. All the water's colours come from one shared palette,
+`src/render3d/waterPalette.ts`.
 
 | Image | What to look at |
 |---|---|
-| [tint-riverValley-4242-256-top.jpg](tint-riverValley-4242-256-top.jpg) | The river above the badwater ditches (37% bad), from above. It reads tainted, wine-red, where dev drew blue water with dark blotches. |
+| [tint-riverValley-4242-256-top.jpg](tint-riverValley-4242-256-top.jpg) | The river above the badwater ditches (37% bad), from above. It reads tainted, a warm red-brown, where dev drew blue water with dark blotches. |
 | [tint-riverValley-4242-256-angled.jpg](tint-riverValley-4242-256-angled.jpg) | The same river at the default angle. |
 | [riverValley-4242-256-top.jpg](riverValley-4242-256-top.jpg) | Where the ditches and the river meet clean water, from above. Each front is a soft gradient over a few tiles. |
 | [riverValley-4242-256-angled.jpg](riverValley-4242-256-angled.jpg) | The same meeting at the default angle. The ditches are pure badwater, crimson and matte. |
@@ -48,10 +50,13 @@ Body band by share and depth:
 
 | Depth | Clean | 10% bad | 25% bad | Half bad | Pure badwater |
 |---|---|---|---|---|---|
-| 0.25 | #40626A (L\* 39.3) | #555A61 (37.9) | #655053 (36.1) | #6F4342 (33.4) | #6B332F (28.6) |
-| 0.8 | #254954 (28.8) | #394048 (26.8) | #45373B (24.6) | #492B2C (21.4) | #3E1E1C (15.6) |
-| 1.25 | #21434F (26.3) | #333A43 (24.0) | #3D3036 (21.5) | #3F2526 (18.0) | #301716 (11.1) |
-| 4.25 | #1D3545 (21.0) | #292E3A (18.8) | #30262E (16.5) | #311D1E (13.2) | #231110 (7.2) |
+| 0.25 | #40626A (L\* 39.3) | #65564B (37.7) | #714B43 (35.8) | #73403D (33.3) | #6B332F (28.6) |
+| 0.8 | #254954 (28.8) | #483D35 (26.5) | #4E332F (24.4) | #4A2B2A (21.4) | #3E1E1C (15.6) |
+| 1.25 | #21434F (26.3) | #413730 (23.8) | #432E2B (21.3) | #3F2525 (18.0) | #301716 (11.1) |
+| 4.25 | #1D3545 (21.0) | #322C27 (18.5) | #342523 (16.3) | #2F1E1D (13.3) | #231110 (7.2) |
+
+At 5% bad the water is the mixing zone's teal-grey (#37434B at 0.8 deep). At 10% it is a warm
+brownish grey, red above blue by 11–26 codes.
 
 - **Greyscale:** at every depth, water gets darker as more of it is bad.
 - **Colour blindness:** tainted water and badwater are dark olive-brown against blue water with
