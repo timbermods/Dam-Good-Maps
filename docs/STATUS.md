@@ -106,6 +106,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
 - D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
+- D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
 
 ## Done and released
 

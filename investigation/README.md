@@ -13,6 +13,22 @@ may lag the product. A piece that is adopted is ported or moved into `src/` or `
 comment naming its source. Tools and tests may still read data files here at run time:
 `notes/footprints.json`, and the local-only `raw/` maps.
 
+## What an investigation commits
+
+Kyler's rule (PLAN.md §20, D195):
+- **Commit** the report, the code, small samples and a few captures.
+- **Keep out of git** large generated results: bulk JSON, thousands of files, anything over a few MB.
+  Put them in `investigation/<name>/local/` (gitignored) or attach them to a GitHub Release.
+- **Say how to regenerate them** in the report: the command, its inputs and roughly how long it takes.
+- What's already merged stays as it is; history is not rewritten.
+
+Paste this into every investigation prompt, for Claude or Codex:
+
+> Repository size rule (Dam Good Maps, D195): commit your report, code, small samples and a few
+> captures. Keep large generated results (bulk JSON, thousands of files, anything over a few MB) out
+> of git: write them to `investigation/<your-folder>/local/` (gitignored) or attach them to a GitHub
+> Release, and say in your report exactly how to regenerate them.
+
 ## Status
 
 - **Adopted**: built into the product.
