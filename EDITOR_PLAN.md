@@ -113,9 +113,12 @@ D182.)
 
 ## 10. What's gone, and must not come back
 
+<!-- retired-terms:allow -->
 The landform tools and their handles, the river and lake tools, the Channel tool, the separate plant
 brushes, the busy readouts, the Show dropdown and the Advanced checkbox. Part 3 lists each with the
-decision that replaced it.
+decision that replaced it. CI flags these names if they reappear anywhere else
+(`tools/retired-terms.json`, D188).
+<!-- /retired-terms:allow -->
 
 # Part 2: the technical reference
 
