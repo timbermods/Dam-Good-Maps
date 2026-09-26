@@ -5,7 +5,8 @@ This investigation changes no production editor, generator, schema or format.
 ## Transaction and exact history
 
 Adopt carveResult v1 as a stored-result operation. Diagnostic inputs are mode,
-origin/end tile, Power, Defy gravity, walls, dry/keep river, layer setting,
+origin/end tile, Power, Wander, nominal Width (null means follows Power),
+unsigned 32-bit personality seed, Defy gravity, walls, dry/keep river, layers,
 acknowledged step count and end reason. Authoritative output is:
 
 - sorted [tile, before, after] whole-level terrain triples;
@@ -28,20 +29,91 @@ project archive, and a document/run revision on every message. Validate entity
 identity and project schema at import; the demo's local file validation is
 deliberately narrower than a production archive reader.
 
-Cache the pre-run and final render chunks alongside data. The demo keeps the
-latest pair so active cancel and the latest undo/redo restore visibly in one
-frame; older history can remesh from its exact data. Production should retain
-or page the needed chunk versions for its full undo policy. Derived soil,
-checks and overlays should share those revisions.
+## Alternatives and their original land
+
+A reroll starts from the series' original map, with identical intent/settings
+and an incremented seed. The previously kept result is its transaction
+before-state. Completing it commits one literal replacement operation;
+undo/cancel returns that previous result, not the original uncarved map.
+Each attempt consumes a seed even when cancelled. A new source click begins
+a new series at seed 0, with the current map as its original land.
+
+The demo keeps original map / intent / settings / next seed in a worker-side
+WeakMap keyed by the result operation. Portable files add carveBase alongside
+base: base is the undo target, carveBase the series' original map. A reroll
+operation marks params.reroll=true. Exact replay needs only base and the
+operation; another path additionally needs carveBase and the diagnostic intent.
+Old ordinary result files with intent can use base as their original map.
+The new settings are optional for compatibility; missing values use Wander 35,
+linked Width and seed 0. Historical replay still never consults these defaults.
+
+Production should persist a series ID and an original document revision, share
+immutable base arrays across alternatives, and choose an archive retention
+policy. Do not store a fresh full original map for every alternative in memory.
+Changing sliders after a kept result prepares a new carve; Try another path
+restores the kept result's settings, as its label promises the same carve.
+
+Cache pre-run and final render chunks alongside data. The demo additionally
+retains the series' original chunks and preserves the latest history pair
+during a tentative transaction. Cancel restores the kept view immediately;
+finishing/cancelling releases unused geometry. The latest undo/redo pair is
+instant; older history can remesh from exact data. A reroll of older history
+also rebuilds its original view if that cache was discarded. Production should
+retain or page versions for its full history policy, with checks, soil and
+overlays sharing document revisions.
 
 ## Force, water and consequences
 
 CarveRun is an intentional fluvial force, not an extension of the game's
 non-eroding water. Unleash combines inertia, downhill look-ahead and resistance.
 Aim adds destination guidance with coherent lateral acceleration. Power sets
-channel radius, depth, penetration, work rate and finite travel budget. Low
+depth, penetration, work rate and finite travel budget. Low
 force may run out or turn away; high force opens a route through ridges.
 Defy gravity lowers the path ahead to a non-increasing grade.
+
+Character lives in character.ts, separate from terrain work and game water.
+Linked nominal width is 2.8 + 0.1 * Power tiles. An override scales incision
+and work by sqrt(linkedWidth / overrideWidth): narrow slots concentrate power,
+broad channels dilute it. Low effective power also caps total local incision,
+so repeatedly overlapping a wide brush cannot excavate a ridge by accident.
+
+Course guidance lives in course.ts. Aim points toward the endpoint. Unleash
+reads M9 dev's drainage receiver field and downhill spill/distance potential.
+Wander changes lateral amplitude and wavelength in distance units; the desired
+heading swings around this independent guide. It never integrates another
+turn into the guide. All values share a fixed 110° limit; inertia affects the
+candidate score within that limit. Near an aimed endpoint, the swing tapers.
+
+After eight moves without sufficient progress, the course straightens.
+Every candidate must beat the cost from 16 moves ago; otherwise the force
+ends as power spent instead of circling. This is endpoint distance for Aim,
+and interpolated spill level plus drainage distance for Unleash, so whole-level
+flats and hollows still have a downstream direction. Segment intersection
+checks reject crossing old head paths and previously cut shortcuts.
+The 909-case sweep tests the heading bound, every rolling progress window,
+termination and segment intersections, including the linked-width defaults.
+
+At Wander 85+, sufficient power may cut one detected narrow neck per run.
+oxbow.ts requires one long bend on one side of its shortcut, not several
+unrelated swings. The shortcut is cut lower, with extra scour in the old bend
+and its downstream arm left perched. This creates a backwater lake connected
+at the old inlet: no cut tile is raised to seal it, and no isolated pond is
+filled artificially. All target changes use the usual integer work, debris,
+object removal and extrema checks. The diagnostic oxbow record is not required
+for exact replay; the result operation stores every resulting tile and water
+value. Let canonical water dry a remnant if its actual geometry cannot retain it.
+
+The personality mixer remains stateless. Width and grade vary by course
+distance; lateral swing phase advances with forward progress. No decision
+depends on wall time or effects.
+
+Map-derived competent outcrops are independent of personality seeds. Eligible
+wide reaches divide into two smoothly separated lanes and then rejoin, leaving
+a multi-tile core. The same lanes drive excavation, preview water and VFX.
+This is deliberately stylized: it is not a bank-migration or sediment sorting
+solver. Test actual connected channels and unchanged cores, not just a split
+event counter. The preview uses an indexed set of channel cells, avoiding a
+full path rescan on each frame.
 
 The front reveals whole-level cuts, then the trailing bank targets mature into
 steep walls or wider terraces. Horizontal hard layers delay work and make
@@ -54,7 +126,11 @@ WaterSim as terrain changes, so drainage is visible. Completion always replaces
 the preview with canonicalRun from terrain and real sources. Preserve and show
 settled=false if its existing limit is hit. A retained source may fill a closed
 endpoint basin into a lake. Never fake a permanently downhill water surface.
-Power maps to a real source strength from 0.5 to the repo's maximum 8.
+D199 on current dev specifies a retained source following Width. The demo maps
+nominal width to strength 0.5 + 7.5 * clamp((width - 2.8) / 10, 0, 1), capped
+at the repo's maximum 8. Linked Width therefore retains the former Power
+relationship; a custom slot leaves less water, a broad override leaves more.
+Use nominal Width, not the fluctuating downstream reach width, for this source.
 Dry canyon adds no source; existing water sources remain unless carved away.
 
 Protect only the start's footprint plus support margin. Remove other objects
@@ -107,17 +183,21 @@ to reuse v2's complete implicit stream-power solver or uplift/weather pipeline.
 
 Direct reuse from dev: M9's generateProto for seeds; places decoding; waterModel,
 WaterSim and canonicalRun; clean rendering; editor start checks and walking.
-The former passive model's direct drainage import has been removed; the final
-water solve already contains the repo's deterministic priority flood.
+The course guide also directly reuses dev's M9 drainage priority flood. It
+supplies downstream direction and progress on flats, not the carving work.
+Canonical water retains the repo's separate source-aware priority flood.
 
 After PR #32 merges and those processes are promoted:
 
 1. Extract a shared geology query and resistance constants into core. Persist
-   the generator's layer stack as map metadata so carving exposes the same rock.
+   the generator's layer stack and competent outcrop field as map metadata.
+   Replace the prototype hash/grid outcrops with that shared geology query;
+   changing a river personality must never reroll the underlying rock.
 2. Feed level-dependent geology into v2 erodeHard and weather. Its current
    caprock mask is two-dimensional; extend it through elevation for common
    hard lips, canyon benches and tilted regional beds.
-3. Use the promoted M9 generator for the same capture seeds and rerun outcomes;
+3. Adopt the promoted shared drainage API for the progress guide. Use the
+   promoted M9 generator for the same capture seeds and rerun outcomes;
    do not promise identical v1/v2 maps.
 4. Keep offline elevation rescaling and bidirectional cleanup out of live runs.
    Preserve v2 format-3 columns/caves until a voxel-aware carve can edit them;

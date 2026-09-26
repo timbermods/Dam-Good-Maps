@@ -6,26 +6,34 @@
     "settings": {
       "mode": "unleash",
       "power": 95,
+      "wander": 35,
+      "width": null,
+      "seed": 0,
       "walls": "steep",
       "defyGravity": false,
       "dry": false,
       "layers": true
     },
     "metrics": {
-      "cut": 4126,
-      "deposited": 32,
+      "cut": 5766,
+      "deposited": 61,
       "exported": 0,
-      "suspended": 4094,
-      "bankCuts": 1866,
-      "bendCuts": 0,
+      "suspended": 5705,
+      "bankCuts": 2628,
+      "bendCuts": 2,
       "steps": 64,
       "stable": true,
-      "distance": 36.45000000000002,
-      "reason": "lake"
+      "distance": 37.80000000000002,
+      "reason": "lake",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 6,
+      "oxbows": 0
     },
+    "oxbows": [],
     "water": {
       "settled": true,
-      "ticks": 512
+      "ticks": 640
     }
   },
   "aimed-ridge": {
@@ -36,23 +44,31 @@
     "settings": {
       "mode": "aim",
       "power": 95,
+      "wander": 35,
+      "width": null,
+      "seed": 0,
       "walls": "wide",
       "defyGravity": false,
       "dry": false,
       "layers": true
     },
     "metrics": {
-      "cut": 6015,
-      "deposited": 2,
+      "cut": 8115,
+      "deposited": 4,
       "exported": 0,
-      "suspended": 6013,
-      "bankCuts": 4608,
-      "bendCuts": 12,
-      "steps": 82,
+      "suspended": 8111,
+      "bankCuts": 6107,
+      "bendCuts": 2,
+      "steps": 103,
       "stable": true,
-      "distance": 48.60000000000003,
-      "reason": "destination"
+      "distance": 48.518226818815236,
+      "reason": "destination",
+      "splits": 1,
+      "waterfalls": 1,
+      "rapids": 15,
+      "oxbows": 0
     },
+    "oxbows": [],
     "water": {
       "settled": true,
       "ticks": 384
@@ -66,23 +82,31 @@
     "settings": {
       "mode": "aim",
       "power": 95,
+      "wander": 35,
+      "width": null,
+      "seed": 0,
       "walls": "steep",
       "defyGravity": true,
       "dry": false,
       "layers": true
     },
     "metrics": {
-      "cut": 6642,
+      "cut": 7357,
       "deposited": 0,
       "exported": 0,
-      "suspended": 6642,
-      "bankCuts": 3399,
-      "bendCuts": 7,
+      "suspended": 7357,
+      "bankCuts": 3827,
+      "bendCuts": 1,
       "steps": 83,
       "stable": true,
-      "distance": 44.550000000000026,
-      "reason": "destination"
+      "distance": 46.69696530249471,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 1,
+      "rapids": 17,
+      "oxbows": 0
     },
+    "oxbows": [],
     "water": {
       "settled": true,
       "ticks": 512
@@ -95,26 +119,345 @@
     "settings": {
       "mode": "unleash",
       "power": 15,
+      "wander": 35,
+      "width": null,
+      "seed": 0,
       "walls": "steep",
       "defyGravity": false,
       "dry": false,
       "layers": true
     },
     "metrics": {
-      "cut": 393,
-      "deposited": 114,
+      "cut": 436,
+      "deposited": 20,
       "exported": 0,
-      "suspended": 279,
-      "bankCuts": 134,
-      "bendCuts": 0,
-      "steps": 65,
+      "suspended": 416,
+      "bankCuts": 174,
+      "bendCuts": 5,
+      "steps": 97,
       "stable": true,
-      "distance": 36.45000000000002,
-      "reason": "lake"
+      "distance": 40.50000000000002,
+      "reason": "lake",
+      "splits": 0,
+      "waterfalls": 1,
+      "rapids": 8,
+      "oxbows": 0
     },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 384
+    }
+  },
+  "straight": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 0,
+      "width": 6,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 2790,
+      "deposited": 72,
+      "exported": 0,
+      "suspended": 2718,
+      "bankCuts": 1187,
+      "bendCuts": 2,
+      "steps": 107,
+      "stable": true,
+      "distance": 66.10497452695621,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 15,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 512
+    }
+  },
+  "winding": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 100,
+      "width": 6,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 6411,
+      "deposited": 58,
+      "exported": 0,
+      "suspended": 6353,
+      "bankCuts": 3335,
+      "bendCuts": 24,
+      "steps": 196,
+      "stable": true,
+      "distance": 110.27204815648349,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 20,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 896
+    }
+  },
+  "slot": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 95,
+      "wander": 15,
+      "width": 2,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 1338,
+      "deposited": 63,
+      "exported": 0,
+      "suspended": 1275,
+      "bankCuts": 873,
+      "bendCuts": 1,
+      "steps": 107,
+      "stable": true,
+      "distance": 66.47822861449778,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 2,
+      "oxbows": 0
+    },
+    "oxbows": [],
     "water": {
       "settled": true,
       "ticks": 256
+    }
+  },
+  "wide-lazy": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 15,
+      "wander": 15,
+      "width": 24,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 1306,
+      "deposited": 128,
+      "exported": 0,
+      "suspended": 1178,
+      "bankCuts": 632,
+      "bendCuts": 6,
+      "steps": 85,
+      "stable": true,
+      "distance": 27.00000000000001,
+      "reason": "power spent",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 3,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 384
+    }
+  },
+  "personality-1": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 65,
+      "width": 6,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 4509,
+      "deposited": 84,
+      "exported": 0,
+      "suspended": 4425,
+      "bankCuts": 2162,
+      "bendCuts": 13,
+      "steps": 160,
+      "stable": true,
+      "distance": 86.9231490851004,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 20,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 768
+    }
+  },
+  "personality-2": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 65,
+      "width": 6,
+      "seed": 2,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 4434,
+      "deposited": 40,
+      "exported": 0,
+      "suspended": 4394,
+      "bankCuts": 2051,
+      "bendCuts": 9,
+      "steps": 164,
+      "stable": true,
+      "distance": 88.90569436504252,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 20,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 768
+    }
+  },
+  "split-reach": {
+    "intent": {
+      "origin": 7728,
+      "end": 1392
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 35,
+      "width": null,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": true,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 10346,
+      "deposited": 0,
+      "exported": 0,
+      "suspended": 10346,
+      "bankCuts": 4936,
+      "bendCuts": 2,
+      "steps": 127,
+      "stable": true,
+      "distance": 75.91311890723162,
+      "reason": "destination",
+      "splits": 1,
+      "waterfalls": 0,
+      "rapids": 33,
+      "oxbows": 0
+    },
+    "oxbows": [],
+    "water": {
+      "settled": true,
+      "ticks": 512
+    }
+  },
+  "maximum-wander-oxbow": {
+    "intent": {
+      "origin": 7728,
+      "end": 144
+    },
+    "settings": {
+      "mode": "aim",
+      "power": 85,
+      "wander": 100,
+      "width": 6,
+      "seed": 1,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 16188,
+      "deposited": 0,
+      "exported": 0,
+      "suspended": 16188,
+      "bankCuts": 8772,
+      "bendCuts": 22,
+      "steps": 251,
+      "stable": true,
+      "distance": 144.95155337270756,
+      "reason": "destination",
+      "splits": 0,
+      "waterfalls": 0,
+      "rapids": 23,
+      "oxbows": 1
+    },
+    "oxbows": [
+      {
+        "start": 25,
+        "end": 52,
+        "step": 104,
+        "floor": 1
+      }
+    ],
+    "water": {
+      "settled": true,
+      "ticks": 640
     }
   },
   "generated-force": {
@@ -124,23 +467,31 @@
     "settings": {
       "mode": "unleash",
       "power": 90,
+      "wander": 35,
+      "width": null,
+      "seed": 0,
       "walls": "wide",
       "defyGravity": false,
       "dry": false,
       "layers": true
     },
     "metrics": {
-      "cut": 3856,
+      "cut": 4881,
       "deposited": 0,
-      "exported": 3856,
+      "exported": 4881,
       "suspended": 0,
-      "bankCuts": 2188,
-      "bendCuts": 6,
-      "steps": 70,
+      "bankCuts": 2299,
+      "bendCuts": 11,
+      "steps": 132,
       "stable": true,
-      "distance": 43.200000000000024,
-      "reason": "map edge"
+      "distance": 68.85000000000002,
+      "reason": "map edge",
+      "splits": 0,
+      "waterfalls": 2,
+      "rapids": 19,
+      "oxbows": 0
     },
+    "oxbows": [],
     "water": {
       "settled": true,
       "ticks": 768

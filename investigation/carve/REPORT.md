@@ -1,89 +1,121 @@
 # Let the water carve
 
-The demo is rebuilt around a moving, forceful river. Run from the repo root:
+Ready for another try. From the repo root:
 
     npm --prefix investigation/carve run demo
 
 Open the printed local URL (normally http://127.0.0.1:5198/).
 **Unleash:** click an origin. **Aim:** click origin, then destination.
-Turn on **Defy gravity** for an uphill destination. Power sets resistance,
-width, depth and travel budget. Steep keeps a gorge; Wide opens terraces.
-Keep river is the default; Dry canyon omits the new source. Later carves keep
-earlier river sources unless their ground is carved away.
+Defy gravity permits an uphill destination. Keep river is the default;
+Dry canyon leaves no new source. Steep keeps gorges; Wide opens terraces.
+
+## Character controls
+
+- **Wander:** 0 charges ahead; 100 makes wider, more frequent swings around
+  an overall heading. It no longer accumulates turns into circles. Every
+  setting has the same 110° heading limit; stalled reaches straighten.
+- At high Wander, a long bend can form a narrow neck. The river cuts a
+  shortcut and leaves the old bend as an oxbow backwater. The moving head
+  never crosses its earlier path; a detected neck cutoff is the one exception
+  that can connect older channel sections. It happens only where the bend,
+  available power, ground and protected start allow it.
+- **Width follows Power** starts checked. Uncheck it to choose a nominal
+  channel width of 2–24 tiles; banks extend beyond that. Try Power 95 / Width 2
+  for a deep slot, or Power 15 / Width 24 for a wide, shallow river.
+  The retained source follows nominal Width: a slot keeps a modest stream;
+  a wide river keeps a big one (D199 on dev). Linked Width keeps the original
+  Power-to-source relationship.
+- Every course has smooth narrow and broad reaches, constrictions, rapids
+  and occasional whole-level falls. Wider channels can divide around a
+  coherent hard rock core and rejoin. Rock layers still leave benches.
+- **Try another path** repeats the last kept carve's origin, destination and
+  settings on its original land. It restores those settings in the controls.
+  Each attempt gets the next recorded Personality seed. It does not stack
+  another canyon on top. Stop whenever you like, or let it finish.
 
 Pause and speed change playback. Stop keeps everything carved so far.
-**Esc or Undo cancels the entire carve immediately**, even during water
-settling. Finished runs undo in one step. Save run / Replay run preserve the
-literal result, including the source, removed objects and final water.
+**Esc or Undo cancels the entire active carve**, including final water settling.
+For an alternative, that restores the previously kept version. Finished
+alternatives each undo in one step to that version; Redo assigns exact stored
+terrain, entities and water. Save run / Replay run also retain the original
+land for another path. Cancelling an attempt still consumes its seed.
 
-The map selector includes actual M9 seeds at 128² and 256² and three Real
-places. The initial mountain and the ridge/uphill maps are labeled process
-studies. The view now uses the editor's actual clean terrain, water and object
-shaders, soil colours, shadows, models and waterfall curtains. Three.js remains
-exactly 0.186.0.
-
-## What changed
-
-A momentum-driven head cuts from the source, with a narrow muddy ribbon,
-whitewater and a fixed pool of breaking chunks/dust. The floor deepens behind
-it; Wide lets the sides retreat into terraces. Map-derived horizontal hard
-beds delay cuts and retain benches. A carried debris budget builds a fan or
-delta at the receiving end. Follow the river gently tracks the head and gives
-breakthroughs/falls a little more screen time. Reduced motion disables these
-effects and camera motion.
-
-The prototype intentionally exaggerates nature. Its force chooses and cuts
-the route; Timberborn's water does not erode. Once the force ends, the repo's
-canonical simulation decides where the retained source flows. **An endpoint
-in a closed basin can fill the gorge into a lake.** Dry canyon exposes the
-landform without adding a source; existing sources still obey the game.
-
-The start and its supporting ground are fixed. Other objects whose footprints
-lose ground disappear. The editor's live start checks and reachable-land
-overlay update during carving; missing water, wood or berries never veto it.
+The clean 3D view uses the editor's actual shaders, soil colours, shadows,
+models and waterfall curtains. The front has whitewater, muddy flow and a
+fixed pool of breaking chunks/dust. Split ribbons pass either side of the
+rock core. Follow the river tracks the head; reduced motion disables effects,
+water animation and camera motion. Stop and Undo remain visible while the
+settings scroll. Three.js remains exactly 0.186.0.
 
 ## Captures
 
-These are small animated CPU captures of actual step states, not mockups or
-GPU recordings. The white inset ring locates the front. The last frame uses
-the game's canonical water; the browser demonstrates the clean look and VFX.
-[Settings and exact step counts](captures/scenarios.json).
-Each GIF also has a same-name PNG contact sheet for reduced motion.
+Small animated CPU captures of actual step states, not GPU recordings.
+The inset shows the channel and moving front. Comparisons compress each
+run's progress; labels give its own acknowledged time. Each GIF is capped at
+18 frames and has a same-name PNG for reduced motion.
+[Settings, seeds and step counts](captures/scenarios.json).
 
-![Unleashed mountain river](captures/unleashed-mountain.gif)
-![Aimed carve through a ridge](captures/aimed-ridge.gif)
-![Defy gravity uphill](captures/defy-uphill.gif)
-![Low and high power](captures/low-high-power.gif)
-![Actual M9 generated Highlands](captures/generated-force.gif)
+![Maximum Wander: progress and an oxbow cutoff](captures/maximum-wander-oxbow.gif)
+![Straight against winding](captures/straight-winding.gif)
+![Slot canyon against wide lazy river](captures/slot-wide.gif)
+![Two re-rolls of the same carve](captures/rerolled-paths.gif)
 
-## Verification and decisions
+Also refreshed: [mountain to lake](captures/unleashed-mountain.gif),
+[aimed ridge](captures/aimed-ridge.gif), [uphill carve](captures/defy-uphill.gif),
+[low/high Power](captures/low-high-power.gif),
+[split around rock](captures/split-reach.gif) and
+[actual M9 Highlands seed 18](captures/generated-force.gif).
+
+Final water comes from the repo's canonical simulation and real sources.
+**A closed endpoint basin can fill the canyon into a lake.** Dry canyon
+exposes the landform without a new source; existing water follows the game.
+
+## Checks and decisions
 
     npm --prefix investigation/carve test
     npm --prefix investigation/carve run typecheck
     npm --prefix investigation/carve run build
     npm --prefix investigation/carve run captures
 
-[Model checks](captures/checks.json) and [actual worker checks](captures/worker-checks.json)
-cover visible local progress, power, ridge breakthrough, uphill grading,
-layers, terraces, integer/monotone terrain, no new isolated spikes/pits,
-object removal, protected start, canonical water and exact JSON replay.
-Browser verification covered the clean view, source click, complete carve,
-whole-run undo, cancel and the new controls.
+[25 model checks](captures/checks.json),
+[909 route sweep runs](captures/course-checks.json) and
+[11 actual worker checks](captures/worker-checks.json) pass. They cover winding
+routes, independent width, seeded differences, fixed geology, connected split
+channels, integer terrain, no new isolated pits/spikes, one direction per tile,
+protected start, object removal, canonical water, portable alternatives and
+exact cancel/undo/redo. The checked slot reaches 12 levels of incision; the
+wide lazy example cuts one level. Browser checks exercise the controls and
+alternative lifecycle in the clean view.
 
-One displayed second is ten acknowledged steps. Wall-clock time, playback
-speed and effects do not change a result. Each tile keeps its direction for
-the run; new deposits cannot be recut until a later run. Geology is a coherent
-layer stack derived from a terrain hash, unless the map supplies layers.
-Sediment is a lumped carried load, not a grain-level fluid simulation. Unused
-load stays diagnostic; it is exported only at a map edge.
+The sweep covers all 101 Wander values in Unleash, Aim and uphill Aim, with
+low/high Power and the linked-width defaults. Every rolling 16-move reach
+reduces endpoint distance or downstream drainage potential; all runs end at
+a lake, edge, destination or exhausted progress/power. On whole-level flats,
+downstream potential measures progress toward drainage, since height cannot
+drop forever. The oxbow test verifies a wet shortcut, a retained lake over
+one level deep, and a dry old downstream arm under canonical game water.
+It retains one inlet as a backwater, rather than inventing water in an
+isolated basin. Same input, seed and step count remain exact.
 
-Meshing, checks, generation and water run in a worker. Uploads are limited to
-two chunks and a 3 ms scheduling budget per frame. A chunk upload, water tick
-or model step remains indivisible; this is not a GPU-time guarantee.
-**Judge 256² frame rate on your PC with the on-screen FPS/p95 readout.**
-Painting latency still needs validation in the real Live editor after adoption;
-this standalone prototype has no painting tool.
+One carve second means ten acknowledged steps. Frame rate, playback speed and
+effects never enter the model. Width changes smoothly with distance; local
+constrictions and fixed outcrops provide variation without tile noise. A wider
+override spreads the same cutting work, while a slot concentrates it. These
+are exaggerated editing rules, not calibrated landscape predictions.
 
-All changes stay under investigation/carve. The branch remains based on dev.
-M9 v2 c77026b was read from investigation/generative-v2, without merging it.
-Adoption and changes after PR #32 are proposals in [INTEGRATION.md](INTEGRATION.md).
+The start stays on its ground. Other objects lose their ground with the cut.
+Start resource checks and reachable-land status update without blocking
+consequences. Deposits stay coherent; each tile keeps its first direction for
+that run. Fine sediment remains a diagnostic carried load, exported at edges.
+
+Generation, carving, meshing, checks and water run in a worker. Main-thread
+uploads use a two-chunk / 3 ms scheduling target. The measured 256² model-step
+timings are recorded in captures/checks.json; they are CPU measurements.
+**Judge rendered 256² frame rate on your PC using the FPS/p95 readout.**
+Painting latency still needs validation in Live editing; this demo has no
+painting tool. Maps include real generated seeds at 128²/256² and three Real
+places, alongside labeled process studies.
+
+All changes stay in investigation/carve on the dev-based investigation/carve
+branch. M9 v2 c77026b was read without merging it. Shared geology, adoption and
+post-PR-#32 changes remain proposals in [INTEGRATION.md](INTEGRATION.md).
