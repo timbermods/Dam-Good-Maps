@@ -1,0 +1,444 @@
+// Every probe game the batch can play, and the checks each one answers. The list follows the project's own
+// lists: the in-game checks of docs/ingame-log.md that concern the map itself (their files and the numbers
+// in each milestone's checks.txt), the cycle model's calibration points (investigation/cycles/CALIBRATION.md
+// on branch investigation/cycles-exact), the Map look captures (docs/map-look/after/after.json), the high
+// terrain test maps, and any .timber files given on the command line (the M9 prototypes, for example).
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import type { Action, Cycle, Pose } from './job';
+import { NEW_GAME_DAY } from './job';
+import { generated, mesa, raised, withoutStart } from './derived';
+import { readMapBytes, wetAreas, type MapInfo } from './mapfile';
+import { REPO } from './paths';
+
+export type Verdict = 'passed' | 'failed' | 'not measurable' | 'recorded';
+
+export interface CheckDef {
+  /** The check's id: an ingame-log id (A2, B1, …), a calibration point (cal-1 …) or a probe check. */
+  id: string;
+  title: string;
+  /** measure: the probe decides it; partial: it decides the part named in `why`; none: needs a person or a colony. */
+  how: 'measure' | 'partial' | 'none';
+  why?: string;
+}
+
+export interface GameDef {
+  id: string;
+  title: string;
+  group: string;
+  /** The .timber bytes to play. */
+  bytes: () => Uint8Array;
+  faction: 'Folktails' | 'IronTeeth';
+  mode: 'Easy' | 'Normal' | 'Hard';
+  cycles: Cycle[];
+  /** Game days after the start (the start is day 1 + 4/24). */
+  days: number;
+  tiles: (m: MapInfo) => [number, number][];
+  sampleHours: number;
+  /** Extra moments (day offsets from the start) with a whole-map snapshot. */
+  snapshotsAt?: number[];
+  /** Whole-map snapshots every day (model comparisons). */
+  daily?: boolean;
+  actions?: (m: MapInfo) => Action[];
+  poses?: (m: MapInfo) => Pose[];
+  /** Map look captures for this map (the map id in after.json). */
+  lookMap?: string;
+  checks: CheckDef[];
+  /** Compare with the cycle model on the same schedule. */
+  model?: boolean;
+  /** Other games this one is compared with. */
+  pairs?: string[];
+}
+
+export const D0 = NEW_GAME_DAY;
+
+// ------------------------------------------------------------------------------------ sources
+
+const repoFile = (rel: string) => () => new Uint8Array(readFileSync(join(REPO, rel)));
+
+/** The main checkout (local-only inputs live there: investigation/raw, out/m8/local). */
+export function mainCheckout(): string {
+  try {
+    const common = execFileSync('git', ['-C', REPO, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8' }).trim();
+    return join(common, '..');
+  } catch {
+    return REPO;
+  }
+}
+const localFile = (rel: string) => () => new Uint8Array(readFileSync(join(mainCheckout(), rel)));
+const localExists = (rel: string) => existsSync(join(mainCheckout(), rel));
+
+const memo = <T>(f: () => T) => {
+  let v: T | undefined;
+  return () => (v ??= f());
+};
+
+// ------------------------------------------------------------------------------------ poses
+
+const GAME_YAW = -Math.PI / 6; // the game's camera: 30° east of north
+const deg = (d: number) => (d * Math.PI) / 180;
+const at = (m: MapInfo, x: number, y: number): [number, number, number] => [x + 0.5, m.heights[y * m.W + x], -(y + 0.5)];
+
+/** The poses every game gets: the game's own opening view, an overview, the start and the largest water. */
+export function standardPoses(m: MapInfo): Pose[] {
+  const span = Math.max(m.W, m.H);
+  let mean = 0;
+  for (const h of m.heights) mean += h;
+  mean /= m.heights.length;
+  const poses: Pose[] = [
+    { id: 'game-start', kind: 'current', target: [0, 0, 0], yaw: 0, pitch: 0, distance: 0, fovY: 0, width: 1280, height: 800 },
+    { id: 'overview', kind: 'look', target: [m.W / 2, mean, -m.H / 2], yaw: GAME_YAW, pitch: deg(60), distance: span * 1.45, fovY: 40, width: 1280, height: 800 },
+  ];
+  if (m.start) poses.push({ id: 'start', kind: 'look', target: at(m, m.start.x, m.start.y), yaw: GAME_YAW, pitch: deg(55), distance: 45, fovY: 40, width: 1280, height: 800 });
+  const water = wetAreas(m)[0];
+  if (water) {
+    // the wet tile nearest the area's centre (a river's centre can be dry ground)
+    let best = water.tiles[0], bd = Infinity;
+    for (const t of water.tiles) {
+      const d = (t % m.W - water.cx) ** 2 + (((t / m.W) | 0) - water.cy) ** 2;
+      if (d < bd) (bd = d), (best = t);
+    }
+    const x = best % m.W, y = (best / m.W) | 0;
+    const t = at(m, x, y);
+    t[1] = m.floor[best] >= 0 ? m.floor[best] + m.depth[best] : t[1];
+    poses.push({ id: 'water', kind: 'look', target: t, yaw: GAME_YAW, pitch: deg(55), distance: Math.min(110, Math.max(35, Math.sqrt(water.tiles.length) * 2.2)), fovY: 40, width: 1280, height: 800 });
+  }
+  return poses;
+}
+
+interface LookShot {
+  map: string;
+  pose: string;
+  file: string;
+  size: [number, number];
+  view: { mode: string; yaw: number; pitch: number; distance: number; target: [number, number, number] };
+}
+const lookShots = memo(() => (JSON.parse(readFileSync(join(REPO, 'docs', 'map-look', 'after', 'after.json'), 'utf8')) as { shots: LookShot[] }).shots);
+
+/** Map look's poses for one of its maps, reproduced exactly (our 3D view: 40° vertical field of view). */
+export function lookPoses(mapId: string): Pose[] {
+  return lookShots()
+    .filter((s) => s.map === mapId && s.view.mode === 'orbit' && s.size[0] > 0)
+    .map((s) => ({ id: `look-${s.pose}`, kind: 'look' as const, target: s.view.target, yaw: s.view.yaw, pitch: s.view.pitch, distance: s.view.distance, fovY: 40, width: s.size[0], height: s.size[1], lookCapture: s.file }));
+}
+
+// ------------------------------------------------------------------------------------ helpers
+
+/** checks.txt numbers: "(x, y) 0.49 deep" pairs on a line that contains `marker`. */
+export function depthSamples(rel: string, marker: string): { x: number; y: number; depth: number; bad?: number }[] {
+  const line = readFileSync(join(REPO, rel), 'utf8').split(/\r?\n/).find((l) => l.includes(marker)) ?? '';
+  return [...line.matchAll(/\((\d+), (\d+)\) ([\d.]+) deep(?:, surface [\d.]+)?(?:, badwater (\d+)%)?/g)].map((m) => ({ x: +m[1], y: +m[2], depth: +m[3], bad: m[4] ? +m[4] / 100 : undefined }));
+}
+
+const within = (m: MapInfo, cx: number, cy: number, r: number, pred: (t: number) => boolean) => {
+  const out: [number, number][] = [];
+  for (let y = Math.max(0, cy - r); y <= Math.min(m.H - 1, cy + r); y++)
+    for (let x = Math.max(0, cx - r); x <= Math.min(m.W - 1, cx + r); x++) if (pred(y * m.W + x)) out.push([x, y]);
+  return out;
+};
+
+const calm: Cycle = { temperateDays: 60, hazard: 'drought', hazardDays: 0 };
+
+// ------------------------------------------------------------------------------------ generic checks
+
+const LOAD: CheckDef = { id: 'load', title: 'Loads cleanly: no loading issue, no error or exception in the game log, the start placed', how: 'measure' };
+const OBJECTS: CheckDef = { id: 'objects', title: 'Every object in the file is in the game, at its tile', how: 'measure' };
+const WATER: CheckDef = { id: 'water', title: 'The stored water holds: after a day the water matches the file within 0.1 deep', how: 'measure' };
+const TERRAIN: CheckDef = { id: 'terrain', title: "The terrain is kept after the game's terrain physics", how: 'measure' };
+const GENERIC = [LOAD, OBJECTS, WATER, TERRAIN];
+
+const none = (id: string, title: string, why: string): CheckDef => ({ id, title, how: 'none', why });
+const BUILD = 'needs a building placed and built by beavers (a dam, levee, water wheel or pump); the probe does not play a colony yet (INTEGRATION.md: the bot colony)';
+const WALK = 'needs a beaver sent along a path and watched; the probe does not direct beavers';
+const EDITOR = "needs the game's map editor, which the probe does not open";
+
+// ------------------------------------------------------------------------------------ the catalog
+
+export function catalog(extraMaps: string[] = []): GameDef[] {
+  const games: GameDef[] = [];
+  const m1 = 'out/m1/River Valley (4242).timber';
+  const m1gap = 'out/m1/River Valley (4242) F2 source gap.timber';
+  const riverMouth = (m: MapInfo): [number, number][] => [[0, 77], [0, 78], [0, 79], [0, 80], [0, 81], [1, 79], [3, 79], [8, 79], [16, 79], [24, 79]].filter(([x, y]) => x < m.W && y < m.H) as [number, number][];
+
+  // M1
+  games.push({
+    id: 'm1-rv', title: 'M1 · River Valley (4242), Folktails', group: 'M1', bytes: repoFile(m1), faction: 'Folktails', mode: 'Normal', cycles: [calm], days: 1.5,
+    tiles: riverMouth, sampleHours: 1, snapshotsAt: [0.5, 1, 1.5], pairs: ['m1-rv-gap'],
+    checks: [
+      { id: 'A1', title: 'The map is listed and loads', how: 'partial', why: 'the probe loads the file directly; the New game list entry, thumbnail and description are seen only in the menu' },
+      { id: 'A2', title: 'No loading issues; district center on the start, door north; 9 adults and 4 children', how: 'measure' },
+      none('A3', 'Walk test on terraces and slopes', WALK),
+      none('A4', 'Map editor: open, edit, save', EDITOR),
+      { id: 'F2a', title: 'The river fills and keeps its water at the west edge', how: 'measure' },
+      LOAD, OBJECTS, TERRAIN,
+    ],
+  });
+  games.push({
+    id: 'm1-rv-it', title: 'M1 · River Valley (4242), Iron Teeth', group: 'M1', bytes: repoFile(m1), faction: 'IronTeeth', mode: 'Normal', cycles: [calm], days: 0.5,
+    tiles: () => [], sampleHours: 6, checks: [{ id: 'A5', title: 'Iron Teeth: the district center fits on the start and beavers spawn', how: 'measure' }, LOAD],
+  });
+  games.push({
+    id: 'm1-rv-gap', title: 'M1 · River Valley (4242) F2 source gap', group: 'M1', bytes: repoFile(m1gap), faction: 'Folktails', mode: 'Normal', cycles: [calm], days: 1.5,
+    tiles: riverMouth, sampleHours: 1, snapshotsAt: [0.5, 1, 1.5], pairs: ['m1-rv'],
+    checks: [{ id: 'F2b', title: 'Water drains off the edge through the gap: the river is lower than in F2a', how: 'measure' }, LOAD],
+  });
+
+  // M2
+  const m2 = 'out/m2/River Valley (4242).timber';
+  const m2samples = depthSamples('out/m2/checks.txt', 'River depth samples');
+  games.push({
+    id: 'm2-rv', title: 'M2 · River Valley (4242), pre-filled water', group: 'M2', bytes: repoFile(m2), faction: 'Folktails', mode: 'Normal',
+    // Normal's first drought: 13 temperate days (the shortest), then 3 days (0.38 × 5–9, rounded)
+    cycles: [{ temperateDays: 13, hazard: 'drought', hazardDays: 3 }, calm], days: 16.4,
+    tiles: () => [...m2samples.map((s) => [s.x, s.y] as [number, number]), [42, 38], [108, 94], [111, 91]],
+    sampleHours: 2, snapshotsAt: [1, 4, 8, 12], pairs: ['m2-rv-empty'], model: true,
+    checks: [
+      { id: 'B1', title: 'Day 1: no surge, no drain; the depth samples as listed; no berry bush near the start dry', how: 'measure' },
+      { id: 'B3', title: '15 days and the first drought: groves and bushes near the start alive, dead stands dead', how: 'measure' },
+      { id: 'B4', title: 'Badwater stays in its pit, ditch and the river below; the start water stays clean', how: 'measure' },
+      ...GENERIC,
+    ],
+  });
+  games.push({
+    id: 'm2-rv-empty', title: 'M2 · River Valley (4242), empty water', group: 'M2', bytes: repoFile('out/m2/River Valley (4242) (empty water).timber'), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 2.2, tiles: () => [...m2samples.map((s) => [s.x, s.y] as [number, number]), [42, 38]], sampleHours: 2, snapshotsAt: [1, 2], pairs: ['m2-rv'],
+    checks: [{ id: 'B2', title: 'The empty map fills within about a day and then looks like the pre-filled one; the same plants survive', how: 'measure' }, LOAD, OBJECTS, TERRAIN],
+  });
+
+  // M5
+  const lip = (m: MapInfo): [number, number][] => [55, 60, 64, 69, 74].map((x) => [x, 118] as [number, number]).filter(([x, y]) => x < m.W && y < m.H);
+  const fallPose = (m: MapInfo): Pose[] => [{ id: 'waterfall', kind: 'look', target: at(m, 64, 118), yaw: 0, pitch: deg(25), distance: 40, fovY: 40, width: 1280, height: 800 }];
+  for (const [s, id] of [['S2', 'm5-f1-s2'], ['S8', 'm5-f1-s8']] as const)
+    games.push({
+      id, title: `M5 · River Valley (4242) F1 waterfall ${s}`, group: 'M5', bytes: repoFile(`out/m5/River Valley (4242) F1 waterfall ${s}.timber`), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: (m) => [...lip(m), [75, 123], [64, 120]], sampleHours: 2, snapshotsAt: [1], poses: fallPose,
+      checks: [
+        { id: 'F1', title: `The ${s === 'S2' ? '2' : '8'} water/s waterfall: every lip tile wet, about ${s === 'S2' ? '0.030' : '0.120'} deep`, how: 'partial', why: 'whether the sheet reads as a waterfall is judged from the screenshots; whether a water wheel turns needs a wheel built' },
+        ...GENERIC,
+      ],
+    });
+  games.push({
+    id: 'm5-c1', title: 'M5 · River Valley (4242) C1 dam site', group: 'M5', bytes: repoFile('out/m5/River Valley (4242) C1 dam site.timber'), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 1, tiles: () => [[83, 63], [83, 67], [83, 72], [80, 67], [86, 67]], sampleHours: 3, snapshotsAt: [1],
+    checks: [none('C1', 'A dam 2 high on the gap fills the basin to level 10', BUILD), none('C2', 'A water wheel below a fall turns', BUILD), none('C3', 'The colony survives the first drought on the stored water', BUILD + ', and a colony played to the drought'), ...GENERIC],
+  });
+  games.push({
+    id: 'm5-gorge', title: 'M5 · River Valley (4242) gorge stairs', group: 'M5', bytes: repoFile('out/m5/River Valley (4242) gorge stairs.timber'), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 1, tiles: () => [[66, 20], [66, 18], [66, 24], [65, 20], [64, 20]], sampleHours: 3, snapshotsAt: [1],
+    checks: [{ id: 'C-gorge', title: 'The stair notch and the water beside its landing', how: 'partial', why: WALK + '; a pump needs building. The probe measures the water beside the landing.' }, ...GENERIC],
+  });
+
+  // M6
+  for (const [name, id, dam] of [['Canyon', 'm6-canyon', 'M6-1a'], ['Lake Basin', 'm6-lakebasin', 'M6-1b']] as const)
+    games.push({
+      id, title: `M6 · ${name} (4242)`, group: 'M6', bytes: repoFile(`out/m6/${name} (4242).timber`), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: (m) => (m.start ? [[m.start.x, m.start.y]] : []), sampleHours: 3, snapshotsAt: [1],
+      checks: [
+        { id: dam, title: 'The map loads with no issues', how: 'partial', why: 'the dam and the stair walk need building and a beaver: ' + BUILD },
+        none('M6-1c', 'Levees on the badwater basin hold it until it fills', BUILD),
+        ...GENERIC,
+      ],
+    });
+
+  // M7
+  const m7 = 'out/m7/Lake Basin (4242) D objects.timber';
+  const plug: [number, number][] = [[54, 33], [55, 33], [56, 34]];
+  games.push({
+    id: 'm7-objects', title: 'M7 · Lake Basin (4242) D objects', group: 'M7', bytes: repoFile(m7), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 6, tiles: (m) => [...weirTiles(m), ...lakeTiles(m)], sampleHours: 2, snapshotsAt: [0.8, 1.5, 2.5, 3.5, 5, 6],
+    actions: () => [{ day: D0 + 1, kind: 'deleteEntities', template: 'Blockage', tiles: plug }],
+    poses: (m) => [
+      { id: 'plug', kind: 'look', target: at(m, 55, 33), yaw: GAME_YAW, pitch: deg(50), distance: 38, fovY: 40, width: 1280, height: 800 },
+      { id: 'weir', kind: 'look', target: at(m, 11, 88), yaw: GAME_YAW, pitch: deg(50), distance: 30, fovY: 40, width: 1280, height: 800 },
+    ],
+    checks: [
+      { id: 'D1', title: 'No loading issues; every object listed is there', how: 'measure' },
+      { id: 'D2', title: 'The weir holds the water about 0.65 deeper upstream and water flows over it', how: 'measure' },
+      none('D3', 'A beaver walks round the thorns; builders clear them', WALK),
+      none('D4', 'Relics give science when demolished; the engine and the mine can be placed', BUILD),
+      { id: 'D5', title: 'With the plug gone the lake drains one level to about 8 (about 3,290 water) and then keeps it', how: 'partial', why: 'the probe removes the 3 Blockage tiles itself (as a finished demolition would) instead of beavers demolishing them' },
+      ...GENERIC,
+    ],
+  });
+
+  // M8
+  const m8 = 'out/m8/River Valley (4242) M8 preview.timber';
+  games.push({
+    id: 'm8-preview', title: 'M8 · River Valley (4242) M8 preview', group: 'M8', bytes: repoFile(m8), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 1.2, tiles: () => [[63, 65], [60, 62], [66, 68], [22, 31], [21, 30], [92, 80], [90, 81], [93, 80], [89, 82]], sampleHours: 1, snapshotsAt: [0.5, 1],
+    poses: (m) => [
+      { id: 'lake', kind: 'look', target: at(m, 63, 65), yaw: GAME_YAW, pitch: deg(50), distance: 32, fovY: 40, width: 1280, height: 800 },
+      { id: 'weir', kind: 'look', target: at(m, 91, 81), yaw: GAME_YAW, pitch: deg(50), distance: 28, fovY: 40, width: 1280, height: 800 },
+    ],
+    checks: [
+      { id: 'M8-1a', title: "The water stands where the editor showed it (within about 0.1); the lake's level; the weir holds the river up", how: 'measure' },
+      { id: 'ML-2', title: 'Ground and water in the game against our 3D view', how: 'partial', why: 'the probe takes the screenshots at matching poses; the comparison is by eye (RESULTS.md)' },
+      ...GENERIC,
+    ],
+  });
+  const canyonEdited = 'out/m8/local/Canyon (M8 edited).timber', canyon = 'investigation/raw/builtin/Canyon.timber';
+  const cozyEdited = 'out/m8/local/Cozy Secret Valley (M8 edited).timber', cozy = 'investigation/raw/workshop/Cozy Secret Valley.timber';
+  if (localExists(canyonEdited) && localExists(canyon)) {
+    games.push({
+      id: 'm8-canyon-edited', title: 'M8 · Canyon (M8 edited), local', group: 'M8', bytes: localFile(canyonEdited), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: () => [[76, 63], [72, 59], [80, 67]], sampleHours: 2, snapshotsAt: [1], pairs: ['m8-canyon-original'],
+      checks: [{ id: 'M8-1b', title: 'The new lake fills from its spring; the tunnels flow as in the original Canyon', how: 'measure' }, LOAD, OBJECTS, TERRAIN],
+    });
+    games.push({
+      id: 'm8-canyon-original', title: 'M8 · Canyon (official, unedited), local', group: 'M8', bytes: localFile(canyon), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: () => [[76, 63]], sampleHours: 6, snapshotsAt: [1], checks: [LOAD],
+    });
+  }
+  if (localExists(cozyEdited) && localExists(cozy)) {
+    games.push({
+      id: 'm8-cozy-edited', title: 'M8 · Cozy Secret Valley (M8 edited), local', group: 'M8', bytes: localFile(cozyEdited), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: () => [[14, 12], [12, 10], [16, 14]], sampleHours: 2, snapshotsAt: [1], pairs: ['m8-cozy-original'],
+      checks: [{ id: 'M8-1c', title: "The rivers run at the original's level; the lowered ground fills as the editor showed", how: 'measure' }, LOAD, OBJECTS, TERRAIN],
+    });
+    games.push({
+      id: 'm8-cozy-original', title: 'M8 · Cozy Secret Valley (workshop, unedited), local', group: 'M8', bytes: localFile(cozy), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: () => [[14, 12]], sampleHours: 6, snapshotsAt: [1], checks: [LOAD],
+    });
+  }
+
+  // Map look: our generated maps at Map look's poses (ML-2's reference, and the 3D view against the game)
+  for (const [theme, size] of [['riverValley', 128], ['canyon', 128], ['highlands', 128], ['lakeBasin', 128], ['delta', 128], ['islands', 128], ['riverValley', 256]] as const) {
+    const lookMap = `${theme}-${size}`;
+    games.push({
+      id: `look-${lookMap}`, title: `Map look · ${lookMap} (4242)`, group: 'Map look', bytes: memo(() => generated(theme, 4242, size)), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1, tiles: () => [], sampleHours: 6, snapshotsAt: [1], lookMap,
+      checks: [...GENERIC, { id: 'ML-2', title: 'The game at the same poses as our 3D view', how: 'partial', why: 'compared by eye (RESULTS.md)' }],
+    });
+  }
+  const beavertopia = 'investigation/raw/workshop/Beavertopia - 256x256.timber';
+  if (localExists(beavertopia))
+    games.push({
+      id: 'look-beavertopia-256', title: 'Map look · Beavertopia (workshop), local', group: 'Map look', bytes: localFile(beavertopia), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 0.3, tiles: () => [], sampleHours: 6, lookMap: 'beavertopia-256', checks: [LOAD],
+    });
+
+  // High terrain (Kyler, 2026-09-25): terrain above 16, up to 21, for an optional high-verticality mode
+  const HIGH: CheckDef[] = [
+    { id: 'high-load', title: 'Loads: no loading issue, no error or exception', how: 'measure' },
+    { id: 'high-terrain', title: "Terrain above 16 is kept after the game's terrain physics (every tile's height as in the file)", how: 'measure' },
+    { id: 'high-water', title: 'The stored water holds on the high terrain (after a day, within 0.1 deep of the file)', how: 'measure' },
+    { id: 'high-objects', title: 'Every object is kept, those above level 16 included', how: 'measure' },
+  ];
+  games.push({
+    id: 'high-rv96-plus5', title: 'High terrain · River Valley 96² raised 5 levels (terrain 7–21)', group: 'High terrain',
+    bytes: memo(() => raised(generated('riverValley', 4242, 96), 5, 'DGM Probe high-terrain test: River Valley (4242) 96², every column raised 5 levels (terrain up to 21).')),
+    faction: 'Folktails', mode: 'Normal', cycles: [calm], days: 1, tiles: () => [], sampleHours: 6, snapshotsAt: [0.5, 1], checks: HIGH,
+  });
+  games.push({
+    id: 'high-canyon128-plus5', title: 'High terrain · Canyon 128² raised 5 levels (rim at 21)', group: 'High terrain',
+    bytes: memo(() => raised(generated('canyon', 4242, 128), 5, 'DGM Probe high-terrain test: Canyon (4242) 128², every column raised 5 levels (terrain up to 21).')),
+    faction: 'Folktails', mode: 'Normal', cycles: [calm], days: 1, tiles: () => [], sampleHours: 6, snapshotsAt: [0.5, 1], checks: HIGH,
+  });
+  games.push({
+    id: 'high-highlands-mesa21', title: 'High terrain · Highlands 128² with a level-21 mesa, a spring, trees and a bush on top', group: 'High terrain',
+    bytes: memo(() => mesa(generated('highlands', 4242, 128), 53, 107, 21, 'DGM Probe high-terrain test: Highlands (4242) 128² with a stepped mesa rising to level 21 at (53, 107), a spring in a pit on its top, and trees and a bush up there.')),
+    faction: 'Folktails', mode: 'Normal', cycles: [calm], days: 1.5, tiles: () => [[53, 107], [52, 106], [49, 103], [57, 111], [56, 107]], sampleHours: 2, snapshotsAt: [0.5, 1, 1.5],
+    poses: (m) => [{ id: 'mesa', kind: 'look', target: at(m, 53, 107), yaw: GAME_YAW, pitch: deg(40), distance: 60, fovY: 40, width: 1280, height: 800 }],
+    checks: HIGH,
+  });
+
+  // The cycle model's calibration points (CALIBRATION.md on investigation/cycles-exact), under forced weather
+  games.push({
+    id: 'cal-rv2', title: 'Calibration · River Valley seed 2, 128²: source slowdown and badtide front', group: 'Calibration',
+    bytes: memo(() => generated('riverValley', 2, 128)), faction: 'Folktails', mode: 'Normal',
+    cycles: [{ temperateDays: 3, hazard: 'drought', hazardDays: 3 }, { temperateDays: 3, hazard: 'badtide', hazardDays: 3 }, calm], days: 12.5,
+    tiles: () => [[90, 50], [72, 61], [18, 87]], sampleHours: 0.5, daily: true, model: true,
+    checks: [
+      { id: 'cal-1', title: 'Source slowdown: River Valley (90, 50) before the drought and through its first day', how: 'measure' },
+      { id: 'cal-3', title: 'Badtide front: River Valley (72, 61) before the badtide and after its first day', how: 'measure' },
+      { id: 'cal-timeline', title: "The map's water, moisture and plants day by day against the model", how: 'measure' },
+      LOAD, OBJECTS, WATER,
+    ],
+  });
+  games.push({
+    id: 'cal-rv2-hard', title: 'Calibration · River Valley seed 2, 128², a 14-day Hard drought: plant timer', group: 'Calibration',
+    bytes: memo(() => generated('riverValley', 2, 128)), faction: 'Folktails', mode: 'Hard',
+    cycles: [{ temperateDays: 2, hazard: 'drought', hazardDays: 14 }, calm], days: 17,
+    tiles: () => [[18, 87], [90, 50]], sampleHours: 1, daily: true, model: true,
+    checks: [
+      { id: 'cal-4', title: 'Plant timer: dry plants die 0.9–1.1 × their dry days after the soil dries (BlueberryBush (18, 87))', how: 'measure' },
+      { id: 'cal-timeline', title: "The map's water, moisture and plants day by day against the model", how: 'measure' },
+      LOAD,
+    ],
+  });
+  games.push({
+    id: 'cal-lb2-hard', title: 'Calibration · Lake Basin seed 2, 128², a 6-day Hard drought: evaporation', group: 'Calibration',
+    bytes: memo(() => generated('lakeBasin', 2, 128)), faction: 'Folktails', mode: 'Hard',
+    cycles: [{ temperateDays: 2, hazard: 'drought', hazardDays: 6 }, calm], days: 8.5,
+    tiles: () => [[45, 36]], sampleHours: 1, daily: true, model: true,
+    checks: [
+      { id: 'cal-2', title: 'Evaporation: Lake Basin (45, 36) before the drought, at its start and on its fourth day', how: 'measure' },
+      { id: 'cal-timeline', title: "The map's water, moisture and plants day by day against the model", how: 'measure' },
+      LOAD,
+    ],
+  });
+
+  // Any time: E4, a map with no StartingLocation (last: the game may stop on it)
+  const e4 = memo(() => withoutStart(new Uint8Array(readFileSync(join(REPO, m1)))));
+  const e4game: GameDef = {
+    id: 'e4-no-start', title: 'E4 · River Valley (4242) with no StartingLocation', group: 'Any time', bytes: e4, faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 0.3, tiles: () => [], sampleHours: 6,
+    checks: [
+      { id: 'E4', title: 'Start a new game on a map with no StartingLocation: record what happens', how: 'measure' },
+      none('E1', 'Terrain above 16 in the map editor', EDITOR + ' (the high-terrain maps check the game itself)'),
+      none('E2', 'A beaver walks through a ruin column', WALK),
+      none('E3', 'An aquifer with a powered drill in a drought', BUILD),
+    ],
+  };
+
+  // Maps from the command line (the M9 prototypes, for example): a Normal drought, compared with the model
+  for (const path of extraMaps) {
+    const name = basename(path).replace(/\.timber$/i, '');
+    games.push({
+      id: 'map-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), title: name, group: 'Given maps',
+      bytes: memo(() => new Uint8Array(readFileSync(path))), faction: 'Folktails', mode: 'Normal',
+      // 3 temperate days (every generated map's source ramp is under a day), then Normal's longest first drought (3 days)
+      cycles: [{ temperateDays: 3, hazard: 'drought', hazardDays: 3 }, calm], days: 6.5,
+      tiles: (m) => startWater(m).slice(0, 6), sampleHours: 1, daily: true, model: true,
+      checks: [...GENERIC, { id: 'drought-start-water', title: "The start's water through a Normal drought, against the model and the map's brief", how: 'measure' }],
+    });
+  }
+  games.push(e4game);
+  return games;
+}
+
+// ------------------------------------------------------------------------------------ tile finders
+
+/** The NaturalDam tiles and their wet neighbours on both sides (weirs). */
+export function weirTiles(m: MapInfo): [number, number][] {
+  const dams = m.entities.filter((e) => e.template === 'NaturalDam').map((e) => [e.x, e.y] as [number, number]);
+  const out = new Map<number, [number, number]>();
+  for (const [x, y] of dams) {
+    out.set(y * m.W + x, [x, y]);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0], [0, 2], [0, -2]]) {
+      const nx = x + dx, ny = y + dy, t = ny * m.W + nx;
+      if (nx >= 0 && ny >= 0 && nx < m.W && ny < m.H && m.depth[t] > 0.05 && !dams.some(([a, b]) => a === nx && b === ny)) out.set(t, [nx, ny]);
+    }
+  }
+  return [...out.values()].slice(0, 16);
+}
+
+/** A few tiles of the largest body of water (the deepest and three more). */
+export function lakeTiles(m: MapInfo): [number, number][] {
+  const lake = wetAreas(m)[0];
+  if (!lake) return [];
+  const sorted = [...lake.tiles].sort((a, b) => m.depth[b] - m.depth[a]);
+  return [sorted[0], sorted[Math.floor(sorted.length / 4)], sorted[Math.floor(sorted.length / 2)], sorted[Math.floor((3 * sorted.length) / 4)]].map((t) => [t % m.W, (t / m.W) | 0] as [number, number]);
+}
+
+/** The wet tiles nearest the start, nearest first (the water a new colony would drink). */
+export function startWater(m: MapInfo): [number, number][] {
+  if (!m.start) return lakeTiles(m);
+  const s = m.start;
+  const wet: [number, number, number][] = [];
+  for (let t = 0; t < m.W * m.H; t++) if (m.depth[t] > 0.3 && m.contamination[t] < 0.05) wet.push([t % m.W, (t / m.W) | 0, (t % m.W - s.x) ** 2 + (((t / m.W) | 0) - s.y) ** 2]);
+  return wet.sort((a, b) => a[2] - b[2]).map(([x, y]) => [x, y]);
+}
+
+export { within, readMapBytes };

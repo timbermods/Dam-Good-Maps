@@ -21,6 +21,10 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 - When a test still passes but no longer checks what its name says, because a decision of Kyler's changed the
   thing it tested, update it to check the current decision, rename it if needed, and note it in the progress
   log. No need to ask first. Never weaken a test to make it pass.
+- Dependency updates: merge GitHub Actions updates and minor or patch npm updates when CI is green (CI's byte
+  checks catch anything that changes a map). Hold major upgrades (TypeScript 7.0, @types/node 26, and any future
+  major) for a deliberate upgrade step at a quiet time, such as the refinement phase, with the full nightly suite;
+  never mid-milestone. Dependabot groups its updates into one weekly pull request per ecosystem.
 
 ## Writing README and website text
 
@@ -57,6 +61,11 @@ text.
   - Map look (after M8, before M9) is tagged `map-look-done` once Kyler approves the look, or ships inside the M9
     release;
   - Real places (right after Map look) is tagged `real-places-done`;
+  - Live editing is tagged `live-editing-done` once Kyler says it feels right; its preview is built from its
+    branch into `/preview/` (noindex) by the deploy workflow;
+  - Save to Timberborn is tagged `save-to-timberborn-done`, and Pick a place `pick-a-place-done`;
+  - the start and edge rules are tagged `start-edge-rules-done`; the Real places second round
+    `real-places-2-done`; contaminated ground as a layer `look-contamination-done`, once Kyler approves it;
   - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
   - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
   - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;

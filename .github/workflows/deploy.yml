@@ -21,8 +21,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -55,7 +55,7 @@ jobs:
           }
           EOF
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -68,3 +68,13 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # the live check, against the commit this run deployed (CLAUDE.md, Deploying)
+  live-check:
+    needs: deploy
+    permissions:
+      contents: read
+      issues: write
+    uses: ./.github/workflows/live-check.yml
+    with:
+      ref: ${{ github.sha }}

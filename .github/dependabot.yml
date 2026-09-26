@@ -1,10 +1,10 @@
 # Dependabot version updates: weekly, as pull requests into dev (work happens on dev; main only
-# takes tagged releases). Minor and patch updates come grouped, one pull request per ecosystem;
-# majors come one by one.
-#
-# fflate writes the .timber zip, so an update could change a map's bytes: it always comes on its
-# own, and the fixed sha256s in tests/contract/projects.test.ts fail in CI if it does. No update
-# that changes a map's bytes is merged.
+# takes tagged releases). One pull request per ecosystem per week (Kyler, PLAN §20 D150):
+# - GitHub Actions: every update, majors included, merged when CI is green.
+# - npm: minor and patch updates, merged when CI is green. CI's byte checks (the fixed sha256s in
+#   tests/contract/projects.test.ts and the rest) catch any update that would change a map, fflate
+#   included. npm majors are not requested here: they wait for a deliberate upgrade step at a quiet
+#   time (for example the refinement phase) with the full nightly suite, found with `npm outdated`.
 #
 # Only the root package matters: the package.json files under investigation/ belong to finished
 # studies and prototypes that nothing imports (investigation/README.md).
@@ -20,12 +20,14 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     groups:
       npm-minor-and-patch:
         patterns: ["*"]
-        exclude-patterns: [fflate]
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -34,8 +36,7 @@ updates:
       interval: weekly
       day: monday
       time: "06:00"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     groups:
-      actions-minor-and-patch:
+      github-actions:
         patterns: ["*"]
-        update-types: [minor, patch]
