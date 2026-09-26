@@ -12,7 +12,9 @@ Use Node 22.12+ and open http://127.0.0.1:4197. First run installs this folder's
 
 ## Result and captures
 
-Standard is on the left, High on the right; cameras and water time match. High has quieter teal water, clearer banks, depth absorption, angle-dependent sky reflection, soft foam and sparse sun glints. Badwater stays red-brown, with slow ribbons; mixed water keeps visible dark streaks. Actual tree and scaffold shapes now cast soft shadows. Wall-foot darkening is retained.
+Standard is on the left, High on the right; cameras and water time match. High now has brighter, more saturated teal-blue water, broken moving ripple highlights and a brighter sky reflection at low angles. The banks stay transparent while the body grows darker with depth. Falls have bright white strands and churning foam at their feet. Badwater stays red-brown, with slow ribbons; mixed water keeps visible dark streaks. The accepted soft shadows are unchanged.
+
+**Water revision after the PC trial:** the earlier High water was too dark and still. Bank transparency is now separate from the river body's opacity, so the dark bed no longer dulls the whole surface. Ripple highlights form moving, intersecting crests rather than isolated white flecks. The bar remains a clear visual improvement over Standard; these revised captures are ready for another PC trial.
 
 ![Start, trees and shoreline](captures/river-128-start.jpg)
 
@@ -22,13 +24,15 @@ Standard is on the left, High on the right; cameras and water time match. High h
 
 More comparisons: [badwater](captures/river-128-badwater.jpg), [wet/dry contaminated soil](captures/river-128-soil.jpg), [ruins](captures/river-128-ruins.jpg), [another angle](captures/river-128-start-angle.jpg), [256² overview](captures/river-256-overview.jpg), [shoreline](captures/lake-128-shore.jpg), [low angle](captures/lake-128-shore-low.jpg), [Real Victoria Falls](captures/real-victoria-falls.jpg), [Real Yosemite](captures/real-yosemite-cliff.jpg), [M9 Canyon](captures/m9-canyon-falls.jpg), [M9 River Valley](captures/m9-river-start.jpg), [water only](captures/water-only.jpg), [shadows only](captures/shadows-only.jpg), [demo controls](captures/demo.jpg).
 
-Readability sheets include greyscale and three colour-vision simulations, using the repository's existing linear-RGB matrices: [start](captures/river-128-start-readability.jpg), [soil](captures/river-128-soil-readability.jpg), [mixed water](captures/river-256-meeting-readability.jpg). Grass remains textured and lighter than dry ground; contaminated veins remain visible over both. The start retains its roof, pale deck and banner. Water has fewer bright cues than Standard, so its channel shape, transparency and motion carry more of the reading. Very distant dry contaminated veins remain subtle, as in Standard.
+Readability sheets include greyscale and three colour-vision simulations, using the repository's existing linear-RGB matrices: [start](captures/river-128-start-readability.jpg), [soil](captures/river-128-soil-readability.jpg), [mixed water](captures/river-256-meeting-readability.jpg). Grass remains textured and lighter than dry ground; contaminated veins remain visible over both. The start retains its roof, pale deck and banner. Water reads through its brighter coherent ripples, clear edges and foam; badwater keeps its dark brown ribbons. Very distant dry contaminated veins remain subtle, as in Standard.
 
 ## Checks
 
 TypeScript and the production compilation pass. Headless Chrome/SwiftShader loaded **25 maps**: seed 4242 in all six themes at 128² and 256², three Real places, and all ten M9 files present. No page/shader errors. Both toggles produce distinct results; turning the sun changes High only; water animation changes High; dragging High synchronizes Standard. With both effects disabled, **all 1,711,220 pixel channels match Standard exactly**.
 
-[Verification](captures/verification.json) records the renderer, map counts, camera poses, checks and visible water/soil sample tiles (pixel positions relative to High's canvas). These are evidence of execution and appearance, **not GPU performance measurements**. Captures use 1440×940, DPR 1, water time 8 s, JPEG 75–76; all images are under 260 KB, about 3 MB together. No game assets or game screenshots.
+The water revision passed this sweep again. The shadows-only pixel hash is unchanged (`2597898124`), and its JPEG is byte-identical to the accepted revision. The shadow code is unchanged too.
+
+[Verification](captures/verification.json) records the renderer, map counts, camera poses, checks and visible water/soil sample tiles (pixel positions relative to High's canvas). These are evidence of execution and appearance, **not GPU performance measurements**. Captures use 1440×940, DPR 1, water time 8 s, JPEG 75–76; all images are under 270 KB, about 3 MB together. No game assets or game screenshots.
 
 Reproduce with the demo running and Chrome installed: `npm --prefix investigation/maplook2 run capture`, then `node investigation/maplook2/readability.mjs`. `npm --prefix investigation/maplook2 run check` and `run build` check the code. The build is a compilation check; map discovery is served by the local demo server.
 
@@ -45,3 +49,4 @@ Reproduce with the demo running and Chrome installed: `npm --prefix investigatio
 1. Read CLAUDE.md, PLAN §20 (D114, D147, D154), the clean-look notes/captures and src/render3d. Set up the isolated runner.
 2. Built the worker-backed comparison and both effects. Initial SwiftShader images exposed self-shadow stripes; receiver-plane PCF correction removed them.
 3. Kept badwater visibly liquid from above, captured all required meanings and angles, and passed the 25-map sweep plus parity/toggle/animation/camera checks. Added the integration proposals. Updated the unused local dev reference for the requested scope check; dev advanced only in planning documents during this work.
+4. Revised only High water after the PC feedback: raised teal-blue saturation and brightness, retained clear banks, strengthened moving ripple/sky highlights and waterfall foam. Kept the shadow implementation byte-for-byte unchanged. Refreshed the comparison set, including the requested start, waterfall and 256² overview.
