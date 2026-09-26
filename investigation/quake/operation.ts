@@ -1,24 +1,24 @@
-import { snapshot, type CraterMap, type Settings, type Intent, type Fallen } from './engine';
+import { snapshot, type QuakeMap, type Settings, type Intent, type Fallen } from './engine';
 import type { EntitySpec } from '../../src/core/format/entities';
-export interface CraterOperation {
-  op:'craterizeResult';version:1;params:{
+export interface QuakeOperation {
+  op:'quakeResult';version:1;params:{
     W:number;H:number;settings:Settings;intent:Intent;terrain:[number,number,number][];
     entitiesBefore:EntitySpec[];entitiesAfter:EntitySpec[];fallenBefore:Fallen[];fallenAfter:Fallen[];
     waterBefore:{depth:number[];contamination:number[]};waterAfter:{depth:number[];contamination:number[]};
     settled:boolean;settleTicks:number;reroll:boolean;
   };
 }
-export function operation(before:CraterMap,after:CraterMap,settings:Settings,intent:Intent,result:{settled:boolean;ticks:number},reroll=false):CraterOperation {
+export function operation(before:QuakeMap,after:QuakeMap,settings:Settings,intent:Intent,result:{settled:boolean;ticks:number},reroll=false):QuakeOperation {
   const terrain:[number,number,number][]=[];
   before.heights.forEach((h,i)=>{if(h!==after.heights[i])terrain.push([i,h,after.heights[i]]);});
-  const water=(m:CraterMap)=>({depth:Array.from(m.water.depth),contamination:Array.from(m.water.contamination)});
-  return {op:'craterizeResult',version:1,params:{W:before.W,H:before.H,settings:{...settings},intent:{...intent},terrain,
+  const water=(m:QuakeMap)=>({depth:Array.from(m.water.depth),contamination:Array.from(m.water.contamination)});
+  return {op:'quakeResult',version:1,params:{W:before.W,H:before.H,settings:{...settings},intent:structuredClone(intent),terrain,
     entitiesBefore:structuredClone(before.entities),entitiesAfter:structuredClone(after.entities),fallenBefore:structuredClone(before.fallen),fallenAfter:structuredClone(after.fallen),
     waterBefore:water(before),waterAfter:water(after),settled:result.settled,settleTicks:result.ticks,reroll}};
 }
-/** Assign saved results; never re-run crater or water code on undo/redo/replay. */
-export function applyOperation(map:CraterMap,op:CraterOperation,undo=false):CraterMap {
-  const p=op.params;if(op.op!=='craterizeResult'||op.version!==1||p.W!==map.W||p.H!==map.H)throw Error('Operation does not fit this map');
+/** Assign saved results; never re-run quake or water code on undo/redo/replay. */
+export function applyOperation(map:QuakeMap,op:QuakeOperation,undo=false):QuakeMap {
+  const p=op.params;if(op.op!=='quakeResult'||op.version!==1||p.W!==map.W||p.H!==map.H)throw Error('Operation does not fit this map');
   const expected=undo?2:1,desired=undo?1:2;
   const water=undo?p.waterBefore:p.waterAfter,entities=undo?p.entitiesBefore:p.entitiesAfter,fallen=undo?p.fallenBefore:p.fallenAfter;
   if(!Array.isArray(p.terrain)||!Array.isArray(entities)||!Array.isArray(fallen))throw Error('Invalid result');
@@ -34,4 +34,5 @@ export function applyOperation(map:CraterMap,op:CraterOperation,undo=false):Crat
   out.entities=structuredClone(entities);out.fallen=structuredClone(fallen);
   out.water={depth:Float64Array.from(water.depth),contamination:Float64Array.from(water.contamination)};return out;
 }
+
 

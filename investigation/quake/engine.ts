@@ -1,0 +1,147 @@
+import { JsonFloat } from '../../src/core/format/json';
+import type { EntitySpec } from '../../src/core/format/entities';
+import { FOOTPRINTS } from '../../src/core/format/footprints';
+import { waterModel, objectTile } from '../../src/core/sim/model';
+import type { WaterState } from '../../src/core/sim/water';
+
+export interface Fallen {id:string;x:number;y:number;z:number;dx:number;dy:number;length:number}
+export interface QuakeMap {name:string;W:number;H:number;heights:Uint8Array;entities:EntitySpec[];water:WaterState;maxHeight:number;rockLayers:number[];fallen:Fallen[]}
+export interface Point {x:number;y:number}
+export interface Intent {path:Point[];side:1|-1}
+export interface Settings {mode:'lift'|'slide';power:number;scarp:'sheer'|'stepped';seed:number}
+export const DEFAULTS:Settings={mode:'lift',power:60,scarp:'sheer',seed:1};
+export const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
+export const smooth=(v:number)=>{v=clamp(v,0,1);return v*v*(3-2*v);};
+export const plainEntities=(e:EntitySpec[]):EntitySpec[]=>JSON.parse(JSON.stringify(e,(_k,v)=>v instanceof JsonFloat?v.value:v));
+export const modelFor=(m:QuakeMap)=>waterModel(m.W,m.H,m.heights,m.entities.map(e=>({...e,components:{...e.before,...e.components}})));
+export function geology(h:Uint8Array):number[]{let s=2166136261;for(const v of h)s=Math.imul(s^v,16777619);return Array.from({length:23},(_,z)=>(z+(s>>>0)%4)%4===0?1:0);}
+export function hash(seed:number,k:number):number{let x=Math.imul((seed^Math.imul(k+1,0x9e3779b9))>>>0,0x85ebca6b);x^=x>>>13;return (Math.imul(x,0xc2b2ae35)>>>0)/4294967296;}
+export function snapshot(m:QuakeMap):QuakeMap{return {...m,heights:m.heights.slice(),entities:structuredClone(m.entities),rockLayers:m.rockLayers.slice(),fallen:structuredClone(m.fallen),water:{depth:m.water.depth.slice(),contamination:m.water.contamination.slice()}};}
+export function entityTiles(m:Pick<QuakeMap,'W'|'H'>,e:EntitySpec,margin=0):number[]{
+  const fp=FOOTPRINTS[e.template]?.size??[1,1,1],out:number[]=[];
+  for(let y=-margin;y<fp[1]+margin;y++)for(let x=-margin;x<fp[0]+margin;x++){const [xx,yy]=objectTile(e,x,y);if(xx>=0&&yy>=0&&xx<m.W&&yy<m.H)out.push(yy*m.W+xx);}return out;
+}
+export function protectedGround(m:QuakeMap):Uint8Array{const out=new Uint8Array(m.W*m.H);for(const e of m.entities)if(e.template==='StartingLocation')for(const i of entityTiles(m,e,1))out[i]=1;return out;}
+export function validateSettings(s:Settings,m:QuakeMap,i:Intent){
+  if(!['lift','slide'].includes(s.mode)||!['sheer','stepped'].includes(s.scarp)||!Number.isFinite(s.power)||s.power<0||s.power>100||!Number.isInteger(s.seed)||s.seed<0||s.seed>0xffffffff)throw Error('Invalid quake settings');
+  if(!i||![1,-1].includes(i.side)||!Array.isArray(i.path)||i.path.length<2||i.path.length>512||i.path.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<0||p.y<0||p.x>m.W-1||p.y>m.H-1))throw Error('Draw a fault on the land');
+}
+export interface Segment {a:Point;b:Point;dx:number;dy:number;length:number;along:number}
+export class Fault {
+  readonly points:Point[]=[];readonly segments:Segment[]=[];length=0;readonly reach:number;readonly lift:number;readonly slide:number;
+  constructor(readonly settings:Settings,readonly intent:Intent){
+    this.reach=14+settings.power*.50;this.lift=1+Math.round(settings.power*.075);this.slide=1+Math.round(settings.power*.13);
+    // Resample by arc length. Coherent seed noise has a wavelength, never per-tile static.
+    const raw:Segment[]=[];let length=0;
+    for(let k=1;k<intent.path.length;k++){const a=intent.path[k-1],b=intent.path[k],l=Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);if(l<.01)continue;raw.push({a,b,dx:(b.x-a.x)/l,dy:(b.y-a.y)/l,length:l,along:length});length+=l;}
+    if(length<3)throw Error('Draw a longer fault');
+    const wavelength=7+hash(settings.seed,9)*14,rough=.35+hash(settings.seed,11)*1.3;
+    for(let d=0;d<length+4;d+=4){const t=Math.min(d,length),r=raw.find(s=>t<=s.along+s.length)??raw[raw.length-1],f=t-r.along;
+      const n=t/wavelength,k=Math.floor(n),a=hash(settings.seed,k+100)*2-1,b=hash(settings.seed,k+101)*2-1;
+      const offset=(a+(b-a)*smooth(n-k))*rough*smooth(t/5)*smooth((length-t)/5);
+      this.points.push({x:r.a.x+r.dx*f-r.dy*offset,y:r.a.y+r.dy*f+r.dx*offset});if(t===length)break;
+    }
+    for(let k=1;k<this.points.length;k++){const a=this.points[k-1],b=this.points[k],l=Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);this.segments.push({a,b,dx:(b.x-a.x)/l,dy:(b.y-a.y)/l,length:l,along:this.length});this.length+=l;}
+  }
+  at(x:number,y:number){
+    let best=Infinity,result={d:0,along:0,dx:1,dy:0,end:0};
+    for(const s of this.segments){const rx=x-s.a.x,ry=y-s.a.y,t=rx*s.dx+ry*s.dy,u=clamp(t,0,s.length),ex=rx-s.dx*u,ey=ry-s.dy*u,d2=ex*ex+ey*ey;
+      if(d2<best){best=d2;result={d:(s.dx*ry-s.dy*rx)*this.intent.side,along:s.along+u,dx:s.dx,dy:s.dy,end:Math.abs(t-u)};}}
+    return result;
+  }
+  movement(x:number,y:number){
+    const f=this.at(x,y),s=this.settings,side=f.d>=0?1:-1,dist=Math.abs(f.d);
+    // The block continues to the map edge for a map-spanning stroke. Fading a long
+    // lifted block back down nearby makes an artificial upstream dam, not a scarp.
+    const blockReach=Math.max(this.reach,this.length*1.3);
+    const envelope=(1-smooth((dist-blockReach*.8)/(blockReach*.2)))*(1-smooth(f.end/Math.max(8,this.reach*.6)));
+    const step=s.scarp==='stepped'?Math.min(1,(Math.floor(dist/3)+1)/3):1;
+    const tilt=(hash(s.seed,6)*2-1)*(f.along/this.length-.5)*2.4+(hash(s.seed,7)*2-1)*clamp(dist/this.reach,0,1)*1.4;
+    const alongStep=hash(s.seed,Math.floor(f.along/18)+60)>.72?1:0;
+    let dz=Math.round((side>0?this.lift+tilt:-this.lift*.55)*envelope*step);
+    // Short secondary faults and sag pockets share the main fault's smooth, seeded stations.
+    const branch=Math.floor(f.along/22),u=f.along/22-branch;
+    if(dist<2.2&&u>.30&&u<.62&&hash(s.seed,branch+200)>.48)dz-=1;
+    if(side<0&&dist>3&&dist<8&&u>.38&&u<.58&&hash(s.seed,branch+230)>.65)dz-=1;
+    const amount=(side>0?this.slide+alongStep:-this.slide*.25)*envelope*step;
+    return {...f,dz:s.mode==='lift'?dz:0,dx:s.mode==='slide'?Math.round(f.dx*amount):0,dy:s.mode==='slide'?Math.round(f.dy*amount):0};
+  }
+}
+/** Shared by the cursor and worker: the quiet refusal includes room for seeded bends. */
+export function faultReason(m:QuakeMap,intent:Intent):string|null{
+  if(intent.path.length<2)return null;
+  const f=new Fault({...DEFAULTS,seed:0},intent),keep=protectedGround(m);
+  for(let i=0;i<keep.length;i++)if(keep[i]){const p=f.at(i%m.W,Math.floor(i/m.W));if(Math.abs(p.d)<3.5&&p.end<3.5)return 'Start here';}return null;
+}
+export class QuakePlan {
+  readonly map:QuakeMap;readonly fault:Fault;readonly arrival:Float32Array;readonly dx:Int16Array;readonly dy:Int16Array;
+  readonly stats={changed:0,raised:0,dropped:0,moved:0,toppled:0};private row=0;private done=false;
+  constructor(readonly before:QuakeMap,readonly settings:Settings,readonly intent:Intent){
+    validateSettings(settings,before,intent);this.fault=new Fault(settings,intent);const reason=faultReason(before,intent);if(reason)throw Error(reason);
+    this.map=snapshot(before);this.arrival=new Float32Array(before.W*before.H);this.dx=new Int16Array(this.arrival.length);this.dy=new Int16Array(this.arrival.length);
+  }
+  advance(rows=4):boolean{
+    if(this.done)return true;const {W,H}=this.map,end=Math.min(H,this.row+rows);
+    for(let y=this.row;y<end;y++)for(let x=0;x<W;x++){
+      const i=y*W+x,f=this.fault.movement(x,y);this.arrival[i]=clamp(f.along/this.fault.length*.82+Math.abs(f.d)/this.fault.reach*.12,0,.94);
+      this.dx[i]=f.dx;this.dy[i]=f.dy;
+      // Backtrace the block, with nearest continuation at edges: never wrap or leave missing cells.
+      let sx=x,sy=y;
+      if(this.settings.mode==='slide'){for(let k=0;k<3;k++){const v=this.fault.movement(sx,sy);sx=x-v.dx;sy=y-v.dy;}}
+      const src=clamp(Math.round(sy),0,H-1)*W+clamp(Math.round(sx),0,W-1);
+      this.map.heights[i]=clamp(this.before.heights[src]+f.dz,0,Math.min(22,this.map.maxHeight));
+    }
+    this.row=end;if(end<H)return false;this.moveObjects();
+    this.map.heights.forEach((h,i)=>{const d=h-this.before.heights[i];if(d)this.stats.changed++;this.stats.raised+=Math.max(0,d);this.stats.dropped+=Math.max(0,-d);});this.done=true;return true;
+  }
+  private moveObjects(){
+    const {W,H}=this.map,occupied=new Uint8Array(W*H),all=[...this.map.entities].sort((a,b)=>Number(b.template==='StartingLocation')-Number(a.template==='StartingLocation'));
+    const fallen=new Map(this.map.fallen.map(f=>[f.id,f]));
+    for(const e of all){
+      const old={...e},f=this.fault.movement(e.x,e.y),fp=FOOTPRINTS[e.template]?.size??[1,1,1];
+      const corners=[objectTile(e,0,0),objectTile(e,fp[0]-1,0),objectTile(e,0,fp[1]-1),objectTile(e,fp[0]-1,fp[1]-1)];
+      const xs=corners.map(p=>p[0]-e.x),ys=corners.map(p=>p[1]-e.y);
+      const margin=e.template==='StartingLocation'?1:0;
+      const px=clamp(e.x+f.dx,margin-Math.min(...xs),W-1-margin-Math.max(...xs)),py=clamp(e.y+f.dy,margin-Math.min(...ys),H-1-margin-Math.max(...ys));
+      e.x=px;e.y=py;
+      if(f.dx||f.dy){let found=false;
+        for(let radius=0;radius<=Math.max(W,H)&&!found;radius++)for(let yy=-radius;yy<=radius&&!found;yy++)for(let xx=-radius;xx<=radius&&!found;xx++){
+          if(radius&&Math.abs(xx)!==radius&&Math.abs(yy)!==radius)continue;
+          e.x=px+xx;e.y=py+yy;const tiles=entityTiles(this.map,e,margin);
+          if(tiles.length===(fp[0]+margin*2)*(fp[1]+margin*2)&&tiles.every(i=>!occupied[i]))found=true;
+        }
+        if(!found)throw Error('No room for objects to move');
+      }
+      const changed=e.x!==old.x||e.y!==old.y||this.map.heights[e.y*W+e.x]!==this.before.heights[old.y*W+old.x];
+      if(changed){e.z=clamp(old.z+this.map.heights[e.y*W+e.x]-this.before.heights[old.y*W+old.x],0,22);delete e.raw;this.stats.moved++;}
+      const support=entityTiles(this.map,e,margin);for(const i of support)occupied[i]=1;
+      // Rigid footprints ride whole, including the start's entrance and a one-tile apron.
+      if(changed&&fp[0]*fp[1]>1)for(const i of support){this.map.heights[i]=e.z;this.arrival[i]=this.arrival[old.y*W+old.x];}
+      if(/^(Pine|Birch|Oak|Succulent)$/.test(e.template)&&Math.abs(f.d)<1.9&&f.end<2){
+        e.components={...e.components,LivingNaturalResource:{IsDead:true}};delete e.raw;
+        fallen.set(e.id,{id:e.id,x:e.x+.5,y:e.y+.5,z:e.z,dx:-f.dy||.7,dy:f.dx||.7,length:e.template==='Oak'?2.6:2});this.stats.toppled++;
+      }else if(fallen.has(e.id)){const t=fallen.get(e.id)!;fallen.set(e.id,{...t,x:e.x+.5,y:e.y+.5,z:e.z});}
+    }
+    this.map.fallen=[...fallen.values()];
+  }
+}
+export function quake(m:QuakeMap,s:Settings,i:Intent){const p=new QuakePlan(m,s,i);while(!p.advance(8)){}return p;}
+/** Eight deterministic fronts. Timing and render frame rate never enter the output. */
+export function reveal(plan:QuakePlan,previous:QuakeMap,step:number,steps=8):QuakeMap{
+  const out=snapshot(previous),progress=step/steps,{W,H}=out;
+  for(let i=0;i<out.heights.length;i++)if(plan.arrival[i]<=progress){out.heights[i]=plan.map.heights[i];}
+  out.entities=plan.before.entities.map((e,k)=>{const t=e.y*W+e.x;return structuredClone(plan.arrival[t]<=progress?plan.map.entities[k]:e);});
+  out.fallen=plan.map.fallen.filter(f=>out.entities.some(e=>e.id===f.id&&plan.arrival[(plan.before.entities.find(o=>o.id===e.id)!.y)*W+plan.before.entities.find(o=>o.id===e.id)!.x]<=progress));
+  if(plan.settings.mode==='slide'){
+    // Forward transport only newly activated water once; sum collisions, conserve volume and mixture.
+    const next=new Float64Array(W*H),bad=new Float64Array(W*H);
+    for(let i=0;i<next.length;i++){
+      const newly=plan.arrival[i]<=progress&&plan.arrival[i]>(step-1)/steps;
+      const x=i%W,y=Math.floor(i/W),j=newly?clamp(y+plan.dy[i],0,H-1)*W+clamp(x+plan.dx[i],0,W-1):i;
+      next[j]+=previous.water.depth[i];bad[j]+=previous.water.depth[i]*previous.water.contamination[i];
+    }
+    out.water={depth:next,contamination:Float64Array.from(bad,(v,i)=>next[i]?v/next[i]:0)};
+  }
+  return out;
+}
+
