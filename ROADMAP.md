@@ -868,6 +868,9 @@ A small step right after Resources like the official maps, and before the Real p
 - count and strength like the official maps for the map's size, measured from the official maps
   (first checking whether every official map has one);
 - a check in both validators, like `resources.mine_site`.
+- **No badwater**, an explicit option in the badwater setting for peaceful maps (the default is always
+  at least one source): no badwater sources are placed, badtides still happen, and the share link and
+  the map's description record the choice; generated maps, Real places and Pick a place respect it.
 
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks), and every map having its
 badwater source. Generated maps change (a generator version bump and a contact sheet, D144).
