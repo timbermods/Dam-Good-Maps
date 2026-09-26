@@ -10,8 +10,8 @@ Proposals only. Nothing here changes the plans, the milestone run or the checks 
 - **The cycle model moves to `src/core/sim/cycles/`** when Weather integration lands (the cycles study's
   own INTEGRATION.md). Until then the probe keeps taking it from `investigation/cycles-exact` at a fixed
   commit, into an ignored cache.
-- **Outputs stay local.** Results, screenshots and the contact sheet stay in
-  `Documents\Timberborn\DGMProbe\`. A run's `summary.md` (numbers only, no game images) may be committed
+- **Outputs stay local.** Results, screenshots and the contact sheet stay in `C:\dgm-probe\` (Kyler's
+  decision #54, outside his Timberborn folders). A run's `summary.md` (numbers only, no game images) may be committed
   as the milestone's record, in `out/<milestone>/probe.md`.
 - **The mod is never published** and never ships with the site. It is built on the machine that runs it.
 

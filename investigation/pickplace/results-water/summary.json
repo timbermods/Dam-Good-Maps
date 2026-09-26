@@ -1,0 +1,110 @@
+{
+  "requests": 150,
+  "baseline": {
+    "conversions": 47,
+    "places": 30
+  },
+  "firstPlan": 61,
+  "direct": 76,
+  "directPlaces": 40,
+  "recovered": 142,
+  "recoveredPlaces": 50,
+  "roundTrips": 150,
+  "errors": 0,
+  "attemptErrors": 0,
+  "minHeartbeats": 17,
+  "sourceDesigns": 558,
+  "changedSize": 12,
+  "shifted": 4,
+  "bySize": [
+    {
+      "size": 96,
+      "before": 10,
+      "firstPlan": 20,
+      "direct": 25,
+      "recovered": 47,
+      "totalSeconds": {
+        "median": 3.173,
+        "p90": 28.969899999976157,
+        "max": 48.74019999998808
+      },
+      "directSeconds": {
+        "median": 2.4857000000476837,
+        "p90": 5.638600000023842,
+        "max": 7.246399999976158
+      },
+      "retrySeconds": {
+        "median": 0.3881999999880791,
+        "p90": 25.217,
+        "max": 44.69510000002384
+      },
+      "pairedAddedSeconds": {
+        "median": 0.9799000000357628,
+        "p90": 27.46519999998808,
+        "max": 45.69580000001192
+      }
+    },
+    {
+      "size": 128,
+      "before": 17,
+      "firstPlan": 22,
+      "direct": 29,
+      "recovered": 48,
+      "totalSeconds": {
+        "median": 3.217699999988079,
+        "p90": 25.48139999997616,
+        "max": 61.25569999998808
+      },
+      "directSeconds": {
+        "median": 2.1968000000119208,
+        "p90": 5.721599999964237,
+        "max": 9.263600000023843
+      },
+      "retrySeconds": {
+        "median": 0.0105,
+        "p90": 21.981,
+        "max": 52.97489999997616
+      },
+      "pairedAddedSeconds": {
+        "median": 1.0244000000357627,
+        "p90": 24.08359999996424,
+        "max": 57.59280000001192
+      }
+    },
+    {
+      "size": 256,
+      "before": 20,
+      "firstPlan": 19,
+      "direct": 22,
+      "recovered": 47,
+      "totalSeconds": {
+        "median": 22.727,
+        "p90": 93.09330000001192,
+        "max": 122.691
+      },
+      "directSeconds": {
+        "median": 12.00519999998808,
+        "p90": 40.183899999976155,
+        "max": 64.51640000003576
+      },
+      "retrySeconds": {
+        "median": 5.080199999988079,
+        "p90": 56.55320000004768,
+        "max": 100.67809999996423
+      },
+      "pairedAddedSeconds": {
+        "median": 13.656399999976157,
+        "p90": 79.39689999997616,
+        "max": 104.92189999997616
+      }
+    }
+  ],
+  "failures": {
+    "water.settles": 1,
+    "start.water.D153": 4,
+    "water.source_origins": 3
+  },
+  "originAuditedPasses": 142,
+  "originRejectedAttempts": 16,
+  "multiHeadPasses": 29
+}

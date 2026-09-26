@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-09-26T00:53:02.2559596Z",
+  "branchBase": "652774175c08b46b40c01536ee3d08a83cbe98d6",
+  "observedDev": "ee2cd064ff6c0306591d973137de4048292eff0e",
+  "pinnedReference": "948f395137a6725d4b726864a47e6966d7f2f09a",
+  "checkedTrees": [
+    "src/core",
+    "investigation/cycles"
+  ],
+  "changedSourcePaths": [
+    "src/core/places/attribution.ts",
+    "src/core/places/place.ts"
+  ],
+  "changedDependencyPaths": [],
+  "note": "The added places modules are outside the frozen generator/weather dependency graph; the exact weather tree is unchanged.",
+  "terrain3d": "72d2aa2e88d91f1bfce1ba6fe70de4536a1922e3",
+  "passed": true
+}

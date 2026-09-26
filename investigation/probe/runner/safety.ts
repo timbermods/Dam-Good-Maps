@@ -1,7 +1,9 @@
 // Keeping Kyler's game exactly as it was. Before a launch the runner records the game's settings
-// (the registry key), the Unity logs, the player data and every file under Saves; after the game has
-// quit it puts back whatever changed and deletes whatever the probe's games created. A marker file
-// says a run is in progress, so a runner that died mid-run restores first on its next start.
+// (the registry key), the Unity logs, the player data, every file under Saves, and a copy of every other
+// small file under Documents\Timberborn (his mods' own data, which a mod may rewrite when the game starts);
+// after the game has quit it puts back whatever changed and deletes or moves out whatever the probe's games
+// created. The copies live in the probe's own folder (C:\dgm-probe\runner\backup). A marker file says a run
+// is in progress, so a runner that died mid-run restores first on its next start.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -22,6 +24,13 @@ interface Snapshot {
   saves: Listing;
   saveDirs: string[];
   docs: Listing;
+  /** Files under Documents\Timberborn copied before the launch (relative paths), to put back if they change. */
+  docsCopied?: string[];
+  /** Every folder under Documents\Timberborn before the launch (outside DOCS_SKIP): the others are the run's. */
+  docDirs?: string[];
+  /** Every file and folder under Documents\Timberborn before the launch, nothing skipped: after the restore
+   *  and DGM Probe's removal, anything not in it is a trace the run left (`leftovers`). */
+  all?: string[];
 }
 
 export function isGameRunning(): boolean {
@@ -50,7 +59,7 @@ export function listFiles(root: string, skip: string[] = []): Listing {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
       const rel = relative(root, full);
-      if (skip.some((s) => rel === s || rel.startsWith(s + '\\') || rel.startsWith(s + '/'))) continue;
+      if (skipped(rel, skip)) continue;
       let st;
       try {
         st = statSync(full);
@@ -82,7 +91,30 @@ export function registryValues(): Record<string, string> {
 }
 
 export const marker = () => join(probePaths().backup, 'in-progress.json');
-const DOCS_SKIP = ['DGMProbe', 'Mods', 'Saves', 'ExperimentalSaves'];
+/** Folders the docs listing leaves out: the saves (handled on their own) and DGM Probe's own mod folder
+ *  (installed before the snapshot, removed by the runner after the restore). Everything else under
+ *  Documents\Timberborn is covered: the player's other mods' folders, and any DGMProbe folder there. */
+const DOCS_SKIP = ['Saves', 'ExperimentalSaves', join('Mods', 'DGMProbe')];
+/** A relative path is one of the folders in `skip`, or inside one. */
+const skipped = (rel: string, skip: string[]) => skip.some((s) => rel === s || rel.startsWith(s + '\\') || rel.startsWith(s + '/'));
+/** Steam Cloud rewrites these at every launch of the game, whoever starts it: reported, never put back
+ *  (an older copy could confuse Steam's own sync). */
+export const isSteamBookkeeping = (rel: string) => /(^|[\\/])steam_autocloud\.vdf$/i.test(rel);
+/** Files under Documents\Timberborn up to this size are copied before a launch and put back if the run
+ *  changes them (Late Game Performance rewrites its unity-markers.txt at every launch, for example). */
+const DOCS_COPY_LIMIT = 8 << 20;
+const docsBackup = () => join(probePaths().backup, 'docs');
+
+/** A move that also works across drives. */
+function moveFile(from: string, to: string): void {
+  mkdirSync(dirname(to), { recursive: true });
+  try {
+    renameSync(from, to);
+  } catch {
+    copyFileSync(from, to);
+    rmSync(from);
+  }
+}
 
 /** Record everything a probe run could change. Refuses if an earlier run's backup was never restored. */
 export function takeSnapshot(): Snapshot {
@@ -118,7 +150,18 @@ export function takeSnapshot(): Snapshot {
     saves: { ...listFiles(join(timberbornDocs(), 'Saves')), ...prefixed('ExperimentalSaves', listFiles(join(timberbornDocs(), 'ExperimentalSaves'))) },
     saveDirs: [...listDirs(join(timberbornDocs(), 'Saves')), ...listDirs(join(timberbornDocs(), 'ExperimentalSaves'))],
     docs: listFiles(timberbornDocs(), DOCS_SKIP),
+    docDirs: listDirs(timberbornDocs(), DOCS_SKIP),
+    all: listAll(timberbornDocs()),
   };
+  rmSync(docsBackup(), { recursive: true, force: true });
+  snap.docsCopied = [];
+  for (const [rel, st] of Object.entries(snap.docs)) {
+    if (st.size > DOCS_COPY_LIMIT || isSteamBookkeeping(rel) || rel.startsWith('PlayerData')) continue;
+    const to = join(docsBackup(), rel);
+    mkdirSync(dirname(to), { recursive: true });
+    copyFileSync(join(timberbornDocs(), rel), to);
+    snap.docsCopied.push(rel);
+  }
   writeFileSync(marker(), JSON.stringify(snap, null, 1));
   return snap;
 }
@@ -135,6 +178,9 @@ export interface RestoreReport {
   savesDeleted: string[];
   savesChanged: string[];
   docsMoved: string[];
+  /** Files that existed before and changed, put back from their copy (the changed version is kept in the run's folder). */
+  docsRestored: string[];
+  /** Files that existed before and changed but had no copy (too large, or Steam's own): reported only. */
   docsChanged: string[];
 }
 
@@ -144,15 +190,16 @@ export function hasPendingRestore(): boolean {
 
 /**
  * Put Kyler's game back: settings, logs and player data as they were; files the probe's games created
- * under Saves deleted; other new files under Documents\Timberborn (error reports, for instance) moved
- * into the run's folder. Files that existed before and changed are reported, never deleted.
+ * under Saves deleted; other new files under Documents\Timberborn (error reports, a mod's session logs)
+ * moved into the run's folder, and the folders they leave empty removed; other files that changed put back
+ * from their copy. Changed saves and Steam's bookkeeping files are reported, never touched.
  * `keepLogsIn` receives the probe's own Player.log files.
  */
 export function restore(keepLogsIn: string | null, opts: { registry?: boolean } = {}): RestoreReport {
   if (isGameRunning()) throw new Error('Timberborn is running: the restore waits until it has quit.');
   const p = probePaths();
   const snap = JSON.parse(readFileSync(marker(), 'utf8')) as Snapshot;
-  const report: RestoreReport = { registryChanged: [], registryRestored: false, logsRestored: [], playerDataRestored: [], savesDeleted: [], savesChanged: [], docsMoved: [], docsChanged: [] };
+  const report: RestoreReport = { registryChanged: [], registryRestored: false, logsRestored: [], playerDataRestored: [], savesDeleted: [], savesChanged: [], docsMoved: [], docsRestored: [], docsChanged: [] };
 
   // Settings: compare value by value; if anything differs, put the exported key back whole.
   const now = opts.registry === false ? snap.registryValues : registryValues();
@@ -209,30 +256,65 @@ export function restore(keepLogsIn: string | null, opts: { registry?: boolean } 
 
   // Anything else new under Documents\Timberborn: moved into the run's folder, so it leaves no trace.
   const docs = listFiles(timberbornDocs(), DOCS_SKIP);
+  const copied = new Set(snap.docsCopied ?? []);
   for (const [rel, st] of Object.entries(docs)) {
     const before = snap.docs[rel];
     if (!before) {
-      if (keepLogsIn) {
-        const to = join(keepLogsIn, 'created', rel);
-        mkdirSync(dirname(to), { recursive: true });
-        renameSync(join(timberbornDocs(), rel), to);
-      } else rmSync(join(timberbornDocs(), rel));
+      if (keepLogsIn) moveFile(join(timberbornDocs(), rel), join(keepLogsIn, 'created', rel));
+      else rmSync(join(timberbornDocs(), rel));
       report.docsMoved.push(rel);
-    } else if (before.size !== st.size || before.mtimeMs !== st.mtimeMs) report.docsChanged.push(rel);
+    } else if (before.size !== st.size || before.mtimeMs !== st.mtimeMs) {
+      const copy = join(docsBackup(), rel);
+      if (copied.has(rel) && existsSync(copy)) {
+        if (keepLogsIn) {
+          const kept = join(keepLogsIn, 'changed', rel);
+          mkdirSync(dirname(kept), { recursive: true });
+          copyFileSync(join(timberbornDocs(), rel), kept);
+        }
+        copyFileSync(copy, join(timberbornDocs(), rel));
+        report.docsRestored.push(rel);
+      } else report.docsChanged.push(rel);
+    }
   }
+  // Folders the probe's games created under Documents\Timberborn (a mod's session folder, say), once
+  // emptied: without this the moves above leave empty folders behind. Folders that existed before stay.
+  const keepDocs = new Set(snap.docDirs ?? []);
+  if (snap.docDirs)
+    for (const dir of listDirs(timberbornDocs(), DOCS_SKIP).sort((a, b) => b.length - a.length))
+      if (!keepDocs.has(dir) && readdirSync(dir).length === 0) {
+        rmSync(dir, { recursive: true });
+        report.docsMoved.push(relative(timberbornDocs(), dir) + '\\');
+      }
+  rmSync(docsBackup(), { recursive: true, force: true });
 
   rmSync(marker());
   return report;
 }
 
-/** Every folder under root (absolute paths), root included. */
-function listDirs(root: string): string[] {
+/** Every file and folder under root, as relative paths (folders end with a backslash). */
+function listAll(root: string): string[] {
+  return [...Object.keys(listFiles(root)), ...listDirs(root).filter((d) => d !== root).map((d) => relative(root, d) + '\\')];
+}
+
+/**
+ * What a run left under Documents\Timberborn: every file or folder there now that was not there before the
+ * launch (Steam's bookkeeping aside). Called after the restore and DGM Probe's removal; it should be empty.
+ */
+export function leftovers(snap: { all?: string[] }): string[] {
+  if (!snap.all) return [];
+  const before = new Set(snap.all);
+  return listAll(timberbornDocs()).filter((rel) => !before.has(rel) && !isSteamBookkeeping(rel));
+}
+
+/** Every folder under root (absolute paths), root included, leaving out the folders in `skip` (relative paths). */
+function listDirs(root: string, skip: string[] = []): string[] {
   const out: string[] = [];
   if (!existsSync(root)) return out;
   const walk = (dir: string) => {
     out.push(dir);
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
+      if (skipped(relative(root, full), skip)) continue;
       try {
         if (statSync(full).isDirectory()) walk(full);
       } catch {

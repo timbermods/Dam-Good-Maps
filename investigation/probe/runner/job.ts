@@ -1,4 +1,5 @@
-// The job file the mod reads (Documents\Timberborn\DGMProbe\job.json) and the results it writes.
+// The job file the mod reads (job.json in the folder given with -dgmprobeHome: C:\dgm-probe) and the
+// results it writes.
 // The C# side mirrors these shapes (mod/src/Job.cs, mod/src/Results.cs); keep the two in step.
 
 /** Game time as the game counts it: day 1 starts at 00:00 of the first day, and a new game starts at

@@ -4,10 +4,17 @@ import { execFileSync, spawn } from 'node:child_process';
 import { copyFileSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Job, MapResult } from './job';
-import { probePaths, STEAM_APP_ID, steamExe, unityLogDir } from './paths';
+import { probeHome, probePaths, STEAM_APP_ID, steamExe, unityLogDir } from './paths';
 import { gameProcessIds, isGameRunning } from './safety';
 
-export const LAUNCH_ARGS = ['-skipModManager', '-dgmprobe'];
+/**
+ * The game's arguments: -skipModManager starts the game with the enabled mods without showing the mod
+ * manager (ModManagerSceneUI.ShouldSkipModManager), -dgmprobe switches the probe on, and -dgmprobeHome
+ * tells it where the job is and where its results go (C:\dgm-probe, never Documents\Timberborn).
+ */
+export function launchArgs(): string[] {
+  return ['-skipModManager', '-dgmprobe', '-dgmprobeHome', probeHome()];
+}
 
 interface Heartbeat {
   pid: number;
@@ -109,7 +116,7 @@ export async function runJob(job: Job, o: WatchOptions): Promise<LaunchLog[]> {
     const entry: LaunchLog = { launch, startedAt: new Date().toISOString(), endedAt: '', outcome: 'exited', lastPhase: null, lastMap: null, note: '' };
     o.log(`launch ${launch}: ${job.maps.length - done.size} maps left`);
     // Steam starts the game (tests put a stand-in command in DGM_PROBE_LAUNCH, a JSON array).
-    const [cmd, ...args] = process.env.DGM_PROBE_LAUNCH ? (JSON.parse(process.env.DGM_PROBE_LAUNCH) as string[]) : [steamExe(), '-applaunch', STEAM_APP_ID, ...LAUNCH_ARGS];
+    const [cmd, ...args] = process.env.DGM_PROBE_LAUNCH ? [...(JSON.parse(process.env.DGM_PROBE_LAUNCH) as string[]), ...launchArgs()] : [steamExe(), '-applaunch', STEAM_APP_ID, ...launchArgs()];
     spawn(cmd, args, { detached: true, stdio: 'ignore' }).unref();
     let seenGame = false;
     let lastBeat: Heartbeat | null = null;

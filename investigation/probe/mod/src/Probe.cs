@@ -47,15 +47,33 @@ namespace DGMProbe
         // behind can never take over a player's own session.
         public const string LaunchArgument = "-dgmprobe";
 
-        // Reads Documents\Timberborn\DGMProbe\job.json. Without the launch argument or the job file the
-        // probe stays off for this launch.
+        // The probe's folder follows this argument (the runner passes C:\dgm-probe). The probe never writes
+        // into the player's Timberborn folder (Kyler's decision #54): without the argument, or with a folder
+        // inside Documents\Timberborn, it stays off.
+        public const string HomeArgument = "-dgmprobeHome";
+
+        // Reads <home>\job.json. Without the launch argument, the home argument or the job file the probe
+        // stays off for this launch.
         public static bool TryActivate()
         {
-            if (Array.IndexOf(Environment.GetCommandLineArgs(), LaunchArgument) < 0)
+            string[] args = Environment.GetCommandLineArgs();
+            if (Array.IndexOf(args, LaunchArgument) < 0)
             {
                 return false;
             }
-            Home = Path.Combine(DocumentsTimberborn(), "DGMProbe");
+            int at = Array.IndexOf(args, HomeArgument);
+            if (at < 0 || at + 1 >= args.Length || string.IsNullOrWhiteSpace(args[at + 1]))
+            {
+                Log("no " + HomeArgument + " folder given; the probe stays off.");
+                return false;
+            }
+            Home = Path.GetFullPath(args[at + 1]);
+            string docs = Path.GetFullPath(DocumentsTimberborn()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if ((Home.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar).StartsWith(docs, StringComparison.OrdinalIgnoreCase))
+            {
+                Log(Home + " is inside the game's own folder; the probe stays off.");
+                return false;
+            }
             string jobFile = Path.Combine(Home, "job.json");
             if (!File.Exists(jobFile))
             {

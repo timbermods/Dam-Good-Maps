@@ -1,0 +1,165 @@
+{
+  "buildId": "3d4ee86c350c609c17b8149b824d6e9c054abbea8fb8d2aaa29f8416c88e9710",
+  "byRuntime": {
+    "node": {
+      "128": {
+        "probeCases": 180,
+        "continuousCases": 6,
+        "metric": "cpuMs",
+        "probes": {
+          "baseline": {
+            "endMs": 984.5,
+            "keysMs": 2531,
+            "sequentialEndMs": 12413.5,
+            "totalMs": 26265.5,
+            "idealTwoWorkerFloorMs": 13132.75,
+            "idealTwoWorkerScheduleMs": 14078.5
+          },
+          "combined": {
+            "endMs": 718,
+            "keysMs": 1726,
+            "sequentialEndMs": 8178.5,
+            "totalMs": 18655.5,
+            "idealTwoWorkerFloorMs": 9327.75,
+            "idealTwoWorkerScheduleMs": 9569
+          }
+        },
+        "continuous": {
+          "baseline": {
+            "endMs": 8015.5,
+            "keysMs": 9374.5,
+            "totalMs": 28576.5
+          },
+          "combined": {
+            "endMs": 5524.5,
+            "keysMs": 6517,
+            "totalMs": 20368.5
+          }
+        },
+        "cacheCopyParseMs": 1.2500249999975495,
+        "yieldMeanMs": 0.0037995000010414516,
+        "arrayTimelineBytes": 31850496,
+        "frameBytes": 1369633.5
+      },
+      "256": {
+        "probeCases": 18,
+        "continuousCases": 6,
+        "metric": "cpuMs",
+        "probes": {
+          "baseline": {
+            "endMs": 3541,
+            "keysMs": 8976.5,
+            "sequentialEndMs": 43217,
+            "totalMs": 91988,
+            "idealTwoWorkerFloorMs": 45994,
+            "idealTwoWorkerScheduleMs": 48866.5
+          },
+          "combined": {
+            "endMs": 2711.5,
+            "keysMs": 6845,
+            "sequentialEndMs": 31134.5,
+            "totalMs": 70985,
+            "idealTwoWorkerFloorMs": 35492.5,
+            "idealTwoWorkerScheduleMs": 37337
+          }
+        },
+        "continuous": {
+          "baseline": {
+            "endMs": 30423.5,
+            "keysMs": 35580,
+            "totalMs": 111299
+          },
+          "combined": {
+            "endMs": 20617.5,
+            "keysMs": 24173.5,
+            "totalMs": 77301
+          }
+        },
+        "cacheCopyParseMs": 2.2656999999599066,
+        "yieldMeanMs": 0.003277500001422595,
+        "arrayTimelineBytes": 127401984,
+        "frameBytes": 3386268.5
+      }
+    },
+    "chromium": {
+      "128": {
+        "probeCases": 180,
+        "continuousCases": 6,
+        "metric": "wallMs",
+        "probes": {
+          "baseline": {
+            "endMs": 1077.1500000357628,
+            "keysMs": 2799.4499999582767,
+            "sequentialEndMs": 14535.199999988079,
+            "totalMs": 31530.25000014901,
+            "idealTwoWorkerFloorMs": 15765.125000074506,
+            "idealTwoWorkerScheduleMs": 16736.899999946356
+          },
+          "combined": {
+            "endMs": 726.6499999165535,
+            "keysMs": 1768.3500000238419,
+            "sequentialEndMs": 8998.700000017881,
+            "totalMs": 21419.900000184774,
+            "idealTwoWorkerFloorMs": 10709.950000092387,
+            "idealTwoWorkerScheduleMs": 10982.349999964237
+          }
+        },
+        "continuous": {
+          "baseline": {
+            "endMs": 8602.65000000596,
+            "keysMs": 10167.59999999404,
+            "totalMs": 34923.09999999404
+          },
+          "combined": {
+            "endMs": 7453.199999988079,
+            "keysMs": 9369.799999952316,
+            "totalMs": 26252.699999898672
+          }
+        },
+        "cacheCopyParseMs": 1.2750000059604645,
+        "yieldMeanMs": 0.004249999970197678,
+        "arrayTimelineBytes": 31850496,
+        "frameBytes": 1369633.5
+      },
+      "256": {
+        "probeCases": 18,
+        "continuousCases": 6,
+        "metric": "wallMs",
+        "probes": {
+          "baseline": {
+            "endMs": 3834.649999946356,
+            "keysMs": 9235.749999910593,
+            "sequentialEndMs": 43168.80000001192,
+            "totalMs": 96643.40000009537,
+            "idealTwoWorkerFloorMs": 48321.700000047684,
+            "idealTwoWorkerScheduleMs": 50864.70000013709
+          },
+          "combined": {
+            "endMs": 2550.699999988079,
+            "keysMs": 6706.450000017881,
+            "sequentialEndMs": 28221.999999940395,
+            "totalMs": 67918.34999990463,
+            "idealTwoWorkerFloorMs": 33959.174999952316,
+            "idealTwoWorkerScheduleMs": 35469.54999998212
+          }
+        },
+        "continuous": {
+          "baseline": {
+            "endMs": 30896.400000035763,
+            "keysMs": 35949.600000053644,
+            "totalMs": 115575.90000009537
+          },
+          "combined": {
+            "endMs": 20809.549999922514,
+            "keysMs": 24333.899999946356,
+            "totalMs": 80331.20000007749
+          }
+        },
+        "cacheCopyParseMs": 2.4500000029802322,
+        "yieldMeanMs": 0.005250000059604645,
+        "arrayTimelineBytes": 127401984,
+        "frameBytes": 3386268.5
+      }
+    }
+  }
+}
