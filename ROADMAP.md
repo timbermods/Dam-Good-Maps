@@ -909,6 +909,8 @@ they conflict):
    Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
    with an optional "stop at" level (a faint plane, a pulse on arrival); never below the map's bottom
    or under placed objects.
+   Flatten (D204) starts from the stroke's own height, cuts and fills, has Cliff or Ramped edges,
+   hints where the start fits, and carries trees and objects with the ground.
 2. **Water:** a reflection of the land being painted.
    - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an

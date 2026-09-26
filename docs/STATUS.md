@@ -114,6 +114,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D201: waterfalls with shape and volume in the Standard look (an arcing translucent ribbon, foam at the lip, whitewater below, cascades as small falls); mist and spray in Map look 2's High mode.
 - D202: Craterize, a giant-impact tool with its own button next to Carve; its prototype (`investigation/craterize`) is held until Kyler says it's ready.
 - D203: Quake (a fault line: Lift or Slide, Power, Sheer or Stepped scarp) joins Carve and Craterize in a visually distinct forces group on the top bar; all three share one forces core; its prototype is held until Kyler says it's ready.
+- D204: Flatten from the stroke's start, cut and fill, Cliff or Ramped edges, a "start fits here" hint, objects ride the ground; and the principle "tools read intent".
 
 ## Done and released
 
