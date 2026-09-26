@@ -180,9 +180,22 @@ export async function responseOf(r: ResponseInput): Promise<GenerateResponse> {
   };
 }
 
-export async function runGenerate(spec: MapSpec): Promise<GenerateResponse> {
+/** What the page hears while a map is made (ROADMAP M9a: generating shows its progress): each
+ *  attempt's stage, and its first look, the land and the water the hydrology planned (channels 1,
+ *  lakes 2, floors 3), before the water is settled. */
+export type GenProgress = { kind: "stage"; attempt: number; stage: string } | { kind: "land"; attempt: number; W: number; H: number; heights: Uint8Array; water: Uint8Array };
+
+export async function runGenerate(spec: MapSpec, onProgress?: (p: GenProgress) => void): Promise<GenerateResponse> {
   const t0 = performance.now();
-  const r = generate(spec);
+  const r = generate(
+    spec,
+    onProgress
+      ? {
+          onProgress: (p) => onProgress({ kind: "stage", attempt: p.attempt, stage: p.stage }),
+          onLand: (l) => onProgress({ kind: "land", attempt: l.attempt, W: spec.size.x, H: spec.size.y, heights: l.heights, water: l.water }),
+        }
+      : {},
+  );
   const ms = Math.round(performance.now() - t0);
   last = r;
   const project = encodeProject(generatedDocument(r));

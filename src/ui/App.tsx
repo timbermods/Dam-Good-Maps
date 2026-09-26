@@ -29,6 +29,9 @@ import type { EditorProps } from "../editor/Editor";
 import type { ExportDialogProps } from "../editor/panels";
 import { fetchIndex, fetchPlace, placeFromHash, PLACES_URL } from "../places/data";
 import { Preview2D, type Layers } from "./Preview2D";
+import { FirstLook, type Progress } from "./FirstLook";
+import { proxy } from "comlink";
+import type { GenProgress } from "../worker/api";
 import { MapCard } from "./MapCard";
 import { SettingsPanel } from "./SettingsPanel";
 import { shareText } from "./settingsModel";
@@ -124,6 +127,8 @@ export function App() {
   /** The settings page shows the open document's map (its edits included). */
   const [fromSession, setFromSession] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** While a new map is made: its stage and first look. */
+  const [progress, setProgress] = useState<Progress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | undefined>(init.note);
   const [layers, setLayers] = useState<Layers>({ water: true, moisture: false, contamination: false, reach: false, dam: true, entities: true, features: false });
@@ -232,7 +237,11 @@ export function App() {
         setSession(null);
         void storage.clear();
       }
-      const r = await generator.generate(s);
+      setProgress({ attempt: 0, stage: "land", land: null });
+      const r = await generator.generate(
+        s,
+        proxy((p: GenProgress) => setProgress((q) => (p.kind === "stage" ? { attempt: p.attempt, stage: p.stage, land: q?.land ?? null } : { attempt: p.attempt, stage: q?.stage ?? "land", land: p }))),
+      );
       setResult(r);
       setFromSession(false);
       history.replaceState(null, "", "#" + encodeSpecFragment(r.spec));
@@ -241,6 +250,7 @@ export function App() {
       setError(String(e instanceof Error ? e.message : e));
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -602,7 +612,9 @@ export function App() {
               {error}
             </p>
           )}
-          {result ? (
+          {progress ? (
+            <FirstLook progress={progress} />
+          ) : result ? (
             preview === "3d" ? (
               Preview3D ? (
                 <Preview3D result={result} />
