@@ -233,7 +233,8 @@ new ResizeObserver(()=>{gl.setSize(canvas.clientWidth,canvas.clientHeight,false)
 let previous=performance.now(),fpsAt=previous,frames=0,frameMs:number[]=[],effectTime=0;
 function animate(t:number){
   requestAnimationFrame(animate);const dt=Math.min(.05,(t-previous)/1000);frameMs.push(t-previous);previous=t;frames++;
-  const at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){upload(uploads.shift()!);count++;}
+  const hadUploads=uploads.length>0,at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){upload(uploads.shift()!);count++;}
+  if(hadUploads&&!uploads.length)stateControls();
   if(finishCache&&!uploads.length){afterCache=cache();retain(afterCache);finishCache=false;pruneCaches();stateControls();}
   const pan=Math.max(W,H)*.25*dt*(keys.has('shift')?3:1);
   const x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),z=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);

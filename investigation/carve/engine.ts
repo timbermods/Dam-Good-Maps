@@ -22,7 +22,7 @@ export const plainEntities=(e:EntitySpec[]):EntitySpec[]=>JSON.parse(JSON.string
 export const isPlant=(e:EntitySpec)=>/^(Pine|Birch|Oak|Succulent|BlueberryBush)$/.test(e.template);
 export const objects=(e:EntitySpec[]):MapObject[]=>e.map(e=>({...e,components:{...e.before,...e.components}}));
 export const modelFor=(m:CarveMap)=>waterModel(m.W,m.H,m.heights,objects(m.entities));
-export const sourceStrength=(power:number)=>.5+7.5*power/100;
+export const sourceStrength=(power:number,width?:number|null)=>Math.round((.5+7.5*(width==null?power/100:Math.max(0,Math.min(1,(width-2.8)/10))))*1e6)/1e6;
 export function placeSource(m:CarveMap,tile:number,strength:number,id='carve-source'):CarveMap {
   const e=waterSource({id,owner:'carve',x:tile%m.W,y:Math.floor(tile/m.W),z:m.heights[tile],strength});
   return {...m,entities:plainEntities([...m.entities.filter(e=>e.id!==id),e])};
@@ -93,7 +93,7 @@ export class CarveRun {
       throw new Error('The end point is uphill. Turn on Defy gravity to cut it down.');
     }
     this.stamp(x,y);
-    if(!settings.dry)this.map.entities=placeSource(this.map,intent.origin,sourceStrength(settings.power),this.sourceId).entities;
+    if(!settings.dry)this.map.entities=placeSource(this.map,intent.origin,sourceStrength(settings.power,settings.width),this.sourceId).entities;
   }
   private hard(level:number):number {
     return this.settings.layers?(this.map.rockLayers?.[level]??hardness(level,true,this.seed)):0;

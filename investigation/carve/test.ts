@@ -81,11 +81,14 @@ check('objects on excavated footprints are removed; the start is never removed',
  assert.ok(r.map.entities.some(e=>e.template==='StartingLocation'));
  assert.ok(r.map.entities.length<m.entities.length);
 });
-check('keep river creates a real source set by power; dry canyon adds no source',()=>{
+check('keep river follows nominal width, linked to power by default; dry canyon adds no source',()=>{
  assert.ok(high.map.entities.some(e=>e.id.startsWith('carve-source')));
  const another=new CarveRun(high.map,DEFAULTS,{origin:54*64+53});
  assert.equal(another.map.entities.filter(e=>e.id.startsWith('carve-source')).length,2,'a new carve must keep the previous river');
  assert.equal(sourceStrength(100),8);assert.equal(sourceStrength(0),.5);
+ assert.equal(sourceStrength(95,2),.5);assert.equal(sourceStrength(15,24),8);assert.equal(sourceStrength(85,naturalWidth(85)),sourceStrength(85));
+ const slot=new CarveRun(mountain,{...DEFAULTS,power:95,width:2},intent),broad=new CarveRun(mountain,{...DEFAULTS,power:15,width:24},intent);
+ assert.equal(modelFor(slot.map).emitters.find(e=>e.cells.includes(intent.origin))!.strength,.5);assert.equal(modelFor(broad.map).emitters.find(e=>e.cells.includes(intent.origin))!.strength,8);
  const dry=complete(mountain,{dry:true,power:95});assert.ok(!dry.map.entities.some(e=>e.id.startsWith('carve-source')));
  const settled=canonicalSettle(modelFor(dry.map));assert.ok(settled.depth.every(v=>v===0));
  assert.deepEqual(dry.map.heights,high.map.heights);

@@ -9,7 +9,7 @@
     "defy gravity cuts an uphill destination into a connected descending floor",
     "same input and duration has exact output independent of presentation batching",
     "objects on excavated footprints are removed; the start is never removed",
-    "keep river creates a real source set by power; dry canyon adds no source",
+    "keep river follows nominal width, linked to power by default; dry canyon adds no source",
     "check status and start reach update from changed terrain and resources without blocking it",
     "Wander makes a longer, overshooting course through actual terrain and still reaches the aimed destination",
     "independent width makes deep slots or wide shallow cuts; linked width matches the explicit natural width",
@@ -27,10 +27,10 @@
     "generated 256 map preserves start and exact complete operation"
   ],
   "timings": {
-    "128 step p95 ms": 1.4734999999998308,
-    "128 apply and undo ms": 5.0190000000000055,
-    "256 step p95 ms": 4.066399999999703,
-    "256 apply and undo ms": 6.885400000001027
+    "128 step p95 ms": 1.414700000000039,
+    "128 apply and undo ms": 4.255900000000111,
+    "256 step p95 ms": 5.4812999999994645,
+    "256 apply and undo ms": 9.321700000000419
   },
   "terrainHashes": {
     "mountain": "42c79baeb9ce20ae24d6620fb99a8da9d85412e24726c593e6437ae131381177",
