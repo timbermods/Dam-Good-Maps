@@ -502,3 +502,13 @@ so 10–25% bad already reads warm."
   change generated maps on purpose: seed 4242 at 128² River Valley now downloads as sha256
   `e4f2f72c…` (it was `5118b6a6…` since M8). `tests/contract/look-mine-ruins.test.ts` pins `dev`'s
   new value; this branch changes no bytes of its own (no `src/core` change against `dev`).
+
+**The mine pit and badwater (Kyler's review of D177 and D178, 2026-09-26).** Merging `dev` brought
+#42's mine sites: its pit (#373A34, L* 23.9) is now darker than #38's approved crimson badwater
+(#6E342E, L* 29.3), where it was lighter than the red-black badwater before. Kyler chose to keep both
+colours and flip the order, as in the game. Test updated per D148:
+`tests/unit/look-mine-ruins.test.ts`'s "read in greyscale from above: a dark pit, a rusty frame,
+pale wood, and apart from badwater sources" checked the pit 0.05 (luma) lighter than badwater; it is
+now "…: a dark pit, darker than badwater, …" and checks the pit at least 5 L* darker than badwater
+(5.4 today). Every capture was made again on the current maps (dev's start and edge rules changed
+them), with the before site built from current `dev`.
