@@ -5,6 +5,7 @@ import { THEMES, THEME_NAMES } from '../../src/core/spec/mapspec';
 import { CHANGES, NOT_ENDORSED, PROVIDER_NOTICES } from '../../src/core/places/attribution';
 import { bridge, Effects } from './effects';
 import { pose } from './poses';
+import { WaterFlow } from './flow';
 import type { MapRequest } from './maps.worker';
 
 const $ = <T extends HTMLElement>(id:string) => document.getElementById(id) as T;
@@ -16,6 +17,8 @@ standard.setClock(8); high.setClock(8);
 const effects=new Effects(high);
 effects.water=effects.shadows=true;
 effects.apply();
+const flow = new WaterFlow(bridge(high).waterMat);
+let flowSource = '', velocity = new Float32Array(0);
 let map: MapView | undefined, label='', worker:Worker|undefined, serial=0, ready=false;
 let waterView:ReturnType<typeof surfaceWater>|undefined;
 let syncing=false;
@@ -51,6 +54,7 @@ async function load(index=Number(select.value),seed=Number($<HTMLInputElement>('
       map=data.view;label=data.label;waterView=surfaceWater(map!.W,map!.H,map!.water);
       try {
         standard.setMap(map!);high.setMap(map!);effects.fit(map!.W,map!.H);
+        velocity=data.velocity;flowSource=data.flowSource;flow.set(map!.W,map!.H,velocity);
         $<HTMLInputElement>('sun').value='0';
         setPose($<HTMLSelectElement>('pose').value);
         ready=true;status.textContent=`${label} · ${map!.entities.count.toLocaleString()} objects · cameras synced`;
@@ -104,6 +108,7 @@ declare global { interface Window { maplook2: typeof api } }
 const api={
   get ready(){return ready;},get map(){return map;},get label(){return label;},options,
   load,setPose,standard,high,effects,
+  flow,get velocity(){return velocity;},get flowSource(){return flowSource;},
   freeze(t=8){$<HTMLInputElement>('pause').checked=true;clock=t;standard.setClock(t);high.setClock(t);standard.renderNow();high.renderNow();},
   toggle(water:boolean,shadows:boolean){$<HTMLInputElement>('water').checked=water;$<HTMLInputElement>('shadows').checked=shadows;toggle();},
   camera(v:Partial<ViewState>){standard.setView(v);high.setView(v);},
@@ -111,5 +116,5 @@ const api={
 };
 window.maplook2=api;
 for(const r of [standard,high])r.canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();ready=false;status.textContent='WebGL context lost. Reload the page to restore the comparison.';});
-window.addEventListener('pagehide',()=>{worker?.terminate();effects.dispose();standard.dispose();high.dispose();});
+window.addEventListener('pagehide',()=>{worker?.terminate();flow.dispose();effects.dispose();standard.dispose();high.dispose();});
 void load().catch(console.error);

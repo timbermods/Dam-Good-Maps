@@ -12,9 +12,11 @@ Use Node 22.12+ and open http://127.0.0.1:4197. First run installs this folder's
 
 ## Result and captures
 
-Standard is on the left, High on the right; cameras and water time match. Clean High water now follows Kyler's measured colours: a restrained blue-grey body, gentle depth darkening, drifting lighter streaks, sparse near-white flecks, and lighter reflections toward the horizon. Real bed detail transmits faintly, more in the shallows. Badwater, waterfall foam and the accepted soft shadows keep their previous shader paths.
+Standard is on the left, High on the right; cameras and water time match. Clean High water keeps Kyler's accepted measured palette and gentle depth darkening. Its surface now has small, dense, irregular choppy crests and many tiny white flecks, denser in faster currents. Real bed detail transmits faintly, more in the shallows. Badwater, waterfall foam and the accepted soft shadows keep their previous shader paths.
 
 **Measured-colour revision:** this replaces the previous bright teal treatment. The colour constants compensate for the demo's lighting, warm finish and visible bed; simply entering the screenshot hex values as material inputs did not produce those colours on screen. No screenshot or game asset was loaded: only the supplied numeric measurements were used.
+
+**Final prototype tuning:** only clean surface detail and motion changed after colour acceptance. Generated maps and Real places use their existing settled outflows for direction and speed. M9 imports use a 128-tick estimate from their stored water through the repository simulator; the displayed depths, soil and geometry never change. Velocity is compressed for readable motion while preserving direction. Still lakes retain slow wind drift. Two overlapping advection phases avoid stretching and reset pops; world-coordinate procedural noise replaces the long streaks without a repeating texture tile. Final in-game comparison and polish belong to Map look 2, using DGM Probe shots; no probe batch was run here.
 
 ![Lake water from above](captures/lake-128-water-above.jpg)
 
@@ -40,11 +42,13 @@ The final framebuffer is measured after lighting, haze, the existing finish and 
 | Streaks, above | #2F545F | #2F545F |
 | Streaks, low | #3A5761 | #3A5761 |
 | Body, grazing | #34505A | #34505A |
-| Streaks, grazing | #507B81 | #507B81 |
+| Streaks, grazing | #507B81 | #517C83 |
 
 [Measurements and preservation checks](captures/colour-check.json). Since the screenshots did not specify numeric depths or angles, the reference depths are 0.25, 1.25 and 4.25 levels, viewed at 70°, 30° and 10.3° above the surface. The test uses a 64² synthetic bed, the same renderer/sun/shadows, time 8 s and a central 120×48-pixel patch. Actual maps interpolate between these anchors and vary with shadow, bed, angle and texture. This is not a claim that every water pixel equals a swatch.
 
-`npm --prefix investigation/maplook2 run check:colour` repeats the measurement with the demo running and Chrome installed. It permits at most two RGB code values of error; this software run rounds to all seven targets exactly. It also compares against the preceding accepted shader from commit `1919106`: pure badwater is unchanged across 1,283,415 channels, and the waterfall curtain across 18,720 channels. Foam colour, coverage, motion and opacity formulas remain unchanged.
+`npm --prefix investigation/maplook2 run check:colour` repeats the measurement with the demo running and Chrome installed. The palette constants are asserted identical to accepted commit `9aeac6b`. All body samples still match exactly; the changed crest/fleck distribution moves the grazing highlight sample by at most two RGB codes, within the original test tolerance. Pure badwater is unchanged across 1,283,415 channels, and the waterfall curtain across 18,720 channels. Foam colour, coverage, motion and opacity formulas remain unchanged.
+
+`npm --prefix investigation/maplook2 run check:surface` tracks rendered crests over 0.1 seconds: slow east moves 0.04 tiles, fast east/west/north moves 0.12 tiles in the corresponding direction, and the still-lake displacement is below 0.01 tile. It checks all four simulator directions, increased crest/fleck density and smooth phase handoffs. [Surface checks](captures/surface-check.json) record the controlled probes; these are appearance checks, not measured game velocities or GPU benchmarks.
 
 ## Checks
 
@@ -62,7 +66,7 @@ Reproduce with the demo running and Chrome installed: `npm --prefix investigatio
 - High changes only water and sun shadows. Terrain patterns, soil/contamination, models, sky, grading and resolution remain the baseline. Existing contact darkening stays; no new AO pass.
 - Generated maps use the repository generator in a worker; Real places use its library/build path; M9 files use its importer. No game assets or game captures are read or copied.
 - The original checkout has unrelated edits. Work uses a separate worktree from dev and the explicitly authorized branch.
-- Clean-water sky reflection uses a calibrated angular colour envelope, not reflected terrain. Foam uses existing tile flags; no physical flow is invented. The 2048² map-wide shadow softens small objects on large maps. None of the 25 maps has cave columns, so cave support remains a proposal, not a tested claim. See [INTEGRATION.md](INTEGRATION.md) for adoption, automatic High/fallback, M9/caves and likely costs.
+- Clean-water sky reflection uses the accepted calibrated angular colour envelope, not reflected terrain. Foam uses existing tile flags. Surface motion uses repository simulation outflows, with an estimate for imported maps; it is not a new fluid simulation in the renderer. The 2048² map-wide shadow softens small objects on large maps. None of the 25 maps has cave columns, so cave support remains a proposal, not a tested claim. See [INTEGRATION.md](INTEGRATION.md) for adoption, automatic High/fallback, M9/caves and likely costs.
 
 ## Steps
 
@@ -71,3 +75,4 @@ Reproduce with the demo running and Chrome installed: `npm --prefix investigatio
 3. Kept badwater visibly liquid from above, captured all required meanings and angles, and passed the 25-map sweep plus parity/toggle/animation/camera checks. Added the integration proposals. Updated the unused local dev reference for the requested scope check; dev advanced only in planning documents during this work.
 4. Revised only High water after the PC feedback: raised teal-blue saturation and brightness, retained clear banks, strengthened moving ripple/sky highlights and waterfall foam. Kept the shadow implementation byte-for-byte unchanged. Refreshed the comparison set, including the requested start, waterfall and 256² overview.
 5. Replaced bright clean water with the supplied measured palette. Calibrated the displayed output, added above/low/grazing views and numeric/preservation checks, and refreshed the captures. Kept badwater, waterfall foam and soft shadows as accepted.
+6. Final prototype round: retained the accepted palette, replaced broad streaks with finer choppy detail, added flow-driven motion and more tiny flecks, and checked direction, speed, continuity and preservation. Refreshed captures; further polish is deferred to Map look 2 against DGM Probe's in-game shots.

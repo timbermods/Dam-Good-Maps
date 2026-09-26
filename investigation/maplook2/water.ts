@@ -1,4 +1,4 @@
-import { Vector3, type ShaderMaterial } from 'three';
+import { Vector2, Vector3, type ShaderMaterial } from 'three';
 
 // Display-space palette, calibrated through the renderer (see colour-check.mjs).
 // Targets are the user's measurements; these inputs also allow for the lit bed and finish.
@@ -11,6 +11,8 @@ export const CLEAN_PALETTE = {
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
   material.uniforms = { ...material.uniforms };
+  material.uniforms.mlFlow = { value: null };
+  material.uniforms.mlFlowSize = { value: new Vector2(1, 1) };
   for (const [name, rgb] of Object.entries(CLEAN_PALETTE)) {
     material.uniforms[name] = { value: new Vector3(...rgb).divideScalar(255) };
   }
@@ -27,8 +29,32 @@ vec3 rippleNormal(vec2 p, float t) {
   return normalize(vec3(slope.x * detail, 1.0, -slope.y * detail));
 }
 uniform vec3 mlShallow, mlBody, mlDeep, mlStreakAbove, mlStreakLow, mlGrazing, mlStreakGrazing;
+uniform sampler2D mlFlow;
+uniform vec2 mlFlowSize;
 float fleckHash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float detailNoise(vec2 p) {
+  vec2 cell=floor(p), f=fract(p), u=f*f*(3.0-2.0*f);
+  return mix(mix(fleckHash(cell),fleckHash(cell+vec2(1.0,0.0)),u.x),
+    mix(fleckHash(cell+vec2(0.0,1.0)),fleckHash(cell+1.0),u.x),u.y);
+}
+// Short irregular crests at two incommensurate scales. World-space hashing has
+// no tiled texture, repeated strip or long sine band. Advection follows local flow.
+float chop(vec2 p) {
+  vec2 warp = vec2(detailNoise(p*1.73+8.0), detailNoise(p*1.91-17.0)) - 0.5;
+  vec2 q = mat2(0.91,0.41,-0.41,0.91) * (p + warp*0.19);
+  float coarse = detailNoise(q*vec2(3.3,7.1));
+  float fine = detailNoise(mat2(0.63,-0.78,0.78,0.63)*p*11.3+31.7);
+  return coarse*0.82+fine*0.18;
+}
+float microFlecks(vec2 p, float t, float speed, float pixel) {
+  vec2 cell = floor(p*7.0);
+  vec2 point = vec2(fleckHash(cell+13.0),fleckHash(cell+47.0))*0.6+0.2;
+  float radius = max(pixel*7.0*0.5,0.065);
+  float spot = 1.0-smoothstep(radius*0.25,radius,length(fract(p*7.0)-point));
+  float twinkle = smoothstep(0.1,0.85,sin(t*(1.1+speed*1.2)+fleckHash(cell)*51.0));
+  return spot * step(mix(0.96,0.82,speed),fleckHash(cell+91.0)) * twinkle;
 }
 vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float lit, float t) {
   float bodyDepth = smoothstep(0.25, 1.25, depth);
@@ -40,26 +66,26 @@ vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float 
   float grazing = 1.0 - smoothstep(0.18, 0.50, facing);
   body = mix(body, mlGrazing, grazing);
   vec3 streakColour = mix(mix(mlStreakAbove, mlStreakLow, low), mlStreakGrazing, grazing);
-  // Stretched, warped noise drifts across the surface. No large regular sine bands.
-  vec2 q = vec2(g.x*0.85+g.y*0.24, g.y*5.0-g.x*0.6);
-  q += vec2(vnoise(g*0.55)*0.8, vnoise(g*0.45+9.0)*1.4);
-  q += vec2(t*0.12, -t*0.40);
-  float texture = vnoise(q);
+  vec2 velocity = (texture2D(mlFlow,g/mlFlowSize).rg*255.0-128.0)/63.5;
+  float speed = smoothstep(0.02,1.2,length(velocity));
+  // Still lakes retain a little slow wind motion; current dominates in channels.
+  vec2 drift = velocity*0.65 + vec2(0.018,-0.012)*(1.0-speed);
+  // Two overlapping phases prevent accumulated flow-map stretching or a reset pop.
+  float phase = fract(t/12.0), second = fract(t/12.0+0.5);
+  float blend = abs(phase*2.0-1.0);
+  vec2 p = g-drift*(phase*12.0), p2 = g-drift*(second*12.0)+vec2(19.13,7.71);
   float pixel = max(fwidth(g.x), fwidth(g.y));
   float near = 1.0 - smoothstep(0.18, 0.80, pixel);
-  float streak = smoothstep(0.51, 0.68, texture) * near;
+  float texture = 0.5+(mix(chop(p),chop(p2),blend)-0.5)/sqrt(blend*blend+(1.0-blend)*(1.0-blend));
+  float streak = smoothstep(0.51,0.79,texture) * near;
   vec3 colour = mix(body, streakColour, streak);
   // Palette is anchored in full sun; preserve the existing sun's shadow attenuation.
   vec3 referenceLight = skyColor*1.05 + sunColor*0.42*max(sunDir.y, 0.0);
   vec3 rippleLight = skyColor*1.05 + sunColor*0.42*max(dot(normalize(mix(vec3(0.0,1.0,0.0),N,0.35)),sunDir),0.0)*lit;
   colour *= rippleLight / max(referenceLight, vec3(0.01));
-  // Tiny, sparse microfacet flecks. Fade before they become subpixel noise from afar.
-  vec2 cell = floor(g*3.0);
-  vec2 point = vec2(fleckHash(cell+13.0), fleckHash(cell+47.0))*0.6+0.2;
-  float radius = max(pixel*3.0*0.6, 0.035);
-  float spot = 1.0 - smoothstep(radius*0.3, radius, length(fract(g*3.0)-point));
-  float twinkle = smoothstep(0.30,0.85,sin(t*1.7+fleckHash(cell)*51.0));
-  float glint = spot * step(0.992, fleckHash(cell+91.0)) * twinkle * lit * (1.0-smoothstep(0.06,0.15,pixel));
+  // Many tiny facets, denser in fast flow. The accepted near-white colour stays fixed.
+  float glint = mix(microFlecks(p,t,speed,pixel),microFlecks(p2,t,speed,pixel),blend);
+  glint *= lit*(1.0-smoothstep(0.08,0.22,pixel));
   colour = mix(colour, vec3(0.97,0.985,1.0), glint);
   // Faint real transmission, strongest over the shallow terrace and close to its bank.
   float alpha = mix(mix(0.86,0.96,bodyDepth),0.995,deep);

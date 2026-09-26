@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 process.chdir(fileURLToPath(new URL('.', import.meta.url)));
 mkdirSync('.cache',{recursive:true});
-writeFileSync('.cache/accepted-water.ts',execFileSync('git',['show','1919106:investigation/maplook2/water.ts']));
+writeFileSync('.cache/accepted-water.ts',execFileSync('git',['show','9aeac6b:investigation/maplook2/water.ts']));
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-vulkan']});
 const page=await browser.newPage({viewport:{width:1440,height:940},deviceScaleFactor:1});
 page.setDefaultTimeout(300000);
@@ -23,6 +23,7 @@ try{
       const m={W,H:W,heights:new Uint8Array(N).fill(floor),columns:{tiles:new Int32Array(),voxels:new Uint8Array()},entities:{...a.map.entities,count:0},soil:{moisture:new Uint8Array(N),contamination:new Uint8Array(N)},water:{count:N,tile:Int32Array.from({length:N},(_,i)=>i),floor:new Float32Array(N).fill(floor),depth:new Float32Array(N).fill(depth),contamination:new Float32Array(N).fill(contamination)}};
       if(falls)for(let i=0;i<N;i++)m.heights[i]=m.water.floor[i]=i%W<32?8:4;
       a.standard.setMap(m);a.high.setMap(m);a.effects.fit(W,W);
+      a.flow.set(W,W,new Float32Array(N*2));
       return floor+depth;
     }
     function sample(height,pitch){
@@ -44,7 +45,9 @@ try{
       const height=bed(depth),s=sample(height,pitch);
       measurements.push({label,depth,pitch,body:s.body.map(Math.round),bodyHex:hex(s.body),streak:s.streak.map(Math.round),streakHex:hex(s.streak)});
     }
-    const {highWater:acceptedWater}=await import('/.cache/accepted-water.ts');
+    const {highWater:acceptedWater,CLEAN_PALETTE:acceptedPalette}=await import('/.cache/accepted-water.ts');
+    const {CLEAN_PALETTE:currentPalette}=await import('/water.ts');
+    if(JSON.stringify(acceptedPalette)!==JSON.stringify(currentPalette))throw new Error('Accepted palette changed');
     const accepted=acceptedWater(a.effects.standard.clone());accepted.uniforms=material.uniforms;
     function renderWith(mat){
       a.high.waterMat=mat;for(const mesh of a.high.water.values())mesh.material=mat;
@@ -65,7 +68,7 @@ try{
     const box=[Math.ceil(Math.min(corner1.x,corner2.x))+2,Math.ceil(Math.min(corner1.y,corner2.y))+2,Math.floor(Math.max(corner1.x,corner2.x))-2,Math.floor(Math.max(corner1.y,corner2.y))-2];
     const waterfallUnchanged=compare(renderWith(accepted),renderWith(material),box);
     accepted.dispose();
-    return {renderer:a.high.gpu().renderer,targets,inputs:Object.fromEntries(keys.map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,badwaterUnchanged,waterfallUnchanged};
+    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',paletteUnchanged:true,targets,inputs:Object.fromEntries(keys.map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,badwaterUnchanged,waterfallUnchanged};
   });
   result.errors=errors;
   const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing']];

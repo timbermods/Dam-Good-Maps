@@ -76,7 +76,8 @@ try {
       if(i)await page.evaluate(i=>window.maplook2.load(i),i);
       const entry=await page.evaluate(()=>{
         const a=window.maplook2;a.freeze();const m=a.map;
-        return {label:a.label,W:m.W,H:m.H,objects:m.entities.count,waterColumns:m.water.count,caveColumns:m.columns.tiles.length,badwater:Array.from(m.water.contamination).filter(c=>c>=0.95).length,mixed:Array.from(m.water.contamination).filter(c=>c>0.05&&c<0.95).length,moist:Array.from(m.soil.moisture).filter(v=>v>0).length,contaminated:Array.from(m.soil.contamination).filter(v=>v>0).length};
+        const speeds=[];for(let k=0;k<m.water.count;k++){const i=m.water.tile[k];speeds.push(Math.hypot(a.velocity[i*2],a.velocity[i*2+1]));}speeds.sort((a,b)=>a-b);
+        return {label:a.label,W:m.W,H:m.H,objects:m.entities.count,waterColumns:m.water.count,caveColumns:m.columns.tiles.length,badwater:Array.from(m.water.contamination).filter(c=>c>=0.95).length,mixed:Array.from(m.water.contamination).filter(c=>c>0.05&&c<0.95).length,moist:Array.from(m.soil.moisture).filter(v=>v>0).length,contaminated:Array.from(m.soil.contamination).filter(v=>v>0).length,flow:{source:a.flowSource,median:speeds[Math.floor(speeds.length*.5)]??0,p90:speeds[Math.floor(speeds.length*.9)]??0}};
       });
       report.maps.push(entry);console.log('Loaded',i,entry.label);
       if(i===0){await capture('river-128-badwater','badwater');await capture('river-128-soil','contaminated');await capture('river-128-ruins','ruins');}
