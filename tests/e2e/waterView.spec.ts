@@ -54,24 +54,37 @@ test("water is never an object; clear water, layers, strength, sources findable 
   await page.keyboard.press("Escape");
   await expect.poll(() => clear(page)).toBe(false);
 
-  // the game's layers: Alt+scroll cuts the world down, Alt+click picks a tile's layer, and again
-  // shows it all
+  // the game's layers (D196, D207): Alt+scroll cuts the world down, the first step to the highest
+  // layer that hides anything; Alt+middle-click (the game's) or Alt+click picks a tile's layer,
+  // and on a tile at the layer showing, shows it all; the widget says which, and steps and resets
   const top = await page.evaluate(() => Math.max(...window.dgm3d!.renderer.mapState()!.heights));
+  const widget = page.getByRole("group", { name: "Visible layers" });
+  await expect(widget.getByRole("status", { name: "Visible layer" }).or(widget.locator("output"))).toHaveText("∞");
   await page.mouse.move(mp.x, mp.y);
   await page.keyboard.down("Alt");
   await page.mouse.wheel(0, 120);
   await page.mouse.wheel(0, 120);
   await page.keyboard.up("Alt");
   await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(top - 2);
-  await expect(page.locator(".slice-note")).toContainText(`Layer ${top - 2}`);
+  await expect(widget.locator("output")).toHaveText(String(top - 2));
   const level = await page.evaluate(([a, b]) => window.dgm3d!.renderer.heightAt(a, b), m);
   await page.keyboard.down("Alt");
-  await page.mouse.click(mp.x, mp.y);
+  await page.mouse.click(mp.x, mp.y, { button: "middle" });
   await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(level);
   await page.mouse.click(mp.x, mp.y);
   await page.keyboard.up("Alt");
   await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(null);
-  await expect(page.locator(".slice-note")).toHaveCount(0);
+  await expect(widget.locator("output")).toHaveText("∞");
+  // the widget: a step down, one up, and back to the whole world; Esc never resets it
+  await widget.getByRole("button", { name: "Lower the visible layer" }).click();
+  await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(top - 1);
+  await widget.getByRole("button", { name: "Lower the visible layer" }).click();
+  await widget.getByRole("button", { name: "Raise the visible layer" }).click();
+  await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(top - 1);
+  await page.keyboard.press("Escape");
+  expect(await page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(top - 1);
+  await widget.getByRole("button", { name: "Show every layer" }).click();
+  await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.slice)).toBe(null);
 
   // Source picked: every source shows its marker with its strength
   await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Source (6)" }).click();

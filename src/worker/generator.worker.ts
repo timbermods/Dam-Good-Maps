@@ -8,6 +8,7 @@ import type { EditOp, OpOrigin } from "../core/doc/ops";
 import { decodePlaceFile, placeTimber } from "../core/places/place";
 import type { MapSpec } from "../core/spec/mapspec";
 import type { Orientation } from "../core/format/footprints";
+import type { SavedView } from "../core/doc/document";
 import { viewBuffers } from "../render3d/model";
 import { emptyWaterFile, runGenerate, type GenerateResponse } from "./api";
 import * as ed from "./session";
@@ -100,6 +101,7 @@ const api = {
   entitiesAt: (x: number, y: number) => ed.entitiesAt(x, y),
   footprintCheck: (req: ed.ToolRequest) => ed.footprintCheck(req),
   plantAt: (template: string, tiles: number[]) => sendUpdate(ed.plantAt(template, tiles)),
+  setViews: (views: SavedView[]) => ed.setViews(views),
   removeAt: (tiles: number[], kinds: ed.RemoveKind[]) => sendUpdate(ed.removeAt(tiles, kinds)),
   instantCheck: () => ed.instantCheck(),
   async settingsResponse(): Promise<GenerateResponse> {

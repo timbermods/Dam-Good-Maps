@@ -9,7 +9,7 @@
 // blamed on the player's edits, so an unedited import always exports unchanged (PLAN §20, D43).
 
 import { damSites as findDamSites } from "../core/analysis/damsites";
-import { decodeProject, documentFileName, type MapDocument } from "../core/doc/document";
+import { decodeProject, documentFileName, type MapDocument, type SavedView } from "../core/doc/document";
 import { MapSession, type DocOrphan, type HistoryItem, type SessionMode } from "../core/doc/session";
 import type { AppliedOp, EditOp, OpOrigin } from "../core/doc/ops";
 import {
@@ -94,6 +94,8 @@ export interface SessionInfo {
   version: number;
   /** Changes only when the features do (the page keeps its copy, and its index, meanwhile). */
   featuresKey: string;
+  /** The editor's camera bookmarks (D205), saved with the document. */
+  views: SavedView[];
 }
 
 /** The parts of the map view that changed. */
@@ -212,8 +214,17 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
     timberName: s.exportTimberName(),
     projectName: documentFileName(doc),
     featuresKey: featuresKeyOf(s.features),
+    views: s.views,
     version,
   };
+}
+
+/** Keep the editor's camera bookmarks with the document (D205): no edit, no undo step; the page's
+ *  autosave takes them. */
+export function setViews(views: SavedView[]): SessionInfo {
+  const s = need();
+  s.setViews(views);
+  return sessionInfo(s);
 }
 
 // ------------------------------------------------------------------------------------ the view

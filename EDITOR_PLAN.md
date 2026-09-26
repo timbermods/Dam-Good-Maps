@@ -505,9 +505,21 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - the shelf (D184): each object's picture is drawn once by the view itself (the object's model in
     the map's look, into a small render target), and the ghost under the pointer is the object's own
     model, tinted green or red; Remove tints the objects under the pointer red;
+  - the minimap (D205): the Real places top-down picture (`core/render/shade.ts`, one pixel a tile),
+    drawn again when the page is idle after an edit or its water settles, never per frame; the
+    outline is the view's four corners carried to the ground at the camera's target level;
+  - camera bookmarks (D205): the renderer's view (mode, turn, tilt, distance, target) kept per slot
+    in the document's meta (`views`), never an edit, taken by the autosave; a glide eases there in
+    about half a second (at once with reduced motion);
   - the game's layers (D196): one uniform cuts the world above a level; the terrain's vertices are
     clamped to it (walls above it fold away, the cut tops lie on it, hatched), water and objects above
-    it are not drawn, and picking lands on the cut;
+    it are not drawn, and picking lands on the cut. As the game steps it (D207,
+    `LevelVisibilityService`): down from the whole world, the highest layer that hides anything
+    (the map's top less one); up past it, the whole world; the pick (Alt+middle-click, the game's
+    binding, and Alt+click) cuts at a tile's visible level when it is below the layer showing,
+    and otherwise shows everything. Under a cut the brushes leave the ground above it as it is
+    (its tiles are the stroke's kept tiles) and never raise past it; the Select tool's actions
+    likewise;
   - clear water (D196): one uniform makes clean water nearly transparent, and badwater half so, in its
     own colour with diagonal stripes;
   - each source's upwelling (D196): a texture of the sources' middle tiles, read by the water shader

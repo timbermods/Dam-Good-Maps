@@ -18,7 +18,7 @@ import { footprintTiles, startEntranceTile, type Orientation } from "../core/for
 import type { Point } from "../core/features/schema";
 import type { FixOp } from "../core/validate/report";
 import { rulesFor } from "../core/validate/playability";
-import { saveFile } from "../platform";
+import { canSaveToTimberborn, saveFile, saveToTimberborn } from "../platform";
 import { FLIPPED, ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "../render3d/model";
 import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
@@ -26,7 +26,8 @@ import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { checkStartAt, startProblemAt, describeTile, entitiesByTile, FeatureIndex, feedingGroups, newId, sourceGroups, type StartCheck, type TileContext } from "./features";
-import { ExportDialog, HistoryPanel, InstantProblems, LayerLegend, LAYER_NAMES, plain, SourceOptions, StartIndicators, StatusPill, whereOf, type ItemActions, type LayerKind } from "./panels";
+import { HistoryPanel, LayerLegend, LAYER_NAMES, plain, SourceOptions, StartIndicators, whereOf, type ItemActions, type LayerKind } from "./panels";
+import { ChecksDot, Header } from "./Header";
 import { removeKindOf, type RemoveKind } from "../core/features/objects";
 import { Shelf } from "./Shelf";
 import { DEFAULT_SHELF_OPTIONS, paintTiles, quietWord, SHELF, templateOf, type ShelfItem, type ShelfOptions } from "./shelfItems";
@@ -34,6 +35,9 @@ import { removeTool, shelfTool } from "./placeTools";
 import { Juice, loadSound, type SoundSettings } from "./juice";
 import type { StartCheckApi } from "./startCheck.worker";
 import { startSpots } from "./startHint";
+import { FirstRun, loadFirstRun, saveFirstRun, type FirstStep } from "./FirstRun";
+import { LayerWidget } from "./LayerWidget";
+import { Minimap } from "./Minimap";
 import { REMOVE_KINDS, TopBar } from "./TopBar";
 import { SELECT_MODES, Selection, selectTool, sizeWords, type SelectMode } from "./select";
 import { WaterBar } from "./WaterBar";
@@ -211,7 +215,24 @@ export default function Editor(props: EditorProps) {
   });
   const [instant, setInstant] = useState<CheckItem[]>([]);
   const [damSites, setDamSites] = useState<DamSiteView[] | null>(null);
-  const [exporting, setExporting] = useState(false);
+  /** The first run's hints (D184): the steps done so far. */
+  const [firstRun, setFirstRun] = useState<Set<FirstStep>>(loadFirstRun);
+  const firstDone = (step: FirstStep) =>
+    setFirstRun((d) => {
+      if (d.has(step)) return d;
+      const next = new Set(d).add(step);
+      saveFirstRun(next);
+      return next;
+    });
+  const firstDoneRef = useRef(firstDone);
+  firstDoneRef.current = firstDone;
+  /** The minimap (D205): on by default on 256² maps. */
+  const [minimap, setMinimap] = useState(() => info.W >= 256 && info.H >= 256);
+  const minimapRef = useRef(minimap);
+  minimapRef.current = minimap;
+  /** The quiet dot's list is open; a save in progress (D184). */
+  const [dotOpen, setDotOpen] = useState(false);
+  const [saving, setSaving] = useState<{ kind: "timberborn" | "download"; progress: CheckProgress | null } | null>(null);
   const [noticesOpen, setNoticesOpen] = useState(true);
   const [viewTick, setViewTick] = useState(0);
   // the footprint under the pointer (an object from the shelf) and the source clicked (D196)
@@ -729,7 +750,11 @@ export default function Editor(props: EditorProps) {
     const req = sourceRequest(optionsRef.current, x, y);
     void run(
       () => api.applyTool(req, newId()),
-      (u) => u.ok && feel("source", x, y),
+      (u) => {
+        if (!u.ok) return;
+        feel("source", x, y);
+        firstDone("water");
+      },
     );
   }
 
@@ -920,6 +945,13 @@ export default function Editor(props: EditorProps) {
   const startChecker = useRef<Remote<StartCheckApi> | null>(null);
   const startWorker = useRef<Worker | null>(null);
   useEffect(() => () => startWorker.current?.terminate(), []);
+  function startWorkerApi(): Remote<StartCheckApi> {
+    if (!startChecker.current) {
+      startWorker.current = new Worker(new URL("./startCheck.worker.ts", import.meta.url), { type: "module" });
+      startChecker.current = wrap<StartCheckApi>(startWorker.current);
+    }
+    return startChecker.current;
+  }
   function findStart(p: BrushParams, job: number) {
     const s = startHere;
     const m = mirror.current;
@@ -939,13 +971,9 @@ export default function Editor(props: EditorProps) {
       clearTimeout(hintTimer.current);
       hintTimer.current = window.setTimeout(() => setStartHint(null), 9000);
       // the start's requirements there (a walk over the whole map), in the background
-      if (!startChecker.current) {
-        startWorker.current = new Worker(new URL("./startCheck.worker.ts", import.meta.url), { type: "module" });
-        startChecker.current = wrap<StartCheckApi>(startWorker.current);
-      }
       const f = s.feature ? info.features.find((g) => g.id === s.feature) : undefined;
       const bench = f && f.kind === "start" ? { level: z, radius: f.params.benchRadius } : null;
-      void startChecker.current
+      void startWorkerApi()
         .check({ W, H: info.H, heights: m.heights, water: m.water, entities: m.entities, river: indexed?.river ?? null, x: sp.x, y: sp.y, door, bench, self: s.owner, needs })
         .then((check) => {
           if (job !== hintJob.current || !mounted.current) return;
@@ -1126,7 +1154,11 @@ export default function Editor(props: EditorProps) {
     const [cx, cy] = coordinatesAt(template, x, y, o);
     void run(
       () => api.applyTool({ tool: "entity", template, x: cx, y: cy, orientation: o }, newId()),
-      (u) => u.ok && feel("place", cx, cy),
+      (u) => {
+        if (!u.ok) return;
+        feel("place", cx, cy);
+        firstDone("place");
+      },
     );
   }
   /** Trees and bushes painted by a drag: planted where they can grow, one step, each with its pop. */
@@ -1142,6 +1174,7 @@ export default function Editor(props: EditorProps) {
         const W = infoRef.current.W;
         feel("place", planted[0] % W, Math.floor(planted[0] / W));
         renderer.current?.wiggle(planted);
+        firstDone("place");
       },
     );
   }
@@ -1443,6 +1476,7 @@ export default function Editor(props: EditorProps) {
         terrain.current = { ...terrain.current, pre, protect };
         localUndo.current.push(stroke);
         localRedo.current = [];
+        firstDoneRef.current("paint");
         hintJob.current++;
         setStartHint(null);
         const done = sendTerrain(() => api.apply({ op: "brush", params: stroke.params }, "user", stroke.label));
@@ -1502,7 +1536,7 @@ export default function Editor(props: EditorProps) {
       onView?.(v);
       // the sources' markers and the start's hint follow the view; with none on the map, the page need
       // not redraw
-      if (pending || (!markerRef.current && !hintRef.current)) return;
+      if (pending || (!markerRef.current && !hintRef.current && !minimapRef.current)) return;
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
@@ -1544,14 +1578,14 @@ export default function Editor(props: EditorProps) {
     setSelectDraw(null);
     setSelectionTick((n) => n + 1);
   }
-  /** The selection's tiles as runs, for an operation. */
-  const selectedRuns = () => tilesToRuns(selection.current.tiles(), info.W);
   /** What the Select tool does to the selection: one operation, one undo step each. */
   function selectAction(what: "raise" | "lower" | "flatten" | "dig" | "clear", level?: number) {
-    const tiles = selection.current.tiles();
-    if (!tiles.length) return;
     const h = mirror.current.heights;
-    const cells = selectedRuns();
+    // under a cut (D207), only the visible land: the ground above the cut stays as it is
+    const cut = renderer.current?.slice ?? null;
+    const tiles = selection.current.tiles().filter((i) => cut === null || h[i] <= cut);
+    if (!tiles.length) return;
+    const cells = tilesToRuns(tiles, info.W);
     const n = tiles.length;
     if (what === "clear") {
       // everything standing there but the start and the sources (the water is theirs)
@@ -1571,8 +1605,13 @@ export default function Editor(props: EditorProps) {
     let op: EditOp;
     let label: string;
     if (what === "raise" || what === "lower") {
-      op = { op: "sculpt", params: { mode: what, cells, amount: selectAmount } };
-      label = `${what === "raise" ? "Raise" : "Lower"} ${n} tiles by ${selectAmount}`;
+      // (raised under a cut: up to it, never past it)
+      let top = 0;
+      for (const i of tiles) top = Math.max(top, h[i]);
+      const amount = what === "raise" && cut !== null ? Math.min(selectAmount, cut - top) : selectAmount;
+      if (amount <= 0) return flashNote("Nothing can rise under the cut: show a layer more");
+      op = { op: "sculpt", params: { mode: what, cells, amount } };
+      label = `${what === "raise" ? "Raise" : "Lower"} ${n} tiles by ${amount}`;
     } else if (what === "dig") {
       // dig out: down to the selection's lowest ground
       let lo = 99;
@@ -1768,6 +1807,38 @@ export default function Editor(props: EditorProps) {
     return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs, moved) };
   }
 
+  /** The start's reach (D184): its three requirements where it stands, shown while the pointer is on
+   *  it (no tool out), then fading; the walks run in the start's own worker, once per version. */
+  const [startReach, setStartReach] = useState<{ check: StartCheck; fading: boolean } | null>(null);
+  const reachCache = useRef<{ version: number; check: Promise<StartCheck> } | null>(null);
+  const reachFade = useRef(0);
+  /** The pointer is on the start (its reach shows when the walks come back). */
+  const reachWanted = useRef(false);
+  function hoverStart(on: boolean) {
+    reachWanted.current = on;
+    if (!on) {
+      if (!startReach || startReach.fading) return;
+      setStartReach((r) => (r ? { ...r, fading: true } : r));
+      reachFade.current = window.setTimeout(() => setStartReach(null), 700);
+      return;
+    }
+    clearTimeout(reachFade.current);
+    const s = startHere;
+    const m = mirror.current;
+    if (!s || !m.water) return;
+    if (!reachCache.current || reachCache.current.version !== info.version) {
+      const [cx, cy] = cornerFor(s.x, s.y, s.orientation);
+      const door = startEntranceTile(cx, cy, s.orientation);
+      const f = s.feature ? info.features.find((g) => g.id === s.feature) : undefined;
+      const bench = f && f.kind === "start" ? { level: f.params.benchLevel, radius: f.params.benchRadius, ...(f.params.bank ? { bank: f.params.bank } : {}) } : null;
+      reachCache.current = { version: info.version, check: startWorkerApi().check({ W: info.W, H: info.H, heights: m.heights, water: m.water, entities: m.entities, river: indexed?.river ?? null, x: s.x, y: s.y, door, bench, self: s.owner, needs, moved: false }) };
+    }
+    const v = info.version;
+    void reachCache.current.check.then((check) => {
+      if (infoRef.current.version === v && reachWanted.current) setStartReach({ check, fading: false });
+    });
+  }
+
   /** The start dragged on the map (no tool out): its footprint and the start's requirements follow
    *  the pointer, the drop moves it (one step); Esc puts it back. */
   const startGrab = useRef<{ cancel(): void } | null>(null);
@@ -1782,6 +1853,10 @@ export default function Editor(props: EditorProps) {
     const H = info.H;
     const canvas = renderer.current?.canvas;
     if (canvas) canvas.style.cursor = "grabbing";
+    // (the reach while it stood: the drag shows the reach where it goes)
+    clearTimeout(reachFade.current);
+    reachWanted.current = false;
+    setStartReach(null);
     const end = () => {
       done = true;
       startGrab.current = null;
@@ -1834,6 +1909,30 @@ export default function Editor(props: EditorProps) {
       const toggle = target?.tagName === "INPUT" && ["checkbox", "radio", "button"].includes((target as HTMLInputElement).type);
       if (target && !toggle && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
       const mod = ev.ctrlKey || ev.metaKey;
+      // camera bookmarks (D205): Ctrl+Shift+1–9 keeps the view in that slot, Shift+1–9 glides back
+      // to it (the number keys alone pick the brushes)
+      const digit = /^Digit([1-9])$/.exec(ev.code);
+      if (digit && ev.shiftKey && !ev.altKey) {
+        ev.preventDefault();
+        const slot = Number(digit[1]);
+        const r = renderer.current;
+        if (!r) return;
+        if (mod) {
+          const v = r.getView();
+          const views = [...infoRef.current.views.filter((b) => b.slot !== slot), { slot, ...v }].sort((a, b) => a.slot - b.slot);
+          void api.setViews(views).then((i) => {
+            infoRef.current = { ...infoRef.current, views: i.views };
+            setInfo((cur) => ({ ...cur, views: i.views }));
+            props.onChange({ ...infoRef.current, views: i.views });
+          });
+          flashNote(`View ${slot} saved: Shift+${slot} comes back to it`);
+        } else {
+          const b = infoRef.current.views.find((v) => v.slot === slot);
+          if (b) r.glideTo(b);
+          else flashNote(`No view in ${slot} yet: Ctrl+Shift+${slot} keeps this one`);
+        }
+        return;
+      }
       // the brushes: 1–5 pick one (again: it stays out), [ and ] size it, Esc cancels a stroke,
       // then puts it away
       if (!mod && !ev.altKey && /^[1-5]$/.test(ev.key)) {
@@ -1987,6 +2086,36 @@ export default function Editor(props: EditorProps) {
     saveFile(p.bytes, p.fileName, "application/gzip");
   }
 
+  /** Save the map for Timberborn (D184): the canonical settle and every check, with progress on the
+   *  button; problems that would stop the map loading open the quiet dot's list instead; warnings
+   *  go into the map's description (never a confirmation). Into the game's Maps folder where the
+   *  browser can, else a download. */
+  async function saveMap(kind: "timberborn" | "download") {
+    if (saving) return;
+    setSaving({ kind, progress: null });
+    setMessage(null);
+    try {
+      const onProgress = proxy((q: CheckProgress) => setSaving((s) => (s ? { ...s, progress: q } : s)));
+      const r = await enqueue(() => api.exportTimber(true, onProgress));
+      if (!r.ok) {
+        setDotOpen(true);
+        setMessage({ kind: "error", text: `Not saved: ${plain(r.errors[0] ?? "the map has problems to fix first")}` });
+        return;
+      }
+      if (kind === "download") {
+        saveFile(r.bytes, r.fileName);
+        setMessage({ kind: "info", text: `Saved ${r.fileName}. Move the file to Documents\\Timberborn\\Maps, then start a new game and pick the map.` });
+        return;
+      }
+      const v = await saveToTimberborn(r.bytes, r.fileName);
+      setMessage({ kind: "info", text: v.via === "fsa" ? `Saved ${v.savedAs ?? r.fileName} to ${v.folder}. It'll show up in Timberborn's custom maps.` : `Saved ${r.fileName}. Move the file to Documents\\Timberborn\\Maps, then start a new game and pick the map.` });
+    } catch (e) {
+      setMessage({ kind: "error", text: String(e instanceof Error ? e.message : e) });
+    } finally {
+      setSaving(null);
+    }
+  }
+
   // the dam sites' line in the legend, with their tiles (a click on it points to them)
   const legendExtra = useMemo(
     () => (damSites ? [{ swatch: damLegendSwatch(), label: "Dam sites", markers: true, tiles: damSites.flatMap((d) => d.tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < info.W && y < info.H).map(([x, y]) => y * info.W + x)) }] : []),
@@ -1998,54 +2127,23 @@ export default function Editor(props: EditorProps) {
 
   return (
     <div class="editor" aria-busy={busy > 0}>
-      <header class="editor-bar">
-        <button type="button" class="ghost" onClick={() => props.onBack(info)}>
-          {info.kind === "generated" ? "Back to settings" : "New map"}
-        </button>
-        <div class="editor-title">
-          <h1>{info.name}</h1>
-          <span class="muted">
-            {info.W}×{info.H}
-            {info.kind === "import" ? " · imported" : ""}
-            {info.edits ? ` · ${info.edits} edit${info.edits > 1 ? "s" : ""}` : ""}
-            {props.saveState ? ` · ${props.saveState}` : ""}
-          </span>
-        </div>
-        <div class="editor-actions" role="toolbar" aria-label="Edit">
-          {/* (a stroke the page has painted can be undone at once, before the worker has it) */}
-          <button type="button" class="ghost" onClick={() => void undo()} disabled={!info.canUndo && !localUndo.current.length} title="Undo (Ctrl+Z)">
-            Undo
-          </button>
-          <button type="button" class="ghost" onClick={() => void redo()} disabled={!info.canRedo && !localRedo.current.length} title="Redo (Ctrl+Y)">
-            Redo
-          </button>
-          <button type="button" class="ghost" aria-expanded={showHistory} onClick={() => setShowHistory(!showHistory)}>
-            History{info.orphans.length ? ` (${info.orphans.length} to review)` : ""}
-          </button>
-          <StatusPill check={check} busy={busy > 0} progress={progress} flowing={flowing} onOpen={() => setExporting(true)} />
-          <label class="button ghost">
-            Open
-            <input
-              type="file"
-              class="visually-hidden"
-              accept=".timber,.json,.gz,application/json"
-              aria-label="Open a map or project file"
-              onChange={(e) => {
-                const input = e.target as HTMLInputElement;
-                const file = input.files?.[0];
-                input.value = "";
-                if (file) props.onOpenFile(file);
-              }}
-            />
-          </label>
-          <button type="button" class="ghost" onClick={() => void exportProject()}>
-            Save project
-          </button>
-          <button type="button" class="primary" onClick={() => setExporting(true)}>
-            Export .timber
-          </button>
-        </div>
-      </header>
+      <Header
+        info={info}
+        saveState={props.saveState}
+        canUndo={info.canUndo || !!localUndo.current.length}
+        canRedo={info.canRedo || !!localRedo.current.length}
+        onUndo={() => void undo()}
+        onRedo={() => void redo()}
+        dot={<ChecksDot check={check} instant={instant} busy={busy > 0} progress={progress} flowing={flowing} open={dotOpen} onToggle={setDotOpen} actions={actions} />}
+        canFolder={canSaveToTimberborn()}
+        saving={saving}
+        onSave={(kind) => void saveMap(kind)}
+        onOpenFile={props.onOpenFile}
+        onSaveProject={() => void exportProject()}
+        historyOpen={showHistory}
+        onHistory={() => setShowHistory(!showHistory)}
+        onBack={() => props.onBack(info)}
+      />
       <div class="editor-main">
         <Shelf picked={shelf?.id ?? null} onPick={pickShelf} icon={(t) => icons[t] ?? null} loading={!ready} />
         <section class="editor-map" aria-label="Map">
@@ -2056,6 +2154,8 @@ export default function Editor(props: EditorProps) {
             onReady={onReady}
             legendExtra={legendExtra}
             markersWanted={damSites !== null || shelf?.id === "Slope"}
+            togglesInButtons
+            showLegend={layer !== "none" || damSites !== null}
             viewButtons={
               <>
                 <button type="button" aria-pressed={clearWater} onClick={() => setClearWater(!clearWater)} title="See through the water to the bed and the sources (T). Any tool picked does it too.">
@@ -2063,7 +2163,7 @@ export default function Editor(props: EditorProps) {
                 </button>
                 {(["moisture", "badwater", "drought", ...(waterLayers?.roofed.length ? (["roofed"] as const) : [])] as LayerKind[]).map((k) => (
                   <button type="button" key={k} aria-pressed={layer === k} onClick={() => setLayer(layer === k ? "none" : k)} title={`Show ${LAYER_NAMES[k].toLowerCase()} on the map`}>
-                    {LAYER_NAMES[k]}
+                    {OVERLAY_WORDS[k]}
                   </button>
                 ))}
                 <button
@@ -2073,6 +2173,10 @@ export default function Editor(props: EditorProps) {
                   title="Show the dam sites: where a short dam holds the most water"
                 >
                   Dam sites
+                </button>
+                <LayerWidget level={sliceLevel} onStep={(dir) => renderer.current?.stepSlice(dir)} onReset={() => renderer.current?.setSlice(null)} />
+                <button type="button" aria-pressed={minimap} onClick={() => setMinimap(!minimap)} title="A small picture of the whole map in the corner: click it to go there">
+                  Minimap
                 </button>
                 <span class="reveal-group">
                   <button type="button" aria-pressed={sound.on} onClick={() => setSound({ ...sound, on: !sound.on })} title="The editor's little sounds: on or off (the volume beside it)">
@@ -2093,6 +2197,7 @@ export default function Editor(props: EditorProps) {
               const free = hit && !brushToolRef.current && !shelfRef.current && !removingRef.current && !toolRef.current;
               const onStart = !!hit && !!startHere && Math.max(Math.abs(hit.x - startHere.x), Math.abs(hit.y - startHere.y)) <= 1;
               if (canvas) canvas.style.cursor = free && (sourceAt(hit.x, hit.y) || onStart) ? "grab" : "";
+              hoverStart(!!free && onStart);
             }}
             hoverText={hover}
           >
@@ -2103,6 +2208,16 @@ export default function Editor(props: EditorProps) {
               removeKinds={removeKinds}
               onRemoveKinds={setRemoveKinds}
               row={shelfRow() ?? pickedRow()}
+              hints={
+                <FirstRun
+                  done={firstRun}
+                  onClose={() => {
+                    const all = new Set<FirstStep>(["paint", "place", "water"]);
+                    saveFirstRun(all);
+                    setFirstRun(all);
+                  }}
+                />
+              }
               settings={brush}
               onPick={pickTop}
               onSettings={setBrush}
@@ -2113,17 +2228,29 @@ export default function Editor(props: EditorProps) {
             {player.current ? <WaterBar player={player.current} follow={follow} onFollow={setFollow} weather={weather} onWeather={toggleWeather} /> : null}
             {sourceMarkers()}
             {startHintTag()}
-            {sliceLevel !== null ? (
-              <p class="map-note slice-note" role="status">
-                Layer {sliceLevel}: the world above it is cut away. Alt+scroll up shows it all.
-              </p>
+            {minimap ? (
+              <Minimap
+                W={info.W}
+                H={info.H}
+                renderer={renderer.current}
+                heights={() => mirror.current.heights}
+                depth={() => mirror.current.water?.depth ?? null}
+                stamp={`${info.version}:${waterTick}`}
+                viewTick={viewTick}
+              />
             ) : null}
             {shapeNote ? (
               <div class={`map-note shape-note${shapeNote.ok ? (shapeNote.warn ? " warn" : "") : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}
               </div>
             ) : null}
-            {startDrag ? <StartIndicators check={startDrag.check} rules={needs.rules} /> : null}
+            {startDrag ? (
+              <StartIndicators check={startDrag.check} rules={needs.rules} />
+            ) : startReach ? (
+              <div class={`start-reach${startReach.fading ? " fading" : ""}`}>
+                <StartIndicators check={startReach.check} rules={needs.rules} />
+              </div>
+            ) : null}
             {busy > 0 ? (
               <div class="working" role="status">
                 Working…
@@ -2131,7 +2258,6 @@ export default function Editor(props: EditorProps) {
             ) : null}
           </View3D>
           {layer !== "none" && waterLayers ? <LayerLegend kind={layer} layers={waterLayers} /> : null}
-          <InstantProblems items={instant} actions={actions} onClose={() => setInstant([])} />
           {message ? (
             <div class={`editor-message ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>
               {message.text}
@@ -2169,11 +2295,13 @@ export default function Editor(props: EditorProps) {
         </section>
         {showHistory ? <HistoryPanel info={info} onJump={(k) => void run(() => api.jump(k))} onClose={() => setShowHistory(false)} /> : null}
       </div>
-      {exporting ? <ExportDialog api={api} info={info} onClose={() => setExporting(false)} onChecked={(c) => setCheck(c)} queue={enqueue} actions={actions} /> : null}
       <DropTarget onFile={props.onOpenFile} />
     </div>
   );
 }
+
+/** The overlays' words on their view buttons. */
+const OVERLAY_WORDS: Record<LayerKind, string> = { none: "None", moisture: "Moisture", badwater: "Badwater", drought: "Drought", roofed: "Under roofs" };
 
 const BRUSH_KEY = "dgm.brush";
 

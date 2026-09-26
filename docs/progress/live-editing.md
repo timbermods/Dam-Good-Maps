@@ -508,6 +508,66 @@ on a placed river.
   shelf's Slope instead of the Dam site tool. `waterFlow`, `waterTools` and `waterView` pick Source
   in the top bar; `waterView` reads a picked source's row instead of its inspector.
 
+## D184, push 4: the view, the header, the quiet dot, the start's reach, the first run (D205, D207)
+
+- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers, Clear water, the
+  overlays (Moisture, Badwater, Drought, and Under roofs on a map with caves), Dam sites, the
+  layers, Minimap and Sound. Height colours and Markers moved here from the legend, which now shows
+  only while an overlay or the dam sites are on (the generator's page keeps its legend).
+- **The visible layers (D207), matched to the game** (read in the local decompiled
+  `Timberborn.LevelVisibilitySystem` and `LevelVisibilitySystemUI`, and the key bindings in
+  `KeyBindings/UI`; nothing copied): a compact widget with the view buttons, ∞ and quiet until
+  used, a step down, a step up, and ∞ to show everything; the number can be dragged up or down,
+  as the game's level button. Stepping down from the whole world goes to the highest layer that
+  hides anything (the map's top less one), stepping up past it shows everything again, and the
+  layer never goes below 0; a change of the ground that leaves the cut above anything to hide
+  shows everything again. The game's bindings are Alt+scroll up and down, and **Alt+middle-click**
+  to pick; the pick cuts at the tile's level when it is below the layer showing, and otherwise
+  shows everything. Alt+click picks too (D196, kept). Esc never touches the layers. The old
+  "Layer 7" note is gone: the widget says it.
+- **Tools respect the cut:** under a cut, a brush leaves the ground above it as it is (those tiles
+  are the stroke's kept tiles, trimmed to its reach so the operation stays small) and Raise never
+  lifts past it; Flatten's level is held to it; the Select tool's actions touch only the visible
+  land, and Raise stops at the cut. The shelf's ghost is red on a cut column (it would stand in the
+  ground).
+- **The header:** Undo and Redo as two small icons (with their shortcuts in their names and
+  tooltips); the quiet dot; one primary button, **Save to Timberborn** (**Download .timber** where
+  the browser can't save to a folder); a small menu (⋯) with Open…, Save project, Download .timber,
+  History, and Back to settings or New map. Saving settles the water and runs every check, its
+  progress on the button; problems that would stop the map loading open the dot's list instead;
+  warnings go into the map's description, with no confirmation. The export dialog stays for the
+  generator's page only.
+- **The quiet dot:** grey while checking, green when ready to play, amber with a count otherwise.
+  A click opens its list under it (not a dialog): what the last edit made, what to fix first,
+  what is worth a look, what is good to know, and what the map had when it was opened, each shown
+  on the map and with its fix. The floating "This edit made a problem" card is gone into it.
+- **The start's reach:** with no tool out, the pointer on the start shows its three requirements
+  (water, wood, berries) where it stands, then they fade when the pointer leaves; the walks run in
+  the start's own worker, once per change of the map.
+- **First run:** three one-line hints under the top bar (paint the land, place things, add water),
+  each gone once done, all gone with the ×, and never back (kept in the browser). The brush hint's
+  shortcuts live in the buttons' tooltips.
+- **The minimap (D205):** a small picture of the whole map in the lower left, the Real places look,
+  drawn again when the page is idle after an edit settles; the outline is what the camera sees; a
+  click or a drag moves the camera there. On by default on 256² maps, off on smaller ones, with
+  **Minimap** among the view buttons.
+- **Camera bookmarks (D205):** Ctrl+Shift+1 to 9 keeps the view (position, turn, tilt, zoom) in
+  that slot; Shift+1 to 9 glides back (at once with reduced motion). They are kept in the project
+  document and the autosave (the page saves when they change); older projects open without them.
+- Tests: `tests/e2e/viewAndHeader.spec.ts` (the header and its menu, the dot and its list, the first
+  run's hints, the minimap and its click, bookmarks kept through a reload, the start's reach, Raise
+  under a cut), `tests/e2e/waterView.spec.ts` (the layers as the game: the first step down, the
+  middle-click pick, the widget's steps and ∞, Esc leaving the cut), `tests/unit/header.test.ts`,
+  `tests/contract/views.test.ts`.
+- Tests changed (D148): `editor.spec` saves through the menu's **Download .timber** and reads the
+  dot instead of the export dialog, and finds Undo, Redo, History and Back to settings in their
+  new places; `places.spec` and `maps.spec` download through the menu; `save-to-timberborn.spec`
+  checks the header's primary button (and **Download .timber** as the primary without folder
+  access) instead of the dialog's; `preview.spec` waits for the dot instead of the pill;
+  `start-edit.spec` opens the dot's list for the fix instead of the floating card; `legend.spec`
+  finds New map in the menu; `brush.spec` reads the first run's hints instead of the brush hint;
+  `look-clean.spec` reads the view buttons' group as "View".
+
 ## The camera keys (D180)
 
 Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.
@@ -615,6 +675,5 @@ enables it at once), and the brushes could be picked before the map could be pai
 
 ## Next
 
-D184's push 4: the view buttons and the legend only while an overlay is on, the minimap and the
-layer widget (D205, D207), camera bookmarks (D205), the header and its menu with Save to
-Timberborn, the quiet dot, the start's reach and the first-run hints. The forces wait for Kyler.
+D184's four pushes are in. The forces wait for Kyler (their slots are hidden). The README's
+editor section comes with the release PR.

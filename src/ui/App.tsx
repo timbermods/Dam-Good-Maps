@@ -404,11 +404,13 @@ export function App() {
     }, 1200);
   }
 
-  const lastVersion = useRef(-1);
+  const lastVersion = useRef("");
   function onEditorChange(info: SessionInfo) {
     setSession(info);
-    if (info.version !== lastVersion.current) {
-      lastVersion.current = info.version;
+    // (a change of the map, or of the editor's camera bookmarks, which the project keeps)
+    const key = `${info.version}|${JSON.stringify(info.views ?? [])}`;
+    if (key !== lastVersion.current) {
+      lastVersion.current = key;
       scheduleSave();
     }
   }

@@ -177,28 +177,6 @@ export function HistoryPanel({ info, onJump, onClose }: { info: SessionInfo; onJ
 
 // ------------------------------------------------------------------------------ health and export
 
-export function StatusPill({ check, busy, progress, flowing, onOpen }: { check: ExportCheck | null; busy: boolean; progress?: CheckProgress | null; flowing?: number | null; onOpen(): void }) {
-  let text = flowing !== null && flowing !== undefined ? "Water flowing…" : progress?.stage === "water" ? `Settling water ${Math.round(progress.done * 100)}%` : "Checking…";
-  let tone = "wait";
-  if (check && !busy) {
-    if (check.blocking.length) {
-      text = `${check.blocking.length} problem${check.blocking.length > 1 ? "s" : ""}`;
-      tone = "bad";
-    } else if (check.warnings.length) {
-      text = `${check.warnings.length} warning${check.warnings.length > 1 ? "s" : ""}`;
-      tone = "warn";
-    } else {
-      text = "Ready to play";
-      tone = "ok";
-    }
-  }
-  return (
-    <button type="button" class={`pill ${tone}`} onClick={onOpen} title="Open the checks">
-      {text}
-    </button>
-  );
-}
-
 /** A problem's first tile, for "Show". */
 export function whereOf(c: CheckItem, entityAt: (id: string) => [number, number] | null): [number, number] | null {
   if (c.where?.tiles?.length) return c.where.tiles[0];
@@ -215,7 +193,7 @@ export interface ItemActions {
   canShow(c: CheckItem): boolean;
 }
 
-function Items({ items, actions }: { items: CheckItem[]; actions?: ItemActions }) {
+export function Items({ items, actions }: { items: CheckItem[]; actions?: ItemActions }) {
   return (
     <ul>
       {items.map((c) => (
@@ -240,23 +218,6 @@ function Items({ items, actions }: { items: CheckItem[]; actions?: ItemActions }
         </li>
       ))}
     </ul>
-  );
-}
-
-/** The problems the last edit made (the instant checks), with their fixes. */
-export function InstantProblems({ items, actions, onClose }: { items: CheckItem[]; actions: ItemActions; onClose(): void }) {
-  if (!items.length) return null;
-  return (
-    <aside class="instant" role="alert" aria-label="Problems this edit made">
-      <header>
-        <h2>This edit made {items.length === 1 ? "a problem" : `${items.length} problems`}</h2>
-        <button type="button" class="linkish" aria-label="Dismiss" onClick={onClose}>
-          ×
-        </button>
-      </header>
-      <Items items={items} actions={actions} />
-      <p class="note">Fix it, undo the edit, or carry on: the map can't be exported until it is fixed.</p>
-    </aside>
   );
 }
 

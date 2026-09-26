@@ -38,7 +38,7 @@ import type { PlayabilityAnalysis } from "../validate/playability";
 import { blocks, type Profile, type ValidationReport } from "../validate/report";
 import { baseFromFile, baseTerrain, fileFromBase, joinTerrain, type BaseMap, type BaseTerrain } from "./base";
 import { entityProblem } from "./placing";
-import { baseFeaturesOf, checkDocument, encodeProject, importDocument, toDocument, type DocMeta, type KeptContent, type MapDocument } from "./document";
+import { baseFeaturesOf, checkDocument, encodeProject, importDocument, toDocument, type DocMeta, type KeptContent, type MapDocument, type SavedView } from "./document";
 import {
   applyOp,
   invertOp,
@@ -236,6 +236,17 @@ export class MapSession {
     let w = run.advance(Infinity);
     while (!w) w = run.advance(Infinity);
     this.adoptWater(run.model, w);
+  }
+
+  /** The editor's camera bookmarks (D205): kept with the document, never an edit (no undo step, no
+   *  rebuild). */
+  get views(): SavedView[] {
+    return this.gen.meta.views ?? [];
+  }
+
+  setViews(views: SavedView[]): void {
+    this.gen = { ...this.gen, meta: { ...this.gen.meta, views: views.length ? views.map((v) => ({ ...v, target: [...v.target] as [number, number, number] })) : undefined } };
+    if (!views.length) delete (this.gen.meta as { views?: SavedView[] }).views;
   }
 
   /** The generation the map is built on: the same object until a regeneration, an undo or redo

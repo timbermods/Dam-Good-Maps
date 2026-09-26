@@ -8,27 +8,8 @@
 // is ready. Built from the shared bar and button styles (D176).
 
 import type { ComponentChildren } from "preact";
-import { useState } from "preact/hooks";
 import { BRUSHES, type BrushSettings, type BrushTool } from "./brushes";
 import type { RemoveKind } from "../core/features/objects";
-
-const HINT_KEY = "dgm.brushHint";
-
-function hintSeen(): boolean {
-  try {
-    return localStorage.getItem(HINT_KEY) === "seen";
-  } catch {
-    return false;
-  }
-}
-
-function seeHint(): void {
-  try {
-    localStorage.setItem(HINT_KEY, "seen");
-  } catch {
-    // the hint shows again next time
-  }
-}
 
 const ICON = { width: 20, height: 20, viewBox: "0 0 20 20", "aria-hidden": "true" as const, fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round" as const, "stroke-linejoin": "round" as const };
 
@@ -144,6 +125,8 @@ export interface TopBarProps {
   selectRow?: ComponentChildren;
   /** Another row beneath the bar: the shelf's object's options, a selected source's. */
   row?: { label: string; content: ComponentChildren } | null;
+  /** The first run's hints, under the rows. */
+  hints?: ComponentChildren;
 }
 
 /** A toggle in the options row: a checkbox and its word. */
@@ -157,7 +140,6 @@ function Toggle(p: { label: string; title: string; on: boolean; onChange(on: boo
 }
 
 export function TopBar(p: TopBarProps) {
-  const [hint, setHint] = useState(() => !hintSeen());
   const s = p.settings;
   const set = (patch: Partial<BrushSettings>) => p.onSettings({ ...s, ...patch });
   const t = p.active;
@@ -315,22 +297,7 @@ export function TopBar(p: TopBarProps) {
           {p.selectRow}
         </div>
       ) : null}
-      {t && hint ? (
-        <p class="map-note" role="status">
-          Drag to paint. [ ] or hold F to size, Shift+scroll strength, Shift inverts, Ctrl+drag selects, Ctrl+Z undoes.{" "}
-          <button
-            type="button"
-            class="linkish"
-            aria-label="Dismiss the hint"
-            onClick={() => {
-              seeHint();
-              setHint(false);
-            }}
-          >
-            ×
-          </button>
-        </p>
-      ) : null}
+      {p.hints ?? null}
     </div>
   );
 }

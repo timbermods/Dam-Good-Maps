@@ -349,15 +349,40 @@ export class MapRenderer {
     this.onSlice?.(level === null ? null : v);
   }
 
-  /** One layer up (1) or down (-1); up past the map's top shows the whole world again. */
+  /** One layer up (1) or down (-1), as the game steps them (D207, `LevelVisibilityService`): down
+   *  from the whole world, the first layer that hides anything (the map's top, less one); up past
+   *  it, the whole world again; never below 0. */
   stepSlice(dir: 1 | -1): void {
     const m = this.map;
     if (!m) return;
+    const hiding = this.topHiding();
+    const now = this.slice;
+    if (now === null) {
+      if (dir < 0) this.setSlice(hiding);
+      return;
+    }
+    const next = now + dir;
+    this.setSlice(next > hiding ? null : Math.max(0, next));
+  }
+
+  /** The highest layer that hides anything: the map's highest ground, less one. */
+  topHiding(): number {
+    const m = this.map;
+    if (!m) return 0;
     let top = 0;
     for (let i = 0; i < m.heights.length; i++) if (m.heights[i] > top) top = m.heights[i];
-    const now = this.slice ?? top;
-    const next = now + dir;
-    this.setSlice(next >= top ? null : Math.max(0, next));
+    return Math.max(0, top - 1);
+  }
+
+  /** The game's layer pick (D207, `LevelVisibilityPicker`): on a tile below the layer showing, the
+   *  world is cut at that tile's level; on one at it (or with the whole world showing, never), the
+   *  whole world shows again. The tile's level is its visible top. */
+  pickSlice(hit: TileHit): void {
+    const m = this.map;
+    if (!m) return;
+    const cut = this.slice;
+    const level = Math.min(m.heights[hit.y * m.W + hit.x], cut ?? 99);
+    this.setSlice(cut === null || level < cut ? level : null);
   }
 
   /** The layer the world is cut at, or null. */
@@ -684,6 +709,8 @@ export class MapRenderer {
     // the map's own heights: its objects stand where it has them (new ones follow in updateEntities)
     this.objectGround = heights.slice();
     this.settleObjects();
+    // (the game's rule: a layer above everything the map could hide shows the whole world)
+    if (this.slice !== null && this.slice > this.topHiding()) this.setSlice(null);
     if (!rect) return 0;
     const chunks = dirtyChunks(m.W, m.H, rect);
     for (const [cx, cy] of chunks) this.meshTerrain(cx, cy);
@@ -1140,6 +1167,36 @@ export class MapRenderer {
     this.setView({ mode });
   }
 
+  private glideFrameTo = 0;
+  /** Glide smoothly to a view (a camera bookmark, D205): target, turn, tilt and zoom eased there in
+   *  about half a second (at once with reduced motion); a top-down or orbit view switches at once. */
+  glideTo(to: ViewState, ms = 600): void {
+    cancelAnimationFrame(this.glideFrameTo);
+    const from = this.getView();
+    if (this.reducedMotion || ms <= 0) {
+      this.setView({ ...to, target: [...to.target] as [number, number, number] });
+      return;
+    }
+    // (the shorter way round)
+    let dyaw = to.yaw - from.yaw;
+    while (dyaw > Math.PI) dyaw -= 2 * Math.PI;
+    while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+    const t0 = performance.now();
+    const step = () => {
+      const t = Math.min(1, (performance.now() - t0) / ms);
+      const e = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+      this.setView({
+        mode: to.mode,
+        yaw: from.yaw + dyaw * e,
+        pitch: from.pitch + (to.pitch - from.pitch) * e,
+        distance: Math.exp(Math.log(from.distance) + (Math.log(to.distance) - Math.log(from.distance)) * e),
+        target: [0, 1, 2].map((k) => from.target[k] + (to.target[k] - from.target[k]) * e) as [number, number, number],
+      });
+      if (t < 1 && !this.disposed) this.glideFrameTo = requestAnimationFrame(step);
+    };
+    step();
+  }
+
   resetView(): void {
     const m = this.map;
     if (!m) return;
@@ -1241,6 +1298,31 @@ export class MapRenderer {
     return { origin: [o.x, o.y, o.z], direction: [d.x, d.y, d.z] };
   }
 
+  /** What the camera sees of the ground (the minimap's outline, D205): the view's four corners on
+   *  the level the camera looks at, in tiles (x east, y north), far corners held to a few map
+   *  widths when the view looks over the horizon. */
+  groundFootprint(): [number, number][] {
+    const m = this.map;
+    const r = this.canvas.getBoundingClientRect();
+    if (!m || !r.width || !r.height) return [];
+    const level = this.view.target[1];
+    const far = 3 * Math.max(m.W, m.H);
+    const corners: [number, number][] = [
+      [r.left, r.top],
+      [r.right, r.top],
+      [r.right, r.bottom],
+      [r.left, r.bottom],
+    ];
+    return corners.map(([cx, cy]) => {
+      const ray = this.rayAt(cx, cy);
+      const [ox, oy, oz] = ray.origin;
+      const [dx, dy, dz] = ray.direction;
+      let t = dy < -1e-6 ? (level - oy) / dy : far;
+      if (!(t > 0) || t > far) t = far;
+      return [ox + dx * t, -(oz + dz * t)] as [number, number];
+    });
+  }
+
   /** The tile under a point on the screen. */
   pick(clientX: number, clientY: number): TileHit | null {
     const m = this.map;
@@ -1307,13 +1389,11 @@ export class MapRenderer {
     this.on(c, "pointerdown", (e) => {
       const ev = e as PointerEvent;
       c.focus({ preventScroll: true });
-      // Alt+click: the clicked tile's layer (again: the whole world)
-      if (ev.button === 0 && ev.altKey && this.map && !this.tool?.wantsAlt) {
+      // Alt+middle-click (the game's), or Alt+click: the clicked tile's layer (again: the whole world)
+      if ((ev.button === 1 || (ev.button === 0 && !this.tool?.wantsAlt)) && ev.altKey && this.map) {
+        ev.preventDefault();
         const hit = this.pick(ev.clientX, ev.clientY);
-        if (hit) {
-          const level = this.map.heights[hit.y * this.map.W + hit.x];
-          this.setSlice(this.slice === level ? null : level);
-        }
+        if (hit) this.pickSlice(hit);
         return;
       }
       const grab = ev.button === 0 && this.grab ? this.grab(this.pick(ev.clientX, ev.clientY), ev) : null;

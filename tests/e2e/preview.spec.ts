@@ -26,7 +26,7 @@ for (const theme of ["islands", "lakeBasin"]) {
     await page.getByRole("button", { name: "Refine this map" }).click();
     await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 120_000 });
     // let the first background check finish, so the edit is timed on its own
-    await expect(page.getByRole("button", { name: /Ready to play|warning|problem/ })).toBeVisible({ timeout: 120_000 });
+    await expect(page.getByRole("button", { name: /^Checks: (Ready to play|\d+ things? to look at)/ })).toBeVisible({ timeout: 120_000 });
 
     const times = await page.evaluate(async () => {
       const ed = window.dgmEditor!;

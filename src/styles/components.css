@@ -140,6 +140,18 @@
   font-weight: 600;
 }
 
+/* a note of a few lines (the first run's hints), with its × */
+.map-note:has(> ul) {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.map-note > ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
 /* a note that names a limit still to be met (a river whose water has nowhere to go yet) */
 .map-note.warn {
   color: var(--warn);
@@ -163,6 +175,180 @@
   .icon-button .icon-word {
     display: none;
   }
+}
+
+/* a number with a step down and a step up, and a way back (the visible layers, D207): quiet at
+   its resting value */
+.layer-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.layer-widget button {
+  padding: 4px 7px;
+  font-size: 0.8rem;
+}
+
+.layer-widget output {
+  min-width: 2.2ch;
+  padding: 4px 6px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  background: var(--overlay);
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.layer-widget.quiet output {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* the quiet dot of a map's checks: green, amber (with a count), or grey while checking; its list
+   opens under it, anchored, never a pop-up over the page */
+.checks-dot-wrap,
+.menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.checks-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border-radius: 999px;
+}
+
+.checks-dot .dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.checks-dot.ok .dot {
+  background: var(--ok);
+}
+
+.checks-dot.warn .dot {
+  background: var(--warn);
+}
+
+.checks-dot.wait .dot {
+  opacity: 0.5;
+}
+
+.checks-dot .dot-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--warn);
+}
+
+.checks-list,
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.checks-list {
+  width: min(420px, 90vw);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.checks-list .checks-head {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.checks-list h3 {
+  margin: 8px 0 2px;
+  font-size: 0.85rem;
+}
+
+.checks-list section.bad h3 {
+  color: var(--bad);
+}
+
+.checks-list section.warn h3 {
+  color: var(--warn);
+}
+
+.checks-list ul {
+  margin: 2px 0;
+  padding-left: 18px;
+}
+
+.checks-list .note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* a small menu of a few actions under its button */
+.menu {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  min-width: 190px;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 7px 10px;
+  box-shadow: none;
+}
+
+.menu button:hover,
+.menu button:focus-visible {
+  background: var(--code);
+}
+
+/* a small picture of the whole map with what the camera sees outlined (the minimap, D205) */
+.minimap {
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.minimap svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.minimap polygon {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
 }
 
 /* a control whose detail shows only while it is hovered or in use (a sound's volume) */

@@ -38,6 +38,11 @@ export interface View3DProps {
   class?: string;
   /** More view buttons beside the camera's (the editor's **Clear water**). */
   viewButtons?: ComponentChildren;
+  /** **Height colours** and **Markers** among the view buttons, not in the legend (the editor's
+   *  layout, D184). */
+  togglesInButtons?: boolean;
+  /** Whether the legend shows (the editor: only while an overlay is on, D184). */
+  showLegend?: boolean;
 }
 
 const GROUND_KEY = "dgm.groundColours";
@@ -249,13 +254,24 @@ export function View3D(props: View3DProps) {
     setLegendOpen(open);
     saveLegend(open);
   };
+  const showLegend = props.showLegend ?? true;
+  const toggles = (
+    <>
+      <button type="button" aria-pressed={ground === "height"} onClick={toggleGround} title="Colour the ground by height instead of by soil">
+        Height colours
+      </button>
+      <button type="button" aria-pressed={markers} onClick={toggleMarkers} title="Show dam sites, slope arrows and a line at every level, and draw small far-off objects larger">
+        Markers
+      </button>
+    </>
+  );
 
   return (
-    <div class={`view3d-frame ${legendOpen ? "legend-open" : "legend-folded"} ${props.class ?? ""}`}>
+    <div class={`view3d-frame ${showLegend && legendOpen ? "legend-open" : showLegend ? "legend-folded" : "legend-none"} ${props.class ?? ""}`}>
       <div class="view3d">
       <canvas ref={canvas} aria-label={props.label} />
       {error ? <p class="view3d-error">{error}</p> : null}
-      <div class="view3d-controls" role="group" aria-label="Camera">
+      <div class="view3d-controls" role="group" aria-label="View">
         <button type="button" aria-pressed={mode === "orbit"} onClick={() => pick("orbit")} title="Drag to turn, right-drag to move, wheel to zoom">
           Orbit
         </button>
@@ -265,6 +281,7 @@ export function View3D(props: View3DProps) {
         <button type="button" onClick={() => renderer.current?.resetView()}>
           Reset view
         </button>
+        {props.togglesInButtons ? toggles : null}
         {props.viewButtons}
       </div>
       <div class="compass" aria-label="Compass: north is the top of the top-down view" role="img">
@@ -279,21 +296,18 @@ export function View3D(props: View3DProps) {
       ) : null}
       {props.children}
       </div>
-      {error ? null : (
+      {error || !showLegend ? null : (
         <aside class={`side-panel view3d-legend${legendOpen ? "" : " folded"}`} aria-label="Legend">
           <button type="button" class="side-panel-fold" aria-expanded={legendOpen} aria-controls={legendId} onClick={() => fold(!legendOpen)} title={legendOpen ? "Fold the legend" : "Open the legend"}>
             <span>Legend</span>
           </button>
           {legendOpen ? (
             <div class="side-panel-body" id={legendId}>
-              <div class="toggle-row" role="group" aria-label="Map colours">
-                <button type="button" aria-pressed={ground === "height"} onClick={toggleGround} title="Colour the ground by height instead of by soil">
-                  Height colours
-                </button>
-                <button type="button" aria-pressed={markers} onClick={toggleMarkers} title="Show dam sites, slope arrows and a line at every level, and draw small far-off objects larger">
-                  Markers
-                </button>
-              </div>
+              {props.togglesInButtons ? null : (
+                <div class="toggle-row" role="group" aria-label="Map colours">
+                  {toggles}
+                </div>
+              )}
               <ul class="pick-list">{clean.map(item)}</ul>
               {marked.length ? (
                 <>

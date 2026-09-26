@@ -238,32 +238,6 @@ button[aria-pressed="true"] {
   align-items: center;
 }
 
-.pill {
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.pill.ok {
-  color: var(--ok);
-  border-color: var(--ok);
-}
-
-.pill.warn {
-  color: var(--warn);
-  border-color: var(--warn);
-}
-
-.pill.bad {
-  color: var(--bad);
-  border-color: var(--bad);
-}
-
-.pill.wait {
-  color: var(--muted);
-}
-
 .editor-main {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -282,6 +256,10 @@ button[aria-pressed="true"] {
   min-height: 0;
   /* the legend's width beside the map: the panels on the map's right keep clear of it */
   --legend-space: 34px;
+}
+
+.editor-map:has(.view3d-frame.legend-none) {
+  --legend-space: 0px;
 }
 
 .editor-map:has(.view3d-frame.legend-open) {
@@ -406,46 +384,6 @@ button[aria-pressed="true"] {
 }
 
 /* M5: the tool preview, the problems an edit made, the start's indicators, map layers */
-
-.instant {
-  position: absolute;
-  left: 10px;
-  bottom: 52px;
-  width: min(360px, 80%);
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--overlay);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--rule);
-  font-size: 0.9rem;
-}
-
-.instant h2 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-}
-
-.instant ul {
-  margin: 4px 0;
-  padding-left: 18px;
-}
-
-.instant {
-  left: auto;
-  right: calc(var(--legend-space, 0px) + 10px);
-  bottom: 52px;
-  border-color: var(--bad);
-}
-
-.instant header {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.instant h2 {
-  color: var(--bad);
-}
 
 .start-indicators {
   position: absolute;
@@ -638,6 +576,28 @@ button[aria-pressed="true"] {
   pointer-events: none;
 }
 
+/* the start's reach while the pointer is on it: it fades when the pointer leaves (D184) */
+.start-reach {
+  transition: opacity 0.6s ease;
+}
+
+.start-reach.fading {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-reach {
+    transition: none;
+  }
+}
+
+/* the minimap's corner: the map's lower left, above the hover readout */
+.editor-view .minimap {
+  position: absolute;
+  left: 10px;
+  bottom: 48px;
+}
+
 /* the water's time controls: the map's lower right corner, clear of the top bar and its options
    row (the brushes paint mostly in the middle of the view) */
 .water-bar {
@@ -646,15 +606,6 @@ button[aria-pressed="true"] {
   right: 10px;
   max-width: calc(100% - 420px);
   justify-content: flex-end;
-}
-
-/* the layer the world is cut at (Alt+scroll, D196): a quiet line over the map's foot */
-.slice-note {
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  pointer-events: none;
 }
 
 /* a source's marker (D196): its strength, over it; quiet until its water is the pointer's */

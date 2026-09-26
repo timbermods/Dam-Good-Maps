@@ -370,10 +370,14 @@ export class BrushPainter {
     let tool = s.tool;
     // Shift inverts: raise ↔ lower
     if (ev.shiftKey && (tool === "raise" || tool === "lower")) tool = tool === "raise" ? "lower" : "raise";
-    const level = s.level ?? h.renderer.heightAt(Math.floor(x), Math.floor(y));
+    // the game's layers (D207): under a cut, the brush works the visible land only: the ground above
+    // the cut stays as it is, and nothing rises past it
+    const cut = h.renderer.slice;
+    const level = Math.min(s.level ?? h.renderer.heightAt(Math.floor(x), Math.floor(y)), cut ?? 99);
     const precise = s.precise;
     const heaps = tool === "raise" || tool === "lower";
-    const keep = precise && heaps ? (h.keep?.() ?? []) : [];
+    const keep = [...(precise && heaps ? (h.keep?.() ?? []) : []), ...(cut !== null ? above(h.heights(), cut, h.W) : [])];
+    const stop = tool === "raise" && cut !== null ? Math.min(16, cut, precise && s.stop !== null ? s.stop : cut) : precise && heaps && s.stop !== null ? s.stop : null;
     const settings: Omit<BrushParams, "dabs"> = {
       tool,
       size: s.size,
@@ -385,7 +389,7 @@ export class BrushPainter {
       ...(tool === "flatten" && s.steps ? { steps: s.steps } : {}),
       ...(tool === "smooth" && s.walkable ? { walkable: true } : {}),
       ...(tool === "flatten" && s.ramped ? { edges: "ramped" as const } : {}),
-      ...(precise && heaps && s.stop !== null ? { stop: s.stop } : {}),
+      ...(stop !== null ? { stop } : {}),
       ...(keep.length ? { keep } : {}),
       // smart Lower (D184): a stroke that starts in or beside water carves a bed it follows
       ...(tool === "lower" && !precise && this.byWater(x, y) ? { channel: true } : {}),
@@ -624,8 +628,11 @@ export class BrushPainter {
     const rect = { x0: Math.max(0, b.x0 - 1), y0: Math.max(0, b.y0 - 1), x1: Math.min(h.W - 1, b.x1 + 1), y1: Math.min(h.H - 1, b.y1 + 1) };
     const before = h.terrain();
     const shown = h.heights();
+    // (kept tiles out of the stroke's reach change nothing: the operation keeps only those in it)
+    const settings = st.settings.keep ? { ...st.settings, keep: inReach(st.settings.keep, st.dabs, st.settings.size, h.W, h.H) } : st.settings;
+    if (settings.keep && !settings.keep.length) delete settings.keep;
     const stroke: Stroke = {
-      params: { ...st.settings, ...(st.pressure ? { pressure: st.pressure } : {}), ...(st.levels ? { levels: st.levels } : {}), dabs: st.dabs },
+      params: { ...settings, ...(st.pressure ? { pressure: st.pressure } : {}), ...(st.levels ? { levels: st.levels } : {}), dabs: st.dabs },
       label: `${BRUSH_NAMES[st.settings.tool as BrushTool]}, ${tiles} tile${tiles === 1 ? "" : "s"}`,
       rect,
       before: { shown: cut(st.preview.start, rect, h.W), pre: cut(before.pre, rect, h.W) },
@@ -648,6 +655,49 @@ export class BrushPainter {
     if (st.anchor) this.host.note?.(null, null);
     this.showCursor();
   }
+}
+
+/** The tiles above a cut, as runs [y, x0, x1] (the brush leaves them as they are). */
+function above(heights: Uint8Array, cut: number, W: number): [number, number, number][] {
+  const out: [number, number, number][] = [];
+  const H = heights.length / W;
+  for (let y = 0; y < H; y++) {
+    let x0 = -1;
+    for (let x = 0; x <= W; x++) {
+      const up = x < W && heights[y * W + x] > cut;
+      if (up && x0 < 0) x0 = x;
+      else if (!up && x0 >= 0) {
+        out.push([y, x0, x - 1]);
+        x0 = -1;
+      }
+    }
+  }
+  return out;
+}
+
+/** The kept runs a stroke's dabs can reach (a brush's radius and a tile round its dabs). */
+function inReach(keep: readonly [number, number, number][], dabs: readonly number[], size: number, W: number, H: number): [number, number, number][] {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (let k = 0; k + 1 < dabs.length; k += 2) {
+    x0 = Math.min(x0, dabs[k]);
+    x1 = Math.max(x1, dabs[k]);
+    y0 = Math.min(y0, dabs[k + 1]);
+    y1 = Math.max(y1, dabs[k + 1]);
+  }
+  const r = Math.ceil(size) + 2;
+  const tx0 = Math.max(0, Math.floor(x0 / 4) - r);
+  const tx1 = Math.min(W - 1, Math.floor(x1 / 4) + r);
+  const ty0 = Math.max(0, Math.floor(y0 / 4) - r);
+  const ty1 = Math.min(H - 1, Math.floor(y1 / 4) + r);
+  const out: [number, number, number][] = [];
+  for (const [y, a, b] of keep) {
+    if (y < ty0 || y > ty1 || b < tx0 || a > tx1) continue;
+    out.push([y, Math.max(a, tx0), Math.min(b, tx1)]);
+  }
+  return out;
 }
 
 /** A rectangle's bytes out of a W-wide map. */

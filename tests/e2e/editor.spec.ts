@@ -90,25 +90,27 @@ test("generate → refine → back to settings → regenerate → refine keeps t
 
   // undo and redo, and the history list
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await page.getByRole("button", { name: "Undo (Ctrl+Z)" }).click();
   await page.evaluate(() => window.dgmEditor!.idle());
   expect((await info(page)).history.map((h) => h.applied)).toEqual([true, true, false]);
-  await page.getByRole("button", { name: "Redo", exact: true }).click();
+  await page.getByRole("button", { name: "Redo (Ctrl+Y)" }).click();
   await page.evaluate(() => window.dgmEditor!.idle());
-  await page.getByRole("button", { name: /^History/ }).click();
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: /^History/ }).click();
   await expect(page.getByRole("complementary", { name: "History" }).getByRole("button", { name: "Move start" })).toBeVisible();
 
-  // export from the editor (export profile): the map is ready to play
-  await page.getByRole("button", { name: "Export .timber" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText(/checks pass/)).toBeVisible({ timeout: 60_000 });
+  // saved from the editor (export profile): the quiet dot says it is ready to play, and the menu's
+  // Download .timber gives the file
+  await expect(page.getByRole("button", { name: /^Checks: Ready to play/ })).toBeVisible({ timeout: 60_000 });
   const download = page.waitForEvent("download");
-  await dialog.getByRole("button", { name: "Export", exact: true }).click();
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Download .timber" }).click();
   expect((await download).suggestedFilename()).toBe("River Valley (4242).timber");
-  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Move the file to/ })).toBeVisible();
 
   // back to settings: the card shows the edited map; change a setting and generate again
-  await page.getByRole("button", { name: "Back to settings" }).click();
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Back to settings" }).click();
   await expect(page.getByRole("button", { name: "Generate, keeping my edits" })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(/Your 3 edits stay/)).toBeVisible();
   await page.getByLabel("Designed for").selectOption("hard");

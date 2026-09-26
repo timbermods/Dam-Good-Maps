@@ -88,7 +88,8 @@ test("while another map is open in the editor, the generator's page says which m
   await page.waitForFunction(() => !!window.dgmEditor, null, { timeout: 60_000 });
   // back on the generator's page: the banner names the map being edited, the preview says it is a
   // new one from the settings
-  await page.getByRole("button", { name: "New map" }).click();
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "New map" }).click();
   const banner = page.getByRole("status").filter({ hasText: "You're editing" });
   await expect(banner).toContainText("You're editing My island");
   await expect(banner).toContainText("The map below is a new one");

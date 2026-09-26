@@ -55,8 +55,12 @@ test("the start: its footprint and what is nearby while it is dragged; on the sh
   await page.mouse.click(pd.x, pd.y);
   await idle(page);
   expect((await info(page)).history.at(-1)!.label).toBe("Place thorns");
-  const problems = page.getByRole("alert").filter({ hasText: /This edit made/ });
-  await expect(problems).toBeVisible({ timeout: 30_000 });
+  // the quiet dot turns amber with it; its list shows what this edit made, and the fix
+  const dot = page.getByRole("button", { name: /^Checks: \d+ things? to look at/ });
+  await expect(dot).toBeVisible({ timeout: 30_000 });
+  await dot.click();
+  const problems = page.getByRole("region", { name: "Checks" });
+  await expect(problems).toContainText("This edit made");
   await problems.getByRole("button", { name: "Move the start to the nearest good spot" }).first().click();
   await idle(page);
   i = await info(page);

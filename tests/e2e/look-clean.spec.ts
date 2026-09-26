@@ -49,7 +49,7 @@ test("the 3D view is clean until Markers turns the information layer on", async 
 
   // the Dam sites view button shows the dam sites, with the markers; off again, the clean view
   const markers = page.getByRole("button", { name: "Markers", exact: true });
-  const dams = page.getByRole("group", { name: "Camera" }).getByRole("button", { name: "Dam sites", exact: true });
+  const dams = page.getByRole("group", { name: "View" }).getByRole("button", { name: "Dam sites", exact: true });
   await dams.click();
   await expect(dams).toHaveAttribute("aria-pressed", "true");
   await expect(markers).toHaveAttribute("aria-pressed", "true");
