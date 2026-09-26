@@ -103,9 +103,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
 - D190: #51–#53 decided (the defaults): world traits are candidate intentions; wet caves allowed in 3D-b; the no-clone distance picks candidates, the score breaks near ties.
 - D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
+- D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
 
 ## Done and released
 
+- **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
 - **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
   ship with the next release as `start-edge-rules-done`.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
@@ -143,10 +145,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40; merged once its
-  cloud session lands the "Name (2)" change, D191, and CI is green; it becomes the editor's primary button), `investigation/pickplace-water2`, #38 (Map
-  look 2) and `investigation/carve` (the starting point for "Let the water carve", D180, as proposals),
-  when their PRs are open.
+- Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
+  ESA WorldCover credited like the elevation data), #38 (Map look 2) and `investigation/carve` (the
+  starting point for "Let the water carve", D180, as proposals), when its PR is open.
 
 ## Waiting on Kyler
 
