@@ -2,6 +2,9 @@
 // downloaded map keeps its bytes (the live check's file, tools/gen.ts's for seed 4242 at 128² River
 // Valley, Normal), the ruins' variants reach the view from the map, and a generated map's mine
 // sites and ruins are drawn within their footprints.
+//
+// The pinned sha256 is `dev`'s own for this spec: a step that changes generated maps on purpose
+// updates it (with its contact sheet, D144); a change to how the view draws them never does.
 
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -14,9 +17,9 @@ import { ORIENTATION_NAMES, RUIN_VARIANT_IDS } from "../../src/render3d/model";
 import { runGenerate } from "../../src/worker/api";
 import * as ed from "../../src/worker/session";
 
-/** The live check's download (tests/live/live.spec.ts): tools/gen.ts's file for this spec, the same
- *  since M8. */
-const LIVE_SHA = "5118b6a63cea21bfea04412018a3da6a7c47f0333f6de6a1f8204811e83db016";
+/** The live check's download (tests/live/live.spec.ts): tools/gen.ts's file for this spec, as `dev`
+ *  makes it since the start and edge rules (#44, 2026-09-26; `5118b6a6…` from M8 until then). */
+const LIVE_SHA = "e4f2f72ceac2ada8eb1bfe152006f22ceca435b99a8f722efcf56087374bc7f8";
 const spec = () => makeSpec({ seed: 4242, size: { x: 128, y: 128 }, theme: "riverValley", designedFor: "normal" });
 
 describe("mine sites and ruins, models of our own", () => {

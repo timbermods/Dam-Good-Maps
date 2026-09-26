@@ -392,3 +392,7 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   - At most 288 triangles close up, 24 from afar.
   - The ivy test is now "drape ivy over the lower half of a column's storeys on moist ground, the
     most at its foot, thinning upward, as flat leaves that leave the panels' middles showing".
+- **The pinned download (2026-09-26).** Merging `dev` brought the start and edge rules (#44), which
+  change generated maps on purpose: seed 4242 at 128² River Valley now downloads as sha256
+  `e4f2f72c…` (it was `5118b6a6…` since M8). `tests/contract/look-mine-ruins.test.ts` pins `dev`'s
+  new value; this branch changes no bytes of its own (no `src/core` change against `dev`).
