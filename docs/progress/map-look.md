@@ -512,3 +512,46 @@ pale wood, and apart from badwater sources" checked the pit 0.05 (luma) lighter 
 now "…: a dark pit, darker than badwater, …" and checks the pit at least 5 L* darker than badwater
 (5.4 today). Every capture was made again on the current maps (dev's start and edge rules changed
 them), with the before site built from current `dev`.
+
+### Waterfalls with shape and volume (2026-09-26, branch `look/waterfalls`, D201)
+
+Kyler: falls looked flat, streaky sheets painted on each block's face that cling to the stone. Built
+in the Standard look only; Map look 2's High mode adds mist, spray and splash rings later (D147).
+
+- **A fall leaves the lip and arcs down** (`src/render3d/falls.ts`): wherever water pours over a side
+  into water at least 0.3 lower, a curved translucent ribbon replaces the curtain. Its outer face is a
+  parabola from the brink (level there) to the pool; its inner face runs a lip's depth inside it, so
+  it has thickness, closed at a free end. Lips side by side pouring into the same water share their
+  corners, so a wide fall is one ribbon. Streaks rush down it, stretching as the water speeds up.
+- **Further for stronger flow:** the view carries no flow, and needs none. At a drop the simulation
+  empties the lip tile every substep, so the flow over a side is the lip's depth over the substep,
+  shared among the sides it pours over by head. On generated maps this matches the simulation's own
+  outflow within 5% at nine falls in ten (tested; most are exact). The reach grows with flow and drop,
+  softly limited so the fall lands in its pool; a thin trickle also narrows.
+- **Foam at the lip, whitewater where it lands:** the ribbon breaks white over the brink, with a
+  ragged foam line on the water at the brink; a splash lies on the pool at the impact line, spreading
+  out past it. The old band of foam along the foot of the cliff is gone.
+- **Cascades:** every step is its own fall, with its own lip, arc and splash, each kept on its step.
+- **Badwater falls** take badwater's body, streaks and foam from the shared palette, murky and nearly
+  opaque; they stay far darker than clean falls in greyscale and with colour blindness (tested).
+- **Cheap:** one instance (16 floats) per fall of one small shared template, bent into its arc by the
+  vertex shader; a chunk's falls are listed when its water is meshed, so only changed chunks are
+  listed again. From afar (a tile under 6 pixels), and always in the light look, a fall is a single
+  sheet. A changed tile now dirties the chunks two tiles round it (a fall reads its neighbours'
+  lips), not one.
+- **Frame time (information),** Highlands 2 at 256² (141 falls) and a stress hillside at 256² (1,536
+  falls), before and after: on the RTX 4080 every orbit stays at the display's 129 fps, the render
+  call 0.2–0.3 ms, and the water's remesh 5.2 → 4.5 ms for every chunk, 1.9 ms for one tile, both
+  before and after; on the integrated Radeon with the CPU slowed 4×, still 128 fps, GPU time 5.7 ms
+  (unchanged) on Highlands 2 and 6.0 → 6.4 ms on the stress hillside, the remesh of every chunk
+  28.5 → 25.5 ms and of one tile 10 ms, as before.
+- **Tests changed (D148):** three tests read a fall as a curtain. `look.test.ts`'s "marks shores and
+  the foot of falls, and the drop of each fall" is now "marks shores, the foot of falls and their
+  brinks, and the drop of each fall" and reads the drop from the fall; `render3d.test.ts`'s water
+  meshing test is now "…with curtains toward lower neighbours and a fall into lower water"; and
+  `look-badwater.test.ts`'s "…never blends across dry ground or a fall" reads the fall's badwater
+  share from the fall. New: `tests/unit/look-waterfalls.test.ts`, `tests/contract/look-waterfalls.test.ts`
+  and `tests/e2e/look-waterfalls.spec.ts`.
+- The map's bytes are unchanged (the pinned download in `look-mine-ruins.test.ts` passes).
+- Captures: [docs/look/waterfalls/](../look/waterfalls/README.md), made with
+  `tools/capture-waterfalls.ts` (`--bench` measures the frame and remesh times).

@@ -166,10 +166,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **The docs sweep** (D188), on branch `chore/docs-sweep`: the living docs checked against the
   editor vision, and CI's retired-terms guard. What the Live editing work must keep, and the
   editor text it still has to change: [progress/docs-sweep.md](progress/docs-sweep.md).
-- **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
-  `look/badwater-blend` (#41, approved: the warm-midpoint blend is in, ready to release as
-  `look-badwater-done`);
-  mine sites and ruins (D178) on `look/mine-site`.
+- **Map look fixes**, each judged by Kyler from captures: waterfalls with shape and volume (D201) on
+  `look/waterfalls`, built in the Standard look; its captures are in `docs/look/waterfalls/`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
 - **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) and
@@ -184,9 +182,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    released when it feels right.
 2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-3. A yes before each probe batch; the next is M9a's.
-4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
-5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
+3. Judge the waterfalls (D201) from `docs/look/waterfalls/`; approved, they are released as
+   `look-waterfalls-done`.
+4. A yes before each probe batch; the next is M9a's.
+5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
+6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next

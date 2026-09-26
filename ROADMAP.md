@@ -751,7 +751,9 @@ smoothly into clean water, with #38's approved crimson badwater and a warm tint 
 in one shared water palette (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
 ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`); and waterfalls with shape and
 volume (D201, `look/waterfalls`, `look-waterfalls-done`): falls that leave the lip and arc down as
-a translucent ribbon, foam at the lip, whitewater below, cascades as small falls.
+a translucent ribbon, foam at the lip, whitewater below, cascades as small falls. Built in the
+Standard look, waiting on Kyler's review of its captures (`docs/look/waterfalls/`); Map look 2's High
+mode adds mist, spray and splash rings on the same falls.
 
 ---
 
