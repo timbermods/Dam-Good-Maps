@@ -6,13 +6,187 @@ colour-blindness simulations (protanopia, deuteranopia, tritanopia; Machado, Oli
 Fernandes 2009, full severity, in linear RGB), and a few with **Markers** on (names ending in
 `-markers`).
 
-Made with `npx tsx tools/capture-look.ts --label clean` and `--label clean --markers --poses overview,start` on 2026-09-25, in the installed Chrome, headed, at 1280×800 CSS pixels and a device pixel ratio of 1. Each map is opened in the editor as the page opens it: the clean view, **Markers** off, no dam sites shown. The markers captures show the dam sites (**Show dam sites**) with **Markers** on. Every pose's camera comes from the before run's record, as in the third round. The water is held at one moment of its movement. Beavertopia's captures are not ours to share: they stay in `.scratch/map-look/clean/` and are never committed.
+Made with `npx tsx tools/capture-look.ts --label clean` and `--label clean --markers --poses overview,start` on 2026-09-26, in the installed Chrome, headed, at 1280×800 CSS pixels and a device pixel ratio of 1. Each map is opened in the editor as the page opens it: the clean view, **Markers** off, no dam sites shown. The markers captures show the dam sites (**Show dam sites**) with **Markers** on. Every pose's camera comes from the before run's record, as in the third round. The water is held at one moment of its movement. Beavertopia's captures are not ours to share: they stay in `.scratch/map-look/clean/` and are never committed.
 
 For each capture, up to three example tiles of each meaning in view: the tile (x east, y north,
 from the map's south-west corner) and its position in the image, in pixels from the top-left
 corner, found and checked as for the third round (docs/map-look/captures.md). In the clean view
 nothing grows from afar, so a dead tree's or the start's position is where it stands; a slope's
 is the middle of its ramp.
+
+## River Valley (4242), 128×128
+
+**default-ui** (the editor's own view from its default camera, with its buttons, and its legend opened):
+
+- clean: [riverValley-128-default-ui.jpg](riverValley-128-default-ui.jpg)
+- third round: [after/riverValley-128-default-ui.jpg](../after/riverValley-128-default-ui.jpg)
+
+**overview** (the whole map from the south):
+
+- clean: [riverValley-128-overview.jpg](riverValley-128-overview.jpg)
+- third round: [after/riverValley-128-overview.jpg](../after/riverValley-128-overview.jpg)
+- clean, greyscale: [riverValley-128-overview-grey.jpg](riverValley-128-overview-grey.jpg); protanopia: [riverValley-128-overview-protanopia.jpg](riverValley-128-overview-protanopia.jpg); deuteranopia: [riverValley-128-overview-deuteranopia.jpg](riverValley-128-overview-deuteranopia.jpg); tritanopia: [riverValley-128-overview-tritanopia.jpg](riverValley-128-overview-tritanopia.jpg)
+
+- Tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose.
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | (67, 57) → 511, 408 |
+| badwater | not in view |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (54, 59) → 434, 397; (69, 52) → 523, 431; (73, 53) → 547, 426 |
+| dry ground | (67, 75) → 510, 311; (57, 78) → 454, 314; (48, 73) → 404, 334 |
+| contaminated ground | (33, 78) → 322, 306; (28, 78) → 294, 306; (28, 88) → 300, 266 |
+| contaminated beside moist ground | (33, 76) → 320, 315; (28, 76) → 293, 315; (18, 76) → 237, 315 |
+| living tree | (59, 61) → 464, 385 (Birch); (75, 62) → 557, 379 (Pine); (51, 63) → 418, 376 (Pine) |
+| dead tree | (64, 61) → 494, 370 (Birch); (51, 72) → 419, 336 (Birch); (66, 79) → 503, 292 (Birch) |
+| ruin | (27, 91) → 297, 253 (1 high); (66, 120) → 502, 134 (1 high); (9, 92) → 199, 240 (2 high) |
+| the start | (45, 55) → 379, 409 |
+| slope | (59, 58) → 464, 403 (rises toward the west); (68, 55) → 517, 418 (rises toward the south); (75, 61) → 557, 389 (rises toward the west) |
+| tall cliff | not in view |
+
+**start** (close to the start):
+
+- clean: [riverValley-128-start.jpg](riverValley-128-start.jpg)
+- third round: [after/riverValley-128-start.jpg](../after/riverValley-128-start.jpg)
+- clean, greyscale: [riverValley-128-start-grey.jpg](riverValley-128-start-grey.jpg); protanopia: [riverValley-128-start-protanopia.jpg](riverValley-128-start-protanopia.jpg); deuteranopia: [riverValley-128-start-deuteranopia.jpg](riverValley-128-start-deuteranopia.jpg); tritanopia: [riverValley-128-start-tritanopia.jpg](riverValley-128-start-tritanopia.jpg)
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | (50, 49) → 666, 441; (51, 50) → 672, 413; (49, 48) → 661, 471 |
+| badwater | (39, 83) → 127, 26; (38, 84) → 103, 21; (35, 84) → 47, 40 |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (49, 55) → 571, 327; (46, 51) → 561, 429; (41, 56) → 394, 390 |
+| dry ground | (42, 68) → 300, 206; (44, 69) → 329, 177; (43, 70) → 302, 172 |
+| contaminated ground | (36, 77) → 104, 104; (34, 77) → 64, 118; (32, 77) → 22, 133 |
+| contaminated beside moist ground | (33, 76) → 49, 139 |
+| living tree | (43, 61) → 382, 288 (Oak); (49, 60) → 512, 247 (Pine); (48, 61) → 482, 241 (Pine) |
+| dead tree | (38, 69) → 197, 184 (Oak); (37, 70) → 168, 175 (Oak); (51, 72) → 426, 80 (Birch) |
+| ruin | not in view |
+| the start | (45, 55) → 490, 355 |
+| slope | (40, 58) → 349, 358 (rises toward the west); (51, 54) → 622, 331 (rises toward the west); (59, 58) → 711, 215 (rises toward the west) |
+| tall cliff | (62, 53) → 835, 231 (4 levels, about 6 px a level); (43, 78) → 236, 57 (3 levels, about 9 px a level); (45, 79) → 265, 33 (3 levels, about 9 px a level) |
+
+**badwater** (close to the badwater, where it meets clean water if it does):
+
+- clean: [riverValley-128-badwater.jpg](riverValley-128-badwater.jpg)
+- third round: [after/riverValley-128-badwater.jpg](../after/riverValley-128-badwater.jpg)
+- clean, greyscale: [riverValley-128-badwater-grey.jpg](riverValley-128-badwater-grey.jpg); protanopia: [riverValley-128-badwater-protanopia.jpg](riverValley-128-badwater-protanopia.jpg); deuteranopia: [riverValley-128-badwater-deuteranopia.jpg](riverValley-128-badwater-deuteranopia.jpg); tritanopia: [riverValley-128-badwater-tritanopia.jpg](riverValley-128-badwater-tritanopia.jpg)
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | not in view |
+| badwater | (36, 84) → 480, 348; (34, 84) → 443, 365; (38, 84) → 515, 332 |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (32, 74) → 515, 546; (33, 73) → 549, 554; (30, 74) → 473, 568 |
+| dry ground | (40, 77) → 634, 411; (39, 75) → 641, 454; (41, 76) → 665, 418 |
+| contaminated ground | (34, 81) → 474, 403; (33, 80) → 465, 428; (34, 79) → 496, 435 |
+| contaminated beside moist ground | (33, 76) → 511, 498; (31, 76) → 470, 519; (29, 76) → 428, 541 |
+| living tree | (23, 72) → 336, 686 (Birch); (42, 63) → 874, 663 (Oak); (43, 61) → 928, 694 (Oak) |
+| dead tree | (33, 87) → 393, 309 (Pine); (31, 88) → 346, 310 (Pine); (39, 90) → 474, 210 (Pine) |
+| ruin | (30, 92) → 293, 270 (1 high); (27, 91) → 244, 307 (1 high); (26, 92) → 216, 301 (1 high) |
+| the start | not in view |
+| slope | (35, 83) → 472, 369 (rises toward the south); (42, 78) → 658, 371 (rises toward the north); (47, 85) → 661, 219 (rises toward the north) |
+| tall cliff | (43, 78) → 679, 382 (3 levels, about 11 px a level); (45, 79) → 701, 350 (3 levels, about 11 px a level); (59, 83) → 866, 193 (3 levels, about 9 px a level) |
+
+**falls** (the tallest waterfall, from downstream):
+
+- clean: [riverValley-128-falls.jpg](riverValley-128-falls.jpg)
+- third round: [after/riverValley-128-falls.jpg](../after/riverValley-128-falls.jpg)
+- clean, greyscale: [riverValley-128-falls-grey.jpg](riverValley-128-falls-grey.jpg); protanopia: [riverValley-128-falls-protanopia.jpg](riverValley-128-falls-protanopia.jpg); deuteranopia: [riverValley-128-falls-deuteranopia.jpg](riverValley-128-falls-deuteranopia.jpg); tritanopia: [riverValley-128-falls-tritanopia.jpg](riverValley-128-falls-tritanopia.jpg)
+
+- No dry cliff of three levels or more faces the camera here: count levels in the cliff pose.
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | (87, 74) → 490, 223; (86, 74) → 528, 223; (86, 72) → 526, 181 |
+| badwater | not in view |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (82, 76) → 694, 249; (82, 75) → 688, 226; (81, 76) → 735, 249 |
+| dry ground | not in view |
+| contaminated ground | not in view |
+| contaminated beside moist ground | not in view |
+| living tree | (86, 80) → 543, 328 (Birch); (84, 80) → 635, 330 (Birch); (93, 80) → 217, 400 (Oak) |
+| dead tree | not in view |
+| ruin | not in view |
+| the start | not in view |
+| slope | (96, 85) → 32, 625 (rises toward the south) |
+| tall cliff | not in view |
+
+**cliff** (the tallest dry cliff, from in front):
+
+- clean: [riverValley-128-cliff.jpg](riverValley-128-cliff.jpg)
+- third round: [after/riverValley-128-cliff.jpg](../after/riverValley-128-cliff.jpg)
+- clean, greyscale: [riverValley-128-cliff-grey.jpg](riverValley-128-cliff-grey.jpg); protanopia: [riverValley-128-cliff-protanopia.jpg](riverValley-128-cliff-protanopia.jpg); deuteranopia: [riverValley-128-cliff-deuteranopia.jpg](riverValley-128-cliff-deuteranopia.jpg); tritanopia: [riverValley-128-cliff-tritanopia.jpg](riverValley-128-cliff-tritanopia.jpg)
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | not in view |
+| badwater | not in view |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | not in view |
+| dry ground | (98, 114) → 490, 492; (98, 117) → 490, 242; (97, 114) → 447, 492 |
+| contaminated ground | not in view |
+| contaminated beside moist ground | not in view |
+| living tree | not in view |
+| dead tree | (105, 120) → 764, 172 (Birch); (97, 124) → 454, 93 (Pine); (96, 124) → 416, 93 (Pine) |
+| ruin | not in view |
+| the start | not in view |
+| slope | not in view |
+| tall cliff | (98, 116) → 490, 367 (5 levels, about 38 px a level); (97, 116) → 447, 367 (5 levels, about 38 px a level); (99, 116) → 533, 367 (5 levels, about 38 px a level) |
+
+**overview-markers** (the whole map from the south, with Markers on):
+
+- clean: [riverValley-128-overview-markers.jpg](riverValley-128-overview-markers.jpg)
+- clean, greyscale: [riverValley-128-overview-markers-grey.jpg](riverValley-128-overview-markers-grey.jpg); protanopia: [riverValley-128-overview-markers-protanopia.jpg](riverValley-128-overview-markers-protanopia.jpg); deuteranopia: [riverValley-128-overview-markers-deuteranopia.jpg](riverValley-128-overview-markers-deuteranopia.jpg); tritanopia: [riverValley-128-overview-markers-tritanopia.jpg](riverValley-128-overview-markers-tritanopia.jpg)
+
+- Tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose.
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | not in view |
+| badwater | not in view |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (54, 59) → 434, 397; (69, 52) → 523, 431; (73, 53) → 547, 426 |
+| dry ground | (67, 75) → 510, 311; (57, 78) → 454, 314; (48, 73) → 404, 334 |
+| contaminated ground | (33, 78) → 322, 306; (28, 78) → 294, 306; (28, 88) → 300, 266 |
+| contaminated beside moist ground | (33, 76) → 320, 315; (28, 76) → 293, 315; (18, 76) → 237, 315 |
+| living tree | (59, 61) → 464, 385 (Birch); (75, 62) → 557, 379 (Pine); (51, 63) → 418, 376 (Pine) |
+| dead tree | (64, 61) → 494, 365 (Birch); (51, 72) → 419, 332 (Birch); (66, 79) → 503, 288 (Birch) |
+| ruin | (27, 91) → 297, 253 (1 high); (66, 120) → 502, 134 (1 high); (9, 92) → 199, 240 (2 high) |
+| the start | (45, 55) → 379, 405 |
+| slope | (59, 58) → 463, 393 (rises toward the west); (68, 55) → 517, 408 (rises toward the south); (75, 61) → 558, 379 (rises toward the west) |
+| dam site | (66, 57) → 505, 408; (53, 53) → 427, 428; (78, 60) → 574, 394 |
+| tall cliff | not in view |
+
+**start-markers** (close to the start, with Markers on):
+
+- clean: [riverValley-128-start-markers.jpg](riverValley-128-start-markers.jpg)
+- clean, greyscale: [riverValley-128-start-markers-grey.jpg](riverValley-128-start-markers-grey.jpg); protanopia: [riverValley-128-start-markers-protanopia.jpg](riverValley-128-start-markers-protanopia.jpg); deuteranopia: [riverValley-128-start-markers-deuteranopia.jpg](riverValley-128-start-markers-deuteranopia.jpg); tritanopia: [riverValley-128-start-markers-tritanopia.jpg](riverValley-128-start-markers-tritanopia.jpg)
+
+| Meaning | Tile → position in the image |
+|---|---|
+| clean water | (50, 49) → 666, 441; (51, 50) → 672, 413; (49, 48) → 661, 471 |
+| badwater | (39, 83) → 127, 26; (38, 84) → 103, 21; (35, 84) → 47, 40 |
+| water partly bad | not in view |
+| badwater meets clean water | not in view |
+| moist ground | (46, 51) → 561, 429; (49, 54) → 584, 344; (41, 56) → 394, 390 |
+| dry ground | (42, 68) → 300, 206; (44, 69) → 329, 177; (43, 70) → 302, 172 |
+| contaminated ground | (36, 77) → 104, 104; (34, 77) → 64, 118; (32, 77) → 22, 133 |
+| contaminated beside moist ground | (33, 76) → 49, 139 |
+| living tree | (43, 61) → 382, 288 (Oak); (49, 60) → 512, 247 (Pine); (48, 61) → 482, 241 (Pine) |
+| dead tree | (38, 69) → 197, 184 (Oak); (37, 70) → 168, 175 (Oak); (51, 72) → 426, 80 (Birch) |
+| ruin | not in view |
+| the start | (45, 55) → 490, 355 |
+| slope | (40, 58) → 347, 350 (rises toward the west); (59, 58) → 714, 206 (rises toward the west); (31, 47) → 246, 701 (rises toward the north) |
+| dam site | (50, 56) → 578, 301; (51, 55) → 610, 308; (52, 54) → 639, 328 |
+| tall cliff | (62, 53) → 835, 231 (4 levels, about 6 px a level); (43, 78) → 236, 57 (3 levels, about 9 px a level); (45, 79) → 265, 33 (3 levels, about 9 px a level) |
 
 ## Canyon (4242), 128×128
 
@@ -985,177 +1159,3 @@ is the middle of its ramp.
 | the start | not in view |
 | slope | not in view |
 | tall cliff | (65, 136) → 490, 367 (15 levels, about 23 px a level); (65, 137) → 516, 367 (15 levels, about 23 px a level); (67, 135) → 463, 405 (14 levels, about 24 px a level) |
-
-## River Valley (4242), 128×128
-
-**overview-markers** (the whole map from the south, with Markers on):
-
-- clean: [riverValley-128-overview-markers.jpg](riverValley-128-overview-markers.jpg)
-- clean, greyscale: [riverValley-128-overview-markers-grey.jpg](riverValley-128-overview-markers-grey.jpg); protanopia: [riverValley-128-overview-markers-protanopia.jpg](riverValley-128-overview-markers-protanopia.jpg); deuteranopia: [riverValley-128-overview-markers-deuteranopia.jpg](riverValley-128-overview-markers-deuteranopia.jpg); tritanopia: [riverValley-128-overview-markers-tritanopia.jpg](riverValley-128-overview-markers-tritanopia.jpg)
-
-- Tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose.
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | not in view |
-| badwater | not in view |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (54, 59) → 434, 397; (69, 52) → 523, 431; (73, 53) → 547, 426 |
-| dry ground | (67, 75) → 510, 311; (57, 78) → 454, 314; (48, 73) → 404, 334 |
-| contaminated ground | (33, 78) → 322, 306; (28, 78) → 294, 306; (28, 88) → 300, 266 |
-| contaminated beside moist ground | (33, 76) → 320, 315; (28, 76) → 293, 315; (18, 76) → 237, 315 |
-| living tree | (59, 61) → 464, 385 (Birch); (75, 62) → 557, 379 (Pine); (51, 63) → 418, 376 (Pine) |
-| dead tree | (64, 61) → 494, 365 (Birch); (51, 72) → 419, 332 (Birch); (66, 79) → 503, 288 (Birch) |
-| ruin | (27, 91) → 297, 253 (1 high); (66, 120) → 502, 134 (1 high); (9, 92) → 199, 240 (2 high) |
-| the start | (45, 55) → 379, 405 |
-| slope | (59, 58) → 463, 393 (rises toward the west); (68, 55) → 517, 408 (rises toward the south); (75, 61) → 558, 379 (rises toward the west) |
-| dam site | (66, 57) → 505, 408; (53, 53) → 427, 428; (78, 60) → 574, 394 |
-| tall cliff | not in view |
-
-**start-markers** (close to the start, with Markers on):
-
-- clean: [riverValley-128-start-markers.jpg](riverValley-128-start-markers.jpg)
-- clean, greyscale: [riverValley-128-start-markers-grey.jpg](riverValley-128-start-markers-grey.jpg); protanopia: [riverValley-128-start-markers-protanopia.jpg](riverValley-128-start-markers-protanopia.jpg); deuteranopia: [riverValley-128-start-markers-deuteranopia.jpg](riverValley-128-start-markers-deuteranopia.jpg); tritanopia: [riverValley-128-start-markers-tritanopia.jpg](riverValley-128-start-markers-tritanopia.jpg)
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | (50, 49) → 666, 441; (51, 50) → 672, 413; (49, 48) → 661, 471 |
-| badwater | (39, 83) → 127, 26; (38, 84) → 103, 21; (35, 84) → 47, 40 |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (46, 51) → 561, 429; (49, 54) → 584, 344; (41, 56) → 394, 390 |
-| dry ground | (42, 68) → 300, 206; (44, 69) → 329, 177; (43, 70) → 302, 172 |
-| contaminated ground | (36, 77) → 104, 104; (34, 77) → 64, 118; (32, 77) → 22, 133 |
-| contaminated beside moist ground | (33, 76) → 49, 139 |
-| living tree | (43, 61) → 382, 288 (Oak); (49, 60) → 512, 247 (Pine); (48, 61) → 482, 241 (Pine) |
-| dead tree | (38, 69) → 197, 184 (Oak); (37, 70) → 168, 175 (Oak); (51, 72) → 426, 80 (Birch) |
-| ruin | not in view |
-| the start | (45, 55) → 490, 355 |
-| slope | (40, 58) → 347, 350 (rises toward the west); (59, 58) → 714, 206 (rises toward the west); (31, 47) → 246, 701 (rises toward the north) |
-| dam site | (50, 56) → 578, 301; (51, 55) → 610, 308; (52, 54) → 639, 328 |
-| tall cliff | (62, 53) → 835, 231 (4 levels, about 6 px a level); (43, 78) → 236, 57 (3 levels, about 9 px a level); (45, 79) → 265, 33 (3 levels, about 9 px a level) |
-
-**default-ui** (the editor's own view from its default camera, with its buttons, and its legend opened):
-
-- clean: [riverValley-128-default-ui.jpg](riverValley-128-default-ui.jpg)
-- third round: [after/riverValley-128-default-ui.jpg](../after/riverValley-128-default-ui.jpg)
-
-**overview** (the whole map from the south):
-
-- clean: [riverValley-128-overview.jpg](riverValley-128-overview.jpg)
-- third round: [after/riverValley-128-overview.jpg](../after/riverValley-128-overview.jpg)
-- clean, greyscale: [riverValley-128-overview-grey.jpg](riverValley-128-overview-grey.jpg); protanopia: [riverValley-128-overview-protanopia.jpg](riverValley-128-overview-protanopia.jpg); deuteranopia: [riverValley-128-overview-deuteranopia.jpg](riverValley-128-overview-deuteranopia.jpg); tritanopia: [riverValley-128-overview-tritanopia.jpg](riverValley-128-overview-tritanopia.jpg)
-
-- Tall cliffs are in view, but each level takes under 6 pixels here: count levels in the cliff pose.
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | (67, 57) → 511, 408 |
-| badwater | not in view |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (54, 59) → 434, 397; (69, 52) → 523, 431; (73, 53) → 547, 426 |
-| dry ground | (67, 75) → 510, 311; (57, 78) → 454, 314; (48, 73) → 404, 334 |
-| contaminated ground | (33, 78) → 322, 306; (28, 78) → 294, 306; (28, 88) → 300, 266 |
-| contaminated beside moist ground | (33, 76) → 320, 315; (28, 76) → 293, 315; (18, 76) → 237, 315 |
-| living tree | (59, 61) → 464, 385 (Birch); (75, 62) → 557, 379 (Pine); (51, 63) → 418, 376 (Pine) |
-| dead tree | (64, 61) → 494, 370 (Birch); (51, 72) → 419, 336 (Birch); (66, 79) → 503, 292 (Birch) |
-| ruin | (27, 91) → 297, 253 (1 high); (66, 120) → 502, 134 (1 high); (9, 92) → 199, 240 (2 high) |
-| the start | (45, 55) → 379, 409 |
-| slope | (59, 58) → 464, 403 (rises toward the west); (68, 55) → 517, 418 (rises toward the south); (75, 61) → 557, 389 (rises toward the west) |
-| tall cliff | not in view |
-
-**start** (close to the start):
-
-- clean: [riverValley-128-start.jpg](riverValley-128-start.jpg)
-- third round: [after/riverValley-128-start.jpg](../after/riverValley-128-start.jpg)
-- clean, greyscale: [riverValley-128-start-grey.jpg](riverValley-128-start-grey.jpg); protanopia: [riverValley-128-start-protanopia.jpg](riverValley-128-start-protanopia.jpg); deuteranopia: [riverValley-128-start-deuteranopia.jpg](riverValley-128-start-deuteranopia.jpg); tritanopia: [riverValley-128-start-tritanopia.jpg](riverValley-128-start-tritanopia.jpg)
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | (50, 49) → 666, 441; (51, 50) → 672, 413; (49, 48) → 661, 471 |
-| badwater | (39, 83) → 127, 26; (38, 84) → 103, 21; (35, 84) → 47, 40 |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (49, 55) → 571, 327; (46, 51) → 561, 429; (41, 56) → 394, 390 |
-| dry ground | (42, 68) → 300, 206; (44, 69) → 329, 177; (43, 70) → 302, 172 |
-| contaminated ground | (36, 77) → 104, 104; (34, 77) → 64, 118; (32, 77) → 22, 133 |
-| contaminated beside moist ground | (33, 76) → 49, 139 |
-| living tree | (43, 61) → 382, 288 (Oak); (49, 60) → 512, 247 (Pine); (48, 61) → 482, 241 (Pine) |
-| dead tree | (38, 69) → 197, 184 (Oak); (37, 70) → 168, 175 (Oak); (51, 72) → 426, 80 (Birch) |
-| ruin | not in view |
-| the start | (45, 55) → 490, 355 |
-| slope | (40, 58) → 349, 358 (rises toward the west); (51, 54) → 622, 331 (rises toward the west); (59, 58) → 711, 215 (rises toward the west) |
-| tall cliff | (62, 53) → 835, 231 (4 levels, about 6 px a level); (43, 78) → 236, 57 (3 levels, about 9 px a level); (45, 79) → 265, 33 (3 levels, about 9 px a level) |
-
-**badwater** (close to the badwater, where it meets clean water if it does):
-
-- clean: [riverValley-128-badwater.jpg](riverValley-128-badwater.jpg)
-- third round: [after/riverValley-128-badwater.jpg](../after/riverValley-128-badwater.jpg)
-- clean, greyscale: [riverValley-128-badwater-grey.jpg](riverValley-128-badwater-grey.jpg); protanopia: [riverValley-128-badwater-protanopia.jpg](riverValley-128-badwater-protanopia.jpg); deuteranopia: [riverValley-128-badwater-deuteranopia.jpg](riverValley-128-badwater-deuteranopia.jpg); tritanopia: [riverValley-128-badwater-tritanopia.jpg](riverValley-128-badwater-tritanopia.jpg)
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | not in view |
-| badwater | (36, 84) → 480, 348; (34, 84) → 443, 365; (38, 84) → 515, 332 |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (32, 74) → 515, 546; (33, 73) → 549, 554; (30, 74) → 473, 568 |
-| dry ground | (40, 77) → 634, 411; (39, 75) → 641, 454; (41, 76) → 665, 418 |
-| contaminated ground | (34, 81) → 474, 403; (33, 80) → 465, 428; (34, 79) → 496, 435 |
-| contaminated beside moist ground | (33, 76) → 511, 498; (31, 76) → 470, 519; (29, 76) → 428, 541 |
-| living tree | (23, 72) → 336, 686 (Birch); (42, 63) → 874, 663 (Oak); (43, 61) → 928, 694 (Oak) |
-| dead tree | (33, 87) → 393, 309 (Pine); (31, 88) → 346, 310 (Pine); (39, 90) → 474, 210 (Pine) |
-| ruin | (30, 92) → 293, 270 (1 high); (27, 91) → 244, 307 (1 high); (26, 92) → 216, 301 (1 high) |
-| the start | not in view |
-| slope | (35, 83) → 472, 369 (rises toward the south); (42, 78) → 658, 371 (rises toward the north); (47, 85) → 661, 219 (rises toward the north) |
-| tall cliff | (43, 78) → 679, 382 (3 levels, about 11 px a level); (45, 79) → 701, 350 (3 levels, about 11 px a level); (59, 83) → 866, 193 (3 levels, about 9 px a level) |
-
-**falls** (the tallest waterfall, from downstream):
-
-- clean: [riverValley-128-falls.jpg](riverValley-128-falls.jpg)
-- third round: [after/riverValley-128-falls.jpg](../after/riverValley-128-falls.jpg)
-- clean, greyscale: [riverValley-128-falls-grey.jpg](riverValley-128-falls-grey.jpg); protanopia: [riverValley-128-falls-protanopia.jpg](riverValley-128-falls-protanopia.jpg); deuteranopia: [riverValley-128-falls-deuteranopia.jpg](riverValley-128-falls-deuteranopia.jpg); tritanopia: [riverValley-128-falls-tritanopia.jpg](riverValley-128-falls-tritanopia.jpg)
-
-- No dry cliff of three levels or more faces the camera here: count levels in the cliff pose.
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | (87, 74) → 490, 223; (86, 74) → 528, 223; (86, 72) → 526, 181 |
-| badwater | not in view |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | (82, 76) → 694, 249; (82, 75) → 688, 226; (81, 76) → 735, 249 |
-| dry ground | not in view |
-| contaminated ground | not in view |
-| contaminated beside moist ground | not in view |
-| living tree | (86, 80) → 543, 328 (Birch); (84, 80) → 635, 330 (Birch); (93, 80) → 217, 400 (Oak) |
-| dead tree | not in view |
-| ruin | not in view |
-| the start | not in view |
-| slope | (96, 85) → 32, 625 (rises toward the south) |
-| tall cliff | not in view |
-
-**cliff** (the tallest dry cliff, from in front):
-
-- clean: [riverValley-128-cliff.jpg](riverValley-128-cliff.jpg)
-- third round: [after/riverValley-128-cliff.jpg](../after/riverValley-128-cliff.jpg)
-- clean, greyscale: [riverValley-128-cliff-grey.jpg](riverValley-128-cliff-grey.jpg); protanopia: [riverValley-128-cliff-protanopia.jpg](riverValley-128-cliff-protanopia.jpg); deuteranopia: [riverValley-128-cliff-deuteranopia.jpg](riverValley-128-cliff-deuteranopia.jpg); tritanopia: [riverValley-128-cliff-tritanopia.jpg](riverValley-128-cliff-tritanopia.jpg)
-
-| Meaning | Tile → position in the image |
-|---|---|
-| clean water | not in view |
-| badwater | not in view |
-| water partly bad | not in view |
-| badwater meets clean water | not in view |
-| moist ground | not in view |
-| dry ground | (98, 114) → 490, 492; (98, 117) → 490, 242; (97, 114) → 447, 492 |
-| contaminated ground | not in view |
-| contaminated beside moist ground | not in view |
-| living tree | not in view |
-| dead tree | (105, 120) → 764, 172 (Birch); (97, 124) → 454, 93 (Pine); (96, 124) → 416, 93 (Pine) |
-| ruin | not in view |
-| the start | not in view |
-| slope | not in view |
-| tall cliff | (98, 116) → 490, 367 (5 levels, about 38 px a level); (97, 116) → 447, 367 (5 levels, about 38 px a level); (99, 116) → 533, 367 (5 levels, about 38 px a level) |

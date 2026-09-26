@@ -2,36 +2,38 @@ name: Live check
 
 # Checks the deployed site against main: it loads without page or console errors, stays noindex
 # until launch, and its download for one spec is the file tools/gen.ts makes, byte for byte
-# (tests/live). Runs daily, after every successful deploy, and by hand. A failure opens an issue
-# labelled "deploy", or comments on the open one.
+# (tests/live). Runs daily and by hand (against main), and after every deploy: deploy.yml calls it
+# with the commit it deployed. It has no workflow_run trigger, so nothing privileged checks out code
+# from another run. A failure opens an issue labelled "deploy", or comments on the open one.
 
 on:
   schedule:
     - cron: "17 6 * * *"
-  workflow_run:
-    workflows: ["Deploy to GitHub Pages"]
-    types: [completed]
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to compare the live site with (deploy.yml passes the one it deployed)
+        type: string
+        required: false
 
 permissions:
   contents: read
   issues: write
 
-concurrency:
-  group: live-check
-  cancel-in-progress: false
-
 jobs:
   live:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    concurrency:
+      group: live-check
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      # after a deploy, the commit it deployed; otherwise main
-      - uses: actions/checkout@v4
+      # called by deploy.yml: the commit it deployed (a push to main); otherwise main
+      - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha || 'main' }}
-      - uses: actions/setup-node@v4
+          ref: ${{ inputs.ref || 'main' }}
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -42,7 +44,7 @@ jobs:
         run: npx playwright test -c playwright.live.config.ts
         env:
           DGM_PUBLIC: ${{ vars.DGM_PUBLIC }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: live-check-report

@@ -88,3 +88,5 @@ Information:
   a few of them (D117). None was run, and Timberborn was never launched.
 - `playwright.config.ts` takes `DGM_E2E_PORT` (default 4173), so the browser tests can run beside
   another checkout's.
+
+Deployed: real-places-done, 2026-09-25, live check passed (PR #31; the generator's download unchanged, sha256 `5118b6a6…`; the live gallery page and its index answer 200).

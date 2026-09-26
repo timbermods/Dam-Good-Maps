@@ -1,5 +1,6 @@
 // Map look's fix round (PLAN §20 D114): every meaning reads in greyscale and with any colour
-// blindness, never by colour alone. The meanings keep an order of lightness; dam sites are hatched
+// blindness, never by colour alone. The meanings keep an order of lightness; contamination (a layer
+// over the ground since Kyler's contamination round) reads by its veins; dam sites are hatched
 // with a dark rim; dead trees, slope arrows and the start keep a minimum size from afar; the legend
 // names every meaning the view draws.
 
@@ -9,18 +10,17 @@ import { DAM } from "../../src/editor/tools";
 import { buildEntities } from "../../src/render3d/entities3d";
 import { hatchMarks } from "../../src/render3d/materials";
 import { entityView } from "../../src/render3d/model";
-import { DAM_OVERLAY, DAM_SITE, damLegendSwatch, DEAD_TREE, GROUND, HATCH, LIVING_TREE, cssColor, legendEntries, objectLegend, WATER, waterBody } from "../../src/render3d/palette";
+import { contaminatedGround, contaminationVein, contaminationVeins, DAM_OVERLAY, DAM_SITE, damLegendSwatch, DEAD_TREE, GROUND, groundColor, HATCH, LIVING_TREE, cssColor, legendEntries, objectLegend, WATER, waterBody } from "../../src/render3d/palette";
 
 const lum = (c: readonly number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
 type Mesh = { name: string; count: number; geometry: { getAttribute(n: string): { array: ArrayLike<number>; itemSize: number } | undefined } };
 
 describe("the meanings in lightness", () => {
-  it("keep their order: dead trees, moist, dry, contaminated ground, badwater", () => {
+  it("keep their order: dead trees, moist, dry ground, badwater", () => {
     expect(lum(DEAD_TREE)).toBeGreaterThan(lum(GROUND.moistLow) + 0.1);
     expect(lum(GROUND.moistHigh)).toBeGreaterThan(lum(GROUND.dry) + 0.2);
-    expect(lum(GROUND.dry)).toBeGreaterThan(lum(GROUND.contaminated) + 0.15);
-    expect(lum(GROUND.contaminated)).toBeGreaterThan(lum(WATER.bad) + 0.09);
+    expect(lum(GROUND.dry)).toBeGreaterThan(lum(WATER.bad) + 0.24);
     // clean water's body is lighter than badwater's at every depth (Kyler's rule: badwater stays
     // clearly darker than clean water; the body is the colour the shader draws before its light)
     for (const d of [0.05, 0.25, 0.5, 1, 2, 3, 5]) expect(lum(waterBody(d, false)) - lum(waterBody(d, true))).toBeGreaterThan(0.05);
@@ -29,6 +29,50 @@ describe("the meanings in lightness", () => {
     expect(lum(DEAD_TREE) - lum(LIVING_TREE)).toBeGreaterThan(0.55);
     // a dam site's stripes: light and dark
     expect(lum(DAM_SITE) - lum(HATCH.dark)).toBeGreaterThan(0.7);
+  });
+});
+
+describe("contamination", () => {
+  // Kyler (contamination round): a layer over the ground, as in the game, never a solid rust fill
+  const levels = [1 / 15, 0.2, 0.4, 0.6, 0.8, 1];
+  const soils = [0, 15, 150]; // dry, moist at the edge, moist by the water
+
+  it("is a layer: the ground's own look stays under it, its veins grow denser and brighter with contamination, wet and dry contaminated ground differ, and it reads in greyscale", () => {
+    // the ground's own look stays underneath: moist ground stays grass, dry ground cracked earth,
+    // only stained a little between the veins close up
+    for (const m of soils) for (const c of [1, 120, 255]) expect(groundColor(m, c, false)).toEqual(groundColor(m, 0, false));
+    for (const l of levels) expect(contaminationVeins(l).stain).toBeLessThanOrEqual(0.2);
+    // denser and brighter as contamination rises
+    for (let k = 1; k < levels.length; k++) {
+      const a = contaminationVeins(levels[k - 1]);
+      const b = contaminationVeins(levels[k]);
+      for (const key of ["reach", "fine", "glowDry", "glowWet", "cover"] as const) expect(b[key]).toBeGreaterThanOrEqual(a[key]);
+      expect(lum(contaminationVein(levels[k], false))).toBeGreaterThan(lum(contaminationVein(levels[k - 1], false)));
+    }
+    expect(contaminationVeins(1).reach - contaminationVeins(1 / 15).reach).toBeGreaterThan(0.5);
+    expect(contaminationVeins(1).fine).toBe(1);
+    expect(contaminationVeins(1 / 15).fine).toBe(0);
+    for (const l of levels) {
+      const dryVein = lum(contaminationVein(l, false));
+      const wetVein = lum(contaminationVein(l, true));
+      // wet and dry contaminated ground differ: glowing orange veins on earth, dark red through
+      // grass, over grounds that differ too
+      expect(dryVein - wetVein).toBeGreaterThan(0.2);
+      expect(lum(contaminatedGround(150, l, false)) - lum(contaminatedGround(0, l, false))).toBeGreaterThan(0.15);
+      // in greyscale: on dry earth light lines where clean earth has dark cracks; through grass
+      // dark lines
+      expect(dryVein - lum(GROUND.crack)).toBeGreaterThan(0.2);
+      expect(dryVein).toBeGreaterThan(lum(contaminatedGround(0, l, false)) + 0.02);
+      for (const m of [15, 150]) expect(lum(contaminatedGround(m, l, false)) - wetVein).toBeGreaterThan(0.25);
+      // from afar, where the veins are too fine to see, the ground is darker than clean ground,
+      // and still well lighter than badwater
+      expect(lum(groundColor(0, 0, false)) - lum(contaminatedGround(0, l, true))).toBeGreaterThan(0.03);
+      for (const m of [15, 150]) expect(lum(groundColor(m, 0, false)) - lum(contaminatedGround(m, l, true))).toBeGreaterThan(0.06);
+      for (const m of soils) expect(lum(contaminatedGround(m, l, true))).toBeGreaterThan(lum(WATER.bad) + 0.09);
+    }
+    // the most contaminated: bright veins, and a clear stain from afar
+    expect(lum(contaminationVein(1, false)) - lum(GROUND.dry)).toBeGreaterThan(0.2);
+    expect(lum(GROUND.dry) - lum(contaminatedGround(0, 1, true))).toBeGreaterThan(0.09);
   });
 });
 
