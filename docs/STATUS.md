@@ -86,6 +86,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D171: water sources start rivers: only at heads (edge inflows, springs), clustered for more flow, never inside an existing flow; a check flags any that are.
 - D172: tall maps (up to 22): allowed in both validators once a probe batch confirms; a standard/tall option for Real places and Pick a place, dramatic places tall by default.
 - D173: #33's exact-weather speedups and scheduling, adopted as Weather view proposals.
+- D174: Real places review: 3D thumbnails with a crisp 2D top-down (two layouts to pick from), tighter framing, the survey patches may be re-downloaded, credits confirmed, three titles changed.
 
 ## Done and released
 
