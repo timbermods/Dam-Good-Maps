@@ -9,7 +9,7 @@ import { describeTile, entitiesByTile } from "../../src/editor/features";
 import { buildEntities, modelKeyOf, modelTriangles } from "../../src/render3d/entities3d";
 import { decodeTop, encodeTop, litFraction, objectCasters, shadowMap, shadowTops, SHADOW_RES, skyVisibility, soilNibbles, tileData, waterByte } from "../../src/render3d/light";
 import { DEAD, entityView, soilView, surfaceWater, waterFromDepth, YOUNG } from "../../src/render3d/model";
-import { contaminationByte, cssColor, DEAD_TREE, GROUND, groundColor, groundKind, legendEntries, LIGHT, moistureByte, wallColor, WATER, waterBody } from "../../src/render3d/palette";
+import { contaminationByte, contaminationVein, cssColor, DEAD_TREE, GROUND, groundColor, groundKind, legendEntries, LIGHT, moistureByte, wallColor, WATER, waterBody } from "../../src/render3d/palette";
 import { dropFlags, EDGE_CURTAIN, FALL_IN_BITS, lowerByTile, meshWaterChunk, SHORE_BITS } from "../../src/render3d/waterMesh";
 import { ShaderMaterial } from "three";
 
@@ -29,7 +29,7 @@ describe("the ground's colours", () => {
     expect([...s.contamination]).toEqual([0, 0, 128]);
   });
 
-  it("maps soil to moist, dry, contaminated or under water, in the shader's order", () => {
+  it("maps soil to moist, dry, contaminated or under water, in the shader's order, keeping the ground's own colour under contamination", () => {
     expect(groundKind(0, 0, false)).toBe("dry");
     expect(groundKind(3, 0, false)).toBe("moist");
     expect(groundKind(3, 9, false)).toBe("contaminated");
@@ -38,16 +38,24 @@ describe("the ground's colours", () => {
     expect(groundColor(0, 0, false)).toEqual(GROUND.dry);
     expect(groundColor(1, 0, false)).toEqual(GROUND.moistLow);
     expect(groundColor(150, 0, false)).toEqual(GROUND.moistHigh);
-    expect(groundColor(40, 5, false)).toEqual(GROUND.contaminated);
+    // contamination is a layer over the ground (Kyler's contamination round): the colour under it
+    // is the soil's own
+    expect(groundColor(40, 5, false)).toEqual(groundColor(40, 0, false));
+    expect(groundColor(0, 5, false)).toEqual(GROUND.dry);
   });
 
-  it("keeps the meanings apart in brightness too (greyscale)", () => {
-    // moist grass is the lightest ground, then dry earth, then contaminated earth
+  it("keeps the meanings apart in brightness too (greyscale): grass, earth and its cracks, contamination's veins, water", () => {
+    // moist grass is the lightest ground, then dry earth
     expect(lum(GROUND.moistHigh) - lum(GROUND.dry)).toBeGreaterThan(0.08);
-    expect(lum(GROUND.dry) - lum(GROUND.contaminated)).toBeGreaterThan(0.15);
-    // dry earth's cracks are darker than it, contaminated earth's glowing cracks lighter
+    // dry earth's cracks are darker than it; contamination's veins glow lighter than their rust
+    // rims, so on dry earth they are light lines where clean earth has dark ones, and through
+    // grass they are dark lines
     expect(lum(GROUND.crack)).toBeLessThan(lum(GROUND.dry) - 0.15);
     expect(lum(GROUND.contaminatedGlow)).toBeGreaterThan(lum(GROUND.contaminated) + 0.3);
+    for (const l of [1 / 15, 0.5, 1]) {
+      expect(lum(contaminationVein(l, false)) - lum(GROUND.crack)).toBeGreaterThan(0.2);
+      expect(lum(GROUND.moistHigh) - lum(contaminationVein(l, true))).toBeGreaterThan(0.3);
+    }
     // badwater is darker than clean water of the same depth: the water's body colours, a level deep
     expect(lum(WATER.shallow) - lum(WATER.bad)).toBeGreaterThan(0.2);
     expect(lum(waterBody(1, false)) - lum(waterBody(1, true))).toBeGreaterThan(0.06);
