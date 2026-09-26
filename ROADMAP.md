@@ -749,7 +749,9 @@ captures and released under its own tag; rendering only, so the map files don't 
 contaminated ground as a layer (D154, `look-contamination-done`, released); badwater blending
 smoothly into clean water, with #38's approved crimson badwater and a warm tint for partly bad water,
 in one shared water palette (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
-ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`).
+ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`); and waterfalls with shape and
+volume (D201, `look/waterfalls`, `look-waterfalls-done`): falls that leave the lip and arc down as
+a translucent ribbon, foam at the lip, whitewater below, cascades as small falls.
 
 ---
 
