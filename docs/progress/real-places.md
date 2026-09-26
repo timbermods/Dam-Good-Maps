@@ -4,6 +4,9 @@
 `real-places-done`, right after `map-look-done`. No generated map changes: the generator stays
 0.6.0.
 
+Round 2 (below) changes the titles, the description, **Download**, **Refine**, the card pictures
+and where the byte check runs.
+
 - **The gallery** (`real-places/index.html`, `src/places/`), linked as **Real places** at the top of
   the generator. 85 maps made from real land. Each card shows our own top-down render of the map
   and its settled water, the name ("Near Yosemite Valley"), the landform, size and scale, and a
@@ -90,3 +93,114 @@ Information:
   another checkout's.
 
 Deployed: real-places-done, 2026-09-25, live check passed (PR #31; the generator's download unchanged, sha256 `5118b6a6…`; the live gallery page and its index answer 200).
+
+## Round 2 (Kyler, 2026-09-25)
+
+Built on branch `feature/real-places-2`. Kyler's four instructions, and the card pictures he added.
+Several round-1 details above are replaced here: the titles, the description, **Download**,
+**Refine**, the pictures and where the byte check runs.
+
+- **Credits by link.** Every provider's licence or terms were read, and each verdict is in
+  [docs/real-places-credits.md](../real-places-credits.md). Nine of the eleven accept credit by a
+  link. Two need their notice in the file itself, and only for maps in their region: Kartverket
+  (its name wherever its data is used: Geirangerfjord and Lofoten) and LINZ (CC BY 3.0 NZ asks
+  for the licence on every copy: Waimakariri River, Milford Sound, Hooker Valley, Mount Taranaki).
+  The new **credits page** (`real-places/credits/`) and the gallery show the same credits in full
+  (`src/places/Credits.tsx`): the source, the changes, that the providers do not endorse the maps,
+  and every notice with a link to its licence.
+- **The in-game description** is the title; "Inspired by the land near <place>, at Timberborn's
+  scale; not a replica."; "Credits: https://timbermods.github.io/dam-good-maps/real-places/credits/";
+  then, for the six maps above, "Elevation data: <notice>." Plain ASCII: whether the game shows
+  other characters waits for a probe batch, asked for first. So Kartverket's line has "(c)" where
+  its terms ask for "©" until then.
+- **Built at deploy time.** `npm run places:build` (`tools/places-build.ts`) builds every place's
+  `.timber` with `src/core/places/place.ts`, in worker threads, into
+  `dist/real-places/maps/<id>.timber`. It runs in `deploy.yml` after `vite build`, before the
+  noindex step. A map that fails the export profile or any check of the generate profile, or whose
+  file is not the index's (sha256 and size), fails the deploy. Every deploy rebuilds with the engine
+  it deploys, so the files always match it; the index keeps each sha256, so a change shows in its
+  diff. 85 maps in 30 s on this machine's 16 threads; 15.7 MB in all, the largest 437 KB.
+- **Download** is a plain link to the static file (`download` names it after the title): instant.
+  **Refine** fetches the same file and opens it through `MapSession.importMap`. The browser never
+  builds a place: `place.worker.ts` and the generator worker's `openPlace` are gone.
+  `npm run dev` builds a map on request with the same code (a dev-server middleware in
+  `vite.config.ts`); `npm run preview` serves what `npm run build` and `npm run places:build` wrote.
+- **The byte check** (`places-build-{1,2,3}.test.ts`, all 85 maps against the index) moved to the
+  nightly run (vitest's heavy project). It also runs in the release check: a CI job,
+  `release-places`, on pull requests whose base is `main` (`npm run test:places`). Every push keeps
+  a sample of every size (`placeSample`: the first two at 96² and 128², the first at 256²) with the
+  same assertions, in `places.test.ts`; the browser tests serve the same sample's files.
+- **Titles.** No "Near", no "(… sample)", and the awkward ones tidied; the index keeps the survey's
+  name verbatim (`surveyName`) and the part it sampled (`sample`). The ids, the data and picture
+  files and the `.timber` names follow the new titles. The description's sentence adds "the" where
+  a title needs it ("near the Grand Canyon"). The gallery's "inspired by, not a replica" line
+  stays. Per-map "how it plays" lines wait for M9c's names and descriptions.
+- **Card pictures.** `npm run places:thumbs` (`tools/places-thumbs.ts`) opens each place in the
+  editor, in the installed Chrome on this machine's GPU, and draws the Map look 3D view's clean
+  look as an angled overview: the camera stands on the low side of the land, looking toward the
+  high side, over the whole map. 960 px, scaled to 480 px (twice the card), WebP. The gallery
+  loads them lazily. The index records which `.timber` each shows (`imageFrom`); a test fails when
+  a map changed and its picture did not. Kyler decides from the before and after.
+- **The live check** also downloads the smallest real place from the live gallery and compares it
+  with the deployed index's sha256 (and the checked-out commit's), and loads the credits page.
+
+Title changes (old → new). Every other title only loses "Near": Badlands National Park, Toklat
+River, Crater Lake, Colca Canyon, Twelve Apostles, Mount Mayon, Rhine and Moselle, Drakensberg
+Amphitheatre, Kaieteur Falls, Death Valley, Geirangerfjord, Torres del Paine, Tiger Leaping Gorge,
+Phong Nha, Uvac River, Mount Roraima, Ethiopian Highlands, Lofoten, Drumheller, Tagliamento River,
+Blyde River Canyon, Cliffs of Moher, Paricutin, Alaknanda and Bhagirathi, Niagara Falls, Glencoe,
+Verdon Gorge, Chocolate Hills, Kinabatangan River, Deccan Plateau, Bardenas Reales, Waimakariri
+River, Lake Toba, Mount Etna, Gullfoss, Milford Sound, Lauterbrunnen, Katherine Gorge, Bungle
+Bungle, Tibetan Plateau, Painted Desert, Ngorongoro, Fish River Canyon, Mount Fuji, Victoria Falls,
+Todgha Gorge, Monument Valley, Colorado Plateau, Sete Cidades, Copper Canyon, Mount Taranaki,
+Bandiagara, Iguazu Falls, Yosemite Valley, Tara Gorge, Mamore River, Capitol Reef, Altiplano.
+
+| Old | New |
+|---|---|
+| Near Thousand Islands Saint Lawrence | Thousand Islands |
+| Near Lena delta | Lena Delta |
+| Near English Lake District | Lake District |
+| Near Aso caldera | Aso Caldera |
+| Near Danube delta | Danube Delta |
+| Near Western Ghats Mahabaleshwar | Mahabaleshwar, Western Ghats |
+| Near Roaring River fan | Roaring River Fan |
+| Near Chilean Aysen fjord | Aysen Fjord |
+| Near Finnish Saimaa | Lake Saimaa |
+| Near Ennedi plateau | Ennedi Plateau |
+| Near Grand Canyon Colorado | Grand Canyon |
+| Near Na Pali coast | Na Pali Coast |
+| Near Godavari delta | Godavari Delta |
+| Near Niagara escarpment Hamilton | Niagara Escarpment |
+| Near Taklimakan Kunlun fan | Taklimakan Fan |
+| Near Dinaric karst Plitvice | Plitvice |
+| Near Lower Mississippi oxbows | Lower Mississippi |
+| Near Skeidara outwash | Skeidara Outwash |
+| Near Blue Mountains Jamison | Blue Mountains |
+| Near Atacama fan | Atacama Fan |
+| Near Kenai Aialik Bay | Aialik Bay |
+| Near Aoraki Hooker Valley | Hooker Valley |
+| Near Li River Yangshuo | Li River |
+| Near Goosenecks San Juan | Goosenecks of the San Juan |
+| Near Brahmaputra near Majuli | Majuli, Brahmaputra |
+| Near Ilulissat icefjord | Ilulissat Icefjord |
+| Near Tsingy Bemaraha | Tsingy de Bemaraha |
+
+Tests updated to Kyler's decisions (D148), none weakened:
+- `places.test.ts`: the title check (was "starts with Near") checks the new rules, the survey's
+  name and sample in the index, and the renames; the description check (was: the full credits in
+  the file) checks the new format, plain ASCII, and exactly which maps carry which notice; the card
+  check (was a 240 px JPEG) checks a 480 px WebP that shows the current map; the D108 check (was:
+  the gallery, the editor's worker and the Refine link use real places) drops the worker, which no
+  longer builds them, and adds that the pages only import the builder's types. New: every
+  provider's licence and verdict; a sample of every size, built, validated and compared with the
+  index on every push.
+- `places-build-*.test.ts`: unchanged assertions, now nightly and in the release check.
+- `places.spec.ts`: **Download** is a link to the static file (was a button that built it); "Node
+  and Chromium build the same file" becomes "the site serves each place's `.timber` as Node builds
+  it", since the browser no longer builds one; the credits test checks every notice and licence
+  link. New: the credits page on a desktop and a phone, and that the pictures load lazily.
+- `tests/live/live.spec.ts`: new, the real place and the credits page (above).
+
+Checks: `npm run typecheck`, `npm run test:quick`, `npm run test:e2e` and `npm run test:places`
+pass locally; the deploy build (`npm run build`, `npm run places:build` and the noindex step) was
+run locally. Timberborn was never launched.

@@ -23,18 +23,18 @@ import { moisture } from "../sim/moisture";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
 import { validateMap, type Validation } from "../validate/checks";
-import { CHANGES, ELEVATION_SOURCE, PROVIDER_NOTICES } from "./attribution";
+import { CREDITS_URL, fileNotices } from "./attribution";
 
 export const PLACE_FORMAT = 1;
 
 /** One real place as the site stores it (public/real-places/data/<id>.json.gz). */
 export interface PlaceData {
   format: 1;
-  /** A slug of the name: "near-yosemite-valley". */
+  /** A slug of the name: "grand-canyon". */
   id: string;
-  /** "Near Yosemite Valley": the map's name and its file name. */
+  /** "Grand Canyon": the map's title and its file name. */
   name: string;
-  /** The place it is named after: "Yosemite Valley". */
+  /** The place in a sentence, "Inspired by the land near …": "the Grand Canyon". */
   place: string;
   /** The landform family the survey sampled it for, and its name on the page. */
   family: string;
@@ -43,6 +43,10 @@ export interface PlaceData {
   plays: string;
   /** Metres of real land per tile. */
   metres: number;
+  /** The place's latitude and longitude, in degrees (the survey's anchor): which providers' notices
+   *  the file carries (attribution.ts). */
+  lat: number;
+  lon: number;
   W: number;
   H: number;
   /** Surface height of every tile, one base-36 digit each, row-major from the south edge. */
@@ -64,14 +68,23 @@ export interface PlaceData {
 export interface PlaceIndexEntry {
   id: string;
   name: string;
+  /** The landscape survey's own name, verbatim: "Near Grand Canyon Colorado (southwest sample), 60 m per tile". */
+  surveyName: string;
+  /** The part of the named place the survey sampled ("southwest"), when its name says. */
+  sample?: string;
   family: string;
   familyName: string;
   plays: string;
   size: number;
   metres: number;
-  /** Paths relative to index.json: the place's data and its card picture. */
+  /** Paths relative to index.json: the place's data, its card picture, and its .timber
+   *  (`maps/<id>.timber`, built at deploy time by tools/places-build.ts). */
   data: string;
   image: string;
+  file: string;
+  /** The sha256 of the .timber the card picture shows (tools/places-thumbs.ts renders it again
+   *  when the map changes). */
+  imageFrom?: string;
   /** The .timber's size in bytes and its sha256: every build of the place gives this file. */
   bytes: number;
   sha256: string;
@@ -128,14 +141,24 @@ export function placeFileName(p: Pick<PlaceData, "name">): string {
   return `${p.name}.timber`;
 }
 
-/** The map's in-game description: what it is, that it is not a replica, and its credits. */
+/** The map's in-game description (Kyler, 2026-09-25): its title, that it is not a replica, and a
+ *  link to the credits page; then the provider notices whose terms need them in the file itself
+ *  (attribution.ts, docs/real-places-credits.md). Plain text: the game's handling of other
+ *  characters is not yet checked. */
 export function placeDescription(p: PlaceData): string {
+  const notices = fileNotices(p.lat, p.lon);
   return [
-    `${p.familyName} · ${p.W}×${p.H} · ${p.metres} m per tile. ${p.plays}`,
+    p.name,
     `Inspired by the land near ${p.place}, at Timberborn's scale; not a replica.`,
-    `Made with Dam Good Maps from public elevation data: ${ELEVATION_SOURCE}. ${CHANGES} The data providers do not endorse this map.`,
-    `Elevation data: ${PROVIDER_NOTICES.join("; ")}.`,
+    `Credits: ${CREDITS_URL}`,
+    ...(notices.length ? [`Elevation data: ${notices.join("; ")}.`] : []),
   ].join("\n\n");
+}
+
+/** The places the quick checks build (tests/contract/places.test.ts, the browser tests): the first
+ *  two at 96² and 128², and the first at 256². Every place is checked nightly and before a release. */
+export function placeSample(index: Pick<PlaceIndex, "places" | "sizes">): PlaceIndexEntry[] {
+  return index.sizes.flatMap((s) => index.places.filter((p) => p.size === s).slice(0, s < 256 ? 2 : 1));
 }
 
 /** The place's objects as entities, in a fixed order: sources, the start, bushes, living trees,

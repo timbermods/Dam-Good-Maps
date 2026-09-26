@@ -3,18 +3,20 @@
 //
 //   npm run places                         (writes public/real-places/)
 //   npm run places -- --check              (writes nothing; fails when the committed files differ)
-//   npm run places -- --only near-glencoe  (builds and checks the places named, writes nothing)
+//   npm run places -- --only glencoe       (builds and checks the places named, writes nothing)
 //
 // For every named place in the library (the three random-land controls are survey controls, not
 // places, and stay out) it writes:
 // - data/<id>.json.gz: the place's heights, water sources, start and planted objects, with its
-//   name, landform family, scale and a plain line on how it plays (src/core/places/place.ts);
-// - cards/<id>.jpg: the card's picture, our own top-down render (src/core/render/shade.ts) of the
-//   map with its settled water, north up;
-// - index.json: every place for the gallery page, with the sha256 of its .timber.
+//   title, landform family, scale and a plain line on how it plays (src/core/places/place.ts);
+// - index.json: every place for the gallery page, with the survey's own name, and the size and
+//   sha256 of its .timber.
+// The card pictures (cards/<id>.webp) are rendered in the 3D view by tools/places-thumbs.ts; the
+// index keeps, for each, the sha256 of the .timber it shows (imageFrom), so a changed map shows.
 // Each .timber is built with src/core/places (build, settle, validate, write) and must pass the
 // export profile and every check of the generate profile; the tool stops on any that does not.
-// Everything it writes is the same bytes on every run.
+// Everything it writes is the same bytes on every run. The site's .timber files themselves are
+// built at deploy time (tools/places-build.ts, `npm run places:build`), and must match the index.
 //
 // The product never imports from investigation/ (tests/unit/boundaries.test.ts); this tool reads the
 // library's data files at run time, as tools may.
@@ -23,7 +25,6 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync, gzipSync, strToU8 } from "fflate";
-import encodeJpeg from "../src/core/format/vendor/jpeg-encoder.js";
 import { entityJson } from "../src/core/format/entities";
 import { stringify } from "../src/core/format/json";
 import {
@@ -40,14 +41,10 @@ import {
   type PlaceIndexEntry,
 } from "../src/core/places/place";
 import { writeTimber } from "../src/core/format/timber";
-import { shadeTiles } from "../src/core/render/shade";
 import { validateMap } from "../src/core/validate/checks";
 
 const LIBRARY = "investigation/landscapes/library";
 const OUT = "public/real-places";
-/** The card picture's side in pixels. */
-const CARD = 240;
-const CARD_QUALITY = 60;
 
 /** Each family's name on the page and how it plays: the survey's "play value" for the family
  *  (investigation/landscapes/FAMILIES.md), in plain words. A family label names the region the
@@ -75,16 +72,71 @@ const FAMILIES: Record<string, { name: string; plays: string }> = {
   plateau: { name: "Plateau", plays: "Broad high ground to build on; deep water may be hard to reach." },
 };
 
-/** Survey names a player could misread, by library id. "Badwater" is a place name in Death Valley,
- *  and a hazard in Timberborn: this map has none. */
-const RENAME: Record<string, string> = {
-  "n101-128-120-normalised-16": "Near Death Valley",
+/** Titles (Kyler, 2026-09-25): the survey's name without "Near", the "(… sample)" suffix and the
+ *  scale. Titles that still read awkwardly are tidied here, keyed by that shortened name.
+ *  "Badwater" is a place name in Death Valley, and a hazard in Timberborn: that map has none. */
+const TIDY: Record<string, string> = {
+  "Thousand Islands Saint Lawrence": "Thousand Islands",
+  "Lena delta": "Lena Delta",
+  "Death Valley Badwater fan": "Death Valley",
+  "English Lake District": "Lake District",
+  "Aso caldera": "Aso Caldera",
+  "Danube delta": "Danube Delta",
+  "Western Ghats Mahabaleshwar": "Mahabaleshwar, Western Ghats",
+  "Roaring River fan": "Roaring River Fan",
+  "Chilean Aysen fjord": "Aysen Fjord",
+  "Finnish Saimaa": "Lake Saimaa",
+  "Ennedi plateau": "Ennedi Plateau",
+  "Grand Canyon Colorado": "Grand Canyon",
+  "Na Pali coast": "Na Pali Coast",
+  "Godavari delta": "Godavari Delta",
+  "Niagara escarpment Hamilton": "Niagara Escarpment",
+  "Taklimakan Kunlun fan": "Taklimakan Fan",
+  "Dinaric karst Plitvice": "Plitvice",
+  "Lower Mississippi oxbows": "Lower Mississippi",
+  "Skeidara outwash": "Skeidara Outwash",
+  "Blue Mountains Jamison": "Blue Mountains",
+  "Atacama fan": "Atacama Fan",
+  "Kenai Aialik Bay": "Aialik Bay",
+  "Aoraki Hooker Valley": "Hooker Valley",
+  "Li River Yangshuo": "Li River",
+  "Goosenecks San Juan": "Goosenecks of the San Juan",
+  "Brahmaputra near Majuli": "Majuli, Brahmaputra",
+  "Ilulissat icefjord": "Ilulissat Icefjord",
+  "Tsingy Bemaraha": "Tsingy de Bemaraha",
 };
+
+/** How a title reads in the description's sentence, "Inspired by the land near …": the titles that
+ *  take "the", and two that need more words. The rest read as they are. */
+const THE = new Set([
+  "Thousand Islands", "Toklat River", "Colca Canyon", "Twelve Apostles", "Rhine and Moselle", "Lena Delta", "Drakensberg Amphitheatre",
+  "Geirangerfjord", "Lake District", "Uvac River", "Ethiopian Highlands", "Tagliamento River", "Blyde River Canyon", "Cliffs of Moher",
+  "Alaknanda and Bhagirathi", "Danube Delta", "Roaring River Fan", "Aysen Fjord", "Verdon Gorge", "Chocolate Hills", "Kinabatangan River",
+  "Ennedi Plateau", "Deccan Plateau", "Bardenas Reales", "Waimakariri River", "Grand Canyon", "Na Pali Coast", "Godavari Delta",
+  "Niagara Escarpment", "Taklimakan Fan", "Lower Mississippi", "Bungle Bungle", "Tibetan Plateau", "Painted Desert", "Skeidara Outwash",
+  "Fish River Canyon", "Blue Mountains", "Atacama Fan", "Hooker Valley", "Todgha Gorge", "Li River", "Goosenecks of the San Juan",
+  "Colorado Plateau", "Ilulissat Icefjord", "Tara Gorge", "Tsingy de Bemaraha", "Mamore River", "Altiplano",
+]);
+const NEAR: Record<string, string> = {
+  "Mahabaleshwar, Western Ghats": "Mahabaleshwar, in the Western Ghats",
+  "Majuli, Brahmaputra": "Majuli, on the Brahmaputra",
+};
+
+/** A survey name, "Near Grand Canyon Colorado (southwest sample), 60 m per tile": the map's title,
+ *  the place in a sentence, and the part of the place sampled. */
+function title(surveyName: string): { name: string; place: string; sample?: string } {
+  const m = /^Near (.+?)(?: \((north|south|east|west|northeast|northwest|southeast|southwest) sample\))?, \d+ m per tile$/.exec(surveyName);
+  if (!m) throw new Error(`unexpected survey name ${surveyName}`);
+  const name = TIDY[m[1]] ?? m[1];
+  return { name, place: NEAR[name] ?? (THE.has(name) ? `the ${name}` : name), ...(m[2] ? { sample: m[2] } : {}) };
+}
 
 interface LibraryItem {
   id: string;
   name: string;
   family: string;
+  lat: number;
+  lon: number;
   size: number;
   metres: number;
   fixture: string;
@@ -124,8 +176,9 @@ function toPlace(item: LibraryItem, fx: Fixture): PlaceData {
   if (W !== H || W !== item.size) throw new Error(`${item.id}: size ${W}×${H}, index says ${item.size}`);
   if (!fx.start) throw new Error(`${item.id}: no start`);
   const heights = Uint8Array.from(fx.heights);
-  const name = (RENAME[item.id] ?? item.name.replace(/, \d+ m per tile$/, "").replace(/ \((north|south|east|west|northeast|northwest|southeast|southwest) sample\)$/, "")).trim();
-  if (!/^Near /.test(name)) throw new Error(`${item.id}: unexpected name ${name}`);
+  const { name, place: near } = title(item.name);
+  // plain titles: the game's handling of other characters is not yet checked
+  if (!/^[A-Za-z][A-Za-z ,'-]*[a-z]$/.test(name) || /\bNear\b|sample/.test(name)) throw new Error(`${item.id}: unexpected title ${name}`);
   const fam = FAMILIES[item.family];
   if (!fam) throw new Error(`${item.id}: no family text for ${item.family}`);
   const kinds: Record<"bushes" | "pines" | "birches" | "oaks" | "deadPines" | "ruins", number[]> = { bushes: [], pines: [], birches: [], oaks: [], deadPines: [], ruins: [] };
@@ -169,11 +222,13 @@ function toPlace(item: LibraryItem, fx: Fixture): PlaceData {
     format: PLACE_FORMAT,
     id: slug(name),
     name,
-    place: name.replace(/^Near /, ""),
+    place: near,
     family: item.family,
     familyName: fam.name,
     plays: fam.plays,
     metres: item.metres,
+    lat: item.lat,
+    lon: item.lon,
     W,
     H,
     heights: encodeHeights(heights),
@@ -200,32 +255,6 @@ function toPlace(item: LibraryItem, fx: Fixture): PlaceData {
   return place;
 }
 
-/** The card's picture: the shaded map with its water, north up, CARD pixels square. */
-function cardJpeg(heights: Uint8Array, W: number, H: number, water: ArrayLike<number>): Uint8Array {
-  const tiles = shadeTiles(heights, W, H, water);
-  const out = new Uint8Array(CARD * CARD * 4);
-  for (let py = 0; py < CARD; py++) {
-    const my = Math.min(H - 1, Math.max(0, H * (1 - (py + 0.5) / CARD) - 0.5));
-    const y0 = Math.floor(my);
-    const y1 = Math.min(H - 1, y0 + 1);
-    const ty = my - y0;
-    for (let px = 0; px < CARD; px++) {
-      const mx = Math.min(W - 1, Math.max(0, ((px + 0.5) / CARD) * W - 0.5));
-      const x0 = Math.floor(mx);
-      const x1 = Math.min(W - 1, x0 + 1);
-      const tx = mx - x0;
-      const o = (py * CARD + px) * 4;
-      for (let c = 0; c < 3; c++) {
-        const a = tiles[(y0 * W + x0) * 3 + c] * (1 - tx) + tiles[(y0 * W + x1) * 3 + c] * tx;
-        const b = tiles[(y1 * W + x0) * 3 + c] * (1 - tx) + tiles[(y1 * W + x1) * 3 + c] * tx;
-        out[o + c] = Math.round(a * (1 - ty) + b * ty);
-      }
-      out[o + 3] = 255;
-    }
-  }
-  return encodeJpeg({ data: out, width: CARD, height: CARD }, CARD_QUALITY).data;
-}
-
 // ------------------------------------------------------------------------------------------ run
 
 const check = process.argv.includes("--check");
@@ -236,6 +265,8 @@ const skipped = library.items.filter((it) => it.family === "random");
 
 const files = new Map<string, Uint8Array>();
 const entries: PlaceIndexEntry[] = [];
+/** The card pictures rendered so far: which map each shows (tools/places-thumbs.ts). */
+const shown = new Map((existsSync(join(OUT, "index.json")) ? (JSON.parse(readFileSync(join(OUT, "index.json"), "utf8")) as PlaceIndex).places : []).map((p) => [p.id, p.imageFrom]));
 let failures = 0;
 const t0 = performance.now();
 for (const item of items) {
@@ -259,17 +290,21 @@ for (const item of items) {
   );
   const data = gzipSync(strToU8(JSON.stringify(place)), { level: 9, mtime: 0 });
   files.set(`data/${place.id}.json.gz`, data);
-  files.set(`cards/${place.id}.jpg`, cardJpeg(built.heights, place.W, place.H, built.settle.depth));
+  const { sample } = title(item.name);
   entries.push({
     id: place.id,
     name: place.name,
+    surveyName: item.name,
+    ...(sample ? { sample } : {}),
     family: place.family,
     familyName: place.familyName,
     plays: place.plays,
     size: place.W,
     metres: place.metres,
     data: `data/${place.id}.json.gz`,
-    image: `cards/${place.id}.jpg`,
+    image: `cards/${place.id}.webp`,
+    ...(shown.get(place.id) ? { imageFrom: shown.get(place.id) } : {}),
+    file: `maps/${place.id}.timber`,
     bytes: bytes.length,
     sha256: sha256(bytes),
   });
@@ -287,11 +322,12 @@ files.set("index.json", strToU8(JSON.stringify(index, null, 1) + "\n"));
 
 const total = [...files.values()].reduce((s, b) => s + b.length, 0);
 const dataBytes = [...files].filter(([k]) => k.startsWith("data/")).reduce((s, [, b]) => s + b.length, 0);
-const cardBytes = [...files].filter(([k]) => k.startsWith("cards/")).reduce((s, [, b]) => s + b.length, 0);
 console.log(
   `${entries.length} places in ${Math.round((performance.now() - t0) / 1000)} s; left out ${skipped.length} random-land controls (${skipped.map((s) => s.id).join(", ")}). ` +
-    `Data ${(dataBytes / 1024).toFixed(0)} KB, cards ${(cardBytes / 1024).toFixed(0)} KB (${(cardBytes / 1024 / Math.max(1, entries.length)).toFixed(1)} KB each), total ${(total / 1024).toFixed(0)} KB.`,
+    `Data ${(dataBytes / 1024).toFixed(0)} KB, total ${(total / 1024).toFixed(0)} KB.`,
 );
+const stale = entries.filter((e) => e.imageFrom !== e.sha256).length;
+if (stale) console.log(`${stale} card picture(s) do not show the current map: run npm run places:thumbs`);
 
 if (only) {
   console.log("--only: nothing written");
@@ -303,10 +339,7 @@ if (check) {
     const p = join(OUT, k);
     if (!existsSync(p) || sha256(new Uint8Array(readFileSync(p))) !== sha256(b)) differ.push(k);
   }
-  for (const dir of ["data", "cards"]) {
-    if (!existsSync(join(OUT, dir))) continue;
-    for (const f of readdirSync(join(OUT, dir))) if (!files.has(`${dir}/${f}`)) differ.push(`${dir}/${f} (not made any more)`);
-  }
+  if (existsSync(join(OUT, "data"))) for (const f of readdirSync(join(OUT, "data"))) if (!files.has(`data/${f}`)) differ.push(`data/${f} (not made any more)`);
   if (differ.length) {
     console.error(`public/real-places differs from a fresh run: ${differ.join(", ")}. Run npm run places.`);
     process.exit(1);
@@ -314,7 +347,9 @@ if (check) {
   console.log("public/real-places matches a fresh run");
   process.exit(0);
 }
-rmSync(OUT, { recursive: true, force: true });
+// the card pictures stay (tools/places-thumbs.ts renders them); pictures of places gone are removed
+rmSync(join(OUT, "data"), { recursive: true, force: true });
+if (existsSync(join(OUT, "cards"))) for (const f of readdirSync(join(OUT, "cards"))) if (!entries.some((e) => e.image === `cards/${f}`)) rmSync(join(OUT, "cards", f));
 for (const [k, b] of files) {
   const p = join(OUT, k);
   mkdirSync(join(p, ".."), { recursive: true });

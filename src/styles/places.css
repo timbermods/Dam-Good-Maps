@@ -150,21 +150,17 @@ a.button {
   text-decoration: none;
 }
 
+a.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
 a.button:focus-visible,
 a:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
-}
-
-.place progress {
-  width: 100%;
-  height: 6px;
-  accent-color: var(--accent);
-}
-
-.place .error {
-  margin: 0;
-  font-size: 0.85rem;
 }
 
 .empty {

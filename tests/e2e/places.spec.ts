@@ -1,11 +1,14 @@
 // Real places (ROADMAP "Real places", PLAN §20 D136): the gallery loads, its filters work, a card's
-// Download is Node's file byte for byte, Refine opens the map in the editor, and the page works on
-// a phone. Screenshots go to .scratch/places/.
+// Download is the static .timber built at deploy time (tools/places-build.ts), byte for byte Node's
+// and the index's, Refine opens that file in the editor, the credits page lists every notice, and
+// the pages work on a phone. The web server builds the sample's files (placeSample,
+// playwright.config.ts). Screenshots go to .scratch/places/.
 
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { decodePlaceFile, placeTimber, type PlaceIndex, type PlaceIndexEntry } from "../../src/core/places/place";
+import { CHANGES, ELEVATION_SOURCE, NOT_ENDORSED, PROVIDERS } from "../../src/core/places/attribution";
+import { decodePlaceFile, placeSample, placeTimber, type PlaceIndex, type PlaceIndexEntry } from "../../src/core/places/place";
 
 const DIR = "public/real-places";
 const INDEX = JSON.parse(readFileSync(`${DIR}/index.json`, "utf8")) as PlaceIndex;
@@ -13,8 +16,10 @@ const sha256 = (b: Uint8Array) => createHash("sha256").update(b).digest("hex");
 const entry = (id: string) => INDEX.places.find((p) => p.id === id)!;
 /** Node's .timber of a place. */
 const node = (e: PlaceIndexEntry) => placeTimber(decodePlaceFile(new Uint8Array(readFileSync(`${DIR}/${e.data}`))));
-/** The smallest map, for the flows that build one. */
-const SMALL = INDEX.places.find((p) => p.size === 96)!;
+/** The places whose files the web server builds: a sample of every size. */
+const SAMPLE = placeSample(INDEX);
+/** The smallest map, for the flows that download or open one. */
+const SMALL = SAMPLE[0];
 
 function watchErrors(page: Page): string[] {
   const errors: string[] = [];
@@ -27,6 +32,8 @@ test.beforeAll(() => mkdirSync(".scratch/places", { recursive: true }));
 
 test("the gallery lists every place, filters them and downloads Node's file", async ({ page }) => {
   const errors = watchErrors(page);
+  const pictures = new Set<string>();
+  page.on("request", (r) => r.url().includes("/real-places/cards/") && pictures.add(r.url()));
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./real-places/");
   await expect(page).toHaveTitle("Real places · Dam Good Maps");
@@ -36,13 +43,11 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await expect(cards).toHaveCount(INDEX.count);
   await expect(page.getByRole("status").filter({ hasText: /maps$/ })).toHaveText(`${INDEX.count} maps`);
 
-  // the credits ATTRIBUTION.md asks for
+  // the credits, in full, as on the credits page
   const credits = page.locator("#credits");
   await expect(credits.getByRole("heading", { name: "Elevation data" })).toBeVisible();
-  await expect(credits).toContainText("Terrain Tiles");
-  await expect(credits).toContainText("do not endorse");
-  await expect(credits).toContainText("courtesy of the U.S. Geological Survey");
-  await expect(credits).toContainText("© Kartverket");
+  for (const p of PROVIDERS) await expect(credits).toContainText(p.notice);
+  await expect(credits).toContainText(NOT_ENDORSED);
 
   // each card: our render, the name, landform, size, scale and how it plays
   const first = cards.first();
@@ -50,8 +55,11 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await expect(first.getByRole("heading", { name: p0.name })).toBeVisible();
   await expect(first).toContainText(`${p0.familyName} · ${p0.size}×${p0.size} · ${p0.metres} m per tile`);
   await expect(first).toContainText(p0.plays);
-  await expect(first.getByRole("img")).toHaveJSProperty("naturalWidth", 240);
+  await expect(first.getByRole("img")).toHaveJSProperty("naturalWidth", 480);
   await page.screenshot({ path: ".scratch/places/desktop.png" });
+  // the pictures load as their cards come into view, not all at once
+  expect(pictures.size).toBeGreaterThan(0);
+  expect(pictures.size).toBeLessThan(INDEX.count / 2);
 
   // filters: a landform, then a size; the query keeps them
   const canyons = INDEX.places.filter((p) => p.family === "canyon");
@@ -72,31 +80,58 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await page.getByRole("button", { name: "96×96" }).click();
   await expect(cards).toHaveCount(INDEX.places.filter((p) => p.size === 96).length);
 
-  // Download: the place's .timber, named after it, byte for byte Node's and the index's
-  const expected = node(SMALL);
+  // Download: a link to the place's static .timber, saved under its title, byte for byte Node's
+  // and the index's
+  const link = page.getByRole("link", { name: `Download ${SMALL.name}` });
+  await expect(link).toHaveAttribute("href", `/dam-good-maps/real-places/maps/${SMALL.id}.timber`);
+  await expect(link).toHaveAttribute("download", `${SMALL.name}.timber`);
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: `Download ${SMALL.name}` }).click();
+  const t = Date.now();
+  await link.click();
   const d = await download;
   expect(d.suggestedFilename()).toBe(`${SMALL.name}.timber`);
   const bytes = new Uint8Array(readFileSync(await d.path()));
-  expect(sha256(bytes)).toBe(sha256(expected.bytes));
+  console.log(`download of ${SMALL.name}: ${Date.now() - t} ms, ${bytes.length} B`);
+  expect(sha256(bytes)).toBe(sha256(node(SMALL).bytes));
   expect(sha256(bytes)).toBe(SMALL.sha256);
-  await expect(page.getByRole("button", { name: `Download ${SMALL.name}` })).toHaveText("Download");
   expect(errors).toEqual([]);
 });
 
-test("Node and Chromium build the same file for a place of each size", async ({ page }) => {
-  await page.goto("./real-places/");
-  await page.waitForFunction(() => "dgmPlaces" in window);
-  for (const size of INDEX.sizes) {
-    const e = INDEX.places.filter((p) => p.size === size).at(-1)!;
-    const web = await page.evaluate((id) => window.dgmPlaces!.build(id), e.id);
+test("the site serves each place's .timber, built at deploy time, as Node builds it (a sample of every size)", async ({ page }) => {
+  expect(new Set(SAMPLE.map((e) => e.size))).toEqual(new Set(INDEX.sizes));
+  for (const e of SAMPLE) {
+    const res = await page.request.get(`./real-places/${e.file}`);
+    expect(res.status(), e.id).toBe(200);
+    const bytes = new Uint8Array(await res.body());
     const n = node(e);
-    expect(web.fileName, e.id).toBe(`${e.name}.timber`);
-    expect(web.bytes, e.id).toBe(n.bytes.length);
-    expect(web.sha256, e.id).toBe(sha256(n.bytes));
-    expect(web.sha256, e.id).toBe(e.sha256);
+    expect(n.fileName, e.id).toBe(`${e.name}.timber`);
+    expect(bytes.length, e.id).toBe(n.bytes.length);
+    expect(sha256(bytes), e.id).toBe(sha256(n.bytes));
+    expect(sha256(bytes), e.id).toBe(e.sha256);
   }
+});
+
+test("the credits page lists every notice with its licence, and links back to the gallery", async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const res = await page.goto("./real-places/credits/");
+  expect(res?.status()).toBe(200);
+  await expect(page).toHaveTitle("Credits · Real places · Dam Good Maps");
+  await expect(page.getByRole("heading", { level: 1, name: "Real places credits" })).toBeVisible();
+  const credits = page.locator("#credits");
+  await expect(credits.getByRole("link", { name: ELEVATION_SOURCE })).toBeVisible();
+  await expect(credits).toContainText(CHANGES);
+  await expect(credits).toContainText(NOT_ENDORSED);
+  const items = credits.getByRole("listitem");
+  await expect(items).toHaveCount(PROVIDERS.length);
+  for (const [k, p] of PROVIDERS.entries()) {
+    await expect(items.nth(k)).toContainText(p.notice);
+    await expect(items.nth(k).getByRole("link", { name: p.licence })).toHaveAttribute("href", p.licenceUrl);
+  }
+  await page.screenshot({ path: ".scratch/places/credits.png", fullPage: true });
+  await page.getByRole("navigation", { name: "Pages" }).getByRole("link", { name: "Real places" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Real places" })).toBeVisible();
+  expect(errors).toEqual([]);
 });
 
 test("Refine opens the place in the editor, and it exports unchanged as the same file", async ({ page }) => {
@@ -175,7 +210,7 @@ test.describe("on a phone", () => {
     const fjords = INDEX.places.filter((p) => p.size === 128 && p.family === "fjord");
     await expect(cards).toHaveCount(fjords.length);
     const card = cards.first();
-    await expect(card.getByRole("button", { name: `Download ${fjords[0].name}` })).toBeVisible();
+    await expect(card.getByRole("link", { name: `Download ${fjords[0].name}` })).toBeVisible();
     await expect(card.getByRole("link", { name: `Refine ${fjords[0].name} in the editor` })).toBeVisible();
     await page.screenshot({ path: ".scratch/places/phone-filtered.png" });
 
@@ -184,9 +219,19 @@ test.describe("on a phone", () => {
     await page.getByLabel("Landform").selectOption("");
     await page.getByRole("button", { name: "96×96" }).tap();
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: `Download ${SMALL.name}` }).tap();
+    await page.getByRole("link", { name: `Download ${SMALL.name}` }).tap();
     expect(sha256(new Uint8Array(readFileSync(await (await download).path())))).toBe(SMALL.sha256);
     await page.screenshot({ path: ".scratch/places/phone-top.png", fullPage: false });
+    expect(errors).toEqual([]);
+  });
+
+  test("the credits page fits the screen", async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto("./real-places/credits/");
+    await expect(page.locator("#credits").getByRole("listitem")).toHaveCount(PROVIDERS.length);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: ".scratch/places/phone-credits.png", fullPage: false });
     expect(errors).toEqual([]);
   });
 });

@@ -1,45 +1,15 @@
 // The Real places gallery (ROADMAP "Real places", PLAN §20 D136): maps made from real land, as
-// content to play or to refine. Each card shows our own top-down render, the place's name, its
-// landform, size and scale, and how it plays. **Download** builds the place's .timber in a worker;
-// **Refine** opens it in the editor (the generator page's `#place=` link, which imports it).
-// Nothing here feeds the generator (D108).
+// content to play or to refine. Each card shows our own render, the place's title, its landform,
+// size and scale, and how it plays. **Download** is a link to the place's .timber, built at deploy
+// time (tools/places-build.ts); **Refine** opens it in the editor (the generator page's `#place=`
+// link, which imports it). Nothing here feeds the generator (D108).
 
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { wrap, type Remote } from "comlink";
-import { CHANGES, ELEVATION_SOURCE, ELEVATION_SOURCE_URL, PROVIDER_NOTICES } from "../core/places/attribution";
-import type { PlaceIndex, PlaceIndexEntry } from "../core/places/place";
-import { saveFile } from "../platform";
-import { fetchIndex, fetchPlace, PLACES_URL } from "./data";
-import type { PlaceWorkerApi } from "./place.worker";
+import { useEffect, useMemo, useState } from "preact/hooks";
+import type { PlaceIndex } from "../core/places/place";
+import { Credits } from "./Credits";
+import { fetchIndex, placeMap, PLACES_URL } from "./data";
 
 const HOME = import.meta.env.BASE_URL;
-
-declare global {
-  interface Window {
-    /** Test hook (tests/e2e/places.spec.ts): build a place as Download does, without saving it. */
-    dgmPlaces?: { build(id: string): Promise<{ sha256: string; bytes: number; fileName: string }> };
-  }
-}
-
-let worker: Remote<PlaceWorkerApi> | null = null;
-function placeWorker(): Remote<PlaceWorkerApi> {
-  worker ??= wrap<PlaceWorkerApi>(new Worker(new URL("./place.worker.ts", import.meta.url), { type: "module" }));
-  return worker;
-}
-
-async function buildPlace(id: string) {
-  return placeWorker().build(await fetchPlace(id));
-}
-
-window.dgmPlaces = {
-  async build(id: string) {
-    const r = await buildPlace(id);
-    return { sha256: r.sha256, bytes: r.bytes.length, fileName: r.fileName };
-  },
-};
-
-/** A card's download: building, or failed. */
-type Building = { busy: true } | { error: string };
 
 /** The filters, kept in the page's query so Back returns to the same list. */
 function initialFilters(): { family: string; size: number | null } {
@@ -54,9 +24,6 @@ export function Gallery() {
   const init = useMemo(initialFilters, []);
   const [family, setFamily] = useState(init.family);
   const [size, setSize] = useState<number | null>(init.size);
-  const [building, setBuilding] = useState<Record<string, Building>>({});
-  const live = useRef(building);
-  live.current = building;
 
   useEffect(() => {
     fetchIndex().then(setIndex, (e) => setLoadError(String(e instanceof Error ? e.message : e)));
@@ -71,26 +38,6 @@ export function Gallery() {
   }, [family, size]);
 
   const shown = useMemo(() => (index ? index.places.filter((p) => (!family || p.family === family) && (!size || p.size === size)) : []), [index, family, size]);
-
-  function set(id: string, b: Building | null) {
-    const next = { ...live.current };
-    if (b) next[id] = b;
-    else delete next[id];
-    live.current = next;
-    setBuilding(next);
-  }
-
-  async function download(p: PlaceIndexEntry) {
-    if (live.current[p.id] && !("error" in live.current[p.id])) return;
-    set(p.id, { busy: true });
-    try {
-      const r = await buildPlace(p.id);
-      saveFile(r.bytes, r.fileName);
-      set(p.id, null);
-    } catch (e) {
-      set(p.id, { error: `${p.name} could not be built: ${String(e instanceof Error ? e.message : e)}` });
-    }
-  }
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -158,11 +105,10 @@ export function Gallery() {
           {shown.length ? (
             <ul class="gallery" aria-label="Maps">
               {shown.map((p) => {
-                const b = building[p.id];
-                const busy = !!b && !("error" in b);
+                const map = placeMap(p);
                 return (
                   <li class="place" key={p.id}>
-                    <img src={PLACES_URL + p.image} width={240} height={240} loading="lazy" decoding="async" alt={`${p.name} from above, north up`} />
+                    <img src={PLACES_URL + p.image} width={240} height={240} loading="lazy" decoding="async" alt={`${p.name}, the whole map seen at an angle`} />
                     <div class="place-body">
                       <h2>{p.name}</h2>
                       <p class="place-meta">
@@ -170,19 +116,13 @@ export function Gallery() {
                       </p>
                       <p class="place-plays">{p.plays}</p>
                       <div class="place-actions">
-                        <button type="button" class="primary" aria-label={`Download ${p.name}`} disabled={busy} aria-busy={busy} onClick={() => void download(p)}>
-                          {busy ? "Building…" : "Download"}
-                        </button>
+                        <a class="button primary" href={map.url} download={map.fileName} aria-label={`Download ${p.name}`}>
+                          Download
+                        </a>
                         <a class="button ghost" href={`${HOME}#place=${p.id}`} aria-label={`Refine ${p.name} in the editor`}>
                           Refine
                         </a>
                       </div>
-                      {busy ? <progress aria-label={`Building ${p.name}`} /> : null}
-                      {b && "error" in b ? (
-                        <p class="error" role="alert">
-                          {b.error}
-                        </p>
-                      ) : null}
                     </div>
                   </li>
                 );
@@ -208,18 +148,7 @@ export function Gallery() {
         <p class="placeholder">Loading the maps…</p>
       )}
 
-      <section id="credits" class="credits" aria-labelledby="credits-title">
-        <h2 id="credits-title">Elevation data</h2>
-        <p>
-          The maps are made from <a href={ELEVATION_SOURCE_URL}>{ELEVATION_SOURCE}</a>. {CHANGES} The data providers do not
-          endorse these maps.
-        </p>
-        <ul>
-          {PROVIDER_NOTICES.map((n) => (
-            <li key={n}>{n}.</li>
-          ))}
-        </ul>
-      </section>
+      <Credits />
 
       <footer class="foot">
         Dam Good Maps. Not affiliated with Mechanistry. <a href="https://github.com/timbermods/dam-good-maps">Source</a>

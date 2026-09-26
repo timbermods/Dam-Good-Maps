@@ -33,6 +33,10 @@ jobs:
         run: npm run build
         env:
           DGM_BASE: /dam-good-maps/
+      # Every real place's .timber, built with the engine being deployed, so Download is a static
+      # file. It fails the deploy if a map does not validate or is not the index's file.
+      - name: Build the real places
+        run: npm run places:build
       # The site is not public yet: search engines are asked not to index it until the repository
       # variable DGM_PUBLIC is "true" (at launch). Keep this step when changing this workflow.
       - name: Mark every page noindex (not public yet)

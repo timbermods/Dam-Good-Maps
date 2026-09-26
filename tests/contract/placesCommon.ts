@@ -1,6 +1,8 @@
 // Shared by the Real places contract tests (ROADMAP "Real places", PLAN §20 D136): the gallery's
 // index and data (public/real-places/, written by tools/real-places.ts), and the check every place
-// must pass. The builds are split over a few test files so they run side by side.
+// must pass. Every place is checked nightly and on a pull request into main (the release check),
+// split over three files so they run side by side; a sample of every size on every push
+// (places.test.ts).
 
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -22,14 +24,13 @@ export function placeData(entry: PlaceIndexEntry): PlaceData {
 /** Checks that fail and count: not advisory, applicable, not approximate. */
 export const failing = (checks: readonly CheckResult[]) => checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false && !c.approximate).map((c) => `${c.id}: ${c.message}`);
 
-/** Every place in shard `k` of `n`: its .timber, built as the page builds it (build, settle,
- *  validate, write), passes the export profile and every check of the generate profile, and is the
- *  same bytes as the index records. */
-export function checkShard(k: number, n: number): void {
-  const places = INDEX.places.filter((_, i) => i % n === k);
-  describe(`real places ${k + 1} of ${n}: every map validates and is the same file`, () => {
+/** Each place: its .timber, built as the deploy builds it (build, settle, validate, write), passes
+ *  the export profile and every check of the generate profile, and is the same bytes as the index
+ *  records. */
+export function checkPlaces(title: string, places: readonly PlaceIndexEntry[], build: (e: PlaceIndexEntry) => ReturnType<typeof placeTimber> = (e) => placeTimber(placeData(e))): void {
+  describe(title, () => {
     it.each(places.map((p) => [p.name, p] as const))("%s", (_name, entry) => {
-      const r = placeTimber(placeData(entry));
+      const r = build(entry);
       expect(r.validation.report.profile).toBe("export");
       expect(r.validation.report.passed).toBe(true);
       expect(r.fileName).toBe(`${entry.name}.timber`);
@@ -42,4 +43,12 @@ export function checkShard(k: number, n: number): void {
       expect(r.bytes.length).toBe(entry.bytes);
     });
   });
+}
+
+/** Every place in shard `k` of `n` (nightly, and the release check). */
+export function checkShard(k: number, n: number): void {
+  checkPlaces(
+    `real places ${k + 1} of ${n}: every map validates and is the same file`,
+    INDEX.places.filter((_, i) => i % n === k),
+  );
 }

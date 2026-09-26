@@ -767,6 +767,15 @@ namesake at Timberborn's scale, not a replica, with the full attribution. Every 
 validators and is byte-identical in Node and Chromium; the page works on desktop and phone. See
 [docs/progress/real-places.md](docs/progress/real-places.md).
 
+**Round 2** (Kyler, 2026-09-25; branch `feature/real-places-2`): short in-game descriptions (the
+title, one line and a link to a new credits page; a provider's notice stays in the file only where
+its terms need it, [docs/real-places-credits.md](docs/real-places-credits.md)); every map built once
+at deploy time and served as a static file, so **Download** is instant and **Refine** loads it;
+the byte check of every map nightly and in the release check, a sample of every size on every
+push; titles without "Near" or the sample; card pictures from the 3D view, rendered on a GPU.
+Next, once the new start and edge rules are on `dev`: the places rebuilt without perimeter walls,
+water free to drain off the map, and about 150 places in all.
+
 ---
 
 ## M9. Interestingness, names, candidates, premises and variety
