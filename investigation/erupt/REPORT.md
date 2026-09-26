@@ -17,6 +17,10 @@ The notes menu saves/replays runs; [this small run](samples/vent-32.json) exerci
 - Mode comes first, followed by Power, Shape, Summit, Flows/Ridges and Try another.
 - Whole-level cones, broad shields, summit craters, large calderas and a fissure crater row.
   Heights stay in 0–22; layer 22 remains empty. Edge eruptions clip naturally.
+- Steep peaks narrow and steepen towards the summit. With Power 62, Light flows and no ridges,
+  Steep rises 19 levels versus Broad's 7; width at half-height is 13 versus 31 tiles, on the same land/seed.
+  Vent lava lobes wind downhill with irregular spacing, 4–10 Heavy lobes across tested personalities,
+  variable reach and rounded, widening tongues. Uphill obstacles beyond the cone stop a lobe.
 - Immediate cracks and ash, eight rising terrain stages, live runoff, cooling, dead radial trees,
   optional follow/shake, and reduced motion. No audio is needed.
 - Objects ride supporting terraces. Sources keep their settings and ride vertically too.
@@ -66,6 +70,8 @@ Detailed results: [model](captures/checks.json), [worker](captures/worker-checks
 
 This is a coherent terrain model, not a magma physics solver. Auto uses a peak below Power 32,
 a crater below 80, then a caldera. Fissures keep a crater row even with Peak selected, using shallower vents.
+The revised cone and lobe model applies to vents. Four exact regression fingerprints preserve Fissure's
+terrain, lava and objects across both shapes and flow settings; the original supervolcano basin is preserved too.
 Fissure drawing previews the line immediately; the eruption begins on release. New clicks get new recorded
 seeds; Try another advances a deterministic seed from the original input land.
 

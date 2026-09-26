@@ -13,7 +13,7 @@ assert.deepEqual(modelFor(plan.map).emitters,modelFor(river).emitters);
 const rock=erupt(fixture('plain',128),{...DEFAULTS,power:35,shape:'steep',seed:6},{origin:62*128+68}).map;
 const soft=snapshot(rock);soft.lava.fill(0);
 const settings={...CARVE,mode:'aim' as const,power:60,seed:18,wander:0,width:4,dry:true,defyGravity:true};
-const intent={origin:80*128+28,end:80*128+112},hardRun=new CarveRun(rock,settings,intent),softRun=new CarveRun(soft,settings,intent);
+const intent={origin:72*128+28,end:72*128+112},hardRun=new CarveRun(rock,settings,intent),softRun=new CarveRun(soft,settings,intent);
 for(let k=0;k<200&&!hardRun.metrics.stable;k++)hardRun.step();
 for(let k=0;k<200&&!softRun.metrics.stable;k++)softRun.step();
 assert.notDeepEqual(hardRun.path,softRun.path);

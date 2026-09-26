@@ -5,6 +5,7 @@ import { FOOTPRINTS } from '../../src/core/format/footprints';
 import { waterModel, objectTile, EMITTERS } from '../../src/core/sim/model';
 import { WaterSim, type WaterState } from '../../src/core/sim/water';
 import { canonicalRun } from '../../src/core/sim/prefill';
+import { lavaLobes, lobeField, type LavaLobe } from './flows';
 export interface Fallen {id:string;x:number;y:number;z:number;dx:number;dy:number;length:number}
 export interface EruptMap {name:string;W:number;H:number;heights:Uint8Array;entities:EntitySpec[];water:WaterState;maxHeight:number;rockLayers:number[];fallen:Fallen[];lava:Uint32Array}
 export interface Point {x:number;y:number}
@@ -28,10 +29,12 @@ export function validateSettings(s:Settings,m:Pick<EruptMap,'W'|'H'>,i:Intent){
 export const naturalSize=(p:number)=>2*(7+36*(p/100)**1.15);
 export const autoSummit=(p:number):Settings['summit']=>p<32?'peak':p<80?'crater':'caldera';
 export interface Segment {a:Point;b:Point;length:number;along:number}
-export interface Anatomy {x:number;y:number;datum:number;radius:number;height:number;summit:Settings['summit'];phase:number;segments:Segment[];vents:Point[];length:number}
+export interface Anatomy {x:number;y:number;datum:number;radius:number;height:number;summit:Settings['summit'];phase:number;segments:Segment[];vents:Point[];length:number;lobes:LavaLobe[]}
+export function ventRadius(s:Settings){const summit=s.summit==='auto'?autoSummit(s.power):s.summit;return naturalSize(s.power)*.5*(s.shape==='broad'?1.6:s.mode==='vent'&&summit!=='caldera'?.74:1)*(s.mode==='fissure'?.47:1);}
 export function anatomy(m:Pick<EruptMap,'W'|'H'|'heights'>,s:Settings,intent:Intent):Anatomy{
   validateSettings(s,m,intent);const x=intent.origin%m.W,y=Math.floor(intent.origin/m.W),p=s.power/100;
-  const radius=naturalSize(s.power)*.5*(s.shape==='broad'?1.6:1)*(s.mode==='fissure'?.47:1),height=(2+18*p)*(s.shape==='broad'?.7:1)*(s.mode==='fissure'?.75:1);
+  const summit=s.summit==='auto'?autoSummit(s.power):s.summit,radius=ventRadius(s),legacy=s.mode==='fissure'||summit==='caldera';
+  const height=(2+18*p)*(legacy?(s.shape==='broad'?.7:1)*(s.mode==='fissure'?.75:1):s.shape==='broad'?.55:1.42);
   const segments:Segment[]=[],vents:Point[]=[];let length=0;
   if(s.mode==='fissure'){
     for(let k=1;k<intent.path!.length;k++){const a=intent.path![k-1],b=intent.path![k],l=Math.hypot(b.x-a.x,b.y-a.y);if(l>.01){segments.push({a,b,length:l,along:length});length+=l;}}
@@ -39,7 +42,8 @@ export function anatomy(m:Pick<EruptMap,'W'|'H'|'heights'>,s:Settings,intent:Int
     const spacing=Math.max(7,radius*.72),count=Math.max(2,Math.ceil(length/spacing));
     for(let k=0;k<=count;k++){const d=length*k/count,seg=segments.find(v=>d<=v.along+v.length)??segments.at(-1)!,t=(d-seg.along)/seg.length;vents.push({x:seg.a.x+(seg.b.x-seg.a.x)*t,y:seg.a.y+(seg.b.y-seg.a.y)*t});}
   }else vents.push({x,y});
-  return {x,y,radius,height,datum:m.heights[intent.origin],summit:s.summit==='auto'?autoSummit(s.power):s.summit,phase:hash(s.seed,71)*Math.PI*2,segments,vents,length};
+  const a:Anatomy={x,y,radius,height,datum:m.heights[intent.origin],summit,phase:hash(s.seed,71)*Math.PI*2,segments,vents,length,lobes:[]};
+  if(s.mode==='vent')a.lobes=lavaLobes(m.W,m.H,m.heights,a,s.seed,s.flows==='heavy');return a;
 }
 export function field(a:Anatomy,s:Settings,x:number,y:number){
   let cx=a.x,cy=a.y,along=0,distance=Infinity;
@@ -56,16 +60,16 @@ export function eruptionReason(m:EruptMap,s:Settings,i:Intent):string|null{
 }
 /** Low frequency lobes, terraces, collapse and long flows; no per-tile noise. */
 export class EruptPlan{
-  readonly map:EruptMap;readonly anatomy:Anatomy;readonly keep:Uint8Array;readonly stats={raised:0,changed:0,flattened:0,erased:0,hard:0};private row=0;private done=false;
-  constructor(readonly before:EruptMap,readonly settings:Settings,readonly intent:Intent){this.anatomy=anatomy(before,settings,intent);const reason=eruptionReason(before,settings,intent);if(reason)throw Error(reason);this.keep=protectedGround(before);this.map=snapshot(before);}
+  readonly map:EruptMap;readonly anatomy:Anatomy;readonly keep:Uint8Array;readonly flows:Float32Array;readonly stats={raised:0,changed:0,flattened:0,erased:0,hard:0};private row=0;private done=false;
+  constructor(readonly before:EruptMap,readonly settings:Settings,readonly intent:Intent){this.anatomy=anatomy(before,settings,intent);const reason=eruptionReason(before,settings,intent);if(reason)throw Error(reason);this.keep=protectedGround(before);this.map=snapshot(before);this.flows=lobeField(before.W,before.H,this.anatomy.lobes);}
   advance(rows=4):boolean{
     if(this.done)return true;const {W,H}=this.map,a=this.anatomy,s=this.settings,end=Math.min(H,this.row+Math.max(1,Math.floor(rows)));
     for(let y=this.row;y<end;y++)for(let x=0;x<W;x++){
       const i=y*W+x,h=this.before.heights[i];if(this.keep[i])continue;
       const f=field(a,s,x,y),r=f.r;if(r>2.6)continue;
       const local=this.before.heights[Math.round(f.cy)*W+Math.round(f.cx)],datum=s.mode==='vent'?a.datum:local;
-      let profile=Math.max(0,1-r)**(s.shape==='steep'?.83:1.65);
-      if(s.mode==='vent'&&a.summit==='crater'&&r<.24)profile=.73+.095*smooth(r/.24);
+      let profile=Math.max(0,1-r)**(s.shape==='steep'?(s.mode==='fissure'?.83:1.7):1.65);
+      if(s.mode==='vent'&&a.summit==='crater'&&r<.16)profile=.64+(Math.pow(.84,s.shape==='steep'?1.7:1.65)-.64)*smooth(r/.16);
       if(s.mode==='vent'&&a.summit==='caldera')profile=r<.43?.34:r<.6?.34+.48*smooth((r-.43)/.17):.82*Math.max(0,1-(r-.6)/.65);
       if(s.mode==='fissure'){
         const bowl=1-smooth(f.ventDistance/Math.max(2.4,a.radius*.19));
@@ -74,10 +78,10 @@ export class EruptPlan{
       const shoulder=smooth((r-.48)/.7),cone=datum+a.height*profile+(h-datum)*shoulder;
       const reach=s.flows==='heavy'?2.55:1.25;
       const apron=(s.flows==='heavy'?2.6+s.power*.018:.8)*Math.max(0,1-r/reach)**1.4*(.86+.14*Math.sin(f.theta*4+a.phase+r));
-      const ridge=s.ridges?f.ridge*(1-smooth((r-1.05)/.85))*smooth((r-.34)/.32)*(.8+s.power*.022):0;
+      const ridge=s.ridges?(s.mode==='fissure'?f.ridge*(1-smooth((r-1.05)/.85))*smooth((r-.34)/.32)*(.8+s.power*.022):this.flows[i]*(.7+s.power*.013)*smooth((r-(a.summit==='caldera'?.6:.16))/.2)):0;
       let target=Math.max(h,cone,h+apron)+ridge;
       // Keep broad summit basins open; flow ridges begin below the rim.
-      if(s.mode==='vent'&&r<(a.summit==='caldera'?.6:a.summit==='crater'?.24:0))target=Math.max(h,cone);
+      if(s.mode==='vent'&&r<(a.summit==='caldera'?.6:a.summit==='crater'?.16:0))target=Math.max(h,cone);
       target=clamp(Math.round(Math.round(target*4096)/4096),0,Math.min(22,this.map.maxHeight));this.map.heights[i]=target;
       if(target!==h){this.stats.changed++;this.stats.raised+=target-h;for(let z=h;z<target;z++)this.map.lava[i]|=1<<z;this.stats.hard++;}
     }
