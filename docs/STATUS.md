@@ -149,9 +149,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 2. Kyler's own one-sentence intentions, for design version 2.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
-4. The Map look fixes: approve #38's badwater (its colours then go into the shared water palette, D177,
-   and #41 is shown again); and the mine site's second round (#42, D178; the ruins are approved
-   with two tweaks).
+4. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
+   Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
    #51–#53.
