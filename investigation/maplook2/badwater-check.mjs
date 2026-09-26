@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 process.chdir(fileURLToPath(new URL('.',import.meta.url)));
 mkdirSync('.cache',{recursive:true});
-writeFileSync('.cache/before-badwater.ts',execFileSync('git',['show','675eb50:investigation/maplook2/water.ts'],{encoding:'utf8'}).replace('../../src/render3d/palette','../../../src/render3d/palette'));
+writeFileSync('.cache/before-badwater.ts',execFileSync('git',['show','6b340ea:investigation/maplook2/water.ts'],{encoding:'utf8'}).replace('../../src/render3d/palette','../../../src/render3d/palette'));
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-vulkan']});
 const errors=[];
 try{
@@ -17,7 +17,7 @@ try{
     const a=window.maplook2;a.freeze();const mat=a.high.waterMat;
     const {highWater}=await import('/.cache/before-badwater.ts');
     const before=highWater(a.effects.standard.clone());
-    before.uniforms={...mat.uniforms,mlBad:before.uniforms.mlBad,mlMix:before.uniforms.mlMix};
+    before.uniforms={...mat.uniforms,mlBad:before.uniforms.mlBad,mlMix:before.uniforms.mlMix,mlBadTrough:before.uniforms.mlBadTrough,mlBadStreak:before.uniforms.mlBadStreak};
     function bed(depth,contamination,poisoned=contamination){
       const W=64,N=W*W,floor=8;
       const map={W,H:W,heights:new Uint8Array(N).fill(floor),columns:{tiles:new Int32Array(),voxels:new Uint8Array()},entities:{...a.map.entities,count:0},soil:{moisture:new Uint8Array(N),contamination:new Uint8Array(N).fill(Math.round(poisoned*255))},water:{count:N,tile:Int32Array.from({length:N},(_,i)=>i),floor:new Float32Array(N).fill(floor),depth:new Float32Array(N).fill(depth),contamination:new Float32Array(N).fill(contamination)}};
@@ -46,16 +46,25 @@ try{
     const dryH=bed(0,0),dryGround=stats(render(mat,dryH));
     // A controlled bed brightness delta measures actual alpha transmission.
     const terrain=a.high.terrainMat,saved=terrain.fragmentShader;
-    const shallowH=bed(.25,1);
-    function transmission(material){const values=[];for(const c of [.05,.55]){terrain.fragmentShader=`void main(){gl_FragColor=vec4(vec3(${c}),1.0);}`;terrain.needsUpdate=true;values.push(stats(render(material,shallowH)).mean);}return values[1].map((v,c)=>(v-values[0][c])/(.5*255));}
-    const oldTransmission=transmission(before),newTransmission=transmission(mat);terrain.fragmentShader=saved;terrain.needsUpdate=true;
-    const hiddenBed=stats(render(mat,shallowH,1.22,false)),visibleBed=stats(render(mat,shallowH));
+    // Controlled edge input isolates transmission from shoreline foam/coverage.
+    // Real shoreline geometry is also checked in the committed channel captures.
+    const edge=mat.clone();edge.uniforms=mat.uniforms;
+    const call='measuredSurfaceWater(g, d, shore, bad';
+    if(!edge.fragmentShader.includes(call))throw new Error('Edge probe bridge changed');
+    edge.fragmentShader=edge.fragmentShader.replace(call,'measuredSurfaceWater(g, d, 0.05, bad');
+    function transmission(material,height){const values=[];for(const c of [.05,.55]){terrain.fragmentShader=`void main(){gl_FragColor=vec4(vec3(${c}),1.0);}`;terrain.needsUpdate=true;values.push(stats(render(material,height)).mean);}return values[1].map((v,c)=>(v-values[0][c])/(.5*255));}
+    const transmissionProfile=[];
+    for(const depth of [.03,.10,.25,1.25]){const height=bed(depth,1);transmissionProfile.push({depth,before:transmission(before,height),interior:transmission(mat,height),edge:transmission(edge,height)});}
+    terrain.fragmentShader=saved;terrain.needsUpdate=true;
+    const shallowH=bed(.03,1);
+    const hiddenBed=stats(render(edge,shallowH,1.22,false)),visibleBed=stats(render(edge,shallowH));
+    const bodyH=bed(.25,1),opaqueBody=stats(render(mat,bodyH));
     for(const [name,depth,contamination] of [['exposed poisoned terrain',0,1],['clean water over poisoned terrain',.25,0],['25% mixing anchor',1.25,.25]]){
       const h=bed(depth,contamination,1),b=render(before,h),c=render(mat,h);let changed=0,maxDelta=0;
       for(let i=0;i<b.data.length;i++){const d=Math.abs(b.data[i]-c.data[i]);if(d)changed++;maxDelta=Math.max(maxDelta,d);}cleanParity.push({name,channels:b.data.length,changed,maxDelta});
     }
-    before.dispose();
-    return {baseline:'675eb50',cleanParity,dryGround,reflection:{before:{above:oldAbove,grazing:oldLow},after:{above:newAbove,grazing:newLow},cleanGrazing:cleanLow},shallowTransmission:{before:oldTransmission,after:newTransmission},poisonedBed:{hidden:hiddenBed,visible:visibleBed}};
+    before.dispose();edge.dispose();
+    return {baseline:'6b340ea',cleanParity,dryGround,opaqueBody,reflection:{before:{above:oldAbove,grazing:oldLow},after:{above:newAbove,grazing:newLow},cleanGrazing:cleanLow},transmissionProfile,edgeProbe:'shore=0.05, with foam excluded to isolate water transmission',poisonedBed:{hidden:hiddenBed,visible:visibleBed}};
   });
   result.errors=errors;writeFileSync('captures/badwater-check.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));
   if(errors.length)throw new Error(errors.join('\n'));
@@ -67,8 +76,9 @@ try{
   // The latest request replaces low diffuse contrast with clear troughs/streaks.
   // Sparse specular flecks keep their existing warm colour and duller strength.
   const luminance=rgb=>rgb.reduce((s,v,c)=>s+v*[.299,.587,.114][c],0);
-  if(luminance(result.poisonedBed.visible.body)>=luminance(result.dryGround.body)||result.poisonedBed.visible.greyContrast<=result.dryGround.greyContrast)throw new Error('Badwater must be darker and more contrasting than dry ground');
-  if(result.shallowTransmission.after.some((v,i)=>v<.4||Math.abs(v-result.shallowTransmission.before[i])>.005))throw new Error('Shallow bed transmission changed');
+  if(luminance(result.opaqueBody.body)>=luminance(result.dryGround.body)||result.opaqueBody.greyContrast<=result.dryGround.greyContrast)throw new Error('Badwater must be darker and more contrasting than dry ground');
+  if(result.transmissionProfile.some(p=>p.interior.some(v=>v>.04)))throw new Error('Badwater interior remains too transparent');
+  if(result.transmissionProfile[0].edge.some(v=>v<.4)||result.transmissionProfile[2].edge.some(v=>v>.04))throw new Error('Transmission must be confined to very shallow edges');
   const p=result.poisonedBed;
   if(p.visible.body[0]-p.visible.body[1]<20||p.visible.crest[0]-p.hidden.crest[0]<5)throw new Error('Poisoned ground is not visible through warm badwater');
 }finally{await browser.close();}

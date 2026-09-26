@@ -8,10 +8,10 @@ export const CLEAN_PALETTE = {
   mlStreakAbove: [45, 83, 96], mlStreakLow: [56, 86, 98],
   mlGrazing: [51, 79, 91], mlStreakGrazing: [82.5, 127.5, 137],
 } as const;
-// Badwater inputs compensate for the lit poisoned bed visible through shallows.
-export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [95,58,56] } as const;
-// Display-contrast offsets, compensated for the unchanged shallow transmission.
-export const BAD_DETAIL = { mlBadTrough: [-14,-7,-3], mlBadStreak: [41,36,30] } as const;
+// Crimson body; the poisoned bed contributes only at very shallow edges.
+export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [107,51,49] } as const;
+// Keep the existing swirling texture and compensate its contrast for transmission.
+export const BAD_DETAIL = { mlBadTrough: [-21,-8,-7], mlBadStreak: [37,33,26] } as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
@@ -63,6 +63,10 @@ float microFlecks(vec2 p, float t, float speed, float pixel) {
   float twinkle = smoothstep(0.1,0.85,sin(t*(1.1+speed*1.2)+fleckHash(cell)*51.0));
   return spot * step(mix(0.96,0.82,speed),fleckHash(cell+91.0)) * twinkle;
 }
+float badwaterOpacity(float depth, float shore, float grazing) {
+  float edge=(1.0-smoothstep(0.03,0.18,depth))*(1.0-smoothstep(0.04,0.30,shore));
+  return max(mix(0.975,0.995,smoothstep(0.25,1.80,depth))-0.52*edge,grazing*0.85);
+}
 vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination, vec3 N, vec3 V, float lit, float t) {
   float bodyDepth = smoothstep(0.25, 1.25, depth);
   float deep = smoothstep(1.25, 4.25, depth);
@@ -96,12 +100,13 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   float streak = smoothstep(0.51,0.79,texture) * near;
   vec3 colour = mix(body, streakColour, streak);
   if(contamination>0.25) {
-    // The same advected texture drives brick-red troughs and lighter crests.
-    // Leave the front, phase, poisoned bed and actual opacity untouched.
+    // The same advected texture drives crimson troughs and lighter crests.
+    // Keep contrast continuous as the badwater body becomes more opaque.
     float trough=(1.0-smoothstep(0.20,0.38,texture))*near;
     float signalOpacity=mix(0.40,0.94,smoothstep(0.05,1.80,depth));
     signalOpacity=mix(0.30,signalOpacity,smoothstep(0.0,0.20,shore));
     signalOpacity=max(signalOpacity,grazing*0.62);
+    signalOpacity=mix(signalOpacity,badwaterOpacity(depth,shore,grazing),smoothstep(0.25,1.0,contamination));
     colour += (mlBadTrough*trough+mlBadStreak*streak)
       *((contamination-0.25)/0.75)/signalOpacity;
   }
@@ -132,6 +137,7 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   badAlpha=mix(0.30,badAlpha,smoothstep(0.0,0.20,shore));
   badAlpha=max(badAlpha,grazing*0.62);
   alpha = mix(alpha,badAlpha,contamination);
+  alpha = mix(alpha,badwaterOpacity(depth,shore,grazing),smoothstep(0.25,1.0,contamination));
   return vec4(colour,alpha);
 }
 void main() {

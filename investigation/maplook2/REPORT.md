@@ -12,7 +12,7 @@ Use Node 22.12+ and open http://127.0.0.1:4197. First run installs this folder's
 
 ## Result and captures
 
-Standard is on the left, High on the right; cameras and water time match. Badwater now has the requested brick-red hue, darker troughs and clearly lighter drifting streaks. Clean water, flow, bubbles, poisoned shallows, weak cool reflection and shadows retain their accepted treatment. The concentration filter and mixing anchor are unchanged; the revised badwater endpoint blends through the same soft front.
+Standard is on the left, High on the right; cameras and water time match. Badwater now reads more crimson and saturated, with a thicker opaque body. Poisoned ground shows through only at very shallow edges. The existing swirling streaks, flow, bubbles, weak cool reflection, clean water and shadows retain their treatment. The concentration filter and mostly-clean mixing anchor are unchanged; the redder, thicker badwater blends through the same soft front.
 
 **Measured-colour revision:** this replaces the previous bright teal treatment. The colour constants compensate for the demo's lighting, warm finish and visible bed; simply entering the screenshot hex values as material inputs did not produce those colours on screen. No screenshot or game asset was loaded: only the supplied numeric measurements were used.
 
@@ -20,7 +20,7 @@ Standard is on the left, High on the right; cameras and water time match. Badwat
 
 The final mixing request replaces the old red/blue blotch mask with concentration-based colour. Two small smoothing passes follow connected wet tiles at the same surface height; bilinear interpolation makes the front soft over several tiles. This is a display filter, not changed contamination data. A mostly-clean 25% sample anchors the supplied warm tint, then colour slides toward murky badwater. Ripples and flecks share one clock and detail field across all concentrations. Final polish belongs to Map look 2 against DGM Probe's in-game shots; no probe batch was run here.
 
-Badwater's latest calibration uses the supplied body/trough/streak measurements through the demo's lighting and visible bed. The same moving texture now has a wider light-dark range; no noise scale, direction, speed or phase changed. Contrast fades with contamination and compensates for shallow transmission without changing opacity. Sparse glints remain warm and duller; the stronger drifting streaks are surface texture, not extra sky reflection. The High-only poisoned-bed hook and about 58% shallow transmission are unchanged. No ground texture, map data or game asset was added.
+The latest badwater change follows the user's subjective preference for toxic red over brown. The supplied hex colours are approximate guides; the channel and meeting views were also judged by eye. No noise scale, direction, speed or phase changed. Streak contrast compensates for opacity, preserving the swirling pattern. Body opacity is 97.5–99.5%; transparency opens smoothly only where both depth and distance from a shore are very small. The shader uses the existing shore-adjusted depth: edge transmission fades out by 0.18 levels or 0.30 tiles from the bank. The thicker response fades in smoothly above the 25% contamination anchor. Sparse glints, bubbles and the High-only poisoned-bed art are unchanged. No ground texture, map data or game asset was added.
 
 ![Lake water from above](captures/lake-128-water-above.jpg)
 
@@ -30,7 +30,7 @@ Badwater's latest calibration uses the supplied body/trough/streak measurements 
 
 ![Badwater blending into clean water](captures/river-256-meeting.jpg)
 
-![Badwater channel with visible poisoned bed](captures/river-128-badwater.jpg)
+![Crimson badwater with an opaque channel and shallow edge transmission](captures/river-128-badwater.jpg)
 
 Also see the [low-angle badwater channel](captures/river-128-badwater-low.jpg) and its [greyscale/colour-vision sheet](captures/river-128-badwater-readability.jpg).
 
@@ -38,7 +38,7 @@ The **Look at** menu now includes Water · from above, low angle and grazing ang
 
 More comparisons: [badwater](captures/river-128-badwater.jpg), [wet/dry contaminated soil](captures/river-128-soil.jpg), [ruins](captures/river-128-ruins.jpg), [another angle](captures/river-128-start-angle.jpg), [256² overview](captures/river-256-overview.jpg), [shoreline](captures/lake-128-shore.jpg), [low angle](captures/lake-128-shore-low.jpg), [Real Victoria Falls](captures/real-victoria-falls.jpg), [Real Yosemite](captures/real-yosemite-cliff.jpg), [M9 Canyon](captures/m9-canyon-falls.jpg), [M9 River Valley](captures/m9-river-start.jpg), [water only](captures/water-only.jpg), [shadows only](captures/shadows-only.jpg), [demo controls](captures/demo.jpg).
 
-Readability sheets include greyscale and three colour-vision simulations: [start](captures/river-128-start-readability.jpg), [soil](captures/river-128-soil-readability.jpg), [mixed water](captures/river-256-meeting-readability.jpg). Ground and start retain their established cues. Water reads through fine moving crests, flecks, faint transmission and foam; badwater keeps a distinct warm brown body. Very distant dry contaminated veins remain subtle, as in Standard.
+Readability sheets include greyscale and three colour-vision simulations: [start](captures/river-128-start-readability.jpg), [soil](captures/river-128-soil-readability.jpg), [mixed water](captures/river-256-meeting-readability.jpg). Ground and start retain their established cues. Water reads through fine moving crests, flecks, faint transmission and foam; badwater keeps a distinct crimson body. Very distant dry contaminated veins remain subtle, as in Standard.
 
 ## Rendered colour check
 
@@ -53,18 +53,18 @@ The final framebuffer is measured after lighting, haze, the existing finish and 
 | Streaks, low | #3A5761 | #3A5761 |
 | Body, grazing | #34505A | #34505A |
 | Streaks, grazing | #507B81 | #517C83 |
-| Badwater typical, poisoned bed | #653F35 | #653F35 |
-| Badwater darker troughs | #5B3830 | #5B3830 |
-| Badwater lighter streaks | #936551 | #936552 |
+| Badwater typical, approximate guide | #6E3431 | #6E3430 |
+| Badwater darker troughs, approximate guide | #5E2E2B | #5E2E2C |
+| Badwater lighter streaks, approximate guide | #9A5A4E | #9B5A4E |
 | Mostly-clean mixing zone | #2E444C original reference | #30444B |
 
 [Measurements and preservation checks](captures/colour-check.json). Since the screenshots did not specify numeric depths or angles, the reference depths are 0.25, 1.25 and 4.25 levels, viewed at 70°, 30° and 10.3° above the surface. The test uses a 64² synthetic bed, the same renderer/sun/shadows, time 8 s and a central 120×48-pixel patch. Actual maps interpolate between these anchors and vary with shadow, bed, angle and texture. This is not a claim that every water pixel equals a swatch.
 
-`npm --prefix investigation/maplook2 run check:colour` repeats the measurement with the demo running and Chrome installed. Clean palette constants are identical to accepted commit `9aeac6b`; clean body samples still match exactly. The earlier crest/fleck revision moved the grazing highlight sample by at most two RGB codes. Badwater is sampled at 0.25 levels over fully poisoned soil; mixed water at 1.25 levels and 25% contamination. The three new badwater targets match within one RGB code. The waterfall curtain is unchanged across 18,720 channels; foam formulas are unchanged.
+`npm --prefix investigation/maplook2 run check:colour` repeats the measurement with the demo running and Chrome installed. Clean palette constants are identical to accepted commit `9aeac6b`; clean body samples still match exactly. The earlier crest/fleck revision moved the grazing highlight sample by at most two RGB codes. Badwater is sampled in the opaque body at 0.25 levels over fully poisoned soil; mixed water at 1.25 levels and 25% contamination. The three badwater examples happen to match within one RGB code; the check allows five to keep room for the requested visual judgment. The waterfall curtain is unchanged across 18,720 channels; foam formulas are unchanged.
 
-`npm --prefix investigation/maplook2 run check:badwater` compares with the previous revision, `675eb50`: clean water at five depth/angle combinations, exposed poisoned terrain and clean water over poisoned terrain are pixel-identical. The 25% mixing anchor differs by at most one RGB code because RGBA8 stores it as 64/255, just above the unchanged anchor. Controlled shallow transmission stays about 58%. Badwater's blue crest lift toward grazing is only 0.2 codes. Over poisoned shallows its greyscale body is darker than dry ground, with crest contrast 42.4 codes versus the ground's 10.2. This replaces the earlier low diffuse-contrast check to follow the latest request; glint strength and colour remain unchanged. [Badwater checks](captures/badwater-check.json) record the measurements.
+`npm --prefix investigation/maplook2 run check:badwater` compares with `6b340ea`: clean water at five depth/angle combinations, exposed poisoned terrain and clean water over poisoned terrain are pixel-identical. The quantized 25% mixing anchor differs by at most one RGB code. Controlled bed transmission in the body falls from about 58% to 2.5% at 0.25 levels, and from 19% to 1% at 1.25 levels. An isolated near-bank probe transmits 54% at depth 0.03, 31% at 0.10 and only 2.5% at 0.25. This probe fixes shore distance to 0.05 tiles and excludes foam so it measures water opacity; the captures check real banks. The body remains darker and more contrasting than dry ground, with little cool grazing reflection. [Badwater checks](captures/badwater-check.json) record the measurements.
 
-`npm --prefix investigation/maplook2 run check:surface` tracks rendered crests over 0.1 seconds: slow east moves 0.03 tiles, fast east/west/north moves 0.12 tiles in the corresponding direction, and still-lake displacement is below 0.01 tile. Clean, mixed and badwater move identically at equal flow. The tracker uses a uniform bed and excludes bright glints/slow glowing bubbles, so it measures crests rather than the now-visible stationary ground; resolution is 0.01 tile. It also checks all four simulator directions, a monotonic four-tile mixing transition, increased crest/fleck density and smooth phase handoffs. [Surface checks](captures/surface-check.json) record these controlled probes, not game velocities or GPU benchmarks.
+`npm --prefix investigation/maplook2 run check:surface` tracks rendered crests over 0.1 seconds: slow east moves 0.03 tiles, fast east/west/north moves 0.12 tiles in the corresponding direction, and still-lake displacement is below 0.01 tile. Clean, mixed and badwater move identically at equal flow. The tracker uses a uniform bed and excludes bright glints/slow glowing bubbles, so it measures crests rather than stationary bed detail; resolution is 0.01 tile. It also checks all four simulator directions, a monotonic four-tile mixing transition, increased crest/fleck density and smooth phase handoffs. [Surface checks](captures/surface-check.json) record these controlled probes, not game velocities or GPU benchmarks.
 
 ## Checks
 
@@ -95,3 +95,4 @@ Reproduce with the demo running and Chrome installed: `npm --prefix investigatio
 7. Added the requested smooth concentration front and measured brown/warm mixing colours, with shared motion across clean and badwater. Replaced the superseded badwater preservation test; kept clean colours, waterfalls and shadows protected.
 8. Reduced cool reflection, warmed badwater and restored shallow transmission of the existing poisoned bed/cracks, with slow bubbles and dull glints. Added response/preservation checks and refreshed captures.
 9. Matched the latest brick-red body, trough and streak samples. Expanded the contrast of the existing advected texture only; preserved clean water, concentration smoothing, shallow opacity, bubbles, waterfall and shadows. Refreshed the badwater and meeting captures. Final polish remains with Map look 2 against DGM Probe's in-game shots.
+10. Followed the user's subjective request for more crimson, saturated badwater and a thicker body. Confined poisoned-bed visibility to very shallow edges, preserving swirl motion and the smooth concentration front. Updated opacity checks and badwater captures; the earlier broad shallow-transmission result is superseded.
