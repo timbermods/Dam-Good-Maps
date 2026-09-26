@@ -145,6 +145,9 @@ export interface GenerateOptions {
   /** The drought-aware start (#59): by default Easy requires water that lasts the first drought,
    *  Normal and Hard prefer it. */
   drought?: DroughtPolicy;
+  /** Variety (vy, 0–100; M9b makes it a setting): how far the genome strays from its theme's
+   *  ranges. For the contact sheet only: a share link does not carry it. */
+  variety?: number;
 }
 
 /** The species mix the settings panel starts from: a map that keeps it takes the woods its genome
@@ -197,7 +200,7 @@ export function generate(specIn: MapSpec, opts: GenerateOptions = {}): GenerateR
   for (let attempt = 0; attempt < max; attempt++) {
     if (!land || !last?.replannable || replans >= REPLANS || land.settles >= SETTLE_BUDGET) {
       opts.onProgress?.({ attempt, stage: "land" });
-      const g = drawGenome(specIn.theme, seed, W, H, genomes, { vt: specIn.settings.terrain.verticality, intentions: opts.intentions });
+      const g = drawGenome(specIn.theme, seed, W, H, genomes, { vt: specIn.settings.terrain.verticality, intentions: opts.intentions, ...(opts.variety !== undefined ? { variety: opts.variety } : {}) });
       leanGenome(g, specIn.settings, W, H, seed, genomes);
       genomes++;
       replans = 0;
