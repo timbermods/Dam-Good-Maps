@@ -141,6 +141,9 @@ export function softwareRendering(): boolean {
   }
 }
 
+/** Timberborn's camera keys: WASD and the arrows move, Q and E turn. */
+const CAMERA_KEYS = new Set(["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "q", "e"]);
+
 export class MapRenderer {
   readonly canvas: HTMLCanvasElement;
   private gl: WebGLRenderer;
@@ -187,7 +190,14 @@ export class MapRenderer {
   private resize: ResizeObserver;
   private disposed = false;
   private drag: { kind: "orbit" | "pan" | "tool"; x: number; y: number; id: number; moved: number; button: number } | null = null;
-  private listeners: [string, EventListener, AddEventListenerOptions?][] = [];
+  private listeners: [EventTarget, string, EventListener, AddEventListenerOptions?][] = [];
+  /** The camera keys held (Timberborn's: WASD and the arrows move, Q and E turn, Shift is faster),
+   *  and the camera's speed now: it moves every frame while they are held, easing in and gliding to
+   *  a stop. */
+  private held = new Set<string>();
+  private glide = { x: 0, y: 0, yaw: 0, fast: false };
+  private glideFrame = 0;
+  private glideAt = 0;
   private cpuTimes: number[] = [];
   private timer: { ext: { TIME_ELAPSED_EXT: number; GPU_DISJOINT_EXT: number }; pending: { q: WebGLQuery }[]; times: number[] } | null = null;
   private recording = false;
@@ -931,7 +941,7 @@ export class MapRenderer {
 
   private on(target: EventTarget, type: string, fn: EventListener, opts?: AddEventListenerOptions): void {
     target.addEventListener(type, fn, opts);
-    this.listeners.push([type, fn, opts]);
+    this.listeners.push([target, type, fn, opts]);
   }
 
   private bindInput(): void {
@@ -1011,23 +1021,71 @@ export class MapRenderer {
       },
       { passive: false },
     );
-    this.on(c, "keydown", (e) => {
+    // the camera keys work anywhere on the page but in a text field or a list, and never with
+    // Ctrl, Alt or Cmd (those are the editor's shortcuts)
+    const typing = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      return !!el && (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    };
+    this.on(window, "keydown", (e) => {
       const ev = e as KeyboardEvent;
-      if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey || ev.defaultPrevented || typing(ev.target) || !this.map || !this.canvas.isConnected) return;
       const k = ev.key.toLowerCase();
-      const step = 24;
-      let used = true;
-      if (k === "w" || k === "arrowup") this.panPixels(0, step);
-      else if (k === "s" || k === "arrowdown") this.panPixels(0, -step);
-      else if (k === "a" || k === "arrowleft") this.panPixels(step, 0);
-      else if (k === "d" || k === "arrowright") this.panPixels(-step, 0);
-      else if (k === "q" && this.view.mode === "orbit") this.setView({ yaw: this.view.yaw + 0.12 });
-      else if (k === "e" && this.view.mode === "orbit") this.setView({ yaw: this.view.yaw - 0.12 });
-      else if (k === "r" || k === "+" || k === "=") this.zoom(1 / 1.15);
+      if (CAMERA_KEYS.has(k)) {
+        ev.preventDefault();
+        this.held.add(k);
+        this.glide.fast = ev.shiftKey;
+        this.startGlide();
+        return;
+      }
+      if (k === "r" || k === "+" || k === "=") this.zoom(1 / 1.15);
       else if (k === "f" || k === "-") this.zoom(1.15);
-      else used = false;
-      if (used) ev.preventDefault();
+      else return;
+      ev.preventDefault();
     });
+    this.on(window, "keyup", (e) => {
+      const ev = e as KeyboardEvent;
+      this.held.delete(ev.key.toLowerCase());
+      if (ev.key === "Shift") this.glide.fast = false;
+    });
+    this.on(window, "blur", () => this.held.clear());
+  }
+
+  /** Move the camera every frame while its keys are held: a quick ease-in to full speed, a short
+   *  glide to a stop; the speed follows the zoom (slower up close), and Shift is faster. */
+  private startGlide(): void {
+    if (this.glideFrame) return;
+    this.glideAt = performance.now();
+    const step = () => {
+      this.glideFrame = 0;
+      if (this.disposed) return;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - this.glideAt) / 1000);
+      this.glideAt = now;
+      const h = this.held;
+      const want = {
+        x: (h.has("d") || h.has("arrowright") ? 1 : 0) - (h.has("a") || h.has("arrowleft") ? 1 : 0),
+        y: (h.has("w") || h.has("arrowup") ? 1 : 0) - (h.has("s") || h.has("arrowdown") ? 1 : 0),
+        yaw: this.view.mode === "orbit" ? (h.has("q") ? 1 : 0) - (h.has("e") ? 1 : 0) : 0,
+      };
+      // ease toward the speed wanted: in about 0.12 s, out in about 0.18 s
+      const g = this.glide;
+      for (const k of ["x", "y", "yaw"] as const) {
+        const rate = want[k] ? 1 / 0.12 : 1 / 0.18;
+        const d = want[k] - g[k];
+        g[k] += Math.sign(d) * Math.min(Math.abs(d), rate * dt);
+      }
+      const moving = Math.abs(g.x) > 1e-3 || Math.abs(g.y) > 1e-3 || Math.abs(g.yaw) > 1e-3;
+      if (moving) {
+        // a screen's height in about 1.4 s at full speed, whatever the zoom; Shift 2.5 times that
+        const px = (this.canvas.clientHeight || 600) * 0.7 * (g.fast ? 2.5 : 1) * dt;
+        this.panPixels(-g.x * px, g.y * px);
+        if (g.yaw) this.setView({ yaw: this.view.yaw + g.yaw * 1.6 * (g.fast ? 1.8 : 1) * dt });
+      }
+      if (moving || h.size) this.glideFrame = requestAnimationFrame(step);
+      else this.glide = { x: 0, y: 0, yaw: 0, fast: false };
+    };
+    this.glideFrame = requestAnimationFrame(step);
   }
 
   zoom(factor: number): void {
@@ -1160,7 +1218,8 @@ export class MapRenderer {
     clearTimeout(this.animTimer);
     this.resize.disconnect();
     this.seen?.disconnect();
-    for (const [type, fn, opts] of this.listeners) this.canvas.removeEventListener(type, fn, opts);
+    for (const [target, type, fn, opts] of this.listeners) target.removeEventListener(type, fn, opts);
+    cancelAnimationFrame(this.glideFrame);
     this.clearMap();
     this.cursor?.dispose();
     this.terrainMat.dispose();

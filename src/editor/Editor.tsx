@@ -1234,7 +1234,7 @@ export default function Editor(props: EditorProps) {
       // then puts it away
       if (!mod && !ev.altKey && /^[1-5]$/.test(ev.key)) {
         const b = BRUSHES[Number(ev.key) - 1].tool;
-        if (brushToolRef.current !== b) pickBrush(b);
+        if (painter.current && brushToolRef.current !== b) pickBrush(b);
         return;
       }
       if (!mod && (ev.key === "[" || ev.key === "]") && brushToolRef.current) {
@@ -1357,10 +1357,11 @@ export default function Editor(props: EditorProps) {
           </span>
         </div>
         <div class="editor-actions" role="toolbar" aria-label="Edit">
-          <button type="button" class="ghost" onClick={() => void undo()} disabled={!info.canUndo} title="Undo (Ctrl+Z)">
+          {/* (a stroke the page has painted can be undone at once, before the worker has it) */}
+          <button type="button" class="ghost" onClick={() => void undo()} disabled={!info.canUndo && !localUndo.current.length} title="Undo (Ctrl+Z)">
             Undo
           </button>
-          <button type="button" class="ghost" onClick={() => void redo()} disabled={!info.canRedo} title="Redo (Ctrl+Y)">
+          <button type="button" class="ghost" onClick={() => void redo()} disabled={!info.canRedo && !localRedo.current.length} title="Redo (Ctrl+Y)">
             Redo
           </button>
           <button type="button" class="ghost" aria-expanded={showHistory} onClick={() => setShowHistory(!showHistory)}>
@@ -1452,7 +1453,7 @@ export default function Editor(props: EditorProps) {
             }}
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
-            <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} />
+            <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} loading={!ready} />
             {shapeNote ? (
               <div class={`map-note shape-note${shapeNote.ok ? "" : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}

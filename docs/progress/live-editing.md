@@ -173,6 +173,24 @@ In `investigation/claude/`, the shape of its tools:
   older ones pass, the same 101 as on dev at 761a1d2 (the other 19 are setups tuned on the M7 maps,
   M12-INTEGRATION §11).
 
+## The camera keys (D180)
+
+Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.
+Held, they move the camera every frame (the keys' state, not their repeats), easing in over about
+0.12 s and gliding to a stop over about 0.18 s, at a screen's height in about 1.4 s whatever the
+zoom. They work anywhere on the page but in a text field or a list, and never with Ctrl, Alt or
+Cmd. Nothing else in the editor uses those keys: the brushes take 1–5, [ and ], Esc, Delete and
+Ctrl+Z / Ctrl+Y; a focused handle keeps its arrow keys.
+
+## A stroke right after the editor opens
+
+Reported lost twice on a fresh load (a drag within about 3 s of **Refine this map**). Not
+reproduced: 16 tries in Chrome at 128², locally and on the published preview, at full speed and 6×
+slower, with the drag 0.3–3 s after the brush bar appeared, all kept their stroke. Two things could
+look like a lost stroke, both changed: **Undo** waited for the worker's answer (now a painted stroke
+enables it at once), and the brushes could be picked before the map could be painted (now they wait,
+"The map is still loading").
+
 ## Tests
 
 - `tests/contract/brush.test.ts`: a stroke gives the same levels however its dabs are handed in;
@@ -194,6 +212,8 @@ In `investigation/claude/`, the shape of its tools:
   mid-stroke leaving no trace, Ctrl+click, [ ], Alt+wheel, and the strokes after a reload.
 - `tests/e2e/legend.spec.ts`: the legend beside the map, only what the map has, the highlight by
   mouse and keyboard, the strip; which map is which on the generator's page.
+- `tests/e2e/camera.spec.ts`: held keys move the view in many small steps and glide to a stop;
+  Shift is faster; Q turns; nothing moves while a field has the focus.
 - `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release
   places it and the worker's map is the one shown; Esc mid-drag leaves no trace; its height handle
   by keyboard and a corner handle by mouse, each one step; a hill over the start is refused while
@@ -214,6 +234,8 @@ In `investigation/claude/`, the shape of its tools:
   places them now.
 - `tests/e2e/objects.spec.ts` read the forest's live and dead tiles from the preview before
   **Place**; it reads them from the shape while it is dragged, then lets go.
+- `tests/e2e/look-outline.spec.ts` (from dev) hid the legend to keep its swatch out of the map's
+  pictures; the legend sits beside the map now, and holds **Markers**, so it stays.
 - `tests/contract/randomOps.ts`: the random operations include brush strokes (half of the draws
   that were sculpts), because `properties.test.ts` checks that every kind of log operation is
   exercised.

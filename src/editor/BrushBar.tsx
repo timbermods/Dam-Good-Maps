@@ -66,6 +66,8 @@ export interface BrushBarProps {
   settings: BrushSettings;
   onPick(tool: BrushTool | null): void;
   onSettings(s: BrushSettings): void;
+  /** The map is still loading: the brushes wait until they can paint. */
+  loading?: boolean;
 }
 
 export function BrushBar(p: BrushBarProps) {
@@ -82,7 +84,8 @@ export function BrushBar(p: BrushBarProps) {
             class="icon-button"
             aria-pressed={p.active === b.tool}
             aria-label={`${b.name} brush (${b.key})`}
-            title={`${b.name} (${b.key}): ${b.hint}`}
+            title={p.loading ? "The map is still loading" : `${b.name} (${b.key}): ${b.hint}`}
+            disabled={p.loading}
             onClick={() => p.onPick(p.active === b.tool ? null : b.tool)}
           >
             <Icon tool={b.tool} />
