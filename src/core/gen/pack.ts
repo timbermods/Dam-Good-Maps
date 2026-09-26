@@ -8,6 +8,7 @@ import { entityJson } from "../format/entities";
 import { mapMetadata, writeTimber, type TimberFile } from "../format/timber";
 import { emptySimulationSingletons, GAME_VERSION, LAYERS, settledSimulationSingletons, voxelsFromHeights, type WorldModel } from "../format/world";
 import { thumbnailJpeg } from "../render/shade";
+import { NO_BADWATER_NOTE } from "../resources/badwater";
 import type { BuildResult } from "../features/build";
 import { GENERATOR_VERSION, THEME_NAMES, type MapSpec } from "../spec/mapspec";
 
@@ -43,7 +44,8 @@ export function description(spec: MapSpec): string {
         `A river crosses the valley${falls ? " and drops over a cascade" : ""} into a basin that a rock ridge pinches into a gorge ` +
         `(one short dam there holds a reservoir), then flows on${falls ? " over falls" : ""} and out.`;
   }
-  const bad = spec.settings.hazards.badwater !== "off" ? " Badwater rises in side basins; a levee on a basin's outlet holds it back." : "";
+  // the player's No badwater is recorded, so the map says so wherever it goes (D200)
+  const bad = spec.settings.hazards.badwater !== "off" ? " Badwater rises in side basins; a levee on a basin's outlet holds it back." : ` ${NO_BADWATER_NOTE}`;
   return `${THEME_NAMES[spec.theme]}, ${size}, designed for ${spec.designedFor}. ${body}${bad} Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`;
 }
 

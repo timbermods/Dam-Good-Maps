@@ -13,6 +13,7 @@ import { planLake } from "../doc/tools";
 import { cosDet, PI, sinDet } from "../math/detmath";
 import { distanceFrom } from "../math/grid";
 import type { Rng } from "../math/rng";
+import { lownessAt } from "../resources/measure";
 import type { LayoutTargets } from "./layout";
 
 /** The ground a planner places on: the terrain of its layout so far. */
@@ -303,10 +304,13 @@ function pointMask(W: number, H: number, x: number, y: number): Uint8Array {
   return m;
 }
 
-/** Badwater (PLAN §5.4, §9.5): the badwater setting's total strength in basins of 1–3 each, placed
- *  about `distance + 14` tiles from the start (the Badwater distance setting moves them), each with
- *  its one outlet draining to `drains` (the reaches downstream of the start) or a map edge, never
- *  past the start. */
+/** Badwater (PLAN §5.4, §9.5, D200): the badwater setting's sources (`t.badwater`, as many and as
+ *  strong as the official maps' for the size) in side basins, placed about `distance + 14` tiles
+ *  from the start (the Badwater distance setting moves them), in hollows and side valleys first (the
+ *  ground round the basin higher than its floor, as most official sources stand), each with its one
+ *  outlet draining to `drains` (the reaches downstream of the start) or a map edge, never past the
+ *  start. When no basin fits so, the search runs again over every spot far enough from the start,
+ *  so a map that asks for badwater gets one where any fits (`resources.badwater_source`). */
 export function placeBadwater(opts: {
   rng: Rng;
   ground: PlanGround;
@@ -324,9 +328,9 @@ export function placeBadwater(opts: {
   const { W, H } = g;
   const N = W * H;
   const out: SetPieceFeature[] = [];
-  if (!(t.badwater > 0)) return out;
-  const n = Math.max(1, Math.ceil(t.badwater / 3));
-  const each = round(Math.min(3, Math.max(1, t.badwater / n)), 2);
+  if (!(t.badwater.sources > 0)) return out;
+  const n = t.badwater.sources;
+  const each = t.badwater.strength;
   const D = t.badwaterDistance;
   // the basin's floor keeps D + 12 from the start (its water's soil contamination reaches 7 tiles),
   // its outlet D + 8
@@ -351,21 +355,29 @@ export function placeBadwater(opts: {
   }
   const protect = g.protect.slice();
   for (let i = 0; i < N; i++) if (blockedWater[i] || opts.noRoute[i]) protect[i] = 1;
-  for (let k = 0; k < n; k++) {
+  for (let k = 0, wide = false; k < n; k++) {
     const target = D + 14 + 6 * k;
-    // candidate centres: at least D + 12 from the start, nearest the target distance first
+    // candidate centres: at least D + 12 from the start, nearest the target distance first, and in a
+    // hollow or a side valley before open ground (lowness: the share of the ground 4–6 tiles round
+    // the floor that stands above it); a map still without a basin tries every candidate
     const cands: [number, number][] = [];
     for (let y = 6; y < H - 6; y++)
       for (let x = 6; x < W - 6; x++) {
         const i = y * W + x;
         if (sd[i] < D + 12 || avoid[i]) continue;
         let clear = true;
-        for (let dy = -5; dy <= 5 && clear; dy++) for (let dx = -5; dx <= 5 && clear; dx++) if (avoid[(y + dy) * W + x + dx] || g.channel[(y + dy) * W + x + dx]) clear = false;
-        if (clear) cands.push([Math.abs(sd[i] - target) + rng.float() * 6, i]);
+        let low = Infinity;
+        for (let dy = -5; dy <= 5 && clear; dy++)
+          for (let dx = -5; dx <= 5 && clear; dx++) {
+            const j = (y + dy) * W + x + dx;
+            if (avoid[j] || g.channel[j]) clear = false;
+            else if (dx >= -3 && dx <= 3 && dy >= -3 && dy <= 3) low = Math.min(low, g.heights[j]);
+          }
+        if (clear) cands.push([Math.abs(sd[i] - target) + rng.float() * 6 + 12 * Math.max(0, 0.75 - lownessAt(g.heights, W, H, x, y, low)), i]);
       }
     cands.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     let done: SetPieceFeature | null = null;
-    for (let c = 0; c < cands.length && c < 60 && !done; c++) {
+    for (let c = 0; c < cands.length && c < (wide ? 400 : 60) && !done; c++) {
       const i = cands[c][1];
       const x = i % W;
       const y = (i - x) / W;
@@ -404,6 +416,10 @@ export function placeBadwater(opts: {
       }
     }
     if (done) out.push(done);
+    else if (!out.length && !wide) {
+      wide = true;
+      k--;
+    }
   }
   return out;
 }

@@ -42,9 +42,9 @@ describe.each([
     const ids = r.features.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
     const setPieces = r.features.filter((f) => f.kind === "setPiece").map((f) => (f.params as { kind: string }).kind).sort();
-    // the badwater setting's strength in basins of 1–3 each (0.65 × 7.2 at 256² makes two); since
-    // M7 also ruins on a plateau (where it fits) and, from 128², a second district's site
-    const basins = Math.ceil(layoutTargets(r.spec).badwater / 3);
+    // the badwater setting's sources, as many as the official maps' for the size (D200); since M7
+    // also ruins on a plateau (where it fits) and, from 128², a second district's site
+    const basins = layoutTargets(r.spec).badwater.sources;
     const layoutPieces = setPieces.filter((k) => k !== "obstaclePayoff" && k !== "secondDistrict");
     expect(layoutPieces).toEqual([...Array(basins).fill("badwaterBasin"), "damSite", "waterfall", "waterfall"]);
     expect(setPieces.filter((k) => k === "obstaclePayoff" || k === "secondDistrict").length).toBeLessThanOrEqual(2);

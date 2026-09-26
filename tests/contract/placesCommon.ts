@@ -56,23 +56,30 @@ export const PLACES_SOURCES_IN_FLOW = new Set([
  *  baseline (src/core/resources/plan.ts) and turns this to false. */
 export const PLACES_LACK_MINE_SITES = true;
 
+/** A badwater source on every map (Kyler, 2026-09-26, D200): the places as converted have none,
+ *  which `resources.badwater_source` flags (a playability check: it warns in the export profile).
+ *  Real places 2 places them with `planMapResources`'s springs and turns this to false. */
+export const PLACES_LACK_BADWATER = true;
+
 /** The failing checks of a place, its known faults apart (the conversion's edge wall and sources in
- *  flow, and the missing mine site), and which of them fail. */
-export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean; sourceInFlow: boolean; mineSite: boolean } {
+ *  flow, and the missing mine site and badwater source), and which of them fail. */
+export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean; sourceInFlow: boolean; mineSite: boolean; badwater: boolean } {
   const all = failing(checks);
-  const known = (f: string) => f.startsWith("terrain.edge_wall:") || f.startsWith("water.source_in_flow:") || f.startsWith("resources.mine_site:");
+  const known = (f: string) => f.startsWith("terrain.edge_wall:") || f.startsWith("water.source_in_flow:") || f.startsWith("resources.mine_site:") || f.startsWith("resources.badwater_source:");
   return {
     other: all.filter((f) => !known(f)),
     edgeWall: all.some((f) => f.startsWith("terrain.edge_wall:")),
     sourceInFlow: all.some((f) => f.startsWith("water.source_in_flow:")),
     mineSite: all.some((f) => f.startsWith("resources.mine_site:")),
+    badwater: all.some((f) => f.startsWith("resources.badwater_source:")),
   };
 }
 
 /** Every place in shard `k` of `n`: its .timber, built as the page builds it (build, settle,
  *  validate, write), passes the export profile and every check of the generate profile but its known
  *  faults, which flag it as long as the places have them (`PLACES_HAVE_EDGE_WALLS`,
- *  `PLACES_SOURCES_IN_FLOW`, `PLACES_LACK_MINE_SITES`), and is the same bytes as the index records. */
+ *  `PLACES_SOURCES_IN_FLOW`, `PLACES_LACK_MINE_SITES`, `PLACES_LACK_BADWATER`), and is the same bytes as
+ *  the index records. */
 export function checkShard(k: number, n: number): void {
   const places = INDEX.places.filter((_, i) => i % n === k);
   describe(`real places ${k + 1} of ${n}: every map validates and is the same file`, () => {
@@ -91,10 +98,12 @@ export function checkShard(k: number, n: number): void {
       expect(f.edgeWall).toBe(PLACES_HAVE_EDGE_WALLS);
       expect(f.sourceInFlow).toBe(PLACES_SOURCES_IN_FLOW.has(entry.id));
       expect(f.mineSite).toBe(PLACES_LACK_MINE_SITES);
-      expect(v.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS && !PLACES_LACK_MINE_SITES);
+      expect(f.badwater).toBe(PLACES_LACK_BADWATER);
+      expect(v.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS && !PLACES_LACK_MINE_SITES && !PLACES_LACK_BADWATER);
       expect(r.validation.report.checks.find((c) => c.id === "terrain.edge_wall")!.severity).toBe(PLACES_HAVE_EDGE_WALLS ? "error" : "info");
       // the missing mine site only warns on export: the gallery's download works
       expect(r.validation.report.checks.find((c) => c.id === "resources.mine_site")!.severity).toBe(PLACES_LACK_MINE_SITES ? "warning" : "info");
+      expect(r.validation.report.checks.find((c) => c.id === "resources.badwater_source")!.severity).toBe(PLACES_LACK_BADWATER ? "warning" : "info");
       expect(sha256(r.bytes)).toBe(entry.sha256);
       expect(r.bytes.length).toBe(entry.bytes);
     });

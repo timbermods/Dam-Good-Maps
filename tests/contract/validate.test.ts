@@ -30,7 +30,7 @@ describe("validation profiles (PLAN §19.5)", () => {
     }
     const ids = r.report.checks.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const id of ["water.settles", "water.no_flood", "water.clean_exists", "water.outflow", "water.clean_reach", "water.badwater_contained", "water.reservoir", "start.dry", "start.water", "start.badwater", "start.reach", "start.food", "start.wood", "start.ruins_clear", "plants.survive", "plants.drought", "resources.scrap", "resources.trees", "resources.bushes", "resources.mine_site", "ruins.fields", "ruins.access", "extras.placement"]) {
+    for (const id of ["water.settles", "water.no_flood", "water.clean_exists", "water.outflow", "water.clean_reach", "water.badwater_contained", "water.reservoir", "start.dry", "start.water", "start.badwater", "start.reach", "start.food", "start.wood", "start.ruins_clear", "plants.survive", "plants.drought", "resources.scrap", "resources.trees", "resources.bushes", "resources.mine_site", "resources.badwater_source", "ruins.fields", "ruins.access", "extras.placement"]) {
       expect(ids, id).toContain(id);
     }
   });

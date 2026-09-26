@@ -19,6 +19,7 @@ import { decodeProject, encodeProject, toDocument } from "../src/core/doc/docume
 import { MapSession } from "../src/core/doc/session";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
 import { officialRange } from "../src/core/gen/calibrated";
+import { layoutTargets } from "../src/core/gen/layout";
 import { decodeSpecFragment, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
@@ -58,6 +59,9 @@ const failedChecks = new Map<string, number>(); // every failed attempt's blocki
 // range for their size and settings, and their mine sites
 const inRange = { trees: 0, bushes: 0, scrap: 0 };
 const mines: number[] = [];
+// and their badwater sources, against the budget for the map (D200)
+const badwater: number[] = [];
+let badwaterShort = 0;
 const advisory = new Map<string, number>();
 const lines: string[] = [];
 const log = (s: string) => {
@@ -89,6 +93,9 @@ for (const seed of seeds) {
       else if (t.startsWith("RuinColumnH")) have.scrap += 15 * Number(t.slice(11));
       else if (t === "UndergroundRuins") m++;
     }
+    const bad = r.built.entities.filter((e) => e.template === "BadwaterSource").length;
+    badwater.push(bad);
+    if (bad < layoutTargets(r.spec).badwater.sources) badwaterShort++;
     const s = r.spec.settings.resources;
     const k = { trees: s.forestDensity / 100, bushes: s.berryBushes / 100, scrap: s.ruins / 100 };
     for (const key of ["trees", "bushes", "scrap"] as const) {
@@ -126,7 +133,7 @@ log(`- attempts: mean ${(attempts.reduce((a, b) => a + b, 0) / n).toFixed(2)}, m
 log(`- time per map: median ${Math.round(sorted[n >> 1])} ms, p90 ${Math.round(sorted[Math.floor(n * 0.9)])} ms, max ${Math.round(sorted[n - 1])} ms`);
 log(`- checks that failed an attempt: ${[...failedChecks].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ") || "none"}`);
 log(`- advisory warnings on the accepted maps: ${[...advisory].map(([k, v]) => `${k} ${v}/${n}`).join(", ") || "none"}`);
-log(`- in the official maps' typical range for the size and settings (information): trees ${inRange.trees}/${final}, bushes ${inRange.bushes}/${final}, scrap ${inRange.scrap}/${final}; mine sites ${mines.length ? `${Math.min(...mines)}–${Math.max(...mines)}` : "none"}`);
+log(`- in the official maps' typical range for the size and settings (information): trees ${inRange.trees}/${final}, bushes ${inRange.bushes}/${final}, scrap ${inRange.scrap}/${final}; mine sites ${mines.length ? `${Math.min(...mines)}–${Math.max(...mines)}` : "none"}; badwater sources ${badwater.length ? `${Math.min(...badwater)}–${Math.max(...badwater)}` : "none"}, ${badwaterShort} of ${final} fewer than their budget`);
 const rt = reopenTimes.slice().sort((a, b) => a - b);
 log(`- project round trip: ${reopened}/${final} accepted maps reopen from their project file and rebuild the same .timber${rt.length ? ` (median ${Math.round(rt[rt.length >> 1])} ms, max ${Math.round(rt[rt.length - 1])} ms)` : ""}`);
 for (const f of reopenFailures) log(`  - ${f}`);

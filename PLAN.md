@@ -281,7 +281,7 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 
 | Setting | Range | Default | Maps to |
 |---|---|---|---|
-| Badwater | Off, Low, Normal, High | Normal | Badwater-to-clean strength ratio 0 / 0.3 / 0.65 / 1.2 (official 0.18–2.2, median 0.65). Sources are BadwaterSource 3×3 at strength 1–3, inland on mid-height ground (as in official maps: none are on the edge). As built (M6, D62): the total is split into basins of 1–3 each (§9.5), so High is higher than Normal on every map size. |
+| Badwater | No badwater, Low, Normal, High | Normal (Highlands and Islands: Low) | Every map has at least one badwater source, a late-game resource like the mine site, unless the player picks **No badwater** for a peaceful map: none is placed, badtides still turn every source bad, and the share link (`bw=0`) and the map's description record it (D200). As built (D200): the sources and their total strength are the official maps' for the size (`investigation/official-baselines.json`: 1 / 2 / 4 / 3.5 sources and 1.25 / 3.5 / 5.5 / 6.5 strength for small / medium / large / max maps, joined in ln(area)), moved within the official typical range by the seed, then × 0.5 / 1 / 1.5 (sources) and × 0.5 / 1 / 1.75 (strength) for Low / Normal / High; each source 1–3 strong (official median 1.5). Each is a BadwaterSource 3×3 in a side basin (§9.5), in a hollow or a side valley first. Before D200 (M6, D62): the rivers' flow × 0 / 0.3 / 0.65 / 1.2 (the official badwater-to-clean ratio, 0.18–2.2, median 0.71), in basins of 1–3 each. |
 | Badwater distance | 8 – 60 (12 – 60 before M8) | 15 (Easy 30, Hard 8), Kyler's decision (D85; the workshop study's W4); before M8 30 (Easy 40, Hard 15) | Distance from the start to badwater or contaminated soil the generator aims for (official p10 12, median 30). The basins are placed about 14 tiles beyond it (D62). The start rule "No badwater within" (§5.6) is the same value: the panel sets both, and validation uses the larger. Since M8 it is a target with an advisory warning, never a reason to reject (D85). The workshop study measured the official maps' nearest badwater to the start: median 14.8, p25 10. |
 | Thorn belts | Off, Some | Some (Highlands, River Valley) | 1–3 belts of 13–40 thorns across corridors or plateaus, never within 20 tiles of the start. As built (M7, D75, D81): each belt crosses the way from the start to a relic or a geothermal field, 5–8 tiles in front of it (with none left, a stretch of dry ground), 9–17 tiles across and 2–3 deep, every thorn 22+ tiles from the start; a belt that would cut the colony's land in two is left out. |
 | Unstable cores | Off, On | Off | Advanced. 1–4 cores, 40+ tiles from the start, first countdown at cycle 5+, radius 2–3, never within radius + 2 of each other or of a dam site (no chain reactions). As built (M7, D81): countdown in cycle 5–12, 10.5 days in (the official maps' value). |
@@ -968,6 +968,15 @@ what the map allows are reduced to the nearest achievable value, and the reducti
   where the river keeps its distance (Lake Basin: below the outlet's fall, or a map edge), and 2
   tiles clear of other rivers. River Valley's marsh is replaced. The containment rule is §11.3's
   `water.badwater_contained`: with the outlet blocked, the basin holds its water below its rim.
+- **As built (D200, badwater on every map):** as many basins as the official maps have sources for
+  the size (§5.4), each where the ground 4–6 tiles round its floor stands higher (a hollow or a side
+  valley, as 84% of the official sources stand) before open ground, at the same distances. A map
+  that asks for badwater and finds no basin by the usual search tries every spot far enough from
+  the start; one still without a source fails `resources.badwater_source` and is generated again.
+  Real places and Pick a place get springs from `planMapResources` (`src/core/resources/badwater.ts`):
+  a flat, dry 3×3 in a hollow or side valley on their ground as it stands, at least the badwater
+  distance + 14 tiles from the start, the water settled again with them, and a spring dropped when
+  its badwater comes nearer the start than the badwater distance.
 
 ### 9.6 Plugged spillway
 
@@ -1357,7 +1366,9 @@ column says which; until M8 every row rejects, with the rule before M8 given in 
 | `start.reach` | Dry tiles walkable from the start (same level, plus slope links; blocked by Thorns, Blockage, NaturalDam, relics, cores, geothermal and mine sites) ≥ the buildable-land target (750 / 1,300 / 2,500). | advisory |
 | `start.ruins_clear` | No ruin column within 20 / 15 / 12. | advisory |
 | `plants.survive` | Every living tree and bush stands on moisture > 0, no water and clean soil. Every living succulent is on moisture 0. | rejects |
-| `resources.scrap`, `resources.trees`, `resources.bushes` | Totals ≥ 0.5 × the size-aware official median × the setting multiplier (about the official p10). | rejects |
+| `resources.scrap`, `resources.trees`, `resources.bushes` | Totals ≥ 0.5 × the size-aware official median × the setting multiplier (about the official p10). Information since "Resources like the official maps" (D167–D170). | advisory |
+| `resources.mine_site` | At least one mine site (D167). | rejects |
+| `resources.badwater_source` | At least one BadwaterSource or BadwaterSeep, unless the map is set to No badwater: its Badwater setting, or, for a map without its settings, its description saying No badwater (D200). | rejects |
 | `ruins.fields` | ≥ 80% of columns in fields of 10+ touching columns (official median 97%). | rejects |
 | `ruins.access` | Every column has an 8-neighbour on ground at its level, not blocked. | rejects |
 | `walk.levels` | From 3D-a (D122): information: the levels the start reaches without stairs and how; the heights that need stairs, and what lies there. In `generate`, nothing planned stands in a pocket no stairs reach. | — |
