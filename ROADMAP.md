@@ -907,7 +907,9 @@ they conflict):
      final water is always the game's settled result, at any speed.
    - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
      modes, Defy gravity, a Power slider from creek to catastrophe; it forms gorges and valleys
-     (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready.
+     (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready, keeping its full
+     feature set (D199): Width, Wander, variation, Try another path, Steep or Wide walls, Keep river or
+     Dry canyon, a following camera with carving effects, Stop, instant undo.
 3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
    start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
    geothermal fields and thorns. Picking one shows a live ghost on the terrain, its footprint green
