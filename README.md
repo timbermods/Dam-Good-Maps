@@ -54,9 +54,18 @@ The editor:
 
 Your map is saved in the browser as you work.
 
+Real places:
+- **Real places**, at the top of the generator, lists 85 maps made from real land. Each is inspired
+  by the land near its namesake, at Timberborn's scale. It is not a replica.
+- Filter by **Landform** and size. **Download** gives the map's `.timber`. **Refine** opens it in the
+  editor.
+- The heights come from public elevation data. The gallery lists its credits, and each map's
+  description carries them.
+
 | Path | What it is |
 |---|---|
 | [src/](src/) | The website. `src/core/` is the generator and format code: pure TypeScript that runs in the worker, in Node and in tests. |
+| [public/real-places/](public/real-places/) | The Real places gallery's data and card pictures, written by `tools/real-places.ts` from the [landscape survey](investigation/landscapes/README.md). |
 | [tools/](tools/) | Command-line tools on the same core: batch generation, the Python oracle, the benchmark and the in-game check files. |
 | [PLAN.md](PLAN.md) | The implementation plan for the website: architecture, settings, generation pipeline, validation rules, scoring, tests, and (§19) the foundations shared with the editor. |
 | [EDITOR_PLAN.md](EDITOR_PLAN.md) | The plan for the in-browser map editor and the Claude integration. |
@@ -103,8 +112,10 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 - `npm run gen` writes maps from the command line.
 - `npm run batch` reports first-attempt and final pass rates (default 100 seeds at 128²).
 - `npm run test:e2e` builds the site and runs the browser tests: Chrome and Node produce the same
-  bytes, the editor's tools and its generate-refine-regenerate journey, the 3D view, and every local
-  investigation map through import, 3D and export.
+  bytes, the editor's tools and its generate-refine-regenerate journey, the 3D view, the Real places
+  gallery on a desktop and a phone, and every local investigation map through import, 3D and export.
+- `npm run places` rebuilds the Real places data from the landscape survey's library, checking every
+  map. `npm run places -- --check` says whether the committed data matches a fresh run.
 - `npm run bench` times generation at 128²; `npm run bench:water` times the water settle at 256².
 - `npm run bench:preview` times the editor's water preview after local edits at 256².
 - `npm run bench:3d` measures the 3D view's build time and frame rate at 256² in Chrome. It opens

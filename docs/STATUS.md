@@ -67,10 +67,12 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
-- **M1–M8** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
+- **Real places** (85 real-terrain maps, PR #23) is merged into `dev`; `real-places-done` is being
+  released.
+- **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
-- **Map look** is approved by Kyler (the clean look, with a **Markers** layer off by default)
-  and merged into `dev`; `map-look-done` is being released.
+- **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
+  approved, with a **Markers** layer off by default.
 - Merged investigations: workshop (#4), Claude groundwork (#5), cycles (#10, #15), mechanics,
   verified (#11), names (#12), audit (#13), M9 design version 1 (#14), landscapes (#16), simspeed
   (#17), techniques (#19), terrain 3D (#20).
