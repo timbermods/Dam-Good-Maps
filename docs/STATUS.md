@@ -53,9 +53,13 @@ Most important first. Nothing below was released without your approval.
    official map has lasting badwater: 18 have a badwater source, and Spillage has seeps. Your calls:
    - **The contact sheet** `docs/sheets/badwater-source.png` (on its branch): most maps now get 2 sources
      at 128² and 3–4 at 192² and 256². Its badwater streams run ruler-straight with right-angle turns,
-     from today's generator: exactly what D209 fixes in M9a. **My default:** merge #54 into `dev` (Real
-     places and M9a use its placement module), but release it only with M9a, so players never see
-     those straight streams.
+     from today's generator: exactly what D209 fixes in M9a. Anything merged into `dev` ships with the
+     next release, so choose:
+     - **A:** merge #54 now; the next release carries those straight streams until M9a replaces the
+       generator;
+     - **B (my recommendation):** hold #54 and let M9a take it in, since badwater is part of M9a anyway.
+       The Real places rebuild uses only #54's placement module (`src/core/resources/badwater.ts`),
+       which doesn't draw streams, so it can take that part alone.
    - **Claude's "remove the badwater spring"** (P09) on a map with one source left: set the map to "No
      badwater", or refuse? It refuses for now.
 5. **The forces prototypes are held until you say each is ready:**
