@@ -24,10 +24,14 @@ editor is desktop-first (D185).
 - **Smart defaults instead of settings.** Options stay hidden until wanted.
 - **Forgiveness.** Every stroke or placement is one instant undo step, and Esc always backs out.
 - **One grammar:** pick, paint or place, see.
+- **Tools read intent.** Small quality-of-life tricks remove decisions the player would otherwise
+  make: smart Lower, flatten from the stroke's start, clear water when a tool is picked, a stop level
+  for holding, sampling a riverbed on water. Whenever a player would hesitate, switch tools or do
+  something twice, look for a way the tool could have known what they meant (D204).
 - **Things just work, and are fast.** Full frame rate on 256² maps; painting never waits on water;
   water reacts around the edit first, then the rest of the map; nothing ever freezes.
 
-(D158, D179, D184.)
+(D158, D179, D184, D204.)
 
 ## 3. The screen
 
@@ -65,6 +69,11 @@ editor is desktop-first (D185).
   optional "stop at" level (off by default; set by Ctrl-clicking a tile, or water for its riverbed)
   makes it stop there, with a faint plane at that level and one pulse of the ring on arrival. It
   never digs below the map's bottom or out from under the start or placed objects (D193).
+- **Flatten** (D204): the target is the height where the stroke starts (Ctrl-click samples any other
+  level); it cuts and fills, so one stroke makes a clean plateau; **Edges**: **Cliff** (default) or
+  **Ramped**, where the rim steps down to the land around with natural slopes beavers can climb; a
+  quiet "the start fits here" hint when the area is big and flat enough for the district center, and a
+  stronger one when the start requirements would also hold there; trees and objects ride the ground.
 - **Hills, plateaus, ridges and valleys come from the brushes,** not buttons.
 - **Craterize, a force of nature** (D202): its own top-bar button next to Carve, simulating a giant
   impact. **Strike** or **Aim** (a glancing drag for oval craters); **Power**; **Size** (auto or set);
