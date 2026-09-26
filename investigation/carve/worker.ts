@@ -20,7 +20,7 @@ async function frame(reset=false) {
       else if(v && typeof v==='object') for(const c of Object.values(v)) collect(c);
     };
     collect(chunk);
-    postMessage({type:'chunk',chunk}, [...buffers]);
+    (postMessage as unknown as (data: unknown, transfer: Transferable[]) => void)({type:'chunk',chunk}, [...buffers]);
     await yieldSlice();
   }
   last=snapshot(map);
@@ -43,7 +43,7 @@ async function finish(reason:string) {
   const water=await settle();
   const op=operation(before,map,settings,run.metrics.steps,reason,water);
   undo.push(op);redo=[];
-  send({type:'operation',op,metrics:run.metrics});
+  send({type:'operation',op,base:before,metrics:run.metrics});
   await frame();
   run=null;
   send({type:'finished',reason,settled:water.settled,ticks:water.ticks});
@@ -87,10 +87,21 @@ self.onmessage=async(event:MessageEvent)=>{
       case 'redo':
         if(redo.length){const op=redo.pop()!;map=applyOperation(map,op);undo.push(op);await frame();}
         break;
+      case 'replay':
+        {const b=msg.bundle;
+         if(b?.format!==1||!b.base||!b.operation)throw new Error('Not a saved carve run.');
+         const raw=b.base,N=raw.W*raw.H;
+         if(!Number.isInteger(raw.W)||!Number.isInteger(raw.H)||raw.W<1||raw.H<1||raw.W>256||raw.H>256||
+             ![16,22].includes(raw.maxHeight)||raw.heights?.length!==N||
+             !raw.heights.every((v:number)=>Number.isInteger(v)&&v>=0&&v<=raw.maxHeight)||
+             raw.water?.depth?.length!==N||raw.water?.contamination?.length!==N||
+             !Array.isArray(raw.entities))throw new Error('Invalid saved map.');
+         map={...raw,heights:Uint8Array.from(raw.heights),water:{depth:Float64Array.from(raw.water.depth),contamination:Float64Array.from(raw.water.contamination)}};
+         before=snapshot(map);map=applyOperation(map,b.operation);undo=[b.operation];redo=[];last=null;
+         await frame(true);send({type:'replayed'});
+        }break;
       case 'snapshot':send({type:'snapshot',map});break;
     }
   } catch(error) {send({type:'error',text:error instanceof Error?error.message:String(error)});}
   finally {busy=false;send({type:'ready',ms:performance.now()-t,epoch});}
 };
-
-

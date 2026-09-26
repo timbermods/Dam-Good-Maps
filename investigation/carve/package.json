@@ -5,11 +5,20 @@
   "scripts": {
     "demo": "node launch.mjs",
     "build": "vite build",
-    "test": "node run.mjs test.ts",
+    "test": "node run.mjs test.ts && node run.mjs test-worker.ts",
     "captures": "node run.mjs captures.ts",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": { "three": "0.186.0", "fflate": "^0.8.3" },
-  "devDependencies": { "vite": "^8.3.0", "esbuild": "^0.28.0", "typescript": "~5.9.3", "@types/three": "^0.186.0", "@types/node": "^24.0.0", "pngjs": "^7.0.0", "@types/pngjs": "^6.0.5" }
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.9",
+    "@types/node": "^24.0.0",
+    "@types/three": "^0.186.0",
+    "esbuild": "^0.28.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.0"
+  }
 }
-

@@ -28,6 +28,20 @@ for(let step=0;step<800;step++){
 }
 timings['800 steps, 64 squared']=performance.now()-time;
 check('whole levels, per-step monotonicity, protected start, no new isolated extrema and sediment conservation',()=>{assert.ok(wide.metrics.cut>500);assert.ok(wide.metrics.deposited>100);assert.ok(wide.map.entities.length<initialPlantCount);});
+check('source-first progression leaves distant existing water terrain alone',()=>{
+ const m=source(fixture('mountain',64)), r=new CarveRun(m,DEFAULTS), sx=32,sy=Math.floor(64*.84);
+ for(let k=0;k<12;k++)r.step();
+ let changed=0;
+ for(let i=0;i<m.heights.length;i++)if(m.heights[i]!==r.map.heights[i]){
+  changed++;assert.ok(Math.abs(i%64-sx)+Math.abs(Math.floor(i/64)-sy)<=16);
+ }
+ assert.ok(changed>0);
+});
+check('a flowing river stops itself after a long stable-course interval',()=>{
+ const m=placeSource(fixture('mountain',64),54*64+32,4),r=new CarveRun(m,DEFAULTS);
+ for(let k=0;k<7000&&!r.metrics.stable;k++)r.step();
+ assert.ok(r.metrics.stable);assert.ok(r.metrics.steps>800);
+});
 const steep=new CarveRun(before,{...DEFAULTS,walls:'steep'});for(let k=0;k<800;k++)steep.step();
 check('wide walls produce more bank retreat than steep walls',()=>assert.ok(wide.metrics.bankCuts>steep.metrics.bankCuts*2));
 check('outside-bend momentum erodes banks',()=>assert.ok(wide.metrics.bendCuts>50));
@@ -66,9 +80,14 @@ for(const id of ['seed:highlands:18:128','seed:riverValley:18:256']){
  steps.sort((a,b)=>a-b);timings[id+' step p95']=steps[Math.floor(steps.length*.95)];
  generated.push({id,W:m.W,hash:hash(m.heights),cut:r.metrics.cut});
  assert.equal(m.W,id.endsWith('256')?256:128);
+ assert.ok(m.entities.some(e=>e.template==='StartingLocation'));
+ const afterState={...r.map.water,sat:new Uint8Array(m.W*m.H),settled:false,ticks:100};
+ const base=source(m);const record=operation(base,r.map,DEFAULTS,25,'test',afterState);
+ const t=performance.now();const restored=applyOperation(applyOperation(base,record),record,true);
+ timings[id+' undo+redo data CPU']=performance.now()-t;
+ assert.deepEqual(restored,base);
 }
 checks.push('real M9 generated maps at 128 and 256 load and carve');
 mkdirSync('captures',{recursive:true});
 writeFileSync('captures/checks.json',JSON.stringify({checks,timings,wide:wide.metrics,steep:steep.metrics,soft:soft.metrics,canonical:{settled:final.settled,ticks:final.ticks},realResults,generated},null,2)+'\n');
 console.log(JSON.stringify({passed:checks.length,timings,canonical:{settled:final.settled,ticks:final.ticks}},null,2));
-

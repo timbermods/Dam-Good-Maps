@@ -22,14 +22,14 @@ const marker=new THREE.Mesh(new THREE.TorusGeometry(.9,.12,5,20),new THREE.MeshB
 marker.rotation.x=Math.PI/2;marker.visible=false;scene.add(marker);
 let W=0,H=0,heights=new Uint8Array(),busy=true,active=false,paused=false,placing=true,sourcePlaced=false,speed=1;
 let pending:Record<string,unknown>|null=null,nextAt=0,steps=0,duration=0,top=false,frameMs:number[]=[];
-let lastOperation:CarveOperation|null=null;
+let lastOperation:CarveOperation|null=null;let savedRun:unknown=null;
 function send(msg:Record<string,unknown>){busy=true;worker.postMessage(msg);}
 function controlsState() {
   $<HTMLButtonElement>('carve').disabled=!sourcePlaced||active||busy;
   $<HTMLButtonElement>('source').disabled=active||busy;
   $<HTMLButtonElement>('pause').disabled=!active;
   $<HTMLButtonElement>('stop').disabled=!active;
-  for(const id of ['map','walls','layers','duration','strength','reset']) ($<HTMLInputElement>(id)).disabled=active||busy;
+  for(const id of ['map','walls','layers','duration','strength','reset','replay-file']) ($<HTMLInputElement>(id)).disabled=active||busy;
   $('carve').classList.toggle('active',active);
 }
 function resetView(){controls.target.set(W/2,3,-H/2);camera.position.set(W*.9,Math.max(W,H)*.95,H*.45);controls.update();top=false;$('top').textContent='Top-down';}
@@ -70,6 +70,7 @@ worker.onmessage=(event:MessageEvent)=>{
   if(m.type==='frame'){
     heights=m.heights;sourcePlaced=!!m.source;
     if(!sourcePlaced)marker.visible=false;
+    if(active){$<HTMLButtonElement>('undo').disabled=true;$<HTMLButtonElement>('redo').disabled=true;}
     if(!m.metrics)$('metrics').textContent='';
     if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · cut '+m.metrics.cut+' · deposited '+m.metrics.deposited;}
     $<HTMLButtonElement>('undo').disabled=active||!m.undo;
@@ -81,14 +82,27 @@ worker.onmessage=(event:MessageEvent)=>{
     if(!m.settled)notice.textContent+=' Water reached the repo’s settle limit; this is its canonical result, not a converged solve.';
     $<HTMLButtonElement>('undo').disabled=false;
   }
-  if(m.type==='operation')lastOperation=m.op;
+  if(m.type==='operation'){lastOperation=m.op;savedRun={format:1,base:m.base,operation:m.op};$<HTMLButtonElement>('save-run').disabled=false;}
+  if(m.type==='replayed')notice.textContent='Saved result replayed exactly. No erosion or water simulation was run.';
   if(m.type==='error'){notice.textContent=m.text;active=false;pending=null;}
   if(m.type==='ready'){busy=false;controlsState();if(!active&&(notice.textContent==='Loading…'||notice.textContent?.startsWith('Loading land')))notice.textContent=sourcePlaced?'Source placed. Switch on carving.':'Click a hillside to place a source.';}
 };
 worker.onerror=e=>{notice.textContent='Worker error: '+e.message;busy=false;active=false;controlsState();};
 const select=$<HTMLSelectElement>('map');
 for(const [id,name] of MAPS){const o=document.createElement('option');o.value=id;o.textContent=name;select.add(o);}
-function load(){sourcePlaced=false;lastOperation=null;steps=0;marker.visible=false;placing=true;$('source').setAttribute('aria-pressed','true');$('metrics').textContent='';send({type:'load',id:select.value});controlsState();}
+function load(){sourcePlaced=false;lastOperation=null;savedRun=null;$<HTMLButtonElement>('save-run').disabled=true;steps=0;marker.visible=false;placing=true;$('source').setAttribute('aria-pressed','true');$('metrics').textContent='';send({type:'load',id:select.value});controlsState();}
+$('save-run').onclick=()=>{
+ if(!savedRun)return;
+ const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v);
+ const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+ a.href=url;a.download='carve-run.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$<HTMLInputElement>('replay-file').onchange=async(e)=>{
+ const f=(e.target as HTMLInputElement).files?.[0];if(!f||active||busy)return;
+ if(f.size>32*1024*1024){notice.textContent='Run file is too large.';return;}
+ try{const bundle=JSON.parse(await f.text());send({type:'replay',bundle});}
+ catch{notice.textContent='This is not a readable run file.';}
+};
 select.onchange=load;$('reset').onclick=load;
 $('source').onclick=()=>{placing=!placing;$('source').setAttribute('aria-pressed',String(placing));};
 $('carve').onclick=()=>{
@@ -143,6 +157,3 @@ requestAnimationFrame(animate);
 // Debugging/export is read-only and never used by replay.
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H};},gpu:gl.getContext().getParameter(gl.getContext().RENDERER)}});
 load();
-
-
-

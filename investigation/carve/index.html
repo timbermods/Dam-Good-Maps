@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Let the water carve · Dam Good Maps</title></head>
 <body>
-<header><div><b>Dam Good Maps</b><span>Let the water carve</span></div><select id="map" aria-label="Map"></select><button id="reset">Reload map</button></header>
+<header><div><b>Dam Good Maps</b><span>Let the water carve</span></div><select id="map" aria-label="Map"></select><button id="reset">Reload map</button><a href="/ATTRIBUTION.md" target="_blank" rel="noopener">Credits</a></header>
 <main><canvas id="view" aria-label="3D map. Click to place a water source. Drag to orbit; right drag to pan; scroll to zoom." tabindex="0"></canvas>
 <div id="tools">
 <button id="source" aria-pressed="true">Place source</button>
 <button id="carve" disabled>Let water carve</button>
 <label>Walls <select id="walls"><option value="wide">Wide</option><option value="steep">Steep</option></select></label>
-<details><summary>Options</summary><label>Flow <input id="strength" type="number" min=".25" max="8" step=".25" value="4"></label><label><input id="layers" type="checkbox" checked> Rock layers</label><label>Run seconds <input id="duration" type="number" min="0" max="3600" step="1" value="0"></label><small>0 runs until settled. Time follows the carving, not the clock.</small></details>
+<details><summary>Options</summary><label>Flow <input id="strength" type="number" min=".25" max="8" step=".25" value="4"></label><label><input id="layers" type="checkbox" checked> Rock layers</label><label>Run seconds <input id="duration" type="number" min="0" max="3600" step="1" value="0"></label><small>0 runs until settled. Time follows the carving, not the clock.</small><button id="save-run" disabled>Save run</button><label>Replay saved run <input id="replay-file" type="file" accept=".json"></label></details>
 <button id="pause" disabled>Pause</button><button id="speed">1×</button><button id="stop" disabled>Stop</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button>
 </div>
 <div id="notice" role="status" aria-live="polite">Loading…</div>

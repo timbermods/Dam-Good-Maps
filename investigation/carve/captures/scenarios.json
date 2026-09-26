@@ -1,0 +1,272 @@
+{
+  "mountain-lake": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 32,
+      "y": 54,
+      "z": 12,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "wide",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 761,
+      "deposited": 362,
+      "exported": 252.1969742296047,
+      "suspended": 146.8030257703952,
+      "bankCuts": 383,
+      "bendCuts": 179,
+      "steps": 800,
+      "stable": false
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 384
+    }
+  },
+  "stepped-canyon": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 32,
+      "y": 54,
+      "z": 12,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "steep",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 447,
+      "deposited": 158,
+      "exported": 261.670210049525,
+      "suspended": 27.3297899504753,
+      "bankCuts": 53,
+      "bendCuts": 149,
+      "steps": 800,
+      "stable": false
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 512
+    }
+  },
+  "long-valley": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 32,
+      "y": 54,
+      "z": 12,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "wide",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 1321,
+      "deposited": 362,
+      "exported": 749.2934546764182,
+      "suspended": 209.70654532356508,
+      "bankCuts": 631,
+      "bendCuts": 487,
+      "steps": 6200,
+      "stable": true
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 384
+    }
+  },
+  "bends": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 33,
+      "y": 54,
+      "z": 12,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "wide",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 1233,
+      "deposited": 345,
+      "exported": 662.281048958739,
+      "suspended": 225.7189510412615,
+      "bankCuts": 589,
+      "bendCuts": 436,
+      "steps": 2400,
+      "stable": false
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 384
+    }
+  },
+  "generated-highlands": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 87,
+      "y": 72,
+      "z": 13,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "wide",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 5071,
+      "deposited": 236,
+      "exported": 4268.522996422047,
+      "suspended": 566.4770035779596,
+      "bankCuts": 2721,
+      "bendCuts": 2534,
+      "steps": 800,
+      "stable": false
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 768
+    }
+  },
+  "real-yosemite": {
+    "source": {
+      "id": "carve-source",
+      "owner": "carve",
+      "x": 85,
+      "y": 88,
+      "z": 15,
+      "orientation": "Cw0",
+      "flipped": false,
+      "template": "WaterSource",
+      "before": {
+        "WaterSource": {
+          "SpecifiedStrength": 4,
+          "CurrentStrength": 4
+        }
+      },
+      "components": {
+        "TimeActivatedComponent": {
+          "IsEnabled": false,
+          "CyclesUntilCountdownActivation": 5,
+          "DaysUntilActivation": 10,
+          "DaysPassed": 0
+        }
+      }
+    },
+    "settings": {
+      "walls": "wide",
+      "layers": true,
+      "strength": 4
+    },
+    "metrics": {
+      "cut": 3170,
+      "deposited": 101,
+      "exported": 2729.3505816056554,
+      "suspended": 339.6494183943305,
+      "bankCuts": 2225,
+      "bendCuts": 1172,
+      "steps": 800,
+      "stable": false
+    },
+    "canonical": {
+      "settled": true,
+      "ticks": 1024
+    }
+  }
+}

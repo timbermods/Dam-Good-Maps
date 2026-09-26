@@ -1,6 +1,8 @@
 {
   "checks": [
     "whole levels, per-step monotonicity, protected start, no new isolated extrema and sediment conservation",
+    "source-first progression leaves distant existing water terrain alone",
+    "a flowing river stops itself after a long stable-course interval",
     "wide walls produce more bank retreat than steep walls",
     "outside-bend momentum erodes banks",
     "v2 rock coefficient and level bands",
@@ -15,15 +17,17 @@
     "real M9 generated maps at 128 and 256 load and carve"
   ],
   "timings": {
-    "800 steps, 64 squared": 1373.1187999999997,
-    "undo apply CPU ms": 0.37150000000019645,
-    "near-yosemite-valley 20 steps": 68.88529999999992,
-    "near-geirangerfjord 20 steps": 137.48289999999997,
-    "near-grand-canyon-colorado 20 steps": 242.96239999999943,
-    "seed:highlands:18:128 load": 985.4722999999994,
-    "seed:highlands:18:128 step p95": 9.00630000000092,
-    "seed:riverValley:18:256 load": 20498.694000000003,
-    "seed:riverValley:18:256 step p95": 30.169200000000274
+    "800 steps, 64 squared": 1218.9687,
+    "undo apply CPU ms": 0.4721000000008644,
+    "near-yosemite-valley 20 steps": 51.23409999999967,
+    "near-geirangerfjord 20 steps": 68.7435000000005,
+    "near-grand-canyon-colorado 20 steps": 96.54699999999866,
+    "seed:highlands:18:128 load": 1253.2305000000015,
+    "seed:highlands:18:128 step p95": 5.944999999999709,
+    "seed:highlands:18:128 undo+redo data CPU": 1.2188000000005559,
+    "seed:riverValley:18:256 load": 19368.797599999998,
+    "seed:riverValley:18:256 step p95": 14.65520000000106,
+    "seed:riverValley:18:256 undo+redo data CPU": 3.323100000001432
   },
   "wide": {
     "cut": 755,

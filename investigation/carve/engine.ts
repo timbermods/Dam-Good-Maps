@@ -207,22 +207,27 @@ export class CarveRun {
    * lowering its neighbours. Rejection, never opposite-sign corrective edits. */
   private rejectIsolated(d: Int8Array) {
     const h = this.map.heights, nb = this.neighbours;
+    const marked = new Uint8Array(h.length);
+    for(let i=0;i<h.length;i++)if(d[i]){
+      marked[i]=1;
+      for(let k=0;k<4;k++){const j=nb[4*i+k];if(j>=0)marked[j]=1;}
+    }
+    const candidates:number[]=[];
+    for(let i=0;i<h.length;i++)if(marked[i])candidates.push(i);
     let again = true;
     while (again) {
       again = false;
-      for (let i = 0; i < h.length; i++) {
-        if (nb[4*i] < 0 || nb[4*i+1] < 0 || nb[4*i+2] < 0 || nb[4*i+3] < 0) continue;
-        const ns = [nb[4*i], nb[4*i+1], nb[4*i+2], nb[4*i+3]];
-        const v = h[i]+d[i], lo = Math.min(...ns.map(j => h[j]+d[j])), hi = Math.max(...ns.map(j => h[j]+d[j]));
-        const oldLo = Math.min(...ns.map(j => h[j])), oldHi = Math.max(...ns.map(j => h[j]));
-        if ((v < lo && h[i] >= oldLo) || (v > hi && h[i] <= oldHi)) {
-          if (d[i]) { d[i] = 0; again = true; }
-          else for (const j of ns) if (d[j]) { d[j] = 0; again = true; }
+      for (const i of candidates) {
+        const a=nb[4*i],b=nb[4*i+1],c=nb[4*i+2],e=nb[4*i+3];
+        if(a<0||b<0||c<0||e<0)continue;
+        const v=h[i]+d[i],lo=Math.min(h[a]+d[a],h[b]+d[b],h[c]+d[c],h[e]+d[e]);
+        const hi=Math.max(h[a]+d[a],h[b]+d[b],h[c]+d[c],h[e]+d[e]);
+        const oldLo=Math.min(h[a],h[b],h[c],h[e]),oldHi=Math.max(h[a],h[b],h[c],h[e]);
+        if((v<lo&&h[i]>=oldLo)||(v>hi&&h[i]<=oldHi)){
+          if(d[i]){d[i]=0;again=true;}
+          else for(let k=0;k<4;k++){const j=nb[4*i+k];if(d[j]){d[j]=0;again=true;}}
         }
       }
     }
   }
 }
-
-
-
