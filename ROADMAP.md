@@ -876,8 +876,15 @@ they conflict):
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
      ordinary Lower.
    - **Source:** click to place, and water spreads at once; options: clean or bad, and strength.
-     Hover any source and scroll to change its strength live (a friendly note past the official
-     range, never a block); drag to move it. Anywhere in the editor (D171 is for generated maps).
+     Shift+scroll over any source changes its strength live (a friendly note past the official
+     range, never a block); drag to move it; Delete or Remove makes its water recede. Anywhere in
+     the editor (D171 is for generated maps). Always findable, even underwater (an upwelling; a
+     marker with its strength when near or with Source picked; Markers shows all) (D196).
+   - **Water is never an object** (D196): no river selection, panel or deletion; flow and clean or
+     bad belong to sources; generated rivers are their sources and land. Hovering water shows its
+     depth, bed level and contamination, and highlights the sources feeding it.
+   - **Seeing underwater** (D196): water turns transparent while a tool is picked; T or **Clear
+     water** toggles it otherwise; badwater stays distinct.
    - **Everything else emerges:** lakes fill hollows, waterfalls form at drops, rivers join where
      they meet, and branches form wherever the land is cut from water.
    - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,

@@ -107,6 +107,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
 - D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
 - D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
+- D196: water is never an object (no river selection or panel; flow and clean or bad belong to sources); sources always findable; clear water while a tool is picked or with T; Alt+scroll slices layers and Shift+scroll sets strength, as in the game (replaces #58); water in the hover readout.
 
 ## Done and released
 
