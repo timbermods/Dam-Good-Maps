@@ -120,7 +120,7 @@ export function mapSummary(s: MapSession, conv: Conversation): Record<string, un
     ...(startRules.some((r) => !r.ok) ? { startRulesFailingNow: `${startRules.filter((r) => !r.ok).map((r) => r.id).join(", ")} already fail on this map: not caused by the player's request, and not guards` } : {}),
     stored: { note: "blocks of water near the start, as the validator's water.reservoir check counts them: bestDamNearStart is the best gap a player could dam anywhere near the start (not only dam sites); need is one drought's worth", bestDamNearStart: Math.round(m.map.bestDam), naturalNearStart: Math.round(m.map.natural), need: Math.round(m.rules.reservoirNeed) },
     resources: { trees, bushes, scrap, byRegion, groves: features.filter((f) => f.kind === "forest").length, berryPatches: features.filter((f) => f.kind === "berryPatch").length, ruinFields: ruinFields.slice(0, 10), yourGrovesAndPatches: own.slice(0, 10) },
-    health: { failing, exportBlocked: m.report.checks.some((c) => !c.ok && c.class === "load") },
+    health: { failing, exportBlocked: m.report.checks.some((c) => !c.ok && (c.class === "load" || c.class === "principle")) },
     conversation: { handles: conv.handles, selected: conv.selected, madeSoFar: conv.made.slice(-8).map((x) => ({ handle: x.handle, kind: x.kind })), lastRequest: conv.accepted[conv.accepted.length - 1]?.text ?? null },
   };
   // keep within the limit: drop detail, largest first

@@ -11,7 +11,7 @@ import { droughtStorage } from "../../src/core/sim/drought";
 import { waterModelFromWorld } from "../../src/core/sim/model";
 import { moisture } from "../../src/core/sim/moisture";
 import { canonicalSettle, prefill } from "../../src/core/sim/prefill";
-import { TICKS_PER_DAY, WaterSim, type Emitter, type WaterModel } from "../../src/core/sim/water";
+import { settle, TICKS_PER_DAY, WaterSim, type Emitter, type WaterModel } from "../../src/core/sim/water";
 
 interface Fixture {
   name: string;
@@ -111,5 +111,32 @@ describe.skipIf(!existsSync(SAVE))("the game's own save (local only)", () => {
     }
     expect(worst).toBeLessThan(0.001);
     expect(wetSim).toBe(wetSaved);
+  });
+});
+
+describe("maps need not hold their water (D152)", () => {
+  // a channel from a spring at its west end, stepping down to the east edge, where its water leaves
+  // the map: the settle is steady while the source keeps pouring and the water keeps leaving
+  const W = 40;
+  const H = 12;
+  const floor = new Float64Array(W * H).fill(8);
+  for (let y = 5; y <= 6; y++) for (let x = 1; x < W; x++) floor[y * W + x] = 5 - Math.floor(x / 14);
+  const m: WaterModel = { W, H, floor, dam: null, emitters: [{ cells: [5 * W + 2, 6 * W + 2], strength: 2, contamination: 0 }] };
+
+  it("a steady flow off the map is steady: the canonical settle settles, and the water keeps leaving", () => {
+    const c = canonicalSettle(m);
+    expect(c.settled).toBe(true);
+    const sim = new WaterSim(m, { depth: c.depth, contamination: c.contamination });
+    const before = sim.volume();
+    sim.run(TICKS_PER_DAY);
+    const poured = 2 * 0.6 * TICKS_PER_DAY; // 2 blocks a second for a day of 0.6 s ticks
+    // what the source poured in a day left the map: the water on it hardly changed
+    expect(Math.abs(sim.volume() - before)).toBeLessThan(0.01 * poured);
+    expect(before).toBeLessThan(0.2 * poured);
+  });
+
+  it("what fails is water that never settles: from empty, a few checks are not enough", () => {
+    const sim = new WaterSim(m);
+    expect(settle(sim, { maxDays: 128 / TICKS_PER_DAY }).settled).toBe(false);
   });
 });
