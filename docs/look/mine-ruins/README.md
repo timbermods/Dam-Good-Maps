@@ -20,10 +20,10 @@ in [poses.json](poses.json).
 
 ## Ruins
 
-- [ruins-far.jpg](ruins-far.jpg) ([sheet](ruins-far-sheet.jpg)): ruins as far away as a whole 256² map, on moist and dry ground. Look at the rust of the scaffolding: the ivy barely shows from afar.
-- [ruins-moist.jpg](ruins-moist.jpg) ([sheet](ruins-moist-sheet.jpg)): the five variants A to E on moist ground. Look at the ivy: flat leaves clinging beside the posts, most at the foot, thinning upward, the panels showing through.
+- [ruins-far.jpg](ruins-far.jpg) ([sheet](ruins-far-sheet.jpg)): ruins as far away as a whole 256² map, on moist and dry ground. Look at the rust of the scaffolding, and a green band low on the moist ones.
+- [ruins-moist.jpg](ruins-moist.jpg) ([sheet](ruins-moist-sheet.jpg)): the five variants A to E on moist ground. Look at the ivy on the lower half of each column: the foot clad, thinning upward, bright leaves on the edges, strands hanging from the beams, the panels' middles showing through.
 - [ruins-dry.jpg](ruins-dry.jpg) ([sheet](ruins-dry-sheet.jpg)): the five variants on dry ground, bare.
 - [ruins-showcase.jpg](ruins-showcase.jpg) ([sheet](ruins-showcase-sheet.jpg)): both halves, each with a field of neighbouring columns. Do any two neighbours look alike?
-- [ruins-showcase-low.jpg](ruins-showcase-low.jpg) ([sheet](ruins-showcase-low-sheet.jpg)): the same from a low angle. Look at the ivy on the moist field, left.
+- [ruins-showcase-low.jpg](ruins-showcase-low.jpg) ([sheet](ruins-showcase-low-sheet.jpg)): the same from a low angle. Do the moist field (left) and the dry one (right) look different at a glance?
 - [ruins-close.jpg](ruins-close.jpg) ([sheet](ruins-close-sheet.jpg)): the map's biggest ruin field from the default angle (on dry ground, so no ivy).
 - [ruins-low.jpg](ruins-low.jpg) ([sheet](ruins-low-sheet.jpg)): the same field from a low angle.

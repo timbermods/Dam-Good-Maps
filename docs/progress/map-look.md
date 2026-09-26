@@ -378,3 +378,17 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   - At most 250 triangles close up, 20 from afar.
   - The ivy test is now "drape ivy over about half the storeys of a column on moist ground, the
     most at its foot, as flat leaves that leave the panels showing".
+- **The ivy, between the last two rounds (2026-09-26).** The draped ivy was too faint: moist
+  columns read almost like dry ones. Now, on moist columns only:
+  - over about the lower half of the storeys (`ruinIvy`): the foot clad on every face, the
+    storeys above it clearly green on three faces, the highest ivy a few clusters (a column 4 high:
+    storeys 1 and 2 clearly green, 3 a little; 2 high: the foot clad, a little on the second);
+  - flat leaf clusters beside both posts and spreading over the lower part of each face, larger
+    low down, the brighter #5C803D on the clusters' edges as highlights, #405634 most of it;
+  - 2 to 4 strands a storey hanging from the beams, with leaves along them;
+  - the middle of each face stays clear above its lower part, so the panels show (tested);
+  - from afar, a band of ivy low on the foot (every face) and on the storey above (two faces),
+    the rust still most of each block.
+  - At most 288 triangles close up, 24 from afar.
+  - The ivy test is now "drape ivy over the lower half of a column's storeys on moist ground, the
+    most at its foot, thinning upward, as flat leaves that leave the panels' middles showing".
