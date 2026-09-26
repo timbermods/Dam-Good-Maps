@@ -1,6 +1,10 @@
-// Real places (ROADMAP "Real places", PLAN §20 D136): the gallery's data, its credits, both
-// validators on a sample, the editor's import of a place, and the rule that real places never feed
-// the generator. Every place's own build and validation: places-build-*.test.ts.
+// Real places (ROADMAP "Real places", PLAN §20 D136, D151, D152, D155, D171, D174): the gallery's
+// data and its choice (tools/places/selection.json), the land without edge walls, its titles, the
+// credits and the in-game description, a sample of every size built, validated and compared byte
+// for byte with the index (every place: places-build-*.test.ts, nightly and in the release check),
+// its resources from the shared baseline, both validators on the sample, the editor's import of a
+// place, and the rule that real places never feed the generator and are never built in the
+// browser.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -8,19 +12,44 @@ import { join, relative, sep } from "node:path";
 import { gzipSync, strToU8 } from "fflate";
 import { describe, expect, it } from "vitest";
 import { MapSession } from "../../src/core/doc/session";
-import { jpegSize } from "../../src/core/validate/checks";
 import { readTimber } from "../../src/core/format/timber";
-import { PROVIDER_NOTICES } from "../../src/core/places/attribution";
-import { placeDescription, placeTimber } from "../../src/core/places/place";
+import { CREDITS_URL, fileNotices, PROVIDERS } from "../../src/core/places/attribution";
+import { decodeHeights, placeDescription, placeSample, placeTimber } from "../../src/core/places/place";
 import { validateMap } from "../../src/core/validate/checks";
 import type { CheckResult } from "../../src/core/validate/report";
-import { INDEX, PLACES_DIR, PLACES_HAVE_EDGE_WALLS, PLACES_LACK_MINE_SITES, PLACES_SOURCES_IN_FLOW, placeData, sha256 } from "./placesCommon";
+import { checkPlaces, INDEX, PLACES_DIR, PLACES_HAVE_EDGE_WALLS, PLACES_LACK_MINE_SITES, PLACES_SOURCES_IN_FLOW, placeData, sha256 } from "./placesCommon";
+import { EDGE_SHARE, edgeWalls } from "../../src/core/analysis/edges";
+import { title as titleOf } from "../../tools/places/titles";
+
+/** The choice tools/places-convert.ts made. */
+const SELECTION = JSON.parse(readFileSync("tools/places/selection.json", "utf8")) as {
+  places: { id: string; name: string; row: string; status: "kept" | "replaced" | "added"; was?: string }[];
+  dropped: { name: string; row: string; reason: string }[];
+};
+
+/** A WebP's width and height (its VP8, VP8L or VP8X header), or null. */
+function webpSize(b: Uint8Array): [number, number] | null {
+  const text = (o: number, n: number) => String.fromCharCode(...b.subarray(o, o + n));
+  if (text(0, 4) !== "RIFF" || text(8, 4) !== "WEBP") return null;
+  const u16 = (o: number) => b[o] | (b[o + 1] << 8);
+  const u24 = (o: number) => b[o] | (b[o + 1] << 8) | (b[o + 2] << 16);
+  const chunk = text(12, 4);
+  if (chunk === "VP8 ") return [u16(26) & 0x3fff, u16(28) & 0x3fff];
+  if (chunk === "VP8X") return [u24(24) + 1, u24(27) + 1];
+  if (chunk === "VP8L") {
+    const bits = b[21] | (b[22] << 8) | (b[23] << 16) | (b[24] << 24);
+    return [(bits & 0x3fff) + 1, ((bits >>> 14) & 0x3fff) + 1];
+  }
+  return null;
+}
 
 describe("the gallery's data", () => {
-  it("holds the survey's real places: no random-land controls, one entry and two files each", () => {
+  it("holds the survey's real places: no random-land controls, one entry and three files each", () => {
     expect(INDEX.format).toBe(1);
     expect(INDEX.count).toBe(INDEX.places.length);
-    expect(INDEX.count).toBe(85);
+    // the second round's gallery (Kyler, 2026-09-25, D174): about 150 places
+    expect(INDEX.count).toBe(SELECTION.places.length);
+    expect(INDEX.count).toBeGreaterThanOrEqual(130);
     expect(INDEX.places.filter((p) => p.family === "random" || /random/i.test(p.name))).toEqual([]);
     expect(new Set(INDEX.places.map((p) => p.id)).size).toBe(INDEX.count);
     expect(new Set(INDEX.places.map((p) => p.name)).size).toBe(INDEX.count);
@@ -28,16 +57,26 @@ describe("the gallery's data", () => {
     expect(INDEX.families.map((f) => f.id).sort()).toEqual([...new Set(INDEX.places.map((p) => p.family))].sort());
     for (const p of INDEX.places) {
       expect(p.id, p.name).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
-      expect(p.name, p.id).toMatch(/^Near \S/);
-      expect(p.name, p.id).not.toMatch(/sample|m per tile|badwater/i);
+      expect(p.file, p.id).toBe(`maps/${p.id}.timber`);
       expect(p.plays.length, p.id).toBeLessThan(100);
       expect(existsSync(join(PLACES_DIR, p.data)), p.data).toBe(true);
+      // the card's two pictures (Kyler, 2026-09-25), WebP, showing the map as it is now
+      // (tools/places-thumbs.ts): the 3D view's angled overview, twice the card's 240 px; and the map
+      // from above, a whole number of pixels a tile (about 512 px), so every tile edge is sharp
+      expect(p.image, p.id).toBe(`cards/${p.id}.webp`);
+      expect(p.topImage, p.id).toBe(`cards/${p.id}-top.webp`);
       const card = new Uint8Array(readFileSync(join(PLACES_DIR, p.image)));
-      expect(jpegSize(card), p.image).toEqual([240, 240]);
-      expect(card.length, p.image).toBeLessThan(16_000);
+      expect(webpSize(card), p.image).toEqual([480, 480]);
+      expect(card.length, p.image).toBeLessThan(80_000);
+      const top = new Uint8Array(readFileSync(join(PLACES_DIR, p.topImage)));
+      const side = Math.round(512 / p.size) * p.size;
+      expect(webpSize(top), p.topImage).toEqual([side, side]);
+      expect(side % p.size).toBe(0);
+      expect(top.length, p.topImage).toBeLessThan(80_000);
+      expect(p.imageFrom, `${p.id}: its pictures show an older map; run npm run places:thumbs`).toBe(p.sha256);
     }
     // nothing else is published
-    const listed = new Set(INDEX.places.flatMap((p) => [p.data, p.image]));
+    const listed = new Set(INDEX.places.flatMap((p) => [p.data, p.image, p.topImage]));
     for (const dir of ["data", "cards"]) for (const f of readdirSync(join(PLACES_DIR, dir))) expect(listed.has(`${dir}/${f}`), `${dir}/${f}`).toBe(true);
   });
 
@@ -46,42 +85,160 @@ describe("the gallery's data", () => {
       const p = placeData(entry);
       expect([p.id, p.name, p.family, p.familyName, p.plays, p.W, p.H, p.metres], entry.id).toEqual([entry.id, entry.name, entry.family, entry.familyName, entry.plays, entry.size, entry.size, entry.metres]);
       expect(p.heights.length).toBe(p.W * p.H);
-      expect(p.place).toBe(p.name.replace(/^Near /, ""));
     }
   });
 
-  it("stays light: the page loads the index and the cards, a map's data only when it is used", () => {
+  it("stays light: the page loads the index, and the pictures as their cards come into view", () => {
     const size = (p: string) => statSync(join(PLACES_DIR, p)).size;
     const data = INDEX.places.reduce((s, p) => s + size(p.data), 0);
     const cards = INDEX.places.reduce((s, p) => s + size(p.image), 0);
     console.log(`real places: index ${size("index.json")} B, data ${data} B (largest ${Math.max(...INDEX.places.map((p) => size(p.data)))} B), cards ${cards} B`);
-    expect(size("index.json")).toBeLessThan(64_000);
+    // the index grows with the gallery (85 places were under 64 KB, 753 B a place; Kyler's 150,
+    // D174): the same budget a place, and what the page downloads, gzipped, stays small
+    expect(size("index.json") / INDEX.count).toBeLessThan(64_000 / 85);
+    expect(gzipSync(new Uint8Array(readFileSync(join(PLACES_DIR, "index.json"))), { level: 6 }).length).toBeLessThan(32_000);
     expect(Math.max(...INDEX.places.map((p) => size(p.data)))).toBeLessThan(64_000);
+    // the pictures load lazily, as the cards come into view
+    // (the cards' pictures are the shared components in src/ui/Pictures.tsx)
+    expect(readFileSync("src/places/Gallery.tsx", "utf8")).not.toMatch(/<img /);
+    const imgs = readFileSync("src/ui/Pictures.tsx", "utf8").match(/<img [^>]*>/g) ?? [];
+    expect(imgs.length).toBe(1);
+    for (const img of imgs) expect(img).toContain('loading="lazy"');
   });
 });
 
-describe("credits and the in-game description (investigation/landscapes/ATTRIBUTION.md)", () => {
-  it("every map says what it is, that it is not a replica, and credits the elevation data", () => {
+describe("the choice (tools/places/selection.json, tools/places-convert.ts)", () => {
+  it("keeps the first round's places or says why not, and adds the rest across the families", () => {
+    // the gallery's order is the selection's
+    expect(INDEX.places.map((p) => p.id)).toEqual(SELECTION.places.map((p) => p.id));
+    expect(INDEX.places.map((p) => placeData(p).survey)).toEqual(SELECTION.places.map((p) => p.row));
+    // the first round's 85: each kept (from its own survey row), made from another row of its
+    // region (its title kept), or dropped with the reason
+    const first = SELECTION.places.filter((p) => p.status !== "added");
+    expect(first.length + SELECTION.dropped.length).toBe(85);
+    for (const d of SELECTION.dropped) expect(d.reason.length, d.name).toBeGreaterThan(10);
+    for (const p of SELECTION.places.filter((q) => q.status === "replaced")) expect(p.was, p.id).toMatch(/^n\d{3}-/);
+    // spread across the families: none far behind the rest
+    const perFamily = INDEX.families.map((f) => INDEX.places.filter((p) => p.family === f.id).length);
+    expect(INDEX.families.length).toBe(20);
+    expect(Math.min(...perFamily)).toBeGreaterThanOrEqual(Math.max(...perFamily) - 3);
+    // never a random-land control, never the Las Medulas region (a Roman mine)
+    for (const p of SELECTION.places) expect(p.row, p.id).toMatch(/^n\d{3}-(96|128|256)-(30|60|120)-(normalised|compressed|linear)-16$/);
+  });
+
+  it("the land as it is: no edge walls or rims (D151, D152)", () => {
     for (const entry of INDEX.places) {
       const p = placeData(entry);
-      const d = placeDescription(p);
-      expect(d).toContain(`Inspired by the land near ${p.place}, at Timberborn's scale; not a replica.`);
-      expect(d).toContain("public elevation data");
-      expect(d).toContain("Terrain Tiles");
-      expect(d).toContain("do not endorse");
-      for (const n of PROVIDER_NOTICES) expect(d).toContain(n);
-      expect(d.startsWith(`${p.familyName} · ${p.W}×${p.H} · ${p.metres} m per tile. ${p.plays}`)).toBe(true);
+      const walls = edgeWalls(decodeHeights(p.heights), p.W, p.H);
+      // the check's rule: no edge 60% walled; the first round's walls had 89-99%
+      expect(Math.max(...walls.map((w) => w.share)), entry.id).toBeLessThan(EDGE_SHARE);
+      // the place's own objects are its sources and its start: resources come when it is built
+      expect(Object.keys(p).sort(), entry.id).toEqual(expect.arrayContaining(["format", "heights", "sources", "start", "survey"]));
+      expect(p.sources.length, entry.id).toBeGreaterThan(0);
+      for (const [x, y, strength] of p.sources) {
+        expect(x >= 0 && y >= 0 && x < p.W && y < p.H, entry.id).toBe(true);
+        expect(strength, entry.id).toBeGreaterThan(0);
+        expect(strength, entry.id).toBeLessThanOrEqual(8);
+      }
     }
   });
 });
 
-// A sample for the slower checks: the first two places at 96² and 128², and the first at 256².
-const SAMPLE = INDEX.sizes.flatMap((s) => INDEX.places.filter((p) => p.size === s).slice(0, s < 256 ? 2 : 1));
+describe("titles (Kyler, 2026-09-25)", () => {
+  it("are plain and unique, without \"Near\" or the sample, and the index keeps the survey's name", () => {
+    for (const p of INDEX.places) {
+      // plain: the game's handling of other characters is not yet checked (a future probe batch)
+      expect(p.name, p.id).toMatch(/^[A-Za-z][A-Za-z ,'-]*[a-z]$/);
+      expect(p.name, p.id).not.toMatch(/\bnear\b|sample|m per tile|badwater/i);
+      expect(p.id).toBe(p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+      // the survey's own name, verbatim, and the part of the place it sampled
+      const m = /^Near (.+?)(?: \((\w+) sample\))?, (\d+) m per tile$/.exec(p.surveyName);
+      expect(m, p.surveyName).not.toBeNull();
+      expect(p.sample, p.id).toBe(m![2]);
+      expect(Number(m![3]), p.id).toBe(p.metres);
+      // the sentence's place: the title, with "the" or a few words where it needs them; a second map
+      // of a place names its part ("Colca Canyon North"), and its sentence the place
+      const base = p.name.replace(/ (Centre|East|North|Southwest)(?=,|$)/, "");
+      const place = placeData(p).place;
+      expect([base, `the ${base}`].includes(place) || place.startsWith(`${base.split(",")[0]}, `), `${p.id}: ${place}`).toBe(true);
+    }
+    expect(new Set(INDEX.places.map((p) => p.name.toLowerCase())).size).toBe(INDEX.count);
+    // the renames that tidy an awkward title
+    const title = (survey: string) => INDEX.places.find((p) => p.surveyName.startsWith(`Near ${survey} (`) || p.surveyName.startsWith(`Near ${survey},`))?.name;
+    expect(title("Grand Canyon Colorado")).toBe("Grand Canyon");
+    expect(title("Death Valley Badwater fan")).toBe("Death Valley");
+    // Kyler's choices (2026-09-25)
+    expect(title("Lower Mississippi oxbows")).toBe("Mississippi Oxbows");
+    expect(title("Taklimakan Kunlun fan")).toBe("Kunlun Alluvial Fan");
+    expect(title("Dinaric karst Plitvice")).toBe("Plitvice Lakes");
+    expect(title("Yosemite Valley")).toBe("Yosemite Valley");
+    // the words, as tools/places-convert.ts makes them: a place's second map names its part
+    expect(titleOf("Near Brahmaputra near Majuli (east sample), 30 m per tile")).toEqual({ name: "Majuli, Brahmaputra", place: "Majuli, on the Brahmaputra", sample: "east" });
+    expect(titleOf("Near Colca Canyon, 30 m per tile", true)).toEqual({ name: "Colca Canyon Centre", place: "the Colca Canyon" });
+    expect(titleOf("Near Western Ghats Mahabaleshwar (east sample), 30 m per tile", true).name).toBe("Mahabaleshwar East, Western Ghats");
+    expect(INDEX.places.filter((p) => p.sample).length).toBeGreaterThan(40);
+  });
+});
+
+describe("credits and the in-game description (docs/real-places-credits.md)", () => {
+  it("every map's description: its title, that it is not a replica, and the credits page", () => {
+    expect(CREDITS_URL).toBe("https://timbermods.github.io/dam-good-maps/real-places/credits/");
+    const carried: Record<string, string[]> = {};
+    for (const entry of INDEX.places) {
+      const p = placeData(entry);
+      const d = placeDescription(p);
+      const notices = fileNotices(p.lat, p.lon);
+      expect(d.split("\n\n")).toEqual([
+        p.name,
+        `Inspired by the land near ${p.place}, at Timberborn's scale; not a replica.`,
+        `Credits: ${CREDITS_URL}`,
+        ...(notices.length ? [`Elevation data: ${notices.join("; ")}.`] : []),
+      ]);
+      for (const n of notices) (carried[n] ??= []).push(p.name);
+      // plain text: the game's handling of other characters is not yet checked (a future probe batch)
+      expect(d, entry.id).toMatch(/^[\x20-\x7e\n]+$/);
+    }
+    // the notices whose terms need them in the file (docs/real-places-credits.md): Kartverket's in
+    // the maps in Norway, and LINZ's, with its licence, in those in New Zealand
+    const text = (start: string) => PROVIDERS.find((p) => p.notice.startsWith(start))!.inFile!.text;
+    expect(PROVIDERS.filter((p) => p.inFile).length).toBe(2);
+    expect(carried).toEqual({
+      [text("Norway")]: ["Geirangerfjord", "Lofoten", "Geirangerfjord East"],
+      [text("New Zealand")]: ["Waimakariri River", "Milford Sound", "Hooker Valley", "Mount Taranaki", "Kawarau and Shotover", "Hooker Valley East", "Mount Taranaki North", "Waimakariri River Southwest"],
+    });
+    expect(text("Norway")).toContain("Kartverket");
+    expect(text("New Zealand")).toContain("https://creativecommons.org/licenses/by/3.0/nz/");
+  });
+
+  it("every provider has its notice, licence and verdict; the credits page is a page of the site", () => {
+    expect(PROVIDERS.length).toBe(11);
+    for (const p of PROVIDERS) {
+      expect(p.notice.length, p.notice).toBeGreaterThan(10);
+      expect(p.licence.length, p.notice).toBeGreaterThan(3);
+      expect(p.licenceUrl, p.notice).toMatch(/^https:\/\//);
+    }
+    // a region's box holds its places, and no place elsewhere
+    expect(fileNotices(62.1, 7.1)).toHaveLength(1); // Geirangerfjord
+    expect(fileNotices(61.82, 28.5)).toEqual([]); // Saimaa, Finland
+    expect(fileNotices(-43.72, 170.1)).toHaveLength(1); // Hooker Valley
+    expect(fileNotices(-33.87, 151.2)).toEqual([]); // Sydney
+    const verdicts = readFileSync("docs/real-places-credits.md", "utf8");
+    for (const p of PROVIDERS) expect(verdicts, p.licence).toContain(p.licenceUrl);
+    expect(readFileSync("real-places/credits/index.html", "utf8")).toContain("/src/places/credits-main.tsx");
+    expect(readFileSync("vite.config.ts", "utf8")).toContain("./real-places/credits/index.html");
+  });
+});
+
+// A sample of every size for the checks on every push: the first two places at 96² and 128², and
+// the first at 256² (placeSample; the browser tests use it too).
+const SAMPLE = placeSample(INDEX);
 const builds = new Map<string, ReturnType<typeof placeTimber>>();
 const built = (id: string) => {
   if (!builds.has(id)) builds.set(id, placeTimber(placeData(INDEX.places.find((p) => p.id === id)!)));
   return builds.get(id)!;
 };
+
+checkPlaces("a sample of every size validates and is the index's file (every place: nightly and the release check)", SAMPLE, (e) => built(e.id));
 
 describe("a sample of places", () => {
   it("writes the description into the file, and the file is the index's", () => {
@@ -90,6 +247,18 @@ describe("a sample of places", () => {
       const file = readTimber(r.bytes);
       expect(file.metadata?.MapDescription).toBe(placeDescription(placeData(e)));
       expect(sha256(r.bytes)).toBe(e.sha256);
+    }
+  });
+
+  it("carries the resources the shared baseline plans on its ground, a mine site among them", () => {
+    for (const e of SAMPLE) {
+      const r = built(e.id);
+      const templates = readTimber(r.bytes).world.entities.map((x) => String(x.Template));
+      expect(templates.filter((t) => t === "UndergroundRuins").length, e.id).toBeGreaterThanOrEqual(1);
+      expect(templates.filter((t) => t === "BlueberryBush").length, e.id).toBeGreaterThan(0);
+      expect(templates.filter((t) => /^(Pine|Birch|Oak)$/.test(t)).length, e.id).toBeGreaterThan(0);
+      expect(templates.filter((t) => t === "StartingLocation").length, e.id).toBe(1);
+      expect(templates.filter((t) => t === "WaterSource").length, e.id).toBe(placeData(e).sources.length);
     }
   });
 
@@ -158,7 +327,7 @@ describe.skipIf(!PY)("both validators agree on the sample (prototype/validate.py
   });
 });
 
-describe("real places stay out of the generator (D108)", () => {
+describe("real places stay out of the generator (D108), and the browser never builds one", () => {
   function sources(dir: string): string[] {
     const out: string[] = [];
     for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -169,14 +338,25 @@ describe("real places stay out of the generator (D108)", () => {
     return out;
   }
 
-  it("only the gallery, the editor's worker and the page's Refine link use them", () => {
+  it("only the gallery and the page's Refine link use them", () => {
     const users = sources("src")
       .filter((f) => /from\s+["'][^"']*places\/[^"']*["']/.test(readFileSync(f, "utf8")))
       .map((f) => f.split(sep).join("/"))
       .filter((f) => !f.startsWith("src/places/") && !f.startsWith("src/core/places/"))
       .sort();
-    expect(users).toEqual(["src/ui/App.tsx", "src/worker/generator.worker.ts"]);
+    expect(users).toEqual(["src/ui/App.tsx"]);
     // the page's Refine link loads only the fetch helpers, never the place builder
     expect(readFileSync("src/ui/App.tsx", "utf8")).not.toMatch(/core\/places/);
+  });
+
+  it("the pages fetch the .timber built at deploy time: the builder is only a type to them", () => {
+    let seen = 0;
+    for (const f of sources("src/places")) {
+      for (const line of readFileSync(f, "utf8").split("\n").filter((l) => /from\s+["'][^"']*core\/places\/place["']/.test(l))) {
+        expect(line, f).toMatch(/^import type /);
+        seen++;
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
   });
 });

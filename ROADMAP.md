@@ -793,6 +793,20 @@ namesake at Timberborn's scale, not a replica, with the full attribution. Every 
 validators and is byte-identical in Node and Chromium; the page works on desktop and phone. See
 [docs/progress/real-places.md](docs/progress/real-places.md).
 
+**Round 2** (Kyler, 2026-09-25; branch `feature/real-places-2`): short in-game descriptions (the
+title, one line and a link to a new credits page; a provider's notice stays in the file only where
+its terms need it, [docs/real-places-credits.md](docs/real-places-credits.md)); every map built once
+at deploy time and served as a static file, so **Download** is instant and **Refine** loads it;
+the byte check of every map nightly and in the release check, a sample of every size on every
+push; titles without "Near" or the sample; two card pictures from the 3D view, rendered on a GPU
+and facing the same way: the overview, with the map from above as a minimap (Kyler's choice), each
+with a north arrow.
+The rebuild (2026-09-26): every place converted again from the survey's patches without
+perimeter walls, water free to drain off the map, sources only where water begins (D171), the
+start requirements as they are now and resources from the shared baseline; 150 places (70 kept, 14
+from another row of their region, 66 added, Majuli dropped: no row of its region passes). Every
+card drawn again. Next: badwater on every map (D200), when its step lands.
+
 ---
 
 ## Start and edge rules

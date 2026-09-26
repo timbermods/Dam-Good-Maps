@@ -1,5 +1,5 @@
-/* The Real places gallery (real-places/index.html). It uses the generator page's tokens and buttons
-   (app.css); what the gallery adds is here. */
+/* The Real places gallery (real-places/index.html) and its credits page. They use the shared tokens,
+   buttons and pictures (app.css); the gallery's own layout is here. */
 
 .places {
   max-width: 1200px;
@@ -98,14 +98,6 @@
   overflow: hidden;
 }
 
-.place img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  background: var(--map-bg);
-}
-
 .place-body {
   display: flex;
   flex-direction: column;
@@ -137,34 +129,6 @@
 
 .place-actions > * {
   flex: 1;
-}
-
-a.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-a.button:focus-visible,
-a:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.place progress {
-  width: 100%;
-  height: 6px;
-  accent-color: var(--accent);
-}
-
-.place .error {
-  margin: 0;
-  font-size: 0.85rem;
 }
 
 .empty {
@@ -217,9 +181,8 @@ button.linkish {
     flex-direction: row;
   }
 
-  .place img {
+  .place .pictures {
     width: 112px;
-    height: 112px;
     flex: none;
     align-self: flex-start;
   }

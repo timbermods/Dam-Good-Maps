@@ -4,6 +4,9 @@
 `real-places-done`, right after `map-look-done`. No generated map changes: the generator stays
 0.6.0.
 
+Round 2 (below) changes the titles, the description, **Download**, **Refine**, the card pictures
+and where the byte check runs.
+
 - **The gallery** (`real-places/index.html`, `src/places/`), linked as **Real places** at the top of
   the generator. 85 maps made from real land. Each card shows our own top-down render of the map
   and its settled water, the name ("Near Yosemite Valley"), the landform, size and scale, and a
@@ -90,3 +93,249 @@ Information:
   another checkout's.
 
 Deployed: real-places-done, 2026-09-25, live check passed (PR #31; the generator's download unchanged, sha256 `5118b6a6…`; the live gallery page and its index answer 200).
+
+## Round 2 (Kyler, 2026-09-25)
+
+Built on branch `feature/real-places-2`. Kyler's four instructions, and the card pictures he added.
+Several round-1 details above are replaced here: the titles, the description, **Download**,
+**Refine**, the pictures and where the byte check runs.
+
+- **Credits by link.** Every provider's licence or terms were read, and each verdict is in
+  [docs/real-places-credits.md](../real-places-credits.md). Nine of the eleven accept credit by a
+  link. Two need their notice in the file itself, and only for maps in their region: Kartverket
+  (its name wherever its data is used: Geirangerfjord and Lofoten) and LINZ (CC BY 3.0 NZ asks
+  for the licence on every copy: Waimakariri River, Milford Sound, Hooker Valley, Mount Taranaki).
+  Kyler confirmed both judgement calls: Austria's data under CC BY 4.0, and New Zealand's notice
+  kept in the file.
+  The new **credits page** (`real-places/credits/`) and the gallery show the same credits in full
+  (`src/places/Credits.tsx`): the source, the changes, that the providers do not endorse the maps,
+  and every notice with a link to its licence.
+- **The in-game description** is the title; "Inspired by the land near <place>, at Timberborn's
+  scale; not a replica."; "Credits: https://timbermods.github.io/dam-good-maps/real-places/credits/";
+  then, for the six maps above, "Elevation data: <notice>." Plain ASCII: whether the game shows
+  other characters waits for a probe batch, asked for first. So Kartverket's line has "(c)" where
+  its terms ask for "©" until then.
+- **Built at deploy time.** `npm run places:build` (`tools/places-build.ts`) builds every place's
+  `.timber` with `src/core/places/place.ts`, in worker threads, into
+  `dist/real-places/maps/<id>.timber`. It runs in `deploy.yml` after `vite build`, before the
+  noindex step. A map that fails the export profile or any check of the generate profile, or whose
+  file is not the index's (sha256 and size), fails the deploy. Every deploy rebuilds with the engine
+  it deploys, so the files always match it; the index keeps each sha256, so a change shows in its
+  diff. 85 maps in 30 s on this machine's 16 threads; 15.7 MB in all, the largest 437 KB.
+- **Download** is a plain link to the static file (`download` names it after the title): instant.
+  **Refine** fetches the same file and opens it through `MapSession.importMap`. The browser never
+  builds a place: `place.worker.ts` and the generator worker's `openPlace` are gone.
+  `npm run dev` builds a map on request with the same code (a dev-server middleware in
+  `vite.config.ts`); `npm run preview` serves what `npm run build` and `npm run places:build` wrote.
+- **The byte check** (`places-build-{1,2,3}.test.ts`, all 85 maps against the index) moved to the
+  nightly run (vitest's heavy project). It also runs in the release check: a CI job,
+  `release-places`, on pull requests whose base is `main` (`npm run test:places`). Every push keeps
+  a sample of every size (`placeSample`: the first two at 96² and 128², the first at 256²) with the
+  same assertions, in `places.test.ts`; the browser tests serve the same sample's files. CI's unit
+  and contract step is back to about 3.5 minutes (from about 5.5); `npm run test:places` takes
+  about 90 s here.
+- **Titles.** No "Near", no "(… sample)", and the awkward ones tidied; the index keeps the survey's
+  name verbatim (`surveyName`) and the part it sampled (`sample`). The ids, the data and picture
+  files and the `.timber` names follow the new titles. The description's sentence adds "the" where
+  a title needs it ("near the Grand Canyon"). The gallery's "inspired by, not a replica" line
+  stays. Per-map "how it plays" lines wait for M9c's names and descriptions.
+- **Card pictures.** Two for each place, both drawn by the Map look 3D view in its clean look, on
+  this machine's GPU in the installed Chrome (`npm run places:thumbs`, `tools/places-thumbs.ts`),
+  as WebP, and both facing the same way, so they read as one map:
+  - the **overview**, 480 px (twice the card): the camera looks along the map's axis nearest to
+    the way the land rises, from the low side (the index's `view`: N, E, S or W;
+    `src/core/places/view.ts`), and stands so the land fills the picture: the far edge spans it
+    under a thin band of sky, and the near edge runs off the bottom. Drawn at 960 px and scaled
+    down.
+  - the **map from above** (the view's Top mode, an orthographic camera): moist grass, cracked
+    earth, water by depth and contaminated ground, as in the 3D view. It is turned by whole
+    quarter turns so its top is the overview's far edge. A whole number of pixels a tile (480 px
+    at 96², 512 px at 128² and 256²), so every tile edge is sharp.
+
+  The card shows the overview with the map from above as a minimap in its corner, which fills the
+  picture on hover, keyboard focus or a tap (Kyler chose it over a side-by-side layout, which is
+  gone). Each picture has a small **north arrow**, drawn by the page, not the picture: an upright
+  "N" in a round badge, with a pointer toward north, and a label ("North is to the right").
+  The minimap, its swap and the arrow are shared components with shared styles
+  (`src/ui/Pictures.tsx`, `src/ui/NorthArrow.tsx`, `app.css`), as is the link that looks like a
+  button, so the design pass restyles them rather than rebuilds them (D176).
+
+  About 84 KB a place, 7.1 MB for all 85; the gallery loads them lazily, as their cards come into
+  view. The index records which `.timber` they show (`imageFrom`); a test fails when a map changed
+  and its pictures did not. About 4.3 s a place, 6 minutes for all 85. The committed maps from
+  above were turned to their view in place (every pixel kept); all the pictures are drawn again
+  after the rebuild without walls.
+- **The survey's elevation patches, downloaded again** (Kyler's yes, 2026-09-25), for the rebuild:
+  the survey's own `sample.ts`, unchanged, into its ignored cache
+  (`investigation/landscapes/.cache/`), with at most 6 requests at once, 50 ms apart. All 4,050
+  patches (681 MB) from 6,102 Terrain Tiles (396 MB) in 5.5 minutes, no failures. Every tile
+  matches the sha256 the survey recorded, and the rebuilt patch manifest is byte for byte the
+  committed one. Nothing of it is committed.
+- **The live check** also downloads the smallest real place from the live gallery and compares it
+  with the deployed index's sha256 (and the checked-out commit's), and loads the credits page.
+
+Title changes (old → new). Every other title only loses "Near": Badlands National Park, Toklat
+River, Crater Lake, Colca Canyon, Twelve Apostles, Mount Mayon, Rhine and Moselle, Drakensberg
+Amphitheatre, Kaieteur Falls, Death Valley, Geirangerfjord, Torres del Paine, Tiger Leaping Gorge,
+Phong Nha, Uvac River, Mount Roraima, Ethiopian Highlands, Lofoten, Drumheller, Tagliamento River,
+Blyde River Canyon, Cliffs of Moher, Paricutin, Alaknanda and Bhagirathi, Niagara Falls, Glencoe,
+Verdon Gorge, Chocolate Hills, Kinabatangan River, Deccan Plateau, Bardenas Reales, Waimakariri
+River, Lake Toba, Mount Etna, Gullfoss, Milford Sound, Lauterbrunnen, Katherine Gorge, Bungle
+Bungle, Tibetan Plateau, Painted Desert, Ngorongoro, Fish River Canyon, Mount Fuji, Victoria Falls,
+Todgha Gorge, Monument Valley, Colorado Plateau, Sete Cidades, Copper Canyon, Mount Taranaki,
+Bandiagara, Iguazu Falls, Yosemite Valley, Tara Gorge, Mamore River, Capitol Reef, Altiplano.
+
+| Old | New |
+|---|---|
+| Near Thousand Islands Saint Lawrence | Thousand Islands |
+| Near Lena delta | Lena Delta |
+| Near English Lake District | Lake District |
+| Near Aso caldera | Aso Caldera |
+| Near Danube delta | Danube Delta |
+| Near Western Ghats Mahabaleshwar | Mahabaleshwar, Western Ghats |
+| Near Roaring River fan | Roaring River Fan |
+| Near Chilean Aysen fjord | Aysen Fjord |
+| Near Finnish Saimaa | Lake Saimaa |
+| Near Ennedi plateau | Ennedi Plateau |
+| Near Grand Canyon Colorado | Grand Canyon |
+| Near Na Pali coast | Na Pali Coast |
+| Near Godavari delta | Godavari Delta |
+| Near Niagara escarpment Hamilton | Niagara Escarpment |
+| Near Taklimakan Kunlun fan | Kunlun Alluvial Fan |
+| Near Dinaric karst Plitvice | Plitvice Lakes |
+| Near Lower Mississippi oxbows | Mississippi Oxbows |
+| Near Skeidara outwash | Skeidara Outwash |
+| Near Blue Mountains Jamison | Blue Mountains |
+| Near Atacama fan | Atacama Fan |
+| Near Kenai Aialik Bay | Aialik Bay |
+| Near Aoraki Hooker Valley | Hooker Valley |
+| Near Li River Yangshuo | Li River |
+| Near Goosenecks San Juan | Goosenecks of the San Juan |
+| Near Brahmaputra near Majuli | Majuli, Brahmaputra |
+| Near Ilulissat icefjord | Ilulissat Icefjord |
+| Near Tsingy Bemaraha | Tsingy de Bemaraha |
+
+Tests updated to Kyler's decisions (D148), none weakened:
+- `places.test.ts`: the title check (was "starts with Near") checks the new rules, the survey's
+  name and sample in the index, and the renames; the description check (was: the full credits in
+  the file) checks the new format, plain ASCII, and exactly which maps carry which notice; the card
+  check (was a 240 px JPEG) checks a 480 px WebP that shows the current map; the D108 check (was:
+  the gallery, the editor's worker and the Refine link use real places) drops the worker, which no
+  longer builds them, and adds that the pages only import the builder's types. New: every
+  provider's licence and verdict; a sample of every size, built, validated and compared with the
+  index on every push.
+- `places-build-*.test.ts`: unchanged assertions, now nightly and in the release check.
+- `places.spec.ts`: **Download** is a link to the static file (was a button that built it); "Node
+  and Chromium build the same file" becomes "the site serves each place's `.timber` as Node builds
+  it", since the browser no longer builds one; the credits test checks every notice and licence
+  link. New: the credits page on a desktop and a phone, and that the pictures load lazily; the
+  minimap (hover, keyboard focus, a click, a tap on a phone) and its north arrows on one card. The
+  side-by-side tests went with the side-by-side layout (Kyler chose the minimap), and the map from
+  above's text alternative no longer says "north up": the arrow says where north is.
+- `tests/unit/places-view.test.ts`: new. The index's `view` is the one the overview's camera works
+  out from each map; each view's camera looks that way; north is its quarter turns clockwise from
+  the top; and the arrow's labels.
+- `tests/live/live.spec.ts`: new, the real place and the credits page (above).
+
+Checks: `npm run typecheck`, `npm run test:quick`, `npm run test:e2e` and `npm run test:places`
+pass locally. The deploy build (`npm run build`, `npm run places:build` and the noindex step) was
+run locally, and the live check passes against it, served locally. Timberborn was never launched.
+
+## The rebuild: no walls, today's rules, 150 places (Kyler, 2026-09-26)
+
+Every place converted again from the landscape survey's elevation patches, after the start and edge
+rules (#44) and the resources (#43, generator 0.6.2) reached `dev`: no perimeter walls or rims
+(D151, D152), sources only where water begins (D171), the start requirements as they are now
+(D153, D164), and resources and mine sites from the shared baseline (D167–D170). The gallery grows
+to 150 (D174). No tall versions this round (D172).
+
+- **The conversion** (`npm run places:convert`, `tools/places-convert.ts` and `tools/places/`),
+  per survey row (a patch and a mapping to 16 levels):
+  1. The terrain: the survey's patch, cropped and quantised as the survey did, and nothing more.
+     No wall, no rim; water drains off the map wherever the land takes it.
+  2. The sources, where water begins: a row across each river's mouth where it comes into the map
+     (read from the survey's routing of the halo round the map), about 0.5 of strength a tile as the
+     generator's mouth rows have, and a spring at each channel head inside; at most 8 groups. The
+     flow is the survey's, twice the official maps' strength for the size, shared by the square
+     root of the area each drains. The water settles; any source another's water reaches
+     (`water.source_in_flow`) or whose water never leaves the map (`water.outflow`) goes, and its
+     flow goes to the rest; again until none does. 51 places lost a group this way (78 inside a
+     flow, 3 pooling).
+  3. The start: flat dry 3×3s with a dry ring and their door on their level, the best in each 8×8
+     block by moist land near, scored by the walk to water a pump reaches and the moist land within
+     20 tiles' walk; the best six are built in full and checked with every check of the generate
+     profile, and the first that passes is the start.
+  4. Real land's valley floors are wide and flat at 16 levels, so twice the official flow often
+     spreads thinner than a pump needs (0.3 deep). When no start passes, the conversion runs again
+     with 4 and then 8 times the official strength (more flow from the sources' strength, as D171
+     allows, never from sources downstream). 76 places use 2×, 49 use 4× and 25 use 8×.
+  5. A map whose water stands on more than 60% of it, however thin, fails: flat fans and braided
+     plains at 16 levels can carry a film of water over most of the map, which passes the flood
+     check (it counts water over 0.05 deep) but reads as flooded. Three such maps of the first
+     choice were replaced.
+- **The resources are the late stage**: a place's data holds only its terrain, sources and start
+  (format 2); `buildPlace` plans its trees, bushes, ruins and mine sites with `planMapResources`
+  on the settled ground each time the map is built, seeded by the survey row. A change to the
+  baseline needs no new conversion: `npm run places` rebuilds every map (41 s on 8 threads, 77 s
+  on 4).
+- **The choice**, as the first round's (`investigation/landscapes/curate.ts`), in
+  `tools/places/selection.json`:
+  - The first round's 85: 70 kept from their own row; 14 from another row of their region, their
+    title kept (Alaknanda and Bhagirathi, Danube Delta, Mahabaleshwar, Glencoe, Ennedi Plateau,
+    Deccan Plateau, Mount Etna, Godavari Delta (now 256²), Gullfoss, Aialik Bay, Li River, Tsingy de
+    Bemaraha, Mamore River, Altiplano); 1 dropped: **Majuli, Brahmaputra**. On all 16 of its region's
+    rows tried, no start passes: the braided floodplain is flat and wet, and at the flow its water
+    needs there is no flat dry ground for a mine site (`resources.mine_site`), or the water does
+    not settle.
+  - 66 added, in rounds across the families (fewest places first), preferring a region no place
+    came from yet, then a size (128², 256², 96², 128² by round), then the survey's score. A region
+    gives at most two maps, and its second must be other land (at most a quarter of the smaller map
+    inside the other's footprint). 13 come from regions the first round left out: Raja Ampat,
+    Kawarau and Shotover, Temagami, Etretat Cliffs, Mississippi Delta, Kosi Fan, Kornati, Green and
+    Colorado, Masurian Lakes, Cape of Good Hope, Stockholm Archipelago, Nahuel Huapi, Rio Negro and
+    Solimoes. The other 53 are a place's second map, titled by the part they show ("Colca Canyon
+    Centre", "Toklat River North"); the index keeps the survey's name.
+  - By family: 6 to 9 each (archipelago, confluence, delta and lakes 6; braided, coast and fan 7;
+    caldera 9; the rest 8). By size: 47 at 96², 66 at 128², 37 at 256².
+- **Every place passes** the export profile and every check of the generate profile: no edge
+  walls, no source inside a flow, a mine site, the start's water, food and wood. Advisories, as
+  information: plants.drought 137, water.reservoir 88, start.reach 76, water.clean_exists 9,
+  water.clean_reach 3, resources.trees 3, resources.scrap 1. The places tests' known-fault flags
+  are empty (`PLACES_HAVE_EDGE_WALLS` false, `PLACES_SOURCES_IN_FLOW` empty,
+  `PLACES_LACK_MINE_SITES` false).
+- **Badwater on every map (D200)**: not yet. The badwater step is being built beside this one; when
+  it lands, the places take it in `buildPlace` (after the clean settle, before the resources), and
+  `npm run places:convert` (with its `VERSION` raised, it converts the selection's rows again, about
+  5 minutes), `npm run places` and `npm run places:thumbs` bring the gallery up to it.
+- **What stays out of git** (D195): the survey's patches (`investigation/landscapes/.cache/`, 1.1
+  GB; `npm ci --ignore-scripts --cache ./npm-cache` and `npm run sample` there download them again
+  and check every tile's sha256) and every conversion (`investigation/landscapes/local/real-places-2/`,
+  528 files). Committed: the places' data (150 files, 559 KB), the index, the card pictures and the
+  selection.
+- **Time**: the first choice ran 472 conversions in 31 minutes on 8 threads; a later one, with the
+  kept conversions, about 2.5 minutes. The deploy's `npm run places:build`: 150 maps, 27.7 MB, 45 s
+  on this machine.
+- **Pictures**: every card drawn again on the GPU (`npm run places:thumbs -- --all`), the overview
+  and the map from above turned to match. The contact sheet of the whole gallery:
+  `docs/sheets/real-places.png`; locally `C:\dgm-workshop\places\sheet.html` (both pictures of
+  every place) and `C:\dgm-workshop\places\walls.html` (ten places with their wall and without).
+  Kyler says which should go.
+
+Tests updated to the rebuild (D148), none weakened:
+- `placesCommon.ts`: the known-fault flags are empty; the byte check now asks every place to pass
+  every check.
+- `tests/unit/places-view.test.ts`, `places.spec.ts`: unchanged; they read the new index.
+- `places.test.ts`: the gallery holds the selection's places (at least 130; was 85); new: the choice
+  (the gallery's order is the selection's, the first round's 85 kept, replaced or dropped with a
+  reason, families within 3 of each other, only named survey rows); the land without edge walls
+  (every edge under the check's 60%) and data that holds only sources and a start; the sample's
+  resources from the baseline (a mine site, bushes, trees). The pinned list of maps carrying a
+  file notice follows the new places; the rename checks of a place no longer in the gallery
+  (Majuli) read the titles module.
+- `save-to-timberborn.spec.ts` (from `dev`): Save to Timberborn on a card fetches the static file,
+  so it uses a card the browser tests' server builds, and checks its bytes.
+- `reshape.test.ts` (a heavy test from `dev`, which this branch's nightly run caught): "an object a
+  lake would drown is cleared" drew its lake round River Valley seed 13's small relic; since the
+  resources of generator 0.6.2 that relic has no room for one, so the case uses seed 14, where the
+  same check holds.
+
