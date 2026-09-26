@@ -23,23 +23,23 @@ uniforms.patternTex.value=drawPatterns(gl).texture;uniforms.markers.value=0;
 const groundMat=terrainMaterial(uniforms,0,16),waterMat=waterMaterial(uniforms),objectsMat=objectMaterial(uniforms);
 groundMat.uniforms.rockBeds={value:new Array(23).fill(0)};
 groundMat.fragmentShader='uniform float rockBeds[23];\n'+groundMat.fragmentShader.replace('float py = fwidth(y);','wc *= mix(vec3(1.04,1.01,.95),vec3(.78,.85,.87),rockBeds[int(clamp(level,0.0,22.0))]); float py = fwidth(y);');
-const chunks=new Map<string,THREE.Group>(),uploads:Chunk[]=[];
+const chunks=new Map<string,THREE.Group>(),uploads:(Chunk|{checkpoint:{heights:Uint8Array;lighting:Lighting}})[]=[];
 const retained=new Set<THREE.BufferGeometry>(),retainedInstances=new Set<THREE.InstancedMesh>();
 const marker=new THREE.Mesh(new THREE.TorusGeometry(.9,.12,5,20),new THREE.MeshBasicMaterial({color:0xffeac2}));
 marker.rotation.x=Math.PI/2;marker.visible=false;scene.add(marker);
 const aimLine=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0xf8efd2,dashSize:1,gapSize:.6,depthTest:false}));scene.add(aimLine);aimLine.renderOrder=9;
 const surge=new Rupture();scene.add(surge.group);
 let W=0,H=0,heights=new Uint8Array(),keep=new Uint8Array(),busy=true,active=false,mode:'lift'|'slide'='lift',path:Point[]=[],effectPath:Point[]=[];
-let nextAt=0,steps=0,epoch=0,top=false,settling=false,head:Head|null=null,startedAt=0;
+let steps=0,epoch=0,top=false,settling=false,head:Head|null=null,startedAt=0;
 let canReroll=false,historyIndex=0,cachedAfterIndex=-1;
 let savedRun:unknown=null,lastOperation:QuakeOperation|null=null,finishCache=false;
 interface Lighting {tiles:Uint8Array;light:Uint8Array;checks:any}
 let lighting:Lighting|null=null;
 interface Cache {groups:Map<string,THREE.Group>;heights:Uint8Array;lighting:Lighting}
-let beforeCache:Cache|null=null,afterCache:Cache|null=null,carveBaseCache:Cache|null=null;
+let beforeCache:Cache|null=null,afterCache:Cache|null=null,quakeBaseCache:Cache|null=null;
 let priorCaches:{before:Cache|null;after:Cache|null;base:Cache|null;index:number}|null=null;
 const historyCaches=new Map<number,Cache>();
-const allCaches=()=>[beforeCache,afterCache,carveBaseCache,priorCaches?.before,priorCaches?.after,priorCaches?.base,...historyCaches.values()];
+const allCaches=()=>[beforeCache,afterCache,quakeBaseCache,priorCaches?.before,priorCaches?.after,priorCaches?.base,...historyCaches.values()];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');input('motion').checked=!reduced.matches;
 const motion=()=>!reduced.matches&&input('motion').checked;
 function send(msg:Record<string,unknown>){busy=true;worker.postMessage(msg);}
@@ -87,11 +87,11 @@ function pruneCaches(){
   for(const o of oldInstances)if(!retainedInstances.has(o)&&!currentInstances.has(o))o.dispose();
   for(const g of old)if(!retained.has(g)&&!current.has(g))g.dispose();
 }
-function releaseCaches(){beforeCache=afterCache=carveBaseCache=null;priorCaches=null;historyCaches.clear();pruneCaches();}
-function preserveCaches(){priorCaches={before:beforeCache,after:afterCache,base:carveBaseCache,index:cachedAfterIndex};}
+function releaseCaches(){beforeCache=afterCache=quakeBaseCache=null;priorCaches=null;historyCaches.clear();pruneCaches();}
+function preserveCaches(){priorCaches={before:beforeCache,after:afterCache,base:quakeBaseCache,index:cachedAfterIndex};}
 function rollbackCaches(){
   if(!priorCaches)return;
-  beforeCache=priorCaches.before;afterCache=priorCaches.after;carveBaseCache=priorCaches.base;cachedAfterIndex=priorCaches.index;
+  beforeCache=priorCaches.before;afterCache=priorCaches.after;quakeBaseCache=priorCaches.base;cachedAfterIndex=priorCaches.index;
   priorCaches=null;pruneCaches();
 }
 function upload(c:Chunk){
@@ -120,12 +120,14 @@ worker.onmessage=(event:MessageEvent)=>{
  const m=event.data;if(m.epoch<epoch)return;epoch=m.epoch;
  if(m.type==='reset'){W=m.W;H=m.H;releaseCaches();uploads.length=0;for(const g of chunks.values()){dispose(g);scene.remove(g);}chunks.clear();groundMat.uniforms.rockBeds.value=m.rockLayers;resetView();}
  if(m.type==='chunk')uploads.push(m.chunk);
+ if(m.type==='checkpoint'&&lighting)uploads.push({checkpoint:{heights:heights.slice(),lighting}});
  if(m.type==='lighting')setLighting(m);
  if(m.type==='frame'){
   canReroll=!!m.canReroll;historyIndex=m.undo;heights=m.heights;keep=m.keep;head=m.head;effectPath=m.path;
   if(m.seed!==null)$('seed-label').textContent='Personality '+m.seed;
   surge.set(head,effectPath,heights,W);
   if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=m.metrics.changed.toLocaleString()+' tiles moved · '+m.metrics.toppled+' trees toppled';}
+  else $('metrics').textContent='';
   $<HTMLButtonElement>('undo').disabled=!active&&!m.undo;$<HTMLButtonElement>('redo').disabled=active||!m.redo;
  }
  if(m.type==='status')notice.textContent=m.text;
@@ -138,14 +140,21 @@ worker.onmessage=(event:MessageEvent)=>{
   notice.textContent=m.settled?'A new piece of land. One undo brings it back.':'Quake saved. Water reached the repository’s settle limit.';$<HTMLButtonElement>('undo').disabled=false;
  }
  if(m.type==='operation'){lastOperation=m.op;savedRun={format:1,base:m.base,quakeBase:m.quakeBase,operation:m.op};$<HTMLButtonElement>('save-run').disabled=false;}
- if(m.type==='replayed'){notice.textContent='Exact saved quake restored.';finishCache=true;cachedAfterIndex=historyIndex;}
+ if(m.type==='replayed'){
+  notice.textContent='Exact saved quake restored.';finishCache=true;cachedAfterIndex=historyIndex;
+  let option=select.querySelector<HTMLOptionElement>('option[value="saved"]');if(!option){option=document.createElement('option');option.value='saved';select.add(option);}option.textContent='Saved quake · '+W+' × '+H;select.value='saved';
+  if(lastOperation)showSettings(lastOperation.params.settings);
+ }
  if(m.type==='error'){notice.textContent=m.text;if(active){restoreView(beforeCache);rollbackCaches();}active=false;settling=false;head=null;}
  if(m.type==='ready'){busy=false;stateControls();if(notice.textContent==='Loading land…')instruction();}
 };
 worker.onerror=e=>{notice.textContent='Worker error: '+e.message;busy=false;active=false;stateControls();};
 const select=$<HTMLSelectElement>('map');for(const [id,name]of MAPS){const o=document.createElement('option');o.value=id;o.textContent=name;select.add(o);}
 select.value='fixture:river:128';
-function load(){canReroll=false;cachedAfterIndex=-1;path=[];marker.visible=false;aimLine.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';notice.textContent='Loading land…';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();}
+function load(){
+ if(select.value==='saved'&&savedRun){send({type:'replay',bundle:savedRun});stateControls();return;}
+ select.querySelector('option[value="saved"]')?.remove();canReroll=false;cachedAfterIndex=-1;path=[];marker.visible=false;aimLine.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';notice.textContent='Loading land…';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();
+}
 select.onchange=load;$('reset').onclick=load;
 for(const value of ['lift','slide'] as const)$(value).onclick=()=>{mode=value;for(const a of ['lift','slide'])$(a).setAttribute('aria-pressed',String(a===mode));powerLabel();instruction();};
 function powerLabel(){const p=Number(input('power').value);$('power-label').textContent=(mode==='lift'?1+Math.round(p*.075):1+Math.round(p*.13))+(mode==='lift'?' levels':' tiles');}
@@ -153,10 +162,10 @@ input('power').oninput=powerLabel;
 let nextSeed=crypto.getRandomValues(new Uint32Array(1))[0];
 function settings():Settings{return {mode,power:Number(input('power').value),scarp:$<HTMLSelectElement>('scarp').value as Settings['scarp'],seed:nextSeed++>>>0};}
 function showSettings(s:Settings){mode=s.mode;input('power').value=String(s.power);$<HTMLSelectElement>('scarp').value=s.scarp;for(const a of ['lift','slide'])$(a).setAttribute('aria-pressed',String(a===mode));powerLabel();}
-$('reroll').onclick=()=>{if(!canReroll||busy||active||uploads.length)return;preserveCaches();beforeCache=cache();if(beforeCache)historyCaches.set(historyIndex,beforeCache);afterCache=null;retain(beforeCache);if(historyIndex===cachedAfterIndex)restoreView(carveBaseCache);else carveBaseCache=null;pruneCaches();active=true;path=[];aimLine.visible=false;startedAt=performance.now();measurements.length=0;delete canvas.dataset.firstChangeMs;notice.textContent='Trying another personality…';send({type:'reroll'});stateControls();};
+$('reroll').onclick=()=>{if(!canReroll||busy||active||uploads.length)return;preserveCaches();beforeCache=cache();if(beforeCache)historyCaches.set(historyIndex,beforeCache);afterCache=null;retain(beforeCache);if(historyIndex===cachedAfterIndex)restoreView(quakeBaseCache);else quakeBaseCache=null;pruneCaches();active=true;path=[];aimLine.visible=false;startedAt=performance.now();measurements.length=0;delete canvas.dataset.firstChangeMs;notice.textContent='Trying another personality…';send({type:'reroll'});stateControls();};
 function begin(side:1|-1,explicit?:{settings:Settings;intent:Intent}){
  if(busy||active||uploads.length)return;
- preserveCaches();beforeCache=cache();afterCache=null;carveBaseCache=beforeCache;pruneCaches();active=true;marker.visible=false;aimLine.visible=false;
+ preserveCaches();beforeCache=cache();afterCache=null;quakeBaseCache=beforeCache;pruneCaches();active=true;marker.visible=false;aimLine.visible=false;
  if(beforeCache)historyCaches.set(historyIndex,beforeCache);for(const k of historyCaches.keys())if(k>historyIndex)historyCaches.delete(k);measurements.length=0;
  const intent=explicit?.intent??{path:path.map(p=>({...p})),side};startedAt=performance.now();delete canvas.dataset.firstChangeMs;send({type:'start',settings:explicit?.settings??settings(),intent});path=[];notice.textContent='The fault is waking · Esc reverts';stateControls();
 }
@@ -201,12 +210,20 @@ const keys=new Set<string>();window.addEventListener('keydown',e=>{
  if((e.ctrlKey||e.metaKey)&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();$(e.key.toLowerCase()==='y'||e.shiftKey?'redo':'undo').click();return;}
  if(/INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName))return;keys.add(e.key.toLowerCase());
 });window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>keys.clear());
+$('capture-view').onclick=async()=>{
+ gl.render(scene,camera);const jpeg=canvas.toDataURL('image/jpeg',.85);
+ const response=await fetch('/__quake_capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jpeg,metrics:{...canvas.dataset,fps:$('fps').textContent,map:select.value}})});
+ notice.textContent=response.ok?'View saved in the demo’s local folder.':'View could not be saved.';
+};
 new ResizeObserver(()=>{gl.setSize(canvas.clientWidth,canvas.clientHeight,false);camera.aspect=canvas.clientWidth/canvas.clientHeight;camera.updateProjectionMatrix();uniforms.viewHeight.value=canvas.clientHeight;}).observe(canvas);
 let previous=performance.now(),fpsAt=previous,frames=0,frameMs:number[]=[],effectTime=0;
 const measurements:number[]=[];
 function animate(t:number){
  requestAnimationFrame(animate);const dt=Math.min(.05,(t-previous)/1000);frameMs.push(t-previous);if(active)measurements.push(t-previous);previous=t;frames++;
- const hadUploads=uploads.length>0,at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){upload(uploads.shift()!);count++;if(active&&!canvas.dataset.firstChangeMs)canvas.dataset.firstChangeMs=String(performance.now()-startedAt);}
+ const hadUploads=uploads.length>0,at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){
+  const item=uploads.shift()!;if('checkpoint' in item){beforeCache={groups:new Map(chunks),...item.checkpoint};historyCaches.set(0,beforeCache);retain(beforeCache);}else upload(item);
+  count++;if(active&&!canvas.dataset.firstChangeMs)canvas.dataset.firstChangeMs=String(performance.now()-startedAt);
+ }
  if(hadUploads&&!uploads.length)stateControls();if(finishCache&&!uploads.length){afterCache=cache();if(afterCache)historyCaches.set(historyIndex,afterCache);retain(afterCache);finishCache=false;pruneCaches();stateControls();}
  const pan=Math.max(W,H)*.25*dt*(keys.has('shift')?3:1),x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),z=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
  if(x||z){camera.position.x+=x*pan;camera.position.z+=z*pan;controls.target.x+=x*pan;controls.target.z+=z*pan;}
@@ -217,7 +234,7 @@ function animate(t:number){
   g.position.y=motion()&&active&&!settling&&near?Math.sin(t*.04+cx+cy)*.12:0;}
  const shake=motion()&&input('shake').checked&&active&&!settling ? .12 : 0;camera.position.x+=Math.sin(t*.045)*shake;camera.position.y+=Math.cos(t*.061)*shake;gl.render(scene,camera);camera.position.x-=Math.sin(t*.045)*shake;camera.position.y-=Math.cos(t*.061)*shake;
  if(t-fpsAt>=1000){const sorted=frameMs.sort((a,b)=>a-b);$('fps').textContent=Math.round(frames*1000/(t-fpsAt))+' fps · p95 '+Math.round(sorted[Math.floor(sorted.length*.95)]??0)+' ms';frameMs=[];frames=0;fpsAt=t;}
- if(!busy&&!uploads.length&&active&&!settling&&t>=nextAt){nextAt=t+65;send({type:'advance'});}
+ if(!busy&&!uploads.length&&active&&!settling&&t>=startedAt+Math.max(1,steps)*150)send({type:'advance'});
 }
 requestAnimationFrame(animate);powerLabel();
 Object.assign(window,{quake:{get operation(){return lastOperation;},get bundle(){return savedRun;},get state(){return {steps,active,busy,settling,queued:uploads.length,W,H,mode,head,path,heights,measurements};},

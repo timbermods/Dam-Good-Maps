@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync,writeFileSync } from 'node:fs';
 import { fixture,loadMap } from './maps';
-import { DEFAULTS,quake,reveal,modelFor,snapshot,entityTiles,geology,QuakePlan,type Settings,type Intent } from './engine';
+import { DEFAULTS,quake,reveal,modelFor,snapshot,entityTiles,geology,QuakePlan,startProblem,type Settings,type Intent } from './engine';
 import { canonicalSettle } from '../../src/core/sim/prefill';
 import { WaterSim } from '../../src/core/sim/water';
 import { operation,applyOperation } from './operation';
@@ -29,6 +29,10 @@ test('start moves vertically and sideways with a flat footprint and entrance',()
   assert.ok(mode==='lift'?a.z!==b.z:a.x!==b.x||a.y!==b.y);for(const i of entityTiles(m,a,1))assert.equal(m.heights[i],a.z);assert.equal(entityTiles(m,a,1).length,25);
  }
 });
+test('start remains supported at every front and flooding is identified',()=>{
+ const p=quake(base,settings,line(128,30,-1));let m=snapshot(base);for(let k=1;k<=8;k++){m=reveal(p,m,k);assert.equal(startProblem(m),null);}
+ const e=m.entities.find(e=>e.template==='StartingLocation')!;m.water.depth[e.y*m.W+e.x]=1;assert.equal(startProblem(m),'Water would cover the start');
+});
 test('trees topple at the fault, all object identities and sources ride intact',()=>{
  const ids=result.entities.map(e=>e.id);assert.deepEqual(ids,base.entities.map(e=>e.id));assert.ok(result.fallen.length>0);assert.ok(result.entities.some((e,i)=>e.z!==base.entities[i].z));
  for(const e of base.entities.filter(e=>e.template==='WaterSource'))assert.deepEqual(result.entities.find(a=>a.id===e.id)?.components,e.components);
@@ -46,7 +50,7 @@ test('stepped scarps distribute displacement into separate benches',()=>{
  const a=quake(fixture('plain'),settings,line()).map,b=quake(fixture('plain'),{...settings,scarp:'stepped'},line()).map;
  assert.notDeepEqual(a.heights,b.heights);let count=0;for(let y=64;y<76;y++)if(b.heights[y*128+64]!==b.heights[(y+1)*128+64])count++;assert.ok(count>=2);
 });
-test('Slide transports water once per front without adding water volume',()=>{
+test('Slide transports water at each front without adding water volume',()=>{
  const p=quake(base,{...settings,mode:'slide'},line()),sum=(v:Float64Array)=>v.reduce((a,b)=>a+b,0);let state=snapshot(base);
  for(let step=1;step<=8;step++){const next=reveal(p,state,step);assert.ok(Math.abs(sum(next.water.depth)-sum(state.water.depth))<1e-8);state=next;}assert.deepEqual(state.heights,p.map.heights);
 });
@@ -65,6 +69,11 @@ test('tilted lake spills during live simulation; no new source',()=>{
  assert.ok(newWet>10,'lake must wet previously dry ground');assert.equal(m.entities.filter(e=>e.template==='WaterSource').length,1);measurements.push({case:'lake',newWet});
 });
 test('dry fault never invents water or sources',()=>{const b=fixture('plain'),p=quake(b,settings,line()),w=canonicalSettle(modelFor(p.map));assert.ok(w.depth.every(v=>v===0));assert.equal(p.map.entities.length,b.entities.length);});
+test('replay rejects stale untouched terrain, changed geology and invalid saved objects',()=>{
+ const b=fixture('plain'),a=quake(b,settings,line()).map,op=operation(b,a,settings,line(),{settled:true,ticks:0}),stale=snapshot(b);stale.heights[0]--;assert.throws(()=>applyOperation(stale,op),/Stale/);
+ stale.heights[0]++;stale.rockLayers[0]=1-stale.rockLayers[0];assert.throws(()=>applyOperation(stale,op),/Stale/);
+ const malformed=structuredClone(op);malformed.params.entitiesAfter[0].x=-1;assert.throws(()=>applyOperation(b,malformed),/Invalid saved object/);assert.deepEqual(b,fixture('plain'));
+});
 test('height caps, bent lines, high-power edge slides and 256² stay valid',()=>{
  for(const size of [128,256])for(const mode of ['lift','slide'] as const){const b=fixture('river',size),t=performance.now();const p=quake(b,{...settings,mode,power:100},{side:1,path:[{x:0,y:size*.4},{x:size*.4,y:size*.6},{x:size-1,y:size*.5}]});
   assert.ok(p.map.heights.every(h=>h>=0&&h<=22));assert.equal(p.map.entities.length,b.entities.length);for(const e of p.map.entities)assert.ok(e.x>=0&&e.x<size&&e.y>=0&&e.y<size);measurements.push({case:'plan',size,mode,ms:performance.now()-t});

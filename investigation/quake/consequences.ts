@@ -25,5 +25,3 @@ export function consequences(m:QuakeMap) {
   let count=0;for(let i=0;i<reach.length;i++)if(root>=0&&regions[i]===root&&m.water.depth[i]<=.05){reach[i]=1;count++;}
   return {present:true,reach:count,tiles:reach,water:c.water,trees:c.wood,bushes:c.bushes,meets:c.meets,warnings:c.warnings};
 }
-
-

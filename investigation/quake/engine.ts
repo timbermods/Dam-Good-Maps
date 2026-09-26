@@ -17,11 +17,28 @@ export const modelFor=(m:QuakeMap)=>waterModel(m.W,m.H,m.heights,m.entities.map(
 export function geology(h:Uint8Array):number[]{let s=2166136261;for(const v of h)s=Math.imul(s^v,16777619);return Array.from({length:23},(_,z)=>(z+(s>>>0)%4)%4===0?1:0);}
 export function hash(seed:number,k:number):number{let x=Math.imul((seed^Math.imul(k+1,0x9e3779b9))>>>0,0x85ebca6b);x^=x>>>13;return (Math.imul(x,0xc2b2ae35)>>>0)/4294967296;}
 export function snapshot(m:QuakeMap):QuakeMap{return {...m,heights:m.heights.slice(),entities:structuredClone(m.entities),rockLayers:m.rockLayers.slice(),fallen:structuredClone(m.fallen),water:{depth:m.water.depth.slice(),contamination:m.water.contamination.slice()}};}
+export function validateObjects(m:QuakeMap):void{
+  const ids=new Set<string>();
+  for(const e of m.entities){
+    if(!e||typeof e.id!=='string'||!e.id||ids.has(e.id)||typeof e.template!=='string'||typeof e.owner!=='string'||
+      !Number.isInteger(e.x)||!Number.isInteger(e.y)||!Number.isInteger(e.z)||e.x<0||e.y<0||e.x>=m.W||e.y>=m.H||e.z<0||e.z>22||
+      !['Cw0','Cw90','Cw180','Cw270'].includes(e.orientation)||typeof e.flipped!=='boolean'||!e.components||typeof e.components!=='object'||Array.isArray(e.components))throw Error('Invalid saved object');
+    ids.add(e.id);const fp=FOOTPRINTS[e.template]?.size??[1,1,1];if(entityTiles(m,e).length!==fp[0]*fp[1])throw Error('Object crosses the map edge');
+  }
+  for(const f of m.fallen)if(!f||!ids.has(f.id)||![f.x,f.y,f.z,f.dx,f.dy,f.length].every(Number.isFinite)||f.x<0||f.x>m.W||f.y<0||f.y>m.H||f.length<=0||f.length>10)throw Error('Invalid fallen object');
+}
 export function entityTiles(m:Pick<QuakeMap,'W'|'H'>,e:EntitySpec,margin=0):number[]{
   const fp=FOOTPRINTS[e.template]?.size??[1,1,1],out:number[]=[];
   for(let y=-margin;y<fp[1]+margin;y++)for(let x=-margin;x<fp[0]+margin;x++){const [xx,yy]=objectTile(e,x,y);if(xx>=0&&yy>=0&&xx<m.W&&yy<m.H)out.push(yy*m.W+xx);}return out;
 }
 export function protectedGround(m:QuakeMap):Uint8Array{const out=new Uint8Array(m.W*m.H);for(const e of m.entities)if(e.template==='StartingLocation')for(const i of entityTiles(m,e,1))out[i]=1;return out;}
+export function startProblem(m:QuakeMap):string|null{
+  for(const e of m.entities)if(e.template==='StartingLocation'){
+    const tiles=entityTiles(m,e),fp=FOOTPRINTS[e.template]?.size??[3,3,1];
+    if(tiles.length!==fp[0]*fp[1]||tiles.some(i=>m.heights[i]!==e.z))return 'Start needs flat ground';
+    if(tiles.some(i=>m.water.depth[i]>.05))return 'Water would cover the start';
+  }return null;
+}
 export function validateSettings(s:Settings,m:QuakeMap,i:Intent){
   if(!['lift','slide'].includes(s.mode)||!['sheer','stepped'].includes(s.scarp)||!Number.isFinite(s.power)||s.power<0||s.power>100||!Number.isInteger(s.seed)||s.seed<0||s.seed>0xffffffff)throw Error('Invalid quake settings');
   if(!i||![1,-1].includes(i.side)||!Array.isArray(i.path)||i.path.length<2||i.path.length>512||i.path.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<0||p.y<0||p.x>m.W-1||p.y>m.H-1))throw Error('Draw a fault on the land');
@@ -116,7 +133,11 @@ export class QuakePlan {
       if(changed){e.z=clamp(old.z+this.map.heights[e.y*W+e.x]-this.before.heights[old.y*W+old.x],0,22);delete e.raw;this.stats.moved++;}
       const support=entityTiles(this.map,e,margin);for(const i of support)occupied[i]=1;
       // Rigid footprints ride whole, including the start's entrance and a one-tile apron.
-      if(changed&&fp[0]*fp[1]>1)for(const i of support){this.map.heights[i]=e.z;this.arrival[i]=this.arrival[old.y*W+old.x];}
+      if(fp[0]*fp[1]>1&&(changed||support.some(i=>this.map.heights[i]!==e.z))){
+        const arrival=this.arrival[old.y*W+old.x];
+        for(const i of entityTiles(this.map,old,margin))this.arrival[i]=arrival;
+        for(const i of support){this.map.heights[i]=e.z;this.arrival[i]=arrival;}
+      }
       if(/^(Pine|Birch|Oak|Succulent)$/.test(e.template)&&Math.abs(f.d)<1.9&&f.end<2){
         e.components={...e.components,LivingNaturalResource:{IsDead:true}};delete e.raw;
         fallen.set(e.id,{id:e.id,x:e.x+.5,y:e.y+.5,z:e.z,dx:-f.dy||.7,dy:f.dx||.7,length:e.template==='Oak'?2.6:2});this.stats.toppled++;
@@ -133,7 +154,7 @@ export function reveal(plan:QuakePlan,previous:QuakeMap,step:number,steps=8):Qua
   out.entities=plan.before.entities.map((e,k)=>{const t=e.y*W+e.x;return structuredClone(plan.arrival[t]<=progress?plan.map.entities[k]:e);});
   out.fallen=plan.map.fallen.filter(f=>out.entities.some(e=>e.id===f.id&&plan.arrival[(plan.before.entities.find(o=>o.id===e.id)!.y)*W+plan.before.entities.find(o=>o.id===e.id)!.x]<=progress));
   if(plan.settings.mode==='slide'){
-    // Forward transport only newly activated water once; sum collisions, conserve volume and mixture.
+    // Forward transport water on newly moving cells; sum collisions, conserve volume and mixture.
     const next=new Float64Array(W*H),bad=new Float64Array(W*H);
     for(let i=0;i<next.length;i++){
       const newly=plan.arrival[i]<=progress&&plan.arrival[i]>(step-1)/steps;
@@ -144,4 +165,3 @@ export function reveal(plan:QuakePlan,previous:QuakeMap,step:number,steps=8):Qua
   }
   return out;
 }
-

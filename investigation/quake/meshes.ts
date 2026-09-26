@@ -107,6 +107,3 @@ function transitionMesh(m:QuakeMap,old:QuakeMap,cx:number,cy:number):Geometry {
   }
   return {positions:Float32Array.from(p),normals:Float32Array.from(n),indices:Uint32Array.from(idx),grow:Float32Array.from(grow),colors:new Float32Array(p.length)};
 }
-
-
-

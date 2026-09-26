@@ -1,4 +1,4 @@
-import { QuakePlan,DEFAULTS,modelFor,snapshot,reveal,protectedGround,type QuakeMap,type Settings,type Intent } from './engine';
+import { QuakePlan,DEFAULTS,modelFor,snapshot,reveal,protectedGround,validateObjects,startProblem,type QuakeMap,type Settings,type Intent } from './engine';
 import { loadMap } from './maps';
 import { canonicalRun } from '../../src/core/sim/prefill';
 import { WaterSim } from '../../src/core/sim/water';
@@ -65,6 +65,7 @@ async function settle(token:number,live=false){
 }
 async function finish(token:number){
  const p=plan!;send({type:'settling'});const water=await settle(token,true);
+ const problem=startProblem(map);if(problem)throw Error(problem+' · quake reverted');
  const op=operation(before,map,settings,intent,water,base!==before);
  await frame(false,token);check(token);undo.push(op);redo=[];if(series)variations.set(op,{...series,settings:{...settings}});
  plan=null;send({type:'operation',op,base:before,quakeBase:base});send({type:'finished',undo:undo.length,canReroll:true,seed:settings.seed,settled:water.settled,ticks:water.ticks,stats:p.stats});
@@ -80,7 +81,7 @@ export function storedMap(raw:any):QuakeMap{
  raw.heights?.length!==N||!raw.heights.every((v:number)=>Number.isInteger(v)&&v>=0&&v<=raw.maxHeight)||!Array.isArray(raw.entities)||
  raw.water?.depth?.length!==N||raw.water?.contamination?.length!==N||!raw.water.depth.every((v:number)=>Number.isFinite(v)&&v>=0)||!raw.water.contamination.every((v:number)=>Number.isFinite(v)&&v>=0&&v<=1)||
  !Array.isArray(raw.rockLayers)||raw.rockLayers.length!==23||!raw.rockLayers.every((v:number)=>Number.isFinite(v)&&v>=0&&v<=1)||!Array.isArray(raw.fallen))throw Error('Invalid stored map');
- return {...raw,heights:Uint8Array.from(raw.heights),water:{depth:Float64Array.from(raw.water.depth),contamination:Float64Array.from(raw.water.contamination)}};
+ const m={...raw,heights:Uint8Array.from(raw.heights),water:{depth:Float64Array.from(raw.water.depth),contamination:Float64Array.from(raw.water.contamination)}};validateObjects(m);return m;
 }
 self.onmessage=async(event:MessageEvent)=>{
  const msg=event.data;
@@ -103,8 +104,12 @@ self.onmessage=async(event:MessageEvent)=>{
     case 'redo':if(redo.length){const op=redo.pop()!;map=applyOperation(map,op);undo.push(op);await frame(false,token);}break;
     case 'replay':{
      const b=msg.bundle;if(b?.format!==1)throw Error('Invalid saved quake');const startMap=storedMap(b.base),op=b.operation as QuakeOperation;
-     const result=applyOperation(startMap,op),original=storedMap(b.quakeBase??b.base);map=result;before=startMap;base=original;undo=[op];redo=[];variations=new WeakMap();
-     variations.set(op,{base,settings:op.params.settings,intent:op.params.intent,nextSeed:op.params.settings.seed});await frame(true,token);send({type:'replayed'});break;
+     const result=applyOperation(startMap,op),original=storedMap(b.quakeBase??b.base);
+     // Prebuild the replay's original view too, so its first undo is also a cache swap.
+     map=startMap;before=startMap;base=original;undo=[];redo=[];variations=new WeakMap();
+     await frame(true,token);send({type:'checkpoint'});map=result;undo=[op];
+     variations.set(op,{base,settings:op.params.settings,intent:op.params.intent,nextSeed:op.params.settings.seed});await frame(false,token);
+     send({type:'operation',op,base:before,quakeBase:base});send({type:'replayed'});break;
     }
     case 'snapshot':send({type:'snapshot',map});break;
    }

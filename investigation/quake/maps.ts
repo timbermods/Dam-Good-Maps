@@ -42,4 +42,3 @@ export function fixture(kind='river',W=128):QuakeMap{
  }
  return {name:'Study · '+kind,W,H,heights,entities:plainEntities(entities),water:{depth,contamination:new Float64Array(W*H)},maxHeight:22,rockLayers:geology(heights),fallen:[]};
 }
-
