@@ -86,7 +86,7 @@
             "ruins": { "type": "integer", "minimum": 25, "maximum": 300 },
             "relics": { "enum": ["off", "some"] },
             "geothermal": { "enum": ["off", "some"] },
-            "mineSites": { "type": "integer", "minimum": 0, "maximum": 4 }
+            "mineSites": { "type": "integer", "minimum": 1, "maximum": 4 }
           }
         },
         "start": {
@@ -98,10 +98,10 @@
             "rules": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["waterWithin", "treesWithin20", "bushesWithin20", "badwaterWithin", "ruinsWithin"],
+              "required": ["waterWithin", "woodWithin20", "bushesWithin20", "badwaterWithin", "ruinsWithin"],
               "properties": {
                 "waterWithin": { "type": "integer", "minimum": 4, "maximum": 40 },
-                "treesWithin20": { "type": "integer", "minimum": 0, "maximum": 400 },
+                "woodWithin20": { "type": "integer", "minimum": 0, "maximum": 800 },
                 "bushesWithin20": { "type": "integer", "minimum": 0, "maximum": 200 },
                 "badwaterWithin": { "type": "integer", "minimum": 8, "maximum": 60 },
                 "ruinsWithin": { "type": "integer", "minimum": 0, "maximum": 60 }

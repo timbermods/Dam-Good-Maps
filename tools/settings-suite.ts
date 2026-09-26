@@ -207,7 +207,7 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Forest density",
-    target: "trees per 10k tiles, size-aware (medium 1,061 at 100%)",
+    target: "trees per 10k tiles, size-aware (medium 1,061 at 100%, which the seed moves within the official maps' typical range, 980–1,240)",
     theme: "riverValley",
     values: ["50", "200"],
     apply: (s, v) => (s.settings.resources.forestDensity = num(v)),
@@ -217,7 +217,7 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Grove size",
-    target: "median grove 6 / 10 / 20 trees",
+    target: "median grove 20 / 40 / 80 trees away from the start (a grove: trees within 2 tiles of each other; official median 40)",
     theme: "riverValley",
     values: ["scattered", "bigWoods"],
     apply: (s, v) => (s.settings.resources.groveSize = v as MapSpec["settings"]["resources"]["groveSize"]),
@@ -249,7 +249,7 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Berry bushes elsewhere",
-    target: "berry bushes per 10k tiles, size-aware (medium 92 at 100%)",
+    target: "berry bushes per 10k tiles, size-aware (medium 92 at 100%, which the seed moves within the official maps' typical range, 90–98)",
     theme: "riverValley",
     values: ["50", "300"],
     apply: (s, v) => (s.settings.resources.berryBushes = num(v)),
@@ -259,7 +259,7 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Ruins and scrap",
-    target: "scrap per 1k tiles, size-aware (medium 705 at 100%)",
+    target: "scrap per 1k tiles, size-aware (medium 705 at 100%, which the seed moves within the official maps' typical range, 530–990)",
     theme: "riverValley",
     values: ["25", "300"],
     apply: (s, v) => (s.settings.resources.ruins = num(v)),
@@ -291,13 +291,13 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Mine sites",
-    target: "mine sites (UndergroundRuins) on flat ground 60+ tiles out: 0–4",
+    target: "mine sites (UndergroundRuins) on flat ground 60+ tiles out: 1–4, at least one on every map",
     theme: "riverValley",
-    values: ["0", "3"],
+    values: ["1", "3"],
     apply: (s, v) => (s.settings.resources.mineSites = num(v)),
     metric: (m) => m.mines,
     expect: "up",
-    delta: 2,
+    delta: 1.5,
     digits: 1,
   },
   {
@@ -312,7 +312,7 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     setting: "Water without stairs",
-    target: "tiles' walk on the start's level, without slopes, to a shore touching clean water a pump reaches (D85)",
+    target: "tiles' walk over the map's own ground and slopes to a shore touching clean water a pump there reaches (D85, amended by D153)",
     theme: "riverValley",
     values: ["8", "20"],
     apply: (s, v) => (s.settings.start.rules.waterWithin = num(v)),
@@ -322,14 +322,14 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 1,
   },
   {
-    setting: "Minimum starting trees",
-    target: "living trees within 20 tiles' walk of the start (D85)",
+    setting: "Minimum starting wood",
+    target: "logs of the grown trees within 20 tiles' walk of the start (D164)",
     theme: "riverValley",
-    values: ["20", "120"],
-    apply: (s, v) => (s.settings.start.rules.treesWithin20 = num(v)),
-    metric: (m) => m.treesNearStart,
+    values: ["40", "240"],
+    apply: (s, v) => (s.settings.start.rules.woodWithin20 = num(v)),
+    metric: (m) => m.woodNearStart,
     expect: "up",
-    delta: 30,
+    delta: 60,
   },
   {
     setting: "Minimum starting bushes",

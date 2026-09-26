@@ -1,0 +1,22 @@
+{
+  "name": "dgm-simspeed-cycles-investigation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "node typecheck.mjs",
+    "weather:kernel": "node weather-wasm.mjs",
+    "weather:prototypes": "node weather-prototype.mjs",
+    "weather:build": "node weather-build.mjs",
+    "weather:verify": "node weather-run.mjs",
+    "weather:browser": "node weather-browser-server.mjs",
+    "weather:profile": "node weather-profile.mjs --full",
+    "weather:product": "node weather-product-run.mjs",
+    "weather:report": "node weather-summarize.mjs",
+    "weather:audit": "powershell -NoProfile -File weather-audit.ps1"
+  },
+  "dependencies": {
+    "assemblyscript": "0.28.20",
+    "fflate": "0.8.3",
+    "typescript": "5.9.3"
+  }
+}

@@ -2,7 +2,10 @@
 // rectangles of one height, side walls merged along their edge, and a voxel mesher only for the
 // columns with caves or overhangs (a solid voxel gets a face wherever its neighbour is air). Each
 // tile emits its own faces, so a chunk depends only on its tiles and their neighbours' heights: a
-// terrain edit remeshes the chunks within one tile of the changed rectangle (`dirtyChunks`).
+// terrain edit remeshes the chunks within one tile of the changed rectangle (`dirtyChunks`). A
+// mine site's pit leaves its tiles' tops out (`cutout`), as the game hides the terrain under an
+// object's cutout; the site's model draws the pit's walls and floor in the hole. Nothing else
+// changes: the voxels, every wall and every other top stay, so the hole is only where the pit is.
 //
 // World space: X = x, Y = height, Z = −y (north is −Z). Faces wind counter-clockwise seen from
 // outside. Pure TypeScript, so it runs in Node tests and could run in a worker.
@@ -17,6 +20,10 @@ export interface TerrainSource {
   heights: Uint8Array;
   /** Tile index → 23 voxels (1 = solid), for columns that are not one solid run from z = 0. */
   columns: ReadonlyMap<number, Uint8Array>;
+  /** Tile index → a level whose top face is not drawn: a mine site's pit, whose model draws the
+   *  pit's walls and floor instead (as the game hides the terrain's top under an object's cutout).
+   *  Only the top at exactly that level is left out; the voxels and every wall stay. */
+  cutout?: ReadonlyMap<number, number>;
 }
 
 export interface MeshData {
@@ -116,6 +123,9 @@ export function meshChunk(src: TerrainSource, cx: number, cy: number): MeshData 
   const b = new QuadBuffer(w * h * 2);
   const hasColumns = columns.size > 0;
   const isCol = (i: number) => hasColumns && columns.has(i);
+  const cut = src.cutout && src.cutout.size > 0 ? src.cutout : null;
+  /** A heightfield tile whose top is cut out (it gets no top face, and merges with none). */
+  const isCut = (i: number) => !!cut && cut.get(i) === heights[i];
   /** Solid at (x, y, z)? Outside the map is air. */
   const solid = (x: number, y: number, z: number): boolean => {
     if (x < 0 || y < 0 || x >= W || y >= H || z < 0) return false;
@@ -130,17 +140,17 @@ export function meshChunk(src: TerrainSource, cx: number, cy: number): MeshData 
     for (let lx = 0; lx < w; lx++) {
       if (done[ly * w + lx]) continue;
       const i = (y0 + ly) * W + x0 + lx;
-      if (isCol(i)) {
+      if (isCol(i) || isCut(i)) {
         done[ly * w + lx] = 1;
         continue;
       }
       const z = heights[i];
       let rw = 1;
-      while (lx + rw < w && !done[ly * w + lx + rw] && heights[i + rw] === z && !isCol(i + rw)) rw++;
+      while (lx + rw < w && !done[ly * w + lx + rw] && heights[i + rw] === z && !isCol(i + rw) && !isCut(i + rw)) rw++;
       let rh = 1;
       grow: while (ly + rh < h) {
         const row = (y0 + ly + rh) * W + x0 + lx;
-        for (let k = 0; k < rw; k++) if (done[(ly + rh) * w + lx + k] || heights[row + k] !== z || isCol(row + k)) break grow;
+        for (let k = 0; k < rw; k++) if (done[(ly + rh) * w + lx + k] || heights[row + k] !== z || isCol(row + k) || isCut(row + k)) break grow;
         rh++;
       }
       for (let yy = 0; yy < rh; yy++) for (let xx = 0; xx < rw; xx++) done[(ly + yy) * w + lx + xx] = 1;
@@ -228,9 +238,10 @@ export function meshChunk(src: TerrainSource, cx: number, cy: number): MeshData 
       for (let x = x0; x < x1; x++) {
         const c = columns.get(y * W + x);
         if (!c) continue;
+        const cutAt = cut?.get(y * W + x);
         for (let z = 0; z < LAYERS; z++) {
           if (!c[z]) continue;
-          if (z + 1 >= LAYERS || !c[z + 1]) top(b, x, y, x + 1, y + 1, z + 1);
+          if ((z + 1 >= LAYERS || !c[z + 1]) && cutAt !== z + 1) top(b, x, y, x + 1, y + 1, z + 1);
           if (z > 0 && !c[z - 1]) bottom(b, x, y, x + 1, y + 1, z);
           if (!solid(x + 1, y, z)) east(b, x, y, y + 1, z, z + 1);
           if (!solid(x - 1, y, z)) west(b, x, y, y + 1, z, z + 1);

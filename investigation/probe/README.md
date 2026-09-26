@@ -5,7 +5,7 @@ under forced weather, and records what the game does; a runner builds the job, l
 it, and compares the records with the project's models.
 
 - [REPORT.md](REPORT.md): what was built, the choices made and why.
-- RESULTS.md: the first real batch (not run yet).
+- RESULTS.md: the first real batch (on the `investigation/probe` branch).
 - [INTEGRATION.md](INTEGRATION.md): proposals for the repository and the milestone run.
 
 ## Run it
@@ -25,6 +25,9 @@ once, and only for the plan it was printed for.
 
 - `--smoke`: one map (the M8 preview) for one game day, a few minutes.
 - `--only m2-rv,cal-rv2` or `--group Calibration`: some games (`--job-only` lists them).
+- The tall maps (terrain up to 22, PLAN §20 D172): make them with `npx tsx tools/probe-tall.ts` (it writes
+  `C:\dgm-probe\tall\` and checks each map with both validators), then play them as the group
+  `Tall maps`, with `--keep-mods`.
 - Any `.timber` paths on the command line are added as games of their own, with a Normal drought.
 - `--compare-only <run id>`: redo the verdicts and the contact sheet of a finished run.
 - `--restore-only`: put the game's settings, logs and saves back after an interrupted run.
@@ -39,25 +42,38 @@ another session, and a low processor load). `--no-wait` skips the wait.
 
 ## What stays on this machine
 
-Everything the game produces stays in `Documents\Timberborn\DGMProbe\`: the job, the heartbeat, `results\`
-(one JSON file per map, whole-map snapshots, the game's logs), `shots\` (the screenshots, never committed),
-`maps\` (the files played) and `sheet\` (the HTML contact sheet).
+Everything the probe produces stays in `C:\dgm-probe\` (Kyler's decision, outside his Timberborn folders):
+the job, the heartbeat, `results\` (one JSON file per map, whole-map snapshots, the game's logs),
+`shots\` (the screenshots, never committed), `maps\` (the files played), `sheet\` (the HTML contact
+sheet), `tall\` (the tall maps) and `runner\` (the backups a run restores from). The game is told the
+folder with `-dgmprobeHome`; `DGM_PROBE_HOME` changes it.
 
 ## Safety
 
-- The mod does nothing unless the game was started with `-dgmprobe` **and** a job file exists. A normal
-  launch never has that argument.
+- The mod does nothing unless the game was started with `-dgmprobe` and `-dgmprobeHome <folder>` **and** a
+  job file exists in that folder. A normal launch never has those arguments. It never writes inside
+  `Documents\Timberborn`: given a folder there, it stays off.
+- The game loads mods only from `Documents\Timberborn\Mods` (or the Steam Workshop), so DGM Probe is
+  installed there just before the launch and removed right after it. It sorts after every other mod, so the
+  game never rewrites the load order.
 - The runner never launches the game while it is running. Before a launch it records the game's settings
-  (the registry key), the Unity logs, the player data and every save file. Only DGM Probe is on during
-  the run. Afterwards it puts the settings, logs and player data back exactly, deletes any save the
-  probe's games made, and moves any other new file (an error report, say) into the run's folder.
+  (the registry key), the Unity logs, the player data, every save file, and a copy of every other small file
+  under `Documents\Timberborn`, the other mods' folders in `Mods` included. With `--keep-mods` it changes
+  no setting. Afterwards it puts the logs, player data and any changed mod file back, deletes any save the
+  probe's games made, and moves any other new file (an error report, a mod's session log) into the run's
+  folder, removing the folders that leaves empty. Steam Cloud's `steam_autocloud.vdf` files change at
+  every launch; they are reported, never put back. Last, after removing DGM Probe, it checks that nothing
+  new is left anywhere in `Documents\Timberborn` (`leftovers.json` in the run's folder); if anything is,
+  the run stops with exit code 6.
 - Graphics and speed changes are made in memory only, during probe runs.
 
 ## Remove the mod
 
+The runner removes it after every run. If a run was cut short:
+
 1. Close Timberborn.
 2. Delete the folder `Documents\Timberborn\Mods\DGMProbe`.
-3. Optionally delete `Documents\Timberborn\DGMProbe` (the results and screenshots).
+3. Optionally delete `C:\dgm-probe` (the results and screenshots).
 
 ## Files
 

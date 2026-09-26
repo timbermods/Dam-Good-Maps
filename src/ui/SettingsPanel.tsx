@@ -342,13 +342,13 @@ export function SettingsPanel(p: SettingsPanelProps) {
         <Slider id="ruins" label="Ruins and scrap" value={s.resources.ruins} min={25} max={300} step={5} unit="%" band={band("ruins", spec)} onChange={(v) => set((c) => (c.resources.ruins = v))} />
         <Pick id="relics" label="Relics" value={s.resources.relics} choices={OFF_SOME} band={band("relics", spec)} onChange={(v) => set((c) => (c.resources.relics = v))} />
         <Pick id="geothermal" label="Geothermal fields" value={s.resources.geothermal} choices={OFF_SOME} band={band("geothermal", spec)} onChange={(v) => set((c) => (c.resources.geothermal = v))} />
-        <Slider id="mines" label="Mine sites" value={s.resources.mineSites} min={0} max={4} band={band("mineSites", spec)} onChange={(v) => set((c) => (c.resources.mineSites = v))} />
+        <Slider id="mines" label="Mine sites" value={s.resources.mineSites} min={1} max={4} band={band("mineSites", spec)} onChange={(v) => set((c) => (c.resources.mineSites = v))} />
       </Section>
 
       <Section title="Advanced: start rules">
         <Pick id="start-area" label="Start area" value={s.start.area} choices={AREAS} band="The flat bench round the district center, and the land you need nearby." onChange={(v) => set((c) => (c.start.area = v))} />
         <Num id="rule-water" label="Water without stairs (tiles)" value={s.start.rules.waterWithin} min={4} max={40} band={`${band("waterWithin", spec)} Default ${d.waterWithin}.`} onChange={(v) => set((c) => (c.start.rules.waterWithin = v))} />
-        <Num id="rule-trees" label="Minimum starting trees" value={s.start.rules.treesWithin20} min={0} max={400} band={`${band("treesWithin20", spec)} Default ${d.treesWithin20}.`} onChange={(v) => set((c) => (c.start.rules.treesWithin20 = v))} />
+        <Num id="rule-wood" label="Minimum starting wood (logs)" value={s.start.rules.woodWithin20} min={0} max={800} band={`${band("woodWithin20", spec)} Default ${d.woodWithin20}.`} onChange={(v) => set((c) => (c.start.rules.woodWithin20 = v))} />
         <Num id="rule-bushes" label="Minimum starting bushes" value={s.start.rules.bushesWithin20} min={0} max={200} band={`${band("bushesWithin20", spec)} Default ${d.bushesWithin20}.`} onChange={(v) => set((c) => (c.start.rules.bushesWithin20 = v))} />
         <Num id="rule-ruins" label="No ruins within (tiles)" value={s.start.rules.ruinsWithin} min={0} max={60} band={`${band("ruinsWithin", spec)} Default ${d.ruinsWithin}.`} onChange={(v) => set((c) => (c.start.rules.ruinsWithin = v))} />
       </Section>

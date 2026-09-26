@@ -13,16 +13,17 @@ RESOURCE_BUILDING_RANGE = 20     # walk steps from a gatherer/lumberjack/scaveng
 
 # ---- difficulty: what the first days demand (official medians define Normal)
 DIFFICULTY = {
-    # The start requirements (PLAN.md §5.6, D85, Kyler 2026-09-24): water without stairs within
-    # 12/20/28 tiles' walk on the start's level (the workshop study: official median 13, p90 20.4),
-    # living trees 60/40/20 and living bushes 40/30/20 within 20 tiles' walk; targets with an
+    # The start requirements (PLAN.md §5.6, D85, Kyler 2026-09-24, amended by D153 and D164): water
+    # without stairs within 12/20/28 tiles' walk over the map's own ground and slopes (the workshop
+    # study: official median 13, p90 20.4), starting wood 120/80/40 logs of grown trees (D164: the
+    # old 60/40/20 trees at 2 logs a tree) and living bushes 40/30/20 within 20 tiles' walk; targets with an
     # advisory warning: badwater at least 30/15/8 (official nearest badwater median 14.8, p25 10),
     # ruins 20/15/12.
-    "easy":   {"water_dist": 12, "trees_r20": 60, "bushes_r20": 40, "badwater_min": 30, "ruin_min": 20,
+    "easy":   {"water_dist": 12, "wood_r20": 120, "bushes_r20": 40, "badwater_min": 30, "ruin_min": 20,
                "drought_days": 4, "colony": 40},
-    "normal": {"water_dist": 20, "trees_r20": 40, "bushes_r20": 30, "badwater_min": 15, "ruin_min": 15,
+    "normal": {"water_dist": 20, "wood_r20": 80, "bushes_r20": 30, "badwater_min": 15, "ruin_min": 15,
                "drought_days": 9, "colony": 50},
-    "hard":   {"water_dist": 28, "trees_r20": 20, "bushes_r20": 20, "badwater_min": 8, "ruin_min": 12,
+    "hard":   {"water_dist": 28, "wood_r20": 40, "bushes_r20": 20, "badwater_min": 8, "ruin_min": 12,
                "drought_days": 30, "colony": 50},
 }
 
@@ -42,11 +43,11 @@ def reservoir_needed(difficulty: str) -> float:
 # aggregates official_small / _medium / _large / _max; small = 50x50 and 100x50).
 SIZE_ANCHORS = (3750, 16384, 36864, 65536)
 DENSITY = {
-    "scrap_per_1k_tiles": (840, 705, 236, 237),
-    "trees_per_10k": (1715, 1061, 534, 500),
-    "bushes_per_10k": (265, 92, 40, 38),
+    "scrap_per_1k_tiles": (840, 705, 236, 235),       # official-baselines.json class medians (Nomads,
+    "trees_per_10k": (1715, 1061, 544, 559),          # Oasis and each rate's clear outliers left out)
+    "bushes_per_10k": (265, 92, 40, 44),
     "water_strength_per_10k": (5.0, 2.2, 1.2, 1.1),   # official 8.5/1.5/1.0/1.1; floor of ~2 on small maps keeps rivers visible
-    "ruin_field_columns": (21, 31, 40, 41),
+    "ruin_field_columns": (19, 32, 39, 42),
     "basins_ge20": (1.5, 4, 15.5, 15),                 # natural basins of 20+ tiles per map (Lakes and basins)
 }
 
@@ -102,8 +103,8 @@ BUSHES = {
 # ---- ruins (calibration "ruins"; official aggregates)
 RUINS = {
     "scrap_per_1k_tiles": 280,       # official median 281 (p10 152, p90 724)
-    "height_shares": {"H1": 0.282, "H2": 0.224, "H3": 0.173, "H4": 0.103,
-                      "H5": 0.079, "H6": 0.052, "H7": 0.042, "H8": 0.044},
+    "height_shares": {"H1": 0.284, "H2": 0.221, "H3": 0.163, "H4": 0.1,     # official-baselines.json
+                      "H5": 0.084, "H6": 0.06, "H7": 0.038, "H8": 0.05},      # (Nomads, Oasis left out)
     "field_columns": [20, 25, 30, 38, 45, 55, 70],   # official field size median 38, max per map median 58
     "singles_share": 0.05,           # official: 97% of columns sit in fields of >= 10
     "center_bias": 0.35,             # mild lean of tall columns inward (official Spearman median -0.06, p10 -0.39)

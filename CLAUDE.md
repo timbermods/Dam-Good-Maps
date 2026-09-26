@@ -4,6 +4,23 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 
 ## Standing rules
 
+- Before any editor work, read `EDITOR_PLAN.md`. It opens with the editor's vision (Kyler's decisions, PLAN §20
+  D158, D179–D188); what it lists as superseded must not come back.
+- Docs are part of done (PLAN §20, D188):
+  - any change that alters how something works updates its living document in the same PR (`EDITOR_PLAN.md` for
+    the editor, `PLAN.md` for the product, `ROADMAP.md` for steps, `CLAUDE.md` for the rules, `docs/STATUS.md`
+    for the current state); a PR that changes behaviour without its doc isn't finished;
+  - at every milestone boundary, skim the living docs against what was just built, fix any drift, and note it
+    in the progress log;
+  - retired terms (`tools/retired-terms.json`) must not reappear in the living docs, the interface text or the
+    editor code; CI flags them. Add a term when a feature is retired;
+  - `docs/README.md` says which documents are living and which are history. History (progress logs,
+    investigations, the decision log) stays as written; mark superseded parts, never rewrite them.
+- Investigations commit reports, code, small samples and a few captures. Large generated results (bulk JSON,
+  thousands of files, anything over a few MB) stay out of git: in `investigation/<name>/local/` (gitignored) or
+  attached to a GitHub Release, with the report saying how to regenerate them (PLAN §20, D195). Don't rewrite
+  history for what's already merged. Every investigation prompt, for Claude or Codex, includes this rule; the
+  text to paste is in `investigation/README.md`.
 - Claude never launches or drives Timberborn, with one exception: the DGM Probe runner may launch it for an
   automated probe batch, but only after asking Kyler explicitly and getting Kyler's yes in chat, every time (PLAN
   §20, D117).
@@ -66,10 +83,15 @@ text.
   - Save to Timberborn is tagged `save-to-timberborn-done`, and Pick a place `pick-a-place-done`;
   - the start and edge rules are tagged `start-edge-rules-done`; the Real places second round
     `real-places-2-done`; contaminated ground as a layer `look-contamination-done`, once Kyler approves it;
+  - the Map look fixes, once Kyler approves each: badwater blending `look-badwater-done`; mine sites and ruins
+    `look-mine-ruins-done`; waterfalls `look-waterfalls-done`;
   - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
   - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
   - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
   - the Weather view (after the 3D stages, before M10) is tagged `weather-view-done`.
 - When dev changes `deploy.yml`, keep its noindex step.
+- The deploy workflow can publish a branch at `/preview/` (noindex): run it by hand with `preview_ref=<branch>`
+  (Live editing's preview, refreshed after every iteration). Small changes to the deploy workflow itself are
+  released as their own tag, like `preview-workflow-done`.
 - Tokens and secrets are Kyler's to create and store with `gh secret set`. Never ask Kyler to paste one into chat.
 - Kyler has said Claude may merge tagged releases into `main` and manage the Pages setting.

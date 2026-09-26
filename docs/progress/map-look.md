@@ -302,3 +302,213 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
   legend) and `tests/e2e/look-outline.spec.ts` (Markers off: no outline; on: the outline; a soil
   update without contamination: none). The walls' lip shows the top's own ground under
   contamination (it was the rust).
+
+Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the live check now runs inside the deploy workflow; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged: no map file changes).
+
+### Badwater blends into clean water (2026-09-25, branch `look/badwater-blend`)
+
+- Kyler (D177): mixed water showed dark red blotches that read like stains; in the game badwater
+  blends smoothly into clean water. Each water tile is now coloured by its badwater share, blended
+  over the connected water up to 3 tiles away (`waterMesh.ts` `blendedBadwater`: a binomial kernel
+  along rows, then columns, never across dry ground or a fall) and shared at the tops' corners, so
+  a front is a gradient over about six tiles. The colour slides from clean water's to badwater's by
+  `badwaterShare` (`palette.ts`, the share to the power 0.75, also as GLSL for any other water
+  shader), with no streaks. Clean water draws the same pixels as before.
+- Badwater is the game's murky red-brown: pure badwater a quarter level deep, the usual depth on our
+  maps, lands on #4B3C38 on screen (the game's #4B3C37, measured by Kyler). Deeper it darkens, so it
+  stays at least 6 L* below clean water of the same depth (the clean-look rule; its test is
+  unchanged). Up close it is duller than clean water (no crests, a fifth of the glints), and its
+  glowing bubbles grow denser with the share. The legend's mixed-water swatch shows the gradient.
+- Captures, the colour table and how it was measured: [look/badwater-blend](../look/badwater-blend/README.md)
+  (`tools/capture-badwater.ts`, and `--measure`). Waiting on Kyler: how dark deep badwater gets (A as
+  built, or B, nearer #4B3C37 when deep).
+- Speed (information): the blend costs about 1 ms per water update at 256²; meshing all of a 256²
+  map's water takes 5–6 ms, as before; only the chunks whose blended water changed are remeshed.
+- **Tests updated to Kyler's decision (D148):**
+  - `tests/unit/look-water-slopes.test.ts`: "shows each tile's own badwater share on its top" (D115's
+    rule, which D177 replaces) is now "blends the badwater share between tiles on the tops, so water
+    partly bad turns smoothly (D177)".
+  - `tests/unit/look-readable.test.ts`: badwater is now the game's measured colour, lighter than the
+    red-black before, so its margins in luminance changed; the order is unchanged. In "keep their
+    order: dead trees, moist, dry ground, badwater", dry ground must be 0.15 lighter than badwater
+    (was 0.24; 0.156 today) and clean shallows 0.3 lighter (was 0.4; 0.308 today). In the
+    contamination test, contaminated ground from afar must be 0.05 lighter than badwater (was 0.09;
+    0.059 today, about 7 L*).
+- New tests: `tests/unit/look-badwater.test.ts` (8): the gradient across a straight and a diagonal
+  front and a narrow tongue of badwater (no step above 0.3 between neighbouring corners, at least 4
+  tiles of ramp), clean water unchanged, a pure pool stays pure, no blending across dry ground or a
+  fall, remeshing every chunk the blend reaches, the measured colour, the share's curve, and the
+  shader (no streaks).
+
+**Kyler's review of #41 (2026-09-25; D177 on dev): not approved yet, three changes.** Deep badwater
+stays darker with depth (option A); the three loosened margins are accepted if the order of
+lightness holds with the final colour; the shallow weak spot is accepted.
+- **One shared water palette** (`src/render3d/waterPalette.ts`): clean water's and badwater's
+  colours (body, troughs, streaks), their opacity by depth, the contamination blend and the
+  calibration (the method, as #38's colour check, and the on-screen targets) in one module. The
+  water shader reads every colour and the water's opacity only through `WATER_GLSL`, generated from
+  its values (the Light look runs the same shader code); `palette.ts` re-exports them for the legend
+  and tests; `tools/capture-badwater.ts --measure` measures against its targets. Clean water draws
+  the same pixels as before. `tests/unit/water-palette.test.ts` fails if a water colour is defined
+  anywhere else in `src/`, or if the water shader has a colour of its own.
+- **The warm tint:** water partly bad now darkens in proportion to its share (luminance, in linear
+  light) and turns its hue to a warm red early (over half way at a quarter bad), then to badwater's
+  own, so a mixed river reads as tainted: the River Valley river above the badwater ditches
+  (about 40% bad) is now red, where it looked like deep clean water.
+- **Placeholders:** badwater's body, deep colour, troughs (none yet), streaks, opacity and the
+  tint's hue wait for Kyler's approval of #38's badwater (`WATER_PLACEHOLDERS`); then they come from
+  #38's calibration, the margins are re-checked, and the captures are made again.
+- Tests: `look-badwater.test.ts`'s colour tests now check the new rule (the blend's curves, luminance
+  in proportion, warm at a quarter bad, the placeholders); `water-palette.test.ts` is new (3).
+
+**#38's badwater, as Kyler approved it (2026-09-25; #38 at e63a3ff).** Kyler: "#38's badwater is
+approved; use its final colours and opacity for #41."
+- **#38's badwater in the shared palette:**
+  - its on-screen targets from #38's `check:colour` (pure badwater 0.25 deep over a poisoned bed,
+    70° down): typical #6E3431, troughs #5E2E2B, streaks #7C4538;
+  - its opacity (`badwaterOpacity`): 0.975–0.995 by depth, 0.52 less at its shallow edges, and at
+    least 0.85 at a grazing angle;
+  - its matte surface: a twelfth of clean water's glints and glint, and a trace of the sky.
+- **Calibrated to #38:** the Standard look's inputs are calibrated so it lands on #38's targets.
+  `--measure` hits all three exactly (0 codes off; 2 allowed). Badwater's troughs and streaks
+  darken with depth as its body does.
+- **Deep badwater stays option A,** re-derived for the crimson (`badDeep`, absorbing 1.85 a level).
+  It stays at least 6.2 L* below clean water at every depth.
+- **Tint:** it takes the crimson body's hue, so tainted water and badwater agree. The placeholders
+  are gone.
+- **The three loosened margins, re-checked:** the order of lightness holds with the crimson. In
+  luma: dead trees 0.784, moist ground 0.610, dry ground 0.401, contaminated ground from afar 0.303
+  at the least, badwater 0.251. All three accepted margins hold:
+  - dry ground is 0.150 lighter than badwater (test 0.15);
+  - clean shallows are 0.301 lighter (test 0.3);
+  - contaminated ground from afar is 0.053 lighter (test 0.05).
+
+  They are thin: badwater sits just under each of them.
+- **Captures:** all made again. The tint views of River Valley 4242 are centred on the river above
+  the ditches (37% bad). `deep-badwater-options.jpg` is gone, since Kyler chose A.
+
+**Kyler approved #41, with one change (2026-09-26):** "partly contaminated water leans wine-mauve,
+almost purple, because teal and crimson blend through purple. Blend through a warm midpoint instead
+(the game's measured mixing zone, about #2E444C, toward warm brown), so mixed water goes teal, then
+warm brownish, then crimson, and never looks purple or mauve-grey. Make the tint a little steeper,
+so 10–25% bad already reads warm."
+- **The hue now follows a path** in `waterBlend`: clean teal, then the mixing zone's teal-grey
+  (#2E444C, `WATER.mixing`, at a fifth of the way), then a warm brown (`WATER.warm`, half way), then
+  #38's crimson. It moves 1 - (1 - s)^6 of the way, steeper than before. The brown leans a little
+  yellow, so no step of the path is purple: blue drops below green before red rises above it.
+  Luminance still follows the share in proportion, and pure badwater is still exactly #38's body.
+- **On screen, 0.8 deep:** 5% bad #37434B (teal-grey), 10% #483D35 (warm brownish), 25% #4E332F
+  (red-brown), 50% #4A2B2A (crimson-brown). #38's targets still land exactly, and clean water is
+  unchanged.
+- **Tests:** `look-badwater.test.ts` checks the new path.
+  - New: no hue from violet to magenta (250°–350°) at any share, depth or distance from a bank; at
+    10% and 25% bad, red is above blue by 10 codes or more, with an orange-red hue; the path passes
+    the mixing zone's hue.
+  - Changed: the continuity bound for 1% more bad is 0.06 per channel (was 0.04). The steeper turn
+    Kyler asked for peaks at 0.048 in bright shallows.
+- **The dry-ground margin is fragile:** dry ground is 0.1501 lighter than badwater against the
+  accepted 0.15 (noted in `look-readable.test.ts`). The badwater body did not change, so it still
+  passes; any lighter badwater would fail it.
+- All captures made again.
+
+### Mine sites and ruins, models of our own (2026-09-25, branch `look/mine-site`, D178)
+
+- Kyler: a small fix round, judged from before and after captures (no blind review). Captures and
+  what to look at: [docs/look/mine-ruins/](../look/mine-ruins/README.md), made with the new
+  `tools/capture-objects.ts` (the same cameras before and after, side by side, with greyscale and
+  colour-blindness sheets; `--bench` measures frame times).
+- **Mine sites** (`src/render3d/entities3d.ts`, `mesh.ts`): a pit 1.6 levels deep sunk into the
+  middle 3 × 3 tiles of the 5 × 5 footprint. The terrain leaves those tops out (the mesher's
+  `cutout`, as the game hides the terrain under the site; every other top and wall stays) and the
+  model closes the hole: earthen walls and floor showing about #373A34 in the pit's shade, with
+  roots, rubble, cracks and a ladder; a dull rusty frame (#844D2F); scaffolding at each corner with
+  pale platforms, crates and planks (#A78E65) and beams over the edge, one with a bucket on a rope.
+  About 1,200 triangles, a few sites a map. It does not grow from afar (its footprint is 13 pixels
+  across in a view of a whole 256² map); with **Markers** on, the terrain shader outlines the
+  footprint in orange between dark edges, a few pixels wide from any distance.
+- **Ruins**: ruined scaffold towers, a storey per level: thin rusty posts (#8D5631), a beam round
+  every storey, braces on some faces, beige slab panels (#B8A775) with some missing, tilted or
+  broken, the top storey often only partly there, ivy (#405634) on moist ground. The file's
+  variant (A to E) now reaches the 3D view; each has two layouts that alternate up a column.
+  Columns turn by (x + 2y) mod 4, so no two neighbours turn alike, and no layout looks the same
+  turned. Under 9 pixels a tile each storey is a solid block (the object shader picks close-up or
+  far parts per instance): at most 228 triangles close up, 10 from afar.
+- **Frame time** (information, the 256² map above, orbiting): on the RTX 4080 the whole map drew
+  in 2.5 ms of GPU time (2.7 before) and the ruin field in 0.6 ms (1.3); on the integrated Radeon
+  with the page's CPU 4× slower, 5.0 ms (5.5) and 5.1 ms (5.2), with CPU time up from 1.6 to 2.6
+  ms (17 more draw calls: 124 against 107). Frames stayed at the display's rate (156 to 165 a
+  second).
+- **Tests updated to Kyler's decision (D178):** `tests/unit/look-water-slopes.test.ts`'s "ruins
+  are grey-brown metal, apart from rusty contaminated ground" checked the old grey-brown deck; it
+  is now "stand apart from rusty contaminated ground: rusty posts and beige panels far lighter,
+  and lighter from afar" (Kyler's colours: posts 0.13 lighter than the rust, panels 0.35, both far
+  colours 0.12, panels far less red). `tests/unit/look.test.ts`'s "…ruins as scrap heaps…" is
+  renamed "…ruins as scaffold storeys…" (its name was older than the scaffolds).
+- **New tests:** `tests/unit/look-mine-ruins.test.ts` (14: footprints in every orientation, the
+  cutout and the hole closed, Kyler's colours as drawn, greyscale, the outline with Markers,
+  variants, turns, layouts, ivy, far blocks, the legend) and `tests/contract/look-mine-ruins.test.ts`
+  (2: the live check's download for seed 4242 keeps sha256 `5118b6a6…`; a generated map's
+  variants reach the view and its sites and ruins stay within their footprints).
+- **Kyler's second round (2026-09-25).** Ruins approved with two tweaks, the mine site one more
+  round (PLAN §20 D178):
+  - **Ruins from afar:** each storey's block is now the scaffolding's rust (#8D5631, its top a
+    brighter rust) with a pale panel set in where it has one, so a ruin field reads as orange
+    scaffolding, not sandstone. At most 22 triangles from afar.
+  - **Ivy:** on every storey of a column on moist ground (it was the lowest three), leafy masses
+    over every face in #405634 and a brighter green (#5C803D), with the clumps and strands before,
+    and a patch of it on the far blocks. At most 294 triangles close up.
+  - **Mine sites:** the rusty frame runs round the edge of the whole footprint and the pit (1.6
+    levels deep) fills the rest, so the terrain leaves all 25 of the footprint's tops out, as the
+    game's cutout does; the model covers them. Scaffold towers stand on the frame's corners, their
+    inner legs down in the pit; rails on two sides carry two beams across the pit, a crossbar and
+    a bucket on a rope, one structure. More of the dark interior shows: roots hanging from the rim
+    and running over the floor to a shaft in the middle. About 1,200 triangles.
+  - **The Markers outline** keeps its look. With the footprint's tops now the pit's, it runs on
+    the tiles just outside the footprint and turns round its corners.
+  - Kyler's in-game reference screenshots were looked at for the feel only, never copied.
+  - Frame time (information), after: RTX 4080 whole map 3.1 ms of GPU time, 0.4 ms of CPU;
+    integrated Radeon with the CPU 4× slower, 5.0 ms and 1.4 ms, 165 frames a second.
+  - Tests follow the round: the cutout is the whole footprint, the outline runs just outside it,
+    the far blocks are mostly rust, ivy is on every storey (the ivy test is renamed "…on every
+    storey, dark and brighter, close up and from afar"), and the bytes are unchanged.
+- **Kyler's note on the ivy (2026-09-25).** The mine site and the ruins from afar approved; the
+  second round's ivy was too heavy and chunky (dark green cubes filling every storey and hiding
+  the panels). Now it drapes as the game's does, on moist columns only:
+  - on about half the storeys, from the foot up, chosen from the tile: the foot storey the most,
+    the ones above a little (`ruinIvy`);
+  - flat leaf clusters clinging to the faces beside the posts and along the foot, fewer higher up,
+    a few thin strands hanging from the beams with a leaf at the tip; no clumps;
+  - mostly #405634, a few leaves the brighter #5C803D;
+  - the middle of every face stays clear, so the panels show through (tested);
+  - from afar, a small patch low on a column's foot only: the rust still dominates.
+  - At most 250 triangles close up, 20 from afar.
+  - The ivy test is now "drape ivy over about half the storeys of a column on moist ground, the
+    most at its foot, as flat leaves that leave the panels showing".
+- **The ivy, between the last two rounds (2026-09-26).** The draped ivy was too faint: moist
+  columns read almost like dry ones. Now, on moist columns only:
+  - over about the lower half of the storeys (`ruinIvy`): the foot clad on every face, the
+    storeys above it clearly green on three faces, the highest ivy a few clusters (a column 4 high:
+    storeys 1 and 2 clearly green, 3 a little; 2 high: the foot clad, a little on the second);
+  - flat leaf clusters beside both posts and spreading over the lower part of each face, larger
+    low down, the brighter #5C803D on the clusters' edges as highlights, #405634 most of it;
+  - 2 to 4 strands a storey hanging from the beams, with leaves along them;
+  - the middle of each face stays clear above its lower part, so the panels show (tested);
+  - from afar, a band of ivy low on the foot (every face) and on the storey above (two faces),
+    the rust still most of each block.
+  - At most 288 triangles close up, 24 from afar.
+  - The ivy test is now "drape ivy over the lower half of a column's storeys on moist ground, the
+    most at its foot, thinning upward, as flat leaves that leave the panels' middles showing".
+- **The pinned download (2026-09-26).** Merging `dev` brought the start and edge rules (#44), which
+  change generated maps on purpose: seed 4242 at 128² River Valley now downloads as sha256
+  `e4f2f72c…` (it was `5118b6a6…` since M8). `tests/contract/look-mine-ruins.test.ts` pins `dev`'s
+  new value; this branch changes no bytes of its own (no `src/core` change against `dev`).
+
+**The mine pit and badwater (Kyler's review of D177 and D178, 2026-09-26).** Merging `dev` brought
+#42's mine sites: its pit (#373A34, L* 23.9) is now darker than #38's approved crimson badwater
+(#6E342E, L* 29.3), where it was lighter than the red-black badwater before. Kyler chose to keep both
+colours and flip the order, as in the game. Test updated per D148:
+`tests/unit/look-mine-ruins.test.ts`'s "read in greyscale from above: a dark pit, a rusty frame,
+pale wood, and apart from badwater sources" checked the pit 0.05 (luma) lighter than badwater; it is
+now "…: a dark pit, darker than badwater, …" and checks the pit at least 5 L* darker than badwater
+(5.4 today). Every capture was made again on the current maps (dev's start and edge rules changed
+them), with the before site built from current `dev`.

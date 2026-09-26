@@ -20,11 +20,14 @@ describe("the meanings in lightness", () => {
   it("keep their order: dead trees, moist, dry ground, badwater", () => {
     expect(lum(DEAD_TREE)).toBeGreaterThan(lum(GROUND.moistLow) + 0.1);
     expect(lum(GROUND.moistHigh)).toBeGreaterThan(lum(GROUND.dry) + 0.2);
-    expect(lum(GROUND.dry)).toBeGreaterThan(lum(WATER.bad) + 0.24);
+    // badwater is #38's approved crimson (D177), lighter than the red-black it was, and still below
+    // dry ground and clean shallows. Kyler accepted these margins while the order holds. FRAGILE:
+    // dry ground clears its margin by only 0.0001 (0.1501 over 0.15); clean shallows by 0.301
+    expect(lum(GROUND.dry)).toBeGreaterThan(lum(WATER.bad) + 0.15);
     // clean water's body is lighter than badwater's at every depth (Kyler's rule: badwater stays
     // clearly darker than clean water; the body is the colour the shader draws before its light)
     for (const d of [0.05, 0.25, 0.5, 1, 2, 3, 5]) expect(lum(waterBody(d, false)) - lum(waterBody(d, true))).toBeGreaterThan(0.05);
-    expect(lum(WATER.shallow)).toBeGreaterThan(lum(WATER.bad) + 0.4);
+    expect(lum(WATER.shallow)).toBeGreaterThan(lum(WATER.bad) + 0.3);
     // living trees are dark, dead trees nearly white
     expect(lum(DEAD_TREE) - lum(LIVING_TREE)).toBeGreaterThan(0.55);
     // a dam site's stripes: light and dark
@@ -65,10 +68,11 @@ describe("contamination", () => {
       expect(dryVein).toBeGreaterThan(lum(contaminatedGround(0, l, false)) + 0.02);
       for (const m of [15, 150]) expect(lum(contaminatedGround(m, l, false)) - wetVein).toBeGreaterThan(0.25);
       // from afar, where the veins are too fine to see, the ground is darker than clean ground,
-      // and still well lighter than badwater
+      // and still lighter than badwater (by 0.053 at the least, about 4 L*, since badwater is #38's
+      // crimson, D177; by 0.18 before, when it was red-black)
       expect(lum(groundColor(0, 0, false)) - lum(contaminatedGround(0, l, true))).toBeGreaterThan(0.03);
       for (const m of [15, 150]) expect(lum(groundColor(m, 0, false)) - lum(contaminatedGround(m, l, true))).toBeGreaterThan(0.06);
-      for (const m of soils) expect(lum(contaminatedGround(m, l, true))).toBeGreaterThan(lum(WATER.bad) + 0.09);
+      for (const m of soils) expect(lum(contaminatedGround(m, l, true))).toBeGreaterThan(lum(WATER.bad) + 0.05);
     }
     // the most contaminated: bright veins, and a clear stain from afar
     expect(lum(contaminationVein(1, false)) - lum(GROUND.dry)).toBeGreaterThan(0.2);

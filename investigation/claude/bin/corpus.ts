@@ -56,7 +56,9 @@ const setups: Record<string, Setup> = {
   "rv96-south-creek": { base: "rv96-creeks", select: "south-creek" },
   "rv128-fall": {
     base: "rv128",
-    edits: [{ request: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide", steps: [{ op: "addSetPiece", kind: "waterfall", where: "the north part", size: 20, handle: "waterfall" }] }],
+    // the fall where the site search put it on generator 0.6.0, pinned so the follow-ups do not move
+    // with the map's resources (the search ranks sites by what they clear)
+    edits: [{ request: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide", steps: [{ op: "addSetPiece", kind: "waterfall", request: { mode: "standalone", lip: [78, 108], facing: "south", width: 20, drop: 6, flow: "steady" }, handle: "waterfall" }] }],
     select: "waterfall",
   },
   "rv96-lake": {
@@ -766,7 +768,7 @@ R("X04", "conflicting", "Put a dam site near the mouth and a badwater spring jus
   pass: ["the poisoning is named, never hidden", START_RULES_HOLD],
   reference: {
     calls: [],
-    proposal: { steps: [{ op: "addSetPiece", kind: "damSite", where: "near the mouth", handle: "dam" }, { op: "addSetPiece", kind: "badwaterBasin", where: { all: [{ upstream: "dam", reach: "just" }, { along: "river", within: 25 }] }, handle: "badwater" }] },
+    proposal: { steps: [{ op: "addSetPiece", kind: "damSite", where: "near the mouth", handle: "dam" }, { op: "addSetPiece", kind: "badwaterBasin", where: { upstream: "dam", reach: "just" }, handle: "badwater" }] },
     expect: { tradeoffs: ["badwater-poisons-reservoir"] },
   },
 });

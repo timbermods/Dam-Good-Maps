@@ -1,0 +1,757 @@
+{
+  "id": 47,
+  "family": "polar",
+  "name": "Svalbard valley",
+  "lat": 78.22,
+  "lon": 15.65,
+  "size": 128,
+  "requested": {
+    "lat": 78.22,
+    "lon": 15.65,
+    "size": 128
+  },
+  "choices": [
+    {
+      "mpt": 60,
+      "metrics": {
+        "min": -39.485694885253906,
+        "max": 742.926513671875,
+        "relief": 523.0068607330322,
+        "fullRelief": 782.4122085571289,
+        "seaProxy": 0.080810546875,
+        "flatShare": 0.15178571428571427,
+        "steepShare": 0.000992063492063492,
+        "channelCells": 98,
+        "channelIndex": 1914
+      },
+      "prediction": {
+        "score": 88.32384285094246,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 60,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 30,
+      "metrics": {
+        "min": -13.975774765014648,
+        "max": 414.0281677246094,
+        "relief": 362.4896357059479,
+        "fullRelief": 428.003942489624,
+        "seaProxy": 0.037353515625,
+        "flatShare": 0.12946428571428573,
+        "steepShare": 0.003472222222222222,
+        "channelCells": 113,
+        "channelIndex": 3533
+      },
+      "prediction": {
+        "score": 90.18020290798611,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 30,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 120,
+      "metrics": {
+        "min": -229.51197814941406,
+        "max": 995.5379638671875,
+        "relief": 947.2998657226562,
+        "fullRelief": 1225.0499420166016,
+        "seaProxy": 0.12646484375,
+        "flatShare": 0.1212797619047619,
+        "steepShare": 0,
+        "channelCells": 92,
+        "channelIndex": 2527
+      },
+      "prediction": {
+        "score": 85.80908203125,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 120,
+        "riverVerified": false
+      }
+    }
+  ],
+  "selected": {
+    "mpt": 60,
+    "metrics": {
+      "min": -39.6703987121582,
+      "max": 815.33740234375,
+      "relief": 525.1529846191406,
+      "fullRelief": 855.0078010559082,
+      "seaProxy": 0.07867431640625,
+      "flatShare": 0.13385826771653545,
+      "steepShare": 0.006120816929133859,
+      "channelCells": 232,
+      "channelIndex": 6906
+    },
+    "prediction": {
+      "score": 88.2148230845534,
+      "verdict": "promising",
+      "warnings": [],
+      "suggestions": [],
+      "metresPerTile": 60,
+      "riverVerified": false
+    }
+  },
+  "vertical": {
+    "min": -39.6703987121582,
+    "max": 815.33740234375,
+    "levels": 15,
+    "gamma": 1,
+    "cliffShare": 0.000472411186696901,
+    "padShare": 0.5947971781305115
+  },
+  "pixelMetres": 31.209903683481265,
+  "passed": true,
+  "directPassed": true,
+  "firstPlanPassed": true,
+  "legacyPassed": true,
+  "current": {
+    "passed": true,
+    "failures": [],
+    "waterDistance": 1,
+    "shore": 12256,
+    "retainedLegacyFailures": [],
+    "policy": "LOCAL D151–D153 adapter; Normal start; base load/design/resource checks; water amount, connected-body size and outflow advisory; canonical settle required; D164 log thresholds pending shared implementation"
+  },
+  "checks": [
+    {
+      "id": "file.size",
+      "class": "load",
+      "ok": true,
+      "value": "128x128",
+      "limit": "4..256",
+      "message": "map is 128×128 (the game allows 4–256 per side)",
+      "severity": "info"
+    },
+    {
+      "id": "file.layers",
+      "class": "load",
+      "ok": true,
+      "value": 23,
+      "limit": 23,
+      "message": "23 voxel layers (exactly 23)",
+      "severity": "info"
+    },
+    {
+      "id": "file.version",
+      "class": "load",
+      "ok": true,
+      "value": "1.1.2.4-52e959e-sw",
+      "limit": "1.1.2.4-52e959e-sw",
+      "message": "version 1.1.2.4-52e959e-sw, version.txt 1.1.2.4-52e959e-sw",
+      "severity": "info"
+    },
+    {
+      "id": "file.singletons",
+      "class": "load",
+      "ok": true,
+      "message": "all present, WaterSimulationMigrator.IsMigrated true",
+      "severity": "info"
+    },
+    {
+      "id": "file.arrays",
+      "class": "load",
+      "ok": true,
+      "value": 1,
+      "limit": 1,
+      "message": "every packed array has W·H tokens per slot",
+      "severity": "info"
+    },
+    {
+      "id": "file.metadata",
+      "class": "load",
+      "ok": true,
+      "message": "metadata 128×128",
+      "severity": "info"
+    },
+    {
+      "id": "file.thumbnail",
+      "class": "load",
+      "ok": true,
+      "message": "960×540 JPEG",
+      "severity": "info"
+    },
+    {
+      "id": "entities.templates",
+      "class": "load",
+      "ok": true,
+      "message": "every template is in the common collections",
+      "severity": "info"
+    },
+    {
+      "id": "entities.enums",
+      "class": "load",
+      "ok": true,
+      "message": "every orientation is a valid enum name",
+      "severity": "info"
+    },
+    {
+      "id": "entities.components",
+      "class": "load",
+      "ok": true,
+      "message": "required components present",
+      "severity": "info"
+    },
+    {
+      "id": "entities.ids",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "0 duplicate or malformed ids",
+      "severity": "info"
+    },
+    {
+      "id": "entities.placement",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every object would load",
+      "severity": "info"
+    },
+    {
+      "id": "start.clear",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "nothing overlaps the start",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.max_height",
+      "class": "design",
+      "ok": true,
+      "value": 16,
+      "limit": 16,
+      "message": "highest column 16 (the in-game editor's limit is 16)",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.top_layer_free",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "layer 22 is empty",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.single_floor",
+      "class": "design",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "one floor per tile",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.supported",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "all terrain is supported",
+      "severity": "info"
+    },
+    {
+      "id": "slopes.connect",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "610 slopes join level z to z+1",
+      "severity": "info"
+    },
+    {
+      "id": "start.count",
+      "class": "load",
+      "ok": true,
+      "value": 1,
+      "limit": 1,
+      "message": "1 StartingLocation(s) (a vanilla map needs exactly one)",
+      "severity": "info"
+    },
+    {
+      "id": "start.flat",
+      "class": "load",
+      "ok": true,
+      "message": "the district center's 3×3 is flat ground at the start level",
+      "severity": "info"
+    },
+    {
+      "id": "start.entrance",
+      "class": "load",
+      "ok": true,
+      "where": {
+        "tiles": [
+          [98,94]
+        ]
+      },
+      "message": "entrance tile (98,94) is free ground at level 2",
+      "severity": "info"
+    },
+    {
+      "id": "water.settles",
+      "class": "playability",
+      "ok": true,
+      "value": 2176,
+      "limit": 3072,
+      "message": "the water settles after 2176 ticks (2.8 days)",
+      "severity": "info"
+    },
+    {
+      "id": "water.no_flood",
+      "class": "playability",
+      "ok": true,
+      "value": 0.267,
+      "limit": 0.35,
+      "message": "27% of the map is under water (at most 35%; official maps reach 40% at p90)",
+      "severity": "info"
+    },
+    {
+      "id": "water.clean_exists",
+      "class": "playability",
+      "ok": true,
+      "value": 4371,
+      "limit": 327,
+      "message": "4371 tiles of clean water (at least 2% of the map, 327)",
+      "severity": "info"
+    },
+    {
+      "id": "water.outflow",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every source's water drains to a map edge or a planned lake",
+      "severity": "info"
+    },
+    {
+      "id": "water.clean_reach",
+      "class": "playability",
+      "ok": true,
+      "value": 3831,
+      "limit": 40,
+      "message": "the largest body of clean water badwater never reaches has 3831 tiles (at least 40)",
+      "severity": "info"
+    },
+    {
+      "id": "water.badwater_contained",
+      "class": "playability",
+      "ok": true,
+      "applicable": false,
+      "message": "no badwater basin with a planned outlet on this map",
+      "severity": "info"
+    },
+    {
+      "id": "start.dry",
+      "class": "playability",
+      "ok": true,
+      "where": {
+        "tiles": [
+          [98,96]
+        ]
+      },
+      "message": "the district center and its ring stay dry after the water settles",
+      "severity": "info"
+    },
+    {
+      "id": "start.water",
+      "class": "playability",
+      "ok": true,
+      "value": 1,
+      "limit": 20,
+      "where": {
+        "tiles": [
+          [95,95]
+        ]
+      },
+      "message": "clean water a pump reaches is 1 tiles' walk from the start on its own level, without stairs (Normal allows 20)",
+      "severity": "info"
+    },
+    {
+      "id": "start.badwater",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": "none",
+      "limit": 15,
+      "message": "no badwater or contaminated soil on the map",
+      "severity": "info"
+    },
+    {
+      "id": "start.reach",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": 11864,
+      "limit": 1300,
+      "message": "11864 dry tiles are walkable from the start through slopes (the target is 1300; official p10 1,007)",
+      "severity": "info"
+    },
+    {
+      "id": "start.food",
+      "class": "playability",
+      "ok": true,
+      "value": 48,
+      "limit": 30,
+      "message": "48 living berry bushes within 20 tiles' walk of the start (at least 30)",
+      "severity": "info"
+    },
+    {
+      "id": "start.wood",
+      "class": "playability",
+      "ok": true,
+      "value": 60,
+      "limit": 40,
+      "message": "60 living trees within 20 tiles' walk of the start (at least 40)",
+      "severity": "info"
+    },
+    {
+      "id": "start.ruins_clear",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "0 ruin columns within 15 tiles of the start (the target is none)",
+      "severity": "info"
+    },
+    {
+      "id": "plants.survive",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every living plant is on soil where it survives",
+      "severity": "info"
+    },
+    {
+      "id": "plants.drought",
+      "class": "playability",
+      "advisory": true,
+      "ok": false,
+      "value": 48,
+      "limit": 0,
+      "message": "48 berry bushes near the start dry out in a 9-day drought (their water drains; a blueberry dies after about 9 dry days). Irrigate or dam upstream.",
+      "where": {
+        "entities": [
+          "313da182-a822-2d1d-5e97-83a4f906abc7",
+          "323da315-a722-2b8a-5f97-8537f806aa34",
+          "2b3d9810-a222-23ab-5c97-807ef706a8a1",
+          "2c3d99a3-a122-2218-5d97-8211f606a70e",
+          "2d3d9b36-a422-26d1-5a97-7d58f506a57b",
+          "2e3d9cc9-a322-253e-5b97-7eebf406a3e8",
+          "373daaf4-9e22-1d5f-5897-7a32f306a255",
+          "383dac87-9d22-1bcc-5997-7bc5f206a0c2",
+          "41447677-941b-51dc-5a95-3ec1e108c496",
+          "404474e4-951b-536f-5995-3d2ee208c629",
+          "4344799d-961b-5502-5895-3b9bdf08c170",
+          "4244780a-971b-5695-5795-3a08e008c303",
+          "3d44702b-901b-4b90-5e95-450de508cae2",
+          "3c446e98-911b-4d23-5d95-437ae608cc75",
+          "3f447351-921b-4eb6-5c95-41e7e308c7bc",
+          "3e4471be-931b-5049-5b95-4054e408c94f",
+          "394469df-9c1b-5e74-5295-3229e908d12e",
+          "3844684c-9d1b-6007-5195-3096ea08d2c1",
+          "3b422e6e-9a1d-99e5-5492-f6b8e70b0c9f",
+          "3c423001-991d-9852-5592-f84be60b0b0c",
+          "39422b48-981d-96bf-5692-f9dee90b0fc5",
+          "3a422cdb-971d-952c-5792-fb71e80b0e32",
+          "3f4234ba-961d-9399-5892-fd04e30b0653",
+          "4042364d-951d-9206-5992-fe97e20b04c0",
+          "3d423194-941d-9073-5a93-002ae50b0979",
+          "3e423327-931d-8ee0-5b93-01bde40b07e6",
+          "334221d6-a21d-a67d-4c92-ea20ef0b1937",
+          "34422369-a11d-a4ea-4d92-ebb3ee0b17a4",
+          "bd362f21-2816-2aaa-5ea4-4f97dcf9b3c0",
+          "bc362d8e-2916-2c3d-5da4-4e04ddf9b553",
+          "bb362bfb-2616-2784-60a4-52bddef9b6e6",
+          "ba362a68-2716-2917-5fa4-512adff9b879",
+          "c136356d-2416-245e-5aa4-494be0f9ba0c",
+          "c03633da-2516-25f1-59a4-47b8e1f9bb9f",
+          "bf363247-2216-2138-5ca4-4c71e2f9bd32",
+          "be3630b4-2316-22cb-5ba4-4adee3f9bec5",
+          "b5362289-2016-1e12-56a4-42ffe4f9c058",
+          "b43620f6-2116-1fa5-55a4-416ce5f9c1eb",
+          "37331d98-0e18-4053-58a2-078e62fcc549",
+          "38331f2b-0d18-3ec0-59a2-092161fcc3b6",
+          "393320be-1018-4379-56a2-046860fcc223",
+          "3a332251-0f18-41e6-57a2-05fb5ffcc090",
+          "3b3323e4-1218-469f-5ca2-0dda66fccb95",
+          "3c332577-1118-450c-5da2-0f6d65fcca02",
+          "3d33270a-1418-49c5-5aa2-0ab464fcc86f",
+          "3e33289d-1318-4832-5ba2-0c4763fcc6dc",
+          "2f331100-1618-4ceb-50a1-faf66afcd1e1",
+          "30331293-1518-4b58-51a1-fc8969fcd04e"
+        ]
+      },
+      "severity": "warning"
+    },
+    {
+      "id": "water.reservoir",
+      "class": "playability",
+      "advisory": true,
+      "ok": false,
+      "value": 0,
+      "limit": 380,
+      "message": "the best dam site within 40 tiles holds 0 and natural pools keep 0; 380 carries 50 beavers through a 9-day drought",
+      "severity": "warning"
+    },
+    {
+      "id": "resources.scrap",
+      "class": "playability",
+      "ok": true,
+      "value": 12030,
+      "limit": 5775,
+      "message": "12030 scrap metal in ruins (at least 5775: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "resources.trees",
+      "class": "playability",
+      "ok": true,
+      "value": 1739,
+      "limit": 869,
+      "message": "1739 trees (at least 869: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "resources.bushes",
+      "class": "playability",
+      "ok": true,
+      "value": 151,
+      "limit": 75,
+      "message": "151 berry bushes (at least 75: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "ruins.fields",
+      "class": "playability",
+      "ok": true,
+      "value": 1,
+      "limit": 0.8,
+      "message": "100% of ruin columns are in fields of 10 or more (at least 80%; official median 97%)",
+      "severity": "info"
+    },
+    {
+      "id": "ruins.access",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every ruin column can be scavenged from its own level",
+      "severity": "info"
+    },
+    {
+      "id": "extras.placement",
+      "class": "playability",
+      "ok": true,
+      "applicable": false,
+      "message": "no relics, geothermal fields, mine sites, thorn belts or unstable cores on this map",
+      "severity": "info"
+    }
+  ],
+  "settled": true,
+  "ticks": 2176,
+  "sourceCount": 1,
+  "waterDesign": {
+    "sources": [
+      {
+        "i": 5516,
+        "area": 51,
+        "score": 67.23987748102537,
+        "kind": "tributary head spring",
+        "headId": "head-5516",
+        "upstreamChannels": 0,
+        "entryFrom": null,
+        "routeLength": 90,
+        "downstreamInterest": 51.239877481025374,
+        "strength": 3
+      }
+    ],
+    "outlets": [],
+    "intention": "balanced",
+    "variant": 0,
+    "candidateCount": 93,
+    "threshold": 49.152,
+    "algorithm": "designed-water-v3-heads-only"
+  },
+  "originAudit": {
+    "checked": true,
+    "passed": true,
+    "checks": [
+      {
+        "headId": "head-5516",
+        "depthFromOthers": 0,
+        "settled": true
+      }
+    ],
+    "policy": "LOCAL source-origin audit: exact edge entries or tributary heads; no basin interiors or downstream boosters; other tributaries alone must settle with each head dry."
+  },
+  "edgeChanges": 0,
+  "start": {
+    "x": 97,
+    "y": 95,
+    "z": 2,
+    "orientation": "Cw0"
+  },
+  "roundTripPassed": true,
+  "bytes": 189157,
+  "autoTry": {
+    "enabled": true,
+    "attempts": [
+      {
+        "lat": 78.22,
+        "lon": 15.65,
+        "size": 128,
+        "mpt": 60,
+        "reason": "requested area",
+        "variant": 0,
+        "passed": true,
+        "failures": [],
+        "waterDistance": 1,
+        "settled": true,
+        "ticks": 2176,
+        "sources": [
+          {
+            "i": 5516,
+            "area": 51,
+            "score": 67.23987748102537,
+            "kind": "tributary head spring",
+            "headId": "head-5516",
+            "upstreamChannels": 0,
+            "entryFrom": null,
+            "routeLength": 90,
+            "downstreamInterest": 51.239877481025374,
+            "strength": 3,
+            "x": 12,
+            "y": 43
+          }
+        ],
+        "originAudit": {
+          "checked": true,
+          "passed": true,
+          "checks": [
+            {
+              "headId": "head-5516",
+              "depthFromOthers": 0,
+              "settled": true
+            }
+          ],
+          "policy": "LOCAL source-origin audit: exact edge entries or tributary heads; no basin interiors or downstream boosters; other tributaries alone must settle with each head dry."
+        },
+        "ms": 2759.699999988079
+      }
+    ],
+    "selectedAttempt": 0,
+    "suggestions": [
+      {
+        "lat": 78.22,
+        "lon": 15.65,
+        "size": 128,
+        "mpt": 60,
+        "reason": "requested area",
+        "passed": true,
+        "failures": [],
+        "preview": {
+          "size": 40,
+          "heights": [10,9,8,8,9,10,11,10,10,9,9,10,11,11,12,11,11,11,10,10,10,10,10,9,8,7,7,6,5,4,4,3,3,3,3,3,3,4,3,3,10,9,8,8,8,9,10,10,10,9,9,9,10,11,11,11,11,10,10,10,10,10,10,9,9,9,8,8,7,6,5,4,3,3,2,3,3,3,2,2,10,9,8,7,7,7,8,9,10,9,8,8,8,10,11,11,10,10,10,10,10,9,9,9,9,9,9,9,9,8,8,5,3,3,2,2,2,2,2,2,10,9,8,7,6,6,6,8,9,8,7,7,8,10,10,10,10,10,10,10,10,9,9,9,10,10,10,10,10,9,8,6,4,3,2,2,2,2,2,2,10,10,8,7,6,5,5,6,7,7,6,6,7,10,10,10,10,10,10,10,9,9,9,9,9,10,10,10,9,9,8,5,3,3,2,2,2,2,2,2,10,10,8,7,7,5,5,5,5,5,5,5,8,9,10,10,10,10,9,9,9,9,9,9,9,9,10,9,9,7,6,5,3,3,2,2,2,2,2,2,11,10,9,9,8,7,5,5,5,5,5,5,8,9,10,10,10,9,9,9,9,9,9,8,9,9,9,8,7,6,5,4,3,2,2,2,2,2,2,2,11,10,10,10,10,9,7,5,5,4,4,5,7,9,10,10,10,9,9,9,9,9,9,8,8,9,8,7,6,5,4,3,2,2,2,2,2,2,2,2,11,10,10,10,10,10,8,6,5,4,4,4,6,8,9,10,9,8,9,9,9,9,8,7,8,8,7,6,5,4,3,2,2,2,2,2,2,2,2,2,11,10,10,10,10,10,9,7,5,4,4,4,5,6,8,9,9,8,9,9,9,8,7,7,7,7,6,5,4,3,3,2,2,2,2,2,2,2,2,2,11,10,10,10,10,10,10,8,6,4,4,3,4,5,7,8,8,7,8,9,8,7,6,6,7,6,5,4,3,2,2,2,2,2,2,2,2,2,2,2,10,10,10,10,10,10,10,9,7,5,4,3,3,4,6,7,7,7,8,9,7,6,5,6,6,5,4,3,2,2,2,2,2,2,2,2,2,2,2,2,10,10,10,10,10,10,10,9,8,6,4,3,3,3,4,5,5,6,8,8,7,5,5,5,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,10,10,10,10,10,10,10,10,9,6,5,3,3,3,3,4,4,6,8,8,7,5,4,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,10,10,10,10,10,10,10,9,7,5,4,3,3,3,3,4,6,7,7,6,4,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,10,9,9,10,10,10,10,10,8,7,5,3,3,2,3,3,5,6,6,5,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,10,9,9,10,10,10,10,10,9,8,6,4,3,2,2,3,4,4,4,4,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,9,8,9,10,10,10,10,9,9,8,7,4,3,2,2,2,3,3,3,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,9,7,9,9,10,10,10,9,9,8,7,5,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,9,7,8,9,10,9,9,9,8,7,6,5,3,3,2,2,2,2,2,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,10,8,6,7,9,9,9,9,8,7,6,5,4,3,3,2,2,2,2,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,9,7,6,7,8,9,8,8,7,6,5,5,4,3,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,8,7,5,6,8,7,7,6,6,5,4,4,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,7,6,5,6,7,6,6,5,5,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,7,6,5,6,6,5,5,4,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6,5,4,5,5,5,4,3,3,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,6,4,4,5,4,4,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,5,4,4,4,3,3,2,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4,3,3,3,3,2,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,2,2,3,3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,2,1,2,3,2,2,2,2,2,2,3,3,3,3,2,2,2,3,3,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,2,3,3,3,2,2,2,2,2,2,2,2,2,3,3,3,3,3,2,2,2,2,3,2,2,2,2,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3,2,2,2,2,2,2,2,2,3,3,3,4,3,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,2,2,2,2,2,2,3,3,3,4,4,5,5,5,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,4,2,2,2,2,2,3,3,3,4,5,5,6,6,6,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,4,4,2,2,2,2,3,3,4,4,5,6,6,6,7,7,2,2,2,2,2,2,2,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,2,2,2,2,3,3,3,3,4,5,5,5,6,7,7,8,8,2,2,2,2,2,2,2,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,2,2,2,2,2,3,3,4,4,5,6,6,6,7,7,8,9,9,2,2,2,2,1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3,2,2,2,2,2,3,3,4,5,4,5,6,7,7,7,8,9,10,11,11,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,3,3,2,2,2,2,3,3,4,5,5,5,5,6,7,8,8,9,10,12,13,13,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,3,3,2,2,2,3,3,4,5,6,6,6,6,6,7,8,9,10,11,13,15,15],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.06,0,0.07,0.07,0.07,0.06,0.05,0.03,0.03,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0.03,0.05,0.03,0.07,0.06,0.05,0.05,0.03,0.03,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0,0.04,0.05,0.05,0.08,0.08,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.03,0.03,0.02,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0.07,0.07,0.06,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0.06,0.06,0.11,0.03,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0,0.01,0.09,0.08,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.06,0.05,0.05,0.05,0,0,0,0,0.08,0.08,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.22,0.09,0.05,0.05,0,0,0,0,0.08,0.07,0.06,0.06,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0.05,0.05,0.05,0.06,0.05,0.05,0.05,0.05,0,0,0,0,0.06,0.06,0.05,0.03,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0.05,0.05,0.07,0.11,0.05,0.05,0.05,0.05,0,0,0,0,0.06,0.04,0.1,0.03,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0.05,0.05,0.06,0.06,0.05,0.05,0.05,0.05,0,0,0,0,0,0.01,0.1,0.09,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0.04,0.1,0.05,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0.08,0.08,0.07,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0.12,0,0,0.05,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0.1,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0.14,0.03,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0.08,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0.14,0.04,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0.11,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0.08,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0.07,0,0,0,0,0,0,0,0,0,0,0,0.02,0.12,0.03,0,0,0,0,0,0.07,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0.1,0,0.01,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.02,0.02,0.01,0.02,0.01,0.07,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.03,0.02,0.07,0.07,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.02,0.03,0.03,0.02,0.07,0.07,0,0,0,0,0.07,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0.59,0,0,0,0,0,0,0,0,0,0,0.01,0.01,0.07,0.07,0.07,0,0,0.07,0,0,0,0,0.05,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0,0.07,0.07,0,0,0.05,0.05,0.05,0.05,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.07,0.07,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0.07,0.07,0.07,0.07,0.07,0.07,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0.07,0.07,0.07,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07,0,0.07,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05,0.05,0,0.05,0.05,0.05,0.05,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      }
+    ]
+  },
+  "timings": {
+    "settingsMs": 173.30000001192093,
+    "fetchMs": 335.30000001192093,
+    "convertMs": 2759.599999964237,
+    "exportMs": 201,
+    "directMs": 3268.800000011921,
+    "retryMs": 8.599999964237213,
+    "totalMs": 3478.399999976158
+  },
+  "requests": [
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/556/141.png",
+      "sha256": "727b75e16b3271fda2570fc9b0d7844b79fef223253b8e3ed8061da2ab79a0da",
+      "bytes": 61979,
+      "ms": 4.899999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/556/142.png",
+      "sha256": "f40a71042aa49acb84c5a23af9d55635a783b2f8103ef11ca55cec9eac33b576",
+      "bytes": 33241,
+      "ms": 134.20000004768372,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/9/278/71.png",
+      "sha256": "b7f1a7cc5c1db13c0e700c914749aa6578b237e0b3d154ccf2dcebd89af598a8",
+      "bytes": 44011,
+      "ms": 3.899999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/9/278/70.png",
+      "sha256": "560fecdd54a4256aa407d6c69916266bfb2d3c30e5ca6f2f5baa60e36a9b2a3d",
+      "bytes": 66987,
+      "ms": 4.399999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/139/35.png",
+      "sha256": "87d6c3d18eebfb78004a0b16e1528911879f27b668921a21cb89381d3ca0918d",
+      "bytes": 64438,
+      "ms": 3.899999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/138/35.png",
+      "sha256": "0dfe5caad5859cff2c09abf4ca14dcd3f3b720af4aa73658de45350bafe03ba6",
+      "bytes": 97819,
+      "ms": 4.799999952316284,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/555/142.png",
+      "sha256": "cc59a44944ace61cb73bb8ab26502e35db2c206f734e558de2a96e94f47a11f7",
+      "bytes": 38279,
+      "ms": 123.10000002384186,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/557/142.png",
+      "sha256": "83bddca0c10c4d1723fd6ff0ad4fb9d118a7aceb6c680d0c68be5736099e03e8",
+      "bytes": 27136,
+      "ms": 154.69999998807907,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/555/141.png",
+      "sha256": "59c35a96e74ece1c83ecced993c45b0cdb82b201b1c5470b07ea51fd60a86c33",
+      "bytes": 81146,
+      "ms": 166.5999999642372,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/557/141.png",
+      "sha256": "e73e0210f483c20c07f5540875852a7f7b859a292addf91c74024b47b24b5958",
+      "bytes": 37303,
+      "ms": 258,
+      "cached": false
+    }
+  ],
+  "heartbeats": 70
+}

@@ -3,17 +3,37 @@
 // facing the same way: the angled overview, with the map from above as a minimap in its corner
 // that fills the picture on hover, focus or a tap (Kyler's choice), each with a north arrow. Then
 // the place's title, its landform, size and scale, and how it plays. **Download** is a link to the
-// place's .timber, built at deploy time (tools/places-build.ts); **Refine** opens it in the editor
-// (the generator page's `#place=` link, which imports it). Nothing here feeds the generator (D108).
+// place's .timber, built at deploy time (tools/places-build.ts); **Save to Timberborn** fetches the
+// same file and saves it into the game's maps folder (D162); **Refine** opens it in the editor (the
+// generator page's `#place=` link, which imports it). Nothing here feeds the generator (D108).
 
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { PlaceIndex, PlaceIndexEntry } from "../core/places/place";
+import { saveToTimberborn, type SaveToTimberbornResult } from "../platform";
 import { VIEW_TURNS } from "../core/places/view";
 import { InsetPicture } from "../ui/Pictures";
 import { Credits } from "./Credits";
 import { fetchIndex, placeMap, PLACES_URL } from "./data";
 
 const HOME = import.meta.env.BASE_URL;
+
+/** A card's Save to Timberborn: fetching, failed, or where the map ended up. */
+type Saving = { busy: true } | { error: string } | SaveToTimberbornResult;
+
+/** Per-card async state, keyed by place id, with a ref so a stale closure can't clobber a newer update. */
+function usePerCard<T>(): [Record<string, T>, (id: string, v: T | null) => void] {
+  const [state, setState] = useState<Record<string, T>>({});
+  const live = useRef(state);
+  live.current = state;
+  function set(id: string, v: T | null) {
+    const next = { ...live.current };
+    if (v) next[id] = v;
+    else delete next[id];
+    live.current = next;
+    setState(next);
+  }
+  return [state, set];
+}
 
 /** The filters, kept in the page's query so Back returns to the same list. */
 function initialFilters(): { family: string; size: number | null } {
@@ -41,6 +61,7 @@ export function Gallery() {
   const init = useMemo(initialFilters, []);
   const [family, setFamily] = useState(init.family);
   const [size, setSize] = useState<number | null>(init.size);
+  const [saving, setSaving] = usePerCard<Saving>();
 
   useEffect(() => {
     fetchIndex().then(setIndex, (e) => setLoadError(String(e instanceof Error ? e.message : e)));
@@ -55,6 +76,20 @@ export function Gallery() {
   }, [family, size]);
 
   const shown = useMemo(() => (index ? index.places.filter((p) => (!family || p.family === family) && (!size || p.size === size)) : []), [index, family, size]);
+
+  /** Save to Timberborn: the place's .timber, as Download serves it, into the game's maps folder. */
+  async function saveToPlace(p: PlaceIndexEntry) {
+    if (saving[p.id] && "busy" in saving[p.id]) return;
+    setSaving(p.id, { busy: true });
+    try {
+      const map = placeMap(p);
+      const r = await fetch(map.url);
+      if (!r.ok) throw new Error(`the map did not load (${r.status})`);
+      setSaving(p.id, await saveToTimberborn(new Uint8Array(await r.arrayBuffer()), map.fileName));
+    } catch (e) {
+      setSaving(p.id, { error: `${p.name} could not be saved: ${String(e instanceof Error ? e.message : e)}` });
+    }
+  }
 
   const counts = useMemo(() => {
     const m = new Map<string, number>();
@@ -123,6 +158,8 @@ export function Gallery() {
             <ul class="gallery" aria-label="Maps">
               {shown.map((p) => {
                 const map = placeMap(p);
+                const s = saving[p.id];
+                const savingBusy = !!s && "busy" in s;
                 return (
                   <li class="place" key={p.id}>
                     <Pictures p={p} />
@@ -136,10 +173,38 @@ export function Gallery() {
                         <a class="button primary" href={map.url} download={map.fileName} aria-label={`Download ${p.name}`}>
                           Download
                         </a>
+                        <button type="button" class="ghost" aria-label={`Save ${p.name} to Timberborn`} disabled={savingBusy} aria-busy={savingBusy} onClick={() => void saveToPlace(p)}>
+                          Save to Timberborn
+                        </button>
                         <a class="button ghost" href={`${HOME}#place=${p.id}`} aria-label={`Refine ${p.name} in the editor`}>
                           Refine
                         </a>
                       </div>
+                      {savingBusy ? <progress aria-label={`Saving ${p.name}`} /> : null}
+                      {s && "error" in s ? (
+                        <p class="error" role="alert">
+                          {s.error}
+                        </p>
+                      ) : null}
+                      {s && "via" in s ? (
+                        <p class="muted" role="status">
+                          {s.via === "fsa" ? (
+                            <>
+                              Saved to <strong>{s.folder}</strong>. It'll show up in Timberborn's custom maps.
+                              {s.savedAs ? (
+                                <>
+                                  {" "}
+                                  Saved as <strong>{s.savedAs}</strong>.
+                                </>
+                              ) : null}
+                            </>
+                          ) : (
+                            <>
+                              Downloaded. Move the file to <code>Documents\Timberborn\Maps</code>.
+                            </>
+                          )}
+                        </p>
+                      ) : null}
                     </div>
                   </li>
                 );

@@ -191,8 +191,17 @@
       {
        "op": "addSetPiece",
        "kind": "waterfall",
-       "where": "the north part",
-       "size": 20,
+       "request": {
+        "mode": "standalone",
+        "lip": [
+         78,
+         108
+        ],
+        "facing": "south",
+        "width": 20,
+        "drop": 6,
+        "flow": "steady"
+       },
        "handle": "waterfall"
       }
      ]
@@ -5583,16 +5592,8 @@
        "op": "addSetPiece",
        "kind": "badwaterBasin",
        "where": {
-        "all": [
-         {
-          "upstream": "dam",
-          "reach": "just"
-         },
-         {
-          "along": "river",
-          "within": 25
-         }
-        ]
+        "upstream": "dam",
+        "reach": "just"
        },
        "handle": "badwater"
       }

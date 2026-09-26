@@ -24,21 +24,74 @@ export function placeData(entry: PlaceIndexEntry): PlaceData {
 /** Checks that fail and count: not advisory, applicable, not approximate. */
 export const failing = (checks: readonly CheckResult[]) => checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false && !c.approximate).map((c) => `${c.id}: ${c.message}`);
 
+/** No edge walls (Kyler, 2026-09-25, D151): every place as converted for real-places-done stands in
+ *  a full-height wall round the whole map, which `terrain.edge_wall` flags, a principle that blocks
+ *  the export profile the places are built in. placeTimber refuses only what would not load, so the
+ *  gallery keeps serving them until Real places 2 converts them without it and turns this to
+ *  false. */
+export const PLACES_HAVE_EDGE_WALLS = true;
+
+/** Water sources start rivers (D171): the places whose conversion puts a source inside a flow
+ *  another source already feeds (`water.source_in_flow`, a design check: it warns in the export
+ *  profile). Real places 2 places sources only at heads and empties this list. */
+export const PLACES_SOURCES_IN_FLOW = new Set([
+  "aialik-bay", "altiplano", "atacama-fan", "aysen-fjord", "badlands-national-park", "bandiagara",
+  "blue-mountains", "blyde-river-canyon", "bungle-bungle", "capitol-reef", "chocolate-hills",
+  "cliffs-of-moher", "colca-canyon", "copper-canyon", "death-valley", "drakensberg-amphitheatre",
+  "ennedi-plateau", "ethiopian-highlands", "geirangerfjord", "glencoe", "godavari-delta",
+  "goosenecks-of-the-san-juan", "gullfoss", "ilulissat-icefjord", "kunlun-alluvial-fan",
+  "lake-saimaa", "lake-toba", "lena-delta", "mahabaleshwar-western-ghats", "majuli-brahmaputra",
+  "mamore-river", "mississippi-oxbows", "monument-valley", "mount-mayon", "na-pali-coast",
+  "ngorongoro", "niagara-falls", "painted-desert", "phong-nha", "plitvice-lakes",
+  "rhine-and-moselle", "roaring-river-fan", "sete-cidades", "skeidara-outwash", "tara-gorge",
+  "tiger-leaping-gorge", "todgha-gorge", "toklat-river", "torres-del-paine", "tsingy-de-bemaraha",
+  "twelve-apostles", "victoria-falls", "waimakariri-river", "yosemite-valley",
+]);
+
+/** A mine site on every map (Kyler, 2026-09-25): the places as converted for real-places-done have
+ *  none, which `resources.mine_site` flags (a playability check: it warns in the export profile the
+ *  places are built in, so the gallery keeps working). Real places 2 places them with the resource
+ *  baseline (src/core/resources/plan.ts) and turns this to false. */
+export const PLACES_LACK_MINE_SITES = true;
+
+/** The failing checks of a place, its known faults apart (the conversion's edge wall and sources in
+ *  flow, and the missing mine site), and which of them fail. */
+export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean; sourceInFlow: boolean; mineSite: boolean } {
+  const all = failing(checks);
+  const known = (f: string) => f.startsWith("terrain.edge_wall:") || f.startsWith("water.source_in_flow:") || f.startsWith("resources.mine_site:");
+  return {
+    other: all.filter((f) => !known(f)),
+    edgeWall: all.some((f) => f.startsWith("terrain.edge_wall:")),
+    sourceInFlow: all.some((f) => f.startsWith("water.source_in_flow:")),
+    mineSite: all.some((f) => f.startsWith("resources.mine_site:")),
+  };
+}
+
 /** Each place: its .timber, built as the deploy builds it (build, settle, validate, write), passes
- *  the export profile and every check of the generate profile, and is the same bytes as the index
- *  records. */
+ *  the export profile and every check of the generate profile but its known faults, which flag it
+ *  as long as the places have them (`PLACES_HAVE_EDGE_WALLS`, `PLACES_SOURCES_IN_FLOW`,
+ *  `PLACES_LACK_MINE_SITES`), and is the same bytes as the index records. */
 export function checkPlaces(title: string, places: readonly PlaceIndexEntry[], build: (e: PlaceIndexEntry) => ReturnType<typeof placeTimber> = (e) => placeTimber(placeData(e))): void {
   describe(title, () => {
     it.each(places.map((p) => [p.name, p] as const))("%s", (_name, entry) => {
       const r = build(entry);
       expect(r.validation.report.profile).toBe("export");
-      expect(r.validation.report.passed).toBe(true);
+      // the export profile passes but for the edge wall, a principle it blocks (D151); the gallery
+      // still gets the file, as placeTimber refuses only what would not load
+      expect(r.validation.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS);
       expect(r.fileName).toBe(`${entry.name}.timber`);
       // the written file, read back: every check of the strictest profile, on its own settle
       const file = readTimber(r.bytes);
       const v = validateMap(file, { profile: "generate", designedFor: "normal", features: [], water: { model: r.validation.model!, settled: r.validation.water! } });
-      expect(failing(v.report.checks)).toEqual([]);
-      expect(v.report.passed).toBe(true);
+      const f = placeFailures(v.report.checks);
+      expect(f.other).toEqual([]);
+      expect(f.edgeWall).toBe(PLACES_HAVE_EDGE_WALLS);
+      expect(f.sourceInFlow).toBe(PLACES_SOURCES_IN_FLOW.has(entry.id));
+      expect(f.mineSite).toBe(PLACES_LACK_MINE_SITES);
+      expect(v.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS && !PLACES_LACK_MINE_SITES);
+      expect(r.validation.report.checks.find((c) => c.id === "terrain.edge_wall")!.severity).toBe(PLACES_HAVE_EDGE_WALLS ? "error" : "info");
+      // the missing mine site only warns on export: the gallery's download works
+      expect(r.validation.report.checks.find((c) => c.id === "resources.mine_site")!.severity).toBe(PLACES_LACK_MINE_SITES ? "warning" : "info");
       expect(sha256(r.bytes)).toBe(entry.sha256);
       expect(r.bytes.length).toBe(entry.bytes);
     });

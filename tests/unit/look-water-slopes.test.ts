@@ -1,7 +1,8 @@
 // Map look's third round (PLAN §20 D115) and Kyler's clean look: badwater stays clearly darker
 // than clean water, and clean water keeps its shore foam, glints and see-through shallows so it
-// reads apart from ground (it may be as dark as dry ground, as in the game); each water top shows
-// its own tile's badwater share (so water partly bad never looks pure); a slope's arrow is level and floats above the slope, pointing uphill, so it reads from
+// reads apart from ground (it may be as dark as dry ground, as in the game); water partly bad
+// turns smoothly from clean water to badwater, the badwater share blended between tiles (D177,
+// which replaced each top showing its own tile's share); a slope's arrow is level and floats above the slope, pointing uphill, so it reads from
 // any camera angle; ruins stand apart from contaminated ground; and the light look (software
 // rendering) draws each model once, however many objects use it.
 
@@ -11,7 +12,7 @@ import { buildEntities, SLOPE_ARROW_HEIGHT } from "../../src/render3d/entities3d
 import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
 import { entityView, surfaceWater, waterFromDepth } from "../../src/render3d/model";
 import { GROUND, RUIN, WATER_SURFACE, waterBody, waterOpacity } from "../../src/render3d/palette";
-import { lowerByTile, meshWaterChunk } from "../../src/render3d/waterMesh";
+import { blendedBadwater, lowerByTile, meshWaterChunk } from "../../src/render3d/waterMesh";
 
 const lum = (c: readonly number[]) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 /** CIE L* of a display colour (sRGB). */
@@ -48,19 +49,34 @@ describe("water", () => {
     for (const d of [0.1, 0.25, 0.5, 1]) expect(waterOpacity(d, 0)).toBeLessThan(0.8);
   });
 
-  it("shows each tile's own badwater share on its top", () => {
+  it("blends the badwater share between tiles on the tops, so water partly bad turns smoothly (D177)", () => {
     // four tiles in a row at one level: pure badwater, a third bad, a tenth bad, clean
     const W = 4;
     const heights = new Uint8Array([2, 2, 2, 2]);
     const shares = [1, 0.33, 0.1, 0];
     const view = waterFromDepth(heights, [0.6, 0.6, 0.6, 0.6], shares);
     const sw = surfaceWater(W, 1, view);
+    const blended = blendedBadwater(W, 1, sw);
     const m = meshWaterChunk(W, 1, heights, sw, view, lowerByTile(sw, view), 0, 0);
+    // each top's corner has the mean of the blended shares of the tiles round it; the west edge
+    // of the row the first tile's, the east edge the last's
+    const at = (x: number) => (x <= 0 ? blended[0] : x >= W ? blended[W - 1] : (blended[x - 1] + blended[x]) / 2);
+    let tops = 0;
     for (let q = 0; q < m.quads; q++) {
       if (m.normals[q * 12 + 1] <= 0) continue;
-      const x = Math.round(Math.min(m.positions[q * 12], m.positions[q * 12 + 3], m.positions[q * 12 + 6]));
-      for (let v = 0; v < 4; v++) expect(m.data[(q * 4 + v) * 2 + 1]).toBeCloseTo(shares[x], 5);
+      tops++;
+      for (let v = 0; v < 4; v++) expect(m.data[(q * 4 + v) * 2 + 1]).toBeCloseTo(at(Math.round(m.positions[(q * 4 + v) * 3])), 5);
     }
+    expect(tops).toBe(4);
+    // the blend keeps the order and softens the steps: from the badwater end to the clean end,
+    // no corner step above a third
+    const corners = [0, 1, 2, 3, 4].map(at);
+    for (let k = 1; k < corners.length; k++) {
+      expect(corners[k]).toBeLessThanOrEqual(corners[k - 1]);
+      expect(corners[k - 1] - corners[k]).toBeLessThan(0.34);
+    }
+    expect(corners[0]).toBeGreaterThan(0.5);
+    expect(corners[4]).toBeGreaterThan(0);
   });
 });
 
@@ -83,10 +99,16 @@ describe("slopes", () => {
 });
 
 describe("ruins", () => {
-  it("are grey-brown metal, apart from rusty contaminated ground", () => {
-    const hue = (c: readonly number[]) => c[0] - c[2];
-    expect(lum(RUIN.body)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
-    expect(hue(RUIN.body)).toBeLessThan(hue(GROUND.contaminated) - 0.15);
+  // Kyler's ruins (D178): rusty posts and beige panels, his colours; they still stand apart from
+  // rusty contaminated ground in lightness, close up and from afar (each storey a block)
+  it("stand apart from rusty contaminated ground: rusty posts and beige panels far lighter, and lighter from afar", () => {
+    expect(lum(RUIN.rust)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
+    expect(lum(RUIN.panel)).toBeGreaterThan(lum(GROUND.contaminated) + 0.35);
+    // from afar a storey is a block in the scaffolding's rust, its top a brighter rust
+    for (const far of [RUIN.top, RUIN.rust]) expect(lum(far)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
+    // the panels are beige, not rust: far less red for their lightness
+    const hue = (c: readonly number[]) => (c[0] - c[2]) / lum(c);
+    expect(hue(RUIN.panel)).toBeLessThan(hue(GROUND.contaminated) - 0.5);
   });
 });
 

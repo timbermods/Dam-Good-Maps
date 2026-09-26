@@ -15,7 +15,7 @@ import { CREDITS_URL, fileNotices, PROVIDERS } from "../../src/core/places/attri
 import { placeDescription, placeSample, placeTimber } from "../../src/core/places/place";
 import { validateMap } from "../../src/core/validate/checks";
 import type { CheckResult } from "../../src/core/validate/report";
-import { checkPlaces, INDEX, PLACES_DIR, placeData, sha256 } from "./placesCommon";
+import { checkPlaces, INDEX, PLACES_DIR, PLACES_HAVE_EDGE_WALLS, PLACES_LACK_MINE_SITES, PLACES_SOURCES_IN_FLOW, placeData, sha256 } from "./placesCommon";
 
 /** A WebP's width and height (its VP8, VP8L or VP8X header), or null. */
 function webpSize(b: Uint8Array): [number, number] | null {
@@ -221,7 +221,7 @@ const PY = python();
 if (!PY && process.env.CI) throw new Error("CI needs Python with numpy for the real places oracle");
 
 describe.skipIf(!PY)("both validators agree on the sample (prototype/validate.py)", () => {
-  it("every check has the same verdict, and every map passes both", () => {
+  it("every check has the same verdict, and every map passes both but for the conversion's known faults, which both flag", () => {
     const dir = join(".scratch", "places-oracle");
     rmSync(dir, { recursive: true, force: true });
     mkdirSync(dir, { recursive: true });
@@ -245,14 +245,16 @@ describe.skipIf(!PY)("both validators agree on the sample (prototype/validate.py
     for (const [k, e] of SAMPLE.entries()) {
       const rep = reports.get(paths[k].split(sep).join("/"));
       expect(rep, `${e.id}: no Python report. ${r.stderr ?? ""}`).toBeDefined();
-      expect(rep!.passed, e.id).toBe(true);
+      const known = [...(PLACES_HAVE_EDGE_WALLS ? ["terrain.edge_wall"] : []), ...(PLACES_SOURCES_IN_FLOW.has(e.id) ? ["water.source_in_flow"] : []), ...(PLACES_LACK_MINE_SITES ? ["resources.mine_site"] : [])];
+      expect(rep!.passed, e.id).toBe(known.length === 0);
+      expect(rep!.checks.filter((c) => !c.ok && !c.na && !c.approx && !(c as { advisory?: boolean }).advisory).map((c) => c.id).sort(), e.id).toEqual(known.sort());
       const b = built(e.id);
       const v = validateMap(readTimber(b.bytes), { profile: "generate", designedFor: "normal", features: [], water: { model: b.validation.model!, settled: b.validation.water! } });
       const a = Object.fromEntries(v.report.checks.map((c) => [c.id, ts(c)]));
       const p = Object.fromEntries(rep!.checks.map((c) => [c.id, py(c)]));
       expect(p, e.id).toEqual(a);
     }
-    expect(r.status).toBe(0);
+    expect(r.status).toBe(PLACES_HAVE_EDGE_WALLS || PLACES_LACK_MINE_SITES || SAMPLE.some((e) => PLACES_SOURCES_IN_FLOW.has(e.id)) ? 1 : 0);
   });
 });
 

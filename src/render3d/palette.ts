@@ -5,8 +5,8 @@
 // plants grow), dry ground cracked earth in a grey-brown, contamination a layer over either (red-
 // orange veins, more and brighter the more contaminated: dry earth's own cracks glow orange, dark
 // red veins run through grass), clean water a deep teal body darkening to navy with depth, clear in
-// the shallows, and ground under water a dark wet bed; a toggle switches the ground to height
-// colours.
+// the shallows (the water's own palette is waterPalette.ts, D177), and ground under water a dark
+// wet bed; a toggle switches the ground to height colours.
 // Walls are dark cobbled stone, every other level a shade darker. Colours are display values (the
 // renderer outputs them without conversion).
 //
@@ -15,14 +15,19 @@
 // light lines on dry earth, dark lines on grass, and a darker stain from afar. Clean water's body is
 // about as dark as the stained contaminated earth (Kyler, 2026-09-25: as in the game); it reads as
 // water by its light shore foam, glints and ripple crests and its see-through shallows, and in
-// colour by its blue. Badwater is darker still, brown and dull. Living trees are dark, dead trees
-// pale. The walls, in the side light, are darker than the ground above them. The information
+// colour by its blue. Badwater is darker than clean water of the same depth, and dull; water partly
+// bad turns smoothly from one to the other over a few tiles where they meet, through a teal-grey and
+// a warm brown to crimson, never in streaks, patches or purple (D177). Living trees are dark, dead trees pale. The walls, in the side light, are darker than the ground above them. The information
 // layer (**Markers**) adds dam sites, hatched light and dark with a dark rim so they show on any
 // ground or water, slope arrows and a pale line at every level.
 //
 // Pure TypeScript, no three.js: the unit tests and the page's legend read it too.
 
-export type Rgb = readonly [number, number, number];
+import { BADWATER, WATER, waterBody, type Rgb } from "./waterPalette";
+
+// The water's colours, opacity and blend live in waterPalette.ts (D177); they are re-exported here
+// for the pages and tests that read the palette.
+export { BADWATER, blendWater, badwaterBody, badwaterOpacity, cleanWaterBody, WATER, WATER_BLEND, WATER_CALIBRATION, WATER_SURFACE, waterBlend, waterBody, waterOpacity, type Rgb } from "./waterPalette";
 
 /** What colours the tops of the ground. */
 export type GroundMode = "moisture" | "height";
@@ -72,30 +77,6 @@ export const WALL = {
   alternate: 0.86,
   low: 0.92,
   high: 1.12,
-} as const;
-
-export const WATER = {
-  /** Clean water, as in the game (Kyler's clean look): clear in the shallows, where the bed shows
-   *  through a light teal tint, and a deep teal body darkening to navy with depth. The body may be
-   *  as dark as dry ground or darker; water reads as water by its shore foam, glints, ripples and
-   *  see-through shallows, and badwater stays darker still, brown and dull. */
-  shallow: [0.36, 0.6, 0.64] as Rgb,
-  /** The ripples' lit crests, where they catch the sky: the lightest the water gets. */
-  crest: [0.26, 0.5, 0.62] as Rgb,
-  /** The body of water a level or so deep. */
-  teal: [0.09, 0.23, 0.25] as Rgb,
-  /** The body of deep water. */
-  navy: [0.07, 0.15, 0.2] as Rgb,
-  foam: [0.9, 0.94, 0.95] as Rgb,
-  /** The sky the water reflects. */
-  sky: [0.6, 0.72, 0.84] as Rgb,
-  /** Badwater: much darker than clean water at any depth, a murky red-black liquid with slow
-   *  glowing bubbles. Water mixed with badwater is murkier than clean water all over, and
-   *  streaked with badwater as densely as it is bad. */
-  bad: [0.2, 0.1, 0.08] as Rgb,
-  badDeep: [0.13, 0.06, 0.05] as Rgb,
-  badVein: [0.98, 0.5, 0.16] as Rgb,
-  badFoam: [0.66, 0.5, 0.36] as Rgb,
 } as const;
 
 /** Contamination as a layer (Kyler, 2026-09-25: as in the game): red-orange veins over the ground's
@@ -153,56 +134,10 @@ export function contaminatedGround(moisture: number, level: number, afar: boolea
   return c;
 }
 
-/** Clean water's surface, as the water shader draws it: foam along the shore and broken foam
- *  just off it, glints on the ripples, and shallows clear enough to see the bed through, the more
- *  so toward the banks. */
-export const WATER_SURFACE = {
-  /** Foam: the line along the shore, and the broken foam just off it. */
-  shoreFoam: 0.7,
-  brokenFoam: 0.6,
-  /** Glints of light on the ripples (up close). */
-  glints: 0.6,
-  /** Opacity where the water is shallowest, and where it is deep. */
-  clearest: 0.3,
-  deepest: 0.93,
-  /** At a bank the water is this share of its depth, deepening over this far from it (tiles). */
-  bank: 0.3,
-  bankWidth: 0.45,
-  /** How quickly clean water turns from its clear shallows to its teal body (per level), and
-   *  between which depths the teal turns navy; how quickly badwater turns to its deep colour. */
-  absorb: 4,
-  navyFrom: 0.6,
-  navyTo: 2.8,
-  badAbsorb: 1.4,
-} as const;
-
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
-
-/** Clean water's depth as its colour and opacity see it, `fromBank` tiles from a bank. */
-function seenDepth(depth: number, fromBank: number): number {
-  const S = WATER_SURFACE;
-  return depth * (S.bank + (1 - S.bank) * smooth(0, S.bankWidth, fromBank));
-}
-
-/** The body colour of water `depth` levels deep, clean or bad, `fromBank` tiles from a bank (open
- *  water by default): before the light, the ripples, the foam and the glints (as the shader). */
-export function waterBody(depth: number, bad: boolean, fromBank = 1): Rgb {
-  const S = WATER_SURFACE;
-  if (bad) return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-depth * S.badAbsorb));
-  const d = seenDepth(depth, fromBank);
-  return mixRgb(mixRgb(WATER.shallow, WATER.teal, 1 - Math.exp(-d * S.absorb)), WATER.navy, smooth(S.navyFrom, S.navyTo, d));
-}
-
-/** Clean water's opacity, `depth` levels deep and `fromBank` tiles from a bank: see-through in
- *  the shallows and toward the banks (as the shader, before foam and glints). */
-export function waterOpacity(depth: number, fromBank = 1): number {
-  const S = WATER_SURFACE;
-  const absorb = 1 - Math.exp(-seenDepth(depth, fromBank) * S.absorb);
-  return S.clearest + (S.deepest - S.clearest) * absorb;
-}
 
 /** Dead trees: bare, pale wood (no crown), so they read as dead in any colours; the models use a
  *  greyer tone of it, so dead trees sit back in the landscape. */
@@ -230,9 +165,21 @@ export const START = {
   banner: [1.0, 0.82, 0.16] as Rgb,
 } as const;
 
-/** Ruins: open scaffold towers, one storey per level: weathered posts, rusty rails and braces,
- *  grey-brown decks (so they stand apart from rusty contaminated ground), beige crates and sheets. */
-export const RUIN = { body: [0.5, 0.46, 0.42] as Rgb, frame: [0.68, 0.5, 0.3] as Rgb, rust: [0.52, 0.26, 0.12] as Rgb, panel: [0.8, 0.72, 0.54] as Rgb } as const;
+/** Ruins (Kyler's rounds, D178; his colours, measured in the game): ruined scaffold towers, one
+ *  storey per level: thin rusty posts, beams and braces (#8D5631), beige slab panels (#B8A775) and,
+ *  on moist ground, ivy (#405634, the brighter green on its clusters' edges) draped over about the
+ *  lower half of the storeys, the panels' middles showing through. From afar each storey is a block in the scaffolding's rust (what
+ *  makes ruins read from afar), a pale panel set in where it has one. The rust and the panels are
+ *  lighter than rusty contaminated ground. */
+export const RUIN = {
+  rust: [0.553, 0.337, 0.192] as Rgb,
+  panel: [0.722, 0.655, 0.459] as Rgb,
+  ivy: [0.251, 0.337, 0.204] as Rgb,
+  /** The ivy's brighter leaves, on its clusters' edges. */
+  leaf: [0.36, 0.5, 0.24] as Rgb,
+  /** From afar: the top of a storey (its beams, lit from above), a brighter rust. */
+  top: [0.6, 0.38, 0.22] as Rgb,
+} as const;
 
 /** Slopes: a stone ramp; with **Markers** on, a pale arrow rimmed dark points uphill. */
 export const SLOPE = { ramp: [0.5, 0.46, 0.4] as Rgb, side: [0.3, 0.31, 0.28] as Rgb, arrow: [0.97, 0.93, 0.78] as Rgb, rim: [0.14, 0.1, 0.07] as Rgb } as const;
@@ -251,8 +198,38 @@ export const THORNS: Rgb = [0.34, 0.16, 0.14];
  *  colour, so distant ground fades into it). */
 export const SKY = { zenith: [0.36, 0.55, 0.8] as Rgb, horizon: [0.64, 0.75, 0.87] as Rgb, below: [0.46, 0.6, 0.77] as Rgb, cloud: [0.93, 0.95, 0.97] as Rgb } as const;
 
-/** Mine sites: a dark pit in an orange frame. */
-export const MINE = { pit: [0.06, 0.06, 0.06] as Rgb, frame: [0.88, 0.45, 0.14] as Rgb } as const;
+/** Mine sites (Kyler's rounds, D178; his colours, measured in the game): a rusty frame in a dull
+ *  brown-orange (#844D2F) round the edge of the 5 × 5 footprint, and a pit with real depth filling
+ *  the rest, its earth a dark grey-brown with roots, rubble and cracks; scaffold towers on the
+ *  frame's corners with pale wooden platforms, crates and planks (#A78E65). With **Markers** on, an
+ *  orange line between dark edges outlines the footprint, a few pixels wide from any distance. */
+export const MINE = {
+  /** The pit as it shows in its shade (about #373A34): the legend's colour. */
+  pit: [0.216, 0.227, 0.204] as Rgb,
+  /** The pit's earth as the model colours it: lit only by the sky down there, it shows about as
+   *  `pit`. The walls' topsoil is browner and lighter, with a pale seam, and the earth darkens
+   *  toward the floor; the floor darkens toward its edges. */
+  earthTop: [0.66, 0.58, 0.45] as Rgb,
+  earth: [0.56, 0.55, 0.46] as Rgb,
+  earthLow: [0.43, 0.43, 0.37] as Rgb,
+  seam: [0.68, 0.64, 0.53] as Rgb,
+  floor: [0.43, 0.45, 0.37] as Rgb,
+  floorEdge: [0.34, 0.35, 0.3] as Rgb,
+  crack: [0.16, 0.16, 0.15] as Rgb,
+  floorCrack: [0.24, 0.24, 0.21] as Rgb,
+  /** The shaft in the pit's floor. */
+  shaft: [0.2, 0.2, 0.18] as Rgb,
+  root: [0.34, 0.25, 0.17] as Rgb,
+  rootPale: [0.74, 0.64, 0.48] as Rgb,
+  rubble: [[0.62, 0.58, 0.5], [0.44, 0.41, 0.36], [0.72, 0.67, 0.58]] as readonly Rgb[],
+  ladder: [0.52, 0.42, 0.29] as Rgb,
+  rope: [0.22, 0.17, 0.12] as Rgb,
+  frame: [0.518, 0.302, 0.184] as Rgb,
+  wood: [0.655, 0.557, 0.396] as Rgb,
+  /** **Markers**: the outline round the footprint. */
+  outline: [1.0, 0.56, 0.18] as Rgb,
+  outlineDark: [0.1, 0.05, 0.02] as Rgb,
+} as const;
 
 /** The light: a warm sun from the north-west, a cool sky (violet in the shadows of the earth),
  *  and a blue-grey haze over distant ground. */
@@ -364,7 +341,7 @@ export function legendEntries(mode: GroundMode): LegendEntry[] {
   return [
     ...ground,
     { swatch: `linear-gradient(90deg, ${c(WATER.foam)} 0 2px, ${c(WATER.shallow)} 2px, ${c(WATER.teal)} 45%, ${c(WATER.navy)})`, label: "Water: darker is deeper" },
-    { swatch: icon(`<path d="M0 7 Q6 4 12 7 T24 7" stroke="${c([0.55, 0.4, 0.38])}" stroke-width="1.2" fill="none"/><circle cx="17" cy="11" r="1.3" fill="${c(WATER.badVein)}"/>`, c(WATER.bad)), label: "Badwater" },
+    { swatch: icon(`<path d="M0 7 Q6 4 12 7 T24 7" stroke="${c(WATER.badStreak)}" stroke-width="1.2" fill="none"/><circle cx="17" cy="11" r="1.3" fill="${c(WATER.badVein)}"/>`, c(WATER.bad)), label: "Badwater" },
     { swatch: walls, label: "Walls: one band per level" },
     { swatch: cssColor(DEAD_TREE), label: "Bare pale trees: dead" },
   ];
@@ -378,8 +355,12 @@ export function objectLegend(): LegendEntry[] {
   const dry = c(GROUND.dry);
   return [
     {
-      swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.teal)),
-      label: "Water mixed with badwater: murkier, with dark streaks",
+      // clean water turning to badwater (teal-grey, warm brown, crimson, darker), with badwater's
+      // bubbles at its end
+      swatch:
+        icon(`<circle cx="18" cy="6" r="1.1" fill="${c(WATER.badVein)}"/><circle cx="21.5" cy="11" r="1.1" fill="${c(WATER.badVein)}"/>`) +
+        `, linear-gradient(90deg, ${[0, 0.25, 0.5, 0.75, 1].map((share) => c(waterBody(BADWATER.shallow, share))).join(", ")})`,
+      label: "Water mixed with badwater: fades to murky brown",
     },
     {
       swatch: icon(`<circle cx="7" cy="8" r="5" fill="${c(LIVING_TREE)}"/><path d="M16 2 L21 14 H11Z" fill="${c([0.11, 0.28, 0.17])}"/>`, grass),
@@ -398,14 +379,26 @@ export function objectLegend(): LegendEntry[] {
       label: "Slopes: stone ramps",
     },
     {
+      // a rusty skeleton with beige panels, one askew, its top storey partly there
       swatch: icon(
-        `<rect x="7" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="15.6" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="7" y="7" width="10" height="1.4" fill="${c(RUIN.rust)}"/><rect x="7" y="13.6" width="10" height="1.4" fill="${c(RUIN.rust)}"/><path d="M8 2 L16 7" stroke="${c(RUIN.frame)}" stroke-width="1"/>` +
-          `<rect x="9" y="3" width="4" height="4" fill="${c(RUIN.panel)}"/><rect x="11" y="10" width="4" height="3.6" fill="${c(RUIN.panel)}"/>`,
+        `<rect x="8.3" y="9.6" width="7.4" height="5.6" fill="${c(RUIN.panel)}"/><rect x="9" y="4.4" width="5" height="4.2" fill="${c(RUIN.panel)}" transform="rotate(-9 11.5 6.5)"/>` +
+          `<rect x="7" y="3" width="1.3" height="13" fill="${c(RUIN.rust)}"/><rect x="15.7" y="0.5" width="1.3" height="15.5" fill="${c(RUIN.rust)}"/><rect x="7" y="8.6" width="10" height="1.1" fill="${c(RUIN.rust)}"/>` +
+          `<path d="M8 8.6 L16 1.5" stroke="${c(RUIN.rust)}" stroke-width="0.9"/>`,
         dry,
       ),
-      label: "Ruins: scaffold towers, a storey per level",
+      label: "Ruins: ruined scaffold towers, a storey per level",
     },
-    { swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="6.5" y="3.5" width="11" height="9" fill="${c(MINE.pit)}"/>`, dry), label: "Mine site" },
+    {
+      // the rusty frame round the footprint, the pit filling it, pale platforms on the frame's
+      // corners, beams across
+      swatch: icon(
+        `<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="5.3" y="2.3" width="13.4" height="11.4" fill="${c(MINE.pit)}"/>` +
+          `<rect x="4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/>` +
+          `<rect x="4" y="6.2" width="16" height="0.9" fill="${c(MINE.frame)}"/><rect x="4" y="8.9" width="16" height="0.9" fill="${c(MINE.frame)}"/>`,
+        dry,
+      ),
+      label: "Mine site: a pit in a rusty frame",
+    },
     {
       swatch: icon(`<circle cx="12" cy="8" r="6" fill="#77746d"/><circle cx="12" cy="8" r="4.2" fill="${c([0.32, 0.62, 0.95])}"/>`, dry) + `, ${dry}`,
       label: "Water source",
@@ -443,6 +436,11 @@ export function objectLegend(): LegendEntry[] {
           `<rect x="10" width="4" height="16" fill="${c(CONTAMINATION_OUTLINE.dark)}"/><rect x="11" width="2" height="16" fill="${c(CONTAMINATION_OUTLINE.light)}"/>`,
       ),
       label: "Contaminated ground: an outline where it ends",
+      markers: true,
+    },
+    {
+      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.outlineDark)}"/><rect x="5" y="2" width="14" height="12" fill="${c(MINE.outline)}"/><rect x="7" y="4" width="10" height="8" fill="${c(MINE.outlineDark)}"/><rect x="8" y="5" width="8" height="6" fill="${c(MINE.pit)}"/>`, dry),
+      label: "Mine sites: an orange outline",
       markers: true,
     },
   ];

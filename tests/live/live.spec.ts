@@ -3,7 +3,9 @@
 // Normal, default settings, is the file tools/gen.ts makes from the checked-out commit, byte for
 // byte. Real places: a map downloaded from the live gallery is the file its deployed index records,
 // which is the checked-out commit's, and the credits page loads. Pages can take a few minutes to
-// serve a new build, so a failed attempt is retried before the check fails.
+// serve a new build, so a failed attempt is retried before the check fails. It checks the main site
+// only: a preview build under /preview/ (deploy.yml) is not part of the release and is never
+// checked here.
 //
 //   npx playwright test -c playwright.live.config.ts
 

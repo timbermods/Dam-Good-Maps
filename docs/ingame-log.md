@@ -311,20 +311,20 @@ Record every difference as a PLAN §20 decision ("Editor decisions").
 
 | Check | What to do | What should happen | File | Status |
 |---|---|---|---|---|
-| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. The game's side is the probe batch P-V16 (below). | any map with terrain 17–22 | pending |
+| E1 | Load a map with terrain above 16 in the editor. | Record whether the editor loads and edits it. The game's side passed (P-V16, below). | any map with terrain 17–22 | pending |
 | E2 | Walk a beaver into a ruin column. | Beavers walk through ruin columns, as the code says. | `River Valley (4242).timber`: the website preview of seed 4242 outlines its ruin fields | pending |
 | E3 | Run an aquifer with a powered drill during a drought. | Record whether it yields water. | any map with an aquifer | pending |
 | E4 | Start a new game on a map with no StartingLocation. | Record what happens, for the error message. | needs a hand-made file | pending |
 
 ## DGM Probe batches
 
-Each is launched only with Kyler's yes for that batch (D117). None has run: the probe (PR #18) is
-still a draft.
+Each is launched only with Kyler's yes for that batch (D117). One exception, the night of 2026-09-26 only: Kyler pre-approved any batch prepared that night, with every usual safeguard (settings backed up and verified, saves and mods untouched, results in `C:\dgm-probe`, Steam running and Timberborn closed); from the next day, each batch needs his yes again. The probe (PR #18) is merged; each
+run keeps its results in `C:\dgm-probe\` (D149).
 
 | Batch | Step | What it must show | Status |
 |---|---|---|---|
 | P-M9a | M9a's gate (D116) | M9a's maps load, their pre-filled water holds, their objects load, and droughts and badtides behave as the models predict, within tolerances stated before the run; the probe's review of its screenshots finds nothing visibly broken. | pending (M9a) |
-| P-V16 | M9a, Verticality above 16 (D132; E1 below) | Maps with terrain above 16 load, and keep their terrain, water and objects (the Probe's T6). M9a offers heights above 16 only after it passes. | pending (M9a) |
+| P-V16 | M9a, Verticality above 16 (D132; E1 below) | Maps with terrain above 16 load, and keep their terrain, water and objects (the Probe's T6). M9a offers heights above 16 only after it passes. | passed 2026-09-25 (run 20260925-tall, with Kyler's installed mods): 4 maps, Highlands 128² lifted to 22, Lake Basin 96² with the start at 22, Canyon 128² with a summit lake and springs at 19 and 22, and Yosemite 96² stretched to 22; 23 checks passed, 0 failed. After 1.5 days every tile's terrain and every object matched the file, the water above 16 stayed within 0.1 and its sources ran; the screenshots are whole. Both validators allow up to 22 (D172 (1)). |
 | P-ML | Map look (D135) | The DGM Probe's in-game shots of the Map look maps from the 3D view's poses, for Kyler to judge the clean look beside them. Kept local, never committed. | pending (when the probe exists) |
 | P-RP | Real places (D136), optional | A few of the real-terrain maps load in the game. Only if Kyler approves a batch. | optional |
 | P-3Db | 3D-b (D127) | T1–T4 and T6 agree with the model within the tolerances stated before the run (investigation/terrain3d/DESIGN.md §8). | pending (3D-b) |
