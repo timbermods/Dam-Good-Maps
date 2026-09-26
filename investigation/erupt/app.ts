@@ -23,6 +23,7 @@ let lastSeed=0,lastWorkMs=0,frameSamples:number[]=[],lastFPS=0;
 interface Batch{chunks:Chunk[];lighting:Lighting|null;frame:any;transition:boolean;begun:boolean;captureBefore?:boolean}
 let batches:Batch[]=[],incoming:Batch|null=null;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let wasReduced=reduced.matches;
 input('motion').checked=!reduced.matches;
 const motion=()=>!reduced.matches&&input('motion').checked;
 function notice(text:string,invalid=false){$('notice').textContent=text;$('notice').parentElement!.classList.toggle('invalid',invalid);}
@@ -56,7 +57,7 @@ function cancel(){
   if(!active)return;
   epoch++;batches=[];incoming=null;queuedFinish=null;queuedReady=false;animStart=null;finishSent=false;active=false;settling=false;
   if(pendingBefore)view.restore(pendingBefore);pendingBefore=null;view.activeMorph=0;effects.update(2,false);collect();
-  worker.postMessage({type:'cancel'});busy=true;notice('Whole eruption reverted.');stateControls();
+  restoreSaved();worker.postMessage({type:'cancel'});busy=true;notice('Whole eruption reverted.');stateControls();
 }
 function undoEruption(){
   if(active){cancel();return;}if(busy||!history.length)return;
@@ -81,7 +82,7 @@ worker.onmessage=(event:MessageEvent)=>{
     case 'status':notice(m.text);break;
     case 'cancelled':
       if(pendingBefore)view.restore(pendingBefore);pendingBefore=null;batches=[];incoming=null;queuedReady=false;queuedFinish=null;
-      active=false;settling=false;animStart=null;effects.update(2,false);collect();notice('Whole eruption reverted.');break;
+      active=false;settling=false;animStart=null;effects.update(2,false);restoreSaved();collect();notice('Whole eruption reverted.');break;
     case 'operation':lastOperation=m.op;savedRun={format:1,base:m.base,eruptionBase:m.eruptionBase,operation:m.op};button('save-run').disabled=false;break;
     case 'finished':queuedFinish=m;break;
     case 'replayBase':if(incoming)incoming.captureBefore=true;break;
@@ -143,7 +144,8 @@ window.addEventListener('keydown',e=>{
   keys.add(e.key.toLowerCase());
 });
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();drag=null;});
-reduced.addEventListener('change',()=>{if(reduced.matches){input('motion').checked=false;input('shake').checked=false;input('follow').checked=false;}stateControls();});
+function syncMotion(){wasReduced=reduced.matches;if(wasReduced){input('motion').checked=false;input('shake').checked=false;input('follow').checked=false;}stateControls();}
+reduced.addEventListener('change',syncMotion);
 button('save-run').onclick=()=>{
   if(!savedRun)return;const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v);
   const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.href=url;a.download='erupt-run.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -154,6 +156,7 @@ input('replay-file').onchange=async()=>{
 };
 let prior=performance.now(),fpsAt=prior,frames=0,timings:number[]=[];
 function animate(t:number){
+  if(wasReduced!==reduced.matches)syncMotion();
   requestAnimationFrame(animate);const ms=t-prior,dt=Math.min(.05,ms/1000);prior=t;frames++;timings.push(ms);frameSamples.push(ms);if(frameSamples.length>600)frameSamples.shift();
   const batch=batches[0];
   if(batch){
@@ -174,6 +177,7 @@ function animate(t:number){
   }
 
   if(queuedFinish&&!batches.length){
+    lastSeed=queuedFinish.seed??lastSeed;$('seed-label').textContent='Personality '+lastSeed;
     if(pendingBefore){history.push({before:pendingBefore,after:view.capture(),op:lastOperation,bundle:savedRun});if(history.length>16)history.shift();redo=[];}
     canReroll=queuedFinish.canReroll??true;pendingBefore=null;active=false;settling=false;animStart=null;view.activeMorph=0;personality=(lastSeed+1)>>>0;collect();
     notice(queuedFinish.settled?(lastOperation?.op==='carveStudyResult'?'Carve follows the softer ground.':'A new volcano. One undo step.'):'Land kept · water reached the simulation limit.');
@@ -190,7 +194,7 @@ function animate(t:number){
 }
 Object.assign(window,{erupt:{
   get state(){return {W:view.W,H:view.H,busy,active,settling,queued:batches.length,mode,seed:lastSeed,undo:history.length,redo:redo.length,motion:motion(),fps:lastFPS,lastWorkMs,age:animStart===null?null:(performance.now()-animStart)/1000,frameMs:frameSamples.slice()};},
-  get operation(){return lastOperation;},get saved(){return savedRun;},get heights(){return Array.from(view.heights);},clearTimings:()=>{frameSamples=[];},
+  get operation(){return lastOperation;},get saved(){return savedRun;},get heights(){return Array.from(view.heights);},heightAt:(x:number,y:number)=>view.heights[y*view.W+x],clearTimings:()=>{frameSamples=[];},
   carve:(intent:{origin:number;end:number})=>{if(active||busy)return;pendingBefore=view.capture();active=true;finishSent=true;send({type:'carve',intent});},
   setSettings:showSettings,erupt:(intent:Intent)=>begin(intent),load:(id:string)=>{select.value=id;load();},
   screen:(x:number,y:number)=>{const v=new THREE.Vector3(x+.5,view.heights[y*view.W+x]+.1,-y-.5).project(view.camera),r=canvas.getBoundingClientRect();return {x:r.left+(v.x+1)*r.width/2,y:r.top+(1-v.y)*r.height/2};},

@@ -36,7 +36,7 @@ async function frame(token:number,reset=false,transition?:EruptMap){
 async function settle(token:number,live=false){
   const run=waterRun(map);let result=null;
   while(!result){
-    check(token);result=run.advance(2);await yieldSlice();
+    check(token);result=run.advance(8);await yieldSlice();
     if(live&&run.ticks%128===0&&!result){
       send({type:'status',text:'Water finding its level…'});
     }

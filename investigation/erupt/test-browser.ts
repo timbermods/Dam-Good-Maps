@@ -36,12 +36,14 @@ try{
  await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('summary').filter({hasText:'The moment'}).click();await page.locator('#motion').check();
  await page.evaluate(()=>(window as any).erupt.load('seed:riverValley:18:256'));await idle();
  await page.evaluate(s=>(window as any).erupt.setSettings({...s,seed:420}),DEFAULTS);
- await page.evaluate(()=>(window as any).erupt.clearTimings());const started=Date.now();await page.evaluate(()=>(window as any).erupt.erupt({origin:140*256+140}));await idle();
+ const oldHeight=await page.evaluate(()=>(window as any).erupt.heightAt(140,140));
+ await page.evaluate(()=>(window as any).erupt.clearTimings());const started=Date.now();await page.evaluate(()=>(window as any).erupt.erupt({origin:140*256+140}));
+ await page.waitForFunction(h=>(window as any).erupt.heightAt(140,140)!==h,oldHeight);const firstTerrainMs=Date.now()-started;await idle();
  const state=await page.evaluate(()=>(window as any).erupt.state),frames=state.frameMs.filter((v:number)=>v>0).sort((a:number,b:number)=>a-b);
- report.generated256={elapsedMs:Date.now()-started,fps:state.fps,p95Ms:frames[Math.floor(frames.length*.95)],maxFrameMs:Math.max(...frames),sampleCount:frames.length};
+ report.generated256={elapsedMs:Date.now()-started,firstTerrainMs,fps:state.fps,p95Ms:frames[Math.floor(frames.length*.95)],maxFrameMs:Math.max(...frames),sampleCount:frames.length};
  note('Generated 256² map loads and erupts in the actual clean renderer');
  for(const id of ['place:near-yosemite-valley','place:near-geirangerfjord','place:near-grand-canyon-colorado']){
-   await page.evaluate(id=>(window as any).erupt.load(id),id);await idle();assert((await page.evaluate(()=>(window as any).erupt.state)).W>=128);note(id+' loads with settled water');
+   await page.evaluate(id=>(window as any).erupt.load(id),id);await idle();const s=await page.evaluate(()=>(window as any).erupt.state);assert(s.W>0);assert.equal((await heights()).length,s.W*s.H);note(id+' loads with settled water ('+s.W+' × '+s.H+')');
  }
  assert.deepEqual(errors,[]);report.errors=errors;writeFileSync('captures/browser-checks.json',JSON.stringify(report,null,2)+'\n');
 }finally{await browser.close();await server.close();}

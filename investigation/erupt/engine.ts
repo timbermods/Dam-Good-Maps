@@ -57,7 +57,7 @@ export function eruptionReason(m:EruptMap,s:Settings,i:Intent):string|null{
 /** Low frequency lobes, terraces, collapse and long flows; no per-tile noise. */
 export class EruptPlan{
   readonly map:EruptMap;readonly anatomy:Anatomy;readonly keep:Uint8Array;readonly stats={raised:0,changed:0,flattened:0,erased:0,hard:0};private row=0;private done=false;
-  constructor(readonly before:EruptMap,readonly settings:Settings,readonly intent:Intent){this.anatomy=anatomy(before,settings,intent);const reason=eruptionReason(before,settings,intent);if(reason)throw Error(reason);this.keep=protectedGround(before);for(const e of before.entities)if(EMITTERS[e.template])for(const i of entityTiles(before,e))this.keep[i]=1;this.map=snapshot(before);}
+  constructor(readonly before:EruptMap,readonly settings:Settings,readonly intent:Intent){this.anatomy=anatomy(before,settings,intent);const reason=eruptionReason(before,settings,intent);if(reason)throw Error(reason);this.keep=protectedGround(before);this.map=snapshot(before);}
   advance(rows=4):boolean{
     if(this.done)return true;const {W,H}=this.map,a=this.anatomy,s=this.settings,end=Math.min(H,this.row+Math.max(1,Math.floor(rows)));
     for(let y=this.row;y<end;y++)for(let x=0;x<W;x++){
@@ -89,18 +89,18 @@ export class EruptPlan{
     m.entities=m.entities.filter(e=>{
       const tile=e.y*m.W+e.x;if(this.keep[tile])return true;
       const f=field(a,s,e.x,e.y),plant=/^(Pine|Oak|Birch|Succulent|BlueberryBush)$/.test(e.template);
-      if(f.ventDistance<Math.max(1.5,a.radius*.065)){this.stats.erased++;m.fallen=m.fallen.filter(v=>v.id!==e.id);return false;}
+      if(!EMITTERS[e.template]&&f.ventDistance<Math.max(1.5,a.radius*.065)){this.stats.erased++;m.fallen=m.fallen.filter(v=>v.id!==e.id);return false;}
       if(plant&&f.ventDistance<a.radius*.72){
         if(e.template==='BlueberryBush'||e.template==='Succulent'){this.stats.erased++;return false;}
         const d=Math.hypot(e.x-f.vent.x,e.y-f.vent.y)||1;m.fallen=m.fallen.filter(v=>v.id!==e.id);
         m.fallen.push({id:e.id,x:e.x+.5,y:e.y+.5,z:m.heights[tile],dx:(e.x-f.vent.x)/d,dy:(e.y-f.vent.y)/d,length:e.template==='Oak'?2.6:2});
-        e.components={...e.components,LivingNaturalResource:{IsDead:true}};this.stats.flattened++;
+        e.components={...e.components,LivingNaturalResource:{IsDead:true}};delete e.raw;this.stats.flattened++;
       }
       // Rigid footprints ride a supporting terrace, instead of leaving one corner hanging.
       const tiles=entityTiles(m,e),height=Math.max(...tiles.map(i=>m.heights[i]));
       if(tiles.some(i=>this.keep[i]&&m.heights[i]!==height))return true;
       if(!plant)for(const i of tiles){const prior=m.heights[i];m.heights[i]=height;for(let z=prior;z<height;z++)m.lava[i]|=1<<z;}
-      e.z=plant?m.heights[tile]:height;delete e.raw;return true;
+      const z=plant?m.heights[tile]:height;if(e.z!==z)delete e.raw;e.z=z;return true;
     });
   }
 }

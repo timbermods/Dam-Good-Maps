@@ -46,3 +46,6 @@ assert.equal(p.map.entities.filter(e=>e.template.includes('Source')).length,0);
 checks.objectsAndStart=true;
 const b256=fixture('plain',256),t=performance.now(),large=erupt(b256,settings,{origin:128*256+128});checks.plan256Ms=Math.round(performance.now()-t);checks.changed256=large.stats.changed;
 mkdirSync('captures',{recursive:true});writeFileSync('captures/checks.json',JSON.stringify(checks,null,2)+'\n');console.log(checks);
+const smallBase=fixture('plain',32),sampleSettings={...DEFAULTS,power:18,seed:17},sampleIntent={origin:22*32+22},sample=erupt(smallBase,sampleSettings,sampleIntent).map;
+const sampleRun=waterRun(sample);let sr=sampleRun.advance(Infinity);while(!sr)sr=sampleRun.advance(Infinity);sample.water={depth:sr.depth,contamination:sr.contamination};
+mkdirSync('samples',{recursive:true});writeFileSync('samples/vent-32.json',JSON.stringify({format:1,base:smallBase,eruptionBase:smallBase,operation:operation(smallBase,sample,sampleSettings,sampleIntent,sr)},(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as any):v));
