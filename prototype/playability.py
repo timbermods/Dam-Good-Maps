@@ -34,8 +34,10 @@ START_CHECKS = ("start.dry", "start.water", "start.badwater", "start.reach", "st
                 "start.wood", "start.ruins_clear", "plants.survive", "plants.drought", "water.reservoir",
                 "resources.scrap", "resources.trees", "resources.bushes", "ruins.fields", "ruins.access",
                 "extras.placement")
-# advisory from M8 (D85): generation targets with a warning, never a reason to reject a map
-ADVISORY_START = ("start.badwater", "start.reach", "start.ruins_clear", "water.reservoir", "plants.drought")
+# advisory from M8 (D85): generation targets with a warning, never a reason to reject a map; the
+# resource amounts are information (Kyler, 2026-09-25: resources like the official maps)
+ADVISORY_START = ("start.badwater", "start.reach", "start.ruins_clear", "water.reservoir", "plants.drought",
+                  "resources.scrap", "resources.trees", "resources.bushes")
 
 # emitters: local tiles, contamination, running at map start, seep (sim/model.ts)
 SQ2 = [(x, y) for x in range(2) for y in range(2)]
@@ -331,6 +333,10 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     SC = contamination(h, D, C, barrier)
     water.update({"D": D, "C": C, "M": M, "SC": SC, "ticks": sim.ticks, "settled": settled})
 
+    # ---- a mine site on every map (Kyler, 2026-09-25)
+    mines = sum(1 for e in m.entities if e["Template"] == "UndergroundRuins" and "BlockObject" in e.get("Components", {}))
+    rep.add("resources.mine_site", mines >= 1, f"{mines} mine sites (at least one)", mines, 1)
+
     # ---- the start (vanilla: exactly one; start.count reports anything else)
     starts = [e for e in m.entities if e["Template"] == "StartingLocation" and "BlockObject" in e.get("Components", {})]
     if len(starts) != 1:
@@ -461,7 +467,8 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     for key, have, dkey, per in (("scrap", scrap, "scrap_per_1k_tiles", 1e3), ("trees", n_trees, "trees_per_10k", 1e4),
                                  ("bushes", n_bushes, "bushes_per_10k", 1e4)):
         need_k = 0.5 * cal.density(dkey, area) * area / per * rules["mult"][key]
-        rep.add(f"resources.{key}", have >= need_k, f"{have} {key} (at least {need_k:.0f})", have, round(need_k))
+        rep.add(f"resources.{key}", have >= need_k, f"{have} {key} (at least {need_k:.0f})", have, round(need_k),
+                advisory=True)
 
     # ---- ruins: fields of touching columns, each scavengeable from its own level
     if ruins:

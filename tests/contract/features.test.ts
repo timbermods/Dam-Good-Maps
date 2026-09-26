@@ -26,9 +26,10 @@ describe.each([
 
   it("passes the generate profile", () => {
     // every check passes except, possibly, the advisory ones (PLAN §11, §19.5): plants.drought and,
-    // from M8, the start targets and the stored drought water (D85)
+    // from M8, the start targets and the stored drought water (D85); the resource amounts are
+    // information too (Kyler, 2026-09-25: resources like the official maps; D148)
     expect(r.report.checks.filter((c) => !c.ok && !c.advisory)).toEqual([]);
-    expect(r.report.checks.filter((c) => c.advisory).map((c) => c.id)).toEqual(["start.badwater", "start.reach", "start.ruins_clear", "plants.drought", "water.reservoir"]);
+    expect(r.report.checks.filter((c) => c.advisory).map((c) => c.id)).toEqual(["start.badwater", "start.reach", "start.ruins_clear", "plants.drought", "water.reservoir", "resources.scrap", "resources.trees", "resources.bushes"]);
     expect(r.report.passed).toBe(true);
   });
 

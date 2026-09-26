@@ -16,6 +16,8 @@ The generator:
 - Every map's start has water on its own level, trees and bushes within a short walk. The map card
   lists the **Start requirements**. **Advanced: start rules** sets them.
 - The preview shows water, moisture and reach layers.
+- Trees, berry bushes and ruins come in about the amounts official maps of that size have. They
+  grow in groves, patches and fields. Every map has at least one mine site.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
 - **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
 

@@ -288,15 +288,21 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 
 | Setting | Range | Default | Maps to |
 |---|---|---|---|
-| Forest density | 50% – 200% | 100% | Trees per 10k tiles, size-aware (small 1,715, medium 1,061, large 534, max 500). Living share comes from moisture (official 0.33). |
-| Grove size | Scattered, Normal, Big woods | Normal | Grove size median 6 / 10 / 20 trees, with a log-normal tail capped at 120 / 180 / 300. Groves are single-species, as every official grove of 20+ is. |
+| Forest density | 50% – 200% | 100% | Trees per 10k tiles, size-aware (small 1,715, medium 1,061, large 544, max 559), each map placed by its seed within the official typical range (×0.92–1.17). About a third alive (official 0.27–0.43), on moist ground; the rest stored dead on dry ground. |
+| Grove size | Scattered, Normal, Big woods | Normal | Grove size median 20 / 40 / 80 trees (a grove: trees within 2 tiles of each other; official median 40), capped at 120 / 250 / 400, with clearings between groves. Near the start, groves of 9 / 15 / 30. Groves are single-species, as every official grove of 20+ is. |
 | Species mix | weights for Pine, Birch, Oak, Succulent | 47 / 27 / 20 / 6 | The only species that load for both factions and in the editor. Succulents go on dry soil only. |
 | Berries near start | 20 – 100 | by difficulty (Easy 40, Normal 48, Hard 60; Easy was 20 before M8, D85): the generation target, never below Minimum starting bushes (§5.6), which validation enforces | Living bushes within 20 tiles' walk of the start, in 2–3 patches beside water, grown within the colony's walk first (D97). |
-| Berry bushes elsewhere | 50% – 300% | 100% | Bushes per 10k tiles, size-aware (medium 92, large 40), in patches of about 20–40 beside water. |
-| Ruins and scrap | 25% – 300% | 100% | Scrap per 1k tiles, size-aware (small 840, medium 705, large and max 236). |
+| Berry bushes elsewhere | 50% – 300% | 100% | Bushes per 10k tiles, size-aware (small 265, medium 92, large 40, max 44), each map placed within the official typical range (×0.98–1.07), in a few patches of about 44 along the banks. |
+| Ruins and scrap | 25% – 300% | 100% | Scrap per 1k tiles, size-aware (small 840, medium 705, large 236, max 235), each map placed within the official typical range (×0.75–1.41). |
 | Relics | Off, Some | Some | 0–3 small (13–70 tiles out), 0–2 medium (40–140), 0–1 large (140+, maps ≥ 192²). As built (M7, D81): 1–3 small, 1–2 medium from 128² (0–1 below), one large from 192². |
 | Geothermal fields | Off, Some | Some | 1–3 per map, 30–120 tiles out, flat, dry, outside flood reach. As built: 1 / 2 / 3 by size (under 128², from 128², from 192²). |
-| Mine sites (UndergroundRuins) | 0 – 4 | 1 / 2 / 3 / 3 by size | Flat 5×5, no cave below, 60+ tiles out (official 24–173, median 89). |
+| Mine sites (UndergroundRuins) | 1 – 4 | 1 / 2 / 3 / 3 by size | Every map has at least one (Kyler, 2026-09-25): old links with 0 open with 1. Flat 5×5 with a level ring, dry, 60+ tiles out (official 24–173, median 89), on ground the colony walks to when the band has any. |
+
+As built ("Resources like the official maps", Kyler, 2026-09-25): the amounts and layouts come from
+`investigation/official-baselines.json` (`tools/official-baselines.ts`), the official maps measured
+by size without Nomads and Oasis, and `src/core/resources/` places them for generated maps and Real
+places alike. The resource amount checks are information: a warning under half the official median
+at the map's settings, never a reason to reject a map.
 
 On maps under 128² the distance bands of relics, geothermal fields and mine sites shrink by the
 map's longer side ÷ 128 (a 96² map has no tile 140 out); thorn belts and cores keep theirs (D75).
@@ -971,6 +977,13 @@ from a click on a lake's shore.
     lies 64–128 tiles out.
 - **Each column:** `RuinModels.VariantId` A–E uniform, random Orientation, `Yielder:Ruin` 15·h.
   Each needs an 8-neighbour at its own level, which the one-level rule guarantees.
+- **As built** ("Resources like the official maps", Kyler, 2026-09-25; `src/core/resources/baseline.ts`):
+  scrap per map within the official typical range for the size; fields of about 19 / 32 / 39 / 42
+  columns by size, grown in an ellipse of aspect 1–2 with 4–10% holes; each field has its own
+  tallness, the official storey shares tilted so a field averages 2.4 to 3.8 storeys; heights placed
+  by a mildly clumped key (neighbours differ by about 2 storeys, official 1.8), so a few towers of
+  6+ stand among shorter columns; models A 26%, B–E 18–19% each, and turns mostly Cw0 (59%), as the
+  official maps have them. The ruins on a plateau are a taller field.
 
 ### 9.8 Second district site
 
