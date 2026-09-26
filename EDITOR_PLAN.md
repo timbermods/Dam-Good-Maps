@@ -108,7 +108,10 @@ Make a valley, drop a source, and there's a river.
   - **Power** (creek to catastrophe), and **Width** (following Power by default, or set by hand for
     slot canyons or wide lazy rivers);
   - **Wander** (straight to winding), natural variation within each carve, and **Try another path**;
-  - **Steep** or **Wide** walls; **Keep river** or **Dry canyon**;
+  - **Steep** or **Wide** walls; **Keep river** (the default) or **Dry canyon**. Keep river leaves a
+    source at the origin whose strength follows the river's Width, not its Power, so a slot canyon
+    keeps a modest stream and a wide river a big one; Dry canyon leaves no source. The source is
+    editable afterwards like any other;
   - an optional camera that follows the river's head, with the visible carving effects (a surging
     head, crumbling blocks, dust, muddy water);
   - **Stop** keeps what's carved; Esc or undo reverts the whole carve instantly.
