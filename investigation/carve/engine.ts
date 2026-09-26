@@ -1,3 +1,4 @@
+import { RiverCharacter, type Lane } from './character';
 import { JsonFloat } from '../../src/core/format/json';
 import type { EntitySpec } from '../../src/core/format/entities';
 import { waterSource } from '../../src/core/format/entities';
@@ -12,10 +13,10 @@ export interface CarveMap {
   rockLayers?:number[];
 }
 export interface Settings {
-  mode:'unleash'|'aim'; power:number; walls:'steep'|'wide'; defyGravity:boolean; dry:boolean; layers:boolean;
+  mode:'unleash'|'aim'; power:number; wander?:number; width?:number|null; seed?:number; walls:'steep'|'wide'; defyGravity:boolean; dry:boolean; layers:boolean;
 }
 export interface Intent { origin:number; end?:number }
-export const DEFAULTS:Settings={mode:'unleash',power:65,walls:'steep',defyGravity:false,dry:false,layers:true};
+export const DEFAULTS:Settings={mode:'unleash',power:65,wander:35,width:null,seed:0,walls:'steep',defyGravity:false,dry:false,layers:true};
 export const STEPS_PER_SECOND=10;
 export const plainEntities=(e:EntitySpec[]):EntitySpec[]=>JSON.parse(JSON.stringify(e,(_k,v)=>v instanceof JsonFloat?v.value:v));
 export const isPlant=(e:EntitySpec)=>/^(Pine|Birch|Oak|Succulent|BlueberryBush)$/.test(e.template);
@@ -40,9 +41,9 @@ export function protectedGround(m:CarveMap):Uint8Array {
     }
   }return keep;
 }
-export interface Head {x:number;y:number;z:number;dx:number;dy:number;width:number;event:'surge'|'breakthrough'|'waterfall'|'rock';cut:number}
-export interface Metrics {cut:number;deposited:number;exported:number;suspended:number;bankCuts:number;bendCuts:number;steps:number;stable:boolean;distance:number;reason:string}
-interface Station {x:number;y:number;bed:number;width:number;dx:number;dy:number}
+export interface Head {x:number;y:number;z:number;dx:number;dy:number;width:number;event:'surge'|'breakthrough'|'waterfall'|'rock'|'split'|'rapids';cut:number;lanes?:Lane[]}
+export interface Metrics {cut:number;deposited:number;exported:number;suspended:number;bankCuts:number;bendCuts:number;steps:number;stable:boolean;distance:number;reason:string;splits:number;waterfalls:number;rapids:number}
+export interface Station {x:number;y:number;bed:number;width:number;dx:number;dy:number;lanes:Lane[]}
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 const angleDelta=(a:number,b:number)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 /** Terrain-derived, coherent horizontal beds, shared v2 hardness coefficients below. */
@@ -61,29 +62,33 @@ export function hardness(level:number,layers:boolean,seed=0):number {
 export class CarveRun {
   readonly map:CarveMap; readonly original:Uint8Array; readonly initialWater:Float64Array; readonly keep:Uint8Array;
   readonly sign:Int8Array; readonly target:Uint8Array; readonly wear:Float64Array;
-  readonly path:Station[]=[]; readonly seed:number; readonly intent:Intent; readonly sourceId:string;
-  readonly metrics:Metrics={cut:0,deposited:0,exported:0,suspended:0,bankCuts:0,bendCuts:0,steps:0,stable:false,distance:0,reason:''};
+  readonly character:RiverCharacter; readonly path:Station[]=[]; readonly seed:number; readonly intent:Intent; readonly sourceId:string;
+  readonly metrics:Metrics={cut:0,deposited:0,exported:0,suspended:0,bankCuts:0,bendCuts:0,steps:0,stable:false,distance:0,reason:'',splits:0,waterfalls:0,rapids:0};
   head:Head;
   private sim:WaterSim; private active=new Set<number>();private channel=new Uint8Array();private visited=new Uint16Array();
   private born=new Uint16Array();private heading=0;private bed=0;private energy=0;
+  private bendVelocity=0;private splitSeen=new Set<string>();private previewBed:Uint8Array;private previewCells=new Set<number>();
   private ended=false;private tail=0;private quiet=0;private depositQueue:number[]=[];private depositDone=false;
   constructor(input:CarveMap,readonly settings:Settings,intent:Intent) {
+    settings.wander??=35;settings.width??=null;settings.seed??=0;
     const N=input.W*input.H;
     if(input.heights.length!==N||!Number.isInteger(intent.origin)||intent.origin<0||intent.origin>=N||
        !['unleash','aim'].includes(settings.mode)||!['steep','wide'].includes(settings.walls)||
        !Number.isFinite(settings.power)||settings.power<0||settings.power>100)throw new Error('Invalid carve settings');
+    if(!Number.isFinite(settings.wander)||settings.wander<0||settings.wander>100||!Number.isInteger(settings.seed)||settings.seed<0||settings.seed>0xffffffff||
+      (settings.width!==null&&(!Number.isFinite(settings.width)||settings.width<2||settings.width>24)))throw new Error('Invalid character settings');
     if(settings.mode==='aim'&&(!Number.isInteger(intent.end)||intent.end!<0||intent.end!>=N||intent.end===intent.origin))throw new Error('Choose a different end point');
-    this.initialWater=input.water.depth.slice();this.intent={...intent};this.seed=mapSeed(input);
+    this.initialWater=input.water.depth.slice();this.intent={...intent};this.seed=mapSeed(input);this.character=new RiverCharacter(input,settings,this.seed,intent.origin,intent.end);this.previewBed=new Uint8Array(N).fill(255);
     let sourceId='carve-source-'+intent.origin+'-'+this.seed.toString(16);while(input.entities.some(e=>e.id===sourceId))sourceId+='-next';this.sourceId=sourceId;this.original=input.heights.slice();this.keep=protectedGround(input);
     if(this.keep[intent.origin]||(settings.mode==='aim'&&this.keep[intent.end!]))throw new Error('Choose a point outside the start’s protected ground');
     this.map={...input,heights:input.heights.slice(),entities:plainEntities(input.entities),water:{depth:input.water.depth.slice(),contamination:input.water.contamination.slice()}};
     this.sim=new WaterSim(modelFor(input),input.water);this.target=input.heights.slice();this.sign=new Int8Array(N);this.wear=new Float64Array(N);
     this.channel=new Uint8Array(N);this.visited=new Uint16Array(N);this.born=new Uint16Array(N);
     const x=intent.origin%input.W,y=Math.floor(intent.origin/input.W),p=settings.power/100;
-    this.bed=Math.max(Math.min(2,input.heights[intent.origin]),input.heights[intent.origin]-Math.round(1+6*p));
-    this.energy=Math.max(input.W,input.H)*(1.2+4*p);
-    this.heading=settings.mode==='aim'?Math.atan2(Math.floor(intent.end!/input.W)-y,intent.end!%input.W-x):this.downhill(x,y);
-    this.head={x,y,z:input.heights[intent.origin],dx:Math.cos(this.heading),dy:Math.sin(this.heading),width:1.4+5*p,event:'surge',cut:0};
+    this.bed=Math.max(Math.min(2,input.heights[intent.origin]),input.heights[intent.origin]-Math.round(Math.min(12,1+6*p*this.character.intensity)));
+    this.energy=Math.max(input.W,input.H)*(1.2+4*p)*(1+.6*this.character.wander);
+    this.heading=settings.mode==='aim'?Math.atan2(Math.floor(intent.end!/input.W)-y,intent.end!%input.W-x):this.downhill(x,y)+this.character.initialOffset();
+    this.head={x,y,z:input.heights[intent.origin],dx:Math.cos(this.heading),dy:Math.sin(this.heading),width:this.character.width(0),event:'surge',cut:0};
     if(settings.mode==='aim'&&!settings.defyGravity&&input.heights[intent.end!]>input.heights[intent.origin]){
       throw new Error('The end point is uphill. Turn on Defy gravity to cut it down.');
     }
@@ -103,29 +108,42 @@ export class CarveRun {
   }
   private stamp(x:number,y:number) {
     const {W,H}=this.map,p=this.settings.power/100,raw=this.original[this.at(x,y)];
-    // Non-increasing channel floor. Hard lips delay the actual cutting; downsteps
-    // at bed boundaries survive as falls. Defy cuts high destinations to this grade.
-    const sourceBed=Math.max(Math.min(2,this.original[this.intent.origin]),this.original[this.intent.origin]-Math.round(1+6*p));
-    const grade=Math.max(0,sourceBed-Math.floor(this.metrics.distance/18));
-    this.bed=Math.min(this.bed,grade,Math.max(Math.min(2,raw),raw-Math.round(1+6*p)));
-    const width=(1.4+5*p)*(1+.13*Math.sin(this.metrics.distance*.13+this.seed%11));
-    const depth=Math.max(1,raw-this.bed),shoulder=this.settings.walls==='wide'?depth*.9:Math.min(2,depth*.15);
-    const radius=width+shoulder+1;
-    this.path.push({x,y,bed:this.bed,width,dx:Math.cos(this.heading),dy:Math.sin(this.heading)});
-    for(let yy=Math.max(0,Math.floor(y-radius));yy<=Math.min(H-1,Math.ceil(y+radius));yy++)
-      for(let xx=Math.max(0,Math.floor(x-radius));xx<=Math.min(W-1,Math.ceil(x+radius));xx++){
-        const i=yy*W+xx;if(this.keep[i]||this.sign[i]>0)continue;
-        const d=Math.hypot(xx-x,yy-y),slope=this.settings.walls==='wide'?1:4;
-        let t=this.bed+Math.max(0,Math.ceil((d-width)*slope));
-        // Persistent benches at hard layers on the sidewall, never random rubble.
-        if(d>width&&this.hard(t)>.5)t++;
-        if(t<this.target[i]){
-          this.target[i]=t;this.active.add(i);if(!this.born[i])this.born[i]=this.metrics.steps+1;
+    const incision=Math.round(Math.min(12,1+6*p*this.character.intensity));
+    const sourceBed=Math.max(Math.min(2,this.original[this.intent.origin]),this.original[this.intent.origin]-incision);
+    const drop=this.character.grade(this.metrics.distance,this.settings.power),oldBed=this.bed;
+    const grade=Math.max(0,sourceBed-drop);
+    this.bed=Math.min(this.bed,grade,Math.max(0,Math.max(Math.min(2,raw),raw-incision)-drop));
+    const width=this.character.width(this.metrics.distance),dx=Math.cos(this.heading),dy=Math.sin(this.heading);
+    const {lanes,knob}=this.character.lanes(x,y,dx,dy,width);
+    let event:Head['event']='surge';
+    if(oldBed-this.bed>=2){this.metrics.waterfalls++;event='waterfall';}
+    else if(this.bed<oldBed||width<this.character.radius*.8){this.metrics.rapids++;event='rapids';}
+    if(knob){
+      const key=knob.x+','+knob.y;
+      if(!this.splitSeen.has(key)){this.splitSeen.add(key);this.metrics.splits++;}
+      event='split';
+    }
+    this.gradeDrop=drop;
+    this.path.push({x,y,bed:this.bed,width,dx,dy,lanes});
+    for(const lane of lanes){
+      const depth=Math.max(1,raw-this.bed),shoulder=this.settings.walls==='wide'?depth*.9:Math.min(2,depth*.15),radius=lane.width+shoulder+1;
+      for(let yy=Math.max(0,Math.floor(lane.y-radius));yy<=Math.min(H-1,Math.ceil(lane.y+radius));yy++)
+        for(let xx=Math.max(0,Math.floor(lane.x-radius));xx<=Math.min(W-1,Math.ceil(lane.x+radius));xx++){
+          const i=yy*W+xx;if(this.keep[i]||this.character.rock[i]||this.sign[i]>0)continue;
+          const d=Math.hypot(xx-lane.x,yy-lane.y),slope=this.settings.walls==='wide'?1:4;
+          let t=this.bed+Math.max(0,Math.ceil((d-lane.width)*slope));
+          if(d>lane.width&&this.hard(t)>.5)t++;
+          const work=p*this.character.intensity;
+          if(work<.45)t=Math.max(t,this.original[i]-Math.max(1,Math.round(1+6*work)));
+          if(t<this.target[i]){
+            this.target[i]=t;this.active.add(i);if(!this.born[i])this.born[i]=this.metrics.steps+1;
+          }
+          if(d<=lane.width*.72)this.channel[i]=1;
+          if(d<=lane.width*.65){this.previewCells.add(i);this.previewBed[i]=Math.min(this.previewBed[i],this.bed);}
         }
-        if(d<=width*.72)this.channel[i]=1;
-      }
+    }
     const i=this.at(x,y);this.visited[i]++;
-    this.head={x,y,z:this.map.heights[i]+.4,dx:Math.cos(this.heading),dy:Math.sin(this.heading),width,event:'surge',cut:0};
+    this.head={x,y,z:this.map.heights[i]+.4,dx,dy,width,event,cut:0,lanes};
   }
   private advanceHead() {
     const {W,H}=this.map,{x,y}=this.head,p=this.settings.power/100;
@@ -137,7 +155,9 @@ export class CarveRun {
     let best=-Infinity,bestA=this.heading,bestX=x,bestY=y;
     const targetAngle=goal?Math.atan2(goal.y-y,goal.x-x):this.heading;
     // Coherent lateral acceleration + inertia gives overshooting bends. No white noise.
-    const sway=Math.sin(this.metrics.distance/(7+10*p)+this.seed%31)*(.2*(1-p)+.06);
+    const wander=this.character.wander;
+    this.bendVelocity=.86*this.bendVelocity+.14*this.character.bend(this.metrics.distance);
+    const sway=this.bendVelocity;
     for(let k=-10;k<=10;k++){
       const a=this.heading+k*.12+ sway,dx=Math.cos(a),dy=Math.sin(a);
       const nx=x+dx*1.35,ny=y+dy*1.35,i=this.at(nx,ny);
@@ -145,8 +165,11 @@ export class CarveRun {
       if(this.keep[i])continue;
       const far=this.original[this.at(nx+dx*5,ny+dy*5)],near=this.original[i],here=this.original[this.at(x,y)];
       const obstacle=Math.max(0,far-here),resist=obstacle*(1+this.hard(far)*2)*(1-p);
-      let score=3.5*Math.cos(angleDelta(a,this.heading))+(here-far)*(.8+1.5*(1-p))-resist*1.2-this.visited[i]*9;
-      if(goal)score+=Math.cos(angleDelta(a,targetAngle+Math.sin(this.metrics.distance*.12+this.seed%7)*.25))*8;
+      let score=(8-2*wander)*Math.cos(angleDelta(a,this.heading+sway*4))+(here-far)*(.65+1.5*(1-p))*(1-.55*wander)-resist*1.2-this.visited[i]*9;
+      if(goal){
+        const direct=Math.hypot(this.intent.origin%W-goal.x,Math.floor(this.intent.origin/W)-goal.y),late=this.metrics.distance>direct*2;
+        score+=Math.cos(angleDelta(a,targetAngle+(late?0:this.character.aimOffset(this.metrics.distance))))*(late?15:8-3*wander);
+      }
       // Low force shies away from rock even when its top is at the same level.
       score-=this.hard(near)*(1-p)*1.3;
       if(score>best){best=score;bestA=a;bestX=nx;bestY=ny;}
@@ -164,7 +187,7 @@ export class CarveRun {
     const fall=this.original[this.at(x,y)]-this.original[ahead],lake=this.initialWater[ahead]>1.1;
     const turn=Math.abs(angleDelta(bestA,this.heading));if(turn>.15)this.metrics.bendCuts++;
     this.heading=bestA;this.metrics.distance+=1.35;this.stamp(bestX,bestY);
-    this.head.event=fall>1?'waterfall':climb>0?'breakthrough':'surge';
+    if(this.head.event==='surge')this.head.event=fall>1?'waterfall':climb>0?'breakthrough':'surge';
     if(this.settings.mode==='unleash'&&lake)this.end('lake');
   }
   private end(reason:string){this.ended=true;this.metrics.reason=reason;}
@@ -178,7 +201,7 @@ export class CarveRun {
       const xx=Math.round(x+dx*d-dy*s),yy=Math.round(y+dy*d+dx*s);
       if(xx<0||yy<0||xx>=W||yy>=H)continue;
       const i=yy*W+xx;
-      if(this.keep[i]||this.sign[i]<0||this.channel[i]||this.target[i]<this.original[i]||this.map.heights[i]>=this.map.maxHeight)continue;
+      if(this.keep[i]||this.character.rock[i]||this.sign[i]<0||this.channel[i]||this.target[i]<this.original[i]||this.map.heights[i]>=this.map.maxHeight)continue;
       const surface=this.original[this.at(x,y)]+Math.max(1,this.map.water.depth[this.at(x,y)]);
       if(this.map.heights[i]<surface&&Math.abs(s)>width*.65)this.depositQueue.push(i);
     }
@@ -196,7 +219,7 @@ export class CarveRun {
       // Wide terraces retreat after the head, not simultaneously across the map.
       if(bank&&age<4)continue;
       const hard=this.hard(h),coefficient=bank?1-.8*hard:1-.85*hard;
-      this.wear[i]+=(.75+2.4*p)*coefficient*(bank?.65:1);
+      this.wear[i]+=(.75+2.4*p)*Math.min(2,this.character.intensity)*coefficient*(bank?.65:1);
       if(this.wear[i]>=1)delta[i]=-1;
     }
     if(this.ended){
@@ -217,7 +240,7 @@ export class CarveRun {
       }else{this.metrics.deposited++;this.metrics.suspended--;}
     }
     this.head.cut=frontCut;this.head.z=this.map.heights[this.at(this.head.x,this.head.y)]+.7;
-    if(frontCut>60)this.head.event='breakthrough';
+    if(frontCut>60&&this.head.event==='surge')this.head.event='breakthrough';
     else if(!frontCut&&this.active.size)this.head.event='rock';
     if(changed.length){
       const hit=new Set(changed);
@@ -236,15 +259,8 @@ export class CarveRun {
     // The force's muddy ribbon is a preview, not counterfeit game water. Keep it
     // inside the excavated channel; final water always comes from canonicalRun.
     for(const i of this.active)if(this.sign[i]<0)this.map.water.depth[i]=0;
-    for(let n=0;n<this.path.length;n++){
-      const s=this.path[n],r=s.width*.65;
-      for(let y=Math.max(0,Math.ceil(s.y-r));y<=Math.min(this.map.H-1,Math.floor(s.y+r));y++)
-        for(let x=Math.max(0,Math.ceil(s.x-r));x<=Math.min(this.map.W-1,Math.floor(s.x+r));x++){
-          const i=y*this.map.W+x;
-          if(Math.hypot(x-s.x,y-s.y)<=r&&this.sign[i]<0&&this.map.heights[i]<=s.bed+2)
-            this.map.water.depth[i]=.45+.5*this.settings.power/100;
-        }
-    }
+    for(const i of this.previewCells)if(this.sign[i]<0&&this.map.heights[i]<=this.previewBed[i]+2)
+      this.map.water.depth[i]=.45+.5*this.settings.power/100;
   }
   private rejectIsolated(d:Int8Array) {
     const h=this.map.heights,{W,H}=this.map,marked=new Set<number>();
@@ -261,3 +277,4 @@ export class CarveRun {
     }
   }
 }
+
