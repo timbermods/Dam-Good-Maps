@@ -13,10 +13,9 @@ import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView
 import { walkRegions } from "../core/analysis/regions";
 import { pumpShoreDistance, reachAt, walkDistance } from "../core/analysis/walk";
 import { noWood, type WoodBySpecies, type WoodSpecies } from "../core/analysis/wood";
-import { START_CLEAR_RADIUS } from "../core/features/build";
 import { DERIVED_SLOPES } from "../core/features/ids";
 import { inBench } from "../core/features/raster/terrain";
-import { placeSlopes, SLOPE_RULES } from "../core/features/slopes";
+import { placeSlopes, SLOPE_RULES, START_CLEAR_RADIUS } from "../core/features/slopes";
 import { TREE_LOGS } from "../core/format/entities";
 import { FOOTPRINTS, footprintTiles, slopeHighSide, type Orientation } from "../core/format/footprints";
 import { WALK_BLOCKERS } from "../core/validate/playability";

@@ -537,11 +537,13 @@ start rules as reasons to reject a map:
   outflow, badwater containment).
 - **Build rules:**
   - Change both validators together (TypeScript and the Python oracle), with 0 disagreements.
-  - A unit test for each requirement: water reachable only by a slope fails; water beyond the
-    walking distance fails; only badwater fails; trees or bushes below the minimum, or too far
-    away, fail; changing any of the three settings moves the result.
+  - A unit test for each requirement: water beyond the walking distance fails; only badwater
+    fails; trees or bushes below the minimum, or too far away, fail; changing any of the three
+    settings moves the result. As M8 built it, water reachable only by a slope failed; since D153
+    water down a natural slope passes and water that needs stairs fails, and since D164 wood below
+    the minimum fails, each species counting its own logs.
   - The three settings have a measured target in `tools/settings-suite.ts`, like the M6 settings
-    (the water distance's experiment measures the walk on the start's level).
+    (the water distance's experiment measures the walk; since D153 over the map's own slopes).
   - The editor's start indicators and its green or red footprint follow the three requirements,
     using the map's settings. The map card lists them.
   - This changes which attempt wins and where the start stands: bump the generator version and
@@ -790,9 +792,15 @@ A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built
   and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
   editor's start indicators and the start text change together. Generated maps change: the
   generator version goes up.
+- **Starting wood** (D164): the logs of the grown trees within 20 tiles' walk, by species, replace
+  the tree count; **Minimum starting wood (logs)**, with saplings' wood shown apart as growing, and
+  the page reading a tree's growth correctly (before and after captures of saplings for Kyler).
 
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
 D151, and what a player feels.
+
+**Status:** built on `feature/start-edge-rules` (docs/progress/start-edge-rules.md), a PR into
+`dev`; generator 0.6.1.
 
 ---
 

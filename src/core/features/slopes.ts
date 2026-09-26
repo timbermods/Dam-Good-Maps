@@ -43,6 +43,10 @@ export interface SlopeRules {
   water?: Uint8Array | null;
 }
 
+/** Nothing stands within this Chebyshev distance of the start's centre, slopes included (PLAN §7.7);
+ *  the build reserves it, and the editor's start indicators predict the slopes round it. */
+export const START_CLEAR_RADIUS = 3;
+
 /** §7.5 for generated and edited maps. */
 export const SLOPE_RULES: SlopeRules = { core: 40, bigRegion: 400 };
 /** Slopes stand at least this far apart (Manhattan), as in the prototype. */

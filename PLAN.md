@@ -346,7 +346,7 @@ distance, trees within 20 tiles 80 / 50 / 40 (dead ones included), living bushes
 
 | Target | Easy | Normal | Hard | Source |
 |---|---|---|---|---|
-| Berries near start (§5.5) | 40 | 48 | 60 | Official median 47. Never below Minimum starting bushes, so Easy's 20 becomes 40. Near-start groves aim at 1.2× Minimum starting trees (D59). |
+| Berries near start (§5.5) | 40 | 48 | 60 | Official median 47. Never below Minimum starting bushes, so Easy's 20 becomes 40. Near-start groves aim at 1.35× Minimum starting wood, in grown logs (D59, D164). |
 | No badwater within | 30 | 15 | 8 | The workshop study: official maps' nearest badwater median 14.8, p25 10 (W4, decided by Kyler in D85). Before M8: 40 / 30 / 15. |
 | No ruins within | 20 | 15 | 12 | Official p10 22; scrap within 40 is 0 on the median official map. |
 | Drought sized for | 4 days, 40 beavers | 9 days, 50 beavers | 30 days, 50 beavers | Game mode durations. |

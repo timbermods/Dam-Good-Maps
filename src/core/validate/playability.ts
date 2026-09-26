@@ -170,8 +170,8 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     value: water.ticks,
     limit: 4 * TICKS_PER_DAY,
     message: water.settled
-      ? `the water settles after ${water.ticks} ticks (${(water.ticks / TICKS_PER_DAY).toFixed(1)} days)`
-      : `the water is still moving after 4 game days`,
+      ? `the water is steady after ${water.ticks} ticks (${(water.ticks / TICKS_PER_DAY).toFixed(1)} days); water may keep flowing off the map`
+      : `the water is still changing after 4 game days`,
   });
   const share = wetCount / N;
   c.add({
