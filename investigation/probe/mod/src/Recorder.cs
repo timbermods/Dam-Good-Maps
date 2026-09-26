@@ -248,7 +248,8 @@ namespace DGMProbe
                     X = r?.X ?? 0,
                     Y = r?.Y ?? 0,
                     Day = day,
-                    Cause = r?.Plant == null ? "unknown" : r.Plant.Flooded ? "flooded" : r.Plant.Contaminated ? "contaminated soil" : r.Plant.Dry ? "dry soil" : "moist soil",
+                    // The fastest timer first: contaminated soil kills in 0.2–0.3 days, dry soil and flooding in 7 or more.
+                    Cause = r?.Plant == null ? "unknown" : r.Plant.Contaminated ? "contaminated soil" : r.Plant.Dry ? "dry soil" : r.Plant.Flooded ? "flooded" : "moist soil",
                 });
             }
             return deaths;

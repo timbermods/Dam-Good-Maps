@@ -306,10 +306,19 @@ const EVALS: Record<string, Eval> = {
     const inGroves = died.filter((d) => groves.some((g) => g.species === d.template && Math.hypot(d.x - g.x, d.y - g.y) <= 10));
     const deadAtStart = new Set((r.entitiesAtStart ?? []).filter((e) => e.plant?.dead).map((e) => e.id));
     const revived = (r.entitiesAtEnd ?? []).filter((e) => deadAtStart.has(e.id) && e.plant && !e.plant.dead).length;
-    const ok = nearStart.length === 0 && inGroves.length === 0 && revived === 0;
+    // "nothing near the river dies": plants within 3 tiles of the file's water
+    const nearWater = died.filter((d) => {
+      for (let dy = -3; dy <= 3; dy++)
+        for (let dx = -3; dx <= 3; dx++) {
+          const x = d.x + dx, y = d.y + dy;
+          if (x >= 0 && y >= 0 && x < info.W && y < info.H && info.depth[y * info.W + x] > 0.05) return true;
+        }
+      return false;
+    });
+    const ok = nearStart.length === 0 && inGroves.length === 0 && revived === 0 && nearWater.length === 0;
     const bySpecies: Record<string, number> = {};
     for (const d of died) bySpecies[`${d.template} (${d.cause})`] = (bySpecies[`${d.template} (${d.cause})`] ?? 0) + 1;
-    return { verdict: ok ? 'passed' : 'failed', detail: `over ${f2((r.samples.at(-1)?.day ?? D0) - D0)} days with a 3-day drought from day 14: ${died.length} plants died (${Object.entries(bySpecies).map(([k, v]) => `${v} ${k}`).join(', ') || 'none'}); berry bushes within 20 tiles of the start: ${nearStart.length} died; the four living groves: ${inGroves.length} died; dead stands alive again: ${revived}` };
+    return { verdict: ok ? 'passed' : 'failed', detail: `over ${f2((r.samples.at(-1)?.day ?? D0) - D0)} days with a 3-day drought from day 14: ${died.length} plants died (${Object.entries(bySpecies).map(([k, v]) => `${v} ${k}`).join(', ') || 'none'}); berry bushes within 20 tiles of the start: ${nearStart.length} died; the four living groves: ${inGroves.length} died; plants within 3 tiles of the river's water: ${nearWater.length} died${nearWater.length ? ` (days ${f2(Math.min(...nearWater.map((d) => d.day)) - D0)}–${f2(Math.max(...nearWater.map((d) => d.day)) - D0)})` : ''}; dead stands alive again: ${revived}. A cause is the plant's state when found dead: a plant killed by contaminated soil can also stand in water` };
   },
   B4(c) {
     const info = c.L.info;
@@ -380,7 +389,8 @@ const EVALS: Record<string, Eval> = {
     const wet = weirTiles(info).map(([x, y]) => y * info.W + x).filter((t) => !dams.has(t));
     const surf = (t: number) => info.floor[t] + info.depth[t];
     const top = Math.max(...wet.map(surf));
-    const up = wet.filter((t) => surf(t) > top - 0.3), down = wet.filter((t) => surf(t) <= top - 0.3);
+    // upstream stands level at the top surface; downstream is lower (0.2 lower beside the weir, then falling)
+    const up = wet.filter((t) => surf(t) > top - 0.1), down = wet.filter((t) => surf(t) <= top - 0.1);
     const upFile = median(up.map((t) => info.depth[t])), upGame = median(up.map((t) => s.depth[t]));
     const downGame = median(down.map((t) => s.depth[t]));
     const ok = up.length > 0 && down.length > 0 && Math.abs(upGame - upFile) <= 0.1 && downGame > 0.01;

@@ -283,7 +283,7 @@ export function catalog(extraMaps: string[] = []): GameDef[] {
     games.push({
       id: 'm8-canyon-edited', title: 'M8 · Canyon (M8 edited), local', group: 'M8', bytes: localFile(canyonEdited), faction: 'Folktails', mode: 'Normal',
       cycles: [calm], days: 1, tiles: () => [[76, 63], [72, 59], [80, 67]], sampleHours: 2, snapshotsAt: [1], pairs: ['m8-canyon-original'],
-      checks: [{ id: 'M8-1b', title: 'The new lake fills from its spring; the tunnels flow as in the original Canyon', how: 'measure' }, LOAD, OBJECTS, TERRAIN],
+      checks: [{ id: 'M8-1b', title: 'The new lake fills from its spring; the tunnels flow as in the original Canyon', how: 'measure' }, LOAD, OBJECTS, WATER, TERRAIN],
     });
     games.push({
       id: 'm8-canyon-original', title: 'M8 · Canyon (official, unedited), local', group: 'M8', bytes: localFile(canyon), faction: 'Folktails', mode: 'Normal',
@@ -294,7 +294,7 @@ export function catalog(extraMaps: string[] = []): GameDef[] {
     games.push({
       id: 'm8-cozy-edited', title: 'M8 · Cozy Secret Valley (M8 edited), local', group: 'M8', bytes: localFile(cozyEdited), faction: 'Folktails', mode: 'Normal',
       cycles: [calm], days: 1, tiles: () => [[14, 12], [12, 10], [16, 14]], sampleHours: 2, snapshotsAt: [1], pairs: ['m8-cozy-original'],
-      checks: [{ id: 'M8-1c', title: "The rivers run at the original's level; the lowered ground fills as the editor showed", how: 'measure' }, LOAD, OBJECTS, TERRAIN],
+      checks: [{ id: 'M8-1c', title: "The rivers run at the original's level; the lowered ground fills as the editor showed", how: 'measure' }, LOAD, OBJECTS, WATER, TERRAIN],
     });
     games.push({
       id: 'm8-cozy-original', title: 'M8 · Cozy Secret Valley (workshop, unedited), local', group: 'M8', bytes: localFile(cozy), faction: 'Folktails', mode: 'Normal',
