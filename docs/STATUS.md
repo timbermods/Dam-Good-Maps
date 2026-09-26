@@ -105,12 +105,19 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
 - D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
+- D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
+- D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
+- D196: water is never an object (no river selection or panel; flow and clean or bad belong to sources); sources always findable; clear water while a tool is picked or with T; Alt+scroll slices layers and Shift+scroll sets strength, as in the game (replaces #58); water in the hover readout.
+- D197: water near an edit moves within a frame or two; a speed control (slower, normal, faster, instant), brisk by default; the final water is always the game's settled result.
 
 ## Done and released
 
-- **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
-- **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
-  ship with the next release as `start-edge-rules-done`.
+- **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
+  proposals for their steps.
+- **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
+- **Mine sites and ruins** are live (`look-mine-ruins-done`, #42, D178).
+- **The start and edge rules** are live (`start-edge-rules-done`, #44, released in PR #48, live check passed):
+  no edge walls, start water over natural slopes, starting wood in logs, sources start rivers, heights up to 22.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
@@ -143,12 +150,12 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   water part 1 are on the preview address; next water per D184 (smart Lower, Source, part 2's paced
   water), then the rest of D184's design in pushes.
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
-  `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
+  `look/badwater-blend` (#41, approved: the warm-midpoint blend is in, ready to release as
+  `look-badwater-done`);
+  mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
-  ESA WorldCover credited like the elevation data), #38 (Map look 2) and `investigation/carve` (the
-  starting point for "Let the water carve", D180, as proposals), when its PR is open.
+- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
 
 ## Waiting on Kyler
 

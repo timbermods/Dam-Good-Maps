@@ -1,0 +1,24 @@
+{
+  "name": "dam-good-maps-pickplace-water2-investigation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node server.mjs",
+    "test": "node test-signature.mjs",
+    "survey": "node survey-signature.mjs",
+    "survey:water": "node survey-signature.mjs",
+    "summarize:water": "node summarize-signature.mjs",
+    "cors": "node cors.mjs",
+    "summarize": "node summarize-signature.mjs"
+  },
+  "dependencies": {
+    "fflate": "0.8.2",
+    "geotiff": "2.1.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "playwright": "1.56.1",
+    "pngjs": "7.0.0"
+  }
+}

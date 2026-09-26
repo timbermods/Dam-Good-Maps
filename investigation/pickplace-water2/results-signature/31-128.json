@@ -1,0 +1,1296 @@
+{
+  "id": 31,
+  "family": "lakes",
+  "name": "English Lake District",
+  "lat": 54.57,
+  "lon": -3.13,
+  "size": 128,
+  "requested": {
+    "lat": 54.57,
+    "lon": -3.13,
+    "size": 128
+  },
+  "choices": [
+    {
+      "mpt": 60,
+      "metrics": {
+        "min": 74.42852020263672,
+        "max": 631.2662963867188,
+        "relief": 478.0966796875,
+        "fullRelief": 556.837776184082,
+        "seaProxy": 0,
+        "flatShare": 0.18061023622047245,
+        "steepShare": 0.00593626968503937,
+        "channelCells": 257,
+        "channelIndex": 15658
+      },
+      "prediction": {
+        "score": 91.76254921259843,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 60,
+        "riverVerified": false
+      }
+    }
+  ],
+  "selected": {
+    "mpt": 60,
+    "metrics": {
+      "min": 74.42852020263672,
+      "max": 631.2662963867188,
+      "relief": 478.0966796875,
+      "fullRelief": 556.837776184082,
+      "seaProxy": 0,
+      "flatShare": 0.18061023622047245,
+      "steepShare": 0.00593626968503937,
+      "channelCells": 257,
+      "channelIndex": 15658
+    },
+    "prediction": {
+      "score": 91.76254921259843,
+      "verdict": "promising",
+      "warnings": [],
+      "suggestions": [],
+      "metresPerTile": 60,
+      "riverVerified": false
+    }
+  },
+  "vertical": {
+    "min": 74.42852020263672,
+    "max": 631.2662963867188,
+    "levels": 15,
+    "gamma": 0.8
+  },
+  "passed": true,
+  "playabilityPassed": true,
+  "signatureWaterDistance": 16.48528137423857,
+  "directPassed": true,
+  "firstPlanPassed": true,
+  "current": {
+    "passed": true,
+    "failures": [],
+    "waterDistance": 16.48528137423857,
+    "shore": 14133,
+    "retainedLegacyFailures": [
+      "water.outflow",
+      "start.water"
+    ],
+    "policy": "LOCAL D151–D153 adapter; Normal start; base load/design/resource checks; water amount, connected-body size and outflow advisory; canonical settle required; D164 log thresholds pending shared implementation"
+  },
+  "settled": true,
+  "ticks": 256,
+  "sourceCount": 45,
+  "waterDesign": {
+    "features": [
+      {
+        "id": "water-0",
+        "kind": "lake",
+        "cells": 1558,
+        "referenceArea": 1440.3674247264862,
+        "heads": 1,
+        "rawRange": [74.60099029541016,76.27854919433594]
+      },
+      {
+        "id": "water-1",
+        "kind": "open lake",
+        "cells": 155,
+        "referenceArea": 129.465187728405,
+        "heads": 44,
+        "rawRange": [179.70277404785156,192.16751098632812]
+      }
+    ],
+    "sources": [
+      {
+        "i": 511,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 639,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 767,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 895,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1023,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1151,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1279,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1407,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1535,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1663,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1791,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 1919,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2047,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2175,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2303,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2431,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2559,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2687,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2815,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 2943,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3071,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3199,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3327,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3455,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3583,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3711,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3839,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 3967,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4095,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4223,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4351,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4479,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4607,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4735,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4863,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 4991,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5119,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5247,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5375,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5503,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5631,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5759,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 5887,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 6015,
+        "area": 155,
+        "strength": 0.0011363636363636365,
+        "featureId": "water-1",
+        "headId": "water-1",
+        "kind": "sea/lake edge opening"
+      },
+      {
+        "i": 11575,
+        "area": 1558,
+        "strength": 0.18696000000000002,
+        "featureId": "water-0",
+        "headId": "water-0",
+        "kind": "basin spring"
+      }
+    ],
+    "outlets": [],
+    "variant": 0,
+    "algorithm": "signature-water-v4",
+    "originAudit": {
+      "policy": "LOCAL: exact edge entries or head/single-basin origins; whole-head counterfactual prefill removes springs inside existing flow; lake spring may fill its own lake",
+      "removedHeads": [],
+      "prefillChecked": true,
+      "canonical": {
+        "checked": true,
+        "passed": true,
+        "checks": [
+          {
+            "head": "water-1",
+            "kind": "boundary opening",
+            "passed": true
+          },
+          {
+            "head": "water-0",
+            "kind": "interior origin",
+            "settled": true,
+            "depthFromOthers": 0,
+            "passed": true
+          }
+        ],
+        "policy": "LOCAL canonical whole-head audit: turn off each interior head, keeping footprints; other heads must settle with its origin dry. Boundary openings are origins by definition."
+      }
+    },
+    "bedCells": 1713,
+    "landEdits": 0
+  },
+  "drama": {
+    "referenceCoverage": 1,
+    "referenceWaterCells": 1577.6470064884052,
+    "retainedWaterFraction": 0.9950468045124318,
+    "waterPrecision": 0.9164230078545774,
+    "wetShare": 0.10455322265625,
+    "targetCoverage": 1,
+    "features": [
+      {
+        "id": "water-0",
+        "kind": "lake",
+        "cells": 1558,
+        "referenceArea": 1440.3674247264862,
+        "heads": 1,
+        "rawRange": [74.60099029541016,76.27854919433594],
+        "coverage": 1,
+        "present": true
+      },
+      {
+        "id": "water-1",
+        "kind": "open lake",
+        "cells": 155,
+        "referenceArea": 129.465187728405,
+        "heads": 44,
+        "rawRange": [179.70277404785156,192.16751098632812],
+        "coverage": 1,
+        "present": true
+      }
+    ],
+    "signaturePresent": true,
+    "observedSignature": true,
+    "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+    "anchor": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 1577.6470064884052,
+      "retained": 0.9950468045124318,
+      "precision": 0.9164230078545774,
+      "signaturePresent": true,
+      "features": [
+        {
+          "cells": 155,
+          "area": 129.465187728405,
+          "coverage": 1
+        },
+        {
+          "cells": 1558,
+          "area": 1440.3674247264862,
+          "coverage": 1
+        }
+      ],
+      "wetShare": 0.10455322265625
+    },
+    "ownSignaturePresent": true
+  },
+  "landEdits": 0,
+  "edgeChanges": 0,
+  "bedCells": 1713,
+  "start": {
+    "x": 67,
+    "y": 112,
+    "z": 3,
+    "orientation": "Cw0"
+  },
+  "roundTripPassed": true,
+  "bytes": 181903,
+  "reference": {
+    "coverage": 1,
+    "errors": [],
+    "requests": [
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N54W006_Map.tif",
+        "window": [33725,28746,35155,29574],
+        "nativePixels": 1184040,
+        "ms": 102.40000003576279,
+        "status": "read"
+      }
+    ],
+    "ranges": [
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N54W006_Map.tif",
+        "range": "bytes=0-65536",
+        "status": 206,
+        "bytes": 65537,
+        "ms": 6.5,
+        "etag": "\"868aecf9c2b731a6bb888747e6152080-5\"",
+        "sha256": "2413ed69654a8ceac76fd5391ade5bb704c90fb3978aacbb769cefa78b166528"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N54W006_Map.tif",
+        "range": "bytes=36569088-36700160",
+        "status": 206,
+        "bytes": 131073,
+        "ms": 2.100000023841858,
+        "etag": "\"868aecf9c2b731a6bb888747e6152080-5\"",
+        "sha256": "6841359366d832da403c616673289678cf04a8f6f3f57110ba7961ce5762a7a8"
+      }
+    ]
+  },
+  "autoTry": {
+    "attempts": [
+      {
+        "lat": 54.57,
+        "lon": -3.13,
+        "size": 128,
+        "mpt": 60,
+        "reason": "requested area",
+        "variant": 0,
+        "passed": true,
+        "accepted": true,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 1577.6470064884052,
+          "retainedWaterFraction": 0.9950468045124318,
+          "waterPrecision": 0.9164230078545774,
+          "wetShare": 0.10455322265625,
+          "targetCoverage": 1,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "lake",
+              "cells": 1558,
+              "referenceArea": 1440.3674247264862,
+              "heads": 1,
+              "rawRange": [74.60099029541016,76.27854919433594],
+              "coverage": 1,
+              "present": true
+            },
+            {
+              "id": "water-1",
+              "kind": "open lake",
+              "cells": 155,
+              "referenceArea": 129.465187728405,
+              "heads": 44,
+              "rawRange": [179.70277404785156,192.16751098632812],
+              "coverage": 1,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 1577.6470064884052,
+            "retained": 0.9950468045124318,
+            "precision": 0.9164230078545774,
+            "signaturePresent": true,
+            "features": [
+              {
+                "cells": 155,
+                "area": 129.465187728405,
+                "coverage": 1
+              },
+              {
+                "cells": 1558,
+                "area": 1440.3674247264862,
+                "coverage": 1
+              }
+            ],
+            "wetShare": 0.10455322265625
+          },
+          "ownSignaturePresent": true
+        },
+        "failures": [],
+        "sources": [
+          {
+            "i": 511,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 3
+          },
+          {
+            "i": 639,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 4
+          },
+          {
+            "i": 767,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 5
+          },
+          {
+            "i": 895,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 6
+          },
+          {
+            "i": 1023,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 7
+          },
+          {
+            "i": 1151,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 8
+          },
+          {
+            "i": 1279,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 9
+          },
+          {
+            "i": 1407,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 10
+          },
+          {
+            "i": 1535,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 11
+          },
+          {
+            "i": 1663,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 12
+          },
+          {
+            "i": 1791,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 13
+          },
+          {
+            "i": 1919,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 14
+          },
+          {
+            "i": 2047,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 15
+          },
+          {
+            "i": 2175,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 16
+          },
+          {
+            "i": 2303,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 17
+          },
+          {
+            "i": 2431,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 18
+          },
+          {
+            "i": 2559,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 19
+          },
+          {
+            "i": 2687,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 20
+          },
+          {
+            "i": 2815,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 21
+          },
+          {
+            "i": 2943,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 22
+          },
+          {
+            "i": 3071,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 23
+          },
+          {
+            "i": 3199,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 24
+          },
+          {
+            "i": 3327,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 25
+          },
+          {
+            "i": 3455,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 26
+          },
+          {
+            "i": 3583,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 27
+          },
+          {
+            "i": 3711,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 28
+          },
+          {
+            "i": 3839,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 29
+          },
+          {
+            "i": 3967,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 30
+          },
+          {
+            "i": 4095,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 31
+          },
+          {
+            "i": 4223,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 32
+          },
+          {
+            "i": 4351,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 33
+          },
+          {
+            "i": 4479,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 34
+          },
+          {
+            "i": 4607,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 35
+          },
+          {
+            "i": 4735,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 36
+          },
+          {
+            "i": 4863,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 37
+          },
+          {
+            "i": 4991,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 38
+          },
+          {
+            "i": 5119,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 39
+          },
+          {
+            "i": 5247,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 40
+          },
+          {
+            "i": 5375,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 41
+          },
+          {
+            "i": 5503,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 42
+          },
+          {
+            "i": 5631,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 43
+          },
+          {
+            "i": 5759,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 44
+          },
+          {
+            "i": 5887,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 45
+          },
+          {
+            "i": 6015,
+            "area": 155,
+            "strength": 0.0011363636363636365,
+            "featureId": "water-1",
+            "headId": "water-1",
+            "kind": "sea/lake edge opening",
+            "x": 127,
+            "y": 46
+          },
+          {
+            "i": 11575,
+            "area": 1558,
+            "strength": 0.18696000000000002,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "basin spring",
+            "x": 55,
+            "y": 90
+          }
+        ],
+        "bedCells": 1713,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 535.5
+      }
+    ],
+    "selectedAttempt": 0,
+    "suggestions": [
+      {
+        "lat": 54.57,
+        "lon": -3.13,
+        "size": 128,
+        "mpt": 60,
+        "reason": "requested area",
+        "passed": true,
+        "failures": [],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 1577.6470064884052,
+          "retainedWaterFraction": 0.9950468045124318,
+          "waterPrecision": 0.9164230078545774,
+          "wetShare": 0.10455322265625,
+          "targetCoverage": 1,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "lake",
+              "cells": 1558,
+              "referenceArea": 1440.3674247264862,
+              "heads": 1,
+              "rawRange": [74.60099029541016,76.27854919433594],
+              "coverage": 1,
+              "present": true
+            },
+            {
+              "id": "water-1",
+              "kind": "open lake",
+              "cells": 155,
+              "referenceArea": 129.465187728405,
+              "heads": 44,
+              "rawRange": [179.70277404785156,192.16751098632812],
+              "coverage": 1,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 1577.6470064884052,
+            "retained": 0.9950468045124318,
+            "precision": 0.9164230078545774,
+            "signaturePresent": true,
+            "features": [
+              {
+                "cells": 155,
+                "area": 129.465187728405,
+                "coverage": 1
+              },
+              {
+                "cells": 1558,
+                "area": 1440.3674247264862,
+                "coverage": 1
+              }
+            ],
+            "wetShare": 0.10455322265625
+          },
+          "ownSignaturePresent": true
+        },
+        "preview": {
+          "size": 40,
+          "heights": [12,15,16,15,14,13,12,9,5,3,3,2,5,7,8,9,10,11,10,9,9,9,7,8,9,11,12,12,13,13,13,12,12,12,12,12,11,11,10,7,12,15,16,15,13,12,12,7,4,3,2,3,6,9,9,9,10,10,10,10,9,8,7,8,9,11,12,12,13,13,13,12,12,12,11,11,11,10,8,4,13,15,15,14,13,12,10,6,4,2,2,3,6,9,9,9,10,10,10,10,9,7,7,9,10,11,12,12,13,13,13,13,12,11,11,10,10,9,7,4,12,15,15,14,13,11,9,6,4,2,2,2,4,7,8,8,9,10,10,10,9,7,8,10,11,12,12,12,13,13,13,13,12,12,11,10,9,7,6,4,11,14,16,14,12,10,7,4,3,2,2,2,3,5,6,6,8,9,10,10,9,7,8,10,11,12,12,13,13,13,13,13,12,12,11,11,9,7,6,4,10,13,15,13,10,9,7,4,2,2,2,2,3,4,4,4,7,9,10,10,8,7,9,11,11,12,12,13,13,13,13,13,13,12,12,11,10,7,5,4,9,12,14,12,10,8,6,4,3,2,2,1,4,5,4,3,5,9,10,9,7,8,11,11,12,12,13,13,13,13,13,13,13,12,12,11,10,7,4,4,8,11,14,13,11,9,7,4,3,2,2,1,2,3,3,2,4,9,9,8,7,8,11,11,12,12,13,14,14,14,13,13,12,12,12,11,10,7,4,4,8,11,14,14,12,10,7,5,3,2,2,1,1,2,2,2,5,8,8,7,7,8,10,11,11,12,14,14,15,15,14,13,12,12,12,11,10,7,4,4,7,10,14,14,13,11,8,5,3,2,2,1,1,1,1,2,5,7,7,7,7,9,10,11,12,13,14,14,15,15,14,13,13,12,12,11,10,8,6,4,6,9,14,14,14,12,10,6,4,2,2,1,1,1,1,2,5,7,7,7,8,10,11,11,12,13,14,14,15,15,14,14,13,12,11,11,11,9,6,4,5,8,13,14,14,13,11,7,5,2,2,1,1,1,1,2,4,6,6,7,9,10,11,12,13,14,14,14,14,14,14,14,13,12,11,11,11,9,7,4,5,8,11,12,12,12,12,8,5,3,2,2,1,1,1,1,3,5,7,8,9,9,11,12,13,13,13,14,14,14,14,14,13,12,11,11,12,9,7,4,5,8,11,11,10,10,11,8,5,3,2,2,0,0,1,1,2,4,6,8,8,9,11,12,13,13,13,14,14,14,14,14,13,12,11,11,11,10,6,4,5,8,10,9,9,9,10,8,5,4,3,2,1,0,0,1,1,2,5,7,8,8,11,12,13,13,13,14,14,14,14,14,13,12,10,10,11,9,7,5,5,8,8,7,8,9,10,7,5,3,3,2,0,0,0,1,1,2,4,6,6,8,10,12,12,12,13,14,14,14,14,14,13,12,10,10,11,9,7,5,4,6,6,6,7,10,10,8,5,3,2,0,0,0,0,0,0,1,3,5,6,7,9,10,11,12,13,14,14,14,14,14,13,12,9,9,11,10,8,6,4,4,5,5,7,10,11,8,5,3,0,0,0,0,0,0,0,0,2,5,5,7,8,10,11,12,13,15,14,14,14,13,12,10,8,9,11,10,8,7,4,4,5,5,6,9,11,8,5,3,0,0,0,0,0,0,0,0,2,4,5,7,10,11,11,12,13,14,14,14,14,13,11,9,7,9,10,7,6,6,4,4,4,5,6,8,10,8,5,4,0,0,0,0,0,0,0,0,2,4,5,8,10,11,12,12,12,13,13,13,13,12,10,8,7,9,8,5,5,5,4,3,4,5,6,7,9,7,5,3,2,0,0,0,0,0,0,0,2,3,5,8,10,11,11,11,11,11,12,12,12,11,8,7,7,7,6,5,5,5,5,4,4,4,5,7,8,6,4,3,2,0,0,0,0,0,0,0,0,3,6,8,10,11,11,11,11,11,11,12,12,11,9,7,6,5,5,5,5,5,6,4,3,4,5,6,8,7,4,2,2,0,0,0,0,0,0,0,0,2,6,8,9,10,10,10,10,11,11,11,12,11,9,7,5,5,5,5,5,6,6,4,3,4,4,5,7,7,4,2,1,0,0,0,0,0,0,0,0,2,5,7,9,9,10,10,10,10,11,11,11,11,8,7,5,5,5,5,5,7,5,3,3,3,3,4,5,6,5,2,0,0,0,0,0,0,0,0,0,2,4,7,9,9,10,10,10,10,10,10,10,9,7,6,5,4,5,5,6,8,4,3,3,3,3,3,3,4,4,2,0,0,0,0,0,0,0,0,0,2,4,6,9,10,10,10,10,10,10,10,9,7,7,6,5,4,5,6,6,8,3,3,2,2,2,2,3,3,3,2,0,0,0,0,0,0,0,0,0,0,3,5,8,10,10,9,9,10,10,9,8,7,6,6,4,4,5,6,7,8,3,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,2,3,6,9,9,9,9,10,10,9,8,6,5,5,4,4,5,8,9,9,3,2,2,2,2,3,3,2,2,2,2,0,0,0,0,0,0,0,1,2,2,3,4,7,9,9,9,9,10,9,7,6,5,4,4,4,5,8,9,9,3,2,2,2,2,3,3,3,3,2,2,2,0,0,0,0,0,0,1,2,2,3,4,5,7,8,8,9,9,8,6,5,4,4,4,4,5,8,8,9,3,2,2,2,2,4,4,3,3,3,2,2,0,0,0,0,0,0,1,2,2,3,4,4,5,6,7,8,8,6,5,4,4,4,4,4,6,8,8,9,3,2,2,2,3,5,5,4,3,2,2,2,0,0,0,0,0,1,1,2,2,3,3,4,5,6,6,7,7,6,5,4,4,4,4,4,6,8,8,9,5,3,2,2,4,6,6,4,3,3,2,2,0,0,0,0,0,2,2,2,2,3,3,4,5,6,6,6,6,6,5,4,4,4,4,5,6,7,7,7,5,4,2,2,3,4,5,4,3,3,3,0,0,0,0,0,0,2,2,3,3,3,3,4,5,6,6,6,6,6,5,4,4,4,4,6,7,7,6,5,5,4,2,1,2,2,4,3,2,2,2,0,0,0,1,0,0,2,2,3,3,3,3,4,5,6,6,6,6,6,5,5,4,4,4,6,7,7,6,5,4,4,2,1,1,1,2,2,2,1,2,0,0,0,1,1,2,2,2,2,2,3,3,4,5,5,6,6,6,6,6,5,4,4,4,5,6,7,6,5,3,3,2,1,1,1,1,1,2,2,2,0,0,0,1,1,1,2,2,2,2,3,3,4,5,5,5,6,6,6,6,5,4,4,4,5,6,6,5,4,2,2,1,1,1,1,1,1,2,2,2,1,1,1,1,1,2,2,2,2,2,2,2,3,4,4,5,6,6,6,6,5,4,4,4,5,6,6,5,4,2,2,1,1,1,1,2,1,2,2,2,2,1,1,1,1,1,2,2,2,2,2,2,3,3,4,5,5,6,6,6,6,5,4,4,5,5,6,5,4,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,4,4,5,5,6,6,6,5,4,4,4,5,5,5,4],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0049169499868198,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.004902184964802,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0048991010228927,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0048913842641172,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00488066755553557,1.0048865874796546,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0048722714940295,1.00487064987036,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.004850993901006,1.0048415062519307,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0048203401013402,1.0048158728178516,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.004786943578016,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.004748719979063,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0047303299570867,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.004699362924616,0,0,0,0,0,0,0,0,0,0,0,0,0.9987993129155585,0.9988223846067062,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0046879167798333,0,0,0,0,0,0,0,0,0,0,0,0,0,0.99882600519199,0.9988652775788902,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.004668543467717358,0,0,0,0,0,0,0,0,0,0,0,0,0.9988217445135622,0.998845381621932,0.9988894788914524,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.998928409426955,0.9988618322621884,0.9988779478706581,0.9989213714057393,0.9989287663828661,0.9989147383601816,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9989196738960305,0.9989226866492691,0.9989405370538801,0.9989570996716028,0.9989666338433504,0.9989644612252014,0.998934710827565,0.9989015742406355,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9989459405846324,0.9989614810029106,0.9990010858887157,0.9990097693472995,0.9990039371389674,0.998990996461121,0.9989672245037199,0.9989125747675079,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9989864405434704,0.9990373934950407,0.9990669280914358,0.9990643372393078,0.999064077463535,0.9990501345767829,0.9990384587184495,0.9990254381634347,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9991646288572328,0.9991901927421624,0.999175728513486,0.9991568127912809,0.9991373335683087,0.9991294848328734,0.9991449514792595,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9993141199827222,0.9993304542972993,0.9992966958721159,0.9992592317305748,0.9992409335559165,0.9992342934894732,0.9992306788018624,0.9992473884844248,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9994765700382858,0.9994629066924279,0.9994303719080798,0.9993882398117317,0.9993504630240224,0.9993245085798362,0.9992800701856617,0.9992758625602918,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995406911866045,0.9995312166145355,0.9995128271253247,0.999468262594568,0.9994236587978785,0.999391633839053,0.9993488904329086,0.9993231932239695,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995287864014586,0.9995578821685904,0.9995539249626595,0.999536937539067,0.9995203142915688,0.9994884019278478,0.9994443850824188,0.9994158776231074,0.9994000667768432,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995205107599323,0.9995677663652817,0.999581523861219,0.9995704955059458,0.9995525985369352,0.9995386704035588,0.999481504465136,0.9994560890023436,0.9994540823029562,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9994948829959215,0.99956058108274,0.9995923531226821,0.9996137002677561,0.9995637675614522,0.9995544780492821,0.9995220453956086,0.9994902192871931,0.9995058524050895,0.9995293589554654,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9994784369223488,0.9995448948105374,0.9996179963550833,0.9996478995681458,0.9996396287802906,0.9996044104383887,0.9995632273831053,0.9995619602491126,0.9995451547704177,0.9995432100410218,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995238236702685,0.9996178896410788,0.9996657787636428,0.9996801033130367,0.9996638930162854,0.9996170121266292,0.9996228412906076,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9996049309388069,0.9996636077956152,0.99968187808287,0.9996677321198285,0.9996364948345164,0.9996296412707555,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995912857366813,0.9996304328701361,0.9996529663942377,0.9996479905025781,0.9996407338719444,0.999672966888819,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9995389468425688,0.9995554533353979,0.9995968968204467,0.9995933712128264,0.9996012133464378,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9994169762393822,0.9994503906376281,0.9994641940977961,0.9994389814978416,0.9994445362717252,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9993440161094702,0.99932635109758,0.9993594086515697,0.9993890547109605,0.9993995950185621,0.9994079375336583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9991696339195503,0.999221398325272,0.9992405194709209,0,0.9993797493711023,0.9993739223540996,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9990955195608754,0.9991141275927226,0.9991118231462438,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.9990622660830011,0.9990696456214144,0.9990619073961359,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      }
+    ]
+  },
+  "timings": {
+    "fetchMs": 171.9000000357628,
+    "convertMs": 535.4000000357628,
+    "directMs": 734.2000000476837,
+    "retryMs": 0,
+    "exportMs": 182.79999995231628,
+    "totalMs": 917
+  },
+  "requests": [
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/1005/652.png",
+      "sha256": "d527427ab04a383ae64b691d12a9d4cebd4349732189687b0d6eb5f7e01300b1",
+      "bytes": 137583,
+      "ms": 15.399999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/1005/651.png",
+      "sha256": "e39b40c57e7525b839d128df2aacddcaa0ad931bda1b7dad07a8da654ffba8b0",
+      "bytes": 125884,
+      "ms": 16,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/1006/652.png",
+      "sha256": "def065d565eeda69c9a28b6da9b4752e03b7b7fbd48d7cf08b7015c0abff25ad",
+      "bytes": 133861,
+      "ms": 16.69999998807907,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/1006/651.png",
+      "sha256": "ee0f7f82c5a1fc5a827293ca3cb45276caccd80516edcec11d69965b561cfb3c",
+      "bytes": 129337,
+      "ms": 17.19999998807907,
+      "cached": true
+    }
+  ],
+  "heartbeats": 19,
+  "comparison": {
+    "before": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 1577.6470064884052,
+      "retained": 0.9103785238041278,
+      "precision": 0.6188091136798429,
+      "signaturePresent": false,
+      "features": [
+        {
+          "cells": 155,
+          "area": 129.465187728405,
+          "coverage": 0
+        },
+        {
+          "cells": 1558,
+          "area": 1440.3674247264862,
+          "coverage": 0.9865211810012837
+        }
+      ],
+      "wetShare": 0.14166259765625
+    },
+    "afterOnBeforeExtent": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 1577.6470064884052,
+      "retained": 0.9950468045124318,
+      "precision": 0.9164230078545774,
+      "signaturePresent": true,
+      "features": [
+        {
+          "cells": 155,
+          "area": 129.465187728405,
+          "coverage": 1
+        },
+        {
+          "cells": 1558,
+          "area": 1440.3674247264862,
+          "coverage": 1
+        }
+      ],
+      "wetShare": 0.10455322265625
+    },
+    "afterOwnExtent": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 1577.6470064884052,
+      "retained": 0.9950468045124318,
+      "precision": 0.9164230078545774,
+      "signaturePresent": true,
+      "features": [
+        {
+          "cells": 155,
+          "area": 129.465187728405,
+          "coverage": 1
+        },
+        {
+          "cells": 1558,
+          "area": 1440.3674247264862,
+          "coverage": 1
+        }
+      ],
+      "wetShare": 0.10455322265625
+    },
+    "beforeExtent": {
+      "lat": 54.57,
+      "lon": -3.13,
+      "size": 128,
+      "mpt": 60
+    }
+  }
+}
