@@ -49,7 +49,7 @@ is not touched.
 - 3D stages: carving is a brush (D182); "Why this order" says the brushes came with Live editing and 3D-a moves them onto runs.
 - 3D-a: caves stay locked to the brushes; a new item moves the Live editing brushes onto runs; blocking: projects saved before 3D-a open the same and their strokes replay exactly.
 - 3D-c: 3D picking and selections without handles; Carve and Fill as brushes, with tunnels, arches, caves, ledges and overhangs carved, not placed.
-- 3D-c: whether Carve and Fill get buttons or make Lower and Raise smarter is left to the stage (D184).
+- 3D-c: cave carving (D125's Carve and Fill) is kept apart from the top bar's Carve, the water's force (D194, merged from dev during the sweep); whether it extends that Carve, makes Lower and Raise smarter or earns a button is left to the stage (D184).
 - 3D-c: Claude steers 3D forms and carves with strokes (D139, D187); blocking and budgets per stroke.
 - Weather view: a paragraph on how it sits beside the editor's buttons (D186).
 - Weather view: item 1 is the full cycle's timeline; live water notes the editor already has it (D179 (2)).
@@ -96,7 +96,7 @@ is not touched.
 **docs/STATUS.md**
 - The decisions list, "in the version in force": D158, D179, D180, D182, D183 and D184 no longer name the removed tools.
 - Running: the docs sweep, pointing here.
-- "Where to look next": every decision is D1–D193.
+- "Where to look next": every decision is D1–D194.
 
 **docs/progress/README.md**
 - Links this entry.

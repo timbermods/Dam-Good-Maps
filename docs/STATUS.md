@@ -93,7 +93,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D178: mine sites and ruins get models of our own: a sunken pit with a rusty frame and corner scaffolding; ruined scaffold towers with braces, panels and ivy on moist ground.
 - D179: **Live editing is how you edit a map**, the editor's core principle: every tool live, water flowing visibly after every edit, brush shapes and a precise mode, one Select tool; no plan-confirm-place flow remains (its water tools, plant painting and object dragging became D184's smart Lower, Source and left shelf).
 - #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
-- D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), Remove (first named Demolish), water-aware Ctrl-click sampling, player-set source strength, "let the water carve", water time controls with a "drought" button, and local-first water that always ends at the game's settled result (its drawn-river rules and natural or exact rivers removed by D184).
+- D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), Remove (first named Demolish), water-aware Ctrl-click sampling, player-set source strength, "let the water carve" (Carve since D194), water time controls with a "drought" button, and local-first water that always ends at the game's settled result (its drawn-river rules and natural or exact rivers removed by D184).
 - D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
 - D182: **the brush kit is the core of the editor**: the landform objects and their handles removed, no presets; terraces and ramps (now Flatten and Smooth options, D184), pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted, carving is a brush).
 - D183: live dimensions: a selection's size in tiles, a straight stroke's length, the level while flattening (D184 removed the other cursor readouts).
@@ -105,6 +105,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
 - D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
+- D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
 
 ## Done and released
 
@@ -150,8 +151,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
 - Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
-  ESA WorldCover credited like the elevation data), #38 (Map look 2) and `investigation/carve` (the
-  starting point for "Let the water carve", D180, as proposals), when its PR is open.
+  ESA WorldCover credited like the elevation data) and #38 (Map look 2). **Held:** #47 (`investigation/carve`,
+  Carve as a force of nature, D194) until Kyler says it's ready.
 
 ## Waiting on Kyler
 
@@ -167,7 +168,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D193.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D194.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.

@@ -872,9 +872,9 @@ they conflict):
   always zooms, decisions-pending #58); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove. A small row beneath
-   shows only the picked tool's options. The size ring is drawn on the land; strength shows only
-   while Alt+scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row
+   beneath shows only the picked tool's options. The size ring is drawn on the land; strength shows
+   only while Alt+scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
    lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
    the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
    slot. Pen pressure sets strength on a drawing tablet.
@@ -893,10 +893,12 @@ they conflict):
    - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
      follow, and the Drought and Badtide buttons, each showing what that event looks like on this
      map (the game's badtide rules, from `investigation/cycles`; the whole cycle's timeline is the
-     separate Weather view, D186); moisture
-     spreading as the land greens; optional sounds of our own; "Let the water carve", forming
-     valleys (D181). Local first, then the rest of the map in the background; the final water is
-     always the game's settled result.
+     separate Weather view, D186); moisture spreading as the land greens; optional sounds of our
+     own. Local first, then the rest of the map in the background; the final water is always the
+     game's settled result.
+   - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
+     modes, Defy gravity, a Power slider from creek to catastrophe; it forms gorges and valleys
+     (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready.
 3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
    start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
    geothermal fields and thorns. Picking one shows a live ghost on the terrain, its footprint green
@@ -1516,14 +1518,14 @@ while water settles). Budgets and measures are information.
 1. One mesher for every tile (greedy faces per plane, undersides), sky light and sun visibility in
    3D, water per column, and Map look per run top (D126).
 2. 3D picking and selections (the Select tool in 3D), and a level-slice cutaway.
-3. **Carving is a brush** (D182; EDITOR_PLAN.md Part 1, §9). Carve cuts into the land under the
-   cursor, into a cliff face or beneath the ground; Fill fills a hollow back in (D125). They keep
-   the brushes' grammar: the size ring, Alt+scroll for strength, one undo step per stroke.
-   Tunnels, arches, caves, ledge paths and overhangs come from carving, as hills and valleys come
-   from the brushes, never from buttons (D184; D182 makes D125's feature tools brush-first).
-   While painting, the stroke shows live what the support rule would drop (D125). Whether Carve
-   and Fill get their own buttons or make Lower and Raise smarter is decided when the stage is
-   built (D184: a new idea earns a button or makes an existing tool smarter).
+3. **Cave carving is a brush** (D182; EDITOR_PLAN.md Part 1, §9). D125's Carve cuts into the land
+   under the cursor, into a cliff face or beneath the ground, and its Fill fills a hollow back in.
+   They keep the brushes' grammar: the size ring, Alt+scroll for strength, one undo step per
+   stroke. Tunnels, arches, caves, ledge paths and overhangs come from carving, as hills and valleys
+   come from the brushes, never from buttons (D184; D182 makes D125's feature tools brush-first).
+   While painting, the stroke shows live what the support rule would drop (D125). The top bar's
+   Carve is the water's force (D194), so whether cave carving extends it, makes Lower and Raise
+   smarter, or earns its own button is decided when the stage is built (D184).
 4. Undo, generate-keeping-edits and 3D locks. Imported caves become editable (D40 retires).
 5. Claude and 3D: new 3D forms steer the generator (Verticality and the 3D processes, D139);
    precise carving uses carve and fill strokes (D187). The words land with M12.
