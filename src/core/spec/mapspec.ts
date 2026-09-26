@@ -4,15 +4,20 @@
 export const GENERATOR_VERSION = "0.6.2";
 export const SPEC_VERSION = 1;
 
-export type ThemeId = "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
+/** "any" (Surprise me, the default, D208, D209) draws from all six themes' ranges at once; a named
+ *  theme only leans the generator toward that kind of land. */
+export type ThemeId = "any" | "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
 export type ArchetypeId = ThemeId;
 export type Difficulty = "easy" | "normal" | "hard";
 export type SizePreset = "small" | "medium" | "large" | "max";
 
+/** The themes the settings panel offers, in its order. "any" joins with the generator that makes it
+ *  (M9a's processes). */
 export const THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
 /** Themes the generator can build (all six since M7). */
 export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
 export const THEME_NAMES: Record<ThemeId, string> = {
+  any: "Any",
   riverValley: "River Valley",
   canyon: "Canyon",
   highlands: "Highlands",
@@ -31,6 +36,8 @@ export interface Settings {
     highestTerrain: number; // 10–16
     terracing: number; // 0–100
     buildableLand: "tight" | "normal" | "generous";
+    /** Verticality (`vt`, D132): how vertical the land is, 0–100. Heights above 16 from 70 (D172). */
+    verticality: number; // 0–100
   };
   water: {
     rivers: number; // 0–3
@@ -118,6 +125,7 @@ interface ThemePreset {
 }
 
 export const THEME_PRESETS: Record<ThemeId, ThemePreset> = {
+  any: { relief: 55, terracing: 45, buildableLand: "normal", rivers: 1, riverStyle: "meandering", riverFlow: "normal", droughtReserve: "normal", lakes: "some", waterfalls: "few", badwater: "normal", thornBelts: "some", forestDensity: 100, ruins: 100 },
   riverValley: { relief: 50, terracing: 45, buildableLand: "normal", rivers: 1, riverStyle: "meandering", riverFlow: "normal", droughtReserve: "normal", lakes: "some", waterfalls: "few", badwater: "normal", thornBelts: "some", forestDensity: 100, ruins: 100 },
   canyon: { relief: 80, terracing: 75, buildableLand: "tight", rivers: 1, riverStyle: "straight", riverFlow: "normal", droughtReserve: "normal", lakes: "few", waterfalls: "many", badwater: "normal", thornBelts: "off", forestDensity: 80, ruins: 120 },
   highlands: { relief: 90, terracing: 60, buildableLand: "tight", rivers: 2, riverStyle: "meandering", riverFlow: "normal", droughtReserve: "normal", lakes: "some", waterfalls: "many", badwater: "low", thornBelts: "some", forestDensity: 90, ruins: 100 },
@@ -125,6 +133,10 @@ export const THEME_PRESETS: Record<ThemeId, ThemePreset> = {
   delta: { relief: 20, terracing: 25, buildableLand: "generous", rivers: 1, riverStyle: "braided", riverFlow: "strong", droughtReserve: "scarce", lakes: "few", waterfalls: "off", badwater: "normal", thornBelts: "off", forestDensity: 120, ruins: 80 },
   islands: { relief: 35, terracing: 30, buildableLand: "normal", rivers: 1, riverStyle: "meandering", riverFlow: "lush", droughtReserve: "plenty", lakes: "none", waterfalls: "off", badwater: "low", thornBelts: "off", forestDensity: 100, ruins: 100 },
 };
+
+/** Verticality's defaults by theme (investigation/terrain3d; decisions-pending #60, D209): ordinary
+ *  maps within 16; "any" at about the six themes' mean. */
+export const VT_DEFAULT: Record<ThemeId, number> = { any: 25, riverValley: 20, canyon: 40, highlands: 45, lakeBasin: 10, delta: 10, islands: 20 };
 
 /** Starting wood a tree of the old count stands for (D164): the living trees the start rule
  *  counted before, on seeds 1–30 of every theme at 128² with the default settings, gave 3.0 logs
@@ -162,6 +174,16 @@ export function upgradeSpec(spec: unknown): void {
   if (!("woodWithin20" in rules) && typeof trees === "number" && Number.isFinite(trees)) rules.woodWithin20 = woodForTrees(trees);
 }
 
+/** A spec stored before M9a has no Verticality: it takes its theme's default. Changes the spec in
+ *  place; anything else is left for the schema to judge. */
+export function upgradeVerticality(spec: unknown): void {
+  const s = spec as { theme?: unknown; settings?: { terrain?: Record<string, unknown> } } | null;
+  const t = s?.settings?.terrain;
+  if (!t || typeof t !== "object" || "verticality" in t) return;
+  const theme = typeof s!.theme === "string" && s!.theme in VT_DEFAULT ? (s!.theme as ThemeId) : "riverValley";
+  t.verticality = VT_DEFAULT[theme];
+}
+
 /** A spec stored before every map had a mine site (Kyler, 2026-09-25) may ask for none: it asks for
  *  one. Changes the spec in place; anything else is left for the schema to judge. */
 export function upgradeMineSites(spec: unknown): void {
@@ -178,7 +200,7 @@ export function defaultSettings(theme: ThemeId, designedFor: Difficulty, size: {
   const p = THEME_PRESETS[theme];
   const d = DIFFICULTY_RULES[designedFor];
   return {
-    terrain: { relief: p.relief, highestTerrain: 16, terracing: p.terracing, buildableLand: p.buildableLand },
+    terrain: { relief: p.relief, highestTerrain: 16, terracing: p.terracing, buildableLand: p.buildableLand, verticality: VT_DEFAULT[theme] },
     water: {
       rivers: p.rivers,
       riverStyle: p.riverStyle,

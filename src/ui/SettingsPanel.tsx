@@ -49,6 +49,7 @@ export interface SettingsPanelProps {
 }
 
 const THEME_BLURB: Record<ThemeId, string> = {
+  any: "Anything the land can make.",
   riverValley: "A river winds through a terraced valley.",
   canyon: "A river deep between cliff walls.",
   highlands: "Plateaus and cascades.",
