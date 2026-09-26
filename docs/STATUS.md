@@ -75,6 +75,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D158: **Live editing**, alongside the M9 design: a triage first, then Cities-style terrain brushes, live shape tools, water that never blocks; tried by Kyler on `/preview/`.
 - D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
 - D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
+- D161: the north-star journey: a striking place → Pick a place → the Weather view → Live editing → play; each step smooth, no gaps.
 
 ## Done and released
 
