@@ -106,6 +106,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
+- **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
+  ship with the next release as `start-edge-rules-done`.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
@@ -127,8 +129,6 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **The start and edge rules** (D151–D153, and D172 (1)'s height limit of 22), on branch
-  `feature/start-edge-rules`.
 - **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
   and edge rules, then the Real places are rebuilt through its planner.
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
