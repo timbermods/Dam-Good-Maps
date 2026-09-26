@@ -18,7 +18,7 @@
 // is the prototype's for the same seed; `leanGenome` then applies the map's settings.
 
 import { stream, type Rng } from "../math/rng";
-import { VT_DEFAULT, type Settings, type ThemeId } from "../spec/mapspec";
+import { THEME_PRESETS, VT_DEFAULT, type Settings, type ThemeId } from "../spec/mapspec";
 import { drawIntentions, nudgeFor, type IntentionId } from "./intentions";
 import { clamp } from "./num";
 
@@ -122,6 +122,9 @@ export interface Genome {
   /** An island sea in the map's middle, with islands scattered through it (Islands; one of the
    *  water features "Any" combines freely). */
   sea: boolean;
+  /** Falls on the rivers (the Waterfalls setting): 0 spreads every drop along the course (no
+   *  falls), 1 lets the land decide, 2 gathers more of them. */
+  falls: 0 | 1 | 2;
   intentions: IntentionId[];
   /** A variation index (D143): 0 for the map itself. */
   variation: number;
@@ -564,6 +567,7 @@ export function drawGenome(theme: ThemeId, seed: number, W: number, H: number, a
     benchPhase: rng.float(),
     troughs: p.troughs,
     sea,
+    falls: 1,
     intentions: [],
     variation,
     woods: { kind: "mixed", pine: 47, birch: 27, oak: 20, succulent: 6 },
@@ -628,6 +632,115 @@ function addSea(g: Genome, rng: Rng, W: number, H: number, attempt: number, area
   g.hyps.eq = 0.1 + 0.1 * rng.float();
   // islands are high, soft ground in a low sea: weathering would waste them into it
   g.weathering = Math.min(g.weathering, 0.1);
+}
+
+// ------------------------------------------------------------------------------- the settings
+
+const LEVEL3 = { tight: -1, normal: 0, generous: 1 } as const;
+const STYLE_WANDER = { straight: 0.45, meandering: 1, braided: 1 } as const;
+const FLOW = { trickle: 0.55, normal: 1, strong: 1.5, lush: 2.4 } as const;
+const RESERVE = { scarce: 0.75, normal: 1, plenty: 1.35 } as const;
+const LAKE_STEP = { none: 0, few: 1, some: 2, many: 3 } as const;
+const FALL_STEP = { off: 0, few: 1, many: 2 } as const;
+const BADWATER = { off: 0, low: 0.6, normal: 1, high: 1.6 } as const;
+
+/**
+ * The player's settings lean the drawn genome (PLAN §5; M9a). At the theme's own preset nothing
+ * moves: the genome is the theme's (or Any's) draw. A setting moved from its preset moves the
+ * parameters it names, by how far it moved: Relief spreads the levels, Highest terrain caps the top
+ * (below high Verticality), Terracing sets the benched share, Buildable land quiets the land and
+ * gives cliffs more ramps, Rivers sets the edge inflows (0: springs feed the water), River style how
+ * far rivers wander (never ruler-straight, D209) and whether they braid, River flow the water, Drought
+ * reserve and Lakes and basins the lakes, Waterfalls the gathered drops, and Badwater its strength
+ * (No badwater: none, D200). Draws it needs come from their own stream.
+ */
+export function leanGenome(g: Genome, s: Settings, W: number, H: number, seed: number, attempt: number): void {
+  const p = THEME_PRESETS[g.theme];
+  const rng = stream(seed, "lean", g.theme, attempt);
+  // relief: the spread of the land's levels
+  const dr = (s.terrain.relief - p.relief) / 100;
+  if (dr < 0) {
+    g.top = Math.max(g.base + 5, g.top + 9 * dr);
+    g.hyps.eq = clamp(g.hyps.eq + 0.5 * dr, 0, 0.9);
+    g.noise.amp *= 1 + 0.6 * dr;
+  } else if (dr > 0) {
+    g.hyps.eq = clamp(g.hyps.eq + 0.6 * dr, 0, 0.9);
+    g.base = Math.max(0.2, g.base - 1.5 * dr);
+    g.noise.amp *= 1 + 0.5 * dr;
+  }
+  // the highest terrain, below high Verticality (a tall map's top is Verticality's)
+  if (!g.tall) g.top = Math.min(g.top, s.terrain.highestTerrain);
+  g.relief = g.top - g.base;
+  // terracing: the benched share
+  const dt = (s.terrain.terracing - p.terracing) / 100;
+  g.terrace.share = clamp(g.terrace.share + 0.9 * dt, 0, 1);
+  if (dt >= 0.25 && g.terrace.step < 2) g.terrace.step = 2;
+  // buildable land: quieter land, more ramps, fewer benches
+  const bl = LEVEL3[s.terrain.buildableLand] - LEVEL3[p.buildableLand];
+  if (bl) {
+    g.noise.amp *= 1 - 0.2 * bl;
+    g.regional.amp *= 1 - 0.15 * bl;
+    g.ramps = clamp(g.ramps + 0.3 * bl, 0.1, 1);
+    g.terrace.share = clamp(g.terrace.share - 0.12 * bl, 0, 1);
+  }
+  // rivers entering on the edges (0: springs feed the water)
+  if (s.water.rivers === 0) {
+    g.hydro.inflows = 0;
+    g.hydro.springs = Math.max(1, g.hydro.springs);
+  } else if (s.water.rivers !== p.rivers) g.hydro.inflows = clamp(g.hydro.inflows + s.water.rivers - p.rivers, 1, 4);
+  // river style: how far rivers wander, and braids
+  g.wander *= STYLE_WANDER[s.water.riverStyle] / STYLE_WANDER[p.riverStyle];
+  if (s.water.riverStyle === "braided" && p.riverStyle !== "braided") {
+    g.hydro.split = Math.max(g.hydro.split, 0.85);
+    g.hydro.delta = Math.max(g.hydro.delta, 0.85);
+    g.hydro.floor += 2;
+  } else if (p.riverStyle === "braided" && s.water.riverStyle !== "braided") {
+    g.hydro.split *= 0.4;
+    g.hydro.delta *= 0.3;
+  }
+  // flow
+  g.hydro.flowMul = Math.max(0.3, (g.hydro.flowMul * FLOW[s.water.riverFlow]) / FLOW[p.riverFlow]);
+  // drought reserve: room for lakes
+  g.hydro.lakeBudget = clamp((g.hydro.lakeBudget * RESERVE[s.water.droughtReserve]) / RESERVE[p.droughtReserve], 0.01, 0.5);
+  // lakes and basins
+  const dl = LAKE_STEP[s.water.lakes] - LAKE_STEP[p.lakes];
+  if (s.water.lakes === "none") {
+    g.parts = g.parts.filter((q) => q.kind !== "basin" || q.shape === "sea");
+    g.troughs = 0;
+    g.lakeSprings = 0;
+  } else if (dl > 0) {
+    for (let k = 0; k < 2 * dl; k++) g.parts.push(randomPart(rng, "basin", W, H, g.variety, 1 + (0.6 * g.vt) / 100));
+    g.troughs += 0.5 * dl;
+    g.lakeSprings = Math.min(1, g.lakeSprings + 0.25 * dl);
+    g.hydro.lakeBudget = clamp(g.hydro.lakeBudget * (1 + 0.3 * dl), 0.01, 0.5);
+  } else if (dl < 0) {
+    for (let k = 0; k < -2 * dl; k++) {
+      const at = g.parts.findIndex((q) => q.kind === "basin" && q.shape !== "sea");
+      if (at >= 0) g.parts.splice(at, 1);
+    }
+    g.troughs *= 0.5 ** -dl;
+    g.lakeSprings *= 0.6 ** -dl;
+  }
+  // waterfalls
+  const df = FALL_STEP[s.water.waterfalls] - FALL_STEP[p.waterfalls];
+  if (s.water.waterfalls === "off") {
+    g.falls = 0;
+    g.knick = 0;
+    g.hanging = 0;
+  } else if (df > 0) {
+    g.falls = 2;
+    g.knick = Math.max(g.knick, 8 + 6 * rng.float());
+    g.hanging += 1;
+  } else if (df < 0) {
+    g.knick = 0;
+    g.hanging *= 0.5;
+  }
+  // badwater: at least one source on every map, unless No badwater (D200)
+  if (s.hazards.badwater === "off") g.hazards.badwater = "none";
+  else {
+    if (g.hazards.badwater === "none") g.hazards.badwater = "pit";
+    g.hazards.ratio = clamp((g.hazards.ratio * BADWATER[s.hazards.badwater]) / (BADWATER[p.badwater] || 1), 0.15, 1.8);
+  }
 }
 
 export type { Settings };
