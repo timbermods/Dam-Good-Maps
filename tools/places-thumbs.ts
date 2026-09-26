@@ -284,7 +284,20 @@ async function main(): Promise<void> {
     await browser.close();
     await server.close();
   }
-  if (!dir) writeFileSync(indexPath, JSON.stringify(index, null, 1) + "\n");
+  if (!dir) {
+    // imageFrom where tools/real-places.ts writes it (after view), so `npm run places -- --check`
+    // sees the same bytes
+    index.places = index.places.map((p) => {
+      const entry: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(p)) {
+        if (k === "imageFrom") continue;
+        entry[k] = v;
+        if (k === "view" && p.imageFrom) entry.imageFrom = p.imageFrom;
+      }
+      return entry as unknown as PlaceIndexEntry;
+    });
+    writeFileSync(indexPath, JSON.stringify(index, null, 1) + "\n");
+  }
   console.log(
     `${places.length} place(s) in ${((performance.now() - t0) / 1000).toFixed(0)} s, ${(total / 1024).toFixed(0)} KB (${(total / 1024 / places.length).toFixed(1)} KB a place), in ${join(out, "cards")}${dir ? "" : "; the index records the map they show"}`,
   );
