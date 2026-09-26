@@ -1,0 +1,103 @@
+{
+  "theme": "islands",
+  "size": 96,
+  "seed": 1,
+  "reference": "948f395137a6725d4b726864a47e6966d7f2f09a",
+  "profileBundle": "167f093cc9c3c6c94a4064b4db77ea093ee1621eb3fb59a064dc13ee926def24",
+  "inputSha256": "74493576de9d947a1bd9bfdcb3b7f053cff01188443abf9deadac98197b68b48",
+  "matrixWorkers": 1,
+  "wallMs": 70965.42039999999,
+  "cpuMs": 64297,
+  "phases": {
+    "soil.wet-count-saturation": {
+      "ms": 5321.177900003604,
+      "calls": 56064
+    },
+    "soil.evaporation": {
+      "ms": 821.9360999989876,
+      "calls": 56064
+    },
+    "soil.dirty": {
+      "ms": 8303.736699999441,
+      "calls": 56064
+    },
+    "soil.remember": {
+      "ms": 1716.2827000000543,
+      "calls": 56064
+    },
+    "soil.moisture": {
+      "ms": 1707.5694999990228,
+      "calls": 56064
+    },
+    "soil.candidates": {
+      "ms": 133.60040000162553,
+      "calls": 56064
+    },
+    "soil.publish-levels": {
+      "ms": 120.28019999804383,
+      "calls": 56064
+    },
+    "water.clear-active": {
+      "ms": 5543.470499999472,
+      "calls": 112128
+    },
+    "water.outflows": {
+      "ms": 12775.291700005488,
+      "calls": 112128
+    },
+    "water.depth": {
+      "ms": 8970.35749999847,
+      "calls": 112128
+    },
+    "water.mix": {
+      "ms": 16735.222300004258,
+      "calls": 112128
+    },
+    "water.diffusion": {
+      "ms": 6811.75119999575,
+      "calls": 112128
+    },
+    "water.sources-finish": {
+      "ms": 1055.810700002854,
+      "calls": 112128
+    }
+  },
+  "probes": [
+    {
+      "id": "normal",
+      "days": 17,
+      "wet": 3122,
+      "contaminated": 133
+    },
+    {
+      "id": "first-easy",
+      "days": 5,
+      "wet": 3181,
+      "contaminated": 192
+    },
+    {
+      "id": "first-normal",
+      "days": 6,
+      "wet": 3181,
+      "contaminated": 192
+    },
+    {
+      "id": "first-hard",
+      "days": 8,
+      "wet": 3181,
+      "contaminated": 192
+    },
+    {
+      "id": "first-badtide",
+      "days": 6,
+      "wet": 3181,
+      "contaminated": 3053
+    },
+    {
+      "id": "late-hard",
+      "days": 31,
+      "wet": 3122,
+      "contaminated": 133
+    }
+  ]
+}
