@@ -91,6 +91,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D172 (1) confirmed: the tall-maps probe batch passed, so both validators allow heights up to 22 (built in the start and edge rules).
 - D177: in the Standard look, badwater blends smoothly into clean water by contamination (toward #4B3C37), a soft gradient over several tiles, distinct in greyscale; consistent with #38's High look.
 - D178: mine sites and ruins get models of our own: a sunken pit with a rusty frame and corner scaffolding; ruined scaffold towers with braces, panels and ivy on moist ground.
+- D179: **Live editing is how you edit a map**, the editor's core principle: every tool becomes live, water first (freehand rivers, lakes, sources, visible flow), then brush shapes and a precise mode, one Select tool, resource brushes, objects dragged with live footprints; no plan-confirm-place flow remains.
+- #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
 
 ## Done and released
 
@@ -120,8 +122,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **Resources like the official maps** (D167–D170), on branch `feature/resources`.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
-- **Live editing** (D158), on branch `feature/live-editing`: the triage and the terrain brushes
-  are on the preview address; the live shape tools come next.
+- **Live editing** (D158, D179), on branch `feature/live-editing`: the terrain brushes are on the
+  preview address; next come the live shape tools, then every tool made live, water first.
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
@@ -131,19 +133,17 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Waiting on Kyler
 
-1. Try Live editing on <https://timbermods.github.io/dam-good-maps/preview/> and say what feels
-   wrong; it is released when it feels right.
+1. Try each Live editing push on <https://timbermods.github.io/dam-good-maps/preview/>; it is
+   released when it feels right.
 2. Kyler's own one-sentence intentions, for design version 2.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
 4. The before and after captures of the Map look fixes (D177, D178), when they're ready.
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53 and #56 (Pick a place when no map passes).
+   #51–#53.
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
-   ([What Kyler needs to do](progress/kyler-todo.md), item 4), and deleting
-   `Documents\Timberborn\DGMProbe` (208 MB, left by an earlier probe runner) and the empty
-   PerformanceLog folders.
+   ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
 
 ## Where to look next
 

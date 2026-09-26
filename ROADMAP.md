@@ -848,13 +848,38 @@ and released as `live-editing-done` when Kyler says it feels right.
   strip, lists only what's on the current map, and highlights those things when an entry is
   clicked (its styling waits for the design pass); and it must be obvious which map is shown and
   which is being edited (the generator page said "You are editing …" over a different map).
-- **Principles:** responsive above all; direct manipulation (no confirm steps, no Place button, no
+- **Principles** (D179: the editor's core principle, for every tool): responsive above all; direct
+  manipulation (no confirm steps, no Place button, no
   waiting); everything reversible; show, don't ask; good defaults.
 - **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
   naturalize, in whole levels with natural slopes at the brush's edge; a brush cursor projected on
   the terrain; Cities: Skylines-style controls; a compact brush bar with shortcut tooltips.
 - **Water never blocks:** terrain updates instantly, water re-settles and flows live in the
   background; an option pauses it while painting.
+- **Every tool live** (D179), built in pushes, water first, each put on the preview for Kyler:
+  1. **Water:** freehand rivers that carve in under the cursor, step down with the terrain and fill
+     behind it, spilling over drops as waterfalls; the source at the head (D171), or a join to an
+     existing river; width and depth from the brush controls; handles afterwards. Lakes by painting
+     a shore or clicking a basin, filling as you watch. Water and badwater sources that start
+     spreading at once, badwater's spread visible.
+  2. **Visible flow** after every edit: the water advances over a few seconds at a pace the eye can
+     follow, with a speed setting and "skip to result". It ends exactly at today's settled water,
+     and the brush never waits for it.
+  3. **Brush options** on the brush bar: circle or square (square on the tile grid); a precise mode
+     (hard edges; at size 1 one tile, one level per click); straight strokes (click, then
+     Shift-click).
+  4. **One Select tool:** rectangle, freehand and same level; Shift adds, Alt subtracts; raise or
+     lower by N levels, flatten or set to a level, dig out to a level, clear trees and objects;
+     live, water flowing in, one undo step each.
+  5. **Landforms:** the live shape tools below.
+  6. **Resources:** forest and berry brushes with natural clusters at official-like densities, and a
+     clear brush.
+  7. **Objects:** ruins, mine sites, relics, slopes and the start dragged into place with a live
+     footprint (green, or red with the reason).
+  8. Limits, reasons and checks live while dragging, never dialogs afterwards; each
+     plan-confirm-place flow retired once its live version exists.
+  9. Heavy operations (regenerate an area, "Generate, keeping my edits") show their result
+     growing, never a frozen wait.
 - **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
   resize and raise it live; limits show while dragging.
 - **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
@@ -866,11 +891,13 @@ and released as `live-editing-done` when Kyler says it feels right.
 
 **Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
 rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
-breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost).
-Kyler decides when it feels right.
+breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost; after
+any edit the water ends exactly at the settled result, so exports are unchanged). Kyler decides when it
+feels right.
 
-**Later:** the 3D terrain steps extend the same brushes to caves and tunnels; M10 keeps symmetry and
-the advanced extras.
+**Later:** every future editing tool is built live from the start (D179): the 3D terrain steps extend
+the same brushes to caves and tunnels; M10 keeps symmetry and the advanced extras; M11's stamps, locks
+and regenerate area.
 
 ---
 
@@ -1319,6 +1346,8 @@ contracts byte for byte, no state shown by colour alone, the test hooks kept.
 
 ## Terrain above terrain (3D-a, 3D-b, 3D-c)
 
+Its carving tools are built live from the start (D179).
+
 After the M9 build and the Frame pass, and before the Weather view and M10 (Kyler, 2026-09-25;
 PLAN §20 D118–D127). Real 3D terrain is essential: caves, overhangs, tunnels and arches must be
 possible to generate and to edit, not only to import and keep (83% of the 1.0+ workshop maps use
@@ -1537,6 +1566,8 @@ background start after generation, caching under the full input hash, cancellabl
 
 ## M10. Sculpting, naturalize, symmetry
 
+Built live from the start (D179): symmetry and the advanced brushes follow Live editing's principles.
+
 **Delivers:** E6.
 - Advanced sculpt brushes and the naturalize brush.
 - Symmetry across all tools:
@@ -1572,6 +1603,9 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 ---
 
 ## M11. Stamps, heightmap import, regenerate area, locks
+
+Built live from the start (D179): stamps, locks and regenerate area follow Live editing's principles;
+regenerating an area shows its result growing, never a frozen wait.
 
 **Delivers:** E7.
 - The built-in stamp library, and user stamps with export and import (the entity transform rules
