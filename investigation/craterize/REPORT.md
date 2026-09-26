@@ -64,10 +64,10 @@ Unchanged sources then flood **777** previously dry upstream tiles.
 Water settles after 2,176 repository simulation ticks.
 
 The 256² model measured **35–47 ms** total, planned in four-row slices.
-The final browser run measured **127 FPS**, **8.4 ms p95**, and **0.6 ms**
+The final browser run measured **163 FPS**, **6.2 ms p95**, and **0.8 ms**
 for cached Undo at 256². These are local headless-browser measurements, not a
 guarantee for every GPU. The demo's live readout is the useful check on yours.
-Initial generation of the 256² River Valley seed took about 15 seconds here,
+Initial generation of the 256² River Valley seed took about 18 seconds here,
 in the worker; subsequent impacts do not regenerate it.
 
 ## Decisions
@@ -90,3 +90,4 @@ in the worker; subsequent impacts do not regenerate it.
 3. Added the clean 3D demo, sliced worker, fixed effects pool, immediate view restoration, saved replay and browser checks. Ten worker lifecycle checks and eleven browser checks pass. The river study now includes an upstream floodplain; its 777 newly flooded tiles settle after 2,176 ticks. The earlier narrow-channel measurement above remains as the first model-step result.
 4. Recorded seven browser sequences and one still contact sheet (under 4 MB together). Frame inspection caught and fixed premature cave shading and rim shadows during deformation; old lighting now transitions with the land, and trees remain standing until impact. Refreshed browser checks, typechecking and the production build pass. Integration remains a proposal.
 5. Replaced straight ray fences with curved, tapering, broken bands and scattered pits. Separated the wall profiles into near-vertical cliffs and broad terraces. Nineteen model checks and ten worker checks pass, including ray breakup, edge clearance, cliff height, terrace width, exact replay and unchanged river damming.
+6. Refreshed all seven sequences and the contact sheet to match the revised morphology, with dedicated ring/rays and side-by-side wall stills. Inspected the final renders; all eleven browser checks, typechecking and the production build pass. Captures and check reports total about 4.3 MB.
