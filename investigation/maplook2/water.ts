@@ -7,13 +7,14 @@ export const CLEAN_PALETTE = {
   mlStreakAbove: [45, 83, 96], mlStreakLow: [56, 86, 98],
   mlGrazing: [51, 79, 91], mlStreakGrazing: [82.5, 127.5, 137],
 } as const;
+export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [73,58,54] } as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
   material.uniforms = { ...material.uniforms };
   material.uniforms.mlFlow = { value: null };
   material.uniforms.mlFlowSize = { value: new Vector2(1, 1) };
-  for (const [name, rgb] of Object.entries(CLEAN_PALETTE)) {
+  for (const [name, rgb] of Object.entries({...CLEAN_PALETTE,...MIX_PALETTE})) {
     material.uniforms[name] = { value: new Vector3(...rgb).divideScalar(255) };
   }
   const marker = '      /** The slope of the ripples';
@@ -29,6 +30,7 @@ vec3 rippleNormal(vec2 p, float t) {
   return normalize(vec3(slope.x * detail, 1.0, -slope.y * detail));
 }
 uniform vec3 mlShallow, mlBody, mlDeep, mlStreakAbove, mlStreakLow, mlGrazing, mlStreakGrazing;
+uniform vec3 mlMix, mlBad;
 uniform sampler2D mlFlow;
 uniform vec2 mlFlowSize;
 float fleckHash(vec2 p) {
@@ -56,7 +58,7 @@ float microFlecks(vec2 p, float t, float speed, float pixel) {
   float twinkle = smoothstep(0.1,0.85,sin(t*(1.1+speed*1.2)+fleckHash(cell)*51.0));
   return spot * step(mix(0.96,0.82,speed),fleckHash(cell+91.0)) * twinkle;
 }
-vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float lit, float t) {
+vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination, vec3 N, vec3 V, float lit, float t) {
   float bodyDepth = smoothstep(0.25, 1.25, depth);
   float deep = smoothstep(1.25, 4.25, depth);
   vec3 body = mix(mix(mlShallow, mlBody, bodyDepth), mlDeep, deep);
@@ -66,6 +68,14 @@ vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float 
   float grazing = 1.0 - smoothstep(0.18, 0.50, facing);
   body = mix(body, mlGrazing, grazing);
   vec3 streakColour = mix(mix(mlStreakAbove, mlStreakLow, low), mlStreakGrazing, grazing);
+  // A continuous concentration gradient, never a stochastic red/blue mask.
+  // The supplied warm mixing sample anchors a mostly-clean (25%) concentration.
+  vec3 cleanBody=body;
+  vec3 mixedBody=mlMix+(body-mlBody)*0.55;
+  vec3 badBody=mlBad*(1.0-deep*0.12)+vec3(0.035,0.045,0.05)*grazing;
+  body=contamination<=0.25 ? mix(body,mixedBody,contamination/0.25) : mix(mixedBody,badBody,(contamination-0.25)/0.75);
+  // Preserve the same crest/fleck field on both sides of the front.
+  streakColour=body+(streakColour-cleanBody)*mix(1.0,0.65,contamination);
   vec2 velocity = (texture2D(mlFlow,g/mlFlowSize).rg*255.0-128.0)/63.5;
   float speed = smoothstep(0.02,1.2,length(velocity));
   // Still lakes retain a little slow wind motion; current dominates in channels.
@@ -91,6 +101,7 @@ vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float 
   float alpha = mix(mix(0.86,0.96,bodyDepth),0.995,deep);
   alpha = mix(0.76,alpha,smoothstep(0.0,0.20,shore));
   alpha = max(alpha, grazing*0.98);
+  alpha = mix(alpha,max(alpha,0.94),contamination);
   return vec4(colour,alpha);
 }
 void main() {
@@ -126,7 +137,7 @@ void main() {
   float cleanAlpha = mix(0.13 + 0.35 * absorb, 0.62 + 0.34 * absorb, bank);
   cleanAlpha *= smoothstep(0.0, 0.12, vData.x);
   float alpha = mix(cleanAlpha, 0.91 + 0.07 * absorb, bad);
-  vec3 N = n.y > 0.5 ? rippleNormal(g, t) : n;
+  vec3 N = n.y > 0.5 ? rippleNormal(g, time) : n;
   vec3 V = normalize(cameraPosition - vWorld);
   float lit = sunLit(g, vWorld.y);
   c *= skyColor * 1.05 + sunColor * 0.42 * max(dot(N, sunDir), 0.0) * lit;
@@ -172,11 +183,12 @@ void main() {
     alpha = edge ? mix(0.78, 0.96, bad) : (0.32+0.53*strands)*smoothstep(0.06, 0.25, drop);
     if (alpha < 0.01) discard;
   }
-  // Retain the accepted badwater and waterfall paths exactly; replace only clean tops.
-  if (n.y > 0.5 && bad < 1.0) {
-    vec4 matched = measuredCleanWater(g, d, shore, N, V, lit, t);
-    c = mix(matched.rgb, c, bad);
-    alpha = mix(matched.a, alpha, bad);
+  // Waterfall curtains retain their accepted path; all tops share one detail field.
+  if (n.y > 0.5) {
+    bad=texture2D(mlFlow,g/mlFlowSize).b;
+    vec4 matched = measuredSurfaceWater(g, d, shore, bad, N, V, lit, time);
+    c = matched.rgb;
+    alpha = matched.a;
   }
   foam *= 1.0 - bad * 0.55;
   foam = clamp(foam, 0.0, 1.0);

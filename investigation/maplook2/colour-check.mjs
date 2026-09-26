@@ -20,10 +20,10 @@ try{
     const hex=rgb=>'#'+rgb.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();
     function bed(depth,contamination=0,falls=false){
       const W=64,N=W*W,floor=depth===0.25?8:depth===1.25?7:4;
-      const m={W,H:W,heights:new Uint8Array(N).fill(floor),columns:{tiles:new Int32Array(),voxels:new Uint8Array()},entities:{...a.map.entities,count:0},soil:{moisture:new Uint8Array(N),contamination:new Uint8Array(N)},water:{count:N,tile:Int32Array.from({length:N},(_,i)=>i),floor:new Float32Array(N).fill(floor),depth:new Float32Array(N).fill(depth),contamination:new Float32Array(N).fill(contamination)}};
+      const m={W,H:W,heights:new Uint8Array(N).fill(floor),columns:{tiles:new Int32Array(),voxels:new Uint8Array()},entities:{...a.map.entities,count:0},soil:{moisture:new Uint8Array(N),contamination:new Uint8Array(N).fill(Math.round(contamination*255))},water:{count:N,tile:Int32Array.from({length:N},(_,i)=>i),floor:new Float32Array(N).fill(floor),depth:new Float32Array(N).fill(depth),contamination:new Float32Array(N).fill(contamination)}};
       if(falls)for(let i=0;i<N;i++)m.heights[i]=m.water.floor[i]=i%W<32?8:4;
       a.standard.setMap(m);a.high.setMap(m);a.effects.fit(W,W);
-      a.flow.set(W,W,new Float32Array(N*2));
+      a.flow.set(W,W,new Float32Array(N*2),new Float32Array(N).fill(contamination));
       return floor+depth;
     }
     function sample(height,pitch){
@@ -39,11 +39,15 @@ try{
       function band(lo,hi){const s=pixels.slice(Math.floor(pixels.length*lo),Math.floor(pixels.length*hi));return [0,1,2].map(c=>s.reduce((sum,p)=>sum+p[c],0)/s.length);}
       return {body:band(.15,.40),streak:band(.96,.985)};
     }
-    const targets={mlShallow:[42,75,85],mlBody:[36,67,77],mlDeep:[29,50,62],mlStreakAbove:[47,84,95],mlStreakLow:[58,87,97],mlGrazing:[52,80,90],mlStreakGrazing:[80,123,129]};
+    const targets={mlShallow:[42,75,85],mlBody:[36,67,77],mlDeep:[29,50,62],mlStreakAbove:[47,84,95],mlStreakLow:[58,87,97],mlGrazing:[52,80,90],mlStreakGrazing:[80,123,129],mlBad:[75,60,55],mlMix:[46,68,76]};
     const measurements=[];
     for(const [depth,pitch,label]of [[.25,1.22,'shallow above'],[1.25,1.22,'body above'],[4.25,1.22,'deep above'],[1.25,Math.PI/6,'low 30 degrees'],[1.25,.18,'grazing 10.3 degrees']]){
       const height=bed(depth),s=sample(height,pitch);
       measurements.push({label,depth,pitch,body:s.body.map(Math.round),bodyHex:hex(s.body),streak:s.streak.map(Math.round),streakHex:hex(s.streak)});
+    }
+    for(const [depth,contamination,label] of [[.25,1,'badwater shallow poisoned bed'],[1.25,.25,'mostly clean mixing zone']]){
+      const height=bed(depth,contamination),s=sample(height,1.22);
+      measurements.push({label,depth,contamination,pitch:1.22,body:s.body.map(Math.round),bodyHex:hex(s.body),streak:s.streak.map(Math.round),streakHex:hex(s.streak)});
     }
     const {highWater:acceptedWater,CLEAN_PALETTE:acceptedPalette}=await import('/.cache/accepted-water.ts');
     const {CLEAN_PALETTE:currentPalette}=await import('/water.ts');
@@ -61,21 +65,19 @@ try{
       }
       return {channels,changed,maxDelta};
     }
-    const height=bed(1.25,1);a.camera({mode:'orbit',target:[32,height,-32],distance:44,yaw:-0.55,pitch:1.22});a.freeze();
-    const badwaterUnchanged=compare(renderWith(accepted),renderWith(material));
     bed(1.25,0,true);a.camera({mode:'orbit',target:[32,7,-32],distance:30,yaw:Math.PI/2,pitch:0.30});a.freeze();
     const corner1=a.high.project(32.01,6.25,-30),corner2=a.high.project(32.01,8.75,-34);
     const box=[Math.ceil(Math.min(corner1.x,corner2.x))+2,Math.ceil(Math.min(corner1.y,corner2.y))+2,Math.floor(Math.max(corner1.x,corner2.x))-2,Math.floor(Math.max(corner1.y,corner2.y))-2];
     const waterfallUnchanged=compare(renderWith(accepted),renderWith(material),box);
     accepted.dispose();
-    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',paletteUnchanged:true,targets,inputs:Object.fromEntries(keys.map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,badwaterUnchanged,waterfallUnchanged};
+    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,inputs:Object.fromEntries([...keys,'mlBad','mlMix'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
   });
   result.errors=errors;
-  const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing']];
+  const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing'],[5,'body','mlBad'],[6,'body','mlMix']];
   result.maxTargetError=Math.max(...probes.flatMap(([i,part,key])=>result.measurements[i][part].map((v,c)=>Math.abs(v-result.targets[key][c]))));
   writeFileSync('captures/colour-check.json',JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result,null,2));
   if(errors.length)throw new Error(errors.join('\n'));
   if(result.maxTargetError>2)throw new Error('Rendered colour is more than two code values from its target');
-  if(result.badwaterUnchanged.changed||result.waterfallUnchanged.changed||!result.waterfallUnchanged.channels)throw new Error('Accepted badwater or waterfall curtain changed');
+  if(result.waterfallUnchanged.changed||!result.waterfallUnchanged.channels)throw new Error('Accepted waterfall curtain changed');
 }finally{await browser.close();}

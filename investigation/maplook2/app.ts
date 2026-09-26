@@ -5,7 +5,7 @@ import { THEMES, THEME_NAMES } from '../../src/core/spec/mapspec';
 import { CHANGES, NOT_ENDORSED, PROVIDER_NOTICES } from '../../src/core/places/attribution';
 import { bridge, Effects } from './effects';
 import { pose } from './poses';
-import { WaterFlow } from './flow';
+import { WaterFlow, surfaceContamination } from './flow';
 import type { MapRequest } from './maps.worker';
 
 const $ = <T extends HTMLElement>(id:string) => document.getElementById(id) as T;
@@ -54,7 +54,7 @@ async function load(index=Number(select.value),seed=Number($<HTMLInputElement>('
       map=data.view;label=data.label;waterView=surfaceWater(map!.W,map!.H,map!.water);
       try {
         standard.setMap(map!);high.setMap(map!);effects.fit(map!.W,map!.H);
-        velocity=data.velocity;flowSource=data.flowSource;flow.set(map!.W,map!.H,velocity);
+        velocity=data.velocity;flowSource=data.flowSource;flow.set(map!.W,map!.H,velocity,surfaceContamination(map!));
         $<HTMLInputElement>('sun').value='0';
         setPose($<HTMLSelectElement>('pose').value);
         ready=true;status.textContent=`${label} · ${map!.entities.count.toLocaleString()} objects · cameras synced`;
