@@ -113,6 +113,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D200: at least one permanent badwater source on every map (generated, Real places, Pick a place), placed naturally at the per-difficulty distance, counts and strengths like the official maps. A "No badwater" option makes a peaceful map (badtides still happen).
 - D201: waterfalls with shape and volume in the Standard look (an arcing translucent ribbon, foam at the lip, whitewater below, cascades as small falls); mist and spray in Map look 2's High mode.
 - D202: Craterize, a giant-impact tool with its own button next to Carve; its prototype (`investigation/craterize`) is held until Kyler says it's ready.
+- D203: Quake (a fault line: Lift or Slide, Power, Sheer or Stepped scarp) joins Carve and Craterize in a visually distinct forces group on the top bar; all three share one forces core; its prototype is held until Kyler says it's ready.
 
 ## Done and released
 
@@ -164,7 +165,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- **Held:** `investigation/craterize` (Craterize, D202) when its PR opens, until Kyler says it's ready.
+- **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) when their
+  PRs open, until Kyler says each is ready.
 - **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
   round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
   merged when he says it's ready.

@@ -895,7 +895,10 @@ they conflict):
   always zooms, Alt+scroll slices the visible layers, as in the game, D196); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Craterize | Remove.
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve, Craterize,
+   Quake; a visually distinct group, D203) | Remove. Quake splits the land along a drawn fault (Lift
+   or Slide, Power, Sheer or Stepped scarp, Try another); built from `investigation/quake` once Kyler
+   says it's ready. All three forces share one forces core.
    Craterize (D202) simulates a giant impact (Strike or Aim, Power, Size, walls, centre, debris, Try
    another); built from `investigation/craterize` once Kyler says it's ready. A small row
    beneath shows only the picked tool's options. The size ring is drawn on the land; strength shows
