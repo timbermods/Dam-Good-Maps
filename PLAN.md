@@ -193,7 +193,10 @@ dam-good-maps/
 │  │  │               build.ts (the one build pipeline, §19.8, with dirty-region rebuilds)  target.ts  edits.ts (entity and slope edits)
 │  │  ├─ doc/         document.ts (MapDocument, project files)  base.ts (the stored map)  ops.ts (edit operations)
 │  │  │               session.ts (apply, undo and redo, regenerate, export: what the editor runs)
-│  │  ├─ gen/         generate.ts (spec → features, then build, retries)  riverValley.ts (one planner per archetype)
+│  │  ├─ land/        genome.ts (the genome, the themes as priors, Any)  field.ts  levels.ts  drainage.ts  hydro.ts  hazards.ts
+│  │  │               narrows.ts (the natural-narrows builder)  intentions.ts: the processes the land grows from (M9a)
+│  │  ├─ gen/         generate.ts (the field, its water, then build, retries)  settler.ts (the start)  readback.ts (features
+│  │  │               read back out of the field)  weir.ts  extras.ts (objects, district sites, rises)  resources.ts
 │  │  │               calibrated.ts (size-aware densities)  blobs.ts (ruin and grove shapes)  pack.ts (file, name, thumbnail)
 │  │  ├─ validate/    checks.ts (load and design classes, placement emulation, validateMap)  playability.ts
 │  │  │               report.ts (result shape, severity per profile, blocking, groups; §19.5)
@@ -767,7 +770,9 @@ D64). Each theme builds one premise until names and premises (M9): River Valley'
 basin, Canyon's Narrows, Lake Basin's Rising lake. River Valley and Canyon still flow west to east,
 and Lake Basin's outlet runs east (D67). As built (M7): Highlands and Delta are rows of the valley
 planner's table (D73, D74), and Islands is the Lake Basin planner with a sea (D70); each builds one
-premise until M9 (Staircase, Many mouths, Archipelago).
+premise until M9 (Staircase, Many mouths, Archipelago). From M9a (D208, D209) the land and its water
+grow from processes (the genome, the field, the hydrology; docs/m9-design.md), each theme only leans
+the genome's ranges, and Any, the default, draws from all of them; the planners above are gone.
 
 **Planned for M9** (D87, the workshop study): at least three premises per theme, each a planner
 variant that lays its landmark out first and the rest around it, from the study's recipes
@@ -1248,7 +1253,8 @@ basins (a lake, a valley basin and a weir pool): they agree within 5% of the sto
 ## 11. Validation
 
 A generated map is offered for download only when **every** check passes (apart from the advisory
-checks: `plants.drought`, §11.5; from M8 the start targets of §11.4 and `water.reservoir`, D85; and
+checks: `plants.drought`, §11.5; from M8 the start targets of §11.4, D85, with `water.storage_possible` in
+place of `water.reservoir` from M9a (information the generator prefers, #67); and
 since D152 `water.clean_exists` and `water.clean_reach`: maps need not hold their water). Check ids match
 `prototype/validate.py` and `prototype/playability.py`. Thresholds come from
 `data/calibrated.ts`, generated from `prototype/calibrated.py`.
@@ -1337,7 +1343,8 @@ clean water has contamination under 0.05.
 | `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. Since D152 a target with an advisory warning, as `water.clean_exists`. |
 | `water.source_in_flow` | Sources start rivers (Kyler, 2026-09-25, D171): no WaterSource or BadwaterSource stands where water from another source comes down to it. Emitters whose tiles touch are one group (a sealed mouth, a cluster at a river's head). Water runs down the spill levels, across a flat toward its way out and never back, and all through a pool; a group's water goes from its tiles over the settled water. A group is inside a flow when a running group's water reaches one of its sources and its own water does not reach that group back. Design class. |
 | `water.badwater_contained` | With the planned outlet channel's tiles blocked (a levee, §9.5), the water rising in each planned badwater basin cannot leave the basin (its 7×7 floor and two-tile rim) or reach a map edge below the rim's level. A source never stops, so this proves the outlet is the basin's only way out, not that a levee holds forever (D57, pending Kyler). Not applicable without a basin with a planned outlet. |
-| `water.reservoir` | The better of these two ≥ need × drought reserve (Scarce 1×, Normal 1.5×, Plenty 3×; §5.3): (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). Dam sites are sampled on every second clean water tile within 60 tiles of the start, with crests 1–3, and flood at most max(6,000, 15% of the map) tiles (D30). From M8 it is advisory, Hard's 3-deep rule included: a generation target with a warning on the map card, never a reason to reject (D85). |
+| `water.storage_possible` | From M9a, in place of `water.reservoir` (D111): the start's pump shore is fed by running clean water (at least need ÷ two days) and a dam site, natural pools or levees within 40 tiles hold the need (need × drought reserve, §5.3). Dam sites are sampled as before (every second clean water tile within 60 tiles of the start, crests 1–3, or 1–4 with Hard's depth rule); natural pools are the water kept through the worst drought (§10); levees raise clean water within 40 tiles 1–3 levels, up to the start's own level, behind a short line of levees. Information the generator prefers, never a reason to reject (#67, D209). Both validators. |
+| `terrain.dam_wall` | From M9a (D111, D115): no built ridge that is a dam in all but name, a straight wall across a valley with a gap for the river (`analysis/ridge.ts`). A principle (D115): it blocks in `generate` and `export` and is information on an import. Both validators. |
 
 ### 11.4 Start and playability
 
@@ -1883,7 +1890,7 @@ the editor's live checks and export gating.
 
 - **Check result:** `{id, class, severity, ok, value, limit, message, where?, fix?}`. The classes
   are `load`, `playability` and `design` (§11). A check marked advisory (today only
-  `plants.drought`; from M8 also the start targets of §11.4 and `water.reservoir`, D85) is
+  `plants.drought`; from M8 also the start targets of §11.4, D85, and from M9a `water.storage_possible`) is
   reported in every profile and never blocks.
 - **Profiles:**
 
