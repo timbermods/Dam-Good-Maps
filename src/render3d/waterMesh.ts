@@ -4,8 +4,10 @@
 // water. Water in caves (below a tile's surface water) gets its top quad only. Each vertex carries
 // a depth and badwater share, which the shader turns into colour and opacity (Map look, D86: a
 // top's corners share depth with the tiles round the corner, so the water thins toward the shore;
-// the badwater share is the tile's own, so each tile shows its own mix, D114), and flags for the
-// foam: which sides of a top meet the shore, and which take a fall from higher water.
+// D177: the badwater share is blended over the connected water a few tiles round, then shared at
+// the corners too, so where badwater meets clean water the colour turns in a soft gradient over
+// several tiles, never tile by tile), and flags for the foam: which sides of a top meet the shore,
+// and which take a fall from higher water.
 
 import { CHUNK } from "./mesh";
 import type { SurfaceWater, WaterView } from "./model";
@@ -60,8 +62,74 @@ class WaterBuffer {
 
 /** Lower than this below the surface, a neighbour gets a curtain. */
 const STEP = 0.02;
+/** Water within this of a tile's surface is the same water: it shares depth and badwater at the
+ *  corners, and the badwater blend reaches across it. */
+const SAME_WATER = 0.35;
 /** Higher than this above the surface, a neighbour's water falls into a tile (foam there). */
 const FALL = 0.3;
+
+/** How the badwater share is blended between tiles (D177): a binomial kernel along rows, then
+ *  along columns, from the tile itself out to 3 tiles away. A clean/bad front becomes a gradient
+ *  over about six tiles (four for the middle of it), no step between neighbouring tiles above a
+ *  third of the way. */
+export const BLEND_KERNEL = [20, 15, 6, 1] as const;
+
+const blends = new WeakMap<SurfaceWater, Float32Array>();
+
+/** The badwater share of each tile's surface water blended over the connected water round it
+ *  (`BLEND_KERNEL`): each tile's share averaged with its neighbours' out to 3 tiles along the row,
+ *  then along the column, over water at its own level (within `SAME_WATER`) that reaches it without
+ *  crossing dry ground or a fall, the kernel's weights shared among the tiles it reaches. Clean
+ *  water with no badwater within reach stays exactly 0, and badwater with no clean water within
+ *  reach exactly its own share (a pool of pure badwater stays pure). Computed once for each
+ *  surface-water state (the renderer makes a new one for every water update); 0 on dry tiles. */
+export function blendedBadwater(W: number, H: number, sw: SurfaceWater): Float32Array {
+  let out = blends.get(sw);
+  if (!out) {
+    out = blend(W, H, sw);
+    blends.set(sw, out);
+  }
+  return out;
+}
+
+function blend(W: number, H: number, sw: SurfaceWater): Float32Array {
+  const { surface, contamination } = sw;
+  const N = W * H;
+  const out = new Float32Array(N);
+  let any = false;
+  for (let i = 0; i < N && !any; i++) any = contamination[i] > 0 && surface[i] === surface[i];
+  if (!any) return out;
+  const K = BLEND_KERNEL;
+  const R = K.length - 1;
+  const rows = new Float32Array(N);
+  /** One pass along a line of tiles (step 1: a row; step W: a column), from `src` into `dst`. */
+  const pass = (src: Float32Array, dst: Float32Array, i: number, pos: number, len: number, step: number) => {
+    const s = surface[i];
+    let sum = K[0] * src[i];
+    let weight = K[0];
+    for (const dir of [1, -1])
+      for (let k = 1; k <= R; k++) {
+        const p = pos + dir * k;
+        if (p < 0 || p >= len) break;
+        const j = i + dir * k * step;
+        if (!(Math.abs(surface[j] - s) <= SAME_WATER)) break;
+        sum += K[k] * src[j];
+        weight += K[k];
+      }
+    dst[i] = sum / weight;
+  };
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (surface[i] === surface[i]) pass(contamination, rows, i, x, W, 1);
+    }
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (surface[i] === surface[i]) pass(rows, out, i, y, H, W);
+    }
+  return out;
+}
 
 /** A curtain's flags: its drop in thirtieths of a level, to 254; 255 at the map's edge (the side
  *  of the water there, no fall). */
@@ -76,9 +144,10 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
   const y0 = cy * CHUNK;
   const x1 = Math.min(W, x0 + CHUNK);
   const y1 = Math.min(H, y0 + CHUNK);
+  const bad = blendedBadwater(W, H, sw);
   /** A top's corner (tile-corner coordinates) shares the water of the tiles round it at its own
    *  level: their mean depth, dry ground counting as none (so the water thins toward the shore),
-   *  and their mean badwater share (unused: each top shows its own share). */
+   *  and their mean blended badwater share (so the colour runs on smoothly across the tile). */
   const corner = (cxx: number, cyy: number, s: number, d: number, c: number): [number, number] => {
     let dn = 0;
     let ds = 0;
@@ -90,11 +159,11 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
         const j = yy * W + xx;
         const ns = sw.surface[j];
         if (ns === ns) {
-          if (Math.abs(ns - s) > 0.35) continue;
+          if (Math.abs(ns - s) > SAME_WATER) continue;
           dn++;
           ds += sw.depth[j];
           cn++;
-          cs += sw.contamination[j];
+          cs += bad[j];
         } else if (heights[j] >= s - 0.05) dn++;
       }
     return [dn ? ds / dn : d, cn ? cs / cn : c];
@@ -112,7 +181,7 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
       const s = sw.surface[i];
       if (s === s) {
         const d = sw.depth[i];
-        const c = sw.contamination[i];
+        const c = bad[i];
         const f = sw.floor[i];
         // foam: a side meets the shore where dry ground stands at the surface or above it, and
         // takes a fall where the neighbour's water stands well above it
@@ -131,11 +200,16 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
         const k1 = corner(x + 1, y, s, d, c);
         const k2 = corner(x + 1, y + 1, s, d, c);
         const k3 = corner(x, y + 1, s, d, c);
-        // depth shared with the tiles round each corner; the badwater share is the tile's own, so
-        // a tile's pattern shows its own share
-        b.quad4([x, s, -y, x + 1, s, -y, x + 1, s, -(y + 1), x, s, -(y + 1)], [k0[0], k1[0], k2[0], k3[0]], [c, c, c, c], 0, 1, 0, flags);
+        // depth and the blended badwater share, shared with the tiles round each corner
+        const c0 = k0[1];
+        const c1 = k1[1];
+        const c2 = k2[1];
+        const c3 = k3[1];
+        b.quad4([x, s, -y, x + 1, s, -y, x + 1, s, -(y + 1), x, s, -(y + 1)], [k0[0], k1[0], k2[0], k3[0]], [c0, c1, c2, c3], 0, 1, 0, flags);
         // curtains toward lower neighbours: down to the ground (never below the floor), or, where
-        // the water falls to lower water, all the way to it, in front of the cliff (a fall)
+        // the water falls to lower water, all the way to it, in front of the cliff (a fall); each
+        // with the badwater share of the top's edge it hangs from
+        const dd = [d, d, d, d];
         const drop = (xx: number, yy: number): number => {
           const lv = level(xx, yy);
           if (!(lv < s - STEP)) return NaN;
@@ -147,22 +221,22 @@ export function meshWaterChunk(W: number, H: number, heights: Uint8Array, sw: Su
         const e = drop(x + 1, y);
         if (e === e) {
           const X = e < f ? x + 1 + O : x + 1;
-          b.quad([X, e, -y, X, e, -(y + 1), X, s, -(y + 1), X, s, -y], d, c, 1, 0, 0, dropFlags(s, e, x + 1 >= W));
+          b.quad4([X, e, -y, X, e, -(y + 1), X, s, -(y + 1), X, s, -y], dd, [c1, c2, c2, c1], 1, 0, 0, dropFlags(s, e, x + 1 >= W));
         }
         const wv = drop(x - 1, y);
         if (wv === wv) {
           const X = wv < f ? x - O : x;
-          b.quad([X, wv, -(y + 1), X, wv, -y, X, s, -y, X, s, -(y + 1)], d, c, -1, 0, 0, dropFlags(s, wv, x === 0));
+          b.quad4([X, wv, -(y + 1), X, wv, -y, X, s, -y, X, s, -(y + 1)], dd, [c3, c0, c0, c3], -1, 0, 0, dropFlags(s, wv, x === 0));
         }
         const n = drop(x, y + 1);
         if (n === n) {
           const Z = n < f ? -(y + 1) - O : -(y + 1);
-          b.quad([x + 1, n, Z, x, n, Z, x, s, Z, x + 1, s, Z], d, c, 0, 0, -1, dropFlags(s, n, y + 1 >= H));
+          b.quad4([x + 1, n, Z, x, n, Z, x, s, Z, x + 1, s, Z], dd, [c2, c3, c3, c2], 0, 0, -1, dropFlags(s, n, y + 1 >= H));
         }
         const so = drop(x, y - 1);
         if (so === so) {
           const Z = so < f ? -y + O : -y;
-          b.quad([x, so, Z, x + 1, so, Z, x + 1, s, Z, x, s, Z], d, c, 0, 0, 1, dropFlags(s, so, y === 0));
+          b.quad4([x, so, Z, x + 1, so, Z, x + 1, s, Z, x, s, Z], dd, [c0, c1, c1, c0], 0, 0, 1, dropFlags(s, so, y === 0));
         }
       }
       const lower = lowerByTile?.get(i);
@@ -190,29 +264,34 @@ export function lowerByTile(sw: SurfaceWater, view: WaterView): Map<number, numb
   return m;
 }
 
-/** Chunks whose water differs between two surface-water states (a curtain reads the neighbours,
- *  so a chunk is also dirty when a tile beside it changed). */
+/** Chunks whose water differs between two surface-water states: a tile's surface, depth or
+ *  blended badwater share changed (the blend reaches a few tiles past a change of badwater). A
+ *  top's corners and curtains read the tiles round it, so a chunk is also dirty when a tile beside
+ *  it, or diagonally beside it, changed. */
 export function changedWaterChunks(W: number, H: number, a: SurfaceWater, b: SurfaceWater, aLower: number, bLower: number): Set<string> {
   const out = new Set<string>();
   const mark = (x: number, y: number) => {
-    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const xx = x + dx;
-      const yy = y + dy;
-      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
-      out.add(`${Math.floor(xx / CHUNK)},${Math.floor(yy / CHUNK)}`);
-    }
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        out.add(`${Math.floor(xx / CHUNK)},${Math.floor(yy / CHUNK)}`);
+      }
   };
   if (aLower || bLower) {
     // caves: rare; remesh everything
     for (let cy = 0; cy * CHUNK < H; cy++) for (let cx = 0; cx * CHUNK < W; cx++) out.add(`${cx},${cy}`);
     return out;
   }
+  const ba = blendedBadwater(W, H, a);
+  const bb = blendedBadwater(W, H, b);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
       const sa = a.surface[i];
       const sb = b.surface[i];
-      const same = (sa !== sa && sb !== sb) || (sa === sb && a.contamination[i] === b.contamination[i] && a.depth[i] === b.depth[i]);
+      const same = (sa !== sa && sb !== sb) || (sa === sb && ba[i] === bb[i] && a.depth[i] === b.depth[i]);
       if (!same) mark(x, y);
     }
   }

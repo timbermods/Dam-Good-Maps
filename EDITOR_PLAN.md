@@ -24,22 +24,37 @@ editor is desktop-first (D185).
 - **Smart defaults instead of settings.** Options stay hidden until wanted.
 - **Forgiveness.** Every stroke or placement is one instant undo step, and Esc always backs out.
 - **One grammar:** pick, paint or place, see.
+- **Tools read intent.** Small quality-of-life tricks remove decisions the player would otherwise
+  make: smart Lower, flatten from the stroke's start, clear water when a tool is picked, a stop level
+  for holding, sampling a riverbed on water. Whenever a player would hesitate, switch tools or do
+  something twice, look for a way the tool could have known what they meant (D204).
 - **Things just work, and are fast.** Full frame rate on 256² maps; painting never waits on water;
   water reacts around the edit first, then the rest of the map; nothing ever freezes.
 
-(D158, D179, D184.)
+(D158, D179, D184, D204.)
 
 ## 3. The screen
 
-- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove, with a small
-  options row for the picked tool.
+- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve,
+  Craterize, Quake, Erupt, a visually distinct group) | Remove, with a small options row for the picked
+  tool; every force's options row starts with its mode switch. The four forces are built on one shared
+  forces core (D203, D206).
 - **The left shelf:** a clean grid of placeable objects (the start, trees, bushes, ruins, the mine
   site, relics, slopes and the rest), each a small render in the map's look. Picking one shows a live
   ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
   quiet word. Click to place, R to rotate, Esc to put it back; drag trees and bushes to paint them in
   natural clusters.
-- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers and the overlays
-  (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers, Clear water and the
+  overlays (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The minimap** (D205): a small top-down view of the whole map in a corner, refreshed after edits
+  settle, with an outline of what the camera sees; click or drag on it to move there. On by default
+  for 256² maps, off for smaller ones, with a toggle among the view buttons.
+- **Juice** (D205): small satisfying feedback on every action (a soft thud as land rises, a puff of
+  dust when it's lowered, a pop and a wiggle when something is placed, a splash when a source starts,
+  fitting touches for the forces). Sounds are quiet and optional, with a volume and an off switch;
+  micro-animations follow the reduced-motion setting. Nothing new stays on screen unless in use.
+- **The hover readout:** a quiet corner line for what's under the cursor ("Height 11, dry soil"); over
+  water, its depth, the bed level and its contamination (D196).
 - **The header:** Undo and Redo; one primary button, **Save to Timberborn** (**Download .timber** in
   browsers that can't save to a folder); a small menu for the rest (Open, Save project, Download
   .timber, History, New map).
@@ -62,36 +77,86 @@ editor is desktop-first (D185).
   optional "stop at" level (off by default; set by Ctrl-clicking a tile, or water for its riverbed)
   makes it stop there, with a faint plane at that level and one pulse of the ring on arrival. It
   never digs below the map's bottom or out from under the start or placed objects (D193).
+- **Flatten** (D204): the target is the height where the stroke starts (Ctrl-click samples any other
+  level); it cuts and fills, so one stroke makes a clean plateau; **Edges**: **Cliff** (default) or
+  **Ramped**, where the rim steps down to the land around with natural slopes beavers can climb; a
+  quiet "the start fits here" hint when the area is big and flat enough for the district center, and a
+  stronger one when the start requirements would also hold there; trees and objects ride the ground.
 - **Hills, plateaus, ridges and valleys come from the brushes,** not buttons.
+- **Craterize, a force of nature** (D202): its own top-bar button next to Carve, simulating a giant
+  impact. **Strike** or **Aim** (a glancing drag for oval craters); **Power**; **Size** (auto or set);
+  **Steep** or **Terraced** walls; **Centre** (Auto, Bowl, Peak, Ring, Flat); **Debris** (Light or
+  Heavy, with or without Rays); **Try another**; the impact moment with radial tree knockdown. Newer
+  impacts overprint older ones; it refuses to strike where the start sits and never adds water; one
+  undo step, and Esc reverts. Prototyped on `investigation/craterize` (held until Kyler says it's ready).
+- **Quake, a force of nature** (D203): in the forces group with Carve and Craterize. It splits the land
+  along a drawn fault line: **Lift** or **Slide**; **Power**; **Sheer** or **Stepped** scarp; **Try
+  another** (including a natural tilt); objects ride with the land; it refuses a fault through the start
+  and never adds water; one undo step, and Esc reverts. Prototyped on `investigation/quake` (held until
+  Kyler says it's ready).
+- **Erupt, a force of nature** (D206): in the forces group. It raises a volcano: **Mode** (**Vent** or
+  **Fissure**); **Power**; **Shape** (**Steep** or **Broad**); **Summit** (Auto, Peak, Crater, Caldera);
+  **Flows** (Light or Heavy, with or without Ridges); **Try another**. Fresh volcanic rock is hard for
+  Carve; flows can dam rivers; objects ride the rising ground; overlapping eruptions build volcanic
+  fields; it refuses to erupt where the start sits and never adds water; one undo step, and Esc
+  reverts. Prototyped on `investigation/erupt` (held until Kyler says it's ready).
 - **Remove:** click one object or drag to remove many; filters; a red highlight on hover. It never
   changes terrain, and it refuses removals that would break a rule (such as deleting the start).
 - **Heights:** up to 16, or 22 on tall maps (D172); the game's own editor edits up to 16.
 
-(D180, D182, D183, D184, D193.)
+(D180, D182, D183, D184, D193, D202, D203, D206.)
 
 ## 5. Water
 
 Make a valley, drop a source, and there's a river.
 
-- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill;
-  the brush ring glows blue when it does.
-- **Source:** click to place; Alt+scroll sets strength (strong waterfalls allowed, with a friendly
-  note past the official range); drag to move; clean or bad. Sources can go anywhere in the editor;
+- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill.
+  The brush ring itself turns a clear water-blue and slightly thicker, with a faint fill as a second
+  cue; ordinary Lower keeps the white ring. Readable over water, badwater, every ground and in
+  colour-blind views (D198).
+- **Source:** click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
+  note past the official range); drag to move; clean or bad; select it and press Delete (or use
+  Remove) and its water recedes live. A source is always findable, even underwater: a subtle
+  upwelling (bubbles, a gentle ring) shows through the water; with Source picked or when hovering near
+  one, a clear marker with its strength; Markers shows every source (D196).
+- **Water is never an object.** It is the result of sources and land: never selectable or deletable,
+  with no river panel or selection. A river's flow is its sources' strength; clean or bad belongs to
+  each source; water changes only through its causes (a source removed, moved or weakened, or the
+  land reshaped). Generated maps' rivers are just their sources (edge inflows included) and their
+  land. Hovering water quietly highlights the sources feeding it (D196).
+- **Seeing underwater:** with any tool picked, water turns transparent, so the bed, ledges and sources
+  show; with no tool picked it looks normal, and T (the game's key) or **Clear water** toggles it.
+  Badwater stays clearly distinct in transparent mode, for colour-blind players too (D196). Sources can go anywhere in the editor;
   the "only where water begins" rule (D171) is for generated maps.
 - **Lakes, waterfalls, joins and branches emerge from the land.**
-- **Water flows visibly** over a few seconds, and the land greens along new water. Time controls:
-  pause, speed up, replay and follow.
+- **Water flows visibly,** and the land greens along new water. It reacts at once: water near an edit
+  starts moving within a frame or two, the rest of the map follows. A speed control (slower, normal,
+  faster, instant) is brisk by default: small edits settle nearby in a second or two, big changes (a
+  new river, a breach) still flow visibly, and instant skips to the settled result. Time controls:
+  pause, replay and follow (D197).
 - **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).
-- **Carve, a force of nature** (D194): its own top-bar button next to Source. Unleash and Aim modes,
-  Defy gravity, and a Power slider from creek to catastrophe; the water cuts its own gorge or valley,
-  with floodplains and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
-  until Kyler says it's ready).
+- **Carve, a force of nature** (D194, D199): its own top-bar button next to Source, with its full set:
+  - **Unleash** (click a spot) and **Aim** (origin to end point), with **Defy gravity** for aimed
+    carves that climb uphill;
+  - **Power** (creek to catastrophe), and **Width** (following Power by default, or set by hand for
+    slot canyons or wide lazy rivers);
+  - **Wander** (straight to winding), natural variation within each carve, and **Try another path**;
+  - **Steep** or **Wide** walls; **Keep river** (the default) or **Dry canyon**. Keep river leaves a
+    source at the origin whose strength follows the river's Width, not its Power, so a slot canyon
+    keeps a modest stream and a wide river a big one; Dry canyon leaves no source. The source is
+    editable afterwards like any other;
+  - an optional camera that follows the river's head, with the visible carving effects (a surging
+    head, crumbling blocks, dust, muddy water);
+  - **Stop** keeps what's carved; Esc or undo reverts the whole carve instantly.
+
+  The water cuts its own gorge or valley, with floodplains and a delta. It's being prototyped on
+  `investigation/carve` (PR #47, held until Kyler says it's ready).
 - **Optional water sounds,** our own.
 - **What you watch is what you'll play:** the final water always matches the game's settled result.
 
-(D180, D181, D184, D186, D194.)
+(D180, D181, D184, D186, D194, D196.)
 
 ## 6. The look
 
@@ -101,8 +166,13 @@ mode with the water shader and soft shadows (Map look 2, D147).
 
 ## 7. Controls
 
-WASD and the arrow keys move, Q and E rotate, scroll zooms, Alt+scroll sets strength, [ and ] set
-size, Esc backs out. Every tool is reachable by keyboard, with labels for screen readers. (D180, D184.)
+Like the game: WASD and the arrow keys move (Shift moves faster), Q and E rotate, scroll zooms,
+Alt+scroll slices the visible layers from the top down, Alt+click jumps to a tile's layer, and T
+toggles clear water. Shift+scroll sets strength (brushes and a hovered source), [ and ] set size, Esc
+backs out. Hold F and move the mouse to resize the brush live, then click to set. Ctrl+Shift+1 to 9
+saves a camera bookmark (position, angle, zoom), and Shift+1 to 9 glides back to it; the number keys
+alone stay the brush shortcuts; bookmarks are saved with the project. Every tool is reachable by
+keyboard, with labels for screen readers. (D180, D184, D196, D205.)
 
 ## 8. The generator, Claude and the first run
 
@@ -115,15 +185,20 @@ size, Esc backs out. Every tool is reachable by keyboard, with labels for screen
 
 ## 9. The future
 
+A time-lapse of how a map was built, near M13 with the sharing features: the edit history replayed
+at speed from the generated map, a camera gliding to each edit, saved as a WebM video to share (D205).
 Every future editing tool is brush-first and follows these principles: symmetry mirrors strokes live
 (M10), stamps are painted onto the land (M11), and cave carving is a brush (the 3D stages). (D179,
 D182.)
 
 ## 10. What's gone, and must not come back
 
+<!-- retired-terms:allow -->
 The landform tools and their handles, the river and lake tools, the Channel tool, the separate plant
 brushes, the busy readouts, the Show dropdown and the Advanced checkbox. Part 3 lists each with the
-decision that replaced it.
+decision that replaced it. CI flags these names if they reappear anywhere else
+(`tools/retired-terms.json`, D188).
+<!-- /retired-terms:allow -->
 
 # Part 2: the technical reference
 
