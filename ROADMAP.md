@@ -923,6 +923,8 @@ and released as `live-editing-done` when Kyler says it feels right.
     start-reach indicators update live;
   - **pen pressure** sets strength on a drawing tablet (mice unaffected);
   - **level lines:** an optional toggle with faint contour lines at each level while sculpting.
+  - **live dimensions** (D183): a selection's size ("12 × 8 tiles"), a straight stroke's length, the
+    target level for Flatten and Terrace ("level 7"), and the river's width and depth ("3 wide, 1 deep").
   Saved projects keep their land exactly: landforms already in a project open as plain terrain, so
   no edit is lost (breakage rule, D115).
 - **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
