@@ -120,6 +120,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **The start and edge rules** (D151–D153, and D172 (1)'s height limit of 22), on branch
   `feature/start-edge-rules`.
 - **Resources like the official maps** (D167–D170), on branch `feature/resources`.
+- **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
+  setups tuned on M7's maps that later generator changes moved (M12-INTEGRATION §11). They are re-tuned
+  once the start and edge rules and the resources step land, since both change generated maps again.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
 - **Live editing** (D158, D179), on branch `feature/live-editing`: the terrain brushes are on the
