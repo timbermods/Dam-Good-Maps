@@ -14,17 +14,17 @@
 // its badwater meets clean water: the water tiles with the most change of badwater share round
 // them, with clean water and badwater both near. Our own generated maps only.
 //
-// --measure prints the water's colours on screen instead, measured as #38's colour check does
-// (investigation/maplook2/colour-check.mjs): a 64² bed of water one badwater share and depth all
-// over, drawn by the after site's renderer, the camera 70° down (and 30°) at time 8 s, and the mean
-// of the 15–40% luminance band (the body) of a central 240 × 96 patch of the final frame; the
-// 96–98.5% band is the lightest texture. Pure badwater a quarter level deep is the one to land on
-// the game's #4B3C37 (palette.ts BADWATER_MEASURED).
+// --measure measures the water's colours on screen instead, with the method and against the
+// targets of the shared water palette (waterPalette.ts WATER_CALIBRATION, as #38's colour check):
+// the site's own renderer on the GPU, its canvas the method's size, a bed of water one badwater
+// share and depth all over. It prints each target's bands, measured and wanted, and a table of
+// shares and depths; it fails when a target that is not a placeholder misses.
 
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium, type Browser, type Page } from "@playwright/test";
 import { build, preview, type PreviewServer } from "vite";
+import { WATER_CALIBRATION } from "../src/render3d/waterPalette";
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -186,55 +186,82 @@ async function compose(tool: Page, images: Buffer[], labels: string[], cols: num
   }
 }
 
-/** Page side: a uniform bed of water in the editor's renderer, and the bands of its central patch. */
-const MEASURE_JS = `([share, depth, pitch]) => {
+/** Page side: a uniform bed of water in the editor's renderer (its soil as contaminated as the
+ *  water), measured as the calibration's method says: each band's mean over the central patch. */
+const MEASURE_JS = `([share, depth, pitch, floor, m]) => {
   const r = window.dgm3d.renderer;
-  const W = 64, N = W * W;
-  const floor = depth <= 0.5 ? 8 : depth <= 1.25 ? 7 : 4;
+  const W = m.bed, N = W * W;
   const tile = new Int32Array(N);
   for (let i = 0; i < N; i++) tile[i] = i;
   const e = { count: 0, templates: [], owners: [], template: new Uint16Array(0), x: new Int16Array(0), y: new Int16Array(0), z: new Int16Array(0), orientation: new Uint8Array(0), flags: new Uint8Array(0), owner: new Uint16Array(0) };
-  r.setMap({ W, H: W, heights: new Uint8Array(N).fill(floor), columns: { tiles: new Int32Array(0), voxels: new Uint8Array(0) }, entities: e, soil: { moisture: new Uint8Array(N), contamination: new Uint8Array(N) },
+  r.setMap({ W, H: W, heights: new Uint8Array(N).fill(floor), columns: { tiles: new Int32Array(0), voxels: new Uint8Array(0) }, entities: e,
+    soil: { moisture: new Uint8Array(N), contamination: new Uint8Array(N).fill(Math.round(share * 255)) },
     water: { count: N, tile, floor: new Float32Array(N).fill(floor), depth: new Float32Array(N).fill(depth), contamination: new Float32Array(N).fill(share) } }, true);
-  r.setClock(8);
-  r.setView({ mode: "orbit", target: [32, floor + depth, -32], distance: 44, yaw: -0.55, pitch });
+  r.setClock(m.time);
+  r.setView({ mode: "orbit", target: [W / 2, floor + depth, -W / 2], distance: m.distance, yaw: m.yaw, pitch });
   r.renderNow();
   const gl = r.gl.getContext();
   const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
   const p = new Uint8Array(w * h * 4);
   gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, p);
   const px = [];
-  for (let y = (h >> 1) - 48; y < (h >> 1) + 48; y++)
-    for (let x = (w >> 1) - 120; x < (w >> 1) + 120; x++) { const i = (y * w + x) * 4; px.push([p[i], p[i + 1], p[i + 2]]); }
+  const [pw, ph] = m.patch;
+  for (let y = (h >> 1) - (ph >> 1); y < (h >> 1) + (ph >> 1); y++)
+    for (let x = (w >> 1) - (pw >> 1); x < (w >> 1) + (pw >> 1); x++) { const i = (y * w + x) * 4; px.push([p[i], p[i + 1], p[i + 2]]); }
   px.sort((a, b) => a[0] + 2 * a[1] + a[2] - (b[0] + 2 * b[1] + b[2]));
-  const band = (lo, hi) => { const s = px.slice(Math.floor(px.length * lo), Math.floor(px.length * hi)); return [0, 1, 2].map((c) => s.reduce((t, q) => t + q[c], 0) / s.length); };
-  return { body: band(0.15, 0.4), top: band(0.96, 0.985), renderer: r.gpu().renderer };
+  const bands = {};
+  for (const [name, [lo, hi]] of Object.entries(m.bands)) {
+    const s = px.slice(Math.floor(px.length * lo), Math.floor(px.length * hi));
+    bands[name] = [0, 1, 2].map((c) => s.reduce((t, q) => t + q[c], 0) / s.length);
+  }
+  return { bands, size: [w, h], renderer: r.gpu().renderer };
 }`;
 
 async function measure() {
+  const M = WATER_CALIBRATION.method;
   const after = await site(resolve("."), "after", 4194);
   const browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--enable-gpu", "--use-angle=d3d11", "--ignore-gpu-blocklist"] });
+  let missed = 0;
   try {
-    const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: 1, colorScheme: "light" });
+    const page = await browser.newPage({ viewport: { width: M.viewport[0], height: M.viewport[1] }, deviceScaleFactor: 1, colorScheme: "light" });
     await open(page, 4194, { id: "", name: "", fragment: "#s=1&z=96&d=n&t=riverValley", top: 0, angled: 0 });
-    const hex = (c: number[]) => "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("").toUpperCase();
+    // the view's canvas the method's size, over the whole page
+    await page.addStyleTag({ content: `.editor-view canvas { position: fixed !important; left: 0 !important; top: 0 !important; width: ${M.viewport[0]}px !important; height: ${M.viewport[1]}px !important; z-index: 9999 !important; }` });
+    await page.waitForTimeout(300);
+    const hex = (c: readonly number[]) => "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("").toUpperCase();
     const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-    const lstar = (c: number[]) => {
+    const lstar = (c: readonly number[]) => {
       const y = 0.2126 * lin(c[0] / 255) + 0.7152 * lin(c[1] / 255) + 0.0722 * lin(c[2] / 255);
       return (y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y).toFixed(1);
     };
-    const cases: [number, number, number, string][] = [];
-    for (const share of [0, 0.25, 0.5, 1]) for (const depth of [0.25, 0.5, 1.25, 4.25]) cases.push([share, depth, (70 * Math.PI) / 180, "70°"]);
-    for (const share of [0, 1]) cases.push([share, 1.25, Math.PI / 6, "30°"]);
-    for (const [share, depth, pitch, angle] of cases) {
-      const r = (await page.evaluate(`(${MEASURE_JS})(${JSON.stringify([share, depth, pitch])})`)) as { body: number[]; top: number[]; renderer: string };
+    const run = async (share: number, depth: number, pitch: number) => {
+      const r = (await page.evaluate(`(${MEASURE_JS})(${JSON.stringify([share, depth, pitch, WATER_CALIBRATION.floor(depth), M])})`)) as { bands: Record<string, number[]>; size: [number, number]; renderer: string };
       if (/SwiftShader|llvmpipe|Software|Basic Render/i.test(r.renderer)) throw new Error(`the browser draws in software (${r.renderer})`);
-      console.log(`share ${share}, ${depth} deep, ${angle}: body ${hex(r.body)} (L* ${lstar(r.body)}), lightest ${hex(r.top)} (L* ${lstar(r.top)})`);
+      if (r.size[0] !== M.viewport[0] || r.size[1] !== M.viewport[1]) throw new Error(`the canvas is ${r.size.join(" × ")}, not ${M.viewport.join(" × ")}`);
+      return r.bands;
+    };
+    console.log("targets (method: waterPalette.ts WATER_CALIBRATION):");
+    for (const t of WATER_CALIBRATION.targets) {
+      const bands = await run(t.share, t.depth, t.pitch);
+      for (const [band, want] of Object.entries(t.bands)) {
+        const got = bands[band];
+        const err = Math.max(...got.map((v, c) => Math.abs(Math.round(v) - want[c])));
+        const ok = err <= M.tolerance;
+        if (!ok && !t.placeholder) missed++;
+        console.log(`  ${t.name}, ${band}: ${hex(got)} (L* ${lstar(got)}), wanted ${hex(want)}: ${ok ? "within" : "off by"} ${err}${t.placeholder ? " (placeholder)" : ""}`);
+      }
     }
+    console.log("shares and depths, 70° down (body band; lightest band):");
+    for (const share of [0, 0.1, 0.25, 0.5, 0.75, 1])
+      for (const depth of [0.25, 0.8, 1.25, 4.25]) {
+        const b = await run(share, depth, 1.22);
+        console.log(`  share ${share}, ${depth} deep: ${hex(b.body)} (L* ${lstar(b.body)}); ${hex(b.streak)} (L* ${lstar(b.streak)})`);
+      }
   } finally {
     await browser.close();
     await after.close();
   }
+  if (missed) throw new Error(`${missed} calibrated colours missed their targets`);
 }
 
 async function main() {

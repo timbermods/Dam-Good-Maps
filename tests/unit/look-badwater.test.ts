@@ -1,15 +1,16 @@
 // Map look, badwater blends into clean water (PLAN §20 D177): each water tile is coloured by its
 // badwater share, blended over the connected water a few tiles round and shared at the tops'
 // corners, so where badwater meets clean water the colour turns in a soft gradient over several
-// tiles, never in streaks or patches; clean water stays exactly as it was; badwater is the game's
-// murky red-brown as measured, darker than clean water of the same depth.
+// tiles, never in streaks or patches; clean water stays exactly as it was; water partly bad takes
+// a warm red tint early and darkens in proportion (Kyler's review of #41); badwater's own colours
+// are placeholders until #38's are approved, and darken with depth (option A).
 
 import { describe, expect, it } from "vitest";
 import { DataTexture } from "three";
 import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
 import { CHUNK } from "../../src/render3d/mesh";
 import { surfaceWater, waterFromDepth, type SurfaceWater } from "../../src/render3d/model";
-import { BADWATER, BADWATER_MEASURED, badwaterBody, badwaterShare, WATER, waterBody } from "../../src/render3d/palette";
+import { BADWATER, badwaterBody, cleanWaterBody, WATER, WATER_CALIBRATION, WATER_GLSL, WATER_PLACEHOLDERS, waterBlend, waterBody } from "../../src/render3d/waterPalette";
 import { blendedBadwater, changedWaterChunks, lowerByTile, meshWaterChunk, type WaterMeshData } from "../../src/render3d/waterMesh";
 
 /** CIE L* of a display colour (sRGB). */
@@ -104,10 +105,13 @@ describe("badwater meeting clean water", () => {
           if (y > 0) expect(Math.abs(c - shares.get(`${x},${y - 1}`)!)).toBeLessThan(0.3);
         }
     }
-    // the tongue still reads as badwater along its middle, well away from its tip
+    // the tongue still reads as badwater along its middle, well away from its tip: tinted all the
+    // way and darkened over half way
     const { heights, view, sw } = flat(W, H, (x, y) => (y < 20 && x >= 18 && x < 21 ? 1 : 0));
     const shares = cornerShares(meshAll(W, H, heights, sw, view));
-    expect(badwaterShare((shares.get("19,5")! + shares.get("20,5")!) / 2)).toBeGreaterThan(0.75);
+    const mid = waterBlend((shares.get("19,5")! + shares.get("20,5")!) / 2);
+    expect(mid.tint).toBeGreaterThan(0.95);
+    expect(mid.darken).toBeGreaterThan(0.5);
   });
 
   it("leaves clean water exactly as it was", () => {
@@ -116,7 +120,7 @@ describe("badwater meeting clean water", () => {
     const H = 6;
     const { heights, view, sw } = flat(W, H, () => 0);
     for (const m of meshAll(W, H, heights, sw, view)) for (let k = 0; k < m.quads * 4; k++) expect(m.data[k * 2 + 1]).toBe(0);
-    expect(badwaterShare(0)).toBe(0);
+    expect(waterBlend(0)).toEqual({ darken: 0, tint: 0, settle: 0, opacity: 0, surface: 0 });
     for (const d of [0.05, 0.25, 1, 3]) for (const fromBank of [0, 1]) expect(waterBody(d, 0, fromBank)).toEqual(waterBody(d, false, fromBank));
     // clean water far from badwater is 0 too, exactly
     const front = flat(W, H, (x) => (x < 3 ? 1 : 0));
@@ -173,44 +177,73 @@ describe("badwater meeting clean water", () => {
 });
 
 describe("badwater's colour", () => {
-  it("is the game's murky red-brown, as measured, in its shallows", () => {
+  it("waits for #38's: placeholders, for now at the in-game #4B3C37 in its shallows, darker deeper (option A)", () => {
+    // body, troughs, streaks and opacity are placeholders until Kyler approves #38's badwater
+    for (const k of ["WATER.bad", "WATER.badTrough", "WATER.badStreak", "BADWATER.opacity"]) expect(WATER_PLACEHOLDERS).toContain(k);
+    const target = WATER_CALIBRATION.targets.find((t) => t.share === 1)!;
+    expect(target.placeholder).toBe(true);
+    const measured = target.bands.body.map((v) => v / 255);
     // the view draws WATER.bad about as it is at 70° (docs/look/badwater-blend/README.md)
-    for (let k = 0; k < 3; k++) expect(Math.abs(WATER.bad[k] - BADWATER_MEASURED[k])).toBeLessThan(0.015);
-    expect(Math.abs(lightness(WATER.bad) - lightness(BADWATER_MEASURED))).toBeLessThan(1);
-    // red-brown: red over green over blue
-    expect(WATER.bad[0]).toBeGreaterThan(WATER.bad[1] + 0.04);
-    expect(WATER.bad[1]).toBeGreaterThan(WATER.bad[2]);
+    for (let k = 0; k < 3; k++) expect(Math.abs(WATER.bad[k] - measured[k])).toBeLessThan(0.015);
     expect(badwaterBody(BADWATER.shallow)).toEqual(WATER.bad);
+    // option A: darker with depth
+    for (let d = 0.3; d < 5; d += 0.1) expect(lightness(badwaterBody(d))).toBeLessThan(lightness(badwaterBody(d - 0.1)) + 1e-9);
+    expect(lightness(badwaterBody(4))).toBeLessThan(lightness(WATER.bad) - 15);
   });
 
-  it("turns from clean water's by the badwater share: continuously, darker at every step, a small share showing", () => {
+  it("turns from clean water's by the badwater share: darker in proportion, the warm red tint early, both continuous", () => {
     const shares = Array.from({ length: 101 }, (_, k) => k / 100);
+    // the curves: the darkening in proportion; the tint early (over half way at a quarter bad),
+    // always ahead of the darkening; both rising at every step, never jumping
     for (let k = 1; k < shares.length; k++) {
-      expect(badwaterShare(shares[k])).toBeGreaterThan(badwaterShare(shares[k - 1]));
-      expect(badwaterShare(shares[k]) - badwaterShare(shares[k - 1])).toBeLessThan(0.04);
+      const a = waterBlend(shares[k - 1]);
+      const b = waterBlend(shares[k]);
+      expect(b.darken).toBeCloseTo(shares[k], 12);
+      expect(b.tint).toBeGreaterThan(a.tint);
+      expect(b.tint - a.tint).toBeLessThan(0.035);
+      if (shares[k] < 1) expect(b.tint).toBeGreaterThan(b.darken);
     }
-    expect(badwaterShare(1)).toBe(1);
-    expect(badwaterShare(0.1)).toBeGreaterThan(0.15);
-    // at any depth, water partly bad lies between clean water and badwater in lightness, darker
-    // the more of it is bad (a cue in greyscale at any share)
+    expect(waterBlend(0.25).tint).toBeGreaterThan(0.5);
+    expect(waterBlend(0.1).tint).toBeGreaterThan(0.2);
+    const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    const luma = (c: readonly number[]) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+    const warmth = (c: readonly number[]) => (lin(c[0]) - lin(c[2])) / luma(c);
     for (const d of [0.1, 0.25, 0.5, 1, 2, 4]) {
-      let prev = lightness(waterBody(d, 0));
-      for (const s of [0.1, 0.25, 0.5, 0.75, 1]) {
-        const l = lightness(waterBody(d, s));
-        expect(l, `${d} deep, ${s} bad`).toBeLessThan(prev);
-        prev = l;
+      const clean = cleanWaterBody(d);
+      const bad = badwaterBody(d);
+      // the ends: exactly clean water and exactly badwater
+      expect(waterBody(d, 0)).toEqual(clean);
+      expect(waterBody(d, 1)).toEqual(bad);
+      let prevL = lightness(clean);
+      let prev = clean;
+      for (const s of shares.slice(1)) {
+        const c = waterBody(d, s);
+        // its luminance goes from clean water's to badwater's in proportion to the share
+        expect(luma(c)).toBeCloseTo(luma(clean) + (luma(bad) - luma(clean)) * s, 9);
+        // darker at every step in greyscale too, and no jump in any channel
+        expect(lightness(c), `${d} deep, ${s} bad`).toBeLessThan(prevL);
+        // (0.031 at the most, where the tint starts in bright shallows)
+        for (let k = 0; k < 3; k++) expect(Math.abs(c[k] - prev[k]), `${d} deep, ${s} bad`).toBeLessThan(0.04);
+        prevL = lightness(c);
+        prev = c;
       }
+      // tainted at a glance: at a quarter bad the water is already warm (redder than it is blue),
+      // over half way from clean water's hue to the tint's, whatever its depth
+      const q = waterBody(d, 0.25);
+      expect(q[0], `${d} deep`).toBeGreaterThan(q[2]);
+      expect(warmth(q) - warmth(clean)).toBeGreaterThan(0.5 * (warmth(WATER.tint) - warmth(clean)));
     }
   });
 
-  it("is drawn by the water shader from the blended share, with no streaks", () => {
+  it("is drawn by the water shader from the shared palette, with no streaks", () => {
     const t = () => new DataTexture(new Uint8Array(4), 1, 1);
     for (const lite of [false, true]) {
       const shader = waterMaterial(sceneUniforms(1, 1, t(), t(), t(), t()), lite).fragmentShader;
-      expect(shader).toContain("float badwaterShare(float level)");
-      expect(shader).toContain("float bad = badwaterShare(cont);");
+      expect(shader).toContain(WATER_GLSL);
+      expect(shader).toContain("float bad = waterDull(cont);");
       expect(shader).toContain("vec3 murky = badwaterBody(depth);");
-      expect(shader).toContain("vec3 c = mix(body, murky, bad);");
+      expect(shader).toContain("vec3 c = waterBlend(body, murky, cont);");
+      expect(shader).toContain("mix(cleanWaterAlpha(absorb), badwaterAlpha(absorb), waterMurk(cont))");
       // the old streaks of mixed water are gone; the bubbles grow denser with the share
       expect(shader).not.toContain("mixed");
       expect(shader).toContain("smoothstep(0.93 - 0.1 * bad, 1.03 - 0.1 * bad");

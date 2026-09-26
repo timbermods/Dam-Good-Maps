@@ -339,3 +339,24 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   tiles of ramp), clean water unchanged, a pure pool stays pure, no blending across dry ground or a
   fall, remeshing every chunk the blend reaches, the measured colour, the share's curve, and the
   shader (no streaks).
+
+**Kyler's review of #41 (2026-09-25; D177 on dev): not approved yet, three changes.** Deep badwater
+stays darker with depth (option A); the three loosened margins are accepted if the order of
+lightness holds with the final colour; the shallow weak spot is accepted.
+- **One shared water palette** (`src/render3d/waterPalette.ts`): clean water's and badwater's
+  colours (body, troughs, streaks), their opacity by depth, the contamination blend and the
+  calibration (the method, as #38's colour check, and the on-screen targets) in one module. The
+  water shader reads every colour and the water's opacity only through `WATER_GLSL`, generated from
+  its values (the Light look runs the same shader code); `palette.ts` re-exports them for the legend
+  and tests; `tools/capture-badwater.ts --measure` measures against its targets. Clean water draws
+  the same pixels as before. `tests/unit/water-palette.test.ts` fails if a water colour is defined
+  anywhere else in `src/`, or if the water shader has a colour of its own.
+- **The warm tint:** water partly bad now darkens in proportion to its share (luminance, in linear
+  light) and turns its hue to a warm red early (over half way at a quarter bad), then to badwater's
+  own, so a mixed river reads as tainted: the River Valley river above the badwater ditches
+  (about 40% bad) is now red, where it looked like deep clean water.
+- **Placeholders:** badwater's body, deep colour, troughs (none yet), streaks, opacity and the
+  tint's hue wait for Kyler's approval of #38's badwater (`WATER_PLACEHOLDERS`); then they come from
+  #38's calibration, the margins are re-checked, and the captures are made again.
+- Tests: `look-badwater.test.ts`'s colour tests now check the new rule (the blend's curves, luminance
+  in proportion, warm at a quarter bad, the placeholders); `water-palette.test.ts` is new (3).
