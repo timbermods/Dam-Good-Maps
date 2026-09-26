@@ -871,23 +871,68 @@ and released as `live-editing-done` when Kyler says it feels right.
   4. **One Select tool:** rectangle, freehand and same level; Shift adds, Alt subtracts; raise or
      lower by N levels, flatten or set to a level, dig out to a level, clear trees and objects;
      live, water flowing in, one undo step each.
-  5. **Landforms:** the live shape tools below.
-  6. **Resources:** forest and berry brushes with natural clusters at official-like densities, and a
-     clear brush.
+  5. **Landforms:** no landform tools; the brush kit shapes the land (D182).
+  6. **Resources:** forest and berry brushes with natural clusters at official-like densities; the
+     Demolish tool removes (D180).
   7. **Objects:** ruins, mine sites, relics, slopes and the start dragged into place with a live
      footprint (green, or red with the reason).
   8. Limits, reasons and checks live while dragging, never dialogs afterwards; each
      plan-confirm-place flow retired once its live version exists.
   9. Heavy operations (regenerate an area, "Generate, keeping my edits") show their result
      growing, never a frozen wait.
-- **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
-  resize and raise it live; limits show while dragging.
+- **Additions** (D180), each on the preview as it lands:
+  1. **Smooth camera:** per-frame movement while keys are held, eased, speed scaled by zoom;
+     Timberborn's controls (WASD, Q and E rotate, scroll zooms, Shift faster, arrows move); never
+     while typing, never clashing with brush shortcuts.
+  2. **Demolish:** click removes one object, drag removes everything under the brush; a red
+     highlight of exactly what goes; filters (trees, bushes, ruins, water sources, other objects,
+     all); Delete removes the selection; one undo step each; water re-flows live; never changes
+     terrain; rule-breaking removals refused live; instant on 256² (a per-tile index, only affected
+     models updated, batched removals).
+  3. **Water-aware sampling:** Ctrl-click on water samples its bed ("riverbed: level 7").
+  4. **River rules:** a new river from dry land gets a source at its head; from water, a branch with
+     no new source; it ends as a tributary, off the map edge, or filling a basin into a lake; the bed
+     never goes uphill, is dug 1 level (adjustable) on flat ground, cuts gorges through higher ground
+     ("cutting 6 levels deep here") and steps down into waterfalls; one undo step per river.
+  5. **Source strength** set while drawing or placing, adjustable on any source afterwards, live; a
+     friendly note beyond the official range, never a block.
+  6. **"Let the water carve":** a source erodes its own way downhill with the M9 erosion processes,
+     in whole levels, until stopped; one undo step.
+  7. **Natural or exact rivers** (Natural by default, remembered).
+  8. **Water time controls:** pause, speed up, replay; an optional camera following the water
+     front; a "drought" button.
+  9. **Local first:** water near the edit first, then the rest of the map.
+  10. The final water always matches the game's settled result.
+- **More for water** (D181):
+  1. **Carving makes valleys:** the channel cuts down where the water is fast, the sides slump
+     into stepped terraces, and deposition leaves floodplains and a small delta where it slows; a
+     walls setting (steep or wide); in the background, near the source first.
+  2. **The land comes alive:** moisture spreads visibly from new water, dry earth turning to grass
+     along the banks over a few seconds, fading back in a drought; it ends at the settled moisture.
+  3. **A "badtide" button** beside "drought": badwater surges, spreads, poisons the ground, recovers.
+  4. **Optional water sounds,** off by default, our own: a rush near falls, a trickle along streams,
+     quieter zoomed out.
+- **The brush kit is the core** (D182), right after the smooth camera and water pushes: every
+  landform tool (hill, plateau, ridge, canyon, valley, island, lake and resource-area objects) and
+  its handles removed, with everything in the editor that only supported them; no presets. The
+  kit: Raise, Lower, Flatten, Smooth and Naturalize (circle or square, precise mode, straight
+  strokes), the Select tool, the water tools, Demolish, the forest and berry brushes, and new:
+  - a **Terrace brush:** a painted slope becomes clean stepped terraces, one level apart, with a
+    step-width setting;
+  - a **Ramp brush:** painting along an edge between levels places the game's natural slopes; the
+    start-reach indicators update live;
+  - **pen pressure** sets strength on a drawing tablet (mice unaffected);
+  - **level lines:** an optional toggle with faint contour lines at each level while sculpting.
+  - **live dimensions** (D183): a selection's size ("12 × 8 tiles"), a straight stroke's length, the
+    target level for Flatten and Terrace ("level 7"), and the river's width and depth ("3 wide, 1 deep").
+  Saved projects keep their land exactly: landforms already in a project open as plain terrain, so
+  no edit is lost (breakage rule, D115).
 - **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
   an operation that replays exactly and survives regeneration and format 3; quiet background
   checks.
 - **Polish:** only changed chunks rebuilt; keyboard access and screen-reader labels; a one-line
   first-use hint.
-- **Keep M12 ready** (D134): Claude tool entries for the brushes and the live shape tools.
+- **Keep M12 ready** (D134): Claude tool entries for the brushes and the brush-first tools.
 
 **Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
 rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
@@ -1566,7 +1611,8 @@ background start after generation, caching under the full input hash, cancellabl
 
 ## M10. Sculpting, naturalize, symmetry
 
-Built live from the start (D179): symmetry and the advanced brushes follow Live editing's principles.
+Built live and brush-first (D179, D182): symmetry mirrors strokes live, and the advanced brushes follow
+Live editing's principles.
 
 **Delivers:** E6.
 - Advanced sculpt brushes and the naturalize brush.
@@ -1604,7 +1650,8 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 
 ## M11. Stamps, heightmap import, regenerate area, locks
 
-Built live from the start (D179): stamps, locks and regenerate area follow Live editing's principles;
+Built live and brush-first (D179, D182): stamps are painted onto the land; locks and regenerate area
+follow Live editing's principles;
 regenerating an area shows its result growing, never a frozen wait.
 
 **Delivers:** E7.
