@@ -9,36 +9,59 @@
 //   trees are bare: a pale grey-brown trunk and bare branches at the tree's true size, far lighter
 //   than the dark living crowns.
 // - Berry bushes: dark green, dotted with blue flowers.
-// - Ruins: rusty scaffold towers, one storey per level of the ruin's height: rusty posts and
-//   rails, a grey-brown deck, beige crates and sheets; ivy where the ground is moist.
+// - Ruins (Kyler's round, D178): ruined scaffold towers, one column per tile and one storey per
+//   level of its height: a skeleton of thin rusty corner posts, a beam round every storey and
+//   diagonal braces on some faces; beige slab panels on some storeys and faces, some missing, a few
+//   tilted or broken; the top storey often only partly there. The five variants (A to E, the
+//   file's own) differ in bracing and panels, each in two layouts that alternate up the column.
+//   Ivy climbs the posts and hangs from the beams where the column stands on moist ground. A
+//   column is turned a quarter more than its east neighbour and a half more than its north one,
+//   and no layout looks the same turned, so neighbouring columns never look alike. From afar each
+//   storey is a solid block, its faces beige where it has panels and rusty where it is open.
 // - The start: a district center of our own, a lodge with pale walls, a dark roof and a yellow
 //   banner on a pale deck, its door facing the entrance, and a lit post on the entrance tile.
 // - Slopes: a stone ramp; with Markers, a level pale arrow rimmed dark floating just above it,
 //   pointing uphill (it reads from any camera angle). Water sources: a stone ring round a spring;
-//   badwater sources: a brown swirl in a dark pit. Mine sites: a square pit in an orange frame.
-//   Geothermal fields: dark rock with glowing vents. Relics: broken stone columns on a plinth.
-//   Thorns: dark brambles. Blockages and natural dams: heaps of stones.
+//   badwater sources: a brown swirl in a dark pit. Mine sites (D178): a square pit sunk into the
+//   middle 3 × 3 tiles of the 5 × 5 footprint (the terrain leaves its tops out there, as the game
+//   hides the terrain under the site), with dark earthen walls and floor, roots, rubble, cracks and
+//   a ladder; a rusty frame round it; scaffolding at each corner with small platforms, pale crates
+//   and planks, and beams reaching over the edge, one with a bucket on a rope. With Markers, an
+//   outline round its footprint (the terrain shader). Geothermal fields: dark rock with glowing
+//   vents. Relics: broken stone columns on a plinth. Thorns: dark brambles. Blockages and natural
+//   dams: heaps of stones.
 // - Every other template: a box on each block its footprint occupies.
 // With Markers on (the information layer), dead trees, the slopes' arrows and the start have a
 // minimum size on screen: from afar they grow (the object shader: dead trees up to 2.5 times, the
 // start 3, the arrows 6) so they stay readable in a view of the whole map. The clean view draws
-// every object at its true size.
-// Jitter, turn and tint come from each object's tile, so a redraw looks the same.
+// every object at its true size. A model's parts can belong to the view from close up or from afar
+// only (`lod`); the object shader draws each instance's parts for its size on screen.
+// Every model stays within its footprint. Jitter, turn and tint come from each object's tile, so a
+// redraw looks the same.
 
-import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedBufferAttribute, InstancedMesh, OctahedronGeometry, type ShaderMaterial } from "three";
+import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedBufferAttribute, InstancedMesh, OctahedronGeometry, PlaneGeometry, type ShaderMaterial } from "three";
 import { FOOTPRINTS, rotate, startEntranceTile, worldBlocks, type Orientation } from "../core/format/footprints";
-import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView } from "./model";
+import { DEAD, FLIPPED, NO_VARIANT, ORIENTATION_NAMES, RUIN_VARIANT_IDS, YOUNG, type EntityView, type SoilView } from "./model";
 import { GEOTHERMAL, GEOTHERMAL_ROCK, MINE, RELIC_STONE, RUIN, SLOPE, START, THORNS } from "./palette";
 
 type Rgb = readonly [number, number, number];
 
 // ------------------------------------------------------------------------------ model building
 
+/** Which view a model's part is drawn in (the per-vertex `lod` the object shader reads): always,
+ *  only close up, or only from afar (materials.ts `RUIN_NEAR_PX` sets where they meet). */
+export const LOD_ALL = 0;
+export const LOD_NEAR = 1;
+export const LOD_FAR = 2;
+
 /** A model under construction: flat-shaded triangles with a colour per vertex. */
 class Model {
   pos: number[] = [];
   nrm: number[] = [];
   col: number[] = [];
+  lod: number[] = [];
+  /** The view the parts added now belong to (LOD_ALL, LOD_NEAR or LOD_FAR). */
+  level = LOD_ALL;
 
   /** Add a three.js geometry, transformed, in one colour (flat shaded). */
   add(g: BufferGeometry, color: Rgb, t: { x?: number; y?: number; z?: number; rx?: number; ry?: number; rz?: number; sx?: number; sy?: number; sz?: number; lift?: number } = {}): this {
@@ -57,6 +80,7 @@ class Model {
       this.pos.push(p.getX(k), p.getY(k), p.getZ(k));
       this.nrm.push(n.getX(k), n.getY(k), n.getZ(k));
       this.col.push(color[0], color[1], color[2]);
+      this.lod.push(this.level);
     }
     if (flat !== g) flat.dispose();
     g.dispose();
@@ -75,12 +99,20 @@ class Model {
     g.setAttribute("position", new Float32BufferAttribute(this.pos, 3));
     g.setAttribute("normal", new Float32BufferAttribute(this.nrm, 3));
     g.setAttribute("pcolor", new Float32BufferAttribute(this.col, 3));
+    g.setAttribute("lod", new Float32BufferAttribute(this.lod, 1));
     g.computeBoundingSphere();
     return g;
   }
 
   get triangles(): number {
     return this.pos.length / 9;
+  }
+
+  /** Triangles drawn in one view: close up (LOD_NEAR) or from afar (LOD_FAR). */
+  trianglesIn(view: typeof LOD_NEAR | typeof LOD_FAR): number {
+    let n = 0;
+    for (let v = 0; v < this.lod.length; v += 3) if (this.lod[v] === LOD_ALL || this.lod[v] === view) n++;
+    return n;
   }
 }
 
@@ -90,6 +122,29 @@ const cyl = (r0: number, r1: number, h: number, sides: number) => new CylinderGe
 const post = (r0: number, r1: number, h: number, sides: number) => new CylinderGeometry(r1, r0, h, sides, 1, false);
 const box = (x: number, y: number, z: number) => new BoxGeometry(x, y, z);
 const ico = (r: number) => new IcosahedronGeometry(r, 0);
+const oct = (r: number) => new OctahedronGeometry(r, 0);
+/** A flat rectangle facing +Z (one side). */
+const plane = (w: number, h: number) => new PlaneGeometry(w, h);
+/** A thin bar along Y with a square section of half-width r, its sides facing the axes (open ends:
+ *  8 triangles). */
+const bar = (r: number, h: number) => new CylinderGeometry(r * Math.SQRT2, r * Math.SQRT2, h, 4, 1, true).rotateY(Math.PI / 4);
+
+/** A bar from (x0, y0) to (x1, y1) in the plane z (a brace, a strut). */
+function strut(m: Model, x0: number, y0: number, x1: number, y1: number, z: number, r: number, color: Rgb): void {
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  m.add(bar(r, Math.hypot(dx, dy)), color, { rz: Math.atan2(-dx, dy), x: (x0 + x1) / 2, y: (y0 + y1) / 2, z });
+}
+
+/** Build parts on the north face (−Z) and turn them to face `f` (0 north, 1 east, 2 south,
+ *  3 west). */
+function onFace(m: Model, f: number, build: () => void): void {
+  const before = m.pos.length / 3;
+  build();
+  if (f % 4) rotateTail(m, m.pos.length / 3 - before, (-f * Math.PI) / 2, 0);
+}
+
+const shade = (c: Rgb, k: number): Rgb => [c[0] * k, c[1] * k, c[2] * k];
 
 const BARK: Rgb = [0.36, 0.25, 0.16];
 /** Bare dead wood: a pale grey-brown tan, far lighter than the living crowns; a dead birch stays
@@ -122,6 +177,14 @@ function rotateTail(m: Model, vertices: number, angle: number, y: number): void 
     const nz = m.nrm[k + 2];
     m.nrm[k] = c * nx + s * nz;
     m.nrm[k + 2] = -s * nx + c * nz;
+  }
+}
+
+/** Move the last `vertices` vertices of a model by (x, z). */
+function moveTail(m: Model, vertices: number, x: number, z: number): void {
+  for (let k = m.pos.length - vertices * 3; k < m.pos.length; k += 3) {
+    m.pos[k] += x;
+    m.pos[k + 2] += z;
   }
 }
 
@@ -233,14 +296,7 @@ const MODELS: Record<string, () => Model> = {
     }
     return m.add(cone(0.18, 0.12, 6), [0.16, 0.08, 0.06], { y: 0.12, rx: Math.PI });
   },
-  UndergroundRuins: () => {
-    // a mine site: a square pit in an orange frame, over its 5 × 5 footprint (centred on it)
-    const m = new Model().add(box(4.3, 0.04, 4.3), [0.1, 0.1, 0.09], { y: 0.02 }).add(box(3.4, 0.03, 3.4), MINE.pit, { y: 0.045 });
-    const frame: Rgb = [...MINE.frame];
-    for (const [x, z, w, d] of [[0, 2.2, 4.6, 0.22], [0, -2.2, 4.6, 0.22], [2.2, 0, 0.22, 4.6], [-2.2, 0, 0.22, 4.6]] as const) m.add(box(w, 0.2, d), frame, { x, y: 0.1, z });
-    for (const [x, z] of [[2.2, 2.2], [2.2, -2.2], [-2.2, 2.2], [-2.2, -2.2]] as const) m.add(box(0.3, 0.45, 0.3), [0.62, 0.3, 0.1], { x, y: 0.22, z });
-    return m;
-  },
+  UndergroundRuins: () => mineSite(),
   GeothermalField: () => {
     // a low mound of dark rock over its 3 × 3 footprint, cracked by vents glowing orange
     const m = new Model().add(cyl(1.45, 1.2, 0.22, 7), GEOTHERMAL_ROCK, { y: 0.11 }).add(new CylinderGeometry(1.2, 1.2, 0.02, 7), [0.22, 0.21, 0.2], { y: 0.22 });
@@ -263,6 +319,209 @@ const MODELS: Record<string, () => Model> = {
     return m;
   },
 };
+
+// ------------------------------------------------------------------------------ mine sites
+
+/** A mine site's pit: sunk into the middle 3 × 3 tiles of its 5 × 5 footprint (whose tops the
+ *  terrain leaves out, `mineCutout`), `half` tiles either side of the footprint's middle and
+ *  `depth` levels deep. */
+export const MINE_PIT = { half: 1.5, depth: 1.6 } as const;
+
+/** A mine site, centred on its 5 × 5 footprint (Kyler's round, D178; our own model, true to the
+ *  game's footprint): the pit with its earthen walls and floor, roots, rubble, cracks and a
+ *  ladder; a rusty frame round the pit's edge; scaffolding at each corner, with a small platform,
+ *  pale crates and planks, and a beam reaching over the edge (one with a bucket on a rope). Within
+ *  ±2.5 of the middle: the footprint. */
+function mineSite(): Model {
+  const m = new Model();
+  const p = MINE_PIT.half;
+  const d = MINE_PIT.depth;
+  // the pit's walls: a band of browner topsoil under a rusty lip, earth with a pale seam, darker
+  // toward the floor; the floor darker toward its edges
+  const soil = 0.38;
+  const low = 0.34;
+  for (let f = 0; f < 4; f++)
+    onFace(m, f, () => {
+      m.add(plane(2 * p, soil), MINE.earthTop, { y: -soil / 2, z: -p });
+      m.add(plane(2 * p, d - soil - low), MINE.earth, { y: -soil - (d - soil - low) / 2, z: -p });
+      m.add(plane(2 * p, low), MINE.earthLow, { y: -d + low / 2, z: -p });
+      m.add(plane(2 * p, 0.05), MINE.seam, { y: -0.78 - 0.06 * (f % 2), z: -p + 0.006 });
+      m.add(plane(2 * p, 0.2), shade(MINE.frame, 0.8), { y: -0.1, z: -p + 0.012 });
+    });
+  m.add(plane(2 * p, 2 * p), MINE.floorEdge, { rx: -Math.PI / 2, y: -d });
+  m.add(plane(2 * p - 0.7, 2 * p - 0.7), MINE.floor, { rx: -Math.PI / 2, y: -d + 0.004 });
+  // cracks down the walls and across the floor: dark zigzags
+  const cracks: [number, number, number, number, number][] = [
+    // face, x, top, length, lean
+    [0, -0.7, -0.25, 0.9, 0.25],
+    [0, 0.95, -0.5, 0.8, -0.3],
+    [1, -0.2, -0.3, 1.0, 0.2],
+    [2, 0.5, -0.2, 0.7, -0.2],
+    [3, -0.9, -0.4, 0.9, 0.3],
+    [3, 0.6, -0.6, 0.7, -0.25],
+  ];
+  for (const [f, x, top, len, lean] of cracks)
+    onFace(m, f, () => {
+      m.add(plane(0.05, len * 0.5), MINE.crack, { rz: lean, x, y: top - len * 0.25, z: -p + 0.01 });
+      m.add(plane(0.04, len * 0.5), MINE.crack, { rz: -lean, x: x - Math.sin(lean) * len * 0.22, y: top - len * 0.72, z: -p + 0.01 });
+    });
+  for (const [x, z, len, turn] of [[-0.55, 0.35, 0.8, 0.6], [-0.05, 0.62, 0.5, -0.5], [0.5, -0.35, 0.7, -0.9], [0.8, 0.05, 0.4, 0.4]] as const) m.add(box(len, 0.012, 0.018), MINE.floorCrack, { ry: turn, x, y: -d + 0.008, z });
+  // roots hanging from the edge, dark and pale
+  const roots: [number, number, number, number][] = [
+    // face, x, length, tilt
+    [0, -1.2, 0.6, 0.15],
+    [0, -0.95, 0.4, -0.2],
+    [0, -0.3, 0.45, -0.1],
+    [0, 1.05, 0.7, 0.2],
+    [1, -1.0, 0.55, -0.15],
+    [1, -0.45, 0.35, 0.2],
+    [1, 0.25, 0.8, 0.1],
+    [1, 1.1, 0.45, -0.2],
+    [2, -0.8, 0.6, 0.1],
+    [2, -0.1, 0.4, -0.2],
+    [2, 0.9, 0.7, -0.15],
+    [3, -1.1, 0.4, 0.15],
+    [3, -0.4, 0.65, 0.2],
+    [3, 0.7, 0.5, -0.1],
+  ];
+  roots.forEach(([f, x, len, tilt], k) =>
+    onFace(m, f, () => {
+      m.add(cone(0.045, len, 3), k % 3 ? MINE.root : MINE.rootPale, { rx: Math.PI, rz: tilt, x, y: -0.06 - len / 2, z: -p + 0.06 });
+    }),
+  );
+  // rubble along the walls and a heap in a corner
+  const rubble: [number, number, number, number][] = [
+    // x, z, radius, shade
+    [-1.12, -1.08, 0.32, 0],
+    [-0.72, -1.22, 0.22, 1],
+    [-1.22, -0.62, 0.24, 2],
+    [-0.88, -0.78, 0.17, 1],
+    [-0.5, -1.25, 0.14, 2],
+    [1.18, 0.4, 0.24, 0],
+    [1.2, 0.9, 0.18, 2],
+    [0.85, 1.2, 0.15, 1],
+    [0.3, 1.22, 0.2, 1],
+    [-0.4, 1.25, 0.15, 0],
+    [0.95, -1.18, 0.16, 2],
+    [0.15, -0.2, 0.12, 1],
+    [-0.35, 0.3, 0.1, 2],
+  ];
+  rubble.forEach(([x, z, r, s], k) => m.add(k % 2 ? oct(r) : ico(r), MINE.rubble[s], { x, y: -d + r * 0.4, z, sy: 0.6, ry: k }));
+  // a ladder down the north wall (the far wall from the game's camera)
+  const lx = 0.45;
+  const lz = -p + 0.07;
+  for (const sx of [-0.17, 0.17]) m.add(bar(0.025, d + 0.42), MINE.ladder, { x: lx + sx, y: (0.42 - d) / 2, z: lz });
+  for (let k = 0; k < 6; k++) m.add(box(0.36, 0.035, 0.04), MINE.ladder, { x: lx, y: -d + 0.2 + k * 0.28, z: lz });
+  // the rusty frame round the edge: four beams on the ground, a lighter strip along each
+  const fw = 0.22;
+  for (let f = 0; f < 4; f++)
+    onFace(m, f, () => {
+      m.add(box(2 * p + 2 * fw, 0.14, fw), MINE.frame, { y: 0.07, z: -p - fw / 2 });
+      m.add(box(2 * p + 2 * fw - 0.1, 0.03, 0.05), shade(MINE.frame, 1.12), { y: 0.155, z: -p - fw + 0.03 });
+    });
+  // scaffolding at each corner
+  for (let k = 0; k < 4; k++) tower(m, k);
+  // planks and crates on the ground between the towers
+  m.add(box(1.5, 0.05, 0.16), MINE.wood, { x: 0.1, y: 0.03, z: 2.2, ry: 0.04 });
+  m.add(box(1.3, 0.05, 0.15), shade(MINE.wood, 0.9), { x: -0.05, y: 0.08, z: 2.05, ry: -0.06 });
+  m.add(box(0.34, 0.3, 0.34), MINE.wood, { x: -2.15, y: 0.15, z: 0.3, ry: 0.3 });
+  m.add(box(0.26, 0.24, 0.26), shade(MINE.wood, 0.86), { x: -2.12, y: 0.12, z: -0.2, ry: -0.2 });
+  m.add(box(0.28, 0.26, 0.28), shade(MINE.wood, 0.94), { x: 2.1, y: 0.13, z: -0.4, ry: 0.5 });
+  return m;
+}
+
+/** A corner's scaffold tower of a mine site (corner k: 0 north-east, 1 south-east, 2 south-west,
+ *  3 north-west): four rusty posts, a small platform of pale planks with crates on it, a rail, a
+ *  brace, and a beam reaching from its top over the pit's edge. */
+function tower(m: Model, k: number): void {
+  const sx = k === 0 || k === 1 ? 1 : -1;
+  const sz = k === 1 || k === 2 ? 1 : -1;
+  const c = 1.98;
+  const cx = sx * c;
+  const cz = sz * c;
+  const e = 0.34;
+  const h = 1.42;
+  for (const [ax, az] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) m.add(bar(0.035, h), MINE.frame, { x: cx + ax * e, y: h / 2, z: cz + az * e });
+  // the platform, a rail on its two outer sides, and a brace on one
+  m.add(box(0.8, 0.06, 0.8), MINE.wood, { x: cx, y: 0.98, z: cz });
+  m.add(box(0.76, 0.02, 0.1), shade(MINE.wood, 0.8), { x: cx, y: 1.02, z: cz + 0.2 });
+  m.add(box(2 * e + 0.07, 0.05, 0.05), shade(MINE.frame, 0.9), { x: cx, y: h - 0.03, z: cz + sz * e });
+  m.add(box(0.05, 0.05, 2 * e + 0.07), shade(MINE.frame, 0.9), { x: cx + sx * e, y: h - 0.03, z: cz });
+  m.add(box(0.05, 0.05, 2 * e + 0.07), shade(MINE.frame, 0.9), { x: cx + sx * e, y: 0.55, z: cz });
+  // (the brace is built across x, then turned to run along z on the tower's outer x side)
+  const before = m.pos.length / 3;
+  strut(m, -e, 0.06, e, 0.95, 0, 0.022, shade(MINE.frame, 0.85));
+  rotateTail(m, m.pos.length / 3 - before, Math.PI / 2, 0);
+  moveTail(m, m.pos.length / 3 - before, cx + sx * e, cz);
+  // crates on the platform, one or two, and one at the foot
+  m.add(box(0.3, 0.28, 0.3), MINE.wood, { x: cx + sx * 0.12, y: 1.15, z: cz + sz * 0.1, ry: 0.2 * k });
+  if (k % 2 === 0) m.add(box(0.22, 0.2, 0.22), shade(MINE.wood, 0.85), { x: cx - sx * 0.16, y: 1.11, z: cz + sz * 0.14, ry: -0.3 });
+  else m.add(box(0.6, 0.04, 0.14), shade(MINE.wood, 0.92), { x: cx - sx * 0.05, y: 1.03, z: cz - sz * 0.2, ry: 0.5 });
+  m.add(box(0.26, 0.24, 0.26), shade(MINE.wood, 0.9 + 0.05 * k), { x: cx + sx * 0.08, y: 0.12, z: cz + sz * 0.1, ry: 0.4 + k });
+  // a beam from the top over the pit's edge (longer from two corners), a bucket on a rope from one
+  const long = k % 2 === 0;
+  const len = long ? 1.45 : 0.95;
+  const a = Math.atan2(sz, -sx);
+  const x0 = cx - sx * e;
+  const z0 = cz - sz * e;
+  const ux = -sx * Math.SQRT1_2;
+  const uz = -sz * Math.SQRT1_2;
+  m.add(box(len, 0.08, 0.08), MINE.frame, { ry: a, x: x0 + (ux * len) / 2, y: h - 0.06, z: z0 + (uz * len) / 2 });
+  if (k === 0) {
+    const bx = x0 + ux * (len - 0.1);
+    const bz = z0 + uz * (len - 0.1);
+    const drop = h + 0.35;
+    m.add(bar(0.01, drop), MINE.rope, { x: bx, y: h - 0.08 - drop / 2, z: bz });
+    m.add(post(0.1, 0.12, 0.18, 6), shade(MINE.frame, 0.7), { x: bx, y: -0.52, z: bz });
+  }
+}
+
+/** Where the terrain leaves its tops out for mine sites' pits (mesh.ts `cutout`): tile index →
+ *  the site's level, for the middle 3 × 3 tiles of each site's footprint. */
+export function mineCutout(v: EntityView, W: number, H: number): Map<number, number> {
+  const out = new Map<number, number>();
+  for (let k = 0; k < v.count; k++) {
+    if (v.templates[v.template[k]] !== "UndergroundRuins") continue;
+    const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
+    for (let ly = 1; ly <= 3; ly++)
+      for (let lx = 1; lx <= 3; lx++) {
+        const [dx, dy] = rotate(o, lx, ly);
+        const x = v.x[k] + dx;
+        const y = v.y[k] + dy;
+        if (x >= 0 && y >= 0 && x < W && y < H) out.set(y * W + x, v.z[k]);
+      }
+  }
+  return out;
+}
+
+/** Where the outline round mine sites runs (**Markers**; the terrain shader), RGBA bytes (W × H):
+ *  R bits 1, 2, 4, 8 the tile's east, west, north and south edge, on the edge of a site's 5 × 5
+ *  footprint (on the footprint's side). */
+export function mineOutline(v: EntityView, W: number, H: number, into?: Uint8Array): Uint8Array {
+  const out = into ?? new Uint8Array(W * H * 4);
+  out.fill(0);
+  for (let k = 0; k < v.count; k++) {
+    if (v.templates[v.template[k]] !== "UndergroundRuins") continue;
+    const o = ORIENTATION_NAMES[v.orientation[k]] as Orientation;
+    const tiles = new Set<number>();
+    const cells: [number, number][] = [];
+    for (let ly = 0; ly < 5; ly++)
+      for (let lx = 0; lx < 5; lx++) {
+        const [dx, dy] = rotate(o, lx, ly);
+        const x = v.x[k] + dx;
+        const y = v.y[k] + dy;
+        tiles.add(y * 4096 + x);
+        cells.push([x, y]);
+      }
+    for (const [x, y] of cells) {
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      let bits = 0;
+      for (const [dx, dy, bit] of [[1, 0, 1], [-1, 0, 2], [0, 1, 4], [0, -1, 8]] as const) if (!tiles.has((y + dy) * 4096 + x + dx)) bits |= bit;
+      out[(y * W + x) * 4] |= bits;
+    }
+  }
+  return out;
+}
 
 /** A vent's glow: brighter than any lit colour, so it shines in shade too. */
 const GLOW: Rgb = [GEOTHERMAL[0] * 1.3, GEOTHERMAL[1] * 1.3, GEOTHERMAL[2] * 1.3];
@@ -309,7 +568,12 @@ const LITE_MODELS: Record<string, () => Model> = {
   Succulent: () => new Model().add(cone(0.2, 0.5, 4), [0.4, 0.6, 0.5], { y: 0.25 }),
   BlueberryBush: () => new Model().add(new OctahedronGeometry(0.28, 0), [0.14, 0.29, 0.14], { y: 0.2, sy: 0.75 }),
 };
-const LITE_RUIN = () => new Model().add(box(0.8, 1, 0.8), RUIN.body, { y: 0.5 });
+/** The light look's ruin: a column one block per ruin, as it looks from afar (scaled to its height). */
+const LITE_RUIN = () => {
+  const m = new Model();
+  farBlock(m, RUIN_LAYOUTS[0][0], 1);
+  return m;
+};
 
 /** The light look's dead tree: a trunk and two bare branches. */
 function liteDead(r: number, h: number, length: number, color: Rgb): Model {
@@ -362,35 +626,173 @@ function entrance(): Model {
     .add(box(0.12, 0.12, 0.12), [1.0, 0.85, 0.42], { x: 0.24, y: 0.6, z: 0.18 });
 }
 
-/** Ruins: storeys of an old scaffold tower, one level high each, a ruin stacks one per level:
- *  weathered posts, rusty rails and braces, a grey-brown deck on some storeys and beige crates and
- *  sheets. Ivy grows on them where the ground is moist. */
-const IVY: Rgb = [0.2, 0.38, 0.15];
-function storey(variant: number, ivy: boolean): Model {
+// ------------------------------------------------------------------------------ ruins
+
+/** A storey's braces and panels, face by face (0 north, 1 east, 2 south, 3 west). A brace rises
+ *  to the right ("/") or to the left ("\"), seen from outside, or crosses ("X"). A panel fills the
+ *  face ("full"), its lower or upper half, hangs askew ("tilt") or is broken ("broken"). */
+type Brace = "/" | "\\" | "X";
+type Panel = "full" | "low" | "high" | "tilt" | "broken";
+interface Layout {
+  braces: [number, Brace][];
+  panels: [number, Panel][];
+}
+
+/** The five variants (A to E), two layouts each, alternating up a column: they differ in bracing
+ *  and panels (Kyler's round, D178). No layout looks the same turned a quarter, a half or three
+ *  quarters, nor like another layout of its variant turned, so two columns turned differently
+ *  never look alike. */
+export const RUIN_LAYOUTS: readonly (readonly [Layout, Layout])[] = [
+  // A: an X-brace at the back, panels on two sides
+  [
+    { braces: [[0, "X"], [1, "/"]], panels: [[2, "full"], [3, "low"]] },
+    { braces: [[0, "X"], [3, "\\"]], panels: [[1, "full"], [2, "broken"]] },
+  ],
+  // B: single braces on three faces, one panel
+  [
+    { braces: [[1, "/"], [2, "\\"], [3, "/"]], panels: [[0, "full"]] },
+    { braces: [[0, "\\"], [1, "/"], [2, "/"]], panels: [[3, "high"]] },
+  ],
+  // C: well panelled, one X-brace
+  [
+    { braces: [[2, "X"]], panels: [[0, "full"], [1, "full"], [3, "tilt"]] },
+    { braces: [[3, "X"]], panels: [[0, "full"], [2, "low"]] },
+  ],
+  // D: low and broken panels, long braces
+  [
+    { braces: [[0, "/"], [2, "/"]], panels: [[1, "low"], [3, "broken"]] },
+    { braces: [[1, "\\"]], panels: [[0, "full"], [2, "full"], [3, "broken"]] },
+  ],
+  // E: heavily braced, hardly panelled
+  [
+    { braces: [[0, "X"], [1, "X"], [2, "X"]], panels: [[3, "tilt"]] },
+    { braces: [[1, "X"], [3, "X"]], panels: [[0, "broken"]] },
+  ],
+];
+
+/** A column's top storey is only partly there this often: its posts broken off at these heights
+ *  (corners north-east, south-east, south-west, north-west), in one of two forms. */
+export const RUIN_PARTIAL_TOP = 0.6;
+const BROKEN_POSTS: readonly (readonly [number, number, number, number])[] = [
+  [1, 0.62, 0.34, 0.86],
+  [0.46, 1, 0.9, 0.3],
+];
+
+/** The corner posts' distance from the tile's middle. */
+const RUIN_E = 0.4;
+
+/** A storey of a ruin column (variant 0–4, A–E; kind 0 or 1 its layouts, 2 or 3 a top storey only
+ *  partly there, in the first or second layout's form), one level high, within its tile. Close
+ *  up: the rusty skeleton, its braces and beige panels, and with ivy climbing the posts and hanging
+ *  from the beams; from afar: a solid block, its faces beige where it has panels and rusty where
+ *  it is open (`farBlock`). */
+function storey(variant: number, kind: number, ivy: boolean): Model {
   const m = new Model();
-  const e = 0.36;
-  const frame = RUIN.frame;
-  // weathered corner posts
-  for (const [x, z] of [[e, e], [e, -e], [-e, e], [-e, -e]] as const) m.add(cyl(0.045, 0.04, 1.0, 4), frame, { x, y: 0.5, z, ry: Math.PI / 4 });
-  // rusty rails round the top of the storey
-  const sides: [number, number, number][] = [[0, e, 0], [e, 0, Math.PI / 2], [0, -e, Math.PI], [-e, 0, -Math.PI / 2]];
-  for (const [x, z, ry] of sides) m.add(box(0.78, 0.05, 0.05), RUIN.rust, { x, y: 0.97, z, ry });
-  // a cross brace on two sides
-  const [a, b, c] = [sides[variant % 4], sides[(variant + 1) % 4], sides[(variant + 2) % 4]];
-  m.add(box(1.0, 0.045, 0.045), frame, { x: a[0], y: 0.5, z: a[1], ry: a[2], rz: 0.9 });
-  m.add(box(1.0, 0.045, 0.045), RUIN.rust, { x: c[0], y: 0.5, z: c[1], ry: c[2], rz: -0.9 });
-  // a plank deck, a sheet hanging on one side, crates stacked on the floor
-  if (variant !== 1) m.add(box(0.76, 0.05, 0.76), RUIN.body, { y: 0.93 });
-  m.add(box(0.5, 0.38, 0.03), RUIN.panel, { x: b[0] * 1.02, y: 0.62, z: b[1] * 1.02, ry: b[2] });
-  m.add(box(0.3, 0.26, 0.3), RUIN.panel, { x: 0.12, y: 0.13, z: -0.1, ry: 0.3 * variant });
-  if (variant === 2) m.add(box(0.22, 0.2, 0.22), [RUIN.panel[0] * 0.85, RUIN.panel[1] * 0.85, RUIN.panel[2] * 0.85], { x: -0.12, y: 0.1, z: 0.14, ry: 0.5 });
-  if (ivy) {
-    m.add(ico(0.2), IVY, { x: a[0] * 1.05, y: 0.25, z: a[1] * 1.05, sy: 1.3 });
-    m.add(ico(0.16), [0.24, 0.44, 0.17], { x: -e, y: 0.55 + 0.1 * (variant % 2), z: e, sy: 1.6 });
+  const layout = RUIN_LAYOUTS[variant][kind % 2];
+  const partial = kind >= 2;
+  const posts = partial ? BROKEN_POSTS[kind - 2] : [1, 1, 1, 1];
+  const e = RUIN_E;
+  const rust = RUIN.rust;
+  const corners: [number, number][] = [[e, -e], [e, e], [-e, e], [-e, -e]];
+  /** How high face f's skeleton stands: its lower corner post. */
+  const faceTop = (f: number) => Math.min(posts[(f + 3) % 4], posts[f]);
+  m.level = LOD_NEAR;
+  // the corner posts, one a little darker
+  corners.forEach(([x, z], k) => m.add(bar(0.034, posts[k]), k === variant % 4 ? shade(rust, 0.84) : rust, { x, y: posts[k] / 2, z }));
+  for (let f = 0; f < 4; f++) {
+    const top = faceTop(f);
+    const braces = layout.braces.filter(([g]) => g === f).map(([, b]) => b);
+    const panels = layout.panels.filter(([g]) => g === f).map(([, p]) => p);
+    onFace(m, f, () => {
+      // a beam round the top of the storey; where the posts broke, a lower rail if they reach it
+      if (top >= 0.97) m.add(bar(0.028, 2 * e + 0.06), shade(rust, 0.92), { rz: Math.PI / 2, y: 0.965, z: -e });
+      else if (top >= 0.55) m.add(bar(0.026, 2 * e + 0.06), shade(rust, 0.92), { rz: Math.PI / 2, y: 0.5, z: -e });
+      for (const b of braces) {
+        if (top >= 0.95) {
+          if (b !== "\\") strut(m, -e, 0.05, e, 0.93, -e, 0.02, shade(rust, 0.95));
+          if (b !== "/") strut(m, e, 0.05, -e, 0.93, -e, 0.02, shade(rust, 1.05));
+        } else if (top >= 0.5) strut(m, -e, 0.05, 0.02, 0.48, -e, 0.02, shade(rust, 0.95));
+      }
+      const z = -e + 0.045;
+      for (const [k, p] of panels.entries()) {
+        const col = shade(RUIN.panel, 0.95 + 0.07 * ((f + k + variant) % 3) * 0.5);
+        const hi = Math.min(0.9, top - 0.06);
+        if (p === "full" && hi > 0.35) m.add(box(0.74, hi - 0.06, 0.03), col, { y: (hi + 0.06) / 2, z });
+        else if (p === "low") m.add(box(0.74, 0.4, 0.03), col, { y: 0.25, z });
+        else if (p === "high" && top >= 0.95) m.add(box(0.74, 0.42, 0.03), col, { y: 0.69, z });
+        else if (p === "tilt" && top >= 0.7) m.add(box(0.7, 0.62, 0.03), col, { rz: 0.17, rx: -0.08, x: 0.03, y: 0.44, z: z - 0.01 });
+        else if (p === "broken") {
+          m.add(box(0.36, Math.min(0.84, hi - 0.06), 0.03), col, { x: -0.19, y: (Math.min(0.9, hi) + 0.06) / 2, z });
+          m.add(box(0.34, 0.36, 0.03), shade(col, 0.93), { rz: -0.14, x: 0.2, y: 0.25, z });
+        } else if (partial) {
+          // a panel that fell from where the posts broke, leaning on the column's foot
+          m.add(box(0.6, 0.66, 0.03), col, { rx: 0.35, y: 0.32, z: -e + 0.035 });
+        }
+      }
+      if (ivy && (f + variant) % 2 === 0 && top >= 0.55) {
+        // ivy hanging from the beam on two faces: a leafy mass along the beam and a curtain of
+        // strands below it
+        const y = top >= 0.97 ? 0.9 : 0.47;
+        m.add(oct(0.1), RUIN.ivy, { x: -0.06, y, z: -e - 0.01, sx: 3.2, sy: 0.9, sz: 0.8 });
+        for (const [x, reach] of [[-0.3, 0.46], [-0.16, 0.72], [-0.02, 0.38], [0.12, 0.6], [0.27, 0.3]] as const) {
+          const len = Math.min(reach, y * 0.85);
+          m.add(cone(0.06, len, 4), x > 0 ? RUIN.leaf : RUIN.ivy, { rx: Math.PI, x, y: y - len / 2, z: -e - 0.035 });
+        }
+      }
+    });
   }
+  if (ivy) {
+    // ivy climbing two corner posts from the ground, in leafy clumps
+    for (const k of [variant % 4, (variant + 2) % 4]) {
+      const [x, z] = corners[k];
+      const reach = Math.min(posts[k], 1);
+      for (let j = 0; j < 3; j++) {
+        const y = 0.24 + j * 0.26;
+        if (y > reach - 0.12) break;
+        m.add(oct(0.11), j % 2 ? RUIN.leaf : RUIN.ivy, { x: x * 0.95, y, z: z * 0.95, sy: 2.1, ry: j * 0.7 });
+      }
+    }
+  }
+  // from afar: a solid block
+  m.level = LOD_FAR;
+  farBlock(m, layout, partial ? 0.72 : 1);
+  m.level = LOD_ALL;
   return m;
 }
-const STOREYS = 3;
+
+/** A storey from afar: a block over its tile, its faces beige where the layout has panels (a
+ *  little rust showing where they are halves or broken), rusty where it is open, and its top a rusty tan. */
+function farBlock(m: Model, layout: Layout, height: number): void {
+  const w = 0.86;
+  for (let f = 0; f < 4; f++) {
+    const panels = layout.panels.filter(([g]) => g === f).map(([, p]) => p);
+    const full = panels.some((p) => p === "full" || p === "tilt");
+    const color = full ? RUIN.panel : panels.length ? mix(RUIN.panel, RUIN.open, 0.45) : RUIN.open;
+    onFace(m, f, () => m.add(plane(w, height), color, { ry: Math.PI, y: height / 2, z: -w / 2 }));
+  }
+  m.add(plane(w, w), RUIN.top, { rx: -Math.PI / 2, y: height });
+}
+
+const mix = (a: Rgb, b: Rgb, t: number): Rgb => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+/** A column's quarter turns: one more than its west neighbour and two more than its south one, so
+ *  no two neighbouring columns (the eight round one) are turned alike. */
+export function ruinTurn(x: number, y: number): number {
+  return (((x + 2 * y) % 4) + 4) % 4;
+}
+
+/** A column's storeys as drawn: for each level, its variant (0–4) and kind (0 or 1: its layouts,
+ *  alternating up the column from a phase of the tile's; 2 or 3: a top storey only partly there).
+ *  A column with no variant in its file gets one from its tile. */
+export function ruinStoreys(x: number, y: number, height: number, variant: number): { variant: number; kind: number }[] {
+  const v = variant < RUIN_VARIANT_IDS.length ? variant : Math.floor(jitter(x, y, 40) * RUIN_VARIANT_IDS.length);
+  const phase = jitter(x, y, 41) < 0.5 ? 0 : 1;
+  const partialTop = jitter(x, y, 42) < RUIN_PARTIAL_TOP;
+  const form = jitter(x, y, 43) < 0.5 ? 0 : 1;
+  const out: { variant: number; kind: number }[] = [];
+  for (let lv = 0; lv < height; lv++) out.push({ variant: v, kind: lv === height - 1 && partialTop ? 2 + ((form + lv + phase) % 2) : (lv + phase) % 2 });
+  return out;
+}
 
 // ------------------------------------------------------------------------------ selection
 
@@ -406,8 +808,28 @@ export function modelKeyOf(template: string, flags: number): string {
 /** Triangles of a model (tests and the benchmark's budget). */
 export function modelTriangles(key: string): number {
   if (key === "start") return districtCenter().triangles;
-  if (key === "ruin") return storey(1, true).triangles;
+  if (key === "ruin") return storey(0, 0, true).triangles;
   return MODELS[key] ? MODELS[key]().triangles : 12;
+}
+
+/** Triangles a ruin storey draws close up and from afar (the worst of its variants and kinds, with
+ *  ivy). */
+export function ruinTriangles(): { near: number; far: number } {
+  let near = 0;
+  let far = 0;
+  for (let v = 0; v < RUIN_LAYOUTS.length; v++)
+    for (let kind = 0; kind < 4; kind++) {
+      const m = storey(v, kind, true);
+      near = Math.max(near, m.trianglesIn(LOD_NEAR));
+      far = Math.max(far, m.trianglesIn(LOD_FAR));
+    }
+  return { near, far };
+}
+
+/** A model's vertices, colours and view levels (the tests read the models' shapes). */
+export function modelOf(key: string, kind = 0, ivy = false): { pos: readonly number[]; col: readonly number[]; lod: readonly number[] } {
+  const m = key === "start" ? districtCenter() : /^scaffold\.[A-E]$/.test(key) ? storey(RUIN_VARIANT_IDS.indexOf(key.slice(-1) as "A"), kind, ivy) : MODELS[key]();
+  return { pos: m.pos, col: m.col, lod: m.lod };
 }
 
 const PLANTS = new Set(["Pine", "Birch", "Oak", "Succulent", "BlueberryBush"]);
@@ -501,15 +923,16 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
       continue;
     }
     if (key === "ruin") {
+      // a storey per level, turned as the column is (`ruinTurn`); ivy on the lower three where the
+      // column stands on moist ground (the soil the ground's colour shows)
       const n = Number(template.slice(-1));
       const ivy = !!soil && W > 0 && x >= 0 && y >= 0 && y * W + x < soil.moisture.length && soil.moisture[y * W + x] > 0;
-      for (let lv = 0; lv < n; lv++) {
-        const variant = Math.floor(jitter(x, y, 10 + lv) * STOREYS);
+      const angle = ruinTurn(x, y) * (Math.PI / 2);
+      ruinStoreys(x, y, n, v.variant?.[k] ?? NO_VARIANT).forEach(({ variant, kind }, lv) => {
         const green = ivy && lv < 3;
-        const b = batch(`scaffold${variant}${green ? ".ivy" : ""}`, () => storey(variant, green));
-        const t = 0.9 + 0.18 * jitter(x, y, 20 + lv);
-        put(b, x + 0.5, z + lv, -(y + 0.5), Math.floor(jitter(x, y, 30 + lv) * 4) * (Math.PI / 2), 1, t);
-      }
+        const b = batch(`scaffold.${RUIN_VARIANT_IDS[variant]}${kind}${green ? ".ivy" : ""}`, () => storey(variant, kind, green));
+        put(b, x + 0.5, z + lv, -(y + 0.5), angle, 1, 0.93 + 0.12 * jitter(x, y, 20 + lv));
+      });
       continue;
     }
     if (key === "start") {
@@ -573,8 +996,16 @@ export function buildEntities(v: EntityView, material: ShaderMaterial, soil: Soi
 }
 
 /** Every instance of a model in one geometry: positions and normals through each instance's
- *  matrix, colours times its tint (the light look). */
-function baked(model: Model, matrices: number[], tints: number[]): BufferGeometry {
+ *  matrix, colours times its tint (the light look, which draws a model's parts for close up: it
+ *  never draws the parts for afar). */
+function baked(full: Model, matrices: number[], tints: number[]): BufferGeometry {
+  const model = new Model();
+  for (let v = 0; v < full.lod.length; v++) {
+    if (full.lod[v] === LOD_FAR) continue;
+    model.pos.push(full.pos[v * 3], full.pos[v * 3 + 1], full.pos[v * 3 + 2]);
+    model.nrm.push(full.nrm[v * 3], full.nrm[v * 3 + 1], full.nrm[v * 3 + 2]);
+    model.col.push(full.col[v * 3], full.col[v * 3 + 1], full.col[v * 3 + 2]);
+  }
   const n = tints.length / 3;
   const V = model.pos.length / 3;
   const pos = new Float32Array(n * V * 3);
@@ -603,6 +1034,7 @@ function baked(model: Model, matrices: number[], tints: number[]): BufferGeometr
   g.setAttribute("position", new Float32BufferAttribute(pos, 3));
   g.setAttribute("normal", new Float32BufferAttribute(nrm, 3));
   g.setAttribute("pcolor", new Float32BufferAttribute(col, 3));
+  g.setAttribute("lod", new Float32BufferAttribute(new Float32Array(n * V), 1));
   g.computeBoundingSphere();
   return g;
 }

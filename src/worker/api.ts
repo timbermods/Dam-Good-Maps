@@ -20,6 +20,8 @@ export interface PreviewEntity {
   owner: string;
   dead?: boolean;
   young?: boolean;
+  /** A ruin's variant ("A" to "E"), which the 3D view draws. */
+  variant?: string;
 }
 
 /** Key facts for the map card (PLAN §14.3). */
@@ -96,6 +98,12 @@ export function lifeOf(components: Record<string, unknown> | undefined): { dead?
   return out;
 }
 
+/** A ruin's variant (`RuinModels.VariantId`), for the 3D view's model. */
+export function variantOf(components: Record<string, unknown> | undefined): { variant?: string } {
+  const r = components?.RuinModels as { VariantId?: unknown } | undefined;
+  return r && typeof r.VariantId === "string" ? { variant: r.VariantId } : {};
+}
+
 export interface ResponseInput {
   spec: MapSpec;
   features: Feature[];
@@ -144,15 +152,10 @@ export async function responseOf(r: ResponseInput): Promise<GenerateResponse> {
     soilContamination: Float32Array.from(b.soilContamination),
     reach: a ? a.reach.slice() : new Uint8Array(N),
     facts,
-    entities: b.entities.map((e) => ({
-      template: e.template,
-      x: e.x,
-      y: e.y,
-      z: e.z,
-      orientation: e.orientation,
-      owner: e.owner,
-      ...lifeOf(e.raw ? (e.raw.Components as Record<string, unknown>) : { ...(e.before ?? {}), ...e.components }),
-    })),
+    entities: b.entities.map((e) => {
+      const comps = e.raw ? (e.raw.Components as Record<string, unknown>) : { ...(e.before ?? {}), ...e.components };
+      return { template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, owner: e.owner, ...lifeOf(comps), ...variantOf(comps) };
+    }),
     checks: r.checks,
     passed: r.passed,
     attempts: r.attempts,

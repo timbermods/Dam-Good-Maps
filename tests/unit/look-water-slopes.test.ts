@@ -83,10 +83,15 @@ describe("slopes", () => {
 });
 
 describe("ruins", () => {
-  it("are grey-brown metal, apart from rusty contaminated ground", () => {
-    const hue = (c: readonly number[]) => c[0] - c[2];
-    expect(lum(RUIN.body)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
-    expect(hue(RUIN.body)).toBeLessThan(hue(GROUND.contaminated) - 0.15);
+  // Kyler's ruins (D178): rusty posts and beige panels, his colours; they still stand apart from
+  // rusty contaminated ground in lightness, close up and from afar (each storey a block)
+  it("stand apart from rusty contaminated ground: rusty posts and beige panels far lighter, and lighter from afar", () => {
+    expect(lum(RUIN.rust)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
+    expect(lum(RUIN.panel)).toBeGreaterThan(lum(GROUND.contaminated) + 0.35);
+    for (const far of [RUIN.top, RUIN.open]) expect(lum(far)).toBeGreaterThan(lum(GROUND.contaminated) + 0.12);
+    // the panels are beige, not rust: far less red for their lightness
+    const hue = (c: readonly number[]) => (c[0] - c[2]) / lum(c);
+    expect(hue(RUIN.panel)).toBeLessThan(hue(GROUND.contaminated) - 0.5);
   });
 });
 
