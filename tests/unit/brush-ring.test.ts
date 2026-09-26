@@ -3,7 +3,7 @@
 // colour-blindness simulations (Machado, Oliveira and Fernandes 2009, full severity, on linear RGB).
 
 import { describe, expect, it } from "vitest";
-import { GROUND, HEIGHT_RAMP, WATER, type Rgb } from "../../src/render3d/palette";
+import { GROUND, HEIGHT_RAMP, WATER, WATER_UI, type Rgb } from "../../src/render3d/palette";
 
 type M = [number, number, number, number, number, number, number, number, number];
 const VIEWS: [string, M | null][] = [
@@ -42,7 +42,7 @@ describe("the brush ring stays readable (D198)", () => {
   it("smart Lower's water-blue is plainly not the ordinary white ring, in every view and in greyscale", () => {
     void lin;
     for (const [name, m] of VIEWS) {
-      const blue = seen(WATER.ring, m);
+      const blue = seen(WATER_UI.ring, m);
       const white = seen(WHITE, m);
       // a different colour in every view (it is also half as thick again, with a blue fill)
       expect(Math.hypot(blue[0] - white[0], blue[1] - white[1], blue[2] - white[2]), name).toBeGreaterThan(0.3);
@@ -55,11 +55,11 @@ describe("the brush ring stays readable (D198)", () => {
     for (const [name, m] of VIEWS)
       for (const [ground, c] of GROUNDS) {
         const bg = seen(c, m);
-        for (const ring of [WATER.ring, WHITE] as Rgb[]) {
-          const best = Math.max(contrast(seen(ring, m), bg), contrast(seen(WATER.ringEdge, m), bg));
+        for (const ring of [WATER_UI.ring, WHITE] as Rgb[]) {
+          const best = Math.max(contrast(seen(ring, m), bg), contrast(seen(WATER_UI.ringEdge, m), bg));
           expect(best, `${name}, ${ground}, ring ${ring}`).toBeGreaterThan(3);
           // and the ring against its own outline
-          expect(contrast(seen(ring, m), seen(WATER.ringEdge, m)), `${name}, ring on its outline`).toBeGreaterThan(4.5);
+          expect(contrast(seen(ring, m), seen(WATER_UI.ringEdge, m)), `${name}, ring on its outline`).toBeGreaterThan(4.5);
         }
       }
   });

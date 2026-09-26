@@ -4,7 +4,7 @@
 // quads at the largest size, in buffers made once).
 
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, type Scene } from "three";
-import { WATER } from "./palette";
+import { WATER_UI } from "./palette";
 
 export interface BrushCursorState {
   /** Middle of the brush, in tiles (x east, y north). */
@@ -29,7 +29,7 @@ const TINT: Record<BrushCursorState["tool"], [number, number, number]> = {
 };
 
 /** Smart Lower, where the water will follow the brush: the faint fill, in the ring's water-blue. */
-const WATER_TINT: [number, number, number] = [...WATER.ring];
+const WATER_TINT: [number, number, number] = [...WATER_UI.ring];
 
 /** Most quads the disc can take: a 24-tile radius, and the ring (a dash and its outline). */
 const MAX_QUADS = 49 * 49 + 512;
@@ -102,8 +102,8 @@ export class BrushCursor {
     // holds on bright shallows and pale ground; white, or with smart Lower a clear water-blue and a
     // little thicker (D198)
     const n = Math.max(24, Math.min(256, Math.round(r * 12)));
-    const ring: [number, number, number] = s.water ? [...WATER.ring] : [1, 1, 1];
-    const edge: [number, number, number] = [...WATER.ringEdge];
+    const ring: [number, number, number] = s.water ? [...WATER_UI.ring] : [1, 1, 1];
+    const edge: [number, number, number] = [...WATER_UI.ringEdge];
     const w = (0.09 + r * 0.004) * (s.water ? 1.45 : 1);
     const o = w + 0.035;
     for (let pass = 0; pass < 2; pass++)

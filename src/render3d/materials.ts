@@ -901,7 +901,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
           vec3 uc = mix(WATER_FOAM, BADWATER_FOAM, step(0.01, badSrc));
           c = mix(c, uc, up * 0.55);
           alpha = mix(alpha, 0.85, up * 0.5);
-          c = mix(c, vec3(1.0, 0.93, 0.55), hl * 0.45);
+          c = mix(c, WATER_SOURCE_GLOW, hl * 0.45);
           alpha = mix(alpha, 0.9, hl * 0.4);
         }
         #endif
