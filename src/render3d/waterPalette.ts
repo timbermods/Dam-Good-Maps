@@ -1,9 +1,9 @@
 // The 3D view's water in one place (PLAN §20 D177): clean water's and badwater's colours, their
 // opacity by depth, how water turns from clean to bad with its badwater share (the contamination
-// blend), and how the colours are calibrated on screen. The Standard look's water shader reads it
-// through `WATER_GLSL` (generated from these values; the Light look runs the same shader code),
-// the legend and the tests read the values, and Map look 2's High shader is to read it when it
-// adopts #38, so the looks never drift apart. No other module defines a water colour
+// blend), and how the colours are calibrated on screen. The Standard look's water shader and its
+// falls' shader (D201) read it through `WATER_GLSL` (generated from these values; the Light look
+// runs the same shader code), the legend and the tests read the values, and Map look 2's High
+// shader is to read it when it adopts #38, so the looks never drift apart. No other module defines a water colour
 // (tests/unit/water-palette.test.ts). The 2D preview and the map file's thumbnail keep their own
 // schematic colours; they are not the 3D view.
 //
@@ -115,6 +115,19 @@ export const BADWATER = {
   spec: 0.04,
   glints: 0.028,
   bubbles: 0.55,
+} as const;
+
+/** Waterfalls (D201): how see-through a fall is between its streaks and on them (clean water),
+ *  badwater's (murky, nearly opaque), and its foam; the inner face shows `inner` of its opacity,
+ *  behind the outer one. A fall's colours are the water's: clean water's light teal shallows with
+ *  white foam, badwater's crimson body with its streaks and foam, and water partly bad between
+ *  them by the blend (`WATER_BLEND`). */
+export const WATER_FALL = {
+  clear: 0.28,
+  streak: 0.7,
+  bad: 0.9,
+  foam: 0.95,
+  inner: 0.6,
 } as const;
 
 /** How water turns from clean to bad with its badwater share `s` (0–1, blended between tiles by
@@ -297,6 +310,11 @@ export const WATER_GLSL = /* glsl */ `
   #define BADWATER_GLINTS ${f(BADWATER.glints)}
   #define BADWATER_BUBBLES ${f(BADWATER.bubbles)}
   #define BADWATER_SIDE ${f(BADWATER.side)}
+  #define FALL_CLEAR ${f(WATER_FALL.clear)}
+  #define FALL_STREAK ${f(WATER_FALL.streak)}
+  #define FALL_FOAM ${f(WATER_FALL.foam)}
+  #define FALL_INNER ${f(WATER_FALL.inner)}
+  #define BADWATER_FALL ${f(WATER_FALL.bad)}
   /** Clean water's depth as its colour and opacity see it, by how far the point is from a shore. */
   float waterSeenDepth(float depth, float shore) {
     return depth * mix(${f(WATER_SURFACE.bank)}, 1.0, smoothstep(0.0, ${f(WATER_SURFACE.bankWidth)}, shore));
