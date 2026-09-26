@@ -235,6 +235,18 @@ function scenePoses(): Pose[] {
     { id: "ruins-showcase", scene: "showcase", what: "ruins in the five variants A–E (the row at the back, heights 5, 3, 6, 4, 7) and a field of neighbouring columns (front), on moist ground (left) and dry ground (right), at the game's default pitch (70° down), looking north", view: { mode: "orbit", yaw: 0, pitch: GAME_PITCH, distance: 40, target: [s.W / 2, s.height + 1, -s.H / 2] }, markers: false },
     { id: "ruins-moist", scene: "showcase", what: "the five variants A–E on moist ground, close up (35° down, looking north)", view: { mode: "orbit", yaw: 0, pitch: 0.6, distance: 17, target: [9.5, s.height + 2.5, -15.5] }, markers: false },
     { id: "ruins-dry", scene: "showcase", what: "the five variants A–E on dry ground, close up (35° down, looking north)", view: { mode: "orbit", yaw: 0, pitch: 0.6, distance: 17, target: [27.5, s.height + 2.5, -15.5] }, markers: false },
+    {
+      id: "ruins-far",
+      scene: "showcase",
+      what: "the same test ground from as far as a view of a whole 256² map, enlarged in whole pixels as drawn: ruins from afar on moist ground (left) and dry ground (right)",
+      view: { mode: "orbit", yaw: 0, pitch: GAME_PITCH, distance: far, target: [s.W / 2, s.height, -s.H / 2] },
+      markers: false,
+      insets: [
+        { point: [9.5, s.height, -11], label: "moist" },
+        { point: [27.5, s.height, -11], label: "dry" },
+      ],
+      crop: { from: [0, 0], to: [s.W, -s.H], y: s.height },
+    },
     { id: "ruins-showcase-low", scene: "showcase", what: "the whole test ground from a low angle (20° down), looking north", view: { mode: "orbit", yaw: 0, pitch: 0.35, distance: 30, target: [s.W / 2, s.height + 2, -s.H / 2 - 2] }, markers: false },
     {
       id: "lineup-far",

@@ -343,3 +343,25 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   variants, turns, layouts, ivy, far blocks, the legend) and `tests/contract/look-mine-ruins.test.ts`
   (2: the live check's download for seed 4242 keeps sha256 `5118b6a6…`; a generated map's
   variants reach the view and its sites and ruins stay within their footprints).
+- **Kyler's second round (2026-09-25).** Ruins approved with two tweaks, the mine site one more
+  round (PLAN §20 D178):
+  - **Ruins from afar:** each storey's block is now the scaffolding's rust (#8D5631, its top a
+    brighter rust) with a pale panel set in where it has one, so a ruin field reads as orange
+    scaffolding, not sandstone. At most 22 triangles from afar.
+  - **Ivy:** on every storey of a column on moist ground (it was the lowest three), leafy masses
+    over every face in #405634 and a brighter green (#5C803D), with the clumps and strands before,
+    and a patch of it on the far blocks. At most 294 triangles close up.
+  - **Mine sites:** the rusty frame runs round the edge of the whole footprint and the pit (1.6
+    levels deep) fills the rest, so the terrain leaves all 25 of the footprint's tops out, as the
+    game's cutout does; the model covers them. Scaffold towers stand on the frame's corners, their
+    inner legs down in the pit; rails on two sides carry two beams across the pit, a crossbar and
+    a bucket on a rope, one structure. More of the dark interior shows: roots hanging from the rim
+    and running over the floor to a shaft in the middle. About 1,200 triangles.
+  - **The Markers outline** keeps its look. With the footprint's tops now the pit's, it runs on
+    the tiles just outside the footprint and turns round its corners.
+  - Kyler's in-game reference screenshots were looked at for the feel only, never copied.
+  - Frame time (information), after: RTX 4080 whole map 3.1 ms of GPU time, 0.4 ms of CPU;
+    integrated Radeon with the CPU 4× slower, 5.0 ms and 1.4 ms, 165 frames a second.
+  - Tests follow the round: the cutout is the whole footprint, the outline runs just outside it,
+    the far blocks are mostly rust, ivy is on every storey (the ivy test is renamed "…on every
+    storey, dark and brighter, close up and from afar"), and the bytes are unchanged.
