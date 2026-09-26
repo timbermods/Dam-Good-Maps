@@ -44,8 +44,8 @@ test("the brushes paint under the cursor, undo at once, and keep their strokes",
   // a place away from the start
   const at: [number, number] = start.position[0] < W / 2 ? [70, 30] : [20, 30];
 
-  // the brush bar: labelled, with shortcuts; the number keys pick a brush
-  const bar = page.getByRole("toolbar", { name: "Terrain brushes" });
+  // the top bar: labelled, with shortcuts; the number keys pick a brush
+  const bar = page.getByRole("toolbar", { name: "Tools" });
   await expect(bar.getByRole("button", { name: "Raise brush (1)" })).toBeVisible();
   await page.keyboard.press("1");
   await expect(bar.getByRole("button", { name: "Raise brush (1)" })).toHaveAttribute("aria-pressed", "true");
@@ -96,23 +96,24 @@ test("the brushes paint under the cursor, undo at once, and keep their strokes",
   await page.keyboard.down("Control");
   await page.mouse.click(p.x, p.y);
   await page.keyboard.up("Control");
-  await expect(bar.getByRole("combobox")).toHaveValue(String(level));
+  await expect(page.getByRole("group", { name: "Flatten options" }).getByRole("combobox", { name: "Flatten level" })).toHaveValue(String(level));
   expect((await info(page)).history.length).toBe(steps);
 
-  // [ and ] size the brush; Shift+wheel sets its strength (D196, as the game)
-  const size = bar.getByRole("slider").first();
-  const s0 = Number(await size.inputValue());
+  // [ and ] size the brush; Shift+wheel sets its strength (D196, as the game); each shows beside the
+  // pointer while it changes (D184: no sliders), and the brush keeps it
+  const saved = () => page.evaluate(() => JSON.parse(localStorage.getItem("dgm.brush") ?? "{}") as { size: number; strength: number });
+  const s0 = (await saved()).size;
   await page.keyboard.press("]");
-  expect(Number(await size.inputValue())).toBeGreaterThan(s0);
+  await expect.poll(async () => (await saved()).size).toBeGreaterThan(s0);
+  await expect(page.locator(".shape-note")).toHaveText(`size ${(await saved()).size}`);
   await page.keyboard.press("[");
-  expect(Number(await size.inputValue())).toBe(s0);
-  const strength = bar.getByRole("slider").nth(1);
-  const k0 = Number(await strength.inputValue());
+  await expect.poll(async () => (await saved()).size).toBe(s0);
+  const k0 = (await saved()).strength;
   await page.mouse.move(p.x, p.y);
   await page.keyboard.down("Shift");
   await page.mouse.wheel(0, -100);
   await page.keyboard.up("Shift");
-  expect(Number(await strength.inputValue())).toBe(Math.min(10, k0 + 1));
+  await expect.poll(async () => (await saved()).strength).toBe(Math.min(10, k0 + 1));
   await expect(page.locator(".shape-note")).toHaveText(`strength ${Math.min(10, k0 + 1)}`);
 
   // Esc puts the brush away
@@ -145,7 +146,7 @@ test("with a brush out, a fast left-drag paints and never turns the camera", asy
   const count = async () => (await info(page)).history.length;
 
   // choosing a brush leaves the camera where it is; its key again keeps it out
-  const raise = page.getByRole("toolbar", { name: "Terrain brushes" }).getByRole("button", { name: "Raise brush (1)" });
+  const raise = page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Raise brush (1)" });
   await raise.click();
   await page.keyboard.press("1");
   await expect(raise).toHaveAttribute("aria-pressed", "true");

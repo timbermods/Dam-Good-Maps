@@ -84,24 +84,6 @@ button[aria-pressed="true"] {
   margin: 0;
 }
 
-.segmented {
-  display: inline-flex;
-}
-
-.segmented button {
-  border-radius: 0;
-  padding: 5px 14px;
-}
-
-.segmented button:first-child {
-  border-radius: 6px 0 0 6px;
-}
-
-.segmented button:last-child {
-  border-radius: 0 6px 6px 0;
-  margin-left: -1px;
-}
-
 /* the 3D view: the map, and its legend beside it */
 
 .view3d-frame {

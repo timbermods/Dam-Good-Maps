@@ -313,6 +313,107 @@ describe("hold to dig, terraces and walkable ground (D184, D193)", () => {
   });
 });
 
+describe("Flatten: cut and fill, cliff or ramped edges, objects ride the ground (D204)", () => {
+  const W = 40;
+  const H = 30;
+  const tile = (x: number, y: number) => [4 * x + 2, 4 * y + 2];
+  const hold = (x: number, y: number, n: number) => Array.from({ length: n }, () => tile(x, y)).flat();
+
+  it("one stroke cuts the high ground down and fills the low ground up to its level", () => {
+    const rand = mulberry(5);
+    const g = new Uint8Array(W * H);
+    for (let i = 0; i < g.length; i++) g[i] = 4 + Math.floor(rand() * 5);
+    const flat = g.slice();
+    applyBrush({ tool: "flatten", size: 6, strength: 10, level: 6, dabs: hold(20, 15, 60) }, flat, W, H);
+    let cut = 0;
+    let filled = 0;
+    for (let y = 13; y <= 17; y++)
+      for (let x = 18; x <= 22; x++) {
+        const i = y * W + x;
+        expect(flat[i], `(${x}, ${y})`).toBe(6);
+        if (g[i] > 6) cut++;
+        if (g[i] < 6) filled++;
+      }
+    expect(cut).toBeGreaterThan(0);
+    expect(filled).toBeGreaterThan(0);
+  });
+
+  it("ramped edges: the rim steps down a level a tile, even precise; a cliff keeps its straight wall", () => {
+    const g = new Uint8Array(W * H).fill(4);
+    const dabs = hold(20, 15, 4);
+    const p: BrushParams = { tool: "flatten", size: 5, strength: 5, level: 9, precise: true, levels: [5, 5, 5, 5], dabs };
+    const cliff = g.slice();
+    applyBrush(p, cliff, W, H);
+    expect(cliff[15 * W + 20]).toBe(9);
+    // the precise stroke's wall: level 9 right beside level 4
+    let wall = 0;
+    for (let x = 12; x < 28; x++) wall = Math.max(wall, Math.abs(cliff[15 * W + x] - cliff[15 * W + x + 1]));
+    expect(wall).toBe(5);
+    const ramped = g.slice();
+    applyBrush({ ...p, edges: "ramped" }, ramped, W, H);
+    expect(ramped[15 * W + 20]).toBe(9);
+    for (let y = 8; y < 22; y++)
+      for (let x = 12; x < 28; x++) {
+        const i = y * W + x;
+        expect(Math.abs(ramped[i] - ramped[i + 1]), `(${x}, ${y})`).toBeLessThanOrEqual(1);
+        expect(Math.abs(ramped[i] - ramped[i + W]), `(${x}, ${y})`).toBeLessThanOrEqual(1);
+      }
+    expect(brushProblems({ tool: "raise", size: 3, strength: 5, edges: "ramped", dabs: tile(5, 5) }, W, H)).not.toEqual([]);
+  });
+
+  it("on a map: a ramped flatten gets the natural slopes on its rim, and the trees on it ride the ground", () => {
+    const r = generate(makeSpec({ seed: 3, theme: "riverValley", size: { x: 96, y: 96 } }));
+    const make = () => {
+      const s = MapSession.fromGenerated(r, r.file);
+      s.setWaterMode("defer");
+      return s;
+    };
+    const s = make();
+    const st = s.built.start!;
+    // dry ground beyond the start's own slopes (40 tiles round it), where a cliff's rim gets none
+    const b = s.built;
+    let cx = -1;
+    let cy = -1;
+    for (let y = 10; y < 86 && cx < 0; y++)
+      for (let x = 10; x < 86 && cx < 0; x++) {
+        if (Math.max(Math.abs(x - st.x), Math.abs(y - st.y)) < 50) continue;
+        let dry = true;
+        for (let yy = y - 9; yy <= y + 9 && dry; yy++) for (let xx = x - 9; xx <= x + 9 && dry; xx++) if (b.water[yy * 96 + xx] > 0 || b.channel[yy * 96 + xx]) dry = false;
+        if (dry) [cx, cy] = [x, y];
+      }
+    expect(cx).toBeGreaterThanOrEqual(0);
+    const level = Math.min(16, s.built.heights[cy * 96 + cx] + 3);
+    const dabs = Array.from({ length: 40 }, () => [4 * cx + 2, 4 * cy + 2]).flat();
+    const p: BrushParams = { tool: "flatten", size: 6, strength: 10, level, dabs };
+    const plants = (m: MapSession) => m.built.entities.filter((e) => /^(Pine|Birch|Oak|BlueberryBush)$/.test(e.template));
+    const near = (e: { x: number; y: number }) => Math.hypot(e.x - cx, e.y - cy) <= 7;
+    expect(s.apply({ op: "brush", params: p }, "user", "Flatten").errors).toEqual([]);
+    const slopesCliff = s.built.entities.filter((e) => e.template === "Slope" && near(e)).length;
+    const ramped = make();
+    expect(ramped.apply({ op: "brush", params: { ...p, edges: "ramped" } }, "user", "Flatten").errors).toEqual([]);
+    expect(ramped.built.entities.filter((e) => e.template === "Slope" && near(e)).length).toBeGreaterThan(slopesCliff);
+    // every plant stands on the ground as it is now
+    for (const m of [s, ramped]) for (const e of plants(m).filter(near)) expect(e.z, `${e.template} at (${e.x}, ${e.y})`).toBe(m.built.heights[e.y * 96 + e.x]);
+    expect(plants(s).filter(near).length).toBeGreaterThan(0);
+    expect(Array.from(ramped.fullBuild().heights)).toEqual(Array.from(ramped.built.heights));
+    const again = MapSession.open(decodeProject(ramped.project()));
+    expect(again.built.entities.map((e) => `${e.id}@${e.x},${e.y},${e.z}`)).toEqual(ramped.built.entities.map((e) => `${e.id}@${e.x},${e.y},${e.z}`));
+    // an imported map's own objects ride the ground too
+    const imp = MapSession.importMap(writeTimber(r.file), "valley.timber");
+    const before = new Map(imp.built.entities.map((e) => [e.id, e]));
+    expect(imp.apply({ op: "brush", params: p }, "user", "Flatten").errors).toEqual([]);
+    let rode = 0;
+    for (const e of imp.built.entities) {
+      if (!near(e) || !/^(Pine|Birch|Oak|BlueberryBush)$/.test(e.template)) continue;
+      const was = before.get(e.id);
+      if (!was || was.z === e.z) continue;
+      expect(e.z, `${e.template} at (${e.x}, ${e.y})`).toBe(imp.built.heights[e.y * 96 + e.x]);
+      rode++;
+    }
+    expect(rode).toBeGreaterThan(0);
+  });
+});
+
 describe("undo and redo of strokes", () => {
   it("random strokes, undone and redone: undo all gives back the map exactly, and each state equals a full build", () => {
     const r = generate(makeSpec({ seed: 13, size: { x: 96, y: 96 } }));

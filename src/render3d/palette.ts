@@ -63,6 +63,13 @@ export const GROUND = {
   underwater: [0.36, 0.38, 0.34] as Rgb,
 } as const;
 
+/** Juice (D205): the dust a lowered stroke puffs up (a light, dry earth), and a source's splash
+ *  (the editor's water-blue). */
+export const JUICE = {
+  dust: [0.72, 0.65, 0.54] as Rgb,
+  splash: [0.35, 0.82, 1.0] as Rgb,
+} as const;
+
 /** Height colours (the toggle): the low and high ends of the ramp, as before Map look. */
 export const HEIGHT_RAMP = { low: [0.478, 0.588, 0.329] as Rgb, high: [0.769, 0.698, 0.549] as Rgb } as const;
 

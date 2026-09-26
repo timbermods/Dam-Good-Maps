@@ -14,7 +14,8 @@
 // model draws the pit), again wherever the objects change.
 //
 // Controls: left drag orbits (pans in the top-down view), right drag pans, the wheel zooms. On the
-// focused canvas: W A S D or the arrows pan, Q and E turn, R and F (or + and −) zoom.
+// focused canvas: W A S D or the arrows pan, Q and E turn, + and − zoom (F is the brush's resize,
+// R the shelf's rotate).
 
 import {
   BufferGeometry,
@@ -38,6 +39,7 @@ import {
   ColorManagement,
 } from "three";
 import { BrushCursor, type BrushCursorState } from "./brushCursor";
+import { Effects } from "./effects";
 import { buildEntities, disposeGroup, mineCutout, mineOutline } from "./entities3d";
 import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
 import { contaminationEdges, drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
@@ -107,6 +109,8 @@ export interface PointerTool {
   wheel?(ev: WheelEvent): boolean;
   /** The drag was lost (the pointer went away without a release). */
   cancel?(): void;
+  /** It takes Alt+click and Alt+drag itself (the Select tool's subtract), instead of the layer pick. */
+  wantsAlt?: boolean;
 }
 
 interface MapState {
@@ -398,6 +402,10 @@ export class MapRenderer {
     for (const i of this.sourceGlow) if (i >= 0 && i < m.W * m.H) d[i * 4 + 2] = 255;
     t.needsUpdate = true;
     this.requestRender();
+  }
+
+  get levelLines(): boolean {
+    return this.uniforms.levelLines.value > 0.5;
   }
 
   /** Level lines (the brush kit's toggle): a thin line where the ground steps down. */
@@ -770,6 +778,68 @@ export class MapRenderer {
     return chunks.length;
   }
 
+  // ------------------------------------------------------------------------------------ juice
+
+  private effects: Effects | null = null;
+
+  /** Whether the land's little effects play (D205): not with reduced motion, not in software. */
+  get juicy(): boolean {
+    return !this.reducedMotion && !this.software && !!this.map;
+  }
+
+  /** A puff of dust where ground was lowered at tile (x, y), `size` tiles across. */
+  puff(x: number, y: number, size: number): void {
+    const m = this.map;
+    if (!this.juicy || !m || x < 0 || y < 0 || x >= m.W || y >= m.H) return;
+    (this.effects ??= new Effects(this.scene, () => this.requestRender())).puff(x, y, m.heights[y * m.W + x], size);
+  }
+
+  /** Rings spreading on the water at tile (x, y) (a source starting). */
+  ripple(x: number, y: number): void {
+    const m = this.map;
+    if (!this.juicy || !m || x < 0 || y < 0 || x >= m.W || y >= m.H) return;
+    const i = y * m.W + x;
+    const s = m.surface.surface[i];
+    (this.effects ??= new Effects(this.scene, () => this.requestRender())).ripple(x, y, s === s ? s : m.heights[i]);
+  }
+
+  /** A pop and a little wiggle for the objects on these tiles (a placed object): they grow from a
+   *  little smaller, overshoot and settle, in about a third of a second. */
+  wiggle(tiles: readonly number[]): void {
+    const m = this.map;
+    const objects = this.objects;
+    if (!this.juicy || !m || !objects || !tiles.length) return;
+    const want = new Set(tiles);
+    const e = m.entities;
+    const items: { mesh: InstancedMesh; i: number; base: Float32Array }[] = [];
+    for (const c of objects.children) {
+      const mesh = c as InstancedMesh;
+      const own = mesh.userData.objects as Int32Array | undefined;
+      if (!own) continue;
+      const a = mesh.instanceMatrix.array as Float32Array;
+      for (let i = 0; i < own.length; i++) {
+        const k = own[i];
+        if (k >= 0 && want.has(e.y[k] * m.W + e.x[k])) items.push({ mesh, i, base: a.slice(i * 16, i * 16 + 16) });
+      }
+    }
+    if (!items.length) return;
+    const t0 = performance.now();
+    const step = () => {
+      // (the objects rebuilt meanwhile: the new ones stand as built)
+      if (this.disposed || this.objects !== objects) return;
+      const t = Math.min(1, (performance.now() - t0) / 360);
+      const s = 1 - 0.3 * Math.cos(3 * Math.PI * t) * (1 - t) ** 2;
+      for (const it of items) {
+        const a = it.mesh.instanceMatrix.array as Float32Array;
+        for (const j of [0, 1, 2, 4, 5, 6, 8, 9, 10]) a[it.i * 16 + j] = it.base[j] * s;
+        it.mesh.instanceMatrix.needsUpdate = true;
+      }
+      this.requestRender();
+      if (t < 1) requestAnimationFrame(step);
+    };
+    step();
+  }
+
   /** Plants and ruins on the tiles of `rect` stand on the ground shown there: each moves by as
    *  much as its ground moved from the map's (a brush painting, a shape dragged). The worker's next
    *  map puts every object where the map has it (updateTerrain, updateEntities). */
@@ -1102,7 +1172,7 @@ export class MapRenderer {
       const ev = e as PointerEvent;
       c.focus({ preventScroll: true });
       // Alt+click: the clicked tile's layer (again: the whole world)
-      if (ev.button === 0 && ev.altKey && this.map) {
+      if (ev.button === 0 && ev.altKey && this.map && !this.tool?.wantsAlt) {
         const hit = this.pick(ev.clientX, ev.clientY);
         if (hit) {
           const level = this.map.heights[hit.y * this.map.W + hit.x];
@@ -1187,11 +1257,12 @@ export class MapRenderer {
       },
       { passive: false },
     );
-    // the camera keys work anywhere on the page but in a text field or a list, and never with
-    // Ctrl, Alt or Cmd (those are the editor's shortcuts)
+    // the camera keys work anywhere on the page but in a text field, a slider or a list (a toggle
+    // just clicked keeps them), and never with Ctrl, Alt or Cmd (those are the editor's shortcuts)
     const typing = (t: EventTarget | null) => {
       const el = t as HTMLElement | null;
-      return !!el && (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (el?.tagName === "INPUT") return !["checkbox", "radio", "button"].includes((el as HTMLInputElement).type);
+      return !!el && (el.tagName === "SELECT" || el.tagName === "TEXTAREA" || el.isContentEditable);
     };
     this.on(window, "keydown", (e) => {
       const ev = e as KeyboardEvent;
@@ -1204,8 +1275,8 @@ export class MapRenderer {
         this.startGlide();
         return;
       }
-      if (k === "r" || k === "+" || k === "=") this.zoom(1 / 1.15);
-      else if (k === "f" || k === "-") this.zoom(1.15);
+      if (k === "+" || k === "=") this.zoom(1 / 1.15);
+      else if (k === "-") this.zoom(1.15);
       else return;
       ev.preventDefault();
     });
@@ -1388,6 +1459,7 @@ export class MapRenderer {
     cancelAnimationFrame(this.glideFrame);
     this.clearMap();
     this.cursor?.dispose();
+    this.effects?.dispose();
     this.terrainMat.dispose();
     this.waterMat.dispose();
     this.objectMat.dispose();

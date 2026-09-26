@@ -33,6 +33,51 @@
   font-size: 0.8rem;
 }
 
+/* a thin line between a bar's groups of buttons (the brushes | Source) */
+.bar-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px;
+  background: var(--rule);
+}
+
+/* a bar's row of the picked tool's options, beneath it: toggles, and words with their list */
+.options-row .check,
+.options-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+/* a switch between a few choices, side by side (the preview's 2D or 3D; a force's mode, first in
+   its options row); the pressed one is the page's pressed button */
+.segmented {
+  display: inline-flex;
+}
+
+.segmented button {
+  border-radius: 0;
+  padding: 5px 14px;
+}
+
+.segmented button + button {
+  margin-left: -1px;
+}
+
+.segmented button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.segmented button:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.options-row .segmented button {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
 /* a line of text over a view: a hint, a status, the tile under the pointer */
 .map-note {
   padding: 5px 10px;
@@ -40,6 +85,24 @@
   background: var(--overlay);
   box-shadow: var(--shadow);
   font-size: 0.85rem;
+}
+
+/* a note pinned to a spot on the map, just above it (the page places it where the spot is on
+   screen); a strong one stands out */
+.map-tag {
+  position: absolute;
+  transform: translate(-50%, -130%);
+  padding: 3px 9px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+}
+
+.map-tag.strong {
+  color: var(--ok);
+  border-color: var(--ok);
+  font-weight: 600;
 }
 
 /* a note that names a limit still to be met (a river whose water has nowhere to go yet) */
@@ -65,6 +128,22 @@
   .icon-button .icon-word {
     display: none;
   }
+}
+
+/* a control whose detail shows only while it is hovered or in use (a sound's volume) */
+.reveal-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reveal-group .reveal {
+  display: none;
+}
+
+.reveal-group:hover .reveal,
+.reveal-group:focus-within .reveal {
+  display: inline-flex;
 }
 
 /* a slider with its label and its value */

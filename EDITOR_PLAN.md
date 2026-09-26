@@ -257,8 +257,12 @@ brush strokes, placements and moves, source changes, removals, the Select tool's
 `regenerateRegion`, `setLock` and `specPatch` (a JSON Merge Patch on the `MapSpec`). Every stroke
 replays exactly and survives regeneration and format 3. A Lower stroke that starts in or beside
 water records `channel` (smart Lower): its bed starts at the lowest ground round its first dab and
-never rises along the stroke, so the replay carves the same bed. A source's strength changed in
-steps (a slider, Alt+scroll) is one undo step. Operations validate their inputs against the
+never rises along the stroke, so the replay carves the same bed. A stroke also records the brush
+kit's options it used: square, precise (each dab's depth in levels, a stop level), the tiles it
+keeps (a precise hold's objects; the footprints a Flatten's rim would leave on a step, D204),
+Flatten's level (the ground where the stroke started, unless one was picked), its steps and ramped
+edges, Smooth's make walkable, and a pen's pressure per dab. A source's strength changed in
+steps (a slider, Shift+scroll) is one undo step. Operations validate their inputs against the
 schemas and reject invalid ones instead of clamping silently.
 
 The document keeps the applied operations as its log, on top of its generation (the spec, the
@@ -379,7 +383,7 @@ Words without a measurable meaning ("more interesting," "nicer") are answered wi
 
 `find_sites` plans every candidate with the real builders, checks it with a real build, ranks the candidates, and returns the nearest alternative when none fits.
 
-**Steps.** Claude proposes steps, not raw operations (`PLAN.md` §20, D89; decisions-pending #41). A step names what to build and where, in words or numbers ("addSetPiece damSite halfway down, size huge"), or takes a site `find_sites` returned, ready to use. The app expands it with the editor's own planners, so a step fails with the planner's reason, never with a broken map. The groundwork (`investigation/claude/`) has 14 step kinds: `changeSettings`, `addSetPiece`, `changeSetPiece`, `changeFeature`, `addSource`, `addResource`, `removeResources`, `moveFeature`, `moveStart`, `deleteFeature`, `setRiverBadwater`, `sculpt`, `brush` and `undoLast`. `brush` paints a place, or one stroke along a path; a Lower stroke from water, or from a source, carves a bed the water follows (D184). A river is a source and such a stroke; a lake is a hollow dug with `brush` and filled by `addSource` with `fillHollow`. Steps that add landforms, rivers or lakes as objects are refused with that advice. M12 adds `addMapObject` and the M7 set pieces (`ROADMAP.md` M12). A proposal has at most 12 steps and changes at most 30% of the map.
+**Steps.** Claude proposes steps, not raw operations (`PLAN.md` §20, D89; decisions-pending #41). A step names what to build and where, in words or numbers ("addSetPiece damSite halfway down, size huge"), or takes a site `find_sites` returned, ready to use. The app expands it with the editor's own planners, so a step fails with the planner's reason, never with a broken map. The groundwork (`investigation/claude/`) has 14 step kinds: `changeSettings`, `addSetPiece`, `changeSetPiece`, `changeFeature`, `addSource`, `changeSource`, `addResource`, `removeResources`, `moveFeature`, `moveStart`, `deleteFeature`, `sculpt`, `brush` and `undoLast`. `brush` paints a place, or one stroke along a path; a Lower stroke from water, or from a source, carves a bed the water follows (D184). It takes the brush kit's options: Flatten's `steps` (terraces) and ramped `edges` (D204), Smooth's `walkable`. `changeSource` sets sources' strength, a river's at its mouth (D196). A river is a source and such a stroke; a lake is a hollow dug with `brush` and filled by `addSource` with `fillHollow`. Steps that add landforms, rivers or lakes as objects are refused with that advice. M12 adds `addMapObject` and the M7 set pieces (`ROADMAP.md` M12). A proposal has at most 12 steps and changes at most 30% of the map.
 
 Tool results stay small. The artifact caps a tool result at 32 KB, a tool's input schema at 4 KB and a whole request at 64 KiB. So the map summary Claude starts from is feature-level and at most about 16 KB, and details come through the tools. A text version of the same messages remains as a fallback for a view where tools are unavailable.
 
@@ -494,7 +498,15 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - clear water (D196): one uniform makes clean water nearly transparent, and badwater half so, in its
     own colour with diagonal stripes;
   - each source's upwelling (D196): a texture of the sources' middle tiles, read by the water shader
-    for its rings and bubbles, and brighter for the sources the water under the pointer comes from.
+    for its rings and bubbles, and brighter for the sources the water under the pointer comes from;
+  - juice (D205): a puff of dust and a source's rings are a few particles and two rings, alive for
+    under a second; a placed object's pop and wiggle scales its own instance. None of them play with
+    reduced motion or in software rendering. The sounds are synthesized on the page (Web Audio), with
+    a volume and an off switch the player keeps.
+- "The start fits here" (D204): after a Flatten stroke the page looks, once it is idle, for a spot on
+  the stroke's level ground where the district center stands (its footprint and door level and dry,
+  nothing standing there); the start's full check (the walks to water, wood and berries) runs in a
+  small worker of its own, so the page never waits for it.
 - Keep worker messages small: send dirty regions and compact arrays, not whole documents.
 - Hosting: a static site on GitHub Pages under the timbermods organization, built from the Dam Good Maps repository. The same code also builds the Claude artifact edition (Claude integration).
 

@@ -59,10 +59,19 @@ test("held camera keys move the view every frame and glide to a stop; typing mov
   await page.waitForTimeout(300);
   expect((await view(page)).yaw).toBeGreaterThan(yaw);
 
-  // typing in a field moves nothing
-  await page.keyboard.press("1");
-  const size = page.getByRole("toolbar", { name: "Terrain brushes" }).getByRole("slider").first();
-  await size.focus();
+  // typing in a field or choosing from a list moves nothing (a toggle just clicked does not hold the
+  // keys: the camera moves on)
+  await page.keyboard.press("3");
+  const toggle = page.getByRole("group", { name: "Flatten options" }).getByLabel("Square");
+  await toggle.focus();
+  const t1 = (await view(page)).target;
+  await page.keyboard.down("d");
+  await page.waitForTimeout(300);
+  await page.keyboard.up("d");
+  await page.waitForTimeout(300);
+  expect((await view(page)).target).not.toEqual(t1);
+  const field = page.getByRole("group", { name: "Flatten options" }).getByRole("combobox", { name: "Flatten level" });
+  await field.focus();
   const t0 = (await view(page)).target;
   await page.keyboard.down("d");
   await page.waitForTimeout(300);

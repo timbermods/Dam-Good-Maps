@@ -590,13 +590,27 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let slopesKey = "";
   if (slopeStart && !base) {
     const targets = landformTargets(features.filter(live), target);
-    // the ground a walkable smooth stroke went over: the natural slopes join its steps too
+    // the ground a walkable smooth stroke went over, and a ramped flatten's with the ground round
+    // it (its rim steps down to that ground, D204): the natural slopes join their steps too
     for (const sc of input.sculpts ?? []) {
       const p = sc.params as BrushParams;
-      if (!("dabs" in p) || p.tool !== "smooth" || !p.walkable) continue;
+      if (!("dabs" in p)) continue;
+      const walk = p.tool === "smooth" && p.walkable;
+      const ramp = p.tool === "flatten" && p.edges === "ramped";
+      if (!walk && !ramp) continue;
       targets.mask ??= new Uint8Array(N);
-      markBrushTiles(p, W, H, targets.mask);
-      targets.key += `|walk:${paramsKey(p)}`;
+      if (walk) markBrushTiles(p, W, H, targets.mask);
+      else {
+        const own = new Uint8Array(N);
+        markBrushTiles(p, W, H, own);
+        for (let i = 0; i < N; i++) {
+          if (!own[i]) continue;
+          const x = i % W;
+          const y = (i - x) / W;
+          for (let yy = Math.max(0, y - 1); yy <= Math.min(H - 1, y + 1); yy++) for (let xx = Math.max(0, x - 1); xx <= Math.min(W - 1, x + 1); xx++) targets.mask[yy * W + xx] = 1;
+        }
+      }
+      targets.key += `|${walk ? "walk" : "ramp"}:${paramsKey(p)}`;
     }
     rules = { ...SLOPE_RULES, targets: targets.mask, links, water: terrain.channel };
     slopesKey = `${slopeStart.x},${slopeStart.y}|${targets.key}|${JSON.stringify(links)}`;

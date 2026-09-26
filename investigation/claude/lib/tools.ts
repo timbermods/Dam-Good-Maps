@@ -479,7 +479,9 @@ export class ClaudeTools {
         maxTiles: Math.floor(0.3 * W * H),
         size: "a round patch of the place near its middle, clear of the start's own area (a lowered one also clear of the water): tiny, small, medium, large, huge (3, 5, 8, 12, 18 tiles across its radius) or a number of tiles across",
         path: "one stroke along 2–24 points instead of a place, size tiles wide (1–9): a lower stroke that starts in or beside water, or beside a source, carves a bed that keeps flowing downhill, and the water follows it",
-        edges: "slope (the brushes' own) or cliff (every tile the full amount: beavers need stairs)",
+        edges: "slope (the brushes' own) or cliff (every tile the full amount: beavers need stairs); flatten also ramped (its rim's steps get the game's natural slopes, so beavers walk up)",
+        steps: { min: 2, max: 8, note: "flatten in steps: terraces, a bench every so many levels from its level" },
+        walkable: "smooth only: true wears steps to one level and puts the game's natural slopes on them, so beavers can walk up",
         edge: "a brush makes no cliffs: its edge slopes a level a tile to the ground round it, so a place rises its full amount only where it is 2·amount − 1 tiles across or more",
         note: "levels stay within 0–16; an imported map's caves and overhangs are left as they are",
       };

@@ -1128,6 +1128,39 @@ R("B12", "simple", "make the main river flow at 4 blocks per second", "rv96", {
     checks: [chk("propose", "steps.0.resolved.total", "equals", 4), chk("propose", "steps.0.report.0", "matches", "sources at [0-9.]+ blocks/s each")],
   },
 });
+R("B13", "simple", "cut the northeast hillside into terraces two levels apart", "rv96", {
+  note: "the brush kit (D184): Flatten in steps; the terraces come from the brush, never a landform",
+  goals: [G("g1", "terraces every two levels on the northeast hillside")],
+  report: { mustSay: ["how many tiles are now on a bench, and the levels of the benches"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the northeast corner" })],
+    proposal: { steps: [{ op: "brush", tool: "flatten", where: "the northeast corner", size: "medium", steps: 2 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^flattens [0-9]+ of [0-9]+ tiles to benches every 2 levels")],
+  },
+});
+R("B14", "simple", "flatten a spot in the southwest into a plateau beavers can walk up to", "rv96", {
+  note: "D204: Flatten with ramped edges, its rim's steps joined by the game's natural slopes",
+  goals: [G("g1", "a flat plateau in the southwest, reachable on foot")],
+  report: { mustSay: ["the plateau's level and size", "that its rim has slopes beavers walk up"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the southwest corner" })],
+    proposal: { steps: [{ op: "brush", tool: "flatten", where: "the southwest corner", size: "small", edges: "ramped" }] },
+    checks: [chk("propose", "steps.0.report.1", "matches", "^with ramped edges")],
+  },
+});
+R("B15", "simple", "wear down the steep steps in the south so beavers can walk there", "rv96", {
+  note: "the brush kit (D184): Smooth with make walkable",
+  goals: [G("g1", "the south's steps worn to one level, with slopes on them")],
+  report: { mustSay: ["how many tiles it smoothed, and the steepest step before and after", "that the game's natural slopes join the steps"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the south third" })],
+    proposal: { steps: [{ op: "brush", tool: "smooth", where: "the south third", size: "medium", walkable: true, passes: 3 }] },
+    checks: [chk("propose", "steps.0.report.1", "matches", "^made walkable")],
+  },
+});
 R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
   note: "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
   goals: [G("g1", "a straight channel from the main river to the south edge")],

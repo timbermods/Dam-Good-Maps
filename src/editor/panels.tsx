@@ -299,21 +299,27 @@ const EDGE_CHOICES: [Edge, string][] = [
   ["cliff", "Cliff: beavers need stairs"],
 ];
 
+/** Source's options (the top bar's row, and the Water list's): clean or bad, and its strength. */
+export function SourceOptions({ options: o, onOptions }: { options: ToolOptions; onOptions(o: ToolOptions): void }) {
+  const set = (patch: Partial<ToolOptions>) => onOptions({ ...o, ...patch });
+  return (
+    <>
+      <Pick label="Water" value={o.sourceBad ? "bad" : "clean"} choices={SOURCE_KINDS} onChange={(v) => set({ sourceBad: v === "bad" })} />
+      {o.sourceBad ? (
+        <StrengthSlider value={o.badwaterStrength} steps={BADWATER_STRENGTHS} onChange={(badwaterStrength) => set({ badwaterStrength })} />
+      ) : (
+        <StrengthSlider value={o.sourceStrength} steps={SOURCE_STRENGTHS} onChange={(sourceStrength) => set({ sourceStrength })} />
+      )}
+    </>
+  );
+}
+
 function ToolOptionsForm({ tool, options: o, onOptions }: { tool: ToolKind; options: ToolOptions; onOptions(o: ToolOptions): void }) {
   const set = (patch: Partial<ToolOptions>) => onOptions({ ...o, ...patch });
   return (
     <div class="tool-options">
       <p class="note">{TOOL_HINTS[tool]}</p>
-      {tool === "source" ? (
-        <>
-          <Pick label="Water" value={o.sourceBad ? "bad" : "clean"} choices={SOURCE_KINDS} onChange={(v) => set({ sourceBad: v === "bad" })} />
-          {o.sourceBad ? (
-            <StrengthSlider value={o.badwaterStrength} steps={BADWATER_STRENGTHS} onChange={(badwaterStrength) => set({ badwaterStrength })} />
-          ) : (
-            <StrengthSlider value={o.sourceStrength} steps={SOURCE_STRENGTHS} onChange={(sourceStrength) => set({ sourceStrength })} />
-          )}
-        </>
-      ) : null}
+      {tool === "source" ? <p class="note">Its options are in the top bar.</p> : null}
       {tool === "waterfall" ? (
         <>
           <Num label="Drop (levels)" value={o.drop} min={1} max={15} onChange={(drop) => set({ drop })} />

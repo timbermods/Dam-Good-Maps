@@ -29,7 +29,10 @@
 // - Flatten in steps (D184's Terrace): benches every `steps` levels from the flatten level, each tile
 //   to its nearest bench. Smooth, make walkable (D184's Ramp): steps of 2 levels or more wear down to
 //   1, and the build's derived slopes join the 1-level steps under the stroke (the game's natural
-//   slopes).
+//   slopes). Flatten cuts and fills (D204): tiles above the level come down to it, tiles below rise
+//   to it. Its edges are a cliff (the brush's own: a precise stroke's straight walls) or, `ramped`,
+//   a rim that steps down a level a tile to the ground round it (precise too), which the derived
+//   slopes join as they do make walkable's.
 // - Smart Lower (D184): a Lower stroke that starts in or beside water (`channel`) carves a bed that
 //   keeps flowing downhill, so the water follows the brush. Its bed starts at the lowest ground
 //   round the first dab (the water's bed) and never rises along the stroke: over lower ground it
@@ -70,6 +73,10 @@ export interface BrushParams {
   /** Smooth, make walkable: steps of 2 levels or more wear down to 1, and the game's natural slopes
    *  join the steps under the stroke. */
   walkable?: boolean;
+  /** Flatten's edges (D204): absent, a cliff (the brush's own edge); `ramped`, a rim stepping down a
+   *  level a tile to the ground round it, even for a precise stroke, with the game's natural slopes
+   *  on its steps. */
+  edges?: "ramped";
   /** Each dab's pressure, 1–255 (a pen's); full when absent. */
   pressure?: number[];
   /** Lower: a stroke that starts in or beside water carves a bed that keeps flowing downhill. */
@@ -403,8 +410,8 @@ export class BrushStroke {
       for (let x = 0; x < bw; x++) m[y * bw + x] = depth ? depth[row + x] : Math.min(BRUSH_MAX_LEVEL, Math.floor(acc[row + x] / LEVEL));
     }
     // the edge rule: a 4-neighbour distance transform from the ground round the stroke (0 outside);
-    // precise strokes have vertical walls
-    if (!depth) this.edgeRule(m, bw, bh);
+    // precise strokes have vertical walls, unless a ramped flatten steps its rim down
+    if (!depth || this.settings.edges === "ramped") this.edgeRule(m, bw, bh);
     const { tool, level, stop, steps } = this.settings;
     const L = Math.max(0, Math.min(BRUSH_MAX_LEVEL, level ?? 0));
     const ceil = Math.min(BRUSH_MAX_LEVEL, stop ?? BRUSH_MAX_LEVEL);
@@ -488,6 +495,7 @@ export function brushProblems(p: BrushParams, W: number, H: number): string[] {
   if (p.stop !== undefined && (!Number.isInteger(p.stop) || p.stop < 0 || p.stop > BRUSH_MAX_LEVEL)) return [`a stroke stops at a level from 0 to ${BRUSH_MAX_LEVEL}`];
   if (p.steps !== undefined && (p.tool !== "flatten" || !Number.isInteger(p.steps) || p.steps < 2 || p.steps > 8)) return ["flatten's steps are 2 to 8 levels apart"];
   if (p.walkable !== undefined && (p.tool !== "smooth" || typeof p.walkable !== "boolean")) return ["only smooth makes the ground walkable"];
+  if (p.edges !== undefined && (p.tool !== "flatten" || p.edges !== "ramped")) return ["only flatten has ramped edges"];
   if (p.keep !== undefined && !(Array.isArray(p.keep) && p.keep.every((r) => Array.isArray(r) && r.length === 3 && r.every((v) => Number.isInteger(v)) && r[1] <= r[2]))) return ["a stroke's kept tiles are runs [y, x0, x1]"];
   for (let k = 0; k < p.dabs.length; k += 2) {
     const x = p.dabs[k];

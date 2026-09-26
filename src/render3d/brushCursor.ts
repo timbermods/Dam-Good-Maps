@@ -18,6 +18,10 @@ export interface BrushCursorState {
   level: number | null;
   /** Smart Lower: a stroke here carves a bed the water follows (the ring turns water-blue, D198). */
   water?: boolean;
+  /** A square brush: a square disc and ring. */
+  square?: boolean;
+  /** The ring pulses (a precise hold reached its stop level, D193). */
+  pulse?: boolean;
 }
 
 const TINT: Record<BrushCursorState["tool"], [number, number, number]> = {
@@ -89,10 +93,11 @@ export class BrushCursor {
     const ty0 = Math.max(0, Math.floor(s.y - r));
     const ty1 = Math.min(H - 1, Math.floor(s.y + r));
     const R2 = r * r;
-    // the soft disc: each tile's top, as strong as the brush presses there
+    // the soft disc: each tile's top, as strong as the brush presses there (square: by the larger
+    // of the two distances)
     for (let y = ty0; y <= ty1; y++)
       for (let x = tx0; x <= tx1; x++) {
-        const d2 = (x + 0.5 - s.x) ** 2 + (y + 0.5 - s.y) ** 2;
+        const d2 = s.square ? Math.max((x + 0.5 - s.x) ** 2, (y + 0.5 - s.y) ** 2) : (x + 0.5 - s.x) ** 2 + (y + 0.5 - s.y) ** 2;
         if (d2 >= R2) continue;
         const f = (1 - d2 / R2) ** 2;
         const h = heights[y * W + x] + 0.03;
@@ -104,13 +109,17 @@ export class BrushCursor {
     const n = Math.max(24, Math.min(256, Math.round(r * 12)));
     const ring: [number, number, number] = s.water ? [...WATER_UI.ring] : [1, 1, 1];
     const edge: [number, number, number] = [...WATER_UI.ringEdge];
-    const w = (0.09 + r * 0.004) * (s.water ? 1.45 : 1);
+    const w = (0.09 + r * 0.004) * (s.water ? 1.45 : 1) * (s.pulse ? 1.8 : 1);
     const o = w + 0.035;
     for (let pass = 0; pass < 2; pass++)
       for (let k = 0; k < n; k++) {
         const a = (k / n) * Math.PI * 2;
-        const px = s.x + Math.cos(a) * r;
-        const py = s.y + Math.sin(a) * r;
+        // a square brush's ring runs round the square
+        const c = Math.cos(a);
+        const sn = Math.sin(a);
+        const f = s.square ? 1 / Math.max(Math.abs(c), Math.abs(sn)) : 1;
+        const px = s.x + c * r * f;
+        const py = s.y + sn * r * f;
         const tx = Math.floor(px);
         const ty = Math.floor(py);
         if (tx < 0 || ty < 0 || tx >= W || ty >= H) continue;

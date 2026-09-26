@@ -607,6 +607,26 @@ function startLinks(c: TileContext, h: Uint8Array, x: number, y: number, door: [
   return links;
 }
 
+/** Why the district center cannot stand at (x, y) with its door at `door` (null: it can): the quick
+ *  part of `checkStartAt`, without the walks. */
+export function startProblemAt(c: TileContext, x: number, y: number, door: [number, number], bench: { level: number } | null, self: string | null): string | null {
+  const { W, H } = c;
+  const tiles: number[] = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) tiles.push((y + dy) * W + (x + dx));
+  const z = bench ? bench.level : c.heights[y * W + x];
+  for (const i of [...tiles, door[1] * W + door[0]]) {
+    const tx = i % W;
+    const ty = Math.floor(i / W);
+    if (tx < 1 || ty < 1 || tx > W - 2 || ty > H - 2 || i < 0) return "too close to the map edge";
+    if (c.index && c.index.river[i] >= 0) return "in a river";
+    if (c.water.depth[i] > 0.05) return "under water";
+    if (!bench && c.heights[i] !== z) return "not on level ground";
+    const here = c.entitiesAt.get(i);
+    if (here?.some((k) => c.entities.owners[c.entities.owner[k]] !== self && !PLACED_AFTER_SLOPES.test(c.entities.templates[c.entities.template[k]]))) return "on an object";
+  }
+  return null;
+}
+
 /** The start's footprint and the three start requirements at (x, y), from what the page shows
  *  (EDITOR_PLAN §4: the footprint preview, green or red, and simple indicators). `bench` is the
  *  bench a start that levels its ground (a generated map) would make there, or null for an
@@ -628,33 +648,7 @@ export function checkStartAt(
   const tiles: number[] = [];
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) tiles.push((y + dy) * W + (x + dx));
   const doorI = door[1] * W + door[0];
-  let problem: string | null = null;
-  const z = bench ? bench.level : c.heights[y * W + x];
-  for (const i of [...tiles, doorI]) {
-    const tx = i % W;
-    const ty = Math.floor(i / W);
-    if (tx < 1 || ty < 1 || tx > W - 2 || ty > H - 2 || i < 0) {
-      problem = "too close to the map edge";
-      break;
-    }
-    if (c.index && c.index.river[i] >= 0) {
-      problem = "in a river";
-      break;
-    }
-    if (c.water.depth[i] > 0.05) {
-      problem = "under water";
-      break;
-    }
-    if (!bench && c.heights[i] !== z) {
-      problem = "not on level ground";
-      break;
-    }
-    const here = c.entitiesAt.get(i);
-    if (here?.some((k) => c.entities.owners[c.entities.owner[k]] !== self && !PLACED_AFTER_SLOPES.test(c.entities.templates[c.entities.template[k]]))) {
-      problem = "on an object";
-      break;
-    }
-  }
+  const problem = startProblemAt(c, x, y, door, bench, self);
   const N = W * H;
   // the ground as it would be: a generated start's bench levels its disc (and, in a project saved
   // before the water rule changed, its strip to the bank)

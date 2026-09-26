@@ -78,8 +78,10 @@ export type Step =
    *  "slope" (the brushes' own: a level a tile) or "cliff" (every tile the full amount). Or one
    *  stroke along a `path`, `size` tiles wide: a Lower stroke that starts in or beside water, or
    *  beside a source, carves a bed that keeps flowing downhill, and the water follows it (smart
-   *  Lower, D184). */
-  | { op: "brush"; tool: BrushTool; where?: Where; path?: Point[]; amount?: number; level?: number; passes?: number; size?: SizeWord | number; edges?: "slope" | "cliff" }
+   *  Lower, D184). The brush kit's options (D184, D204): flatten `steps` (terraces every so many
+   *  levels) and `edges` "ramped" (the rim's steps get the game's natural slopes, so beavers walk
+   *  up); smooth `walkable` (steps worn to one level, with the natural slopes on them). */
+  | { op: "brush"; tool: BrushTool; where?: Where; path?: Point[]; amount?: number; level?: number; passes?: number; size?: SizeWord | number; edges?: "slope" | "cliff" | "ramped"; steps?: number; walkable?: boolean }
   | { op: "undoLast" };
 
 export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "changeSource", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "sculpt", "brush", "undoLast"] as const;
@@ -276,7 +278,10 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       if (s.amount !== undefined && !(Number.isInteger(s.amount) && num(s.amount, 1, 8))) errs.push("amount is 1–8 whole levels (raise and lower)");
       if (s.level !== undefined && !(Number.isInteger(s.level) && num(s.level, 0, BRUSH_MAX_LEVEL))) errs.push(`level is a whole level, 0–${BRUSH_MAX_LEVEL} (flatten)`);
       if (s.passes !== undefined && !(Number.isInteger(s.passes) && num(s.passes, 1, 8))) errs.push("passes is 1–8 (smooth and naturalize)");
-      if (s.edges !== undefined && s.edges !== "slope" && s.edges !== "cliff") errs.push("edges is slope or cliff");
+      if (s.edges !== undefined && s.edges !== "slope" && s.edges !== "cliff" && s.edges !== "ramped") errs.push("edges is slope, cliff or ramped (flatten)");
+      if (s.edges === "ramped" && s.tool !== "flatten") errs.push("ramped edges are flatten's: its rim steps down to the ground round it with the game's natural slopes");
+      if (s.steps !== undefined && (s.tool !== "flatten" || !(Number.isInteger(s.steps) && num(s.steps, 2, 8)))) errs.push("steps is flatten's: terraces every 2–8 levels");
+      if (s.walkable !== undefined && (s.tool !== "smooth" || typeof s.walkable !== "boolean")) errs.push("walkable is smooth's: true wears steps to one level and puts the game's natural slopes on them");
       return [...errs, ...checkPlace(s.where, "where", W, H)];
     case "undoLast":
       return [];
@@ -763,7 +768,9 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
   // cliff edges: every tile the full amount (the brush's own edges slope a level a tile)
   const cliff = step.edges === "cliff";
   const seed = tool === "naturalize" ? fmix32(Math.imul(tiles[0] + 1, 0x9e3779b1) ^ tiles.length) : undefined;
-  const { strokes, inward } = patchStrokes(pre, mask, tiles, W, H, { tool, amount, level, cliff, passes: step.passes ?? 2, seed });
+  const made = patchStrokes(pre, mask, tiles, W, H, { tool, amount, level, cliff, passes: step.passes ?? 2, seed });
+  const inward = made.inward;
+  const strokes = made.strokes.map((p) => withKit(p, step));
   // what it does, measured by running the strokes on the build's own terrain
   const after = pre.slice();
   for (const p of strokes) applyBrush(p, after, W, H, (i) => !roofed[i]);
@@ -777,7 +784,7 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
       moved++;
       by.set(d, (by.get(d) ?? 0) + 1);
     }
-    if (level !== undefined && after[i] === level) reached++;
+    if (level !== undefined && (step.steps ? (after[i] - level) % step.steps === 0 : after[i] === level)) reached++;
     if (tool === "raise" && after[i] === BRUSH_MAX_LEVEL && pre[i] + amount > BRUSH_MAX_LEVEL) atTop++;
   }
   const report: string[] = [];
@@ -795,12 +802,14 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
   } else if (tool === "flatten") {
     if (!moved) return fail(step, [`it is already level ${level} there`], undefined, resolved);
     const rest = tiles.length - reached;
-    report.push(`flattens ${reached} of ${tiles.length} tiles to level ${level}${step.level === undefined ? " (the place's middle level)" : ""}${rest ? `; the other ${rest} slope toward it from the ground round the place, a level a tile (a brush makes no cliffs)` : ""}${cliff ? " with cliff edges" : ""}${roof}`);
+    report.push(`flattens ${reached} of ${tiles.length} tiles to ${step.steps ? `benches every ${step.steps} levels from level ${level}` : `level ${level}`}${step.level === undefined ? " (the place's middle level)" : ""}${rest && !step.steps ? `; the other ${rest} slope toward it from the ground round the place, a level a tile (a brush makes no cliffs)` : ""}${cliff ? " with cliff edges" : ""}${roof}`);
+    if (step.edges === "ramped") report.push("with ramped edges: the game's natural slopes join its rim's steps, so beavers can walk up");
   } else {
     if (!moved) return fail(step, [tool === "smooth" ? "that ground is already smooth: no tile stands apart from its neighbours" : "that ground has no cliffs or straight edges for naturalize to wear"], undefined, resolved);
     const before = steepest(pre, tiles, W, H);
     const now = steepest(after, tiles, W, H);
     report.push(`${tool === "smooth" ? "smooths" : "weathers"} ${moved} of ${tiles.length} tiles in ${strokes.length} passes: the steepest step there ${now < before ? `goes from ${before} to ${now} levels` : `stays ${now} levels`}${roof}`);
+    if (step.walkable) report.push("made walkable: the game's natural slopes join the steps it leaves, so beavers can walk up");
   }
   const ops = strokes.map((params) => ({ op: "brush", params }) as EditOp);
   return { ok: true, step, ops, made: [], report, resolved: { ...resolved, tiles: tiles.length, strokes: strokes.length }, errors: [], tiles: tiles.length };
@@ -855,7 +864,7 @@ function expandBrushPath(s: MapSession, step: Extract<Step, { op: "brush" }>): E
   const level = tool === "flatten" ? (step.level ?? pre[line[0]]) : undefined;
   const seed = tool === "naturalize" ? fmix32(Math.imul(line[0] + 1, 0x9e3779b1) ^ line.length) : undefined;
   const dabs = line.flatMap((i) => [4 * (i % W) + 2, 4 * Math.floor(i / W) + 2]);
-  const stroke: BrushParams = { tool, size, strength: 5, ...(level !== undefined ? { level } : {}), ...(seed !== undefined ? { seed } : {}), ...(channel ? { channel: true } : {}), layer: "top", dabs };
+  const stroke: BrushParams = withKit({ tool, size, strength: 5, ...(level !== undefined ? { level } : {}), ...(seed !== undefined ? { seed } : {}), ...(channel ? { channel: true } : {}), layer: "top", dabs }, step);
   // raise and lower: a stroke per level; flatten: strokes until the path reaches its level
   const passes = channel ? 1 : tool === "raise" || tool === "lower" ? (step.amount ?? 1) : tool === "flatten" ? BRUSH_MAX_LEVEL : (step.passes ?? 2);
   const after = pre.slice();
@@ -908,6 +917,17 @@ function expandBrushPath(s: MapSession, step: Extract<Step, { op: "brush" }>): E
   }
   const ops = strokes.map((params) => ({ op: "brush", params }) as EditOp);
   return { ok: true, step, ops, made: [], report, resolved, errors: [], tiles: changed };
+}
+
+/** A stroke with the brush kit's options the step asks for (flatten's steps and ramped edges,
+ *  smooth's make walkable), as a player's stroke carries them. */
+function withKit(p: BrushParams, step: Extract<Step, { op: "brush" }>): BrushParams {
+  return {
+    ...p,
+    ...(p.tool === "flatten" && step.steps ? { steps: step.steps } : {}),
+    ...(p.tool === "flatten" && step.edges === "ramped" ? { edges: "ramped" as const } : {}),
+    ...(p.tool === "smooth" && step.walkable ? { walkable: true } : {}),
+  };
 }
 
 /** The middle level of a place (flatten's level when none is given). */

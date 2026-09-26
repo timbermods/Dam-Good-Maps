@@ -368,6 +368,77 @@ on a placed river.
   straight line would clash with it (the straight lines stay a toggle); the Select tool's Alt to
   subtract (D184) meets Alt+click's layer pick, so Select will subtract with Alt+drag only.
 
+## D184, push 2: the top bar, the brush kit and Select (D183, D193, D204, D205, D206)
+
+- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source (6), and a row beneath with
+  only the picked tool's options. The brush's size is its ring ([ ], or hold **F**), its strength
+  shows beside the pointer only while it changes (Shift+scroll, { }). The old brush bar and its
+  sliders are gone.
+- **The brush kit,** each off by default: **Square**; **Precise** (hard edges, vertical walls, a
+  level at a time; held still it digs or builds a level more at a steady pace tied to strength, and
+  with **Stop at** it stops at a level, the ring pulsing once on arrival, D193); **Straight lines**
+  (the stroke runs from where it started to the pointer, its length beside it); **Level lines**
+  (a thin line wherever the ground steps down a level). A pen's pressure sets each dab's strength.
+- **Flatten (D204):** its level is the ground where the stroke starts, unless one is picked
+  (Ctrl+click, on water its bed, or **Level**). It cuts and fills: one stroke brings high tiles down
+  and low tiles up. **In steps** makes terraces. **Edges: Cliff** (the default) or **Ramped**: the
+  rim steps down a level a tile to the ground round it, even precise, and the game's natural slopes
+  join those steps, as **Make walkable** does for Smooth. Trees and objects ride the ground: the
+  build and the page's painting put each on the ground as it now is. An object on more than one
+  tile (a mine site, a relic, a badwater source, the start) moves with the ground when the stroke
+  takes its whole footprint to one level; where the stroke's rim would leave it on a step (the game
+  would drop it as floating, and the export would refuse), the stroke leaves that footprint's
+  ground as it was. The page paints the stroke again without those tiles when the button comes up,
+  and the operation records them (its kept tiles), so it replays the same. Found while taking the
+  screenshots: a Flatten beside River Valley's mine site left it floating.
+- **"The start fits here" (D204):** after a Flatten stroke, where its level ground takes the
+  district center (its footprint and door level and dry, nothing standing there), a quiet tag says
+  so; it turns strong ("with water, wood and berries in reach") when the start's requirements
+  would hold there. A click on it moves the start there (one step). The spot is found on the page
+  in about 1–2 ms once it is idle; the start's full check (the walks) runs in a small worker of its
+  own: about 110 ms on 256² (the first time, with the worker starting), and the page never waits.
+- **Select (M, or Ctrl+drag with a brush out):** a rectangle with its size beside the pointer
+  ("6 × 5 tiles"), Shift adds, Alt takes away; Raise, Lower or Set to a level by whole levels, Dig
+  out to its lowest ground, Clear objects; each one undo step. Esc closes it.
+- **Hold F to resize (D205, from Blender):** the ring stays where it is and follows the pointer's
+  distance, in half tiles, the size beside the pointer; a click or letting go of F sets it, Esc or a
+  right click puts it back. [ and ] still work. The camera's R and F zoom are gone (the
+  coordinator's call while Kyler is away; + and − and the wheel zoom): F does nothing with no brush
+  out, and R stays free for the shelf's rotate.
+- **Juice (D205):** a soft thud as land rises, a puff of dust where it is lowered (and a few dust
+  particles on the land), the soft sweep of a brush for Flatten, Smooth and Naturalize, a gentle
+  splash and rings on the water when a source starts, a pop and a little wiggle for a placed object
+  (the shelf, push 3, uses the same hook), a soft whuff when something is removed. The sounds are
+  made on the page with Web Audio, quiet, on by default, with **Sound** (on or off) and its volume
+  beside it among the view buttons (the volume shows while it is hovered); the effects follow the
+  reduced-motion setting and are off in software rendering. The same action again within a moment
+  is skipped, never piled up; nothing waits on any of it. The forces register their own touch on
+  the same hook.
+- **The forces (D194, D202, D203, D206):** Carve, Craterize, Quake and Erupt keep hidden slots in a
+  group of their own; the scaffold is generic (a name, whether it is ready, its two modes), and every
+  force's options row starts with its mode switch (Unleash or Aim, Strike or Aim, Lift or Slide, Vent
+  or Fissure). The mode switch is the shared segmented control, now in `components.css`.
+- **Tools read intent (D204), the tricks in this push:** Flatten from the stroke's start; cut and
+  fill in one stroke; Ctrl+click picks the level a Flatten or a hold's stop needs, on water the bed;
+  Ctrl+drag with a brush out selects instead of painting; a toggle just clicked keeps the tool keys
+  and the camera keys working; "the start fits here", with a click to move it; F sizes the ring
+  where it is, without a trip to a slider.
+- **Claude:** the `brush` step takes Flatten's `steps` and ramped `edges`, and Smooth's `walkable`,
+  onto every stroke it makes; the report says so. New requests B13 (terraces), B14 (a plateau with
+  ramped edges) and B15 (make walkable). Reference solutions: 123 of 135 (the same 12 fail on dev:
+  S04, W05–W07, J03, M04, M06, I07, X01, X08, X09, Q01).
+- Tests: `tests/e2e/brushKit.spec.ts` also flattens across the mine site's edge and finds no
+  floating object. `tests/contract/brush.test.ts` (Flatten cuts and fills; ramped edges step the rim a level a
+  tile, precise too, and a cliff keeps its wall; on a map a ramped Flatten gets slopes on its rim
+  where a cliff's gets none, the trees on it stand on the ground, and an import's own objects ride
+  it; incremental equals full, and the project replays); `tests/unit/startHint.test.ts`,
+  `tests/unit/juice.test.ts`, `tests/unit/select.test.ts`; `tests/e2e/brushKit.spec.ts` (every
+  option above, the forces hidden, F, the sounds' switch, the start hint and its click, Select).
+- Tests changed (D148): `brush.spec` read the brush bar's size and strength sliders; D184 removed
+  them, so it reads the saved brush and the words beside the pointer. `camera.spec` focused the size
+  slider to show that typing moves nothing; it focuses the Flatten level list now, and checks that
+  a toggle just clicked keeps the camera keys.
+
 ## The camera keys (D180)
 
 Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.
@@ -475,7 +546,6 @@ enables it at once), and the brushes could be picked before the map could be pai
 
 ## Next
 
-D184's pushes 2–4: the top bar and its options row (square, precise, straight lines, level lines,
-Flatten "in steps", Smooth "make walkable", pen pressure, Select); the left shelf with live ghosts,
-and Remove; the view buttons and overlays, the header and its menu, the quiet dot, the start's
-reach and the first-run hints. Then "Let the water carve", from the carve investigation.
+D184's pushes 3 and 4: the left shelf with live ghosts, and Remove; the view buttons and overlays
+(with the minimap and the layer widget, D205, D207), camera bookmarks (D205), the header and its
+menu, the quiet dot, the start's reach and the first-run hints. The forces wait for Kyler.

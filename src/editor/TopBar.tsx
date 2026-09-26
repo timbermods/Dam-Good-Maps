@@ -1,0 +1,279 @@
+// The top bar (PLAN §20 D184): Raise, Lower, Flatten, Smooth, Naturalize | Source, and a small row
+// beneath with only the picked tool's options. The brush's size is its ring on the land ([ and ]),
+// its strength shows only while it changes (Shift+scroll, { and }). The brush kit's toggles are off
+// by default: square, precise (with "stop at" for a hold, D193), straight lines, level lines;
+// Flatten has "in steps" and its edges, Smooth "make walkable". After Source come the forces (D194,
+// D202, D203, D206: Carve, Craterize, Quake, Erupt), a group of their own on one shared core, each
+// options row starting with its mode switch; each slot stays empty until Kyler says its prototype
+// is ready. Built from the shared bar and button styles (D176).
+
+import type { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
+import { BRUSHES, type BrushSettings, type BrushTool } from "./brushes";
+
+const HINT_KEY = "dgm.brushHint";
+
+function hintSeen(): boolean {
+  try {
+    return localStorage.getItem(HINT_KEY) === "seen";
+  } catch {
+    return false;
+  }
+}
+
+function seeHint(): void {
+  try {
+    localStorage.setItem(HINT_KEY, "seen");
+  } catch {
+    // the hint shows again next time
+  }
+}
+
+const ICON = { width: 20, height: 20, viewBox: "0 0 20 20", "aria-hidden": "true" as const, fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round" as const, "stroke-linejoin": "round" as const };
+
+/** The tools' icons: an arrow up, an arrow down, a level line, a wave, a weathered peak; a drop. */
+function Icon({ tool }: { tool: BrushTool | "source" }) {
+  switch (tool) {
+    case "raise":
+      return (
+        <svg {...ICON}>
+          <path d="M3 16h14M10 13V4M6 8l4-4 4 4" />
+        </svg>
+      );
+    case "lower":
+      return (
+        <svg {...ICON}>
+          <path d="M3 4h14M10 7v9M6 12l4 4 4-4" />
+        </svg>
+      );
+    case "flatten":
+      return (
+        <svg {...ICON}>
+          <path d="M2 10h16M4 6l2 2M16 6l-2 2M4 14l2-2M16 14l-2-2" />
+        </svg>
+      );
+    case "smooth":
+      return (
+        <svg {...ICON}>
+          <path d="M2 12c2.5-5 5-5 8 0s5.5 5 8 0" />
+        </svg>
+      );
+    case "naturalize":
+      return (
+        <svg {...ICON}>
+          <path d="M2 16l4-6 2 2 3-6 3 4 2-2 2 8" />
+        </svg>
+      );
+    case "source":
+      return (
+        <svg {...ICON}>
+          <path d="M10 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" />
+        </svg>
+      );
+  }
+}
+
+/** The forces (D203, D206): their slots in the bar, each hidden until it is ready. One shared core
+ *  builds them once adopted; the bar needs only a force's name, whether it is ready, and its modes:
+ *  every force's options row starts with its mode switch. */
+export interface Force {
+  id: string;
+  name: string;
+  ready: boolean;
+  /** The mode switch that starts its options row (the first mode is the default). */
+  modes: readonly [string, string];
+}
+export const FORCES: readonly Force[] = [
+  { id: "carve", name: "Carve", ready: false, modes: ["Unleash", "Aim"] },
+  { id: "craterize", name: "Craterize", ready: false, modes: ["Strike", "Aim"] },
+  { id: "quake", name: "Quake", ready: false, modes: ["Lift", "Slide"] },
+  { id: "erupt", name: "Erupt", ready: false, modes: ["Vent", "Fissure"] },
+];
+
+/** A force's options row: its mode switch first, then the force's own options. */
+export function ForceOptions(p: { force: Force; mode: string; onMode(mode: string): void; children?: ComponentChildren }) {
+  return (
+    <div class="map-bar options-row" role="group" aria-label={`${p.force.name} options`}>
+      <div class="segmented" role="group" aria-label="Mode">
+        {p.force.modes.map((m) => (
+          <button type="button" key={m} aria-pressed={p.mode === m} onClick={() => p.onMode(m)}>
+            {m}
+          </button>
+        ))}
+      </div>
+      {p.children ? <div class="bar-group">{p.children}</div> : null}
+    </div>
+  );
+}
+
+export interface TopBarProps {
+  /** The brush out, or null. */
+  active: BrushTool | null;
+  /** Source is picked. */
+  source: boolean;
+  settings: BrushSettings;
+  onPick(tool: BrushTool | "source" | null): void;
+  onSettings(s: BrushSettings): void;
+  /** The map is still loading: the tools wait until they can work. */
+  loading?: boolean;
+  /** Source's options (clean or bad, its strength), from the editor's shared fields. */
+  sourceOptions?: ComponentChildren;
+  /** A selection's own row (its size, its actions), when there is one. */
+  selectRow?: ComponentChildren;
+}
+
+/** A toggle in the options row: a checkbox and its word. */
+function Toggle(p: { label: string; title: string; on: boolean; onChange(on: boolean): void }) {
+  return (
+    <label class="check" title={p.title}>
+      <input type="checkbox" checked={p.on} onChange={() => p.onChange(!p.on)} />
+      {p.label}
+    </label>
+  );
+}
+
+export function TopBar(p: TopBarProps) {
+  const [hint, setHint] = useState(() => !hintSeen());
+  const s = p.settings;
+  const set = (patch: Partial<BrushSettings>) => p.onSettings({ ...s, ...patch });
+  const t = p.active;
+  const heaps = t === "raise" || t === "lower";
+  return (
+    <div class="brush-bar-wrap">
+      <div class="map-bar" role="toolbar" aria-label="Tools">
+        {BRUSHES.map((b) => (
+          <button
+            type="button"
+            key={b.tool}
+            class="icon-button"
+            aria-pressed={p.active === b.tool}
+            aria-label={`${b.name} brush (${b.key})`}
+            title={p.loading ? "The map is still loading" : `${b.name} (${b.key}): ${b.hint}`}
+            disabled={p.loading}
+            onClick={() => p.onPick(p.active === b.tool ? null : b.tool)}
+          >
+            <Icon tool={b.tool} />
+            <span class="icon-word">{b.name}</span>
+          </button>
+        ))}
+        <span class="bar-divider" aria-hidden="true" />
+        <button
+          type="button"
+          class="icon-button"
+          aria-pressed={p.source}
+          aria-label="Source (6)"
+          title={p.loading ? "The map is still loading" : "Source (6): click where water starts. Over a source, Shift+scroll sets its strength; drag it to move it."}
+          disabled={p.loading}
+          onClick={() => p.onPick(p.source ? null : "source")}
+        >
+          <Icon tool="source" />
+          <span class="icon-word">Source</span>
+        </button>
+        {FORCES.some((f) => f.ready) ? (
+          <>
+            <span class="bar-divider" aria-hidden="true" />
+            <span class="bar-group" role="group" aria-label="Forces">
+              {FORCES.filter((f) => f.ready).map((f) => (
+                <button type="button" key={f.id} class="icon-button" disabled title={`${f.name}: coming`}>
+                  <span class="icon-word">{f.name}</span>
+                </button>
+              ))}
+            </span>
+          </>
+        ) : null}
+      </div>
+      {t ? (
+        <div class="map-bar options-row" role="group" aria-label={`${BRUSHES.find((b) => b.tool === t)!.name} options`}>
+          <div class="bar-group">
+            <Toggle label="Square" title="A square brush instead of a round one" on={s.square} onChange={(square) => set({ square })} />
+            <Toggle label="Precise" title="Hard edges and straight walls, a level at a time: hold still to dig or build a level more" on={s.precise} onChange={(precise) => set({ precise })} />
+            <Toggle label="Straight lines" title="The stroke runs straight from where you press to the pointer; its length shows beside it" on={s.straight} onChange={(straight) => set({ straight })} />
+            <Toggle label="Level lines" title="A thin line wherever the ground steps down a level" on={s.levelLines} onChange={(levelLines) => set({ levelLines })} />
+            {t === "flatten" ? (
+              <>
+                <Toggle label="In steps" title="Terraces: benches every few levels from the flatten level" on={s.steps !== null} onChange={(on) => set({ steps: on ? 2 : null })} />
+                {s.steps !== null ? (
+                  <label>
+                    every
+                    <select aria-label="Steps apart" value={String(s.steps)} onChange={(e) => set({ steps: Number((e.target as HTMLSelectElement).value) })}>
+                      {[2, 3, 4].map((k) => (
+                        <option key={k} value={String(k)}>
+                          {k} levels
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                <label title="Cliff: the flat ground ends in a step. Ramped: its rim steps down to the land round it, with the game's natural slopes, so beavers can walk up">
+                  Edges
+                  <select aria-label="Edges" value={s.ramped ? "ramped" : "cliff"} onChange={(e) => set({ ramped: (e.target as HTMLSelectElement).value === "ramped" })}>
+                    <option value="cliff">Cliff</option>
+                    <option value="ramped">Ramped</option>
+                  </select>
+                </label>
+                <label title="The level it flattens to: Ctrl+click the map to pick one (on water, its bed)">
+                  Level
+                  <select aria-label="Flatten level" value={s.level === null ? "start" : String(s.level)} onChange={(e) => {
+                    const v = (e.target as HTMLSelectElement).value;
+                    set({ level: v === "start" ? null : Number(v) });
+                  }}>
+                    <option value="start">Where I start</option>
+                    {Array.from({ length: 17 }, (_, k) => k).map((k) => (
+                      <option key={k} value={String(k)}>
+                        {k}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            ) : null}
+            {t === "smooth" ? <Toggle label="Make walkable" title="Wear steps to one level and put the game's natural slopes on them, so beavers can walk up" on={s.walkable} onChange={(walkable) => set({ walkable })} /> : null}
+            {s.precise && heaps ? (
+              <>
+                <Toggle label="Stop at" title={`A hold stops at this level (a ${t === "lower" ? "floor" : "ceiling"}): Ctrl+click the map to pick it (on water, its bed)`} on={s.stop !== null} onChange={(on) => set({ stop: on ? (t === "lower" ? 2 : 10) : null })} />
+                {s.stop !== null ? (
+                  <label>
+                    level
+                    <select aria-label="Stop level" value={String(s.stop)} onChange={(e) => set({ stop: Number((e.target as HTMLSelectElement).value) })}>
+                      {Array.from({ length: 17 }, (_, k) => k).map((k) => (
+                        <option key={k} value={String(k)}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      {p.source && p.sourceOptions ? (
+        <div class="map-bar options-row" role="group" aria-label="Source options">
+          <div class="bar-group">{p.sourceOptions}</div>
+        </div>
+      ) : null}
+      {p.selectRow ? (
+        <div class="map-bar options-row" role="group" aria-label="Selection">
+          {p.selectRow}
+        </div>
+      ) : null}
+      {t && hint ? (
+        <p class="map-note" role="status">
+          Drag to paint. [ ] or hold F to size, Shift+scroll strength, Shift inverts, Ctrl+drag selects, Ctrl+Z undoes.{" "}
+          <button
+            type="button"
+            class="linkish"
+            aria-label="Dismiss the hint"
+            onClick={() => {
+              seeHint();
+              setHint(false);
+            }}
+          >
+            ×
+          </button>
+        </p>
+      ) : null}
+    </div>
+  );
+}
