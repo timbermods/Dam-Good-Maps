@@ -857,6 +857,23 @@ information.
 
 ---
 
+## Badwater on every map
+
+A small step right after Resources like the official maps, and before the Real places rebuild
+(Kyler, 2026-09-26; PLAN §20 D200), built on branch `feature/badwater-source`:
+- at least one permanent badwater source on every map (generated maps, Real places, Pick a place),
+  a late-game resource like the mine site;
+- placed naturally (a spring in a hollow or side valley, never at random), at the per-difficulty
+  distance targets from the start (30 / 15 / 8 tiles);
+- count and strength like the official maps for the map's size, measured from the official maps
+  (first checking whether every official map has one);
+- a check in both validators, like `resources.mine_site`.
+
+**Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks), and every map having its
+badwater source. Generated maps change (a generator version bump and a contact sheet, D144).
+
+---
+
 ## Live editing
 
 Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20
