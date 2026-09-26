@@ -32,5 +32,10 @@ These record what happened and why. They stay as written; superseded parts may b
 ## Retired terms
 
 Retired features must not come back. `tools/retired-terms.json` lists their names, and CI flags any that
-reappear in the living documents, the interface text or the editor code. Add a term when a feature is
-retired.
+reappear in the living documents, the interface text or the editor code (`tests/unit/retired-terms.test.ts`,
+in the quick suite). Add a term when a feature is retired.
+
+Deliberate mentions are allowed in `PLAN.md` §20, in EDITOR_PLAN.md's "Part 3: superseded", and between
+`<!-- retired-terms:allow -->` and `<!-- /retired-terms:allow -->`, as in ROADMAP's "Removed:" list. The
+JSON's `pendingRemoval` names the editor files that still hold the old tools until Live editing replaces
+them; that list only shrinks.

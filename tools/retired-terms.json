@@ -1,0 +1,39 @@
+{
+  "about": "Names of retired features (Kyler, PLAN.md §20 D188 (3); docs/README.md, 'Retired terms'). tests/unit/retired-terms.test.ts, in CI's quick suite, fails when one reappears in a living document, the interface text or the editor code. Matching ignores case, ** and backticks, hyphens and underscores, and line breaks, splits camelCase, and takes simple plurals (tool, tools; brush, brushes). Add a term when a feature is retired.",
+  "terms": [
+    { "term": "landform tool", "retired": "D182", "instead": "the brushes: hills, plateaus, ridges and valleys come from painting" },
+    { "term": "river tool", "retired": "D184", "instead": "smart Lower and Source" },
+    { "term": "lake tool", "retired": "D184", "instead": "lakes fill hollows by themselves" },
+    { "term": "Channel tool", "retired": "D184", "instead": "smart Lower" },
+    { "term": "Plant brush", "retired": "D184", "instead": "trees and bushes from the left shelf" },
+    { "term": "forest brush", "retired": "D184", "instead": "trees from the left shelf: click one, drag many" },
+    { "term": "berry brush", "retired": "D184", "instead": "berry bushes from the left shelf: click one, drag many" },
+    { "term": "resource brush", "retired": "D184", "instead": "trees and bushes from the left shelf" },
+    { "term": "live shape tool", "retired": "D182", "instead": "the brushes" },
+    { "term": "Terrace brush", "retired": "D184", "instead": "Flatten's \"in steps\" option" },
+    { "term": "Ramp brush", "retired": "D184", "instead": "Smooth's \"make walkable\" option" },
+    { "term": "Demolish tool", "retired": "D184", "instead": "Remove" },
+    { "term": "Show dropdown", "retired": "D184", "instead": "the view buttons" },
+    { "term": "Advanced checkbox", "retired": "D184", "instead": "smart defaults, with options hidden until wanted" },
+    { "term": "health pill", "retired": "D184", "instead": "the quiet dot" },
+    { "term": "Land tab", "retired": "D184", "instead": "the top bar and the left shelf" },
+    { "term": "Water tab", "retired": "D184", "instead": "the top bar and the left shelf" },
+    { "term": "Resources tab", "retired": "D184", "instead": "the top bar and the left shelf" },
+    { "term": "Start tab", "retired": "D184", "instead": "the start on the left shelf" }
+  ],
+  "docs": ["EDITOR_PLAN.md", "PLAN.md", "ROADMAP.md", "CLAUDE.md", "docs/STATUS.md", "docs/README.md", "README.md"],
+  "code": { "dirs": ["src"], "files": ["index.html"], "extensions": [".ts", ".tsx", ".css"] },
+  "allowedSections": [
+    { "file": "PLAN.md", "heading": "## 20. Editor decisions", "why": "the decision log is history" },
+    { "file": "EDITOR_PLAN.md", "heading": "# Part 3: superseded", "why": "it names what must not come back" }
+  ],
+  "markers": {
+    "about": "Text between these markers may name a retired feature on purpose, such as ROADMAP's 'Removed:' list.",
+    "open": "<!-- retired-terms:allow -->",
+    "close": "<!-- /retired-terms:allow -->"
+  },
+  "pendingRemoval": {
+    "about": "Editor files that still hold the old tools on dev. The Live editing work (feature/live-editing) empties this list as it replaces them; the test fails on a listed file that no longer holds a retired term, so the list only shrinks.",
+    "paths": ["src/editor/Editor.tsx", "src/editor/panels.tsx", "src/editor/tools.ts"]
+  }
+}
