@@ -777,6 +777,9 @@ A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built
   generator raises no wall along a map edge.
 - **Maps don't have to hold their water** (D152): no walls or rims to keep water on the map; rivers
   leave naturally and lakes may drain; the settle check accepts a steady flow off the map.
+- **Water sources start rivers** (D171): sources only at river heads (map-edge inflows, springs at
+  valley heads and below ridges), clustered at the head for more flow, never inside an existing
+  flow; a check flags any source inside one.
 - **The start water rule** (D153): clean water counts if a walking path over the map's own terrain
   and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
   editor's start indicators and the start text change together. Generated maps change: the
