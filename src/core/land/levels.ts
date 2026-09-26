@@ -430,3 +430,424 @@ export function fillDryHollows(h: Uint8Array, W: number, H: number, keep: Uint8A
   }
   return n;
 }
+
+/** Outlets for the broad basins that hold water (M9a: water that settles). A basin whose spill level
+ *  is a wide flat (a sea's shelf at its rim's level) sends its water out as a sheet over the whole
+ *  flat, and the sheet takes days to settle (the check's four days are not enough on a sea). Each
+ *  such basin gets a channel a level below the flat, winding across it from the basin to where the
+ *  land falls away or to the map edge, so its water leaves by one outlet as a river's does. Only
+ *  basins of `minArea` tiles or more whose flat at the spill level is `minFlat` tiles or more; the
+ *  tiles of `keep` (the river channels) are never cut, a lake's shallow shore may be. Returns the
+ *  tiles cut. */
+export function carveOutlets(h: Uint8Array, W: number, H: number, keep: Uint8Array, seed: number, width = 5, minArea = 300, minFlat = 120): number {
+  const N = W * H;
+  // spill levels from the draining map edge (priority flood)
+  const spill = new Int16Array(N).fill(-1);
+  const heap = new MinHeap();
+  for (let i = 0; i < N; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    if (x === 0 || y === 0 || x === W - 1 || y === H - 1) {
+      spill[i] = h[i];
+      heap.push(h[i], i);
+    }
+  }
+  while (heap.size) {
+    const c = heap.pop();
+    const lv = heap.lastKey;
+    const x = c % W;
+    const y = (c - x) / W;
+    for (const [dx, dy] of N4) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      const j = yy * W + xx;
+      if (spill[j] >= 0) continue;
+      spill[j] = h[j] > lv ? h[j] : lv;
+      heap.push(spill[j], j);
+    }
+  }
+  // basins: connected tiles standing below their spill level
+  const label = new Int32Array(N).fill(-1);
+  const basins: { tiles: number[]; level: number }[] = [];
+  for (let s0 = 0; s0 < N; s0++) {
+    if (label[s0] >= 0 || !(spill[s0] > h[s0])) continue;
+    const id = basins.length;
+    const tiles = [s0];
+    label[s0] = id;
+    for (let q = 0; q < tiles.length; q++) {
+      const c = tiles[q];
+      const x = c % W;
+      const y = (c - x) / W;
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (label[j] >= 0 || !(spill[j] > h[j]) || spill[j] !== spill[s0]) continue;
+        label[j] = id;
+        tiles.push(j);
+      }
+    }
+    basins.push({ tiles, level: spill[s0] });
+  }
+  let cut = 0;
+  basins.forEach((b, id) => {
+    if (b.tiles.length < minArea || b.level < 1) return;
+    const S = b.level;
+    // the flat at the spill level joined to the basin: a sheet of water would spread over all of it
+    const seen = new Uint8Array(N);
+    const q: number[] = [];
+    for (const i of b.tiles) {
+      const x = i % W;
+      const y = (i - x) / W;
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (seen[j] || label[j] === id || h[j] !== S || spill[j] !== S) continue;
+        seen[j] = 1;
+        q.push(j);
+      }
+    }
+    for (let k = 0; k < q.length && q.length < minFlat; k++) {
+      const c = q[k];
+      const x = c % W;
+      const y = (c - x) / W;
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (seen[j] || label[j] === id || h[j] !== S || spill[j] !== S) continue;
+        seen[j] = 1;
+        q.push(j);
+      }
+    }
+    if (q.length < minFlat) return;
+    // the flat at the spill level joined to the basin, and a way across it to lower ground or the
+    // map edge (cheapest by a noisy cost, so the channel winds)
+    const cost = new Float64Array(N).fill(Infinity);
+    const prev = new Int32Array(N).fill(-1);
+    const hp = new MinHeap();
+    for (const i of b.tiles) {
+      cost[i] = 0;
+      hp.push(0, i);
+    }
+    let end = -1;
+    const ns = hash32(seed, "outlet", id);
+    while (hp.size) {
+      const c = hp.pop();
+      const k = hp.lastKey;
+      if (k > cost[c]) continue;
+      const x = c % W;
+      const y = (c - x) / W;
+      if (label[c] !== id) {
+        // lower ground beside it, or the map's edge: the way out
+        let out = x === 0 || y === 0 || x === W - 1 || y === H - 1;
+        for (const [dx, dy] of N4) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < W && yy < H && spill[yy * W + xx] < S && label[yy * W + xx] !== id) out = true;
+        }
+        if (out) {
+          end = c;
+          break;
+        }
+      }
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (label[j] === id || h[j] !== S || spill[j] !== S || cost[j] <= k) continue;
+        const nk = k + 1 + 1.2 * (fbm(ns, xx, yy, 7, 2) + 1);
+        if (nk < cost[j]) {
+          cost[j] = nk;
+          prev[j] = c;
+          hp.push(nk, j);
+        }
+      }
+    }
+    if (end < 0) return;
+    // cut the way at a level below the flat, `width` tiles wide (never the kept water)
+    const r = (width - 1) / 2;
+    for (let c = end; c >= 0 && label[c] !== id; c = prev[c]) {
+      const cx = c % W;
+      const cy = (c - cx) / W;
+      for (let dy = -Math.ceil(r); dy <= Math.ceil(r); dy++)
+        for (let dx = -Math.ceil(r); dx <= Math.ceil(r); dx++) {
+          if (dx * dx + dy * dy > r * r + 0.5) continue;
+          const xx = cx + dx;
+          const yy = cy + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j = yy * W + xx;
+          if (keep[j] || h[j] !== S || label[j] === id) continue;
+          h[j] = S - 1;
+          cut++;
+        }
+    }
+  });
+  return cut;
+}
+
+/** The lakes of `lakes` that no river's water reaches on the land as it is now: the water from each
+ *  river's head (its mouth tile on the edge, its spring) runs downhill or level on the land filled to
+ *  its spill levels, as the canonical pre-fill runs it (sim/prefill.ts; `sealed` edge tiles, a river's
+ *  mouth, are not outlets, as the sources' own tiles are not). The land has changed since
+ *  the hydrology found its lakes (other rivers cut, edges relaxed, small regions merged), and a lake
+ *  its river no longer runs into fills only by seeping over a bank, for days. */
+export function unreachedLakes(h: Uint8Array, W: number, H: number, heads: readonly number[], lakes: readonly { tiles: number[] }[], sealed: Uint8Array | null = null): number[] {
+  const N = W * H;
+  const spill = new Int16Array(N).fill(-1);
+  const heap = new MinHeap();
+  for (let i = 0; i < N; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    if ((x === 0 || y === 0 || x === W - 1 || y === H - 1) && !sealed?.[i]) {
+      spill[i] = h[i];
+      heap.push(h[i], i);
+    }
+  }
+  while (heap.size) {
+    const c = heap.pop();
+    const lv = heap.lastKey;
+    const x = c % W;
+    const y = (c - x) / W;
+    for (const [dx, dy] of N4) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      const j = yy * W + xx;
+      if (spill[j] >= 0) continue;
+      spill[j] = h[j] > lv ? h[j] : lv;
+      heap.push(spill[j], j);
+    }
+  }
+  const path = new Uint8Array(N);
+  const q: number[] = [];
+  for (const i of heads)
+    if (i >= 0 && i < N && !path[i]) {
+      path[i] = 1;
+      q.push(i);
+    }
+  for (let k = 0; k < q.length; k++) {
+    const c = q[k];
+    const x = c % W;
+    const y = (c - x) / W;
+    for (const [dx, dy] of N4) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      const j = yy * W + xx;
+      if (path[j] || spill[j] > spill[c]) continue;
+      path[j] = 1;
+      q.push(j);
+    }
+  }
+  const out: number[] = [];
+  lakes.forEach((lk, k) => {
+    if (!lk.tiles.some((i) => path[i])) out.push(k);
+  });
+  return out;
+}
+
+/** Spill levels from the draining map edge (priority flood): the lowest level water standing on a
+ *  tile drains at. */
+function edgeSpill(h: Uint8Array, W: number, H: number): Int16Array {
+  const N = W * H;
+  const spill = new Int16Array(N).fill(-1);
+  const heap = new MinHeap();
+  for (let i = 0; i < N; i++) {
+    const x = i % W;
+    const y = (i - x) / W;
+    if (x === 0 || y === 0 || x === W - 1 || y === H - 1) {
+      spill[i] = h[i];
+      heap.push(h[i], i);
+    }
+  }
+  while (heap.size) {
+    const c = heap.pop();
+    const lv = heap.lastKey;
+    const x = c % W;
+    const y = (c - x) / W;
+    for (const [dx, dy] of N4) {
+      const xx = x + dx;
+      const yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+      const j = yy * W + xx;
+      if (spill[j] >= 0) continue;
+      spill[j] = h[j] > lv ? h[j] : lv;
+      heap.push(spill[j], j);
+    }
+  }
+  return spill;
+}
+
+/** A sea's way out, as wide as its water needs (the canonical settle, PLAN §10): a broad basin
+ *  starts full to its spill level, and its water then rises until its outlet passes the flow that
+ *  comes in, by as much as a level where the outlet is a river's width (Islands 256² seed 1: the sea
+ *  rose a whole level and settled after 6,144 ticks, past the settle's four days). A lip passes
+ *  about 3 blocks a second per tile of width and block of depth, so the way out (sill, lips, pools
+ *  and the mouth at the map edge) is made 1.6 tiles wide per block a second of the map's flow (7–41
+ *  tiles): that sea then rises a third of a level and settles after 2,432 ticks. The route is the
+ *  water's own way down to the map edge (never through higher ground, spill levels never rising),
+ *  winding by noise; the land within half the width of it takes the level of the route beside it,
+ *  a level below the sea's once past the sea's own shore (so the sill is short: a long flat at the
+ *  sea's level takes a slope of water to carry the flow), never below the sea's level within two
+ *  tiles of it and never on `keep`. A large lake of `lakes` whose floor is at its outlet's level is
+ *  such a body too (its water stands as a sheet over the flat). A widening that would drain the
+ *  sea or a kept lake is undone. */
+export function widenOutlets(h: Uint8Array, W: number, H: number, keep: Uint8Array, seed: number, flow: number, lakes: readonly (readonly number[])[] = [], minArea = 2500): number {
+  const N = W * H;
+  let spill = edgeSpill(h, W, H);
+  const label = new Int32Array(N).fill(-1);
+  const basins: { tiles: number[]; level: number; sheet?: boolean }[] = [];
+  for (let s0 = 0; s0 < N; s0++) {
+    if (label[s0] >= 0 || !(spill[s0] > h[s0])) continue;
+    const id = basins.length;
+    const tiles = [s0];
+    label[s0] = id;
+    for (let q = 0; q < tiles.length; q++) {
+      const c = tiles[q];
+      const x = c % W;
+      const y = (c - x) / W;
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (label[j] >= 0 || !(spill[j] > h[j]) || spill[j] !== spill[s0]) continue;
+        label[j] = id;
+        tiles.push(j);
+      }
+    }
+    basins.push({ tiles, level: spill[s0] });
+  }
+  // a large lake of the hydrology whose floor is its outlet's level stands as a sheet over it, not
+  // in a basin: it is a water body of its own, at that level
+  for (const lk of lakes) {
+    if (lk.length < minArea) continue;
+    let flat = 0;
+    for (const i of lk) if (label[i] < 0 && spill[i] === h[i]) flat++;
+    if (flat < minArea / 2) continue;
+    const count = new Map<number, number>();
+    for (const i of lk) count.set(spill[i], (count.get(spill[i]) ?? 0) + 1);
+    const S = [...count].sort((a, c) => c[1] - a[1] || a[0] - c[0])[0][0];
+    const id = basins.length;
+    const tiles: number[] = [];
+    for (const i of lk)
+      if (label[i] < 0 && spill[i] === S) {
+        label[i] = id;
+        tiles.push(i);
+      }
+    basins.push({ tiles, level: S, sheet: true });
+  }
+  let lowered = 0;
+  basins.forEach((b, id) => {
+    if (b.tiles.length < (b.sheet ? minArea / 2 : minArea)) return;
+    const S = b.level;
+    const width = Math.max(7, Math.min(41, Math.round(Math.max(1.6 * flow, b.tiles.length / 1000)))) | 1;
+    const R = (width - 1) / 2;
+    // the route: from the basin down to the map edge, never up (spill levels never rise along it,
+    // and no tile above the sea's level), cheapest by a noisy cost
+    const cost = new Float64Array(N).fill(Infinity);
+    const prev = new Int32Array(N).fill(-1);
+    const hp = new MinHeap();
+    for (const i of b.tiles) {
+      cost[i] = 0;
+      hp.push(0, i);
+    }
+    const ns = hash32(seed, "widen", id);
+    let end = -1;
+    while (hp.size) {
+      const c = hp.pop();
+      const k = hp.lastKey;
+      if (k > cost[c]) continue;
+      const x = c % W;
+      const y = (c - x) / W;
+      if (label[c] !== id && (x === 0 || y === 0 || x === W - 1 || y === H - 1) && !keep[c]) {
+        end = c;
+        break;
+      }
+      for (const [dx, dy] of N4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (label[j] === id || h[j] > S || spill[j] > spill[c] || cost[j] <= k) continue;
+        const nk = k + 1 + 3 * (fbm(ns, xx, yy, Math.max(12, width), 2) + 1);
+        if (nk < cost[j]) {
+          cost[j] = nk;
+          prev[j] = c;
+          hp.push(nk, j);
+        }
+      }
+    }
+    if (end < 0) return;
+    const route: number[] = [];
+    for (let c = end; c >= 0 && label[c] !== id; c = prev[c]) route.push(c);
+    // next to the sea the land stays at its spill level: the sea keeps its level
+    const nearSea = new Uint8Array(N);
+    for (const i of b.tiles) {
+      const x = i % W;
+      const y = (i - x) / W;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < W && yy < H) nearSea[yy * W + xx] = 1;
+        }
+    }
+    // each tile within R of the route takes the level of the route tile nearest it; the route
+    // itself runs a level below the sea's once past its sill, so the sill is short and as wide as
+    // the route (a long flat at the sea's level takes a slope of water to carry the flow)
+    const best = new Float64Array(N).fill(Infinity);
+    const target = new Int16Array(N).fill(-1);
+    const band: number[] = [];
+    const Ri = Math.ceil(R);
+    for (const r of route) {
+      const rx = r % W;
+      const ry = (r - rx) / W;
+      for (let dy = -Ri; dy <= Ri; dy++)
+        for (let dx = -Ri; dx <= Ri; dx++) {
+          const d2 = dx * dx + dy * dy;
+          if (d2 > R * R + 0.5) continue;
+          const xx = rx + dx;
+          const yy = ry + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j = yy * W + xx;
+          if (target[j] < 0) band.push(j);
+          if (d2 < best[j]) {
+            best[j] = d2;
+            target[j] = h[r] >= S && !nearSea[r] ? Math.max(0, S - 1) : h[r];
+          }
+        }
+    }
+    const before = h.slice();
+    const inBand = new Uint8Array(N);
+    let n = 0;
+    for (const j of band) {
+      inBand[j] = 1;
+      if (label[j] === id || keep[j]) continue;
+      const t = nearSea[j] ? Math.max(target[j], S) : target[j];
+      if (h[j] > t) {
+        h[j] = t;
+        n++;
+      }
+    }
+    if (!n) return;
+    // undone if it drains the sea or a kept lake (a hollow beside the route may join it)
+    const after = edgeSpill(h, W, H);
+    let drained = false;
+    for (let i = 0; i < N && !drained; i++) if ((label[i] === id || (keep[i] && !inBand[i])) && spill[i] > before[i] && after[i] < spill[i]) drained = true;
+    if (drained) {
+      h.set(before);
+      return;
+    }
+    spill = after;
+    lowered += n;
+  });
+  return lowered;
+}

@@ -42,8 +42,9 @@ import { drawGenome, leanGenome, type Genome } from "../land/genome";
 import { planBadwater, type Hazards } from "../land/hazards";
 import { planHydro, type Hydro } from "../land/hydro";
 import type { IntentionId } from "../land/intentions";
-import { cleanPitsAndSpikes, fillDryHollows, footComponents, mergeSmallRegions, naturalRamps, relaxEdges, snapLevels } from "../land/levels";
+import { carveOutlets, widenOutlets, unreachedLakes, cleanPitsAndSpikes, fillDryHollows, footComponents, mergeSmallRegions, naturalRamps, relaxEdges, snapLevels } from "../land/levels";
 import { distanceFrom } from "../math/grid";
+import { hash32 } from "../math/hash";
 import { stream } from "../math/rng";
 import { droughtStorage } from "../sim/drought";
 import { waterModel } from "../sim/model";
@@ -455,6 +456,55 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   if (ramps.cut) {
     cleanPitsAndSpikes(h, W, H, keep);
     fillDryHollows(h, W, H, keep);
+  }
+  // a lake no river runs into any more (the land changed after the hydrology found it) would fill
+  // only by seeping over a bank, for days: it is filled as the dry hollows are
+  const heads = hy.rivers.map((r) => {
+    const [px, py] = "spring" in r.params.entry ? r.params.entry.spring : r.params.path[0];
+    return Math.min(H - 1, Math.max(0, Math.round(py))) * W + Math.min(W - 1, Math.max(0, Math.round(px)));
+  });
+  // a river's mouth on the map edge holds its sources, which are not outlets
+  const sealed = new Uint8Array(N);
+  for (const r of hy.rivers) {
+    if (!("edge" in r.params.entry)) continue;
+    const [px, py] = r.params.path[0];
+    const reach = Math.ceil(r.params.width / 2) + 2;
+    for (let i = 0; i < N; i++) {
+      const x = i % W;
+      const y = (i - x) / W;
+      if ((x === 0 || y === 0 || x === W - 1 || y === H - 1) && Math.abs(x - px) <= reach && Math.abs(y - py) <= reach) sealed[i] = 1;
+    }
+  }
+  const dry = unreachedLakes(h, W, H, heads, hy.lakes, sealed);
+  if (dry.length) {
+    for (const k of dry)
+      for (const i of hy.lakes[k].tiles)
+        if (hy.water[i] === 2 && !ctx?.locked?.mask[i]) {
+          keep[i] = 0;
+          hy.water[i] = 0;
+        }
+    fillDryHollows(h, W, H, keep);
+    const gone = new Set(dry);
+    hy.lakes = hy.lakes.filter((_, k) => !gone.has(k));
+  }
+  // broad basins whose spill level is a wide flat (a sea's shelf) get a winding outlet channel a
+  // level below it, so their water leaves as a river does instead of a sheet over the flat, which
+  // takes days to settle; the channel is as wide as the map's flow needs
+  const channels = new Uint8Array(N);
+  for (let i = 0; i < N; i++) channels[i] = hy.water[i] === 1 || ctx?.locked?.mask[i] ? 1 : 0;
+  carveOutlets(h, W, H, channels, hash32(seed, "outlets", attempt), Math.max(3, Math.min(9, Math.round(0.35 * hy.flowTotal)) | 1));
+  // a sea's way out as wide as its water needs, so it settles within the four days (the rivers'
+  // heads, the kept lakes and the locks stay as they are)
+  {
+    const heads = new Uint8Array(N);
+    for (const r of hy.rivers) {
+      const [px, py] = "spring" in r.params.entry ? r.params.entry.spring : r.params.path[0];
+      const cx = Math.round(px);
+      const cy = Math.round(py);
+      for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) if (cx + dx >= 0 && cy + dy >= 0 && cx + dx < W && cy + dy < H) heads[(cy + dy) * W + cx + dx] = 1;
+    }
+    for (let i = 0; i < N; i++) if (ctx?.locked?.mask[i] || hy.water[i] === 2) heads[i] = 1;
+    widenOutlets(h, W, H, heads, hash32(seed, "widen", attempt), hy.flowTotal, hy.lakes.map((l) => l.tiles));
   }
   const hLand = h.slice();
   const firstLook = Math.round(performance.now() - t0);

@@ -45,6 +45,32 @@ generator **0.7.0**; share links made with 0.6.x open with the note that the map
   `riseSpots`); the resources through the shared baseline (D167–D170).
 - **Intentions** (`gen/intentions.ts`): checked on the finished map, a start intention re-steered
   once (D138).
+- **Water that settles and sources that start rivers.** The batches found three ways the processes'
+  water failed the checks, each fixed at its cause:
+  - a sea rose for days: a basin starts full to its spill level (the canonical settle), then its
+    water rises until its outlet passes the flow coming in, a whole level where the outlet is a
+    river's width. Over a sea's area that took past the settle's four days (Islands 256² seed 1: 6,144
+    ticks). A sea's way out to the map edge is now as wide as its water needs, 1.6 tiles per block a
+    second of flow, on the water's own route (`widenOutlets`): that sea rises a third of a level and
+    settles after 2,432 ticks. Islands at 256²: first attempts 1 in 8 before, 5 in 12 now; a map in
+    about 15 s instead of 67. A broad basin whose spill level is a wide flat also gets a winding
+    outlet a level below it (`carveOutlets`);
+  - a lake the land no longer led its river into (the land changed after the hydrology found it)
+    filled only by seeping over a bank, for days: such a lake is filled as the dry hollows are. A
+    river's mouth on the map edge holds its sources and is not an outlet when this is judged (it
+    once took a whole sea for unreached);
+  - after the one settle, a spring-fed river whose spring another source's water reaches leaves the
+    map (its valley stays, dry), and a badwater hollow that is reached is planned again (D171).
+  Water still changing after the settle's four days fails the attempt at once and the next attempt
+  draws a new genome (it is the field's), and a source inside a flow fails before the objects.
+  Tried and dropped (no better in 20-seed batches): raising a lake's shore where a river ran beside
+  it, and keeping a river's bed at the lake's outlet level along its shore.
+- **Badwater like the official maps** (merged from `feature/badwater-source`, D200): as many
+  hollows as the official budget's sources for the size, each as strong; the start is kept beyond
+  the badwater distance from their water and soil where it can be, and hollows that still reach
+  within it are planned again from the start as it is.
+- **Progress while a map is made**: the page shows the stage of the attempt under way and a first
+  look at its land before the water is settled.
 - **Nothing is stamped**: no dam-site ridge, no landform, no terrace ring, no plateau. The old
   planners are gone (their exports that other branches use are kept, see below).
 
