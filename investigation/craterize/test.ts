@@ -107,6 +107,36 @@ check('Ordinary rays fade before map edges; huge impacts may reach them',()=>{
  const huge=impact(base,{...settings,size:100,rays:true},intent),noHuge=impact(base,{...settings,size:100,rays:false},intent);
  assert.ok(huge.map.heights.some((h,i)=>(i%128===0||i%128===127||i<128||i>=127*128)&&h!==noHuge.map.heights[i]));
 });
+let rayEvidence:Record<string,unknown>={};
+check('Heavy rays make a raised starburst and pit chains; Light rays stay subtle',()=>{
+ const ground=fixture('plain',256),hit={origin:128*256+128},s={...settings,power:97,size:104,centre:'ring' as const,seed:7};
+ const strength=['heavy','light'].map(debris=>{
+  const rays=impact(ground,{...s,debris:debris as Settings['debris'],rays:true},hit);
+  const no=impact(ground,{...s,debris:debris as Settings['debris'],rays:false},hit);
+  let raised=0,volume=0,multiLevel=0,pits=0,outerRaised=0;const sectors=new Array<number>(10).fill(0);
+  for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+   const i=y*256+x,delta=rays.map.heights[i]-no.map.heights[i],d=Math.hypot(x-128,y-128);
+   if(d<55){assert.equal(delta,0,'Rays must leave the accepted crater walls and centre untouched');continue;}
+   if(delta>0){
+    raised++;volume+=delta;if(delta>=2)multiLevel++;if(d>80)outerRaised++;
+    const theta=(Math.atan2(y-128,x-128)+Math.PI*2+.1*Math.PI)%(Math.PI*2);
+    sectors[Math.floor(theta/(Math.PI*.2))]++;
+   }
+   if(rays.map.heights[i]<ground.heights[i])pits++;
+  }
+  const op=operation(ground,rays.map,rays.settings,hit,{settled:true,ticks:0});
+  assert.deepEqual(applyOperation(ground,JSON.parse(JSON.stringify(op))),rays.map);
+  assert.deepEqual(applyOperation(rays.map,op,true),ground);
+  return {raised,volume,multiLevel,pits,outerRaised,sectors};
+ });
+ const [heavy,light]=strength;
+ assert.ok(heavy.raised>light.raised*3&&heavy.volume>light.volume*4);
+ assert.ok(heavy.multiLevel>150&&heavy.outerRaised>300,'Heavy rays must retain visible relief far outside the rim');
+ assert.ok(heavy.pits>light.pits*2&&heavy.pits>200,'Heavy must expose visible chains of secondary pits');
+ assert.ok(heavy.sectors.every(n=>n>60),'Every arm must contribute to the starburst');
+ assert.equal(light.multiLevel,0,'Light rays keep one-level relief');
+ rayEvidence={heavy,light};
+});
 check('Blast erases central trees and flattens dead trees radially',()=>{
  assert.ok(p.stats.erased>0&&p.stats.flattened>0);
  for(const f of after.fallen){const e=after.entities.find(e=>e.id===f.id)!;assert.deepEqual(e.components.LivingNaturalResource,{IsDead:true});
@@ -152,5 +182,5 @@ check('Existing isolated water is conserved apart from simulation drainage/evapo
 const big=fixture('plain',256),times:number[]=[];
 for(let k=0;k<8;k++){const t=performance.now();impact(big,{...settings,power:95,rays:true},{origin:128*256+128});times.push(performance.now()-t);}
 mkdirSync('captures',{recursive:true});
-writeFileSync('captures/checks.json',JSON.stringify({passed,river:riverEvidence,model256Ms:times},null,2)+'\n');
-console.log(JSON.stringify({river:riverEvidence,model256Ms:times}));
+writeFileSync('captures/checks.json',JSON.stringify({passed,river:riverEvidence,rays:rayEvidence,model256Ms:times},null,2)+'\n');
+console.log(JSON.stringify({river:riverEvidence,rays:rayEvidence,model256Ms:times}));

@@ -69,7 +69,7 @@ function rayWidth(ray:Ray,t:number):number {
     (.8+.2*Math.sin(t*19+ray.phase));
 }
 export interface Anatomy {
-  x:number;y:number;radius:number;a:number;b:number;angle:number;glance:number;diameter:number;
+  x:number;y:number;W:number;H:number;edgeInset:number;radius:number;a:number;b:number;angle:number;glance:number;diameter:number;
   depth:number;rim:number;datum:number;floor:number;centre:Settings['centre'];rays:Ray[];
 }
 export function anatomy(m:CraterMap,s:Settings,intent:Intent):Anatomy {
@@ -87,53 +87,63 @@ export function anatomy(m:CraterMap,s:Settings,intent:Intent):Anatomy {
   }
   samples.sort((a,b)=>a-b);
   const datum=samples.length?samples[Math.floor(samples.length/2)]:m.heights[intent.origin],floor=Math.max(0,datum-depth);
-  const rays:Ray[]=[];
+  const rays:Ray[]=[],heavy=s.debris==='heavy',edgeInset=diameter<Math.min(m.W,m.H)*.65?Math.max(8,Math.min(m.W,m.H)*.0625):0;
   if(s.rays)for(let k=0;k<10;k++){
     const t=angle+(k/10*Math.PI*2)+(hash(s.seed,k)-.5)*.18;
     const down=(1+Math.cos(t-angle))*.5;
-    const dx=Math.cos(t),dy=Math.sin(t),width=1.7+radius*.11;
+    const dx=Math.cos(t),dy=Math.sin(t),baseWidth=1.7+radius*.11,width=baseWidth*(heavy?1.65:1);
     const start=1.12/Math.hypot(Math.cos(t-angle)/a,Math.sin(t-angle)/b);
     let length=start+radius*(1.15+hash(s.seed,k+30)*1.3)*(1+glance*down*.5);
     // Leave breathing room at the map boundary, except for map-scale impacts.
-    if(diameter<Math.min(m.W,m.H)*.65){
-      const margin=Math.max(8,Math.min(m.W,m.H)*.08)+width*2;
+    if(edgeInset){
+      const margin=heavy?edgeInset:Math.max(8,Math.min(m.W,m.H)*.08)+width*2;
       const edge=Math.min(dx>0?(m.W-1-margin-x)/dx:dx<0?(margin-x)/dx:Infinity,
         dy>0?(m.H-1-margin-y)/dy:dy<0?(margin-y)/dy:Infinity);
       length=Math.min(length,edge);
     }
     if(length<start+4)continue;
-    const ray:Ray={dx,dy,start,length,width,bend:width*(.5+hash(s.seed,k+60)),phase:hash(s.seed,k+90)*Math.PI*2,seed:s.seed+k*101,pits:[]};
+    const ray:Ray={dx,dy,start,length,width,bend:baseWidth*(.5+hash(s.seed,k+60))*(heavy?.8:1),phase:hash(s.seed,k+90)*Math.PI*2,seed:s.seed+k*101,pits:[]};
     for(let d=start+3,j=0;d<length*.94;j++){
       const f=(d-start)/(length-start),offset=rayBend(ray,f)+(hash(ray.seed,j+200)-.5)*rayWidth(ray,f)*1.6;
-      ray.pits.push({x:x+dx*d-dy*offset,y:y+dy*d+dx*offset,r:(.8+hash(ray.seed,j+300)*1.1)*(1-f*.45)});
-      d+=Math.max(4,radius*.15)*(1+hash(ray.seed,j+400));
+      ray.pits.push({x:x+dx*d-dy*offset,y:y+dy*d+dx*offset,r:(.8+hash(ray.seed,j+300)*1.1)*(heavy?1.55:1)*(1-f*.45)});
+      d+=Math.max(4,radius*(heavy?.12:.15))*(1+hash(ray.seed,j+400));
     }rays.push(ray);
   }
-  return {x,y,radius,a,b,angle,glance,diameter,depth,rim,datum,floor,centre:s.centre==='auto'?autoCentre(diameter):s.centre,rays};
+  return {x,y,W:m.W,H:m.H,edgeInset,radius,a,b,angle,glance,diameter,depth,rim,datum,floor,centre:s.centre==='auto'?autoCentre(diameter):s.centre,rays};
 }
-export interface Field {r:number;theta:number;down:number;ray:boolean;secondary:number}
+export interface Field {r:number;theta:number;down:number;ray:boolean;rayHeight:number;secondary:number}
 export function field(a:Anatomy,s:Settings,x:number,y:number):Field {
   const dx=x-a.x,dy=y-a.y,c=Math.cos(a.angle),sn=Math.sin(a.angle),u=(dx*c+dy*sn)/a.a,v=(-dx*sn+dy*c)/a.b;
   const theta=Math.atan2(v,u),phase=hash(s.seed,71)*Math.PI*2;
   const edge=1+.035*Math.sin(theta*3+phase)+.022*Math.sin(theta*5-phase*.6);
   const r=Math.hypot(u,v)/edge,down=(1+Math.cos(theta))*.5;
-  let ray=false,secondary=0;
+  const heavy=s.debris==='heavy',edgeFade=heavy&&a.edgeInset?smooth((Math.min(x,y,a.W-1-x,a.H-1-y)-a.edgeInset)/12):1;
+  let rayHeight=0,secondary=0;
   if(s.rays&&r>1.15)for(const rayInfo of a.rays){
     const along=dx*rayInfo.dx+dy*rayInfo.dy,cross=-dx*rayInfo.dy+dy*rayInfo.dx;
     if(along<rayInfo.start||along>=rayInfo.length||Math.abs(cross)>rayInfo.width*4)continue;
     const t=(along-rayInfo.start)/(rayInfo.length-rayInfo.start),offset=cross-rayBend(rayInfo,t),width=rayWidth(rayInfo,t);
     if(Math.abs(offset)<width){
       // Uneven lobes, soft ragged edges and dwindling coverage survive integer-height quantization.
-      const lobes=smooth((Math.sin(t*25+rayInfo.phase)+.65)/1.25);
-      const density=smooth(1-Math.abs(offset)/width)*(.12+.88*lobes)*(1-smooth((t-.2)/.8));
-      if(density>.18+hash(rayInfo.seed,x+Math.imul(y,65537))*.66)ray=true;
+      const feather=smooth(1-Math.abs(offset)/width),grain=hash(rayInfo.seed,x+Math.imul(y,65537));
+      if(heavy){
+        // A coherent raised body remains readable at map scale; gaps and feathered margins stay irregular.
+        const wave=Math.sin(t*13+rayInfo.phase),lobes=smooth((wave+.8)/1.25),gaps=smooth((wave+.96)/.28);
+        const fade=1-smooth((t-.45)/.55);
+        const height=(1.2+1.25*s.power/100)*feather*(.7+.3*lobes)*gaps*fade*edgeFade;
+        rayHeight=Math.max(rayHeight,Math.floor(height+.3+grain*.4));
+      }else{
+        const lobes=smooth((Math.sin(t*25+rayInfo.phase)+.65)/1.25);
+        const density=feather*(.12+.88*lobes)*(1-smooth((t-.2)/.8));
+        if(density>.18+grain*.66)rayHeight=1;
+      }
     }
     for(const pit of rayInfo.pits){
       const dist=(x-pit.x)**2+(y-pit.y)**2;
-      if(dist<pit.r**2)secondary=Math.max(secondary,dist<pit.r**2*.35?2:1);
+      if(edgeFade>.5&&dist<pit.r**2)secondary=Math.max(secondary,dist<pit.r**2*.35?2:1);
     }
   }
-  return {r,theta,down,ray,secondary};
+  return {r,theta,down,ray:rayHeight>0,rayHeight,secondary};
 }
 /** A coherent crater field, quantized once to Timberborn levels. Not a shock-physics solver. */
 export class ImpactPlan {
@@ -176,7 +186,7 @@ export class ImpactPlan {
         const hummock=.8+.18*Math.sin(theta*5+phase+(r-1)*3)+.13*Math.sin(theta*3-phase);
         const skirt=(heavy?(2.1+a.depth*.36):.9)*Math.exp(-(r-1)*(heavy?2.15:7))*smooth((reach-r)/.4)*directional*hummock;
         target=h+Math.max(rim,skirt);
-        if(f.ray)target=Math.max(h+1,Math.round(target)+1);
+        if(f.ray)target=Math.max(h+f.rayHeight,Math.round(target)+f.rayHeight);
         if(f.secondary)target=h-f.secondary;
       }
       // Fixed-point boundary keeps rounding independent of harmless floating-point tails.

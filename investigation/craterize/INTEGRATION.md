@@ -49,8 +49,10 @@ time. The worker plans four terrain rows per yield.
 Keep the wall profiles separate: Steep concentrates the drop into a short
 cliff, while Terraced distributes it across four scarps and three broad benches.
 Bowl retains a rounded inner floor. Rays follow curved paths with varying width,
-broken lobes, tapering coverage and scattered secondary pits. Seeded coverage
-preserves the feathered shape at integer heights. Unless the diameter reaches
+broken lobes, tapering coverage and scattered secondary pits. Heavy uses wider
+raised bands (one to three extra levels) and larger, closer secondary pits to
+read as a starburst at map scale. Light keeps sparse one-level patches. Seeded
+coverage preserves the feathered shape at integer heights. Unless the diameter reaches
 65% of the shorter map side, ray lengths leave a margin before the map edges.
 
 Carve's hard horizontal bed is reused, frozen at map load. A supplied shared
