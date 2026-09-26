@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 process.chdir(fileURLToPath(new URL('.',import.meta.url)));
 mkdirSync('.cache',{recursive:true});
-writeFileSync('.cache/before-badwater.ts',execFileSync('git',['show','6b340ea:investigation/maplook2/water.ts'],{encoding:'utf8'}).replace('../../src/render3d/palette','../../../src/render3d/palette'));
+writeFileSync('.cache/before-badwater.ts',execFileSync('git',['show','35f3442:investigation/maplook2/water.ts'],{encoding:'utf8'}).replace('../../src/render3d/palette','../../../src/render3d/palette'));
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-vulkan']});
 const errors=[];
 try{
@@ -15,7 +15,9 @@ try{
   await page.goto('http://127.0.0.1:4197');await page.waitForFunction(()=>window.maplook2?.ready);
   const result=await page.evaluate(async()=>{
     const a=window.maplook2;a.freeze();const mat=a.high.waterMat;
-    const {highWater}=await import('/.cache/before-badwater.ts');
+    const {highWater,MIX_PALETTE:previousPalette}=await import('/.cache/before-badwater.ts');
+    const {MIX_PALETTE:currentPalette}=await import('/water.ts');
+    if(JSON.stringify(previousPalette)!==JSON.stringify(currentPalette))throw new Error('Accepted body or mixing palette changed');
     const before=highWater(a.effects.standard.clone());
     before.uniforms={...mat.uniforms,mlBad:before.uniforms.mlBad,mlMix:before.uniforms.mlMix,mlBadTrough:before.uniforms.mlBadTrough,mlBadStreak:before.uniforms.mlBadStreak};
     function bed(depth,contamination,poisoned=contamination){
@@ -42,6 +44,15 @@ try{
     const h=bed(1.25,1,0);
     const oldAbove=stats(render(before,h,1.22,false)),oldLow=stats(render(before,h,.18,false));
     const newAbove=stats(render(mat,h)),newLow=stats(render(mat,h,.18));
+    function glintEnergy(material){
+      const dull=material.clone();dull.uniforms=material.uniforms;
+      if(!dull.fragmentShader.includes('glint *= lit*'))throw new Error('Glint probe bridge changed');
+      dull.fragmentShader=dull.fragmentShader.replace('glint *= lit*','glint *= 0.0*lit*');
+      const lit=render(material,h),off=render(dull,h);let energy=0;
+      for(let i=0;i<lit.data.length;i++)if(i%4!==3)energy+=Math.abs(lit.data[i]-off.data[i]);
+      dull.dispose();return energy/(lit.w*lit.h*3);
+    }
+    const glints={before:glintEnergy(before),after:glintEnergy(mat)};
     const cleanH=bed(1.25,0),cleanLow=stats(render(mat,cleanH,.18));
     const dryH=bed(0,0),dryGround=stats(render(mat,dryH));
     // A controlled bed brightness delta measures actual alpha transmission.
@@ -64,7 +75,7 @@ try{
       for(let i=0;i<b.data.length;i++){const d=Math.abs(b.data[i]-c.data[i]);if(d)changed++;maxDelta=Math.max(maxDelta,d);}cleanParity.push({name,channels:b.data.length,changed,maxDelta});
     }
     before.dispose();edge.dispose();
-    return {baseline:'6b340ea',cleanParity,dryGround,opaqueBody,reflection:{before:{above:oldAbove,grazing:oldLow},after:{above:newAbove,grazing:newLow},cleanGrazing:cleanLow},transmissionProfile,edgeProbe:'shore=0.05, with foam excluded to isolate water transmission',poisonedBed:{hidden:hiddenBed,visible:visibleBed}};
+    return {baseline:'35f3442',bodyPaletteUnchanged:true,glints,cleanParity,dryGround,opaqueBody,reflection:{before:{above:oldAbove,grazing:oldLow},after:{above:newAbove,grazing:newLow},cleanGrazing:cleanLow},transmissionProfile,edgeProbe:'shore=0.05, with foam excluded to isolate water transmission',poisonedBed:{hidden:hiddenBed,visible:visibleBed}};
   });
   result.errors=errors;writeFileSync('captures/badwater-check.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2));
   if(errors.length)throw new Error(errors.join('\n'));
@@ -73,11 +84,12 @@ try{
   if(result.cleanParity.some(p=>p.name==='25% mixing anchor'?p.maxDelta>1:p.changed))throw new Error('Clean water or mixing anchor changed');
   const r=result.reflection,newBlue=r.after.grazing.crest[2]-r.after.above.crest[2];
   if(newBlue>6)throw new Error('Cool low-angle reflection remains too strong');
-  // The latest request replaces low diffuse contrast with clear troughs/streaks.
-  // Sparse specular flecks keep their existing warm colour and duller strength.
+  if(result.glints.after>result.glints.before*.15)throw new Error('Badwater facets remain too glossy');
+  if(r.after.above.body.some((v,c)=>Math.abs(v-r.before.above.body[c])>1))throw new Error('Badwater body changed');
   const luminance=rgb=>rgb.reduce((s,v,c)=>s+v*[.299,.587,.114][c],0);
   if(luminance(result.opaqueBody.body)>=luminance(result.dryGround.body)||result.opaqueBody.greyContrast<=result.dryGround.greyContrast)throw new Error('Badwater must be darker and more contrasting than dry ground');
   if(result.transmissionProfile.some(p=>p.interior.some(v=>v>.04)))throw new Error('Badwater interior remains too transparent');
+  if(result.transmissionProfile.some(p=>p.interior.some((v,c)=>Math.abs(v-p.before[c])>.001)))throw new Error('Accepted opacity changed');
   if(result.transmissionProfile[0].edge.some(v=>v<.4)||result.transmissionProfile[2].edge.some(v=>v>.04))throw new Error('Transmission must be confined to very shallow edges');
   const p=result.poisonedBed;
   if(p.visible.body[0]-p.visible.body[1]<20||p.visible.crest[0]-p.hidden.crest[0]<5)throw new Error('Poisoned ground is not visible through warm badwater');

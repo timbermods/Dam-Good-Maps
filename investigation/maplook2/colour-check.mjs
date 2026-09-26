@@ -70,7 +70,7 @@ try{
     const box=[Math.ceil(Math.min(corner1.x,corner2.x))+2,Math.ceil(Math.min(corner1.y,corner2.y))+2,Math.floor(Math.max(corner1.x,corner2.x))-2,Math.floor(Math.max(corner1.y,corner2.y))-2];
     const waterfallUnchanged=compare(renderWith(accepted),renderWith(material),box);
     accepted.dispose();
-    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,badwaterTargets:{typical:[110,52,49],trough:[94,46,43],streak:[154,90,78]},inputs:Object.fromEntries([...keys,'mlBad','mlMix','mlBadTrough','mlBadStreak'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
+    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,badwaterTargets:{typical:[110,52,49],trough:[94,46,43],streak:[124,69,56]},inputs:Object.fromEntries([...keys,'mlBad','mlMix','mlBadTrough','mlBadStreak'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
   });
   result.errors=errors;
   // Clean calibration is unchanged; the latest badwater request now supplies

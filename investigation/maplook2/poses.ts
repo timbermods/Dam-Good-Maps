@@ -2,6 +2,10 @@ import { surfaceWater, type MapView } from '../../src/render3d/model';
 import type { ViewState } from '../../src/render3d/renderer';
 
 export function pose(view: MapView, kind: string): { camera: Partial<ViewState>; found: boolean; tile?: number } {
+  if(kind==='badwater-top') {
+    const p=pose(view,'badwater');
+    return {...p,camera:{...p.camera,mode:'top',distance:34}};
+  }
   const { W, H, heights, entities: e } = view;
   if (kind === 'overview') return { found: true, camera: { mode: 'orbit', target: [W/2, 7, -H/2], distance: Math.max(W,H)*1.9, yaw: -0.55, pitch: 0.91 } };
   const water = surfaceWater(W,H,view.water);

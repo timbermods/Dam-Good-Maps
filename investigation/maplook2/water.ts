@@ -11,7 +11,7 @@ export const CLEAN_PALETTE = {
 // Crimson body; the poisoned bed contributes only at very shallow edges.
 export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [107,51,49] } as const;
 // Keep the existing swirling texture and compensate its contrast for transmission.
-export const BAD_DETAIL = { mlBadTrough: [-21,-8,-7], mlBadStreak: [37,33,26] } as const;
+export const BAD_DETAIL = { mlBadTrough: [-21,-8,-7], mlBadStreak: [12,15,5] } as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
@@ -81,10 +81,11 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   // The supplied warm mixing sample anchors a mostly-clean (25%) concentration.
   vec3 cleanBody=body;
   vec3 mixedBody=mlMix+(body-mlBody)*0.25;
-  vec3 badBody=mlBad*(1.0-deep*0.12)+vec3(0.012,0.008,0.006)*grazing;
+  vec3 badBody=mlBad*(1.0-deep*0.12)+vec3(0.0012,0.0008,0.0006)*grazing;
   body=contamination<=0.25 ? mix(body,mixedBody,contamination/0.25) : mix(mixedBody,badBody,(contamination-0.25)/0.75);
   // Preserve the same crest/fleck field on both sides of the front.
-  vec3 badCrest=vec3(0.035,0.023,0.018)+vec3(0.008,0.006,0.004)*low;
+  vec3 badCrest=mix(vec3(0.035,0.023,0.018)+vec3(0.008,0.006,0.004)*low,
+    vec3(0.009,0.007,0.004)+vec3(0.0008,0.0006,0.0004)*low,smoothstep(0.25,1.0,contamination));
   streakColour=body+mix(streakColour-cleanBody,badCrest,contamination);
   vec2 velocity = (texture2D(mlFlow,g/mlFlowSize).rg*255.0-128.0)/63.5;
   float speed = smoothstep(0.02,1.2,length(velocity));
@@ -120,6 +121,9 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   // Keep the facet positions and motion, but make polluted water duller
   // even in greyscale. Its highlights catch warm light, not a cool sky lobe.
   glint *= mix(1.0,0.35,contamination);
+  // Matte badwater: retain rare dull facets, never a pink glossy highlight.
+  // Fade above the mostly-clean anchor; clean reflection remains untouched.
+  glint *= mix(1.0,0.08,smoothstep(0.25,1.0,contamination));
   colour = mix(colour, mix(vec3(0.97,0.985,1.0),vec3(0.78,0.67,0.56),contamination), glint);
   // Retain Standard's own slow glowing badwater bubbles as a distinct cue.
   if(contamination>0.01) {
