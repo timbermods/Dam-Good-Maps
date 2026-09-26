@@ -31,6 +31,9 @@ Proposals only. Nothing here changes the plans, the milestone run or the checks 
   the most different from the model, or any he chooses.
 - **Machine etiquette.** A full batch waits until no heavy process of another session runs, as it does
   now, and reports its time in the summary.
+- **Where launches run.** A Code-tab session cannot switch the game's mods (its shell sees a private copy of
+  the registry), so a milestone run launches with the installed mods (`--keep-mods`) and checks the settings
+  from outside afterwards. A batch of the unmodified game runs from Kyler's own terminal.
 
 ## 3. How results reach the project's records
 
@@ -38,6 +41,10 @@ Proposals only. Nothing here changes the plans, the milestone run or the checks 
   **pass (probe)** or **fail (probe)** with the date, the run id and the numbers, in the log's own words.
   A person applies it (the log stays hand-edited). Checks that need building, walking or the editor stay
   pending until the bot colony (§5) or Kyler plays them.
+- **From the first batch** (RESULTS.md), the proposed statuses: A1, A2, A5, B1, B4, F2a, F2b, D1, D2, M8-1a pass;
+  B2, B3, D5, M8-1c fail, each with its cause; F1, C-gorge, M6-1a and M6-1b pass in their measured parts; E4 is
+  recorded. The failures become issues: the M8 export of imported caves, the load transient that kills plants, the
+  bank deaths after a drought, the M7 spillway estimate.
 - **Map-level checks as permanent tests.** The generic checks (loads cleanly, every object in place,
   stored water holds within 0.1, terrain kept) run on each milestone's files. Their thresholds become
   part of PLAN §15 once a few runs agree.

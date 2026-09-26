@@ -5,7 +5,7 @@ under forced weather, and records what the game does; a runner builds the job, l
 it, and compares the records with the project's models.
 
 - [REPORT.md](REPORT.md): what was built, the choices made and why.
-- RESULTS.md: the first real batch (not run yet).
+- [RESULTS.md](RESULTS.md): the first real batch.
 - [INTEGRATION.md](INTEGRATION.md): proposals for the repository and the milestone run.
 
 ## Run it

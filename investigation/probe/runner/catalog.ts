@@ -208,7 +208,7 @@ export function catalog(extraMaps: string[] = []): GameDef[] {
 
   // M5
   const lip = (m: MapInfo): [number, number][] => [55, 60, 64, 69, 74].map((x) => [x, 118] as [number, number]).filter(([x, y]) => x < m.W && y < m.H);
-  const fallPose = (m: MapInfo): Pose[] => [{ id: 'waterfall', kind: 'look', target: at(m, 64, 118), yaw: 0, pitch: deg(25), distance: 40, fovY: 40, width: 1280, height: 800 }];
+  const fallPose = (m: MapInfo): Pose[] => [{ id: 'waterfall', kind: 'look', target: at(m, 64, 118), yaw: Math.PI, pitch: deg(25), distance: 40, fovY: 40, width: 1280, height: 800 }];
   for (const [s, id] of [['S2', 'm5-f1-s2'], ['S8', 'm5-f1-s8']] as const)
     games.push({
       id, title: `M5 · River Valley (4242) F1 waterfall ${s}`, group: 'M5', bytes: repoFile(`out/m5/River Valley (4242) F1 waterfall ${s}.timber`), faction: 'Folktails', mode: 'Normal',

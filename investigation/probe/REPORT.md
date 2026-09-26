@@ -1,13 +1,31 @@
 # DGM Probe: report
 
-**Status, 2026-09-25:** built and tested without the game (the runner's tests, a stand-in game for the
-watchdog, the comparisons fed with the model's own output), then three smoke runs of the M8 preview map, each
-launched after Kyler's yes. The third, with his installed mods (`--keep-mods`), is the clean one: unattended
-from launch to quit, every check passed, and his settings, read from outside afterwards, matched his backup
-but for Unity's own per-launch values. The first two loaded his mods too: the runner's mod switches could
-not reach the game from the Code tab's shell (decision 8). The full batch has not run yet.
-[RESULTS.md](RESULTS.md) follows it.
+DGM Probe plays our maps in Timberborn with no one at the keyboard. A mod starts each map as a new game, forces the
+weather, runs time at 99×, records water, soil, plants, sources and objects inside the game's tick, and takes
+screenshots at fixed poses. A runner builds the job from the project's lists, launches the game through Steam,
+watches it, and compares the records with the files, the milestone numbers and the cycle model.
 
+## Status, 2026-09-25
+
+- **The first batch ran:** 42 maps in one launch, 34 minutes, unattended from launch to quit, with Kyler's installed
+  mods. 171 checks passed, 6 failed, 20 are not measurable without a colony, 1 recorded. [RESULTS.md](RESULTS.md) has
+  every result.
+- **The cycle model matches the game** at every calibration point, to the hour, and day by day within 1%.
+- **Findings:** the M8 export breaks the stored water of imported maps with caves; pre-filled maps kill a grove in
+  their first hours (a load transient); a short drought kills plants beside the badwater river; the M7 spillway's
+  estimate ignores the rivers that feed the lake. Terrain up to 21 loads and holds.
+- **Checked without the game too:** the runner's tests, a stand-in game for the watchdog, and the comparisons fed
+  with the model's own output.
+
+## What could not be automated, and why
+
+- **Building and walking** (A3, A4, C1–C3, D3, D4, E1–E3, M6-1c, the dam and stair parts of M6-1a/b). The probe does
+  not place buildings or direct beavers. The code shows what a scripted colony would take (INTEGRATION.md §5).
+- **Switching mods from the Code tab.** Its shell, sandboxed or not, sees a private copy of the registry, so the
+  runner's mod switches and restore never reached Steam-launched Timberborn. Runs use the installed mods
+  (Kyler's choice); from a normal terminal the runner can switch them and restore the settings exactly.
+- **A few game-side limits:** a screenshot moment lands within a few ticks of its time, not on the tick; a demolition
+  is replaced by deleting the objects (D5); plant death causes are read from the plant's state when found dead.
 ## Decisions
 
 Each open choice, what was chosen, and why.
