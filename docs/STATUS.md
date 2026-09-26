@@ -116,6 +116,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   proposals for their steps.
 - **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
 - **Mine sites and ruins** are live (`look-mine-ruins-done`, #42, D178).
+- **Badwater blending** is live (`look-badwater-done`, #41, D177): tainted water turns warm red-brown through
+  the game's mixing grey, never purple; one shared water palette.
 - **The start and edge rules** are live (`start-edge-rules-done`, #44, released in PR #48, live check passed):
   no edge walls, start water over natural slopes, starting wood in logs, sources start rivers, heights up to 22.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
