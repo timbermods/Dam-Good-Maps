@@ -64,7 +64,7 @@ import { badwaterBudget } from "../resources/badwater";
 import { finalChecks, settlerView, type IntentionResult } from "./intentions";
 import { toTimberFile } from "./pack";
 import { nearStartTargets, planResources } from "./resources";
-import { RUIN_HEIGHT_SHARES } from "./calibrated";
+import { DROUGHT, REACH_MIN, RESERVE, reservoirNeeded, RUIN_HEIGHT_SHARES } from "./calibrated";
 import { ruinColumns } from "../resources/baseline";
 import { tilesToRuns } from "../math/grid";
 import { obstacleTiles, type ObstaclePlan } from "../features/setpieces/obstaclePayoff";
@@ -206,7 +206,7 @@ export function generate(specIn: MapSpec, opts: GenerateOptions = {}): GenerateR
     if (!land || !last?.replannable || replans >= REPLANS || land.settles >= SETTLE_BUDGET) {
       opts.onProgress?.({ attempt, stage: "land" });
       const g = drawGenome(specIn.theme, seed, W, H, genomes, { vt: specIn.settings.terrain.verticality, intentions: opts.intentions, ...(opts.variety !== undefined ? { variety: opts.variety } : {}) });
-      leanGenome(g, specIn.settings, W, H, seed, genomes);
+      leanGenome(g, specIn.settings, W, H, seed, genomes, specIn.designedFor);
       genomes++;
       replans = 0;
       const F = makeField(g, seed, W, H);
@@ -559,11 +559,19 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
     };
   };
   if (!hy.rivers.length) return fail("no rivers", null, false);
+  // the Rivers setting's count, when the player set one: land that holds fewer is drawn again
+  // (not on the last attempt, whose map is kept when none passes)
+  if (g.hydro.exactInflows && hy.rivers.filter((r) => "edge" in r.params.entry).length < g.hydro.inflows && attempt < (opts.maxAttempts ?? MAX_ATTEMPTS) - 1) return fail("rivers", null, false);
   // D171: every source starts a river; a hydrology that puts one inside a flow is planned again
   if (springsInFlow(hy, W)) return fail("source in a flow", null, true);
   const foot = footComponents(h, W, H, keep);
-  const minFoot = Math.round(Math.max(1200, 0.12 * N));
+  // the start's ground joins at least Buildable land's walkable land (PLAN §5.2), and more is
+  // preferred up to twice it
+  const reachMin = REACH_MIN[spec.settings.terrain.buildableLand];
+  const minFoot = Math.round(Math.max(Math.min(1200, reachMin), 0.12 * N));
+  const footWant = 2 * reachMin;
   const room = { small: 400, normal: 900, large: 1600 }[spec.settings.start.area];
+  const bench = { small: 79, normal: 113, large: 180 }[spec.settings.start.area];
   const avoidOf = (bad: Hazards | null) => {
     const a = new Uint8Array(N);
     for (let i = 0; i < N; i++) a[i] = (bad?.avoid[i] ?? 0) || ramps.tiles[i] || pool[i] || (protect?.[i] ?? 0) ? 1 : 0;
@@ -571,11 +579,13 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   };
   // ---- the settler: on the water the hydrology planned (its guess), or on the settled water
   const settlerOn = (D: ArrayLike<number>, C: ArrayLike<number>, M: ArrayLike<number>, salt: number, avoid: Uint8Array | null, weight = 1): StartPick | null => {
-    const kept = policy === "off" ? null : droughtStorage(waterModel(W, H, h, []), D, FIRST_DROUGHT_DAYS);
+    const model = waterModel(W, H, h, []);
+    const kept = policy === "off" ? null : droughtStorage(model, D, FIRST_DROUGHT_DAYS);
+    const storage = { kept: droughtStorage(model, D, DROUGHT[spec.designedFor].days), want: reservoirNeeded(spec.designedFor) * RESERVE[spec.settings.water.droughtReserve] };
     const view = g.intentions.length ? settlerView(h, W, H, hy, D, C, M) : null;
     const prefer = view ? (x: number, y: number, L: number, w: number) => weight * Math.max(...g.intentions.map((id) => view.prefer(id, x, y, L, w))) : null;
     const rng = stream(seed, "settler2", attempt, salt);
-    return pickStart(h, W, H, { depth: D, contamination: C, moisture: M }, hy, g.settler, rng, rule, { avoid, kept, drought: policy, prefer, foot, minFoot, moistWalk: { min: MOIST_WALK }, room });
+    return pickStart(h, W, H, { depth: D, contamination: C, moisture: M }, hy, g.settler, rng, rule, { avoid, kept, drought: policy, prefer, foot, minFoot, footWant, moistWalk: { min: MOIST_WALK }, room, bench, storage });
   };
   const levelStart = (p: StartPick) => {
     if (!p.levelled) return;
@@ -611,7 +621,7 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   const badAsk = {
     count: g.hazards.badwater === "none" ? 0 : Math.max(1, budget.sources),
     strength: budget.strength > 0 ? budget.strength : Math.round(Math.min(2, Math.max(1, g.hazards.ratio * 0.65 * hy.flowTotal)) * 100) / 100,
-    distance: spec.settings.hazards.badwaterDistance,
+    distance: Math.max(spec.settings.hazards.badwaterDistance, spec.settings.start.rules.badwaterWithin),
     keepOff: weir ? orMask(protect, pool) : protect,
   };
   const noBad: Hazards = { count: 0, features: [], avoid: new Uint8Array(N), heights: h };

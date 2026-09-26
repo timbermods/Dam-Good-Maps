@@ -18,7 +18,8 @@
 // is the prototype's for the same seed; `leanGenome` then applies the map's settings.
 
 import { stream, type Rng } from "../math/rng";
-import { THEME_PRESETS, VT_DEFAULT, type Settings, type ThemeId } from "../spec/mapspec";
+import { RESERVE, reservoirNeeded } from "../gen/calibrated";
+import { THEME_PRESETS, VT_DEFAULT, type Difficulty, type Settings, type ThemeId } from "../spec/mapspec";
 import { drawIntentions, nudgeFor, type IntentionId } from "./intentions";
 import { clamp } from "./num";
 
@@ -70,6 +71,13 @@ export interface Genome {
   terrace: { step: number; share: number; cell: number; jitter: number };
   hydro: {
     inflows: number;
+    /** The Rivers setting's count, which the hydrology finds exactly when it can (set by `leanGenome`). */
+    exactInflows?: boolean;
+    /** River style Straight: how far (0–1) each course is drawn toward the line between its ends
+     *  (set by `leanGenome`). */
+    straighten?: number;
+    /** River style Braided: the delta fans into one more mouth (set by `leanGenome`). */
+    braided?: boolean;
     springs: number;
     /** Total clean flow as a multiple of the size-aware official median. */
     flowMul: number;
@@ -639,7 +647,7 @@ function addSea(g: Genome, rng: Rng, W: number, H: number, attempt: number, area
 const LEVEL3 = { tight: -1, normal: 0, generous: 1 } as const;
 const STYLE_WANDER = { straight: 0.45, meandering: 1, braided: 1 } as const;
 const FLOW = { trickle: 0.55, normal: 1, strong: 1.5, lush: 2.4 } as const;
-const RESERVE = { scarce: 0.75, normal: 1, plenty: 1.35 } as const;
+
 const LAKE_STEP = { none: 0, few: 1, some: 2, many: 3 } as const;
 const FALL_STEP = { off: 0, few: 1, many: 2 } as const;
 const BADWATER = { off: 0, low: 0.6, normal: 1, high: 1.6 } as const;
@@ -654,20 +662,43 @@ const BADWATER = { off: 0, low: 0.6, normal: 1, high: 1.6 } as const;
  * reserve and Lakes and basins the lakes, Waterfalls the gathered drops, and Badwater its strength
  * (No badwater: none, D200). Draws it needs come from their own stream.
  */
-export function leanGenome(g: Genome, s: Settings, W: number, H: number, seed: number, attempt: number): void {
+export function leanGenome(g: Genome, s: Settings, W: number, H: number, seed: number, attempt: number, designedFor: Difficulty = "normal"): void {
   const p = THEME_PRESETS[g.theme];
   const rng = stream(seed, "lean", g.theme, attempt);
   // relief: the spread of the land's levels
   const dr = (s.terrain.relief - p.relief) / 100;
   if (dr < 0) {
-    g.top = Math.max(g.base + 5, g.top + 9 * dr);
+    g.top = Math.max(g.base + 5, g.top + 11 * dr);
     g.hyps.eq = clamp(g.hyps.eq + 0.5 * dr, 0, 0.9);
     g.noise.amp *= 1 + 0.6 * dr;
   } else if (dr > 0) {
     g.hyps.eq = clamp(g.hyps.eq + 0.6 * dr, 0, 0.9);
-    g.base = Math.max(0.2, g.base - 1.5 * dr);
+    g.base = Math.max(0.2, g.base - 2.5 * dr);
     g.noise.amp *= 1 + 0.5 * dr;
   }
+  // buildable land (flat share 0.40 / 0.52 / 0.60 and walkable land from the start, PLAN §5.2):
+  // Generous asks for quieter, a little lower land with more benches and ramps; Tight for rougher
+  // land whose benches end in cliffs, with fewer ramps
+  const bl = LEVEL3[s.terrain.buildableLand] - LEVEL3[p.buildableLand];
+  if (bl > 0) {
+    g.noise.amp *= 1 - 0.2 * bl;
+    g.regional.amp *= 1 - 0.15 * bl;
+    g.ramps = clamp(g.ramps + 0.3 * bl, 0.1, 1);
+    g.terrace.share = clamp(g.terrace.share + 0.2 * bl, 0, 1);
+    g.top = Math.max(g.base + 4, g.top - 1.5 * bl);
+  } else if (bl < 0) {
+    g.terrace.step = Math.max(g.terrace.step, 2);
+    g.noise.amp *= 1 - 0.15 * bl;
+    g.regional.amp *= 1 - 0.1 * bl;
+    g.ramps = clamp(g.ramps + 0.2 * bl, 0.1, 1);
+    g.terrace.share = clamp(g.terrace.share + 0.1 * bl, 0, 1);
+  }
+  // start area: a large one asks for broad level ground, a small one for less (the start's bench,
+  // radius 5 / 6 / 8, PLAN §5.7; nothing is levelled for it, D209)
+  if (s.start.area === "large") {
+    g.terrace.share = clamp(g.terrace.share + 0.15, 0, 1);
+    g.noise.amp *= 0.85;
+  } else if (s.start.area === "small") g.noise.amp *= 1.1;
   // the highest terrain, below high Verticality (a tall map's top is Verticality's)
   if (!g.tall) g.top = Math.min(g.top, s.terrain.highestTerrain);
   g.relief = g.top - g.base;
@@ -675,24 +706,25 @@ export function leanGenome(g: Genome, s: Settings, W: number, H: number, seed: n
   const dt = (s.terrain.terracing - p.terracing) / 100;
   g.terrace.share = clamp(g.terrace.share + 0.9 * dt, 0, 1);
   if (dt >= 0.25 && g.terrace.step < 2) g.terrace.step = 2;
-  // buildable land: quieter land, more ramps, fewer benches
-  const bl = LEVEL3[s.terrain.buildableLand] - LEVEL3[p.buildableLand];
-  if (bl) {
-    g.noise.amp *= 1 - 0.2 * bl;
-    g.regional.amp *= 1 - 0.15 * bl;
-    g.ramps = clamp(g.ramps + 0.3 * bl, 0.1, 1);
-    g.terrace.share = clamp(g.terrace.share - 0.12 * bl, 0, 1);
-  }
   // rivers entering on the edges (0: springs feed the water)
+  // (a count the player set is the count that enters, PLAN §5.3; the preset's leaves the genome's)
   if (s.water.rivers === 0) {
     g.hydro.inflows = 0;
     g.hydro.springs = Math.max(1, g.hydro.springs);
-  } else if (s.water.rivers !== p.rivers) g.hydro.inflows = clamp(g.hydro.inflows + s.water.rivers - p.rivers, 1, 4);
+  } else if (s.water.rivers !== p.rivers) {
+    g.hydro.inflows = s.water.rivers;
+    g.hydro.exactInflows = true;
+  }
   // river style: how far rivers wander, and braids
   g.wander *= STYLE_WANDER[s.water.riverStyle] / STYLE_WANDER[p.riverStyle];
+  // straight: the rivers keep close to the line from where they begin to where they leave, cutting
+  // through what stands in the way (meander amplitude at most 0.05·H, PLAN §5.3; never
+  // ruler-straight, D209: they still wander a little)
+  if (s.water.riverStyle === "straight" && p.riverStyle !== "straight") g.hydro.straighten = 0.85;
   if (s.water.riverStyle === "braided" && p.riverStyle !== "braided") {
     g.hydro.split = Math.max(g.hydro.split, 0.85);
-    g.hydro.delta = Math.max(g.hydro.delta, 0.85);
+    g.hydro.delta = 1;
+    g.hydro.braided = true;
     g.hydro.floor += 2;
   } else if (p.riverStyle === "braided" && s.water.riverStyle !== "braided") {
     g.hydro.split *= 0.4;
@@ -700,18 +732,29 @@ export function leanGenome(g: Genome, s: Settings, W: number, H: number, seed: n
   }
   // flow
   g.hydro.flowMul = Math.max(0.3, (g.hydro.flowMul * FLOW[s.water.riverFlow]) / FLOW[p.riverFlow]);
-  // drought reserve: room for lakes
-  g.hydro.lakeBudget = clamp((g.hydro.lakeBudget * RESERVE[s.water.droughtReserve]) / RESERVE[p.droughtReserve], 0.01, 0.5);
+  // drought reserve and the difficulty's drought: the stored water the start should have (the
+  // colony's need times the reserve, PLAN §5.3, §11.4) against the theme's own, as room for lakes
+  // and as basins more or fewer (the settler then prefers a start near the water they keep)
+  const storeRatio = (reservoirNeeded(designedFor) * RESERVE[s.water.droughtReserve]) / (reservoirNeeded("normal") * RESERVE[p.droughtReserve]);
+  g.hydro.lakeBudget = clamp(g.hydro.lakeBudget * (storeRatio > 1 ? Math.sqrt(storeRatio) : s.water.droughtReserve === "scarce" && p.droughtReserve !== "scarce" ? 0.8 : 1), 0.01, 0.5);
+  const moreBasins = storeRatio > 1 ? Math.round(1.3 * Math.log2(storeRatio)) : s.water.droughtReserve === "scarce" && p.droughtReserve !== "scarce" ? -1 : 0;
+  for (let k = 0; k < moreBasins; k++) g.parts.push(randomPart(rng, "basin", W, H, g.variety, 1 + (0.6 * g.vt) / 100));
+  for (let k = 0; k < -moreBasins; k++) {
+    const at = g.parts.findIndex((q) => q.kind === "basin" && q.shape !== "sea");
+    if (at >= 0) g.parts.splice(at, 1);
+  }
   // lakes and basins
   const dl = LAKE_STEP[s.water.lakes] - LAKE_STEP[p.lakes];
   if (s.water.lakes === "none") {
+    // (a river crossing a hollow leaves no lake: the lake budget cuts its outlet down to nothing)
     g.parts = g.parts.filter((q) => q.kind !== "basin" || q.shape === "sea");
     g.troughs = 0;
     g.lakeSprings = 0;
+    g.hydro.lakeBudget = 0.0005;
   } else if (dl > 0) {
-    for (let k = 0; k < 2 * dl; k++) g.parts.push(randomPart(rng, "basin", W, H, g.variety, 1 + (0.6 * g.vt) / 100));
-    g.troughs += 0.5 * dl;
-    g.lakeSprings = Math.min(1, g.lakeSprings + 0.25 * dl);
+    for (let k = 0; k < 4 * dl; k++) g.parts.push(randomPart(rng, "basin", W, H, g.variety, 1 + (0.6 * g.vt) / 100));
+    g.troughs += 1.2 * dl;
+    g.lakeSprings = Math.min(1, g.lakeSprings + 0.5 * dl);
     g.hydro.lakeBudget = clamp(g.hydro.lakeBudget * (1 + 0.3 * dl), 0.01, 0.5);
   } else if (dl < 0) {
     for (let k = 0; k < -2 * dl; k++) {

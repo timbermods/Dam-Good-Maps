@@ -379,7 +379,17 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
   // whose path hugs the map edge (its water would drain there) or is too short is passed over
   const owner = new Int32Array(N).fill(-1);
   const traced: { k: number; head: Head; cells: number[]; joins: number }[] = [];
-  const trace = (hd: Head): boolean => {
+  const drainDist = (i: number) => {
+    const x = i % W;
+    const y = (i - x) / W;
+    let d = Infinity;
+    if (!up.includes("west")) d = Math.min(d, x);
+    if (!up.includes("east")) d = Math.min(d, W - 1 - x);
+    if (!up.includes("south")) d = Math.min(d, y);
+    if (!up.includes("north")) d = Math.min(d, H - 1 - y);
+    return d;
+  };
+  const trace = (hd: Head, alongUp = false): boolean => {
     const k = heads.length;
     const cells: number[] = [];
     let c = hd.cell;
@@ -395,36 +405,49 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       cells.push(c);
       c = dr.rcv[c];
     }
-    if (cells.length < 12) return false;
+    if (cells.length < (alongUp ? 8 : 12)) return false;
     if (nearProtect && cells.some((i) => nearProtect[i] < 7)) return false;
-    for (let q = 10; q < cells.length - 10; q++) if (borderDist(cells[q]) < 4) return false;
+    // (the Rivers setting's relaxed search: a shorter path, and one along an upstream edge, which
+    // does not drain)
+    for (let q = 10; q < cells.length - 10; q++) if ((alongUp ? drainDist(cells[q]) : borderDist(cells[q])) < 4) return false;
     heads.push(hd);
     for (const i of cells) if (owner[i] < 0) owner[i] = k;
     traced.push({ k, head: hd, cells, joins });
     return true;
   };
-  // edge inflows: low points of the upstream edges with long paths inland
+  // edge inflows: low points of the upstream edges with long paths inland. When the player set the
+  // Rivers setting, that many rivers enter (PLAN §5.3): if the first search finds too few, shorter
+  // paths and closer heads are taken (a stream of its own, so other maps are as they were)
   if (g.hydro.inflows > 0) {
-    const cands: [number, number][] = [];
-    for (let i = 0; i < N; i++) {
-      if (!onUp(i) || protect?.[i]) continue;
-      const e = edgeOf(i, W, H)!;
-      const x = i % W;
-      const y = (i - x) / W;
-      const along = e === "west" || e === "east" ? y : x;
-      const span = e === "west" || e === "east" ? H : W;
-      if (along < 12 || along > span - 13) continue;
-      if (downLen[i] < 0.6 * side) continue;
-      cands.push([-E[i] + 0.012 * downLen[i] + 1.5 * rng.float(), i]);
-    }
-    cands.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
-    let n = 0;
-    for (const [, i] of cands) {
-      if (n >= g.hydro.inflows) break;
-      const x = i % W;
-      const y = (i - x) / W;
-      if (heads.some((hd) => Math.abs((hd.cell % W) - x) + Math.abs(Math.floor(hd.cell / W) - y) < 0.3 * side)) continue;
-      if (trace({ cell: i, kind: "edge", edge: edgeOf(i, W, H)!, flow: 0 })) n++;
+    const search = (minLen: number, apart: number, r: Rng, n0: number, relaxed: boolean): number => {
+      const cands: [number, number][] = [];
+      for (let i = 0; i < N; i++) {
+        if (!onUp(i) || protect?.[i]) continue;
+        const e = edgeOf(i, W, H)!;
+        const x = i % W;
+        const y = (i - x) / W;
+        const along = e === "west" || e === "east" ? y : x;
+        const span = e === "west" || e === "east" ? H : W;
+        if (along < 12 || along > span - 13) continue;
+        if (downLen[i] < minLen * side || (relaxed && owner[i] >= 0)) continue;
+        cands.push([-E[i] + 0.012 * downLen[i] + 1.5 * r.float(), i]);
+      }
+      cands.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+      let n = n0;
+      for (const [, i] of cands) {
+        if (n >= g.hydro.inflows) break;
+        const x = i % W;
+        const y = (i - x) / W;
+        if (heads.some((hd) => Math.abs((hd.cell % W) - x) + Math.abs(Math.floor(hd.cell / W) - y) < apart * side)) continue;
+        if (trace({ cell: i, kind: "edge", edge: edgeOf(i, W, H)!, flow: 0 }, relaxed)) n++;
+      }
+      return n;
+    };
+    let n = search(0.6, 0.3, rng, 0, false);
+    if (g.hydro.exactInflows) {
+      const more = stream(seed, "hydro-inflows", attempt);
+      if (n < g.hydro.inflows) n = search(0.4, 0.22, more, n, true);
+      if (n < g.hydro.inflows) n = search(0.25, 0.16, more, n, true);
     }
   }
   // springs: high inland ground with a long way down
@@ -549,6 +572,22 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       const lx = last % W;
       const ly = Math.floor(last / W);
       path.push([exitEdge === "west" ? -1 : exitEdge === "east" ? W : lx, exitEdge === "south" ? -1 : exitEdge === "north" ? H : ly]);
+    }
+    // River style Straight: the course drawn toward the line between its ends (a tributary's end
+    // is set on the river it joins below)
+    const pull = g.hydro.straighten ?? 0;
+    if (pull > 0 && path.length > 2) {
+      const [ax, ay] = path[0];
+      const [bx, by] = path[path.length - 1];
+      const L2 = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+      if (L2 > 0)
+        path = path.map(([px, py], k) => {
+          if (k === 0 || k === path.length - 1) return [px, py] as Point;
+          const t = Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / L2));
+          const lx = ax + t * (bx - ax);
+          const ly = ay + t * (by - ay);
+          return [Math.round((lx + (1 - pull) * (px - lx)) * 100) / 100, Math.round((ly + (1 - pull) * (py - ly)) * 100) / 100] as Point;
+        });
     }
     const wv = natural ? wanderOf(g, widthFor(hd.flow)) : null;
     if (wv) {
@@ -908,7 +947,8 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
     const s0 = Math.max(m.L * 0.55, m.L - (26 + 18 * rng.float()));
     const { p: p0 } = pointAt(m.path, s0);
     const end = m.path[m.path.length - 2];
-    const k = 1 + (rng.float() < 0.5 ? 1 : 0);
+    // (River style Braided: two or three more mouths, PLAN §5.3's 2–4 channels)
+    const k = 1 + (rng.float() < 0.5 ? 1 : 0) + (g.hydro.braided ? 1 : 0);
     const alongEdge = e === "west" || e === "east" ? 1 : 0;
     for (let a = 0; a < k; a++) {
       const sgn = a % 2 === 0 ? 1 : -1;

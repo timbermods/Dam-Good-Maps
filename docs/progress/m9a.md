@@ -1,5 +1,8 @@
 # M9a: terrain and water from processes
 
+> **Work in progress (paused 2026-09-26).** The branch is not complete; CI's heavy-tests job and
+> some quick tests are red until the next session's steps below. See "Next session" at the end.
+
 **Built** on branch `feature/m9a` from `dev` at f04674d, after Kyler approved design version 2
 (PLAN §20 D209). The generator grows every map from the processes of design version 2 (the genome,
 the field, the hydrology, the settler) instead of planning stamped features. Generated maps change:
@@ -143,3 +146,65 @@ The stale-tests rule (CLAUDE.md): each still passed or failed for a reason that 
 ## Parked for Kyler
 
 (See the final section of the PR.)
+
+## Next session (paused 2026-09-26, work in progress)
+
+### Kyler's answers (PLAN §20 D211), to build next
+
+- **Theme (Lake Basin's water):** the Theme experiment (water share, River Valley 0.12 against Lake
+  Basin 0.30) becomes information until M9b fixes Lake Basin's water share, as design version 2
+  planned. Now: River Valley 0.083, Lake Basin 0.147 at 96² (seeds 1–4).
+- **Start area:** a preference, never a stamped bench (D209). The setting leans the land toward
+  roomier or tighter benches (built: `leanGenome`, Large: +0.15 benched share and quieter noise;
+  Small: louder noise) and the settler prefers a matching bench (built: `bench` in `pickStart`).
+  To do: describe it as a preference in the panel ("prefer a roomy start" / "prefer a tight
+  start"), show the start's actual bench size on the map card, and make the Start area experiment
+  information (it measured 144 → 136 on seeds 1–4; one cluster of possible starts on most 96² maps).
+  The editor's Flatten, with its "the start fits here" hint, is how a player makes a bigger bench.
+
+### The settings experiments (ROADMAP M6), the heavy-tests job's failures
+
+The M9a generator no longer moved most settings' targets. Fixed in the WIP
+commit (generator, `leanGenome`, the settler, the hydrology, the badwater hollows):
+- Relief (leans stronger), Buildable land (Generous: quieter, a little lower, more benches and
+  ramps; Tight: benches ending in cliffs; the settler prefers ground that joins twice the walkable
+  land Buildable land asks for), Rivers (a set count is exact: a relaxed search, and land holding
+  fewer is drawn again), River style Straight (courses drawn toward their line, `straighten`) and
+  Braided (one more delta mouth; `edgeExits` now counts the water leaving by the edge, thin water
+  included, since delta channels are the land's, not features), Drought reserve (the reserve and
+  the difficulty's need lean basins in; the settler prefers stored water within 40 tiles), Lakes
+  (None: no lake budget; Many: more basins, troughs and spring lakes), Badwater distance and the
+  start rule (hollows aim at about the larger of the two), Water without stairs (the start aims at
+  0.45 × (rule − 5) tiles from its water), Verticality (experiment 10 → 90). The settler now weighs
+  the settings on the intentions' preference too, and picks among starts within 70% of the best.
+- Designed for's experiment now measures the start rule it still sets (badwater distance, Easy 30,
+  Hard 8; stale-test rule): the stored water it measured is information (#67, D209).
+- `minSeeds: 8` on the noisiest experiments (Verticality, Buildable land reach, Braided, Lakes).
+
+Still failing on seeds 1–4 at 96² (`npx tsx .scratch/settings-run.ts "" 1-4 96`, results in
+`.scratch/settings-ci.txt`):
+- Drought reserve 1189 → 624 (on 8 seeds it passed, 1100 → 1472): give it `minSeeds: 8` or
+  strengthen the lean;
+- Badwater (off → high) 0.55 (needs 0.6): passed before today's changes (0.88 on 8 seeds);
+- Berries near start 28 (needs 30): passed at 30 before;
+- Designed for (new target) 6.5 (needs 10): seed 2's hard map keeps its badwater 63 tiles off;
+- Start area and Theme: information per D211 (above).
+
+### Then, in order (hours are estimates)
+
+1. Settings experiments green, the two reshape tests (`tests/contract/reshape.test.ts`: Lake
+   Basin seed 13's geothermal beside a waterfall leaves an object floating; River Valley seed 13's
+   lake over a relic no longer plans) (2–3 h).
+2. Quick tests re-seeded for the final generator: `badwater.test` (Any seed 21: start.badwater at
+   10.5 against 15), `objects.test` (district and rise seeds), `validate.test`
+   (badwater_contained), and `look-mine-ruins.test`'s pinned sha256 (1–1.5 h).
+3. Full batches, all seven themes (Any included) at 96², 128², 192², 256², and the straightness
+   stats; `.scratch/run-batches.sh` (SIZES, SEEDS) runs them one at a time (3–4 h, machine).
+4. `npm run sheet` → `docs/sheets/m9a.png` (under 1 MB) and the Any measures (1 h).
+5. The Claude suite re-tune to at least 103/120 (`npx tsx investigation/claude/bin/reference.ts`),
+   each re-tuned case recorded here (4–6 h).
+6. Docs in step (EDITOR_PLAN, PLAN, ROADMAP, this log), e2e (determinism's timeout, Islands 256²
+   preview's 120 s), CI green (2–3 h).
+7. Tell the orchestrator the probe batch is ready (catalogue group M9a, 15 games, about 93 min);
+   its maps are rebuilt on the final generator first.
+

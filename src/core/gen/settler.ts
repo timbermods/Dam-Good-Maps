@@ -54,11 +54,21 @@ export interface SettlerOptions {
   /** Land joined by one-level steps, and the fewest tiles the start's ground must hold. */
   foot?: { lab: Int32Array; size: number[] } | null;
   minFoot?: number;
+  /** The land the start's ground should join (Buildable land's walkable land, twice its least):
+   *  more is preferred up to it. */
+  footWant?: number;
   /** Moist dry land within 20 tiles' walk, with the slopes the build would derive for a start
    *  here, must reach `min` tiles: food and wood grow there. */
   moistWalk?: { min: number } | null;
   /** The level ground a place should have round it (Start area: small, normal, large), in tiles. */
   room?: number;
+  /** The start's bench: tiles at its level within 8 tiles it should have (Start area: radius 5 /
+   *  6 / 8, PLAN §5.7). */
+  bench?: number;
+  /** Water kept through the difficulty's worst drought (depth per tile) and the stored water the
+   *  start should have within 40 tiles (the colony's need times the Drought reserve, PLAN §11.4):
+   *  places with more are preferred (#67: information the generator prefers, never a guard). */
+  storage?: { kept: ArrayLike<number>; want: number } | null;
 }
 
 /** Shore tiles: dry ground beside clean water 0.3+ deep whose surface a pump on that ground
@@ -269,7 +279,25 @@ export function pickStart(
   const sorted = Array.from(h).sort((a, b) => a - b);
   const medianLevel = sorted[N >> 1];
   const margin = Math.max(8, Math.round(Math.min(W, H) * 0.08));
+  // stored water within 40 tiles (a box of 81), from a summed-area table of what the drought keeps
+  let storeSum: Float64Array | null = null;
+  if (opts.storage && opts.storage.want > 0) {
+    storeSum = new Float64Array((W + 1) * (H + 1));
+    const k = opts.storage.kept;
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) storeSum[(y + 1) * (W + 1) + x + 1] = k[y * W + x] + storeSum[y * (W + 1) + x + 1] + storeSum[(y + 1) * (W + 1) + x] - storeSum[y * (W + 1) + x];
+  }
+  const storedNear = (x: number, y: number): number => {
+    if (!storeSum) return 0;
+    const x0 = Math.max(0, x - 40);
+    const y0 = Math.max(0, y - 40);
+    const x1 = Math.min(W - 1, x + 40) + 1;
+    const y1 = Math.min(H - 1, y + 40) + 1;
+    return storeSum[y1 * (W + 1) + x1] - storeSum[y0 * (W + 1) + x1] - storeSum[y1 * (W + 1) + x0] + storeSum[y0 * (W + 1) + x0];
+  };
   const roomWant = opts.room ?? 900;
+  const benchWant = opts.bench ?? 113;
+  const walkWant = Math.max(2, Math.min(9, 0.45 * (waterRule - 5)));
   const cands: { i: number; score: number; kind: string; o: Orientation; walk: number; levelled: boolean; droughtOk?: boolean; intent: number; sameLevel: boolean }[] = [];
   // first pass: level ground as it is; second pass (when the first finds nothing): a 5×5 within a
   // level of the center is levelled, as a player would level a spot for the district center
@@ -331,6 +359,8 @@ export function pickStart(
         const moistNear = boxSum(L, x - 14, y - 14, x + 14, y + 14);
         if (moistNear < (pass === 0 ? 160 : 110)) continue;
         const room = Math.min(1, regions.size[regions.labels[i]] / roomWant);
+        // the land the start's ground joins, against what Buildable land asks for (PLAN §5.2)
+        const footFit = opts.foot && opts.footWant ? Math.min(1, opts.foot.size[opts.foot.lab[i]] / opts.footWant) : 1;
         const kinds: [string, number][] = [
           ["lake", dLake[i] < 12 ? prefs[0] : 0],
           ["river", dLake[i] >= 12 ? prefs[1] * 0.8 : 0],
@@ -348,13 +378,31 @@ export function pickStart(
           }
         const intent = opts.prefer ? opts.prefer(x, y, L, w) : 0;
         const dry = droughtOk === undefined ? 1 : droughtOk ? 1.25 : 0.8;
-        const score = pref * (0.5 + 0.5 * room) * (0.6 + 0.4 * Math.min(1, moistNear / 500)) * dry + 0.8 * intent + 0.25 * rng.float();
+        // the Start area's bench: level ground at the start's own level within 8 tiles
+        let bench = 0;
+        for (let dy = -8; dy <= 8; dy++)
+          for (let dx = -8; dx <= 8; dx++) {
+            if (dx * dx + dy * dy > 64) continue;
+            const xx = x + dx;
+            const yy = y + dy;
+            if (xx >= 0 && yy >= 0 && xx < W && yy < H && h[yy * W + xx] === L) bench++;
+          }
+        // (Small asks for a small bench: a much larger one is a start area of another size)
+        const benchFit = Math.min(1, bench / benchWant) * (benchWant < 100 ? Math.min(1, (1.6 * benchWant) / Math.max(1, bench)) : 1);
+        // the water rule sets how far the start stands from its water, not only how far it may
+        // (Water without stairs, PLAN §5.6; D59)
+        const walkFit = 1 - Math.min(1, Math.abs(w - walkWant) / 5);
+        // the stored water the Drought reserve and the difficulty ask for (PLAN §5.3, §11.4)
+        const storeFit = storeSum ? Math.min(1, storedNear(x, y) / opts.storage!.want) : 1;
+        // the player's settings weigh on the intentions' preference too: they are asked for
+        const settingsFit = (0.3 + 0.7 * benchFit * benchFit) * (0.3 + 0.7 * walkFit) * (0.4 + 0.6 * storeFit) * (0.5 + 0.5 * footFit);
+        const score = (pref * (0.5 + 0.5 * room) * (0.6 + 0.4 * Math.min(1, moistNear / 500)) * dry + 0.8 * intent) * settingsFit + 0.25 * rng.float();
         cands.push({ i, score, kind, o, walk: w, levelled: uneven, droughtOk, intent, sameLevel });
       }
     }
   if (!cands.length) return bankStart(h, W, H, water, hydro, rng, margin, avoid);
   cands.sort((a, b) => b.score - a.score || a.i - b.i);
-  // one of the best few, far enough apart that the choice matters
+  // the best few, far enough apart that the choice matters
   const top: typeof cands = [];
   let tested = 0;
   for (const c of cands) {
@@ -375,14 +423,17 @@ export function pickStart(
     top.push(c);
   }
   if (!top.length) return bankStart(h, W, H, water, hydro, rng, margin, avoid);
-  const c = top[rng.int(0, top.length)];
+  // one of the best few, among those nearly as good as the best (the settings' preferences hold)
+  const good = top.filter((t) => t.score >= 0.7 * top[0].score);
+  const c = good[rng.int(0, good.length)];
   const x = c.i % W;
   const y = (c.i - x) / W;
   return { x, y, level: h[c.i], orientation: c.o, kind: c.kind, shoreWalk: c.walk, levelled: c.levelled, droughtOk: c.droughtOk, intent: c.intent };
 }
 
 /** The last resort, as the old generator did (D97): beside clean pumpable water, a 5×5 pad and a
- *  3-wide path to the shore, levelled one level above the water, on ground within two levels of it. */
+ *  3-wide path to the shore, levelled one level above the water, on ground within two levels of it,
+ *  where most ground round it stands at the pad's level. */
 function bankStart(
   h: Uint8Array,
   W: number,
@@ -418,7 +469,15 @@ function bankStart(
           if (wet[j] || Math.abs(h[j] - L) > 2) ok = false;
         }
       if (!ok) continue;
-      cands.push([rng.float() + 0.02 * water.moisture[c], c, i, L]);
+      // ground at the pad's level round it: the colony's first land (a pad on a ledge joins little)
+      let near = 0;
+      for (let dy = -8; dy <= 8; dy++)
+        for (let dx = -8; dx <= 8; dx++) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < W && yy < H && !wet[yy * W + xx] && h[yy * W + xx] === L) near++;
+        }
+      cands.push([rng.float() + 0.02 * water.moisture[c] + 1.5 * Math.min(1, near / 150), c, i, L]);
     }
   }
   if (!cands.length) return null;

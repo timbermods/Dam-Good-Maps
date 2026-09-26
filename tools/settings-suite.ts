@@ -29,6 +29,17 @@ export interface Experiment {
   expected?: (value: string, spec: MapSpec) => number;
   /** Decimal places in the report. */
   digits?: number;
+  /** At least this many seeds (M9a: where the processes' maps vary more from seed to seed than the
+   *  planned ones did, the test runs more of them; the threshold is the same). */
+  minSeeds?: number;
+}
+
+/** The seeds an experiment runs: the given ones, extended to its `minSeeds`. */
+export function seedsFor(e: Experiment, seeds: readonly number[]): number[] {
+  const out = seeds.slice();
+  let next = Math.max(0, ...out) + 1;
+  while (out.length < (e.minSeeds ?? 0)) out.push(next++);
+  return out;
 }
 
 const num = (v: string) => Number(v);
@@ -57,11 +68,12 @@ export const EXPERIMENTS: Experiment[] = [
     expected: (v) => num(v),
   },
   {
-    // M9a (D132): the land grows taller and sheerer as it rises
+    // M9a (D132): the land grows taller and sheerer as it rises (to its crazy vertical top)
+    minSeeds: 8,
     setting: "Verticality",
     target: "share of tiles beside a drop of 2+ levels (cliffs)",
     theme: "any",
-    values: ["10", "65"],
+    values: ["10", "90"],
     apply: (s, v) => (s.settings.terrain.verticality = num(v)),
     metric: (m) => m.cliffShare,
     expect: "up",
@@ -91,6 +103,7 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 3,
   },
   {
+    minSeeds: 8,
     setting: "Buildable land (reach)",
     target: "land walkable from the start: at least 750 / 1,300 / 2,500 tiles",
     theme: "riverValley",
@@ -122,6 +135,7 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 3,
   },
   {
+    minSeeds: 8,
     setting: "River style (braided)",
     target: "a braided river splits into 2–4 channels across a low plain: rivers leaving by the map edge",
     theme: "riverValley",
@@ -154,6 +168,7 @@ export const EXPERIMENTS: Experiment[] = [
     delta: 200,
   },
   {
+    minSeeds: 8,
     setting: "Lakes and basins",
     target: "natural basins of 20+ tiles: 0 / 0.5× / 1× / 2× the official median for the size",
     theme: "riverValley",
@@ -384,14 +399,18 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 1,
   },
   {
+    // (M9a: the stored water near the start this measured, Easy 86 × the reserve and Hard 1,174 ×
+    // it at 3 deep, became information the generator prefers, #67 and D209, and D111 took away the
+    // dam sites that were sized to it; Designed for still sets the start rules, D85)
     setting: "Designed for",
-    target: "stored water near the start (Easy needs 86 × the reserve, Hard 1,174 × it at 3 deep)",
+    target: "least distance from the start to badwater or contaminated soil (the start rule: Easy 30, Normal 15, Hard 8)",
     theme: "riverValley",
     values: ["easy", "hard"],
     apply: () => undefined,
-    metric: (m) => Math.max(m.bestDam, m.natural),
-    expect: "up",
-    delta: 300,
+    metric: (m) => (Number.isFinite(m.badwaterDistance) ? m.badwaterDistance : 200),
+    expect: "down",
+    delta: 10,
+    digits: 1,
   },
   {
     setting: "Theme",

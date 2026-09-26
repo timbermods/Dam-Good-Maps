@@ -8,7 +8,7 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { EXPERIMENTS, runExperiment } from "./settings-suite";
+import { EXPERIMENTS, runExperiment, seedsFor } from "./settings-suite";
 
 function arg(name: string, fallback: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -40,7 +40,7 @@ const rows: string[] = [
 let bad = 0;
 for (const e of picked) {
   const t0 = performance.now();
-  const o = runExperiment(e, seeds, size);
+  const o = runExperiment(e, seedsFor(e, seeds), size);
   const d = e.digits ?? 0;
   if (!o.ok) bad++;
   const row = `| ${e.setting} | ${e.values.join(" → ")} | ${e.target} | ${o.means[0].toFixed(d)} | ${o.means[1].toFixed(d)} | ${o.ok ? "moves" : "**does not move**"}: ${o.why}${o.failed ? `; ${o.failed} maps failed a check` : ""} |`;

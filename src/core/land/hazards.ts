@@ -40,7 +40,8 @@ export interface BadwaterAsk {
   count: number;
   /** Each source's strength, blocks per second over its 3×3. */
   strength: number;
-  /** No badwater within this many tiles of the start (the difficulty's, D85, D200). */
+  /** No badwater within this many tiles of the start: the larger of the Badwater distance setting
+   *  and the start rule's (D85, D200). */
   distance: number;
   /** Tiles no pit or ditch may take (a regeneration's constraints, PLAN §7.0). */
   keepOff?: Uint8Array | null;
@@ -106,17 +107,19 @@ export function planBadwater(h: Uint8Array, W: number, H: number, wetNow: ArrayL
   const startWater = new Uint8Array(N);
   for (let i = 0; i < N; i++) if (wet[i] && sd[i] <= 24) startWater[i] = 1;
   let hh = h;
-  // candidate pit centres: far enough from the start, off the water, on ground that stands above
-  // its surroundings (a hollow dug there keeps a rim two levels high)
+  // candidate pit centres: beyond the distance, off the water, on ground that stands above its
+  // surroundings (a hollow dug there keeps a rim two levels high). They aim at about the distance
+  // (its pit and the soil it soaks a few tiles further out): the Badwater distance setting is how
+  // far the colony's first badwater lies, and moves it (ROADMAP M6)
   const cands: [number, number][] = [];
   for (let y = 8; y < H - 8; y++)
     for (let x = 8; x < W - 8; x++) {
       const i = y * W + x;
-      if (sd[i] < D + 14 || dWet[i] < 9 || ask.keepOff?.[i]) continue;
+      if (sd[i] < D + 8 || dWet[i] < 9 || ask.keepOff?.[i]) continue;
       let lo = 99;
       for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) lo = Math.min(lo, h[(y + dy) * W + x + dx]);
       if (lo < 3) continue;
-      cands.push([Math.abs(sd[i] - (D + 20)) + 8 * rng.float() - 0.3 * h[i], i]);
+      cands.push([Math.abs(sd[i] - (D + 11)) + 8 * rng.float() - 0.3 * h[i], i]);
     }
   cands.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const placed: [number, number][] = [];
