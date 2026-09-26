@@ -39,12 +39,22 @@
       129
     ]
   },
-  "badwaterReference": {
-    "range": [
-      "#4C3935",
-      "#5A423C"
+  "badwaterTargets": {
+    "typical": [
+      101,
+      63,
+      53
     ],
-    "note": "Final request calls for a warmer material, visible poisoned bed and little cool reflection; these are references, not flat-colour equality targets."
+    "trough": [
+      91,
+      56,
+      48
+    ],
+    "streak": [
+      147,
+      101,
+      81
+    ]
   },
   "inputs": {
     "mlShallow": [
@@ -83,14 +93,24 @@
       137
     ],
     "mlBad": [
-      88,
-      48,
-      39
+      95,
+      58,
+      56
     ],
     "mlMix": [
       44,
       65.99999999999999,
       76
+    ],
+    "mlBadTrough": [
+      -14,
+      -7,
+      -3
+    ],
+    "mlBadStreak": [
+      40.99999999999999,
+      36,
+      30
     ]
   },
   "measurements": [
@@ -185,17 +205,29 @@
       "contamination": 1,
       "pitch": 1.22,
       "body": [
-        96,
+        97,
+        60,
+        50
+      ],
+      "bodyHex": "#613C32",
+      "typical": [
+        101,
+        63,
+        53
+      ],
+      "typicalHex": "#653F35",
+      "trough": [
+        91,
         56,
-        43
+        48
       ],
-      "bodyHex": "#60382B",
+      "troughHex": "#5B3830",
       "streak": [
-        109,
-        64,
-        47
+        147,
+        101,
+        82
       ],
-      "streakHex": "#6D402F"
+      "streakHex": "#936552"
     },
     {
       "label": "mostly clean mixing zone",
@@ -208,6 +240,18 @@
         75
       ],
       "bodyHex": "#30444B",
+      "typical": [
+        49,
+        69,
+        76
+      ],
+      "typicalHex": "#31454C",
+      "trough": [
+        48,
+        68,
+        75
+      ],
+      "troughHex": "#30444B",
       "streak": [
         59,
         82,
@@ -222,5 +266,6 @@
     "maxDelta": 0
   },
   "errors": [],
-  "maxTargetError": 2
+  "maxTargetError": 2,
+  "maxBadwaterError": 1
 }

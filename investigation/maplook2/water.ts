@@ -8,8 +8,7 @@ export const CLEAN_PALETTE = {
   mlStreakAbove: [45, 83, 96], mlStreakLow: [56, 86, 98],
   mlGrazing: [51, 79, 91], mlStreakGrazing: [82.5, 127.5, 137],
 } as const;
-// Badwater's material input is warmer than the reference pixels: its visible
-// colour includes the existing poisoned bed through the shallow water.
+// Badwater inputs compensate for the lit poisoned bed visible through shallows.
 export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [95,58,56] } as const;
 // Display-contrast offsets, compensated for the unchanged shallow transmission.
 export const BAD_DETAIL = { mlBadTrough: [-14,-7,-3], mlBadStreak: [41,36,30] } as const;

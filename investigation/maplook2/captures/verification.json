@@ -935,8 +935,178 @@
           -81.5
         ]
       },
-      "meanings": {},
-      "note": "Lower view adjusted to keep the channel visible above the intervening bank; tile probes remain in the above-channel capture."
+      "meanings": {
+        "dry contaminated": [
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              43,
+              79
+            ],
+            "pixel": [
+              363,
+              291
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 36,
+            "distance": 7.148257404538137
+          },
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              42,
+              79
+            ],
+            "pixel": [
+              346,
+              297
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 36,
+            "distance": 13.245157719969871
+          }
+        ],
+        "dry": [
+          {
+            "meaning": "dry",
+            "tile": [
+              43,
+              78
+            ],
+            "pixel": [
+              374,
+              300
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 14.729338301267822
+          },
+          {
+            "meaning": "dry",
+            "tile": [
+              42,
+              77
+            ],
+            "pixel": [
+              367,
+              333
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 36.030670214653945
+          }
+        ],
+        "badwater": [
+          {
+            "meaning": "badwater",
+            "tile": [
+              44,
+              84
+            ],
+            "pixel": [
+              332,
+              274
+            ],
+            "depth": 0.2772619128227234,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 36.47206759035641
+          },
+          {
+            "meaning": "badwater",
+            "tile": [
+              43,
+              84
+            ],
+            "pixel": [
+              316,
+              278
+            ],
+            "depth": 0.27730149030685425,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 47.25389062516749
+          }
+        ],
+        "moist": [
+          {
+            "meaning": "moist",
+            "tile": [
+              35,
+              72
+            ],
+            "pixel": [
+              286,
+              442
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 7,
+            "contamination": 0,
+            "distance": 162.2058267370034
+          },
+          {
+            "meaning": "moist",
+            "tile": [
+              36,
+              70
+            ],
+            "pixel": [
+              332,
+              462
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 7,
+            "contamination": 0,
+            "distance": 167.2088797592624
+          }
+        ],
+        "moist contaminated": [
+          {
+            "meaning": "moist contaminated",
+            "tile": [
+              33,
+              76
+            ],
+            "pixel": [
+              202,
+              405
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 7,
+            "contamination": 36,
+            "distance": 190.78925029614072
+          },
+          {
+            "meaning": "moist contaminated",
+            "tile": [
+              32,
+              76
+            ],
+            "pixel": [
+              180,
+              413
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 19,
+            "contamination": 36,
+            "distance": 213.57694681510048
+          }
+        ]
+      }
     },
     {
       "file": "river-128-soil.jpg",
@@ -3417,28 +3587,28 @@
           "shadows": false,
           "standard": 4121280312,
           "high": 4121280312,
-          "passes": 14
+          "passes": 13
         },
         {
           "water": true,
           "shadows": false,
           "standard": 4121280312,
           "high": 2410787375,
-          "passes": 14
+          "passes": 13
         },
         {
           "water": false,
           "shadows": true,
           "standard": 4121280312,
           "high": 2597898124,
-          "passes": 16
+          "passes": 15
         },
         {
           "water": true,
           "shadows": true,
           "standard": 4121280312,
           "high": 2200631017,
-          "passes": 18
+          "passes": 17
         }
       ],
       "turned": {
