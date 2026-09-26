@@ -8,9 +8,9 @@ export function highWater(material: ShaderMaterial): ShaderMaterial {
   material.fragmentShader = material.fragmentShader.slice(0, i) + /* glsl */ `
 vec3 rippleNormal(vec2 p, float t) {
   vec2 slope = vec2(0.0);
-  slope += cos(dot(p, vec2(1.1, 0.4)) + t * 0.8) * vec2(1.1, 0.4) * 0.035;
-  slope += cos(dot(p, vec2(-0.5, 1.7)) - t * 0.62) * vec2(-0.5, 1.7) * 0.021;
-  slope += cos(dot(p, vec2(3.2, 2.1)) + t * 1.1) * vec2(3.2, 2.1) * 0.007;
+  slope += cos(dot(p, vec2(1.1, 0.4)) + t * 1.05) * vec2(1.1, 0.4) * 0.065;
+  slope += cos(dot(p, vec2(-0.5, 1.7)) - t * 0.82) * vec2(-0.5, 1.7) * 0.038;
+  slope += cos(dot(p, vec2(3.2, 2.1)) + t * 1.4) * vec2(3.2, 2.1) * 0.012;
   float detail = 1.0 - smoothstep(0.1, 0.5, max(fwidth(p.x), fwidth(p.y)));
   return normalize(vec3(slope.x * detail, 1.0, -slope.y * detail));
 }
@@ -38,49 +38,65 @@ void main() {
   }
   float d = max(0.0, vData.x) * mix(0.10, 1.0, smoothstep(0.0, 0.55, shore));
   float absorb = 1.0 - exp(-d * 0.65);
-  vec3 clean = mix(vec3(0.10, 0.36, 0.34), vec3(0.022, 0.16, 0.20), absorb);
-  clean = mix(clean, vec3(0.014, 0.045, 0.10), 1.0-exp(-max(d-1.4, 0.0)*0.42));
+  vec3 clean = mix(vec3(0.13, 0.58, 0.60), vec3(0.045, 0.36, 0.48), absorb);
+  clean = mix(clean, vec3(0.025, 0.16, 0.30), 1.0-exp(-max(d-2.0, 0.0)*0.32));
   vec3 murky = mix(vec3(0.19, 0.064, 0.034), vec3(0.060, 0.022, 0.018), absorb);
   vec3 c = mix(clean, murky, bad);
-  float alpha = mix(0.17 + 0.80 * absorb, 0.91 + 0.07 * absorb, bad);
+  // Let the bed show at the banks, without letting its dark colour muddy the whole river.
+  float bank = smoothstep(0.03, 0.65, shore);
+  float cleanAlpha = mix(0.13 + 0.35 * absorb, 0.62 + 0.34 * absorb, bank);
+  cleanAlpha *= smoothstep(0.0, 0.12, vData.x);
+  float alpha = mix(cleanAlpha, 0.91 + 0.07 * absorb, bad);
   vec3 N = n.y > 0.5 ? rippleNormal(g, t) : n;
   vec3 V = normalize(cameraPosition - vWorld);
   float lit = sunLit(g, vWorld.y);
   c *= skyColor * 1.05 + sunColor * 0.42 * max(dot(N, sunDir), 0.0) * lit;
   float foam = 0.0;
   if (n.y > 0.5) {
-    // Schlick Fresnel over our own procedural sky; no copied texture/cubemap.
+    // A broadened Fresnel lobe over our own sky; readable at normal orbit angles too.
     vec3 R = reflect(-V, N);
-    float fresnel = 0.02 + 0.98 * pow(1.0 - max(dot(N, V), 0.0), 5.0);
+    float fresnel = 0.035 + 0.965 * pow(1.0 - max(dot(N, V), 0.0), 3.0);
     float cloud = smoothstep(0.48, 0.78, vnoise(R.xz * 5.0 / max(0.25, abs(R.y))));
-    vec3 sky = mix(vec3(0.49, 0.62, 0.68), vec3(0.22, 0.39, 0.55), clamp(R.y, 0.0, 1.0));
-    sky = mix(sky, vec3(0.74, 0.76, 0.71), cloud * 0.25);
-    c = mix(c, sky, fresnel * mix(0.70, 0.30, bad));
-    alpha = max(alpha, fresnel * 0.7);
+    vec3 sky = mix(vec3(0.74, 0.86, 0.94), vec3(0.32, 0.58, 0.79), clamp(R.y, 0.0, 1.0));
+    sky = mix(sky, vec3(0.91, 0.95, 0.96), cloud * 0.32);
+    c = mix(c, sky, fresnel * mix(0.90, 0.20, bad));
+    alpha = max(alpha, fresnel * 0.88);
     // Fine glints only where a wave reflects the sun. No random white flecks.
     float aa = 1.0 - smoothstep(0.05, 0.22, max(fwidth(g.x), fwidth(g.y)));
-    float spec = pow(max(dot(reflect(-sunDir, N), V), 0.0), 180.0);
-    c += sunColor * spec * 0.20 * aa * lit * (1.0 - bad * 0.85);
-    // Broad low-contrast ripple light: visible water without sparkling noise.
-    c += vec3(0.040, 0.065, 0.067) * smoothstep(-0.015, 0.065, N.x + N.z) * (1.0-bad*0.6);
+    float spec = pow(max(dot(reflect(-sunDir, N), V), 0.0), 95.0);
+    c += sunColor * spec * 0.40 * aa * lit * (1.0 - bad * 0.92);
+    // Long moving crest highlights, broken by low-frequency noise, not random white flecks.
+    float wave = sin(dot(g, vec2(1.7, 3.1)) - t * 1.8 + vnoise(g * 0.65) * 5.0);
+    float width = max(fwidth(wave) * 0.8, 0.09);
+    float crest = smoothstep(0.80-width*0.5, 0.98+width*0.5, wave);
+    float broken = smoothstep(0.30, 0.68, vnoise(g * 1.1 + vec2(t*0.13, -t*0.09)));
+    float crossing = sin(dot(g, vec2(-2.4, 4.8)) + t * 1.15 + vnoise(g*0.9+7.0)*4.0);
+    crest = crest * broken + 0.22 * smoothstep(0.84-width, 1.0+width, crossing) * (1.0-broken);
+    float near = 1.0 - smoothstep(0.20, 0.90, max(fwidth(g.x), fwidth(g.y)));
+    float catchLight = 0.60 + 0.40 * max(dot(N, sunDir), 0.0) * lit;
+    c = mix(c, vec3(0.36, 0.76, 0.85) * catchLight, crest * near * 0.65 * (1.0-bad));
+    c += vec3(0.028, 0.050, 0.060) * smoothstep(-0.04, 0.08, N.x + N.z) * (1.0-bad);
     // Slow broken brown ribbons keep murky water visibly liquid even from above.
     float ribbon = smoothstep(0.48, 0.72, vnoise(vec2(g.x*0.8+g.y*0.25, g.y*4.3-g.x*0.6-t*0.35)));
     c += vec3(0.080, 0.043, 0.025) * ribbon * bad;
     float noise = vnoise(g * 4.0 + vec2(t*0.1, -t*0.2));
-    foam = (1.0-smoothstep(0.015, 0.18, shore)) * (0.20 + noise * 0.35);
-    foam += (1.0-smoothstep(0.0, 0.65, fall)) * (0.23+0.45*noise);
+    foam = (1.0-smoothstep(0.015, 0.16, shore)) * (0.26 + noise * 0.38);
+    float churn = vnoise(g*6.0 + vec2(t*0.7, -t*1.4));
+    foam += (1.0-smoothstep(0.12, 0.95, fall)) * (0.72+0.45*churn);
   } else {
     bool edge = vFlags > 254.5;
     float drop = edge ? 0.0 : vFlags / 30.0;
     float along = abs(n.x) > 0.5 ? g.y : g.x;
-    float streak = vnoise(vec2(along*7.0, vWorld.y*1.4+t*2.2));
-    foam = edge ? 0.0 : smoothstep(0.12, 0.6, drop) * (0.18+streak*0.52);
-    alpha = edge ? mix(0.78, 0.96, bad) : (0.19+0.42*streak)*smoothstep(0.06, 0.25, drop);
+    float streak = vnoise(vec2(along*7.0, vWorld.y*1.4+t*3.6));
+    float strands = smoothstep(0.30, 0.72, streak);
+    foam = edge ? 0.0 : smoothstep(0.12, 0.6, drop) * (0.42+strands*0.60);
+    alpha = edge ? mix(0.78, 0.96, bad) : (0.32+0.53*strands)*smoothstep(0.06, 0.25, drop);
     if (alpha < 0.01) discard;
   }
   foam *= 1.0 - bad * 0.55;
-  c = mix(c, mix(vec3(0.62, 0.76, 0.72), vec3(0.31, 0.17, 0.085), bad) * (0.75+0.25*lit), clamp(foam,0.0,1.0));
-  alpha = mix(alpha, 0.94, foam);
+  foam = clamp(foam, 0.0, 1.0);
+  c = mix(c, mix(vec3(0.90, 0.96, 0.98), vec3(0.31, 0.17, 0.085), bad) * (0.85+0.15*lit), foam);
+  alpha = mix(alpha, 0.97, foam);
   gl_FragColor = vec4(finish(c, vWorld), alpha);
 }
 `;
