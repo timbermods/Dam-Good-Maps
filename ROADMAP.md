@@ -1522,7 +1522,10 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 **Delivers:** E7.
 - The built-in stamp library, and user stamps with export and import (the entity transform rules
   of EDITOR §5).
-- Heightmap import scaled to 0–16. It also serves the workshop catalogue's real-geography maps (4
+- Heightmap import scaled to 0–16, through the landscape survey's conversion pipeline, not just raw
+  heights (Kyler, 2026-09-25; PLAN §20 D159): vertical mapping, rivers from the drainage, water
+  sources, a start by Kyler's rules (D85/D153), and the current water rules (no walls or rims,
+  draining allowed; D151, D152). It also serves the workshop catalogue's real-geography maps (4
   workshop maps).
 - Regenerate an area, with constraints.
 - Locks and the conflict rules.
@@ -1890,6 +1893,12 @@ export, load in Timberborn.
 ---
 
 ## Later
+
+**After M11: "Pick a place"** (Kyler, 2026-09-25; D160). Choose any spot on a world map (or paste
+coordinates, for example from Google Earth), pick size and scale, and get a playable map built from
+open elevation data with attribution, through the same conversion pipeline as the heightmap import
+and Real places. Never Google's own data. If a place converts poorly, say so plainly and suggest a
+larger area or a different scale.
 
 **After M12: a Dam Good Maps MCP server** (Kyler, 2026-09-25; D141). M12's tools (generate, steer
 with intentions, regenerate area, edit, validate, export) packaged as an MCP server, so Claude

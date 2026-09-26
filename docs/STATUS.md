@@ -73,6 +73,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D154: contaminated ground is a layer of crack veins over the ground's own look.
 - D155–D157: Real places, second round: short descriptions with a credits page, deploy-time files, clean titles, 3D thumbnails, no walls, about 150 places.
 - D158: **Live editing**, alongside the M9 design: a triage first, then Cities-style terrain brushes, live shape tools, water that never blocks; tried by Kyler on `/preview/`.
+- D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
+- D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
 
 ## Done and released
 
