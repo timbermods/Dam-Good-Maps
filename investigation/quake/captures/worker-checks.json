@@ -9,17 +9,21 @@
     "Try another starts from original ground with a recorded new seed",
     "cancelling an alternative restores the kept quake exactly",
     "saved alternative replays exactly on another loaded map",
-    "256² real worker responds progressively and cancels exactly"
+    "256² real worker responds progressively and cancels exactly",
+    "held pen changes ground before release; X replans from base; release creates one exact undo",
+    "coalesced fast input and a release during preparation produce the same exact result",
+    "Esc cancels held brush during planning, mesh upload and live water without a history entry",
+    "128 random real-worker strokes: 81 completed quakes and exact undos, 47 visible start refusals"
   ],
   "measurements": [
     {
       "case": "first changed frame",
-      "ms": 204.7407
+      "ms": 188.48919999999998
     },
     {
       "case": "256² rupture seven of eight fronts",
-      "firstMs": 379.6428999999989,
-      "ms": 1298.762499999999
+      "firstMs": 333.0802999999996,
+      "ms": 1219.6401999999998
     }
   ]
 }

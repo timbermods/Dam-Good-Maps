@@ -6,7 +6,7 @@ import { topDown,isometric,type Picture } from '../workshop/lib/render';
 import { canonicalSettle } from '../../src/core/sim/prefill';
 import { WaterSim } from '../../src/core/sim/water';
 import { fixture } from './maps';
-import { quake,reveal,snapshot,modelFor,DEFAULTS,type QuakeMap,type Settings,type Intent } from './engine';
+import { quake,paintWater,snapshot,modelFor,DEFAULTS,type QuakePlan,type QuakeMap,type Settings,type Intent } from './engine';
 import { operation } from './operation';
 interface Frame {map:QuakeMap;label:string}
 const objects=(m:QuakeMap)=>m.entities.map(e=>({...e,components:{...e.before,...e.components}}));
@@ -21,8 +21,16 @@ function gif(name:string,canvases:Canvas[]){const enc=GIFEncoder();canvases.forE
 function save(name:string,title:string,frames:Frame[]){gif(name,frames.map(f=>panel(title,f)));const c=createCanvas(1200,300),ctx=c.getContext('2d');[frames[0],frames[4],frames.at(-1)!].forEach((f,k)=>ctx.drawImage(panel(title,f),k*400,0,400,300));writeFileSync('captures/'+name+'.png',c.toBuffer('image/png'));}
 const scenarios:Record<string,unknown>={};
 function sequence(id:string,m:QuakeMap,s:Settings,intent:Intent){
- const plan=quake(m,s,intent),frames:Frame[]=[{map:snapshot(m),label:'Before · personality '+s.seed}];let state=snapshot(m);
- for(let step=1;step<=8;step++){state=reveal(plan,state,step);const sim=new WaterSim(modelFor(state),state.water).run(12);state.water={depth:sim.D,contamination:sim.C};frames.push({map:snapshot(state),label:'Rupture · '+Math.round(step/8*100)+'%'});}
+ const plan=quake(m,s,intent),frames:Frame[]=[{map:snapshot(m),label:'Before · personality '+s.seed}];let state=snapshot(m),previous:QuakePlan|null=null;
+ // The stroke grows under the pen now; don't replay the retired release-then-race interaction.
+ const distances=intent.path.slice(1).map((p,k)=>Math.hypot(p.x-intent.path[k].x,p.y-intent.path[k].y)),length=distances.reduce((a,b)=>a+b,0);
+ for(let step=1;step<=8;step++){
+  const path=[intent.path[0]];let remaining=length*step/8;
+  for(let k=0;k<distances.length;k++){const a=intent.path[k],b=intent.path[k+1],f=Math.min(1,remaining/distances[k]);path.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});remaining-=distances[k];if(remaining<=0)break;}
+  const p=step===8?plan:quake(m,s,{...intent,path}),water=paintWater(state,p,previous);state=snapshot(p.map);state.water=water;
+  const sim=new WaterSim(modelFor(state),state.water).run(12);state.water={depth:sim.D,contamination:sim.C};previous=p;
+  frames.push({map:snapshot(state),label:'Painting · '+Math.round(step/8*100)+'% · ground follows the pen'});
+ }
  const live=new WaterSim(modelFor(state),state.water);for(let k=0;k<3;k++){live.run(48);state.water={depth:live.D.slice(),contamination:live.C.slice()};frames.push({map:snapshot(state),label:'Water moving across the new land'});}
  const w=canonicalSettle(modelFor(state));state.water={depth:w.depth,contamination:w.contamination};frames.push({map:snapshot(state),label:'After · canonical water · personality '+s.seed});
  scenarios[id]={settings:s,intent,stats:plan.stats,water:{settled:w.settled,ticks:w.ticks}};console.log('Captured '+id);return frames;
@@ -30,7 +38,7 @@ function sequence(id:string,m:QuakeMap,s:Settings,intent:Intent){
 mkdirSync('captures',{recursive:true});mkdirSync('samples',{recursive:true});
 const line=(y=64,side:1|-1=1):Intent=>({side,path:[{x:0,y},{x:127,y}]}),s={...DEFAULTS,seed:18,power:65};
 save('river-lift','Lift · a river becomes a waterfall',sequence('river-lift',fixture('river'),s,line()));
-save('river-slide','Slide · a river is offset',sequence('river-slide',fixture('river'),{...s,mode:'slide',power:85},line()));
+save('river-slide','Slide · a connected dog-leg river',sequence('river-slide',fixture('river'),{...s,mode:'slide',power:85},line()));
 const first=sequence('rift-first',fixture('plain'),{...s,seed:2},line(43,-1)),second=sequence('rift-second',first.at(-1)!.map,{...s,seed:5},line(80,1));
 save('rift-valley','Two faults · a new rift valley',[...first.slice(0,9),...second]);
 save('lake-spill','Lift & tilt · a lake spills',sequence('lake-spill',fixture('lake'),{...s,seed:29,power:85},line(55)));
