@@ -20,12 +20,10 @@ M9a comes first whenever work competes for the machine (D210).
 
 ## 2. Work in flight
 
-<!-- The two WIP commits are filled in below once their agents stopped. -->
-
 | Work | Branch | PR | Worktree | Last commit | State |
 |---|---|---|---|---|---|
-| M9a, the new generator | `feature/m9a` | #56 (draft, WIP) | `C:\Users\Kyler\code\DamGoodMaps-m9a` | see §3 | paused mid-build |
-| Live editing | `feature/live-editing` | none yet | `C:\Users\Kyler\code\DamGoodMaps-live` | see §4 | four D184 pushes done; Carve port WIP |
+| M9a, the new generator | `feature/m9a` | #56 (draft, WIP) | `C:\Users\Kyler\code\DamGoodMaps-m9a` | 12beeb3 (WIP) | paused mid-build |
+| Live editing | `feature/live-editing` | none yet | `C:\Users\Kyler\code\DamGoodMaps-live` | b4d7c27 (WIP; last green 59f826c) | four D184 pushes done; Carve port WIP |
 | Badwater on every map (D200) | `feature/badwater-source` | #54 | `C:\Users\Kyler\code\DamGoodMaps-resources` | 5b1f3d6 | done; **held**, M9a took it in (D213) |
 | Waterfalls (D201) | `look/waterfalls` | #53 | `.claude\worktrees\agent-ae1b9f4667671d0e8` | b00b2fc | done; needs D215 fixes |
 | Real places, round 2 | `feature/real-places-2` | #35 | `C:\Users\Kyler\code\DamGoodMaps-places` | a59c051 | 150 places rebuilt; needs D214 and badwater |
@@ -46,6 +44,9 @@ be removed when convenient: `DamGoodMaps-rules` (#44 merged), `DamGoodMaps-v2` (
 `docs/m9-design.md` (§18 the staging); PLAN §20 D209–D211; the prototype in `investigation/generative/v2/` (port it; `src/`
 must never import `investigation/`). Progress log: `docs/progress/m9a.md` (its top says what's WIP).
 
+**Last pushed commit: 12beeb3** ("WIP: settings move their targets again on the M9a generator (heavy-tests still red)"), on
+`feature/m9a`, PR #56 (draft). No M9a processes are left running.
+
 **Done** (per its reports): the generator from design version 2's processes (genome and "Any", field, hydrology, settler,
 badwater hollows, features read back, nothing stamped); "Any" (Surprise me) as the app default with a Verticality slider
 (above 16 unlocked, D172); no ruler-straight rivers (a blocking straightness measure against real terrain and the official
@@ -57,11 +58,18 @@ Its probe group is prepared: `investigation/probe` catalogue group `M9a`, 15 map
 (`npm --prefix investigation/probe run batch -- --job-only --group M9a` previews it).
 
 **Left** (its own estimates, machine time, one at a time):
-1. **Settings, 3–4 h:** rivers (exact count), Braided, Start area (D211: a preference, renamed "prefer a roomy/tight
-   start", the actual bench size on the map card), Water without stairs, Lake Basin's water share (information until M9b,
-   D211); Designed for's experiment already moved to badwater distance (logged); the two failing reshape tests.
-2. **Test fixes, ~1.5 h:** re-seed the quick tests, re-pin the live-check sha, run the quick and heavy suites (CI's
-   heavy-tests job is red until 1 and 2 are done).
+1. **Settings and reshape tests green, 2–3 h.** Already passing at 12beeb3: Relief, Buildable land, Rivers (exact count),
+   River style Straight and Braided, Lakes, Badwater distance, the no-badwater start rule, Water without stairs,
+   Verticality (its experiment runs 10 → 90); Designed for's experiment moved to badwater distance under the stale-test rule
+   (logged). Still failing on CI's seeds 1–4 at 96²: Drought reserve (1189 → 624, needs +200; passed on 8 seeds), Badwater
+   off → high (0.55, needs 0.6), Berries near start (+28, needs +30), Designed for's new target (+6.5, needs +10); and two
+   reshape tests (Lake Basin seed 13 leaves an object floating; River Valley seed 13's lake over a relic no longer plans).
+   Then apply D211: Theme's Lake Basin water share becomes information until M9b; Start area becomes a preference ("prefer a
+   roomy / tight start"), the map card shows the actual bench size, and its experiment becomes information.
+2. **Re-seed the quick tests, 1–1.5 h:** `badwater.test` (Any seed 21's badwater is 10.5 tiles from the start, target 15),
+   `objects.test` (the second-district and rise seeds), `validate.test` (`water.badwater_contained`), and re-pin
+   `LIVE_SHA` in `look-mine-ruins.test`. CI is red until 1 and 2 are done; neither WIP push has been through CI yet (the last
+   run, on eaa77a1, was green apart from heavy-tests).
 3. **Full batches, 3–4 h:** six themes plus "Any" at 96², 128², 192² and 256², ≥ 98% final each (blocking), with the
    straightness stats.
 4. **Contact sheet and "Any" measures, ~1 h:** `docs/sheets/m9a.png` (D144, with "Any").
@@ -72,7 +80,16 @@ Its probe group is prepared: `investigation/probe` catalogue group `M9a`, 15 map
 7. **The probe batch** from the frozen generator (rebuild its maps first), about 1½ hours in the game, **only after Kyler's
    yes in chat** (§7). Then tag `m9a-done` and release (§8).
 
-**Next concrete step:** read `docs/progress/m9a.md`'s WIP note and continue the settings work (item 1).
+**Next concrete step:** in `C:\Users\Kyler\code\DamGoodMaps-m9a`, run `npx tsx .scratch/settings-run.ts "" 1-4 96` (the last
+results are in `.scratch/settings-ci.txt`); give Drought reserve `minSeeds: 8` or a stronger lean; find why the Badwater and
+Berries experiments dropped; look at Designed for's seed 2 (its hard map keeps badwater 63 tiles off).
+
+**M9a gotchas:** its helper scripts are in its `.scratch/` (`settings-run.ts` runs settings experiments by name, seed range
+and size; `one.ts` and `one2.ts` generate one map and print its checks; `sealevel.ts` traces a sea's level; `thumb.ts` prints
+a coarse map; `run-batches.sh` runs batches with `SIZES` and `SEEDS`); batch results are in `.scratch/batch/`; the last CI
+heavy-test failure log is `.scratch/heavy-fail.log`. The settler now weighs the settings in the intentions' preference and
+picks among starts within 70% of the best score, so seed-specific tests move. A background run started as
+`cmd > file; cat file` shows nothing until it ends: read the file itself.
 
 ## 4. Live editing in detail
 
