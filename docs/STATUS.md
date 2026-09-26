@@ -106,9 +106,12 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
 - D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
 - D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
+- D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
 
 ## Done and released
 
+- **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
+  proposals for their steps.
 - **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
 - **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
   ship with the next release as `start-edge-rules-done`.
@@ -150,9 +153,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: #45 (Pick a place's signature water, D192;
-  ESA WorldCover credited like the elevation data) and #38 (Map look 2). **Held:** #47 (`investigation/carve`,
-  Carve as a force of nature, D194) until Kyler says it's ready.
+- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
 
 ## Waiting on Kyler
 
@@ -168,7 +169,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D194.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D195.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.

@@ -96,7 +96,7 @@ is not touched.
 **docs/STATUS.md**
 - The decisions list, "in the version in force": D158, D179, D180, D182, D183 and D184 no longer name the removed tools.
 - Running: the docs sweep, pointing here.
-- "Where to look next": every decision is D1–D194.
+- "Where to look next": every decision is D1–D195.
 
 **docs/progress/README.md**
 - Links this entry.
