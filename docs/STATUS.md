@@ -63,7 +63,6 @@ Most important first. Nothing below was released without your approval.
    - **Claude's "remove the badwater spring"** (P09) on a map with one source left: set the map to "No
      badwater", or refuse? It refuses for now.
 5. **The forces prototypes are held until you say each is ready:**
-   - Carve [#47](https://github.com/timbermods/dam-good-maps/pull/47) (one more Codex round: Wander, Width, variation, Try another path);
    - Erupt [#50](https://github.com/timbermods/dam-good-maps/pull/50);
    - Craterize [#51](https://github.com/timbermods/dam-good-maps/pull/51);
    - Quake [#52](https://github.com/timbermods/dam-good-maps/pull/52).
@@ -281,9 +280,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   deliberate upgrade step (D150).
 - **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) and
   `investigation/erupt` (Erupt, D206) when their PRs open, until Kyler says each is ready.
-- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
-  round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
-  merged when he says it's ready.
+- **Queued for the next boundary:** #47 (Carve, ready per Kyler; the Carve button in Live editing is built
+  from it, D194, D199).
 
 ## Waiting on Kyler
 
