@@ -43,7 +43,7 @@ Kyler's decided principles and what a player feels block (D115).
 | Whole-map clusters up to 68% of a theme (Delta) | The largest cluster holds 6–14.5% of a theme: the regional tilt no longer dominates the layout, and water and relief are drawn wider | Task b |
 | No-approximation: 2–20% of a theme below the floor | 0.5–15% (River Valley 8.5%, Highlands 3.5%, Delta 12.5%) | Task c, D128 |
 | No intentions | Zero, one or two per map from a set of eleven, four of them Kyler's own; steered by the prior and the settler, checked on the finished map, dropped when absent. Kyler's four emerge on 70%, 68%, 24% and 19.5% of their draws; fourteen more are drafted for him to pick | D138 |
-| The start ignores droughts | The settler prefers water that lasts through the first Normal drought; requiring it is decisions-pending #54 | Task e |
+| The start ignores droughts | The settler prefers water that lasts through the first Normal drought; requiring it is decisions-pending #56 | Task e |
 | Two to four settles an attempt | One settle for 80% of maps, two for 20%; a first look at 0.2 s at 128² | Task f |
 | Heights only | Terrain kept as runs per column; format 3 stores runs; caves slot in with no format change | Task h, D118, I-1 |
 | The Dam site tool proposed as spurs | Built: a natural-narrows builder that never reads as a wall | Task g, D111 |
@@ -157,7 +157,7 @@ lakes, volcano island.
    every two tiles or more, three tiles wide, with the genome's chance (lower as Verticality rises).
    An upland left without one needs stairs: a reward. A ramp's steps get slopes (M9a extends the
    derived-slope rule to join a ramp's steps wherever it is; the prototype pins them;
-   decisions-pending #57).
+   decisions-pending #59).
 8. **Hazards found in the land** (version 1's): badwater rises in a pit dug two levels into high
    ground, draining by its own winding ditch to a river below the start's water; `water.badwater_contained`
    proves it holds. Thorn belts, relics, geothermal fields, mine sites and ruins come from the
@@ -273,7 +273,7 @@ itself (D138); Kyler's further one-sentence intentions join the same way.
 
 Fourteen drafts in the same form as Kyler's four: a plain sentence, the outcome, and a simple check.
 They are not in the set and not prototyped. Only the ones Kyler picks join it, under the same three
-principles (decisions-pending #61). Sources: the workshop catalogue (`investigation/WORKSHOP.md`), the landscape families
+principles (decisions-pending #63). Sources: the workshop catalogue (`investigation/WORKSHOP.md`), the landscape families
 (`investigation/landscapes/FAMILIES.md`) and the mechanics study (`investigation/mechanics/`:
 `CATALOGUE.md`, `AXES.md`).
 
@@ -368,7 +368,7 @@ principles (decisions-pending #61). Sources: the workshop catalogue (`investigat
   (×0.8) the rest. Measured (REPORT-v2 §5): the start keeps its water through the first Normal
   drought on 42% of maps (38.5% with the preference off; version 1 29%). Requiring it gets 100%,
   but first attempts fall from 68.5% to 47% and finals to 98.8% (Canyon 94%). Requiring it is
-  decisions-pending #54.
+  decisions-pending #56.
 
 **Every guard stays**: both validators in the `generate` profile; D85's start requirements;
 `water.storage_possible` (the workshop study's rule: running clean water at the start, and storage
@@ -499,7 +499,7 @@ milestone's full check, and on every brief map (the worst of three weather seeds
 the power axis by the game's wheel rule). The eight axes and their fixed bins run on every batch map
 and every brief. Play variety on them: REPORT-v2 §6.
 
-**Difficulty as positions on the axes** (a proposal; decisions-pending #60). Difficulty today is
+**Difficulty as positions on the axes** (a proposal; decisions-pending #62). Difficulty today is
 D85's start rules and the drought need. The axes let the generator prefer, among a seed's
 candidates, the one whose position suits the difficulty best (the most conditions met; a
 preference, never a rejection):
@@ -726,7 +726,7 @@ from M13's versioned deploys.
   the forced set), from its nudge's tall scarp; a tapered scarp is M9b's fix.
 - *Above 16*: unconfirmed in the game until the probe batch, and the build's cap at 16 must be
   lifted for Verticality 70+ (the prototype measured the land before the build).
-- *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#57).
+- *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#59).
 - *In-game behaviour*: M9a's probe batch (D116).
 
 ## 18. Staging (proposal)
@@ -738,12 +738,12 @@ version. The proposal (also in ROADMAP M9):
   the regional field, caprock, erosion, weathering, levels with benches) and the hydrology (hanging
   valleys, knickpoints, spring lakes); natural ramps and the derived-slope rule for them;
   Verticality (above 16 locked until the probe batch); the settler with reach and the drought-aware
-  start (#54); the one-settle order and the progressive preview; the runs model and format 3 (§12);
+  start (#56); the one-settle order and the progressive preview; the runs model and format 3 (§12);
   the natural-narrows builder as the Dam site tool; tool entries `generate`, `landmarks`, `reach`
   and `place_narrows`.
 - **M9b, composition and variety**: intentions (the set, steering, checks, re-steer, drop records,
   the within-intention measures), Variety and Surprise me (with Verticality's jumps), recipes, the
-  cycle signature and the axes in the openings, difficulty as positions (#60), the permanent
+  cycle signature and the axes in the openings, difficulty as positions (#62), the permanent
   measures; tool entries `steer` and `check_intention`.
 - **M9c, score, names and candidates**: K = 3 with progressive preview; the score as a tiebreaker;
   names from the names study with read-back roles; "how it plays" cards; Variations (D143); the
@@ -757,7 +757,7 @@ Kyler approves version 2 by judgement from the ten briefs
 ([docs/sheets/design-v2.png](sheets/design-v2.png); a local page shows version 1, version 2 and
 high Verticality side by side). The ten maps to play are in
 [investigation/generative/out/v2/](../investigation/generative/out/v2/). This version's pending
-decisions are decisions-pending #54–#61.
+decisions are decisions-pending #56–#63.
 
 ## 20. Appendix: every one-height assumption in `src/`
 

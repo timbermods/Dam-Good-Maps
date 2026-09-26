@@ -56,7 +56,7 @@ the official maps.
 | Naturalness: steps in straight runs of 8+ / longest run | official 0.07 / 18 | 0.04 / 15 | 0.04 / 14 | 0.14 / 28 |
 | Landscape bench, relief group | lower is closer to real terrain | 0.52 | 0.60 | 0.66 |
 | Intentions | outcomes that emerge; some maps none | Kyler's four emerge on 70% (under a cliff), 68% (the snaking river), 24% (the crater) and 19.5% (the waterfall into a round lake) of their draws; the other seven 21–91%; "safe water uphill" left the set | – | – |
-| Start water through the first Normal drought | a proposal (#54) | 42% (off: 38.5%; required: 100%, first attempts 47%, final 98.8%) | 29% | 33% |
+| Start water through the first Normal drought | a proposal (#56) | 42% (off: 38.5%; required: 100%, first attempts 47%, final 98.8%) | 29% | 33% |
 
 ## 1. The prototype
 
@@ -383,7 +383,7 @@ maps, at a cost:
 - first attempts fall from 68.5% to 47%;
 - finals fall to 98.8%: Canyon 94% and Lake Basin 99% miss seeds.
 
-Hence #54's default: prefer on Normal and Hard, require on Easy only. On Easy the preference could
+Hence #56's default: prefer on Normal and Hard, require on Easy only. On Easy the preference could
 be stronger instead (weights of ×2), which M9a can measure.
 
 ## 6. Simulated play
@@ -578,7 +578,7 @@ Plainly, against the targets:
 1. **No approximation is over 10% in three themes**: Lake Basin 12.5%, Delta 12.5% and Islands 15%.
    More water moved Lake Basin and Islands toward the workshop's middle. A fix would draw their water
    share and one-level steps further from the workshop's median (more sea, more cliffs round the
-   lakes) or put islands in lakes more often. This is information (D128); see #59.
+   lakes) or put islands in lakes more often. This is information (D128); see #61.
 2. **A good natural dam near the start is above the official band** in four themes (64% over all;
    the band is 26–56%): lake outlets are short dams. If Kyler wants it lower, lakes' outlets widen.
 3. **Relief is one level short of the workshop's median** (13 against 14) and uses 15 levels against
@@ -596,13 +596,13 @@ Plainly, against the targets:
 8. **The cheap cycle signature's badwater proxy is weak** (r = 0.43 with the exact exposure), so the
    exact model keeps that part.
 9. **The drought-aware preference is weak** (42% against 38.5% with it off); requiring it costs
-   finals in Canyon (#54).
+   finals in Canyon (#56).
 10. **Not built**:
     - player and Claude controls for intentions (they wait, D138);
     - tuning how close Variations stay;
     - difficulty positions as a candidate preference (M9b);
     - the Weather view (its own step);
-    - the fourteen candidate intentions (for Kyler to pick, #61).
+    - the fourteen candidate intentions (for Kyler to pick, #63).
 
 ## 13. Reproducing it
 

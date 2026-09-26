@@ -1,5 +1,5 @@
 // The settler, design version 2: version 1's (../proto/start.ts) with three additions.
-// - Drought-aware start water (task e, decisions-pending #54): with `drought`, a place counts as
+// - Drought-aware start water (task e, decisions-pending #56): with `drought`, a place counts as
 //   drought-safe when clean water within the water rule stays pumpable through the first Normal
 //   drought (the analytic drought over its days); "prefer" weights such places up, "require"
 //   takes only them.
