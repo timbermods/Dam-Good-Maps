@@ -154,13 +154,21 @@ export class WaterSim {
       const x = i % W;
       const y = (i - x) / W;
       let c = 1;
-      for (let dy = -1; dy <= 1; dy++) {
-        const yy = y + dy;
-        if (yy < 0 || yy >= H) continue;
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue;
-          const xx = x + dx;
-          if (xx >= 0 && xx < W && D[yy * W + xx] > 0) c++;
+      if (x > 0 && x < W - 1 && y > 0 && y < H - 1) {
+        // an interior tile has all eight neighbours: count them directly (an integer count, so
+        // the order of the additions cannot change it; PLAN §20 D130)
+        c += +(D[i - W - 1] > 0) + +(D[i - W] > 0) + +(D[i - W + 1] > 0)
+          + +(D[i - 1] > 0) + +(D[i + 1] > 0)
+          + +(D[i + W - 1] > 0) + +(D[i + W] > 0) + +(D[i + W + 1] > 0);
+      } else {
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= H) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const xx = x + dx;
+            if (xx >= 0 && xx < W && D[yy * W + xx] > 0) c++;
+          }
         }
       }
       wn[i] = c;
