@@ -81,9 +81,11 @@ check('objects on excavated footprints are removed; the start is never removed',
  assert.ok(r.map.entities.length<m.entities.length);
 });
 check('keep river creates a real source set by power; dry canyon adds no source',()=>{
- assert.ok(high.map.entities.some(e=>e.id==='carve-source'));
+ assert.ok(high.map.entities.some(e=>e.id.startsWith('carve-source')));
+ const another=new CarveRun(high.map,DEFAULTS,{origin:54*64+53});
+ assert.equal(another.map.entities.filter(e=>e.id.startsWith('carve-source')).length,2,'a new carve must keep the previous river');
  assert.equal(sourceStrength(100),8);assert.equal(sourceStrength(0),.5);
- const dry=complete(mountain,{dry:true,power:95});assert.ok(!dry.map.entities.some(e=>e.id==='carve-source'));
+ const dry=complete(mountain,{dry:true,power:95});assert.ok(!dry.map.entities.some(e=>e.id.startsWith('carve-source')));
  const settled=canonicalSettle(modelFor(dry.map));assert.ok(settled.depth.every(v=>v===0));
  assert.deepEqual(dry.map.heights,high.map.heights);
 });
@@ -132,4 +134,6 @@ for(const size of [128,256]){
 mkdirSync('captures',{recursive:true});
 writeFileSync('captures/checks.json',JSON.stringify({passed,timings,terrainHashes:{mountain:hash(high.map.heights),ridge:hash(ridgeHigh.map.heights),defy:hash(defy.map.heights)},hardwareFPS:'User PC acceptance required; CPU timings are not frame rates'},null,2)+'\n');
 console.log(timings);
+
+
 

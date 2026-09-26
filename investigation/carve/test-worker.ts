@@ -59,8 +59,9 @@ try{
  passed.push('portable saved result replays exactly on a different loaded map without erosion');
  await command({type:'load',id:'fixture:ridge'});await command({type:'start',settings:{...DEFAULTS,power:95,mode:'aim',dry:true},intent:{origin:80*96+48,end:16*96+48}});
  let ended=false;for(let i=0;i<250&&!ended;i++)ended=(await command({type:'advance'})).some(m=>m.type==='finished');
- assert.ok(ended);const dry=await snap();assert.ok(!dry.entities.some(e=>e.id==='carve-source'));assert.ok(dry.water.depth.every(v=>v===0));
+ assert.ok(ended);const dry=await snap();assert.ok(!dry.entities.some(e=>e.id.startsWith('carve-source')));assert.ok(dry.water.depth.every(v=>v===0));
  passed.push('aim auto-finishes at its destination; dry canyon leaves no water source');
  writeFileSync('captures/worker-checks.json',JSON.stringify({passed,operationBytes:JSON.stringify(op).length},null,2)+'\n');
  console.log(passed.map(p=>'PASS '+p).join('\n'));
 }finally{await worker.terminate();}
+

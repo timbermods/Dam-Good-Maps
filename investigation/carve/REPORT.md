@@ -8,7 +8,8 @@ Open the printed local URL (normally http://127.0.0.1:5198/).
 **Unleash:** click an origin. **Aim:** click origin, then destination.
 Turn on **Defy gravity** for an uphill destination. Power sets resistance,
 width, depth and travel budget. Steep keeps a gorge; Wide opens terraces.
-Keep river is the default; Dry canyon omits the new source.
+Keep river is the default; Dry canyon omits the new source. Later carves keep
+earlier river sources unless their ground is carved away.
 
 Pause and speed change playback. Stop keeps everything carved so far.
 **Esc or Undo cancels the entire carve immediately**, even during water
@@ -86,3 +87,4 @@ this standalone prototype has no painting tool.
 All changes stay under investigation/carve. The branch remains based on dev.
 M9 v2 c77026b was read from investigation/generative-v2, without merging it.
 Adoption and changes after PR #32 are proposals in [INTEGRATION.md](INTEGRATION.md).
+

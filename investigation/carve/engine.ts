@@ -22,9 +22,9 @@ export const isPlant=(e:EntitySpec)=>/^(Pine|Birch|Oak|Succulent|BlueberryBush)$
 export const objects=(e:EntitySpec[]):MapObject[]=>e.map(e=>({...e,components:{...e.before,...e.components}}));
 export const modelFor=(m:CarveMap)=>waterModel(m.W,m.H,m.heights,objects(m.entities));
 export const sourceStrength=(power:number)=>.5+7.5*power/100;
-export function placeSource(m:CarveMap,tile:number,strength:number):CarveMap {
-  const e=waterSource({id:'carve-source',owner:'carve',x:tile%m.W,y:Math.floor(tile/m.W),z:m.heights[tile],strength});
-  return {...m,entities:plainEntities([...m.entities.filter(e=>e.id!=='carve-source'),e])};
+export function placeSource(m:CarveMap,tile:number,strength:number,id='carve-source'):CarveMap {
+  const e=waterSource({id,owner:'carve',x:tile%m.W,y:Math.floor(tile/m.W),z:m.heights[tile],strength});
+  return {...m,entities:plainEntities([...m.entities.filter(e=>e.id!==id),e])};
 }
 export function entityTiles(m:CarveMap,e:EntitySpec):number[] {
   const fp=FOOTPRINTS[e.template]?.size??[1,1,1],out:number[]=[];
@@ -61,7 +61,7 @@ export function hardness(level:number,layers:boolean,seed=0):number {
 export class CarveRun {
   readonly map:CarveMap; readonly original:Uint8Array; readonly initialWater:Float64Array; readonly keep:Uint8Array;
   readonly sign:Int8Array; readonly target:Uint8Array; readonly wear:Float64Array;
-  readonly path:Station[]=[]; readonly seed:number; readonly intent:Intent;
+  readonly path:Station[]=[]; readonly seed:number; readonly intent:Intent; readonly sourceId:string;
   readonly metrics:Metrics={cut:0,deposited:0,exported:0,suspended:0,bankCuts:0,bendCuts:0,steps:0,stable:false,distance:0,reason:''};
   head:Head;
   private sim:WaterSim; private active=new Set<number>();private channel=new Uint8Array();private visited=new Uint16Array();
@@ -73,7 +73,8 @@ export class CarveRun {
        !['unleash','aim'].includes(settings.mode)||!['steep','wide'].includes(settings.walls)||
        !Number.isFinite(settings.power)||settings.power<0||settings.power>100)throw new Error('Invalid carve settings');
     if(settings.mode==='aim'&&(!Number.isInteger(intent.end)||intent.end!<0||intent.end!>=N||intent.end===intent.origin))throw new Error('Choose a different end point');
-    this.initialWater=input.water.depth.slice();this.intent={...intent};this.seed=mapSeed(input);this.original=input.heights.slice();this.keep=protectedGround(input);
+    this.initialWater=input.water.depth.slice();this.intent={...intent};this.seed=mapSeed(input);
+    let sourceId='carve-source-'+intent.origin+'-'+this.seed.toString(16);while(input.entities.some(e=>e.id===sourceId))sourceId+='-next';this.sourceId=sourceId;this.original=input.heights.slice();this.keep=protectedGround(input);
     if(this.keep[intent.origin]||(settings.mode==='aim'&&this.keep[intent.end!]))throw new Error('Choose a point outside the start’s protected ground');
     this.map={...input,heights:input.heights.slice(),entities:plainEntities(input.entities),water:{depth:input.water.depth.slice(),contamination:input.water.contamination.slice()}};
     this.sim=new WaterSim(modelFor(input),input.water);this.target=input.heights.slice();this.sign=new Int8Array(N);this.wear=new Float64Array(N);
@@ -87,7 +88,7 @@ export class CarveRun {
       throw new Error('The end point is uphill. Turn on Defy gravity to cut it down.');
     }
     this.stamp(x,y);
-    if(!settings.dry)this.map.entities=placeSource(this.map,intent.origin,sourceStrength(settings.power)).entities;
+    if(!settings.dry)this.map.entities=placeSource(this.map,intent.origin,sourceStrength(settings.power),this.sourceId).entities;
   }
   private hard(level:number):number {
     return this.settings.layers?(this.map.rockLayers?.[level]??hardness(level,true,this.seed)):0;
@@ -220,8 +221,8 @@ export class CarveRun {
     else if(!frontCut&&this.active.size)this.head.event='rock';
     if(changed.length){
       const hit=new Set(changed);
-      this.map.entities=this.map.entities.filter(e=>e.template==='StartingLocation'||e.id==='carve-source'||!entityTiles(this.map,e).some(i=>hit.has(i)))
-        .map(e=>e.id==='carve-source'?{...e,z:this.map.heights[this.intent.origin]}:e);
+      this.map.entities=this.map.entities.filter(e=>e.template==='StartingLocation'||e.id===this.sourceId||!entityTiles(this.map,e).some(i=>hit.has(i)))
+        .map(e=>e.id===this.sourceId?{...e,z:this.map.heights[this.intent.origin]}:e);
     }
     for(const i of changed)this.sim.F[i]=this.map.heights[i];
     this.sim.run(2);this.map.water={depth:this.sim.D.slice(),contamination:this.sim.C.slice()};this.previewWater();
@@ -260,6 +261,7 @@ export class CarveRun {
     }
   }
 }
+
 
 
 

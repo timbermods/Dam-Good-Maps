@@ -109,14 +109,14 @@ worker.onmessage=(event:MessageEvent)=>{
   if(m.type==='chunk')uploads.push(m.chunk);
   if(m.type==='lighting')setLighting(m);
   if(m.type==='frame'){
-    heights=m.heights;head=m.head;
+    heights=m.heights;head=m.head;if(!m.metrics&&!active)metrics.textContent='';
     surge.set(head,m.trail,heights,W);
     if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · '+m.metrics.cut.toLocaleString()+' blocks cut · '+m.metrics.deposited+' deposited';}
     $<HTMLButtonElement>('undo').disabled=!active&&!m.undo;$<HTMLButtonElement>('redo').disabled=active||!m.redo;
   }
   if(m.type==='status')notice.textContent=m.text;
   if(m.type==='started'){active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
-  if(m.type==='cancelled'){active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
+  if(m.type==='cancelled'){steps=0;metrics.textContent='';active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
   if(m.type==='finished'){
     active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
     notice.textContent=(m.reason==='stopped'?'Stopped.': 'The river reached '+m.reason+'.')+' One undo step saved.';
@@ -150,7 +150,7 @@ function cancel(){
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';};
 $('speed').onclick=()=>{speed=speed===1?4:speed===4?12:1;$('speed').textContent=speed+'×';};
 $('stop').onclick=()=>{if(!active)return;pending={type:'stop'};paused=true;notice.textContent='Keeping the canyon and settling water…';stateControls();};
-$('undo').onclick=()=>{if(active){cancel();return;}restoreView(beforeCache);send({type:'undo'});notice.textContent='Run undone.';};
+$('undo').onclick=()=>{if(active){cancel();return;}if(busy)return;restoreView(beforeCache);send({type:'undo'});notice.textContent='Run undone.';};
 $('redo').onclick=()=>{restoreView(afterCache);send({type:'redo'});notice.textContent='Stored result restored.';};
 $('save-run').onclick=()=>{
   if(!savedRun)return;const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v);
@@ -162,7 +162,7 @@ input('replay-file').onchange=async()=>{
   try{send({type:'replay',bundle:JSON.parse(await f.text())});}catch{notice.textContent='This run file could not be read.';}
 };
 $('home').onclick=resetView;$('top').onclick=()=>{
-  if(top){resetView();return;}camera.position.set(controls.target.x,Math.max(W,H)*1.3,controls.target.z+.01);controls.update();top=true;$('top').textContent='Orbit';
+  if(top){resetView();return;}camera.position.set(controls.target.x,Math.max(W,H)*1.65,controls.target.z+.01);controls.update();top=true;$('top').textContent='Orbit';
 };
 let down:{x:number;y:number}|null=null;
 canvas.addEventListener('pointerdown',e=>{if(e.button===0)down={x:e.clientX,y:e.clientY};});
@@ -216,5 +216,6 @@ function animate(t:number){
 requestAnimationFrame(animate);
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H,mode,head};}}});
 load();
+
 
 
