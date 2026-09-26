@@ -758,6 +758,15 @@ few of them in the game (D117).
 
 **Release:** tagged `real-places-done` and released like a milestone (CLAUDE.md, Deploying).
 
+**Status:** done, 2026-09-25 (PR #23; `real-places-done`). A gallery of 85 real places (the survey's 88
+minus its three random-land controls), reached by **Real places** at the top of the generator: our own
+top-down render of each map with its settled water, its name, landform, size, scale and a "how it
+plays" line; **Download** builds the `.timber` in a worker, with progress; **Refine** opens it in the
+editor. The page and every map's in-game description say it is inspired by the land near its
+namesake at Timberborn's scale, not a replica, with the full attribution. Every map passes both
+validators and is byte-identical in Node and Chromium; the page works on desktop and phone. See
+[docs/progress/real-places.md](docs/progress/real-places.md).
+
 ---
 
 ## M9. Interestingness, names, candidates, premises and variety
@@ -953,8 +962,8 @@ become recipes inside the system (design §3).
     version 2), and the measures as permanent measures (information, D115; the dam-wall check
     blocks). Surprise me and high Variety may reach high Verticality now and then; most maps
     never do (D132).
-  - **Intentions** (D138; design version 2 §6): the set (eight after "the only safe water is
-    uphill" left it), the steering (the prior and the settler), the checks on the finished map, one
+  - **Intentions** (D138; design version 2 §6): the set (eleven, four of them Kyler's own; "the
+    only safe water is uphill" left it), the steering (the prior and the settler), the checks on the finished map, one
     re-steer for a start intention, drop rates recorded, and the no-clone and no-archetype measures
     within each intention. **Difficulty as positions on the strategy axes** (#62): a preference
     among a seed's candidates, never a rejection.
@@ -1533,6 +1542,9 @@ improve once every tool exists. Each note is its own item, with its own tests.
    key in an imported singleton is rewritten as forged sibling data (parse into null-prototype
    records, write own keys only); and the JSON parser accepts raw control characters inside
    strings (reject them, as `JSON.parse` does). Each with its round-trip test.
+10. The deliberate upgrade step (PLAN §20 D150): the held major dependency upgrades (TypeScript
+    7.0, @types/node 26, and any future major; list them with `npm outdated`), one at a time, each
+    with the full nightly suite, at a quiet time and never mid-milestone.
 
 **Containment should look natural** (Kyler's note, 2026-09-24)
 

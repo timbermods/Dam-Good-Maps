@@ -68,3 +68,13 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # the live check, against the commit this run deployed (CLAUDE.md, Deploying)
+  live-check:
+    needs: deploy
+    permissions:
+      contents: read
+      issues: write
+    uses: ./.github/workflows/live-check.yml
+    with:
+      ref: ${{ github.sha }}

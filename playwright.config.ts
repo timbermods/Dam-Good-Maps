@@ -2,7 +2,9 @@ import { defineConfig } from "@playwright/test";
 
 // The e2e tests run against the production build, served under the same base as GitHub Pages.
 // Locally they use the installed Chrome (channel "chrome"); CI installs Playwright's Chromium.
+// DGM_E2E_PORT serves them on another port, when 4173 is taken (another checkout's tests).
 const channel = process.env.PW_CHANNEL ?? (process.env.CI ? undefined : "chrome");
+const port = Number(process.env.DGM_E2E_PORT ?? 4173);
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -10,12 +12,12 @@ export default defineConfig({
   fullyParallel: false,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: "http://localhost:4173/dam-good-maps/",
+    baseURL: `http://localhost:${port}/dam-good-maps/`,
     channel,
   },
   webServer: {
-    command: "npx vite build && npx vite preview --port 4173 --strictPort",
-    url: "http://localhost:4173/dam-good-maps/",
+    command: `npx vite build && npx vite preview --port ${port} --strictPort`,
+    url: `http://localhost:${port}/dam-good-maps/`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: { DGM_BASE: "/dam-good-maps/" },

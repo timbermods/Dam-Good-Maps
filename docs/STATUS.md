@@ -64,9 +64,14 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **Design version 2** is built on `investigation/generative-v2` (not started).
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
 - D147: **Map look 2: high fidelity** after the checkpoint and before the Frame pass: High / Standard / Light quality; High adds a real water shader, soft shadows, AO, finer procedural detail, softened edges, anti-aliasing and richer models; our own art; judged by eye; `map-look-2-done`.
+- D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
+- D149: the DGM Probe's integration, adopted as proposals; Kyler decided its two conflicts: results go to `C:\dgm-probe\`, and the probe batch alone is M9a's gate.
+- D150: dependency updates: Actions and minor or patch npm updates merged when CI is green; majors held for a deliberate upgrade step (refinement); one weekly Dependabot pull request per ecosystem.
 
 ## Done and released
 
+- **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
+- **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
@@ -81,7 +86,6 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **PR #18**, the DGM Probe, is a draft. It is merged at a boundary when it's marked ready.
 
 ## Waiting on Kyler
 

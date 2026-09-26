@@ -21,6 +21,10 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 - When a test still passes but no longer checks what its name says, because a decision of Kyler's changed the
   thing it tested, update it to check the current decision, rename it if needed, and note it in the progress
   log. No need to ask first. Never weaken a test to make it pass.
+- Dependency updates: merge GitHub Actions updates and minor or patch npm updates when CI is green (CI's byte
+  checks catch anything that changes a map). Hold major upgrades (TypeScript 7.0, @types/node 26, and any future
+  major) for a deliberate upgrade step at a quiet time, such as the refinement phase, with the full nightly suite;
+  never mid-milestone. Dependabot groups its updates into one weekly pull request per ecosystem.
 
 ## Writing README and website text
 

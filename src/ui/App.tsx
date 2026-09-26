@@ -2,7 +2,8 @@
 // shows the map (2D, or 3D on request) with its card and downloads; "Refine this map" opens it in
 // the editor, and "Back to settings" returns with the edits kept. Generating again while the map
 // has edits regenerates around them (a settings change, PLAN §19.1). Any .timber or project file
-// opens in the editor. The open map is autosaved in the browser.
+// opens in the editor. The open map is autosaved in the browser. A Real places link
+// (`#place=<id>`, from the gallery's Refine) opens that place in the editor.
 
 import type { ComponentType } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
@@ -26,6 +27,7 @@ import type { GenerateResponse } from "../worker/api";
 import type { SessionInfo, SessionOpen } from "../worker/session";
 import type { EditorProps } from "../editor/Editor";
 import type { ExportDialogProps } from "../editor/panels";
+import { fetchIndex, fetchPlace, placeFromHash, PLACES_URL } from "../places/data";
 import { Preview2D, type Layers } from "./Preview2D";
 import { MapCard } from "./MapCard";
 import { SettingsPanel } from "./SettingsPanel";
@@ -103,6 +105,10 @@ interface Confirm {
   text: string;
   yes: string;
   onYes(): void;
+  /** Cancel, when it needs more than closing the dialog. */
+  onNo?(): void;
+  /** Keep the map being replaced (default: the open document's project file). */
+  save?(): void;
 }
 
 export function App() {
@@ -129,6 +135,8 @@ export function App() {
   const [saveState, setSaveState] = useState("");
   const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [exporting, setExporting] = useState(false);
+  /** A real place being opened in the editor: what the page says meanwhile. */
+  const [opening, setOpening] = useState<string | null>(null);
   const saveTimer = useRef(0);
   const screenRef = useRef(screen);
   screenRef.current = screen;
@@ -225,6 +233,25 @@ export function App() {
   useEffect(() => {
     void (async () => {
       const saved = await storage.load();
+      const place = placeFromHash(location.hash);
+      if (place && !saved) {
+        await openPlace(place);
+        return;
+      }
+      if (place && saved) {
+        // the place would replace the map saved in this browser: ask first
+        setConfirm({
+          text: `Opening this real place replaces ${saved.name}, which is saved in this browser. Save its project file first if you want to keep it.`,
+          yes: "Open the real place",
+          onYes: () => void openPlace(place),
+          onNo: () => {
+            setResume(saved);
+            void run(init.spec);
+          },
+          save: () => saveFile(saved.bytes, `${saved.name}.damgoodmaps.json`, "application/gzip"),
+        });
+        return;
+      }
       if (saved && location.hash === "#edit") {
         await openBytes(saved.bytes, saved.name + ".damgoodmaps.json", true);
         return;
@@ -233,6 +260,23 @@ export function App() {
       await run(init.spec);
     })();
   }, []);
+
+  /** Open a real place in the editor: its .timber is built in the worker and imported. */
+  async function openPlace(id: string) {
+    setError(null);
+    setOpening("Opening the map…");
+    try {
+      const entry = (await fetchIndex()).places.find((p) => p.id === id);
+      if (!entry) throw new Error(`there is no real place called "${id}"`);
+      setOpening(`Opening ${entry.name}…`);
+      enterEditor(await generator.openPlace(await fetchPlace(id)));
+      setOpening(null);
+    } catch (e) {
+      setOpening(null);
+      await run(init.spec);
+      setError(`The real place could not be opened: ${String(e instanceof Error ? e.message : e)}`);
+    }
+  }
 
   // -------------------------------------------------------------------------------- the editor
 
@@ -359,11 +403,24 @@ export function App() {
       <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
         <p id="confirm-text">{confirm.text}</p>
         <footer>
-          <button type="button" class="ghost" onClick={() => setConfirm(null)} autoFocus>
+          <button
+            type="button"
+            class="ghost"
+            onClick={() => {
+              const c = confirm;
+              setConfirm(null);
+              c.onNo?.();
+            }}
+            autoFocus
+          >
             Cancel
           </button>
-          {session ? (
-            <button type="button" class="ghost" onClick={() => void generator.project().then((p) => saveFile(p.bytes, p.fileName, "application/gzip"))}>
+          {confirm.save || session ? (
+            <button
+              type="button"
+              class="ghost"
+              onClick={() => (confirm.save ? confirm.save() : void generator.project().then((p) => saveFile(p.bytes, p.fileName, "application/gzip")))}
+            >
               Save project file
             </button>
           ) : null}
@@ -422,7 +479,12 @@ export function App() {
   return (
     <div class="app">
       <header class="top">
-        <h1>Dam Good Maps</h1>
+        <div class="top-row">
+          <h1>Dam Good Maps</h1>
+          <nav class="top-nav" aria-label="Pages">
+            <a href={PLACES_URL}>Real places</a>
+          </nav>
+        </div>
         <p class="tag">Timberborn maps from a seed: generate, refine, download, play.</p>
       </header>
       {resume ? (
@@ -469,7 +531,7 @@ export function App() {
             onReset={() => setSettings(defaultSettings(theme, difficulty, size))}
           />
           <div class="generate-bar">
-            <button type="button" class="primary" disabled={busy} onClick={() => run(spec)}>
+            <button type="button" class="primary" disabled={busy || !!opening} onClick={() => run(spec)}>
               {busy ? "Generating…" : edited ? "Generate, keeping my edits" : stale ? "Generate (settings changed)" : "Generate"}
             </button>
             {edited ? (
@@ -533,7 +595,7 @@ export function App() {
               <Preview2D result={result} layers={layers} />
             )
           ) : (
-            <div class="placeholder">{busy ? "Generating…" : ""}</div>
+            <div class="placeholder">{opening ?? (busy ? "Generating…" : "")}</div>
           )}
           {result && (
             <>
