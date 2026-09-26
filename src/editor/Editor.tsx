@@ -22,7 +22,7 @@ import type { FixOp } from "../core/validate/report";
 import { bankFor } from "../core/features/raster/terrain";
 import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
-import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater } from "../render3d/model";
+import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "../render3d/model";
 import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
@@ -31,6 +31,8 @@ import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, Ex
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import { BrushBar } from "./BrushBar";
+import { WaterBar } from "./WaterBar";
+import { WaterPlayer } from "./waterPlayer";
 import { ellipseOutline, fitOutline, moveOutline, outlineBox, ShapeDrag, type ShapeHost } from "./liveShapes";
 import { hollowAt } from "../core/features/hollow";
 import { OFFICIAL_FLOW } from "../core/gen/calibrated";
@@ -81,6 +83,8 @@ export interface EditorProps {
 interface Mirror {
   heights: Uint8Array;
   water: SurfaceWater;
+  /** The water on screen, as the worker sent it. */
+  waterView: WaterView;
   entities: EntityView;
   /** The objects on each tile, made when first asked for after the objects change. */
   entitiesAt: Map<number, number[]> | null;
@@ -165,6 +169,27 @@ export default function Editor(props: EditorProps) {
   const [waterTick, setWaterTick] = useState(0);
   /** The water is flowing into an edit's new shape (how far it has come, 0–1), or null. */
   const [flowing, setFlowing] = useState<number | null>(null);
+  /** The water's journey, played at a pace the eye can follow; its controls; a drought to watch. */
+  const player = useRef<WaterPlayer | null>(null);
+  const [, setPlayerTick] = useState(0);
+  const [follow, setFollow] = useState(false);
+  const followRef = useRef(follow);
+  followRef.current = follow;
+  const [drought, setDroughtState] = useState(false);
+  const droughtRef = useRef(false);
+  const setDrought = (on: boolean) => {
+    droughtRef.current = on;
+    setDroughtState(on);
+  };
+  /** Where the water stood in the frame shown before (the camera follows where it rises most). */
+  const lastDepth = useRef<Float32Array | null>(null);
+  player.current ??= new WaterPlayer({
+    show: (f) => showWater(f.water),
+    changed: () => {
+      setPlayerTick((n) => n + 1);
+      setFlowing(player.current!.progress);
+    },
+  });
   const [instant, setInstant] = useState<CheckItem[]>([]);
   const [damSites, setDamSites] = useState<DamSiteView[] | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -238,8 +263,89 @@ export default function Editor(props: EditorProps) {
     return next;
   }
 
+  /** Put water on the map (a frame of its journey, a draft's): the renderer, the page's copy, and
+   *  with Follow on, the camera drifting to where the water rises most. */
+  function showWater(w: WaterView) {
+    const r = renderer.current;
+    r?.updateWater(w);
+    const W = infoRef.current.W;
+    const H = infoRef.current.H;
+    mirror.current.water = r?.mapState()?.surface ?? surfaceWater(W, H, w);
+    mirror.current.waterView = w;
+    const depth = new Float32Array(W * H);
+    for (let k = 0; k < w.count; k++) depth[w.tile[k]] = Math.max(depth[w.tile[k]], w.depth[k]);
+    const before = lastDepth.current;
+    lastDepth.current = depth;
+    if (!followRef.current || !r || !before || before.length !== depth.length) return;
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (let i = 0; i < depth.length; i++) {
+      const rise = depth[i] - before[i];
+      if (rise < 0.05) continue;
+      sx += (i % W) * rise;
+      sy += Math.floor(i / W) * rise;
+      n += rise;
+    }
+    if (n < 0.5) return;
+    const v = r.getView();
+    const tx = sx / n + 0.5;
+    const tz = -(sy / n + 0.5);
+    r.setView({ target: [v.target[0] + (tx - v.target[0]) * 0.15, v.target[1], v.target[2] + (tz - v.target[2]) * 0.15] });
+  }
+
+  /** The soil's colours from `from` to `to` over about two seconds (the last step is `to` itself). */
+  const soilTimer = useRef(0);
+  function growSoil(r: MapRenderer, from: SoilView, to: SoilView) {
+    clearTimeout(soilTimer.current);
+    const t0 = performance.now();
+    const n = to.moisture.length;
+    const moisture = new Uint8Array(n);
+    const step = () => {
+      const t = Math.min(1, (performance.now() - t0) / 2000);
+      if (t >= 1) {
+        r.updateSoil(to);
+        return;
+      }
+      for (let i = 0; i < n; i++) {
+        const a = from.moisture[i];
+        const b = to.moisture[i];
+        if (a === b) {
+          moisture[i] = b;
+          continue;
+        }
+        // wetter tiles start sooner: moisture spreads out from the water
+        const k = Math.max(0, Math.min(1, t * 1.6 - (1 - Math.max(a, b) / 255) * 0.6));
+        moisture[i] = Math.round(a + (b - a) * k);
+      }
+      r.updateSoil({ moisture, contamination: to.contamination });
+      soilTimer.current = window.setTimeout(step, 100);
+    };
+    step();
+  }
+
+  /** A drought to watch, or the map's own water back at once. */
+  function toggleDrought(on: boolean) {
+    if (on) {
+      setDrought(true);
+      player.current?.begin(null, true);
+      void api.startDrought();
+    } else {
+      setDrought(false);
+      void api.stopWeather().then((v) => {
+        player.current?.clear();
+        applyView(v);
+      });
+    }
+  }
+
   function applyUpdate(u: SessionUpdate): void {
     applyView(u.view);
+    // an edit: its water's journey starts from the water right after it
+    if (u.ok) {
+      if (droughtRef.current) setDrought(false);
+      player.current?.begin(u.view.water ? { water: u.view.water, done: 0 } : null);
+    }
     // the instant checks: the problems this edit made, in the region it changed (with the checks
     // worker they come as an event a moment later)
     if (u.instant) setInstant(u.instant.items.filter((c) => c.here && c.class === "load"));
@@ -271,12 +377,17 @@ export default function Editor(props: EditorProps) {
       // (the renderer works out the surface water: the page reads it from there)
       r?.updateWater(v.water);
       m.water = r?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
+      m.waterView = v.water;
     }
     // the soil follows the water (the preview's, then the exact settle's): the ground's colours,
     // and the ivy on ruins, so it comes before the objects
     if (v.soil) {
+      // the land comes alive with the water (D181): the soil's colours move to the new moisture
+      // over about two seconds, the tiles that end wettest (by the water) first
+      const from = m.soil;
       m.soil = v.soil;
-      r?.updateSoil(v.soil);
+      if (r && from && from.moisture.length === v.soil.moisture.length) growSoil(r, from, v.soil);
+      else r?.updateSoil(v.soil);
     }
     if (v.entities) {
       m.entities = v.entities;
@@ -400,7 +511,9 @@ export default function Editor(props: EditorProps) {
         .backgroundCheck(proxy((p: CheckProgress) => live && setProgress(p)))
         .then((r) => {
           if (!live || !r || r.check.version !== infoRef.current.version) return;
-          applyView(r.view);
+          // the exact settle's water ends the journey in progress (eased into), or shows at once
+          if (r.view.water && player.current?.hasJourney) player.current.push({ water: r.view.water, done: 1, final: () => applyView(r.view) });
+          else applyView(r.view);
           setCheck(r.check);
           setProgress(null);
         })
@@ -456,12 +569,19 @@ export default function Editor(props: EditorProps) {
       proxy((e: EditorEvent) => {
         if (e.version !== infoRef.current.version) return;
         if (e.kind === "water") {
-          renderer.current?.updateWater(e.water);
-          mirror.current.water = renderer.current?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, e.water);
-          setFlowing((f) => (f === null ? e.done : f));
+          // a draft's water shows as it comes; an edit's plays at a pace the eye can follow
+          if (e.draft) {
+            // (a journey still playing would paint over the draft's water)
+            if (player.current?.hasJourney) player.current.clear();
+            showWater(e.water);
+          }
+          else player.current?.push({ water: e.water, done: e.done });
         } else if (e.kind === "settled") {
-          applyView(e.view);
-          setFlowing(null);
+          player.current?.push({ water: e.view.water ?? mirror.current.waterView, done: 1, final: () => applyView(e.view) });
+        } else if (e.kind === "weather") {
+          if (!droughtRef.current) return;
+          const words = e.phase === "drought" ? `Drought: day ${Math.max(1, Math.ceil(e.day))} of ${e.days}` : e.phase === "return" ? "The water comes back" : undefined;
+          player.current?.push({ water: e.water, done: e.phase === "drought" ? e.day / e.days / 2 : 0.5, ...(words ? { words } : {}), ...(e.phase === "end" ? { final: () => setDrought(false) } : {}) });
         } else setInstant(e.instant.items.filter((c) => c.here && c.class === "load"));
       }),
     );
@@ -1617,6 +1737,7 @@ export default function Editor(props: EditorProps) {
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
             <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} loading={!ready} />
+            {player.current ? <WaterBar player={player.current} follow={follow} onFollow={setFollow} drought={drought} onDrought={toggleDrought} /> : null}
             {shapeNote ? (
               <div class={`map-note shape-note${shapeNote.ok ? (shapeNote.warn ? " warn" : "") : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}
@@ -1851,7 +1972,7 @@ function cornerToCentre(x: number, y: number, o: Orientation): [number, number] 
 }
 
 function mirrorOf(v: MapView): Mirror {
-  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), entities: v.entities, entitiesAt: null, soil: v.soil };
+  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), waterView: v.water, entities: v.entities, entitiesAt: null, soil: v.soil };
 }
 
 /** Dropping a .timber or project file on the editor opens it. */

@@ -49,7 +49,7 @@ import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
 import type { BuildResult } from "../core/features/build";
-import { OFFICIAL_FLOW } from "../core/gen/calibrated";
+import { DROUGHT, OFFICIAL_FLOW } from "../core/gen/calibrated";
 import { polygonMask } from "../core/features/geometry";
 import { patchFeature } from "../core/doc/ops";
 import type { Difficulty, MapSpec } from "../core/spec/mapspec";
@@ -61,7 +61,7 @@ import type { TerrainState } from "../core/features/raster/strokePreview";
 import { droughtStorage } from "../core/sim/drought";
 import { rulesFor } from "../core/validate/playability";
 import { mapObjects, waterModel } from "../core/sim/model";
-import type { WaterModel } from "../core/sim/water";
+import { WaterSim, type WaterModel } from "../core/sim/water";
 import { surfaceOf } from "../core/format/world";
 import { blocks, type CheckClass, type CheckResult, type FixOp } from "../core/validate/report";
 import { changedRect } from "../render3d/mesh";
@@ -484,9 +484,14 @@ export async function replicaCheck(v: number, onProgress?: (p: CheckProgress) =>
 
 /** What the worker tells the page by itself, between its answers (`listen`). */
 export type EditorEvent =
-  /** The water as it flows after an edit (D133's live water): the whole view, a few times a
-   *  second. `done` is how far the settle has come (0–1). */
-  | { kind: "water"; version: number; water: WaterView; done: number }
+  /** The water as it flows after an edit (D133's live water): the whole view, a frame every few
+   *  ticks of the game (close together at first, where the water moves most), for the page to play
+   *  at a pace the eye can follow. `done` is how far the settle has come (0–1); `draft`: a water
+   *  tool's draft (shown at once, not part of the journey). */
+  | { kind: "water"; version: number; water: WaterView; done: number; ticks: number; draft?: boolean }
+  /** A weather run (a drought, then the water coming back): its frames, the day, and the end (the
+   *  map's own water, exactly). */
+  | { kind: "weather"; version: number; water: WaterView; phase: "drought" | "return" | "end"; day: number; days: number }
   /** The water has settled after an edit: the water, the soil and the plants on it. */
   | { kind: "settled"; version: number; view: ViewUpdate; info: SessionInfo }
   /** The instant checks of an edit (with a checks worker, they come a moment after the edit). */
@@ -556,8 +561,14 @@ function kickWater(): void {
 
 /** The background settle: a slice at a time, the water to the page as it flows, then the settled
  *  water in place (the plants follow it). Stops when a newer edit takes over. */
+/** Ticks between the frames of the water's journey: close together at first, where the water moves
+ *  most (a new channel filling), wider apart as it settles. */
+function frameGap(ticks: number): number {
+  return ticks < 240 ? 4 : ticks < 960 ? 12 : 48;
+}
+
 async function runWater(token: number): Promise<void> {
-  let lastFrame = performance.now();
+  let lastTicks = -Infinity;
   for (;;) {
     const j = waterJob;
     if (!j || j.token !== token || session !== j.session) return;
@@ -567,10 +578,23 @@ async function runWater(token: number): Promise<void> {
     }
     const t0 = performance.now();
     let r: CanonicalWater | null = null;
-    while (!r && performance.now() - t0 < WATER_SLICE_MS) r = j.job.advance(4);
+    let lastDraftFrame = 0;
+    while (!r && performance.now() - t0 < WATER_SLICE_MS) {
+      r = j.job.advance(4);
+      if (r || !listener) continue;
+      const ticks = j.job.ticks;
+      // a draft's water is shown as it comes (a few times a second); an edit's journey a frame
+      // every few ticks
+      const due = j.draft ? performance.now() - lastDraftFrame > WATER_FRAME_MS : ticks - lastTicks >= frameGap(ticks);
+      if (!due) continue;
+      lastTicks = ticks;
+      lastDraftFrame = performance.now();
+      const done = Math.min(0.99, ticks / TICKS_PER_DAY);
+      listener({ kind: "water", version, water: waterOf(j.session, { depth: j.job.sim.D, contamination: j.job.sim.C }, j.draft?.heights), done, ticks, ...(j.draft ? { draft: true } : {}) });
+    }
     if (r && j.draft) {
       // a draft's water has settled on its ground: shown as it is, kept for the next edit
-      listener?.({ kind: "water", version, water: waterOf(j.session, { depth: r.depth, contamination: r.contamination }, j.draft.heights), done: 1 });
+      listener?.({ kind: "water", version, water: waterOf(j.session, { depth: r.depth, contamination: r.contamination }, j.draft.heights), done: 1, ticks: j.job.ticks, draft: true });
       draftState = j.job.state();
       waterJob = null;
       return;
@@ -578,11 +602,6 @@ async function runWater(token: number): Promise<void> {
     if (r) {
       finishWater(j, r);
       return;
-    }
-    if (performance.now() - lastFrame > WATER_FRAME_MS && listener) {
-      lastFrame = performance.now();
-      const done = Math.min(0.99, j.job.ticks / TICKS_PER_DAY);
-      listener({ kind: "water", version, water: waterOf(j.session, { depth: j.job.sim.D, contamination: j.job.sim.C }, j.draft?.heights), done });
     }
     await breathe();
   }
@@ -616,6 +635,63 @@ export function cancelShape(): ViewUpdate {
   stopWater();
   kickWater();
   return { water: waterOf(s) };
+}
+
+// ------------------------------------------------------------------------------------ weather
+
+/** A drought to watch (D180 (8)): every source stops for the map's drought (4, 9 or 30 days by its
+ *  difficulty), the water drains and evaporates, then the sources run again and it comes back. A
+ *  frame every 48 ticks; the end is the map's own settled water, exactly. The map never changes. */
+let weatherToken = 0;
+export function startDrought(): void {
+  const s = need();
+  const token = ++weatherToken;
+  const days = DROUGHT[s.meta.designedFor ?? "normal"]?.days ?? DROUGHT.normal.days;
+  const model = s.built.waterModel;
+  const sim = new WaterSim(model, { depth: Float64Array.from(s.built.water), contamination: Float64Array.from(s.built.contamination) });
+  const v = version;
+  const total = days * TICKS_PER_DAY;
+  const send = (phase: "drought" | "return" | "end", water: WaterView, day: number) => listener?.({ kind: "weather", version: v, water, phase, day, days });
+  void (async () => {
+    // the drought: the sources off
+    for (let t = 0; t < total; ) {
+      if (token !== weatherToken || session !== s) return;
+      const t0 = performance.now();
+      while (t < total && performance.now() - t0 < WATER_SLICE_MS) {
+        // closer frames while the rivers drain, the first day
+        const gap = t < TICKS_PER_DAY ? 12 : 96;
+        sim.run(gap, 0);
+        t += gap;
+        send("drought", waterOf(s, { depth: sim.D, contamination: sim.C }), Math.min(days, t / TICKS_PER_DAY));
+      }
+      await breathe();
+    }
+    // then the water comes back, from the dry map to the settled water
+    const back = new PreviewJob({ model, water: { settled: false, ticks: 0, depth: sim.D.slice(), contamination: sim.C.slice(), sat: new Uint8Array(sim.N), out: sim.out.slice(), preview: true } }, model);
+    let last = 0;
+    for (;;) {
+      if (token !== weatherToken || session !== s) return;
+      const t0 = performance.now();
+      let r: CanonicalWater | null = null;
+      while (!r && performance.now() - t0 < WATER_SLICE_MS) {
+        r = back.advance(4);
+        if (!r && back.ticks - last >= frameGap(back.ticks)) {
+          last = back.ticks;
+          send("return", waterOf(s, { depth: back.sim.D, contamination: back.sim.C }), days);
+        }
+      }
+      if (r) break;
+      await breathe();
+    }
+    if (token === weatherToken && session === s) send("end", waterOf(s), days);
+  })();
+}
+
+/** Stop a weather run: the map's own water. */
+export function stopWeather(): ViewUpdate {
+  weatherToken++;
+  const s = session;
+  return s ? { water: waterOf(s) } : {};
 }
 
 /** Settle the open map's water now (Node tests, and anything that must not wait for the

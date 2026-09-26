@@ -15,6 +15,14 @@
   box-shadow: var(--shadow);
 }
 
+/* a bar's own words (what it is doing now) */
+.bar-status {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* a group of fields inside a bar */
 .bar-group {
   display: flex;

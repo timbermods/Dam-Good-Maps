@@ -25,7 +25,7 @@ function sendOpen(o: ed.SessionOpen): ed.SessionOpen {
 
 function eventBuffers(e: ed.EditorEvent): Transferable[] {
   if (e.kind === "instant") return [];
-  return viewBuffers(e.kind === "water" ? { water: e.water } : e.view) as Transferable[];
+  return viewBuffers(e.kind === "water" || e.kind === "weather" ? { water: e.water } : e.view) as Transferable[];
 }
 
 // the page's worker settles the water by itself after each edit, and tells the page as it flows
@@ -92,6 +92,9 @@ const api = {
   },
   /** A draft ended without being placed (Esc, a refused release): the map's own water again. */
   cancelShape: () => ed.cancelShape(),
+  /** A drought to watch, then the water coming back (weather events); stop it at any time. */
+  startDrought: () => ed.startDrought(),
+  stopWeather: () => ed.stopWeather(),
   changeFeature: (id: string, patch: { params: Record<string, unknown> }, label: string) => sendUpdate(ed.changeFeature(id, patch, label)),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),

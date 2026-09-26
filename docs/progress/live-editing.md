@@ -176,7 +176,7 @@ In `investigation/claude/`, the shape of its tools:
   (refused: the 30% limit), make the hill bigger, make the hill as tall as it can go (says the
   level it reaches), raise the ground north of the start by 2 (refused: the start's berries and
   trees there would die; the offer is the ground to its west).
-- Reference solutions (`bin/reference.ts`): 108 of 127 pass. All 7 new ones pass; 101 of the 120
+- Reference solutions (`bin/reference.ts`): 112 of 131 pass. All 11 new ones pass; 101 of the 120
   older ones pass, the same 101 as on dev at 761a1d2 (the other 19 are setups tuned on the M7 maps,
   M12-INTEGRATION §11).
 
@@ -209,8 +209,29 @@ In `investigation/claude/`, the shape of its tools:
 - **Flatten's level beside the pointer** ("level 7"); with Ctrl, the level a click would pick, and
   on water its bed ("riverbed: level 6"), so a channel flattened to it lets the water in.
 
-Not yet: the water's journey at a pace the eye can follow, its time controls and local first
-(part 2); lakes by painting a shore; handles on a placed river.
+## Water, part 2: the water's journey (D179 (2), D180 (8, 9, 10), D181 (2))
+
+- **After every edit the water plays its journey** over a few seconds: the worker settles it as
+  fast as it can and sends a frame every 4 ticks of the game at first (where the water moves
+  most), every 12 later, every 48 as it settles; the page plays them twenty a second, a new
+  channel filling, the water creeping downstream and spreading into basins. The brushes never wait
+  for it: frames only change the water shown.
+- **It ends exactly at the map's water.** The quick settle's last frame can differ from the exact
+  settle (which drains the thin sheets it leaves): the journey eases into the exact water over 16
+  frames, and that water is the worker's and the export's (tested).
+- **Time controls** over the map's lower right: **Pause**, speed **1× / 2× / 4×**, **Skip** to the
+  latest water, **Replay** the last change's journey, **Follow** (the camera drifts to where the
+  water rises most) and **Drought**: every source stops for the map's drought (4, 9 or 30 days by
+  its difficulty), the rivers drain in the first day, pools evaporate, then the sources run again
+  and the water comes back, ending at the map's water. The map never changes.
+- **The land comes alive with the water**: when the water settles, the soil's colours move to the
+  new moisture over about two seconds, the tiles by the water first.
+- **Local first**: the worker settles in slices of 10 ms between the tools' requests, so the tools
+  never wait; the water nearest the edit moves first by its nature, and the first frames show it.
+
+Not yet: badtide (D181 (3): the codebase has no badtide numbers, only the BadtideDrain object;
+waiting for the game's numbers), water sounds (D181 (4)), lakes by painting a shore, handles on a
+placed river.
 
 ## The camera keys (D180)
 
@@ -259,6 +280,9 @@ enables it at once), and the brushes could be picked before the map could be pai
   end on dry ground fills its hollow or runs on downhill (and the same stroke, not drawn in the
   editor, is refused as before); a drawn river's bed never drops below the river it joins;
   Natural's meanders are the same for the same stroke; a hollow fills to its lowest rim.
+- `tests/e2e/waterFlow.spec.ts`: a source's water grows over several frames; Pause holds it; it
+  ends at the worker's water; Replay starts over and Skip returns to the end; a drought drains the
+  map and brings the water back to the map's water.
 - `tests/e2e/camera.spec.ts`: held keys move the view in many small steps and glide to a stop;
   Shift is faster; Q turns; nothing moves while a field has the focus.
 - `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release

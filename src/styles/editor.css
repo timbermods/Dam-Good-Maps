@@ -901,3 +901,11 @@ button[aria-pressed="true"] {
   max-width: 320px;
   pointer-events: none;
 }
+
+/* the water's time controls: the map's lower right corner */
+.water-bar {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+}
