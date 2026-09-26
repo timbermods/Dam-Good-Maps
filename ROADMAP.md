@@ -903,6 +903,15 @@ and released as `live-editing-done` when Kyler says it feels right.
      front; a "drought" button.
   9. **Local first:** water near the edit first, then the rest of the map.
   10. The final water always matches the game's settled result.
+- **More for water** (D181):
+  1. **Carving makes valleys:** the channel cuts down where the water is fast, the sides slump
+     into stepped terraces, and deposition leaves floodplains and a small delta where it slows; a
+     walls setting (steep or wide); in the background, near the source first.
+  2. **The land comes alive:** moisture spreads visibly from new water, dry earth turning to grass
+     along the banks over a few seconds, fading back in a drought; it ends at the settled moisture.
+  3. **A "badtide" button** beside "drought": badwater surges, spreads, poisons the ground, recovers.
+  4. **Optional water sounds,** off by default, our own: a rush near falls, a trickle along streams,
+     quieter zoomed out.
 - **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
   resize and raise it live; limits show while dragging.
 - **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke

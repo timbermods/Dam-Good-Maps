@@ -94,6 +94,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D179: **Live editing is how you edit a map**, the editor's core principle: every tool becomes live, water first (freehand rivers, lakes, sources, visible flow), then brush shapes and a precise mode, one Select tool, resource brushes, objects dragged with live footprints; no plan-confirm-place flow remains.
 - #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
 - D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), a Demolish tool, water-aware Ctrl-click sampling, the river tool's rules (heads, branches, gorges, waterfalls), player-set source strength, "let the water carve", natural or exact rivers, water time controls, and local-first water that always ends at the game's settled result.
+- D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
 
 ## Done and released
 
