@@ -953,6 +953,8 @@ they conflict):
    clustered at official-like densities.
 4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
    (moisture, contamination, drought). The legend appears only while an overlay is on.
+   Visible layers exactly as in Timberborn (D207): a compact layer widget (∞ until used), slicing
+   that hides everything above the level, the layer pick, and tools that act on the visible land.
    Also (D205): a corner minimap (on by default at 256², a toggle among the view buttons), small
    satisfying feedback on every action with optional quiet sounds and reduced-motion support, and
    camera bookmarks (Ctrl+Shift+1–9 to save, Shift+1–9 to glide back).
