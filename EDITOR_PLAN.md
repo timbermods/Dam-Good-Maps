@@ -92,8 +92,11 @@ Make a valley, drop a source, and there's a river.
   Badwater stays clearly distinct in transparent mode, for colour-blind players too (D196). Sources can go anywhere in the editor;
   the "only where water begins" rule (D171) is for generated maps.
 - **Lakes, waterfalls, joins and branches emerge from the land.**
-- **Water flows visibly** over a few seconds, and the land greens along new water. Time controls:
-  pause, speed up, replay and follow.
+- **Water flows visibly,** and the land greens along new water. It reacts at once: water near an edit
+  starts moving within a frame or two, the rest of the map follows. A speed control (slower, normal,
+  faster, instant) is brisk by default: small edits settle nearby in a second or two, big changes (a
+  new river, a breach) still flow visibly, and instant skips to the settled result. Time controls:
+  pause, replay and follow (D197).
 - **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).

@@ -887,7 +887,9 @@ they conflict):
      water** toggles it otherwise; badwater stays distinct.
    - **Everything else emerges:** lakes fill hollows, waterfalls form at drops, rivers join where
      they meet, and branches form wherever the land is cut from water.
-   - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
+   - **How water behaves:** water near an edit moves within a frame or two, then the rest of the
+     map; a speed control (slower, normal, faster, instant; brisk by default: small edits settle
+     nearby in a second or two) (D197); the journey with pause, skip, replay,
      follow, drought and badtide (the game's badtide rules, from `investigation/cycles`); moisture
      spreading as the land greens; optional sounds of our own.
    - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
