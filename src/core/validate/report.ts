@@ -5,7 +5,10 @@
 
 import type { EditOp } from "../doc/ops";
 
-export type CheckClass = "load" | "playability" | "design";
+/** `principle`: a principle Kyler has decided about how a map is built (D115 (2)), such as no edge
+ *  walls (D151): it blocks the download in `generate` and the export in `export`, and is
+ *  information on an import. */
+export type CheckClass = "load" | "playability" | "design" | "principle";
 export type Severity = "error" | "warning" | "info";
 export type Profile = "generate" | "export" | "import";
 
@@ -23,8 +26,9 @@ export interface CheckResult {
   /** Tiles ([x, y]), a feature or entities involved. */
   where?: { tiles?: [number, number][]; feature?: string; entities?: string[] };
   fix?: FixOp[];
-  /** Advisory checks are reported in every profile and never block: plants.drought, and from M8
-   *  the start targets and water.reservoir (D85). */
+  /** Advisory checks are reported in every profile and never block: plants.drought; from M8 the
+   *  start targets and water.reservoir (D85); since D152 water.clean_exists and
+   *  water.clean_reach (maps need not hold their water). */
   advisory?: boolean;
   /** Why the result is only approximate (PLAN §11, D87): the map's water is something a steady
    *  state cannot show (caves, sources that turn on later, aquifers, seeps, a start under a roof).
@@ -43,22 +47,24 @@ export interface ValidationReport {
 
 /** Severity of a result in a profile (PLAN §19.5): load problems are errors everywhere;
  *  playability and design problems must pass in `generate`, warn in `export`, and are reported in
- *  `import` (design as information). Advisory checks warn. */
+ *  `import` (design as information); a principle must pass in `generate` and `export` and is
+ *  information on an import. Advisory checks warn. */
 export function severityOf(profile: Profile, cls: CheckClass, ok: boolean, advisory = false): Severity {
   if (ok) return "info";
   if (advisory) return "warning";
   if (cls === "load") return "error";
   if (profile === "generate") return "error";
-  if (profile === "export") return "warning";
-  return cls === "design" ? "info" : "warning";
+  if (profile === "export") return cls === "principle" ? "error" : "warning";
+  return cls === "design" || cls === "principle" ? "info" : "warning";
 }
 
 /** Whether a result blocks the profile's action: the download in `generate`, the export in
- *  `export`. Nothing blocks an import: the importer reports, and fixes what the game would. */
+ *  `export` (load problems and principles). Nothing blocks an import: the importer reports, and
+ *  fixes what the game would. */
 export function blocks(profile: Profile, r: CheckResult): boolean {
   if (r.ok || r.advisory || r.applicable === false || r.approximate) return false;
   if (profile === "generate") return true;
-  if (profile === "export") return r.class === "load";
+  if (profile === "export") return r.class === "load" || r.class === "principle";
   return false;
 }
 

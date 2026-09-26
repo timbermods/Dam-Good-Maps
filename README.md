@@ -13,8 +13,9 @@ The generator:
   map. Each setting shows what the official maps use.
 - **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
   colony's survival.
-- Every map's start has water on its own level, trees and bushes within a short walk. The map card
-  lists the **Start requirements**. **Advanced: start rules** sets them.
+- Every map's start has clean water within a short walk, using only the map's own slopes. Wood and
+  berry bushes grow nearby. The map card lists the **Start requirements**. **Advanced: start
+  rules** sets them.
 - The preview shows water, moisture and reach layers.
 - Trees, berry bushes and ruins come in about the amounts official maps of that size have. They
   grow in groves, patches and fields. Every map has at least one mine site.
@@ -39,7 +40,7 @@ The editor:
   object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
   them, set a water source's strength, or make it turn on in a later cycle.
 - **Start**: drag the start. Green means the district center fits and the start has its water,
-  trees and bushes.
+  wood and bushes.
 - **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
 - Water settles within a couple of seconds of an edit. The full check follows in the background.
   The pill shows **Settling water** with its progress, then **Ready to play** or the problems.

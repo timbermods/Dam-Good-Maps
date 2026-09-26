@@ -10,13 +10,15 @@ emits on its rotated 3x3, seeps stop at 0.8 deep, aquifers and badtide drains ar
 multi-tile objects block walking on every tile."""
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 import calibrated as cal
-from analysis import (components, dam_sites, distance_from, is_dead, placement, point_clusters, reach_at,
-                      shore_distance, walk_distance, walk_regions)
+from analysis import (components, dam_sites, distance_from, is_dead, placement, point_clusters, pump_shore_distance,
+                      reach_at, walk_distance, walk_regions)
 from watersim import (TICKS_PER_DAY, canonical_settle, cluster_saturation, contamination, drought_storage,
-                      moisture, seq_sum)
+                      moisture, seq_sum, spill_levels)
 
 WET = 0.05                   # water deeper than this is a water tile
 BAD = 0.05                   # water this contaminated is badwater to a beaver
@@ -38,6 +40,46 @@ START_CHECKS = ("start.dry", "start.water", "start.badwater", "start.reach", "st
 # resource amounts are information (Kyler, 2026-09-25: resources like the official maps)
 ADVISORY_START = ("start.badwater", "start.reach", "start.ruins_clear", "water.reservoir", "plants.drought",
                   "resources.scrap", "resources.trees", "resources.bushes")
+
+TREE_LOGS = {"Pine": 2, "Birch": 1, "Oak": 8}      # logs a grown tree gives (the game's specs)
+
+
+def _number(v):
+    """A number as a file stores it: plain, or in the older {"Value": ...} wrapper; None otherwise
+    (src/core/analysis/wood.ts numberOf)."""
+    if isinstance(v, dict) and len(v) == 1 and "Value" in v:
+        v = v["Value"]
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
+        return None
+    return v
+
+
+def growth_of(comps):
+    """How far a tree has grown (Growable.GrowthProgress), or None for a grown tree: the game
+    writes a Growable only while a tree grows (src/core/analysis/wood.ts growthOf)."""
+    g = comps.get("Growable")
+    return _number(g.get("GrowthProgress")) if isinstance(g, dict) else None
+
+
+def is_sapling(comps):
+    g = growth_of(comps)
+    return g is not None and g < 1
+
+
+def tree_logs(template, comps):
+    """The logs a lumberjack cuts from a Pine, Birch or Oak once it has grown (D164;
+    src/core/analysis/wood.ts treeLogs): what its Yielder:Cuttable holds when that is logs, else its
+    species' yield; anything else gives none."""
+    spec = TREE_LOGS.get(template)
+    if spec is None:
+        return 0
+    y = comps.get("Yielder:Cuttable")
+    if isinstance(y, dict) and isinstance(y.get("Yield"), dict) and y["Yield"].get("Good") == "Log":
+        n = _number(y["Yield"].get("Amount"))
+        if n is not None:
+            return n if n > 0 else 0
+    return spec
+
 
 # emitters: local tiles, contamination, running at map start, seep (sim/model.ts)
 SQ2 = [(x, y) for x in range(2) for y in range(2)]
@@ -97,7 +139,7 @@ def water_model(m, fps, surface):
                 s = min(s, 8 * len(tiles))
                 if not s > 0:
                     s = 0.0
-                src = {"tiles": cells, "strength": s, "contamination": cont}
+                src = {"tiles": cells, "strength": s, "contamination": cont, "template": p.template}
                 if seep:
                     src["depth_limit"] = (cells[0], 0.8, 0.72)
                 sources.append(src)
@@ -145,7 +187,7 @@ def rules_for(spec, difficulty):
     return {
         "difficulty": d,
         "water_within": r["waterWithin"] if r else base["water_dist"],
-        "trees_within": r["treesWithin20"] if r else base["trees_r20"],
+        "wood_within": r["woodWithin20"] if r else base["wood_r20"],
         "bushes_within": r["bushesWithin20"] if r else base["bushes_r20"],
         # the Badwater distance setting and the start rule say the same thing: the stricter counts
         "badwater_within": max(s["hazards"]["badwaterDistance"], r["badwaterWithin"]) if s else base["badwater_min"],
@@ -323,11 +365,14 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     rep.add("water.no_flood", share <= rules["max_share"], f"{share:.0%} of the map under water (official p90 40%)",
             round(share, 3), rules["max_share"])
     n_clean = int(np.count_nonzero(clean))
-    rep.add("water.clean_exists", n_clean >= 0.02 * N, f"{n_clean} tiles of clean water", n_clean, int(0.02 * N))
+    # targets, not rules: maps need not hold their water (D152)
+    rep.add("water.clean_exists", n_clean >= 0.02 * N, f"{n_clean} tiles of clean water", n_clean, int(0.02 * N),
+            advisory=True)
     _outflow(rep, D, sources, features, X, Y)
+    _sources_in_flow(rep, floor, sources, dam, D)
     _, sizes = components(clean, connectivity=((1, 0), (-1, 0), (0, 1), (0, -1)))
     largest = max(sizes, default=0)
-    rep.add("water.clean_reach", largest >= 40, f"largest clean water body {largest} tiles", largest, 40)
+    rep.add("water.clean_reach", largest >= 40, f"largest clean water body {largest} tiles", largest, 40, advisory=True)
     _contained(rep, h, features, X, Y)
     M = moisture(h, D, C, sim.sat(), barrier)
     SC = contamination(h, D, C, barrier)
@@ -348,14 +393,11 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     cells = [object_tile(fps, p, lx, ly) for lx in range(3) for ly in range(3)]
     sx = int(round(sum(c[0] for c in cells) / 9))
     sy = int(round(sum(c[1] for c in cells) / 9))
-    sz = p.z
     yy, xx = np.mgrid[0:Y, 0:X]
     cheb = np.maximum(np.abs(yy - sy), np.abs(xx - sx))
     sd = distance_from(cheb <= 1)
     rep.add("start.dry", not wet[cheb <= 2].any(), "district center and its ring stay dry after water settles")
-    surface = h + D
-    pumpable = clean & (D >= 0.3) & (surface >= sz - cal.PUMP_REACH) & (surface <= sz + 0.01)
-    # walking: slopes join levels; without them the walk stays on the start's own level
+    # walking: the map's own ground, and its slopes join levels (no player stairs)
     links = []
     for e in m.entities:
         if e["Template"] != "Slope":
@@ -365,11 +407,10 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
         if 0 <= q.x < X and 0 <= q.y < Y and 0 <= q.x + dx < X and 0 <= q.y + dy < Y:
             links.append(((q.y, q.x), (q.y + dy, q.x + dx)))
     walk = walk_distance(h, blocked, links, sx, sy)
-    flat = walk_distance(h, blocked, (), sx, sy)
-    # requirement 1, water without stairs (D85): pumpable clean water touches a shore tile on the
-    # start's own level within the rule's walk, without any slope
-    dw = shore_distance(flat, h, pumpable, sz)
-    rep.add("start.water", dw <= rules["water_within"], f"clean water on the start's level {dw:.1f} tiles' walk away",
+    # requirement 1, the water rule (D153, amending D85): clean pumpable water at a
+    # shore the start reaches on foot, over the map's own ground and slopes, within the rule's walk
+    dw = pump_shore_distance(walk, h, D, C)
+    rep.add("start.water", dw <= rules["water_within"], f"clean water a pump reaches {dw:.1f} tiles' walk away",
             round(dw, 1), rules["water_within"])
     bad_soil = (SC > 0) | (wet & (C >= BAD))
     db = float(sd[bad_soil].min()) if bad_soil.any() else float("inf")
@@ -384,9 +425,11 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     rep.add("start.reach", dry_reach >= rules["reach_min"], f"{dry_reach} dry tiles walkable from the start",
             dry_reach, rules["reach_min"], advisory=True)
 
-    # requirements 2 and 3 (D85): living trees and berry bushes within 20 tiles' walk (slopes
-    # allowed); living: alive and on soil where it survives at steady state
-    bushes = trees = 0
+    # requirement 3 (D85): living berry bushes within 20 tiles' walk (slopes allowed); living: alive
+    # and on soil where it survives at steady state. Requirement 2, starting wood (D164): the logs
+    # of every grown tree within that walk, alive or dead, by its species' yield (tree_logs); a
+    # sapling's logs are still growing and do not count
+    bushes = wood = 0
     for e in m.entities:
         if "BlockObject" not in e.get("Components", {}):
             continue
@@ -394,20 +437,19 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
         tree = q.template in TREES
         if not tree and q.template != "BlueberryBush":
             continue
-        if not (0 <= q.x < X and 0 <= q.y < Y) or is_dead(e):
-            continue
-        if not (M[q.y, q.x] > 0 and not D[q.y, q.x] > 0 and not SC[q.y, q.x] > 0):
-            continue
-        if reach_at(walk, q.y, q.x) > NEAR:
+        if not (0 <= q.x < X and 0 <= q.y < Y) or reach_at(walk, q.y, q.x) > NEAR:
             continue
         if tree:
-            trees += 1
-        else:
-            bushes += 1
+            if not is_sapling(e["Components"]):
+                wood += tree_logs(q.template, e["Components"])
+            continue
+        if is_dead(e) or not (M[q.y, q.x] > 0 and not D[q.y, q.x] > 0 and not SC[q.y, q.x] > 0):
+            continue
+        bushes += 1
     rep.add("start.food", bushes >= rules["bushes_within"], f"{bushes} living berry bushes within 20 tiles' walk",
             bushes, rules["bushes_within"])
-    rep.add("start.wood", trees >= rules["trees_within"], f"{trees} living trees within 20 tiles' walk", trees,
-            rules["trees_within"])
+    rep.add("start.wood", wood >= rules["wood_within"], f"{wood} logs within 20 tiles' walk", wood,
+            rules["wood_within"])
     ruins = [e for e in m.entities if e["Template"].startswith("RuinColumnH") and "BlockObject" in e.get("Components", {})]
     near_ruins = sum(1 for e in ruins if 0 <= placement(e).x < X and 0 <= placement(e).y < Y
                      and sd[placement(e).y, placement(e).x] < rules["ruins_within"])
@@ -638,6 +680,139 @@ def _contained(rep, h, features, X, Y):
     leaks = [l for l in (basin_leak(p, h, X, Y) for p in basins) if l]
     rep.add("water.badwater_contained", not leaks, f"{len(leaks)} of {len(basins)} badwater basins leak below their rim",
             len(leaks), 0)
+
+
+SOURCE_TEMPLATES = ("WaterSource", "BadwaterSource")
+
+
+def sources_in_flow(floor, sources, dam, D):
+    """Water sources start rivers (Kyler, 2026-09-25, D171; src/core/analysis/sources.ts): the
+    WaterSources and BadwaterSources that stand where water from another source comes down to them.
+    Emitters whose tiles touch (8-neighbour) are one group. Water runs down the spill levels, on a
+    flat toward the flat's way out, and all through a pool (spill above the floor); a group's water
+    goes from its tiles over the settled water (any depth), each step one way water runs. A group
+    is inside a flow when a running group's water reaches one of its sources and its own water does
+    not reach that group back. Returns (sources, [indices into `sources` flagged])."""
+    Y, X = floor.shape
+    N = X * Y
+    units = []
+    for k, s in enumerate(sources):
+        cells = [y * X + x for (y, x) in s["tiles"]]
+        units.append((k, cells, s["strength"], s.get("template") in SOURCE_TEMPLATES))
+    n_sources = sum(1 for u in units if u[3])
+    if not n_sources:
+        return 0, []
+    parent = list(range(len(units)))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    owner = {}
+    for k, cells, _, _ in units:
+        for c in cells:
+            if c not in owner:
+                owner[c] = k
+    for k, cells, _, _ in units:
+        for c in cells:
+            y, x = divmod(c, X)
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    xx, yy = x + dx, y + dy
+                    if not (0 <= xx < X and 0 <= yy < Y):
+                        continue
+                    o = owner.get(yy * X + xx)
+                    if o is None:
+                        continue
+                    ra, rb = find(o), find(k)
+                    if ra != rb:
+                        parent[max(ra, rb)] = min(ra, rb)
+    by_root = {}
+    for k in range(len(units)):
+        by_root.setdefault(find(k), []).append(k)
+    groups = list(by_root.values())
+    spill_a = spill_levels(floor, sources, dam).ravel()
+    level = floor.astype(float).ravel() if dam is None else np.where(dam >= 0, floor + dam, floor).astype(float).ravel()
+    pool = (spill_a > level).tolist()
+    spill = spill_a.tolist()
+    depth = D.ravel().tolist()
+
+    def nbrs(c):
+        y, x = divmod(c, X)
+        return (c - X if y > 0 else -1, c - 1 if x > 0 else -1, c + X if y < Y - 1 else -1, c + 1 if x < X - 1 else -1)
+
+    # which way water runs on a flat: across it and toward its way out (a tile beside lower ground,
+    # or a draining map edge), by the steps to it, never back away from it
+    emitting = bytearray(N)
+    for k, cells, _, _ in units:
+        for c in cells:
+            emitting[c] = 1
+    exit_dist = [-1] * N
+    queue = []
+    for c in range(N):
+        y, x = divmod(c, X)
+        ex = (x == 0 or y == 0 or x == X - 1 or y == Y - 1) and not emitting[c]
+        if not ex:
+            ex = any(n >= 0 and spill[n] < spill[c] for n in nbrs(c))
+        if ex:
+            exit_dist[c] = 0
+            queue.append(c)
+    head = 0
+    while head < len(queue):
+        c = queue[head]
+        head += 1
+        for n in nbrs(c):
+            if n < 0 or exit_dist[n] >= 0 or spill[n] != spill[c]:
+                continue
+            exit_dist[n] = exit_dist[c] + 1
+            queue.append(n)
+
+    def runs(c, n):
+        return spill[n] < spill[c] or (spill[n] == spill[c] and ((pool[c] and pool[n]) or exit_dist[n] <= exit_dist[c]))
+
+    reach = []
+    for g in groups:
+        seen = bytearray(N)
+        queue = []
+        for k in g:
+            for c in units[k][1]:
+                if not seen[c]:
+                    seen[c] = 1
+                    queue.append(c)
+        head = 0
+        while head < len(queue):
+            c = queue[head]
+            head += 1
+            for n in nbrs(c):
+                if n < 0 or seen[n] or not depth[n] > 0 or not runs(c, n):
+                    continue
+                seen[n] = 1
+                queue.append(n)
+        reach.append(seen)
+
+    def reaches(a, b, sources_only):
+        return any((not sources_only or units[k][3]) and any(reach[a][c] for c in units[k][1]) for k in groups[b])
+
+    running = [any(units[k][2] > 0 for k in g) for g in groups]
+    flagged = []
+    for b in range(len(groups)):
+        if not any(units[k][3] for k in groups[b]):
+            continue
+        if any(a != b and running[a] and reaches(a, b, True) and not reaches(b, a, False) for a in range(len(groups))):
+            flagged.extend(units[k][0] for k in groups[b] if units[k][3])
+    return n_sources, sorted(flagged)
+
+
+def _sources_in_flow(rep, floor, sources, dam, D):
+    """water.source_in_flow (D171): no water source inside a flow that is already there."""
+    n, flagged = sources_in_flow(floor, sources, dam, D)
+    if not n:
+        rep.add("water.source_in_flow", True, "no water sources on this map", na=True)
+        return
+    rep.add("water.source_in_flow", not flagged, f"{len(flagged)} of {n} water sources inside an existing flow",
+            len(flagged), 0)
 
 
 def _outflow(rep, D, sources, features, X, Y):

@@ -22,6 +22,7 @@ import {
   MAX_SIDE,
   MIN_SIDE,
   THEMES,
+  woodForTrees,
   type Difficulty,
   type MapSpec,
   type Settings,
@@ -88,7 +89,7 @@ export const SETTING_KEYS: readonly SettingKey[] = [
   { key: "ms", path: ["resources", "mineSites"], kind: "int" },
   { key: "sa", path: ["start", "area"], kind: "enum", codes: { small: "s", normal: "n", large: "l" } },
   { key: "sw", path: ["start", "rules", "waterWithin"], kind: "int" },
-  { key: "st", path: ["start", "rules", "treesWithin20"], kind: "int" },
+  { key: "sl", path: ["start", "rules", "woodWithin20"], kind: "int" },
   { key: "sb", path: ["start", "rules", "bushesWithin20"], kind: "int" },
   { key: "sx", path: ["start", "rules", "badwaterWithin"], kind: "int" },
   { key: "sr", path: ["start", "rules", "ruinsWithin"], kind: "int" },
@@ -97,8 +98,8 @@ export const SETTING_KEYS: readonly SettingKey[] = [
 const SPECIES = ["pine", "birch", "oak", "succulent"] as const;
 const DIFF_CODES: Record<Difficulty, string> = { easy: "e", normal: "n", hard: "h" };
 const DIFFS: Record<string, Difficulty> = { e: "easy", n: "normal", h: "hard" };
-/** Keys that are not settings. */
-const OTHER_KEYS = new Set(["v", "s", "t", "z", "d", "a", "p", "c", "sp", "k"]);
+/** Keys that are not settings, and `st`: Minimum starting trees before D164 (read as wood). */
+const OTHER_KEYS = new Set(["v", "s", "t", "z", "d", "a", "p", "c", "sp", "k", "st"]);
 
 function getAt(s: Settings, path: Path): unknown {
   let o: unknown = s;
@@ -266,6 +267,17 @@ export function decodeSpecFragment(fragment: string): DecodedFragment | null {
     if (v === undefined || (typeof v === "number" && Number.isNaN(v)) || validateSpec(spec).length) {
       setAt(spec.settings, sk.path, before);
       problems.push(`setting ${sk.key}=${raw} is not valid here, so the preset's value is kept`);
+    }
+  }
+  // a link from before D164 counts starting trees (`st`): its wood is `woodForTrees` of them,
+  // unless the link also gives the wood (`sl`)
+  const st = params.get("st");
+  if (st !== undefined && !params.has("sl")) {
+    const before = spec.settings.start.rules.woodWithin20;
+    if (/^\d+$/.test(st)) spec.settings.start.rules.woodWithin20 = woodForTrees(Number(st));
+    if (!/^\d+$/.test(st) || validateSpec(spec).length) {
+      spec.settings.start.rules.woodWithin20 = before;
+      problems.push(`setting st=${st} is not valid here, so the preset's value is kept`);
     }
   }
   const a = params.get("a");

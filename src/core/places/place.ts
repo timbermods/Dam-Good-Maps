@@ -208,14 +208,14 @@ export function validatePlace(b: BuiltPlace): Validation {
   return validateMap(b.file, { profile: "export", designedFor: "normal", features: [], water: { model: b.model, settled: b.settle } });
 }
 
-/** The place's .timber: built, validated and written. Throws when a check blocks the file (a load
- *  problem), which the contract test rules out for every place. */
+/** The place's .timber: built, validated and written. Throws when a load check fails (the file
+ *  would not load), which the contract test rules out for every place. A principle the place breaks
+ *  (the edge walls of the conversions before Real places 2, D151) is in `validation`: the rebuild
+ *  must meet it, and the gallery keeps serving the maps it has until then. */
 export function placeTimber(p: PlaceData): { bytes: Uint8Array; fileName: string; validation: Validation } {
   const built = buildPlace(p);
   const validation = validatePlace(built);
-  if (!validation.report.passed) {
-    const bad = validation.report.checks.filter((c) => !c.ok && !c.advisory && c.class === "load").map((c) => c.id);
-    throw new Error(`${p.name} did not pass the file checks: ${bad.join(", ")}`);
-  }
+  const bad = validation.report.checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false && !c.approximate && c.class === "load").map((c) => c.id);
+  if (bad.length) throw new Error(`${p.name} did not pass the file checks: ${bad.join(", ")}`);
   return { bytes: writeTimber(built.file), fileName: placeFileName(p), validation };
 }

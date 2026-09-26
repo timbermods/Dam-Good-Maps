@@ -54,3 +54,5 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 - Kyler decided #56: a failed Pick a place map is never shown.
 - Kyler's decision D179: Live editing is how you edit a map, the editor's core principle. Every tool becomes live, in pushes, water first; relayed to the Live editing work.
 - Live editing push 0 (the live shape tools and handles, 2f08e79) published on `/preview/` (deploy and live check passed). Kyler's additions recorded as D180 and relayed.
+- Resources like the official maps (D167–D170) built on PR #43; Kyler: "look much better". It merges after the start and edge rules, and the Real places are rebuilt through the same planner (`planMapResources`).
+- Kyler approved the sapling fix; merged #44 (the start and edge rules: D151–D153, D164, D171, D172 (1); generator 0.6.1) into dev at 8f3958b. Resources (#43) follows once its conflicts are resolved and the combined generator is re-verified (0.6.2), then the Real places rebuild.

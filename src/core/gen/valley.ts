@@ -18,7 +18,7 @@
 import type { Orientation } from "../format/footprints";
 import { arcAtX, bedAt, pathField, pointAtArc, polygonMask, round } from "../features/geometry";
 import { buildMap, START_CLEAR_RADIUS, type BuildResult, type LockedLayer, type SettleCache } from "../features/build";
-import { bankFor, inBench } from "../features/raster/terrain";
+import { inBench } from "../features/raster/terrain";
 import { featureId } from "../features/ids";
 import { BUILDERS, flowBudget, planSetPiece, type PlanContext as PieceContext, type PlanRecord } from "../features/setpieces";
 import type {
@@ -390,51 +390,30 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
       };
       let side = startSide;
       let sx: number;
-      let lo: number;
-      let top: number;
       const benchR = BENCH_RADIUS[spec.settings.start.area];
       if (A.stairs) {
         // a canyon's start leaves room downstream for the flight up the wall beside its bench
-        lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
-        top = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
+        const lo = hard ? gorgeX + 8 + benchR : cascadeX + 5 + benchR;
+        const top = Math.max(lo, (hard ? fallsX - 6 : gorgeX - 8) - (benchR + 10));
         sx = lo + Math.floor(startDraw * (top - lo + 1));
       } else if (hard || braided) {
         // below the ridge, clear of it by the bench and its margin (a delta's start stands at the
         // head of the delta, clear of its pool)
-        lo = gorgeX + 14;
-        top = Math.max(lo, braided ? headX - 16 : fallsX - 10);
+        const lo = gorgeX + 14;
+        const top = Math.max(lo, braided ? headX - 16 : fallsX - 10);
         sx = Math.min(top, lo + Math.floor(startDraw * Math.max(1, top - lo)));
       } else {
         sx = basinX0 + 2 + Math.floor(startDraw * Math.max(1, gorgeX - 6 - basinX0 - 2));
         const lastX = Math.max(basinX0 + 2, gorgeX - 7);
         while (sx < lastX && toGorge(sx, side) > 34) sx++;
-        lo = basinX0 + 2;
-        top = lastX;
       }
       if (toGorge(sx, side) > 34 && toGorge(sx, -side) < toGorge(sx, side)) side = -side;
-      // the bench runs to the bank, so the start's own level reaches the river (D85, D97); where
-      // the drawn place has no bank to run to (a fall beside it), the nearest place along the
-      // valley that has one, as close to the gorge as the drawn one allows
-      const bankAt = (x: number) => {
-        const y = startY(x, side);
-        const level = bedAt(river.params.bedProfile, arcAtX(path, x)) + 2;
-        return { y, level, bank: bankFor([river], x, y, level, benchR) };
-      };
-      let at = bankAt(sx);
-      const far = Math.max(34, toGorge(sx, side));
-      for (let d = 1; d <= 16 && !at.bank; d++)
-        for (const x of [sx + d, sx - d]) {
-          if (x < lo || x > top || toGorge(x, side) > far) continue;
-          const b = bankAt(x);
-          if (b.bank) {
-            sx = x;
-            at = b;
-            break;
-          }
-        }
-      const sy = at.y;
-      const benchLevel = at.level;
-      const bank = at.bank;
+      // the bench stands a level above the floodplain (D26), 3–9 tiles from the channel by the
+      // water rule; the colony walks down to the river over the map's own slopes (the water rule,
+      // D153: the start no longer needs water on its own level, so the bench no longer
+      // runs to the bank)
+      const sy = startY(sx, side);
+      const benchLevel = bedAt(river.params.bedProfile, arcAtX(path, sx)) + 2;
       const orientation: Orientation = centre(sx) < sy ? "Cw0" : "Cw180";
       const start: StartFeature = {
         id: id("start", "start/main"),
@@ -447,7 +426,6 @@ export function planValley(archetype: ValleyArchetype, spec: MapSpec, attempt: n
           orientation,
           benchRadius: BENCH_RADIUS[spec.settings.start.area],
           benchLevel,
-          ...(bank ? { bank } : {}),
           player: 0,
         },
       };
