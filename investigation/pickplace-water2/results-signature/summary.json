@@ -1,0 +1,100 @@
+{
+  "requests": 150,
+  "baseline": {
+    "passed": 142,
+    "places": 50
+  },
+  "playability": 103,
+  "playabilityPlaces": 43,
+  "signature": 148,
+  "accepted": 102,
+  "acceptedPlaces": 43,
+  "direct": 68,
+  "roundTrips": 149,
+  "errors": 1,
+  "timeouts": 1,
+  "comparableCases": 121,
+  "retentionImprovements": 101,
+  "retentionRegressions": 13,
+  "waterRetentionBefore": 0.3131134811795957,
+  "waterRetentionAfterOnBeforeExtent": 0.7723990090213947,
+  "signatureBefore": 12,
+  "signatureAfterOnBeforeExtent": 92,
+  "ownExtentRetention": 0.8596447067683013,
+  "ownExtentWaterPrecision": 0.42908715535255404,
+  "missingReference": 6,
+  "sourceDesigns": 883,
+  "minHeartbeatsCompleted": 14,
+  "bySize": [
+    {
+      "size": 96,
+      "before": 47,
+      "playability": 39,
+      "signature": 49,
+      "accepted": 38,
+      "time": {
+        "median": 5.763800000011921,
+        "p90": 27.81269999998808,
+        "max": 47.44310000002384
+      },
+      "added": {
+        "median": 0.428,
+        "p90": 18.473200000047683,
+        "max": 38.319
+      }
+    },
+    {
+      "size": 128,
+      "before": 48,
+      "playability": 34,
+      "signature": 50,
+      "accepted": 34,
+      "time": {
+        "median": 8.624299999952317,
+        "p90": 46.988600000023844,
+        "max": 129.751
+      },
+      "added": {
+        "median": 3.6905,
+        "p90": 45.346000000059604,
+        "max": 122.93880000001192
+      }
+    },
+    {
+      "size": 256,
+      "before": 47,
+      "playability": 30,
+      "signature": 49,
+      "accepted": 30,
+      "time": {
+        "median": 58.918,
+        "p90": 467.5735,
+        "max": 900.084
+      },
+      "added": {
+        "median": 31.362699999988077,
+        "p90": 419.7946999999881,
+        "max": 841.2355
+      }
+    }
+  ],
+  "failures": {
+    "water.source_origins": 7,
+    "water.settles": 31,
+    "resources.scrap": 8,
+    "resources.trees": 6,
+    "start.water.D153": 4,
+    "start.signature": 6,
+    "signature": 1
+  },
+  "waterRangeRequests": {
+    "median": 4,
+    "p90": 18,
+    "max": 30
+  },
+  "waterRangeBytes": {
+    "median": 589832,
+    "p90": 2818065,
+    "max": 6291480
+  }
+}
