@@ -119,3 +119,9 @@ places, alongside labeled process studies.
 All changes stay in investigation/carve on the dev-based investigation/carve
 branch. M9 v2 c77026b was read without merging it. Shared geology, adoption and
 post-PR-#32 changes remain proposals in [INTEGRATION.md](INTEGRATION.md).
+
+The latest character pass measures curvature across six stations. Outer bends
+scour up to two extra levels and shift the cut bank out; inner banks retain
+whole-level shelves. Straights contract between those bends. The same lane
+geometry drives the light effects. A terrain cross-section regression checks
+the outer bank is both wider and deeper at maximum Wander.

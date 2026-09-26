@@ -45,7 +45,7 @@ export function protectedGround(m:CarveMap):Uint8Array {
 }
 export interface Head {x:number;y:number;z:number;dx:number;dy:number;width:number;event:'surge'|'breakthrough'|'waterfall'|'rock'|'split'|'rapids'|'oxbow';cut:number;lanes?:Lane[]}
 export interface Metrics {cut:number;deposited:number;exported:number;suspended:number;bankCuts:number;bendCuts:number;steps:number;stable:boolean;distance:number;reason:string;splits:number;waterfalls:number;rapids:number;oxbows:number}
-export interface Station {x:number;y:number;bed:number;width:number;dx:number;dy:number;lanes:Lane[]}
+export interface Station {x:number;y:number;bed:number;width:number;dx:number;dy:number;bend:number;lanes:Lane[]}
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 
 /** Terrain-derived, coherent horizontal beds, shared v2 hardness coefficients below. */
@@ -108,7 +108,12 @@ export class CarveRun {
     const drop=this.character.grade(this.metrics.distance,this.settings.power),oldBed=this.bed;
     const grade=Math.max(0,sourceBed-drop);
     this.bed=Math.min(this.bed,grade,Math.max(0,Math.max(Math.min(2,raw),raw-incision)-drop));
-    const width=this.character.width(this.metrics.distance),dx=Math.cos(this.heading),dy=Math.sin(this.heading);
+    const reachWidth=this.character.width(this.metrics.distance),dx=Math.cos(this.heading),dy=Math.sin(this.heading);
+    // Curvature over a reach, not a single candidate turn: coherent cut banks
+    // and inner shelves survive at maximum Wander without speckled tile noise.
+    const prior=this.path[Math.max(0,this.path.length-6)];
+    const bend=prior?clamp(angleDelta(this.heading,Math.atan2(prior.dy,prior.dx))/.9,-1,1):0;
+    const width=reachWidth*(1-.22*this.character.wander+.5*Math.abs(bend));
     const {lanes,knob}=this.character.lanes(x,y,dx,dy,width);
     let event:Head['event']='surge';
     if(oldBed-this.bed>=2){this.metrics.waterfalls++;event='waterfall';}
@@ -119,14 +124,20 @@ export class CarveRun {
       event='split';
     }
 
-    this.path.push({x,y,bed:this.bed,width,dx,dy,lanes});
+    // Positive curvature turns left; its faster outer bank lies to the right.
+    for(const lane of lanes){lane.x+=dy*reachWidth*bend*.35;lane.y-=dx*reachWidth*bend*.35;}
+    this.path.push({x,y,bed:this.bed,width,dx,dy,bend,lanes});
     for(const lane of lanes){
       const depth=Math.max(1,raw-this.bed),shoulder=this.settings.walls==='wide'?depth*.9:Math.min(2,depth*.15),radius=lane.width+shoulder+1;
       for(let yy=Math.max(0,Math.floor(lane.y-radius));yy<=Math.min(H-1,Math.ceil(lane.y+radius));yy++)
         for(let xx=Math.max(0,Math.floor(lane.x-radius));xx<=Math.min(W-1,Math.ceil(lane.x+radius));xx++){
           const i=yy*W+xx;if(this.keep[i]||this.character.rock[i]||this.sign[i]>0)continue;
           const d=Math.hypot(xx-lane.x,yy-lane.y),slope=this.settings.walls==='wide'?1:4;
-          let t=this.bed+Math.max(0,Math.ceil((d-lane.width)*slope));
+          const outside=((xx-x)*dy-(yy-y)*dx)*Math.sign(bend);
+          const innerShelf=Math.abs(bend)>.3&&outside<-reachWidth*.2
+            ?Math.min(2,Math.ceil((-outside/reachWidth-.2)*Math.abs(bend)*2)):0;
+          const scour=Math.min(2,Math.floor(Math.max(0,outside/reachWidth-.15)*Math.abs(bend)*3));
+          let t=Math.max(0,this.bed-scour)+innerShelf+Math.max(0,Math.ceil((d-lane.width)*slope));
           if(d>lane.width&&this.hard(t)>.5)t++;
           const work=p*this.character.intensity;
           if(work<.45)t=Math.max(t,this.original[i]-Math.max(1,Math.round(1+6*work)));
