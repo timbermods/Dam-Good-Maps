@@ -157,7 +157,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
    #51–#53.
 6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
-   ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
+   ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
 ## Where to look next
 
