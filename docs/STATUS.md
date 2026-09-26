@@ -144,8 +144,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
 - Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40, finished and
-  reviewed; it becomes the editor's primary button), `investigation/pickplace-water2` and #38 (Map
-  look 2), when their PRs are open.
+  reviewed; it becomes the editor's primary button), `investigation/pickplace-water2`, #38 (Map
+  look 2) and `investigation/carve` (the starting point for "Let the water carve", D180, as proposals),
+  when their PRs are open.
 
 ## Waiting on Kyler
 
