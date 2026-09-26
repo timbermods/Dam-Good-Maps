@@ -53,3 +53,4 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 - The probe leaves nothing in `Documents\Timberborn` (merged from `chore/probe-docs-clean`): the tall-maps run had created no DGMProbe folder (its Performance Log sessions were moved out as designed), and the restore now also covers the other mods' folders and any DGMProbe folder, with a final listing that must show nothing new after DGM Probe is removed (exit code 6 otherwise). Kyler had deleted the old 208 MB DGMProbe folder by hand.
 - Kyler decided #56: a failed Pick a place map is never shown.
 - Kyler's decision D179: Live editing is how you edit a map, the editor's core principle. Every tool becomes live, in pushes, water first; relayed to the Live editing work.
+- Live editing push 0 (the live shape tools and handles, 2f08e79) published on `/preview/` (deploy and live check passed). Kyler's additions recorded as D180 and relayed.

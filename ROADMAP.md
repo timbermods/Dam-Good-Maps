@@ -872,14 +872,37 @@ and released as `live-editing-done` when Kyler says it feels right.
      lower by N levels, flatten or set to a level, dig out to a level, clear trees and objects;
      live, water flowing in, one undo step each.
   5. **Landforms:** the live shape tools below.
-  6. **Resources:** forest and berry brushes with natural clusters at official-like densities, and a
-     clear brush.
+  6. **Resources:** forest and berry brushes with natural clusters at official-like densities; the
+     Demolish tool removes (D180).
   7. **Objects:** ruins, mine sites, relics, slopes and the start dragged into place with a live
      footprint (green, or red with the reason).
   8. Limits, reasons and checks live while dragging, never dialogs afterwards; each
      plan-confirm-place flow retired once its live version exists.
   9. Heavy operations (regenerate an area, "Generate, keeping my edits") show their result
      growing, never a frozen wait.
+- **Additions** (D180), each on the preview as it lands:
+  1. **Smooth camera:** per-frame movement while keys are held, eased, speed scaled by zoom;
+     Timberborn's controls (WASD, Q and E rotate, scroll zooms, Shift faster, arrows move); never
+     while typing, never clashing with brush shortcuts.
+  2. **Demolish:** click removes one object, drag removes everything under the brush; a red
+     highlight of exactly what goes; filters (trees, bushes, ruins, water sources, other objects,
+     all); Delete removes the selection; one undo step each; water re-flows live; never changes
+     terrain; rule-breaking removals refused live; instant on 256² (a per-tile index, only affected
+     models updated, batched removals).
+  3. **Water-aware sampling:** Ctrl-click on water samples its bed ("riverbed: level 7").
+  4. **River rules:** a new river from dry land gets a source at its head; from water, a branch with
+     no new source; it ends as a tributary, off the map edge, or filling a basin into a lake; the bed
+     never goes uphill, is dug 1 level (adjustable) on flat ground, cuts gorges through higher ground
+     ("cutting 6 levels deep here") and steps down into waterfalls; one undo step per river.
+  5. **Source strength** set while drawing or placing, adjustable on any source afterwards, live; a
+     friendly note beyond the official range, never a block.
+  6. **"Let the water carve":** a source erodes its own way downhill with the M9 erosion processes,
+     in whole levels, until stopped; one undo step.
+  7. **Natural or exact rivers** (Natural by default, remembered).
+  8. **Water time controls:** pause, speed up, replay; an optional camera following the water
+     front; a "drought" button.
+  9. **Local first:** water near the edit first, then the rest of the map.
+  10. The final water always matches the game's settled result.
 - **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
   resize and raise it live; limits show while dragging.
 - **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
