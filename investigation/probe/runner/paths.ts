@@ -1,5 +1,6 @@
 // Where the probe reads and writes on this machine. Nothing here is committed: the game's folders, the
-// probe's working folder in Documents\Timberborn\DGMProbe, and the repository's own inputs.
+// probe's own folder C:\dgm-probe (Kyler's decision #54: outside his Timberborn folders), and the
+// repository's own inputs.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -36,9 +37,20 @@ export const REGISTRY_KEY = process.env.DGM_PROBE_REGISTRY_KEY ?? 'HKCU\\Softwar
 export function timberbornDocs(): string {
   return join(documentsDir(), 'Timberborn');
 }
-/** The probe's own folder: job, heartbeat, results, screenshots and the runner's backups. */
+/** Where the probe works (decisions-pending #54, decided by Kyler 2026-09-25): outside Documents\Timberborn. */
+export const DEFAULT_PROBE_HOME = 'C:\\dgm-probe';
+/** The probe's own folder: job, heartbeat, results, screenshots, the maps played and the runner's backups.
+ *  The game is told it with -dgmprobeHome, so it must be a path without spaces. */
 export function probeHome(): string {
-  return join(timberbornDocs(), 'DGMProbe');
+  const home = resolve(process.env.DGM_PROBE_HOME ?? DEFAULT_PROBE_HOME);
+  if (/\s/.test(home)) throw new Error(`The probe's folder ${home} has a space in it; the game's launch argument cannot carry it.`);
+  const docs = timberbornDocs().toLowerCase();
+  if (home.toLowerCase() === docs || home.toLowerCase().startsWith(docs + '\\')) throw new Error(`The probe's folder ${home} is inside ${timberbornDocs()}, which the probe never writes into.`);
+  return home;
+}
+/** The tall maps tools/probe-tall.ts writes (PLAN §20 D172), with their manifest tall.json. */
+export function tallDir(): string {
+  return resolve(process.env.DGM_PROBE_TALL ?? join(DEFAULT_PROBE_HOME, 'tall'));
 }
 export const probePaths = () => {
   const home = probeHome();
@@ -54,6 +66,9 @@ export const probePaths = () => {
     sheet: join(home, 'sheet'),
   };
 };
+/** The game loads user mods only from Documents\Timberborn\Mods (UserFolderModsProvider, whose folder is
+ *  UserDataFolder.Folder: MyDocuments\Timberborn, with no launch argument to change it), so DGM Probe sits
+ *  there during a run only: installed just before the launch and removed right after it. */
 export function modInstallDir(): string {
   return join(timberbornDocs(), 'Mods', 'DGMProbe');
 }
