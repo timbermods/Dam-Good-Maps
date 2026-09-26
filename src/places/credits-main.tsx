@@ -16,9 +16,7 @@ function CreditsPage() {
             <a href={PLACES_URL}>Real places</a>
           </nav>
         </div>
-        <p class="tag">
-          Credits for the maps on <a href={PLACES_URL}>Real places</a>.
-        </p>
+        <p class="tag">Credits for the Real places maps.</p>
       </header>
       <Credits />
       <footer class="foot">
