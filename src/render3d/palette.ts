@@ -120,6 +120,10 @@ export const CONTAMINATION = {
   cover: [0.12, 0.5] as const,
 } as const;
 
+/** With **Markers** on, an outline where contaminated ground ends: a light line between dark
+ *  edges, so it shows on grass, earth and at the water's edge, in any colours. */
+export const CONTAMINATION_OUTLINE = { light: [1, 0.86, 0.6] as Rgb, dark: [0.1, 0.03, 0.02] as Rgb } as const;
+
 /** The contamination layer at a contamination level (0–1): the share of the vein network drawn,
  *  the finer network's strength, the veins' glow on dry earth and on grass, the stain round them,
  *  and how much the veins tint the ground from afar (as the terrain shader draws it). */
@@ -430,6 +434,15 @@ export function objectLegend(): LegendEntry[] {
     {
       swatch: icon(`<rect width="24" height="16" fill="${c(wallColor(5))}"/><rect y="5" width="24" height="1.6" fill="${c(WALL.ledge)}"/><rect y="6.6" width="24" height="0.8" fill="${c(WALL.groove)}"/><rect y="12" width="24" height="1.6" fill="${c(WALL.ledge)}"/><rect y="13.6" width="24" height="0.8" fill="${c(WALL.groove)}"/>`),
       label: "Walls: a pale line at every level",
+      markers: true,
+    },
+    {
+      swatch: icon(
+        `<rect width="12" height="16" fill="${c(GROUND.dry)}"/><rect x="12" width="12" height="16" fill="${c(GROUND.moistLow)}"/>` +
+          `<path d="M2 4 L8 6 L7 11" stroke="${c(GROUND.contaminatedGlow)}" stroke-width="1.1" fill="none"/>` +
+          `<rect x="10" width="4" height="16" fill="${c(CONTAMINATION_OUTLINE.dark)}"/><rect x="11" width="2" height="16" fill="${c(CONTAMINATION_OUTLINE.light)}"/>`,
+      ),
+      label: "Contaminated ground: an outline where it ends",
       markers: true,
     },
   ];

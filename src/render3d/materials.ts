@@ -52,7 +52,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from "three";
-import { CONTAMINATION as CT, GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, WATER_SURFACE as WS, type Rgb } from "./palette";
+import { CONTAMINATION as CT, CONTAMINATION_OUTLINE as OUTLINE, GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, WATER_SURFACE as WS, type Rgb } from "./palette";
 import { SHADOW_OFFSET, SHADOW_RES, SHADOW_SCALE } from "./light";
 
 const az = LIGHT.sunAzimuth;
@@ -80,6 +80,8 @@ export interface SceneUniforms {
   hatching: { value: number };
   /** The information layer (**Markers**): 1 on, 0 off (the clean view). */
   markers: { value: number };
+  /** Where the contamination outline runs (`contaminationEdges`), drawn with **Markers** on. */
+  contamEdges: { value: DataTexture };
   mapSize: { value: Vector2 };
   /** The tiling patterns (drawPatterns). */
   patternTex: { value: Texture | null };
@@ -87,7 +89,7 @@ export interface SceneUniforms {
   viewHeight: { value: number };
 }
 
-export function sceneUniforms(W: number, H: number, tile: DataTexture, light: DataTexture, overlay: DataTexture, marks: DataTexture): SceneUniforms {
+export function sceneUniforms(W: number, H: number, tile: DataTexture, light: DataTexture, overlay: DataTexture, marks: DataTexture, edges: DataTexture = overlayTexture(1, 1)): SceneUniforms {
   return {
     sunDir: { value: SUN.clone() },
     sunColor: { value: color(LIGHT.sun) },
@@ -102,6 +104,7 @@ export function sceneUniforms(W: number, H: number, tile: DataTexture, light: Da
     marks: { value: marks },
     hatching: { value: 0 },
     markers: { value: 0 },
+    contamEdges: { value: edges },
     mapSize: { value: new Vector2(W, H) },
     patternTex: { value: null },
     viewHeight: { value: 800 },
@@ -238,6 +241,37 @@ export function hatchMarks(W: number, H: number, overlay: Uint8Array, into?: Uin
   return out;
 }
 
+/** Where the contamination outline runs (**Markers**), RGBA bytes (W × H): R bits 1, 2, 4, 8 the
+ *  tile's east, west, north and south edge, where contaminated ground ends. A tile is contaminated
+ *  with any contamination at all (the hover text's and the legend's rule). The outline is drawn on
+ *  the side that shows: the contaminated tile's, or the clean tile's where the contaminated one is
+ *  under water; never along the map's edge. Read from the terrain's tile data (light.ts
+ *  `tileData`: G's low nibble the contamination, A the water over the top), so it follows every
+ *  soil and water update. */
+export function contaminationEdges(W: number, H: number, tiles: Uint8Array, into?: Uint8Array): Uint8Array {
+  const out = into ?? new Uint8Array(W * H * 4);
+  out.fill(0);
+  const bad = (i: number) => (tiles[i * 4 + 1] & 15) > 0;
+  const wet = (i: number) => tiles[i * 4 + 3] > 0;
+  const sides: [number, number, number][] = [[1, 0, 1], [-1, 0, 2], [0, 1, 4], [0, -1, 8]];
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const b = bad(i);
+      let bits = 0;
+      for (const [dx, dy, bit] of sides) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const j = ny * W + nx;
+        if (bad(j) === b) continue;
+        if (b ? !wet(i) : wet(j)) bits |= bit;
+      }
+      out[i * 4] = bits;
+    }
+  return out;
+}
+
 /** The terrain shader's per-tile data (light.ts `tileData`): nearest, one texel per tile. */
 export function tileTexture(W: number, H: number, data: Uint8Array): DataTexture {
   const t = new DataTexture(data, W, H, RGBAFormat, UnsignedByteType);
@@ -271,6 +305,7 @@ const COMMON = /* glsl */ `
   uniform sampler2D marks;
   uniform float hatching;
   uniform float markers;
+  uniform sampler2D contamEdges;
   uniform vec2 mapSize;
   uniform sampler2D patternTex;
 
@@ -564,7 +599,7 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
           wc = mix(wc, ${glColor(WALL.groove)}, (1.0 - smoothstep(gw - py * 0.5, gw + py * 0.5, fy)) * lines);
           float lip = 1.0 - smoothstep(0.07, 0.13, h0 - y);
           vec4 s0 = soilOf(d0);
-          vec3 top = groundMode > 0.5 ? heightColor(h0) : (s0.y > 0.5 ? ${glColor(GROUND.contaminated)} : s0.x > 0.5 ? ${glColor(GROUND.moistHigh)} : ${glColor(GROUND.dry)} * 0.85);
+          vec3 top = groundMode > 0.5 ? heightColor(h0) : (s0.x > 0.5 ? ${glColor(GROUND.moistHigh)} : ${glColor(GROUND.dry)} * 0.85);
           c = mix(wc, top, lip * 0.9);
           float ao = mix(0.5, 1.0, smoothstep(0.0, 1.1, y - base));
           light = lightOf(n, 1.0, ao, sunLit(g + out2 * 0.26, y));
@@ -578,6 +613,22 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         if (n.y > 0.5) {
           vec4 hatch = hatchAt(g, o.rgb * (0.88 + 0.12 * min(light.g, 1.0)));
           c = mix(c, hatch.rgb, hatch.a);
+        }
+        // Markers: an outline where contaminated ground ends (contaminationEdges), a light line
+        // between dark edges, a few pixels wide (at most a quarter of a tile)
+        if (markers > 0.5 && n.y > 0.5 && vWorld.y > h0 - 0.5) {
+          float eb = floor(texture2D(contamEdges, (tile + 0.5) / mapSize).r * 255.0 + 0.5);
+          if (eb > 0.5) {
+            vec2 fo = fract(g);
+            float e = 9.0;
+            if (bitOf(eb, 1.0) > 0.5) e = min(e, 1.0 - fo.x);
+            if (bitOf(eb, 2.0) > 0.5) e = min(e, fo.x);
+            if (bitOf(eb, 4.0) > 0.5) e = min(e, 1.0 - fo.y);
+            if (bitOf(eb, 8.0) > 0.5) e = min(e, fo.y);
+            float s = e / min(max(max(fwidth(g.x), fwidth(g.y)), 0.004), 0.07);
+            c = mix(c, ${glColor(OUTLINE.dark)}, 1.0 - smoothstep(3.1, 3.7, s));
+            c = mix(c, ${glColor(OUTLINE.light)}, smoothstep(0.7, 1.2, s) * (1.0 - smoothstep(2.3, 2.8, s)));
+          }
         }
         if (hover.z > 0.5 && tile == hover.xy) {
           vec2 fr = fract(vec2(p.x, -p.z));

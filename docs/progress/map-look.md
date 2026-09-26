@@ -294,3 +294,11 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
     lighter than the rust fill; it now checks the veins: light lines on earth (0.2 lighter than its
     cracks), dark lines through grass (0.3 darker) ("...: grass, earth and its cracks,
     contamination's veins, water").
+- **With Markers on, an outline where contaminated ground ends** (Kyler, after approving the
+  layer): a thin light line between dark edges on the contaminated side of each edge (on the clean
+  side where the contaminated ground is under water), with the hover text's rule, traced from the
+  terrain's tile data whenever the soil or water updates; the clean view is unchanged. New tests:
+  `tests/unit/look-outline.test.ts` (the tracing, the rule, water, updates, Markers only, the
+  legend) and `tests/e2e/look-outline.spec.ts` (Markers off: no outline; on: the outline; a soil
+  update without contamination: none). The walls' lip shows the top's own ground under
+  contamination (it was the rust).

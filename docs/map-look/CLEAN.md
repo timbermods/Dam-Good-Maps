@@ -38,8 +38,8 @@ listed in [clean/captures.md](clean/captures.md).
 - Nothing grows from afar, and dam sites are not drawn.
 
 **The information layer** (**Markers**, off by default): dam sites (hatched light and dark), slope
-arrows, a pale line at every wall level, and dead trees, slope arrows and the start drawn larger
-from afar. The **Markers** button beside **Height colours** turns it on; the choice is remembered.
+arrows, a pale line at every wall level, an outline where contaminated ground ends (since the
+contamination round), and dead trees, slope arrows and the start drawn larger from afar. The **Markers** button beside **Height colours** turns it on; the choice is remembered.
 In the editor, the **Dam site** tool shows the dam sites with the markers while it is out, and puts
 them away after; the **Slope** tool turns the markers on while it is out; **Show dam sites** turns
 them on too. The legend lists the clean view's meanings, then the lines that show "With **Markers**
@@ -81,6 +81,18 @@ replacement.
 - **No solid rust fill,** also in the light look for software rendering, which draws no patterns:
   there contamination tints the ground a quarter to a half of the way, rust on earth, dark red on
   grass.
+
+**With Markers on, an outline where contaminated ground ends** (Kyler, after approving the
+layer): a thin light line between dark edges traces the exact edge, so it shows on demand; the
+clean view keeps its gradual fade. It uses the hover text's rule (any contamination at all is
+contaminated ground), runs on the contaminated side of each edge (on the clean side where the
+contaminated ground is under water, never along the map's edge), follows the terrain, and is
+traced again whenever the soil or the water updates (`contaminationEdges`, from the terrain's tile
+data). It is a few pixels wide, at most a quarter of a tile. The legend lists it under "With
+**Markers** on". Captures: `docs/map-look/clean/contamination/edge-after-markers.jpg` and
+`area-after-markers.jpg`, with greyscale versions; the Markers captures of the clean set were made
+again with it. The walls' lip, the band of the top's ground along a wall's top edge, now shows the
+top's own ground under contamination too (it was the rust).
 
 The terrain shader reads the layer's settings (`CONTAMINATION` in `palette.ts`), and
 `contaminationVeins`, `contaminationVein` and `contaminatedGround` say what it draws, for the
