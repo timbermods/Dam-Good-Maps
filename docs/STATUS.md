@@ -93,6 +93,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D178: mine sites and ruins get models of our own: a sunken pit with a rusty frame and corner scaffolding; ruined scaffold towers with braces, panels and ivy on moist ground.
 - D179: **Live editing is how you edit a map**, the editor's core principle: every tool becomes live, water first (freehand rivers, lakes, sources, visible flow), then brush shapes and a precise mode, one Select tool, resource brushes, objects dragged with live footprints; no plan-confirm-place flow remains.
 - #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
+- D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), a Demolish tool, water-aware Ctrl-click sampling, the river tool's rules (heads, branches, gorges, waterfalls), player-set source strength, "let the water carve", natural or exact rivers, water time controls, and local-first water that always ends at the game's settled result.
 
 ## Done and released
 
