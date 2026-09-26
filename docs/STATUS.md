@@ -121,6 +121,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
+- **Resources like the official maps** (#43, D167–D170, generator 0.6.2) are merged into `dev`; they ship with
+  the next release.
 - **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
   proposals for their steps.
 - **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
@@ -150,8 +152,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
-  and edge rules, then the Real places are rebuilt through its planner.
+- **Badwater on every map** (D200), on branch `feature/badwater-source`.
+- **Real places, second round**: the rebuild through the resources planner, without walls, about 150
+  places, on `feature/real-places-2` (PR #35).
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
   setups tuned on M7's maps that later generator changes moved (M12-INTEGRATION §11). They are re-tuned
   once the start and edge rules and the resources step land, since both change generated maps again.
