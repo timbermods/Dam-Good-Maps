@@ -34,22 +34,27 @@ test("held camera keys move the view every frame and glide to a stop; typing mov
   expect((await view(page)).target).toEqual(stopped.target);
   expect(stopped.target).not.toEqual(v0.target);
 
-  // Shift is faster
-  const a0 = (await view(page)).target;
-  await page.keyboard.down("w");
-  await page.waitForTimeout(400);
-  await page.keyboard.up("w");
-  await page.waitForTimeout(400);
-  const a1 = (await view(page)).target;
-  await page.keyboard.down("Shift");
-  await page.keyboard.down("s");
-  await page.waitForTimeout(400);
-  await page.keyboard.up("s");
-  await page.keyboard.up("Shift");
-  await page.waitForTimeout(400);
-  const a2 = (await view(page)).target;
+  // Shift is faster (the same hold with and without it; a machine busy with another test can
+  // stretch a frame and cut one hold short, so the pair is tried up to three times)
   const d = (p: number[], q: number[]) => Math.hypot(p[0] - q[0], p[2] - q[2]);
-  expect(d(a1, a2)).toBeGreaterThan(1.5 * d(a0, a1));
+  let ratio = 0;
+  for (let k = 0; k < 3 && ratio <= 1.5; k++) {
+    const a0 = (await view(page)).target;
+    await page.keyboard.down("w");
+    await page.waitForTimeout(400);
+    await page.keyboard.up("w");
+    await page.waitForTimeout(400);
+    const a1 = (await view(page)).target;
+    await page.keyboard.down("Shift");
+    await page.keyboard.down("s");
+    await page.waitForTimeout(400);
+    await page.keyboard.up("s");
+    await page.keyboard.up("Shift");
+    await page.waitForTimeout(400);
+    const a2 = (await view(page)).target;
+    ratio = d(a1, a2) / Math.max(1e-6, d(a0, a1));
+  }
+  expect(ratio).toBeGreaterThan(1.5);
 
   // Q turns the 3D view
   const yaw = (await view(page)).yaw;

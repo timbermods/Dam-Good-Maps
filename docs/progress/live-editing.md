@@ -437,7 +437,11 @@ on a placed river.
 - Tests changed (D148): `brush.spec` read the brush bar's size and strength sliders; D184 removed
   them, so it reads the saved brush and the words beside the pointer. `camera.spec` focused the size
   slider to show that typing moves nothing; it focuses the Flatten level list now, and checks that
-  a toggle just clicked keeps the camera keys.
+  a toggle just clicked keeps the camera keys. Its "Shift is faster" pair of holds is tried up to
+  three times: in CI, beside the brush kit's test on the other worker, a stretched frame cut one
+  hold short (Shift still has to be half as fast again in one of them). `brushKit.spec`'s stroke
+  beside the mine site runs up to the site's edge and holds there, so a slow machine's fewer dabs
+  still reach it.
 
 ## The camera keys (D180)
 

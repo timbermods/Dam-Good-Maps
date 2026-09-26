@@ -204,10 +204,14 @@ test("the top bar and the brush kit: options, precise hold with a stop, straight
   expect(mine).not.toBeNull();
   await flatRow.getByRole("combobox", { name: "Flatten level" }).selectOption(String(Math.max(0, mine[2] - 2)));
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  const pm = await client(page, Math.max(2, mine[0] - 4), mine[1] + 2);
+  // (a stroke that runs up to the mine site's west edge and holds there: its rim crosses the site
+  // however fast the machine paints)
+  const pm = await client(page, Math.max(2, mine[0] - 7), mine[1] + 2);
+  const pe = await client(page, Math.max(2, mine[0] - 2), mine[1] + 2);
   await page.mouse.move(pm.x, pm.y);
   await page.mouse.down();
-  await page.waitForTimeout(1200);
+  await page.mouse.move(pe.x, pe.y, { steps: 8 });
+  await page.waitForTimeout(2000);
   await page.mouse.up();
   await settle(page);
   await idle(page);
