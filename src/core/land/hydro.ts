@@ -829,10 +829,16 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       if (level >= 8) for (let q = j; q < j + 3; q++) bedOf[q] = prof[j] - 1;
     }
     carve(st, bedOf, L, n, half, floorHalf);
+    // the feature's bed profile only steps down: where the course dips through a lake and rises to
+    // its outlet, it keeps the outlet's level through the lake (the feature describes the bed the
+    // river runs on; the lake's floor below it is the lake's)
+    const env = prof.slice();
+    for (let j = n - 1; j >= 0; j--) if (env[j] < env[j + 1]) env[j] = env[j + 1];
     const steps: BedStep[] = [];
     for (let j = 1; j <= n; j++) {
       const drop = prof[j - 1] - prof[j];
-      if (drop >= 1) steps.push({ at: Math.round(((j * L) / n) * 100) / 100, drop });
+      const stepDown = env[j - 1] - env[j];
+      if (stepDown >= 1) steps.push({ at: Math.round(((j * L) / n) * 100) / 100, drop: stepDown });
       if (drop >= 2) {
         const {
           p: [px, py],
@@ -849,7 +855,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       origin: "generated",
       role,
       locked: false,
-      params: { path, width, bedDepth: 1, bedProfile: { start: prof[0], steps }, flow: hd.flow, style: "meandering", entry, exit, badwater: false },
+      params: { path, width, bedDepth: 1, bedProfile: { start: env[0], steps }, flow: hd.flow, style: "meandering", entry, exit, badwater: false },
     });
   }
 

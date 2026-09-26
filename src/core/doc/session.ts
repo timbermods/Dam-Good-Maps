@@ -716,8 +716,9 @@ export class MapSession {
     for (const x of this.st.features) {
       if (!inField.has(x.id)) continue;
       const b = base.get(x.id);
-      // (its shape: locking it, or renaming it, leaves it the field's)
-      if (!b || b.kind !== x.kind || JSON.stringify(b.params) !== JSON.stringify(x.params)) edited.push(x.id);
+      // (its shape: locking it, renaming it, or a river's water turning bad or its flow changing,
+      // leaves it the field's)
+      if (!b || b.kind !== x.kind || JSON.stringify(shapeOf(b)) !== JSON.stringify(shapeOf(x))) edited.push(x.id);
     }
     const key = edited.join(",");
     if (this.fieldCache?.key === f && this.fieldCache.edited === key) return this.fieldCache.field;
@@ -883,6 +884,14 @@ function withSettledWater(singletons: JsonObject, W: number, H: number, b: Build
 }
 
 /** A stored field as the build takes it. */
+/** What of a feature the field holds: its params, less a river's water (badwater or clean, its
+ *  flow), which never changes the ground. */
+function shapeOf(f: Feature): unknown {
+  if (f.kind !== "river") return f.params;
+  const { badwater: _b, flow: _f, ...rest } = f.params;
+  return rest;
+}
+
 export function generatedField(f: FieldData, W: number, H: number, except: readonly string[] = []): GeneratedField {
   const { heights } = terrainColumns(f, W * H);
   const out = new Set(except);

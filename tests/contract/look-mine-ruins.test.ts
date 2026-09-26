@@ -21,7 +21,7 @@ import * as ed from "../../src/worker/session";
  *  makes it since the terrain and water from processes (M9a, generator 0.7.0; `b358b4f8…` from
  *  resources like the official maps, #43, generator 0.6.2; `e4f2f72c…` from the start and edge
  *  rules, #44, and `5118b6a6…` from M8 until then). */
-const LIVE_SHA = "b60c1567a39cabaf2752b5d269fffcf3a890050425d6b6892789478a8b59e844";
+const LIVE_SHA = "2d406ba13e667247acc86c30e853bad54aca59d92a39b38f53a1eb36664b7f12";
 const spec = () => makeSpec({ seed: 4242, size: { x: 128, y: 128 }, theme: "riverValley", designedFor: "normal" });
 
 describe("mine sites and ruins, models of our own", () => {
