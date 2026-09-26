@@ -148,7 +148,9 @@ Make a valley, drop a source, and there's a river.
     carves that climb uphill;
   - **Power** (creek to catastrophe), and **Width** (following Power by default, or set by hand for
     slot canyons or wide lazy rivers);
-  - **Wander** (straight to winding), natural variation within each carve, and **Try another path**;
+  - **Wander** (straight to winding), natural variation within each carve (at high Wander too: bends
+    wider and deeper on the outside, narrower on the straights, never a uniform tube), and **Try another
+    path**; a bend cut off becomes an oxbow lake, sealed by sediment at both ends;
   - **Steep** or **Wide** walls; **Keep river** (the default) or **Dry canyon**. Keep river leaves a
     source at the origin whose strength follows the river's Width, not its Power, so a slot canyon
     keeps a modest stream and a wide river a big one; Dry canyon leaves no source. The source is
