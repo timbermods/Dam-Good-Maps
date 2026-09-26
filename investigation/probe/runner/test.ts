@@ -1,7 +1,8 @@
 // The runner's checks without the game: npm --prefix investigation/probe test
-// Everything runs in a sandbox: a temporary Documents folder, a throwaway registry key
+// Everything runs in a sandbox: a temporary Documents folder and probe folder, a throwaway registry key
 // (HKCU\Software\DGMProbeTest\Timberborn) and a stand-in game (a copy of node.exe named
 // FakeTimberborn.exe running test/fake-game.cjs). Kyler's own settings, saves and game are never touched.
+// The tall maps are read (never written) from C:\dgm-probe\tall when tools/probe-tall.ts has made them.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,6 +10,7 @@ import { join } from 'node:path';
 
 const sandbox = mkdtempSync(join(tmpdir(), 'dgm-probe-test-'));
 const TEST_KEY = 'HKCU\\Software\\DGMProbeTest\\Timberborn';
+process.env.DGM_PROBE_HOME = join(sandbox, 'probe');
 process.env.DGM_PROBE_DOCUMENTS = join(sandbox, 'Documents');
 process.env.DGM_PROBE_REGISTRY_KEY = TEST_KEY;
 process.env.DGM_PROBE_UNITY_LOGS = join(sandbox, 'LocalLow');
@@ -35,13 +37,31 @@ const check = (name: string, ok: boolean, detail = '') => {
 };
 
 async function main(): Promise<void> {
-  if (paths.REGISTRY_KEY !== TEST_KEY || !paths.timberbornDocs().startsWith(sandbox)) throw new Error('the sandbox is not in place; refusing to run');
+  if (paths.REGISTRY_KEY !== TEST_KEY || !paths.timberbornDocs().startsWith(sandbox) || !paths.probeHome().startsWith(sandbox)) throw new Error('the sandbox is not in place; refusing to run');
   const docs = paths.timberbornDocs();
   const logs = paths.unityLogDir();
-  for (const d of ['Saves/Kyler colony', 'Saves/Empty folder', 'PlayerData', 'Mods/SomeMod/version-1.1', 'Mods/DGMProbe/version-1.1']) mkdirSync(join(docs, d), { recursive: true });
+  for (const d of ['Saves/Kyler colony', 'Saves/Empty folder', 'PlayerData', 'Mods/SomeMod/version-1.1', 'Mods/DGMProbe/version-1.1', 'SomeModData', 'Kyler empty folder']) mkdirSync(join(docs, d), { recursive: true });
   mkdirSync(logs, { recursive: true });
   writeFileSync(join(docs, 'Saves/Kyler colony/Day 12.timber'), 'kyler save');
+  writeFileSync(join(docs, 'Saves/steam_autocloud.vdf'), 'steam before');
+  writeFileSync(join(docs, 'SomeModData/markers.txt'), 'kyler mod data');
   writeFileSync(join(docs, 'PlayerData/player.data'), 'player data');
+
+  // 0. the probe's folder: C:\dgm-probe by default, never inside Documents\Timberborn, and the launch carries it
+  check('probe folder: the default is C:\\dgm-probe', paths.DEFAULT_PROBE_HOME === 'C:\\dgm-probe');
+  const home = process.env.DGM_PROBE_HOME;
+  process.env.DGM_PROBE_HOME = join(docs, 'DGMProbe');
+  check('probe folder: refused inside Documents\\Timberborn', (() => {
+    try {
+      paths.probeHome();
+      return false;
+    } catch {
+      return true;
+    }
+  })());
+  process.env.DGM_PROBE_HOME = home;
+  const args = launch.launchArgs();
+  check('launch: -skipModManager -dgmprobe -dgmprobeHome <probe folder>', args.join(' ') === `-skipModManager -dgmprobe -dgmprobeHome ${paths.probeHome()}`, args.join(' '));
   writeFileSync(join(docs, 'Mods/SomeMod/version-1.1/manifest.json'), JSON.stringify({ Id: 'someone.somemod' }));
   writeFileSync(join(docs, 'Mods/DGMProbe/version-1.1/manifest.json'), JSON.stringify({ Id: mods.PROBE_MOD_ID }));
   writeFileSync(join(logs, 'Player.log'), 'kyler log');
@@ -76,6 +96,39 @@ async function main(): Promise<void> {
   check('high terrain: three maps up to level 21, top layer empty', high.length === 3 && high.every((p) => p.info.maxHeight >= 17 && p.info.maxHeight <= 21), high.map((p) => `${p.game.id} max ${p.info.maxHeight}`).join(', '));
   const mesa = high.find((p) => p.game.id === 'high-highlands-mesa21');
   check('high terrain: the mesa carries objects above 16', !!mesa && mesa.info.entities.filter((e) => e.z > 16).length >= 7);
+  const tall = prepared.filter((p) => p.game.group === 'Tall maps');
+  if (catalogM.tallMaps().length) {
+    check('tall maps: every map up to 22 with the top layer empty and one floor per tile', tall.length === catalogM.tallMaps().length && tall.every((p) => p.info.maxHeight === 22 && compare.fileColumns(p.info).count.every((n) => n === 1)), tall.map((p) => `${p.game.id} max ${p.info.maxHeight}`).join(', '));
+    check('tall maps: a start above 16, sources above 16, water above 16 and objects above 16', tall.some((p) => (p.info.start?.z ?? 0) > 16) && tall.some((p) => p.info.entities.some((e) => /Source$/.test(e.template) && e.z > 16)) && tall.some((p) => p.game.tall!.flowTiles.length > 0) && tall.every((p) => p.info.entities.some((e) => e.z > 16)));
+    check('tall maps: each has its checks, the tall poses and its water tiles sampled', tall.every((p) => p.checks.some((c) => c.id === 'tall-terrain') && p.map.poses.some((x) => x.id === 'tall-side') && p.map.tiles.length > 0));
+    // the tall checks on a result that is the file itself, then with one tile of terrain changed
+    const tp = tall.find((p) => p.game.tall!.flowTiles.length > 0)!;
+    const tdir = join(sandbox, 'compare-tall');
+    mkdirSync(tdir, { recursive: true });
+    const cols = compare.fileColumns(tp.info);
+    const tsnap = (id: string, day: number) => ({ momentId: id, day, tick: 0, weather: 'temperate', width: tp.info.W, height: tp.info.H, depth: [...tp.info.depth], contamination: [...tp.info.contamination], floor: [...tp.info.floor], moisture: [...tp.info.moisture], soilContamination: [...tp.info.soilContamination], terrain: [...cols.top], terrainColumns: [...cols.count], layered: [], plants: [], sources: tp.info.entities.filter((e) => /Source$/.test(e.template)).map((e) => ({ id: e.id, template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, source: { specified: Number((e.components.WaterSource as { SpecifiedStrength: { value: number } }).SpecifiedStrength.value), current: 1, contamination: 0 } })) });
+    const tz = require('node:zlib') as typeof import('node:zlib');
+    const tsnaps: string[] = [];
+    for (const m of tp.map.moments.filter((x) => x.snapshot)) {
+      const f = `${tp.game.id}-${m.id.replace(/[^A-Za-z0-9_-]/g, '_')}.snapshot.json.gz`;
+      writeFileSync(join(tdir, f), tz.gzipSync(JSON.stringify(tsnap(m.id, m.day))));
+      tsnaps.push(f);
+    }
+    const tents = tp.info.entities.filter((e) => e.template !== 'StartingLocation').map((e) => ({ id: e.id, template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation }));
+    const samples = [0, 0.5, 1, 1.4].map((d) => ({ day: catalogM.D0 + d, tick: 0, weather: 'temperate', tiles: tp.map.tiles.map(([x, y]) => ({ x, y, columns: tp.info.depth[y * tp.info.W + x] > 0 ? [[tp.info.floor[y * tp.info.W + x], tp.info.depth[y * tp.info.W + x], 0]] : [], moisture: 0, soilContamination: 0 })) }));
+    const s = tp.info.start;
+    const tres = { runId: 't', mapId: tp.game.id, title: 't', mapFile: '', status: 'done', log: [], notes: [], samples, snapshots: tsnaps, shots: [{ momentId: 'start', pose: 'tall', file: 'x.jpg', day: catalogM.D0 }], entitiesAtStart: tents, entitiesAtEnd: tents, plantDeaths: [], loadingIssues: [], weather: [], weatherEvents: [], actions: [], start: { districtCenter: s ? { id: 'dc', template: 'DistrictCenter.Folktails', x: s.x, y: s.y, z: s.z, orientation: s.orientation } : null, adults: 9, children: 4, bots: 0 } } as unknown as import('./job').MapResult;
+    const tv = compare.evaluate({ L: new compare.Loaded(tdir, tp, tres), others: new Map(), model: null, modelError: null }, tp.checks);
+    const bad = tv.filter((x) => x.verdict !== 'passed' && !(x.id === 'tall-shots' && x.verdict === 'recorded'));
+    check(`tall checks: the file itself passes every check (${tp.game.id})`, bad.length === 0, bad.map((x) => `${x.id} ${x.verdict}: ${x.detail}`).join(' | ') || tv.map((x) => x.id).join(', '));
+    const end = tp.map.moments.find((x) => x.id === 'end')!;
+    const broken = tsnap(end.id, end.day);
+    const hi = broken.terrain.findIndex((h) => h === 22);
+    broken.terrain[hi] = 21;
+    writeFileSync(join(tdir, tsnaps.find((f) => f.endsWith('-end.snapshot.json.gz'))!), tz.gzipSync(JSON.stringify(broken)));
+    const tv2 = compare.evaluate({ L: new compare.Loaded(tdir, tp, tres), others: new Map(), model: null, modelError: null }, [catalogM.TALL.terrain])[0];
+    check('tall checks: a lost voxel at 22 fails the terrain check', tv2.verdict === 'failed', tv2.detail);
+  } else console.log('skip tall maps: run npx tsx tools/probe-tall.ts first');
   const look = prepared.filter((p) => p.game.group === 'Map look');
   check('Map look: poses from the captures', look.filter((p) => p.map.poses.some((x) => x.lookCapture && existsSync(join(paths.REPO, x.lookCapture)))).length >= 7, look.map((p) => `${p.game.id} ${p.map.poses.filter((x) => x.lookCapture).length}`).join(', '));
   const cal = prepared.find((p) => p.game.id === 'cal-rv2')!;
@@ -155,7 +208,9 @@ async function main(): Promise<void> {
   check('restore: logs back', readFileSync(join(logs, 'Player.log'), 'utf8') === 'kyler log' && readFileSync(join(logs, 'Player-prev.log'), 'utf8') === 'kyler prev log');
   check('restore: player data back', readFileSync(join(docs, 'PlayerData/player.data'), 'utf8') === 'player data');
   check("restore: the probe's saves deleted, Kyler's kept", !existsSync(join(docs, 'Saves/DGMProbe fake')) && existsSync(join(docs, 'Saves/Kyler colony/Day 12.timber')) && existsSync(join(docs, 'Saves/Empty folder')), r.savesDeleted.join(', '));
-  check('restore: error reports moved out', !existsSync(join(docs, 'Error reports')) || require('node:fs').readdirSync(join(docs, 'Error reports')).length === 0, r.docsMoved.join(', '));
+  check('restore: error reports moved out, and the folder the game made for them removed', !existsSync(join(docs, 'Error reports')) && existsSync(join(docs, 'Kyler empty folder')), r.docsMoved.join(', '));
+  check("restore: a mod's data file the game rewrote is put back, the rewritten one kept in the run's folder", readFileSync(join(docs, 'SomeModData/markers.txt'), 'utf8') === 'kyler mod data' && /rewritten by the game/.test(readFileSync(join(sandbox, 'kept', 'changed', 'SomeModData', 'markers.txt'), 'utf8')) && r.docsRestored.includes(join('SomeModData', 'markers.txt')), r.docsRestored.join(', '));
+  check("restore: Steam's own bookkeeping file is reported, never put back", r.savesChanged.includes('steam_autocloud.vdf') && readFileSync(join(docs, 'Saves/steam_autocloud.vdf'), 'utf8') !== 'steam before', r.savesChanged.join(', '));
   check('restore: the marker is gone', !safety.hasPendingRestore());
 
   // 7. the exact comparison with a settings backup, load order and long binary values included

@@ -9,6 +9,7 @@ import { type CheckDef, D0, startWater, type Verdict, weirTiles } from './catalo
 import type { MapResult, MapSnapshot, SampleRow } from './job';
 import type { Prepared } from './jobs';
 import { wetAreas, type MapInfo } from './mapfile';
+import { isObject, num } from '../../../src/core/format/json';
 import type { ModelRun } from './model';
 import { REPO } from './paths';
 
@@ -86,11 +87,13 @@ export interface WaterDiff {
   worst: string;
 }
 
-/** The game's top water against the file's, tile by tile (tiles wet in either, deeper than 0.05). */
-export function waterDiff(info: MapInfo, s: MapSnapshot, ref?: { depth: ArrayLike<number> }): WaterDiff {
+/** The game's top water against the file's, tile by tile (tiles wet in either, deeper than 0.05), on
+ *  every tile or on the tiles `only` picks. */
+export function waterDiff(info: MapInfo, s: MapSnapshot, ref?: { depth: ArrayLike<number> }, only?: (t: number) => boolean): WaterDiff {
   const a = ref?.depth ?? info.depth;
   let wet = 0, within = 0, max = 0, sum = 0, vf = 0, vg = 0, worst = -1;
   for (let t = 0; t < info.W * info.H; t++) {
+    if (only && !only(t)) continue;
     const d0 = a[t] || 0, d1 = s.depth[t] || 0;
     vf += d0;
     vg += d1;
@@ -123,6 +126,51 @@ export function terrainDiff(info: MapInfo, s: MapSnapshot): { differ: number; ab
     }
   }
   return { differ, above16: above, keptAbove16: kept, examples: ex };
+}
+
+/**
+ * The file's terrain as the game's column map holds it, per tile: the number of columns and the top one's
+ * ceiling. The game walks each voxel column from z = 0 and makes a column [floor, ceiling) of every solid
+ * run, starting with an empty [0, 0) when the lowest voxel is air (Timberborn.TerrainSystem, the column
+ * rebuild). A tile with one column is therefore solid exactly on [0, ceiling): equal count and ceiling is
+ * equality voxel for voxel. Tiles with several columns are compared by count and top ceiling only (the
+ * snapshot does not keep the inner columns).
+ */
+export function fileColumns(info: MapInfo): { count: Uint8Array; top: Uint8Array } {
+  const w = info.file.world;
+  const plane = w.sizeX * w.sizeY;
+  const count = new Uint8Array(plane), top = new Uint8Array(plane);
+  for (let t = 0; t < plane; t++) {
+    let n = 0, solid = true, ceiling = 0;
+    for (let z = 0; z < w.layers; z++) {
+      if (w.voxels[z * plane + t]) solid = true;
+      else {
+        if (solid) (n++, (ceiling = z));
+        solid = false;
+      }
+    }
+    if (solid) (n++, (ceiling = w.layers));
+    count[t] = n;
+    top[t] = ceiling;
+  }
+  return { count, top };
+}
+
+export function voxelDiff(info: MapInfo, s: MapSnapshot): { differ: number; multi: number; above16: number; at22: number; examples: string[] } {
+  const f = fileColumns(info);
+  let differ = 0, multi = 0, above = 0, at22 = 0;
+  const ex: string[] = [];
+  if (!s.terrain || !s.terrainColumns) throw new NotMeasurable('the snapshot has no terrain columns');
+  for (let t = 0; t < info.W * info.H; t++) {
+    if (f.count[t] > 1) multi++;
+    if (f.top[t] > 16) above++;
+    if (f.top[t] === 22) at22++;
+    if (s.terrainColumns[t] !== f.count[t] || s.terrain[t] !== f.top[t]) {
+      differ++;
+      if (ex.length < 5) ex.push(`(${t % info.W}, ${(t / info.W) | 0}) file ${f.count[t]} column(s) to ${f.top[t]}, game ${s.terrainColumns[t]} to ${s.terrain[t]}`);
+    }
+  }
+  return { differ, multi, above16: above, at22, examples: ex };
 }
 
 export function objectsDiff(info: MapInfo, r: MapResult): { expected: number; found: number; missing: string[]; moved: string[]; above16: number; above16Found: number } {
@@ -233,6 +281,91 @@ const EVALS: Record<string, Eval> = {
     const s = need(c.L.snapshot('end') ?? c.L.snapshot('start'), 'end');
     const t = terrainDiff(c.L.info, s);
     return { verdict: t.differ === 0 ? 'passed' : 'failed', detail: `${t.keptAbove16} of ${t.above16} tiles above level 16 kept (highest ${c.L.info.maxHeight}); ${t.differ} tiles differ from the file${t.examples.length ? ': ' + t.examples.join(', ') : ''}` };
+  },
+
+  // ---- tall maps (PLAN §20 D172)
+  'tall-load': loadVerdict,
+  'tall-terrain'(c) {
+    const at = [need(c.L.snapshot('start'), 'start'), need(c.L.snapshot('end'), 'end')];
+    const d = at.map((s) => voxelDiff(c.L.info, s));
+    const ok = d.every((x) => x.differ === 0);
+    const [a] = d;
+    return {
+      verdict: ok ? 'passed' : 'failed',
+      detail: `${c.L.info.W}×${c.L.info.H}, highest ${c.L.info.maxHeight}: ${a.above16} tiles above 16 (${a.at22} at 22)${a.multi ? `, ${a.multi} with several columns (compared by count and top only)` : ''}; tiles whose terrain differs from the file: ${d.map((x, k) => `${x.differ} ${k ? `after ${f2(at[k].day - D0)} days` : 'at the load'}`).join(', ')}${d.some((x) => x.examples.length) ? ': ' + d.flatMap((x) => x.examples).slice(0, 5).join('; ') : ''}`,
+    };
+  },
+  'tall-water'(c) {
+    const info = c.L.info;
+    const s0 = need(c.L.snapshot('start'), 'start'), s1 = need(c.L.snapshotAt(D0 + 1, 0.1), 'day-1');
+    const high = (t: number) => info.heights[t] > 16;
+    const a0 = waterDiff(info, s0), a1 = waterDiff(info, s1), h0 = waterDiff(info, s0, undefined, high), h1 = waterDiff(info, s1, undefined, high);
+    const vol = (d: WaterDiff) => Math.abs(d.volumeGame / Math.max(1e-9, d.volumeFile) - 1);
+    const hasHigh = h0.wetEither + h1.wetEither > 0;
+    const okAll = a0.within01 >= 0.99 && a1.within01 >= 0.95 && vol(a1) <= 0.1;
+    const okHigh = !hasHigh || (h0.within01 >= 0.99 && h1.within01 >= 0.95 && vol(h1) <= 0.1);
+    return {
+      verdict: okAll && okHigh ? 'passed' : 'failed',
+      detail: `whole map at the load: ${waterText(a0)}; after ${f2(s1.day - D0)} days: ${waterText(a1)}. ${hasHigh ? `On terrain above 16 at the load: ${waterText(h0)}; after a day: ${waterText(h1)}` : 'No water on terrain above 16 in the file or the game.'}`,
+    };
+  },
+  'tall-objects'(c) {
+    const o = objectsDiff(c.L.info, c.L.result!);
+    const at22 = c.L.info.entities.filter((e) => e.template !== 'StartingLocation' && e.z >= 22).length;
+    const ok = o.missing.length === 0 && o.moved.length === 0;
+    return { verdict: ok ? 'passed' : 'failed', detail: `${o.found} of ${o.expected} objects at their tile and level; ${o.above16Found} of ${o.above16} above level 16 (${at22} standing at 22)${o.missing.length ? `; missing ${o.missing.length}: ${o.missing.slice(0, 8).join(', ')}` : ''}${o.moved.length ? `; moved ${o.moved.length}: ${o.moved.slice(0, 5).join(', ')}` : ''}` };
+  },
+  'tall-start'(c) {
+    const r = c.L.result!, s = c.L.info.start!, dc = r.start?.districtCenter;
+    const onStart = !!dc && dc.x === s.x && dc.y === s.y && dc.z === s.z && dc.orientation === s.orientation;
+    const ok = (r.loadingIssues ?? []).length === 0 && s.z > 16 && onStart && r.start.adults === 9 && r.start.children === 4;
+    return { verdict: ok ? 'passed' : 'failed', detail: `StartingLocation (${s.x}, ${s.y}, ${s.z}) ${s.orientation}; district center ${dc ? `(${dc.x}, ${dc.y}, ${dc.z}) ${dc.orientation}` : 'missing'}; ${r.start.adults} adults, ${r.start.children} children, loading issues ${(r.loadingIssues ?? []).length}` };
+  },
+  'tall-sources'(c) {
+    const info = c.L.info;
+    const s1 = need(c.L.snapshotAt(D0 + 1, 0.1), 'day-1');
+    const want = info.entities.filter((e) => /Source$/.test(e.template) && e.z > 16);
+    const bad: string[] = [];
+    for (const e of want) {
+      const ws = e.components.WaterSource;
+      const strength = isObject(ws) ? num(ws.SpecifiedStrength) : NaN;
+      const g = s1.sources.find((x) => x.id === e.id);
+      const wet = s1.depth[e.y * info.W + e.x] > 0;
+      if (!g || g.x !== e.x || g.y !== e.y || g.z !== e.z) bad.push(`${e.template} (${e.x}, ${e.y}, ${e.z}) ${g ? `at (${g.x}, ${g.y}, ${g.z})` : 'missing'}`);
+      else if (!g.source || Math.abs(g.source.specified - strength) > 0.01 || !(g.source.current > 0) || !wet) bad.push(`${e.template} (${e.x}, ${e.y}, ${e.z}): strength ${g.source ? `${f3(g.source.specified)} (file ${f3(strength)}), now ${f3(g.source.current)}` : 'none'}, water on its tile ${wet ? 'yes' : 'no'}`);
+    }
+    return { verdict: bad.length ? 'failed' : 'passed', detail: `${want.length - bad.length} of ${want.length} sources above 16 in place, at their strength and running after ${f2(s1.day - D0)} days (levels ${[...new Set(want.map((e) => e.z))].sort((a, b) => a - b).join(', ')})${bad.length ? ': ' + bad.slice(0, 6).join('; ') : ''}` };
+  },
+  'tall-flow'(c) {
+    const t = c.L.prepared.game.tall!;
+    const info = c.L.info;
+    const rows = c.L.samples();
+    if (!rows.length) throw new NotMeasurable('no samples');
+    const row1 = c.L.sampleAt(D0 + 1)!;
+    const dry: string[] = [], off: string[] = [], pools: string[] = [];
+    for (const [x, y] of t.flowTiles) {
+      const low = Math.min(...rows.map((r) => Loaded.topWater(r, x, y).depth));
+      const d1 = Loaded.topWater(row1, x, y).depth, f = info.depth[y * info.W + x];
+      if (!(low > 0.01)) dry.push(`(${x}, ${y}) down to ${f3(low)}`);
+      if (Math.abs(d1 - f) > 0.1) off.push(`(${x}, ${y}) ${f3(f)} → ${f3(d1)}`);
+    }
+    for (const [x, y] of t.poolTiles) {
+      const i = y * info.W + x;
+      const want = info.floor[i] + info.depth[i], got = Loaded.topWater(row1, x, y).surface;
+      if (!(Math.abs(got - want) <= 0.1)) pools.push(`(${x}, ${y}) surface ${f3(want)} → ${f3(got)}`);
+    }
+    const ok = dry.length === 0 && off.length <= Math.floor(t.flowTiles.length / 8) && pools.length === 0;
+    return {
+      verdict: ok ? 'passed' : 'failed',
+      detail: `${rows.length} samples over ${f2(rows.at(-1)!.day - rows[0].day)} days. Moving water above 16: ${t.flowTiles.length} tiles, ${t.flowTiles.length - dry.length} wet in every sample${dry.length ? ` (dried: ${dry.slice(0, 4).join(', ')})` : ''}, ${t.flowTiles.length - off.length} within 0.1 of the file after a day${off.length ? ` (${off.slice(0, 4).join(', ')})` : ''}. Standing water above 16: ${t.poolTiles.length} tiles, ${t.poolTiles.length - pools.length} with the file's surface within 0.1${pools.length ? ` (${pools.slice(0, 4).join(', ')})` : ''}`,
+    };
+  },
+  'tall-shots'(c) {
+    const shots = c.L.result!.shots ?? [];
+    return {
+      verdict: 'recorded',
+      detail: `${shots.length} screenshots (${[...new Set(shots.map((s) => s.pose))].join(', ')}) at the load and at the end, in the run's shots folder and contact sheet. Judged by eye: terrain whole up to 22 (no holes, no missing or cut-off tops), no floating or missing objects, no water hanging in the air or cut off, the start and the tall parts as built`,
+    };
   },
 
   A1(c) {
@@ -649,7 +782,7 @@ export function evaluate(ctx: Ctx, checks: CheckDef[]): CheckResult[] {
   return checks.map((def) => {
     if (def.how === 'none') return { id: def.id, title: def.title, verdict: 'not measurable' as Verdict, detail: def.why ?? '' };
     if (!ctx.L.result) return { id: def.id, title: def.title, verdict: 'not measurable' as Verdict, detail: 'the game produced no result for this map' };
-    if (ctx.L.result.status !== 'done' && !['load', 'high-load', 'A1', 'E4', 'M6-1a', 'M6-1b'].includes(def.id))
+    if (ctx.L.result.status !== 'done' && !['load', 'high-load', 'tall-load', 'A1', 'E4', 'M6-1a', 'M6-1b'].includes(def.id))
       return { id: def.id, title: def.title, verdict: 'not measurable' as Verdict, detail: `the map did not finish (${ctx.L.result.status}${ctx.L.result.failure ? ': ' + ctx.L.result.failure : ''})` };
     const e = EVALS[def.id];
     if (!e) return { id: def.id, title: def.title, verdict: 'not measurable' as Verdict, detail: 'no evaluation for this check' };

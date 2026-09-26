@@ -2,15 +2,17 @@
 // lists: the in-game checks of docs/ingame-log.md that concern the map itself (their files and the numbers
 // in each milestone's checks.txt), the cycle model's calibration points (investigation/cycles/CALIBRATION.md
 // on branch investigation/cycles-exact), the Map look captures (docs/map-look/after/after.json), the high
-// terrain test maps, and any .timber files given on the command line (the M9 prototypes, for example).
+// terrain test maps, the tall maps (tools/probe-tall.ts, PLAN §20 D172), and any .timber files given on the
+// command line (the M9 prototypes, for example).
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type { Action, Cycle, Pose } from './job';
 import { NEW_GAME_DAY } from './job';
 import { generated, mesa, raised, withoutStart } from './derived';
 import { readMapBytes, wetAreas, type MapInfo } from './mapfile';
-import { REPO } from './paths';
+import { REPO, tallDir } from './paths';
 
 export type Verdict = 'passed' | 'failed' | 'not measurable' | 'recorded';
 
@@ -49,6 +51,43 @@ export interface GameDef {
   model?: boolean;
   /** Other games this one is compared with. */
   pairs?: string[];
+  /** A tall map's entry in tall.json (tools/probe-tall.ts). */
+  tall?: TallEntry;
+}
+
+/** One map of tall.json, the manifest tools/probe-tall.ts writes beside the tall maps. */
+export interface TallEntry {
+  id: string;
+  title: string;
+  tests: string;
+  file: string;
+  sha256: string;
+  size: [number, number];
+  maxHeight: number;
+  tilesAbove16: number;
+  tilesAt22: number;
+  wetAbove16: number;
+  objectsAbove16: number;
+  plantsAbove16: number;
+  sourcesAbove16: { template: string; x: number; y: number; z: number; strength: number }[];
+  start: { x: number; y: number; z: number } | null;
+  focus: [number, number];
+  flowTiles: [number, number][];
+  poolTiles: [number, number][];
+}
+
+/** The tall maps tools/probe-tall.ts wrote (none until it has run). */
+export function tallMaps(): TallEntry[] {
+  const f = join(tallDir(), 'tall.json');
+  if (!existsSync(f)) return [];
+  return (JSON.parse(readFileSync(f, 'utf8')) as { maps: TallEntry[] }).maps;
+}
+
+/** A tall map's bytes, exactly the file both validators checked (its sha256 in tall.json). */
+function tallBytes(t: TallEntry): Uint8Array {
+  const b = new Uint8Array(readFileSync(join(tallDir(), t.file)));
+  if (createHash('sha256').update(b).digest('hex') !== t.sha256) throw new Error(`${t.file} is not the file tall.json describes: run npx tsx tools/probe-tall.ts again`);
+  return b;
 }
 
 export const D0 = NEW_GAME_DAY;
@@ -147,6 +186,19 @@ const OBJECTS: CheckDef = { id: 'objects', title: 'Every object in the file is i
 const WATER: CheckDef = { id: 'water', title: 'The stored water holds: after a day the water matches the file within 0.1 deep', how: 'measure' };
 const TERRAIN: CheckDef = { id: 'terrain', title: "The terrain is kept after the game's terrain physics", how: 'measure' };
 const GENERIC = [LOAD, OBJECTS, WATER, TERRAIN];
+
+/** The tall maps' checks (PLAN §20 D172: maps above 16 load and keep their terrain, water and objects).
+ *  compare.ts states each one's tolerance in its verdict. */
+export const TALL = {
+  load: { id: 'tall-load', title: 'Loads: no loading issue, no error or exception in the log, the start placed', how: 'measure' },
+  terrain: { id: 'tall-terrain', title: "Terrain kept voxel for voxel: the game's terrain columns equal the file's at the load and at the end", how: 'measure' },
+  water: { id: 'tall-water', title: 'Stored water holds: at the load 99% of wet tiles within 0.1 deep of the file; after a day 95% within 0.1 and the volume within 10%; the same for the water above 16', how: 'measure' },
+  objects: { id: 'tall-objects', title: 'Every object in the file is in the game at its tile and level, those above 16 included', how: 'measure' },
+  start: { id: 'tall-start', title: 'The start above 16: the district center on the StartingLocation, 9 adults and 4 children', how: 'measure' },
+  sources: { id: 'tall-sources', title: 'Every source above 16 is in the game at its strength and runs after a day', how: 'measure' },
+  flow: { id: 'tall-flow', title: 'Water above 16 keeps flowing and standing: the sampled stream tiles stay wet all day and the pools keep their level (within 0.1)', how: 'measure' },
+  shots: { id: 'tall-shots', title: 'The screenshots show nothing visibly broken', how: 'partial', why: 'judged by eye from the contact sheet' },
+} satisfies Record<string, CheckDef>;
 
 const none = (id: string, title: string, why: string): CheckDef => ({ id, title, how: 'none', why });
 const BUILD = 'needs a building placed and built by beavers (a dam, levee, water wheel or pump); the probe does not play a colony yet (INTEGRATION.md: the bot colony)';
@@ -342,6 +394,28 @@ export function catalog(extraMaps: string[] = []): GameDef[] {
     poses: (m) => [{ id: 'mesa', kind: 'look', target: at(m, 53, 107), yaw: GAME_YAW, pitch: deg(40), distance: 60, fovY: 40, width: 1280, height: 800 }],
     checks: HIGH,
   });
+
+  // Tall maps (PLAN §20 D172): terrain up to 22 with the top layer empty, written and checked by both
+  // validators with tools/probe-tall.ts into C:\dgm-probe\tall. A Normal calm day and a half: the records
+  // at the load, after half a day, after a day and at the end, and the water above 16 every hour.
+  for (const t of tallMaps()) {
+    const checks: CheckDef[] = [TALL.load, TALL.terrain, TALL.water, TALL.objects];
+    if (t.start && t.start.z > 16) checks.push(TALL.start);
+    if (t.sourcesAbove16.length) checks.push(TALL.sources);
+    if (t.flowTiles.length || t.poolTiles.length) checks.push(TALL.flow);
+    checks.push(TALL.shots);
+    const seen = new Set<string>();
+    const tiles = [...t.flowTiles, ...t.poolTiles, ...t.sourcesAbove16.map((s) => [s.x, s.y] as [number, number]), ...(t.start ? [[t.start.x + 1, t.start.y + 1] as [number, number]] : [])].filter(([x, y]) => !seen.has(`${x},${y}`) && !!seen.add(`${x},${y}`));
+    games.push({
+      id: t.id, title: t.title, group: 'Tall maps', tall: t, bytes: memo(() => tallBytes(t)), faction: 'Folktails', mode: 'Normal',
+      cycles: [calm], days: 1.5, tiles: () => tiles.slice(0, 20), sampleHours: 1, snapshotsAt: [0.5, 1],
+      poses: (m) => [
+        { id: 'tall', kind: 'look', target: at(m, t.focus[0], t.focus[1]), yaw: GAME_YAW, pitch: deg(45), distance: 50, fovY: 40, width: 1280, height: 800 },
+        { id: 'tall-side', kind: 'look', target: at(m, t.focus[0], t.focus[1]), yaw: GAME_YAW + Math.PI / 2, pitch: deg(18), distance: 70, fovY: 40, width: 1280, height: 800 },
+      ],
+      checks,
+    });
+  }
 
   // The cycle model's calibration points (CALIBRATION.md on investigation/cycles-exact), under forced weather
   games.push({
