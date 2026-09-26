@@ -101,6 +101,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D185–D187: the editor is desktop-first; the editor's Drought and Badtide buttons show each event, and the Weather view is the separate full-cycle timeline; Claude is a summoned chat box.
 - D188: docs are part of done: living docs updated in the same PR, a drift check at each milestone boundary, a CI guard for retired terms, and a docs index (`docs/README.md`). EDITOR_PLAN.md now opens with the editor's vision.
 - D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
+- D190: #51–#53 decided (the defaults): world traits are candidate intentions; wet caves allowed in 3D-b; the no-clone distance picks candidates, the score breaks near ties.
+- D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
 
 ## Done and released
 
@@ -154,8 +156,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 3. The Map look fixes: #41 again, with #38's approved badwater in the shared water palette (D177).
    Mine sites and ruins (#42, D178) are approved; they're released after one ivy change.
 4. A yes before each probe batch; the next is M9a's.
-5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
+5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
 6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
