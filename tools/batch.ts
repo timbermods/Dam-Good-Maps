@@ -19,6 +19,7 @@ import { decodeProject, encodeProject, generatedDocument } from "../src/core/doc
 import { MapSession } from "../src/core/doc/session";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
 import { officialRange } from "../src/core/gen/calibrated";
+import { STRAIGHT_LIMITS } from "../src/core/analysis/straight";
 import { decodeSpecFragment, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
@@ -59,6 +60,7 @@ const failedChecks = new Map<string, number>(); // every failed attempt's blocki
 const inRange = { trees: 0, bushes: 0, scrap: 0 };
 const mines: number[] = [];
 const advisory = new Map<string, number>();
+const straight: { run: number; canal: number }[] = [];
 const lines: string[] = [];
 const log = (s: string) => {
   lines.push(s);
@@ -76,6 +78,7 @@ for (const seed of seeds) {
   if (r.report.passed) {
     final++;
     if (r.attempts === 1) first++;
+    if (r.info.straight) straight.push(r.info.straight);
   }
   for (const f of r.failures) for (const id of f.failed) failedChecks.set(id, (failedChecks.get(id) ?? 0) + 1);
   for (const c of r.report.checks) if (c.advisory && !c.ok) advisory.set(c.id, (advisory.get(c.id) ?? 0) + 1);
@@ -127,6 +130,11 @@ log(`- time per map: median ${Math.round(sorted[n >> 1])} ms, p90 ${Math.round(s
 log(`- checks that failed an attempt: ${[...failedChecks].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ") || "none"}`);
 log(`- advisory warnings on the accepted maps: ${[...advisory].map(([k, v]) => `${k} ${v}/${n}`).join(", ") || "none"}`);
 log(`- in the official maps' typical range for the size and settings (information): trees ${inRange.trees}/${final}, bushes ${inRange.bushes}/${final}, scrap ${inRange.scrap}/${final}; mine sites ${mines.length ? `${Math.min(...mines)}–${Math.max(...mines)}` : "none"}`);
+const spread = (v: number[]) => {
+  const s = v.slice().sort((a, b) => a - b);
+  return s.length ? `median ${s[s.length >> 1].toFixed(1)}, p90 ${s[Math.floor(s.length * 0.9)].toFixed(1)}, max ${s[s.length - 1].toFixed(1)}` : "none";
+};
+log(`- straight channels on the accepted maps (information; D209: past the limits a map is planned again): the longest straight bank ${spread(straight.map((x) => x.run))} tiles (limit ${STRAIGHT_LIMITS.run}), the longest canal ${spread(straight.map((x) => x.canal))} (limit ${STRAIGHT_LIMITS.canal})`);
 const rt = reopenTimes.slice().sort((a, b) => a - b);
 log(`- project round trip: ${reopened}/${final} accepted maps reopen from their project file and rebuild the same .timber${rt.length ? ` (median ${Math.round(rt[rt.length >> 1])} ms, max ${Math.round(rt[rt.length - 1])} ms)` : ""}`);
 for (const f of reopenFailures) log(`  - ${f}`);
