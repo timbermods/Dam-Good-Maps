@@ -112,9 +112,10 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
   proposals for their steps.
-- **Save to Timberborn** (#40, with "Name (2)", D191) is merged into `dev` and ships with the next release.
-- **The start and edge rules** (D151–D153, D164, D171, D172 (1)) are merged into `dev` (#44), and
-  ship with the next release as `start-edge-rules-done`.
+- **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
+- **Mine sites and ruins** are live (`look-mine-ruins-done`, #42, D178).
+- **The start and edge rules** are live (`start-edge-rules-done`, #44, released in PR #48, live check passed):
+  no edge walls, start water over natural slopes, starting wood in logs, sources start rivers, heights up to 22.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
