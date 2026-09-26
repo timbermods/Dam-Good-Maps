@@ -14,6 +14,7 @@
 //   `rebuildWithCurrentGenerator` (PLAN §19.7).
 
 import { buildMap, rebuild, SettleCache, type BaseLayer, type BuildInput, type BuildResult, type DirtyInfo, type LockedLayer } from "../features/build";
+import type { TerrainState } from "../features/raster/strokePreview";
 import { storedWetMask } from "../analysis/mechanics";
 import { canonicalRun, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
@@ -331,6 +332,23 @@ export class MapSession {
    *  is kept and the preview is approximate (EDITOR_PLAN §6). Empty for generated maps. */
   get roofedTiles(): ReadonlySet<number> {
     return this.mode === "live" ? new Set() : new Set(this.baseStuff().terrain.columns.keys());
+  }
+
+  /** What the build's last terrain steps start from (the page's copy, for strokes painted there
+   *  to match the build exactly): copies, safe to hand on. */
+  terrainState(): TerrainState {
+    const t = this.cur.cache.terrain;
+    const live = this.mode === "live";
+    const base = live ? null : this.baseStuff().terrain;
+    const locked = live ? (this.keptLayer()?.mask ?? null) : null;
+    return {
+      pre: t.pre7.slice(),
+      protect: t.protect.slice(),
+      channel: t.channel.slice(),
+      base: base ? base.heights.slice() : null,
+      locked: locked ? locked.slice() : null,
+      columns: base ? Int32Array.from([...base.columns.keys()].sort((a, b) => a - b)) : new Int32Array(0),
+    };
   }
 
   /** The water the base file stores (every level), for the 3D view. */
@@ -990,6 +1008,9 @@ export function protectMask(W: number, H: number, kept: readonly Feature[], lock
   return m;
 }
 
+/** A stroke's history label, when the page gave none ("Raise, 38 tiles" when it did). */
+const BRUSH_NAMES: Record<string, string> = { raise: "Raise", lower: "Lower", flatten: "Flatten", smooth: "Smooth", naturalize: "Naturalize" };
+
 const KIND_NAMES: Record<string, string> = {
   river: "river",
   lake: "lake",
@@ -1016,6 +1037,8 @@ export function labelOf(op: AppliedOp): string {
       return "Reorder a feature";
     case "sculpt":
       return op.params.mode === "raise" ? "Raise terrain" : op.params.mode === "lower" ? "Lower terrain" : op.params.mode === "flatten" ? "Flatten terrain" : op.params.mode === "terrace" ? "Terrace terrain" : "Smooth terrain";
+    case "brush":
+      return BRUSH_NAMES[op.params.tool] ?? "Brush";
     case "placeEntity":
       return `Place ${op.params.template}`;
     case "moveEntity":

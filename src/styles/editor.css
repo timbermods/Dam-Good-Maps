@@ -71,14 +71,6 @@ button[aria-pressed="true"] {
   flex: 1 1 260px;
 }
 
-.preview-caption {
-  margin: 0 0 6px;
-  font-size: 0.95rem;
-}
-
-.banner.editing {
-  border-color: var(--accent);
-}
 
 .view-bar {
   display: flex;
@@ -454,7 +446,7 @@ button[aria-pressed="true"] {
 .tool-hint,
 .working {
   position: absolute;
-  top: 54px;
+  top: 100px;
   left: 10px;
   padding: 6px 10px;
   border-radius: 6px;
@@ -467,6 +459,15 @@ button[aria-pressed="true"] {
   left: auto;
   right: 64px;
   top: 16px;
+}
+
+/* a tool's hint sits below the map, not over its north edge (the camera and brush bars are there) */
+.tool-hint {
+  top: auto;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 20px);
 }
 
 .inspector {
@@ -827,125 +828,34 @@ button[aria-pressed="true"] {
   }
 }
 
-/* the 3D view's legend (Map look): what the colours on this map mean, beside the map. Folded, it
-   is a strip that stays on screen. (Its look waits for the design pass.) */
 
-.view3d-legend {
-  flex: none;
+/* the legend beside the 3D view (a shared side panel; the editor keeps its panels clear of it) */
+.view3d-frame {
+  --side-panel-width: 214px;
+}
+
+/* the brush bar's place over the map: below the camera's buttons */
+.brush-bar-wrap {
+  position: absolute;
+  top: 52px;
+  left: 10px;
   display: flex;
-  width: 214px;
-  border-left: 1px solid var(--rule);
-  background: var(--panel, var(--overlay));
-  font-size: 0.8rem;
-  min-height: 0;
-}
-
-.legend-folded .view3d-legend {
-  width: 34px;
-}
-
-.legend-fold {
-  flex: none;
-  width: 33px;
-  padding: 8px 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.legend-fold span {
-  display: inline-block;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-}
-
-.legend-body {
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-  padding: 8px 8px 8px 2px;
-}
-
-.legend-toggles {
-  display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
-  margin-bottom: 6px;
+  max-width: calc(100% - 20px);
+  pointer-events: none;
 }
 
-.legend-toggles button {
-  padding: 4px 8px;
-  font-size: 0.8rem;
+.brush-bar-wrap > * {
+  pointer-events: auto;
 }
 
-.legend-toggles button[aria-pressed="true"] {
-  background: var(--accent);
+/* the brush's hint lets clicks through to the map under it (all but its close button) */
+.brush-bar-wrap > .map-note {
+  pointer-events: none;
 }
 
-.view3d-legend ul {
-  list-style: none;
-  margin: 2px 0 4px;
-  padding: 0;
-}
-
-.legend-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 2px 4px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  box-shadow: none;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-}
-
-button.legend-line {
-  cursor: pointer;
-}
-
-button.legend-line:hover,
-button.legend-line[aria-pressed="true"] {
-  background: rgba(40, 150, 255, 0.18);
-}
-
-button.legend-line[aria-pressed="true"] {
-  color: inherit;
-  border-color: transparent;
-  box-shadow: inset 0 0 0 2px rgba(40, 150, 255, 0.8);
-}
-
-@media (max-width: 760px) {
-  .view3d-legend {
-    width: 180px;
-  }
-}
-
-.view3d-legend .legend-head {
-  margin: 4px 0 0;
-  font-weight: 600;
-}
-
-.view3d-legend .note {
-  margin: 0 0 4px;
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-.view3d-legend li {
-  margin: 1px 0;
-}
-
-.view3d-legend .swatch {
-  flex: none;
-  width: 24px;
-  height: 16px;
-  border-radius: 3px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+.brush-bar-wrap > .map-note button {
+  pointer-events: auto;
 }

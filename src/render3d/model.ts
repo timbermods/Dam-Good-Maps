@@ -201,12 +201,13 @@ export function entityView(list: readonly EntityInput[]): EntityView {
 }
 
 /** The buffers of a view, for Comlink's transfer list. */
-export function viewBuffers(v: Partial<MapView>): ArrayBuffer[] {
+export function viewBuffers(v: Partial<MapView> & { terrain?: { pre: Uint8Array; protect: Uint8Array; channel: Uint8Array; base: Uint8Array | null; locked: Uint8Array | null; columns: Int32Array } }): ArrayBuffer[] {
   const out: ArrayBuffer[] = [];
-  const add = (a: ArrayBufferView | undefined) => {
+  const add = (a: ArrayBufferView | undefined | null) => {
     if (a && !out.includes(a.buffer as ArrayBuffer)) out.push(a.buffer as ArrayBuffer);
   };
   add(v.heights);
+  if (v.terrain) for (const a of [v.terrain.pre, v.terrain.protect, v.terrain.channel, v.terrain.base, v.terrain.locked, v.terrain.columns]) add(a);
   if (v.columns) {
     add(v.columns.tiles);
     add(v.columns.voxels);

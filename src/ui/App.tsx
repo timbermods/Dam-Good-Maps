@@ -514,7 +514,7 @@ export function App() {
         </div>
       ) : null}
       {session && session.kind === "import" ? (
-        <div class="banner editing" role="status">
+        <div class="banner accent" role="status">
           <span>
             You're editing <strong>{session.name}</strong>. The map below is a new one, made from these settings.
           </span>
@@ -591,7 +591,7 @@ export function App() {
             </p>
           )}
           {result ? (
-            <p class="preview-caption" data-shows={fromSession ? "edited" : "new"}>
+            <p class="view-caption" data-shows={fromSession ? "edited" : "new"}>
               {fromSession ? (
                 <>
                   Your map: <strong>{result.name}</strong>

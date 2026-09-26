@@ -88,14 +88,29 @@ export function legendTiles(m: LegendMap): Map<string, number[]> {
     const h = heights[i];
     if ((x > 0 && heights[i - 1] < h) || (x < W - 1 && heights[i + 1] < h) || (i >= W && heights[i - W] < h) || (i < N - W && heights[i + W] < h)) add("walls", i);
   }
+  // each template's key and footprint are worked out once (a map has thousands of trees)
+  const keys = e.templates.map((t) => {
+    if (PLANTS.has(t)) return null;
+    for (const [re, name] of NAMED) if (re.test(t)) return name;
+    return "other";
+  });
+  const shapes = new Map<number, [number, number][]>();
   for (let k = 0; k < e.count; k++) {
-    const t = e.templates[e.template[k]];
-    let key: string | null = null;
-    if (PLANTS.has(t)) key = e.flags[k] & DEAD ? "dead" : "plants";
-    else for (const [re, name] of NAMED) if (re.test(t)) key = name;
-    key ??= "other";
-    const tiles = footprintTiles(t, { template: t, x: e.x[k], y: e.y[k], z: e.z[k], orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: false });
-    for (const [x, y] of tiles.length ? tiles : [[e.x[k], e.y[k]] as [number, number]]) if (x >= 0 && y >= 0 && x < W && y < H) add(key, y * W + x);
+    const ti = e.template[k];
+    const key = keys[ti] ?? (e.flags[k] & DEAD ? "dead" : "plants");
+    const shapeKey = ti * 4 + e.orientation[k];
+    let shape = shapes.get(shapeKey);
+    if (!shape) {
+      const t = e.templates[ti];
+      const tiles = footprintTiles(t, { template: t, x: 0, y: 0, z: 0, orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: false });
+      shape = tiles.length ? tiles : [[0, 0]];
+      shapes.set(shapeKey, shape);
+    }
+    for (const [dx, dy] of shape) {
+      const x = e.x[k] + dx;
+      const y = e.y[k] + dy;
+      if (x >= 0 && y >= 0 && x < W && y < H) add(key, y * W + x);
+    }
   }
   out.set("height", []);
   return out;

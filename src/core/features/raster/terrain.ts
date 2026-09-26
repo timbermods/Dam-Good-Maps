@@ -9,6 +9,7 @@ import { bedAt, floorAt, polygonMask, round as round2, segmentDistance2 } from "
 import { carveChannel, channelBounds, type ChannelPlan } from "../route";
 import type { Edge, Feature, LakeFeature, LandformFeature, Point, RiverFeature, StartFeature } from "../schema";
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
+import { applyBrush, brushBounds, brushReadsNeighbours, type BrushParams } from "./brush";
 
 export const MAX_TERRAIN = 16; // PLAN §20, D4
 
@@ -339,11 +340,17 @@ export function rasterizeBench(f: StartFeature, t: BuildTarget): void {
 
 // ---------------------------------------------------------------------------------------- sculpt
 
+/** A sculpt edit (cells with a mode) or a brush stroke (dabs with a brush, raster/brush.ts). */
 export interface SculptEdit {
-  params: { mode: string; cells: Runs; amount?: number; level?: number; step?: number };
+  params: { mode: string; cells: Runs; amount?: number; level?: number; step?: number } | BrushParams;
+}
+
+function isBrush(p: SculptEdit["params"]): p is BrushParams {
+  return "dabs" in p;
 }
 
 export function sculptBounds(s: SculptEdit): Rect | null {
+  if (isBrush(s.params)) return brushBounds(s.params, Infinity, Infinity);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -359,13 +366,20 @@ export function sculptBounds(s: SculptEdit): Rect | null {
 
 /** Brushes that read neighbouring cells: a rebuild that touches their cells rebuilds all of them. */
 export function sculptReadsNeighbours(s: SculptEdit): boolean {
-  return s.params.mode === "smooth";
+  return isBrush(s.params) ? brushReadsNeighbours(s.params) : s.params.mode === "smooth";
 }
 
-/** Apply one sculpt edit (step 6) to the region's cells. Heights stay within 0–16, the in-game
- *  editor's range (the brushes are defined that way, like the game's own). */
-export function applySculpt(s: SculptEdit, t: BuildTarget): void {
+/** Apply one sculpt edit or brush stroke (step 6) to the region's cells. Heights stay within
+ *  0–16, the in-game editor's range (the brushes are defined that way, like the game's own).
+ *  `keep(i)` names tiles every tool leaves alone (an imported map's caves). */
+export function applySculpt(s: SculptEdit, t: BuildTarget, keep?: (i: number) => boolean): void {
   const { W, heights } = t;
+  if (isBrush(s.params)) {
+    const b = brushBounds(s.params, W, t.H);
+    if (!b || !t.touchesRegion(b)) return;
+    applyBrush(s.params, heights, W, t.H, keep ? (i) => t.inRegion(i) && !keep(i) : (i) => t.inRegion(i));
+    return;
+  }
   const p = s.params;
   if (p.mode === "smooth") {
     // the median of each cell's 3×3 neighbours inside the brush, read before the brush applies

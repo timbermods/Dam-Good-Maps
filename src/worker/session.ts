@@ -35,6 +35,7 @@ import type { PlanRecord } from "../core/features/setpieces";
 import { footprintCheck as checkFootprint, lakeAt, moveObject, planArea, planEntity, planObject, planRiverBadwater, type AreaPreview, type AreaRequest, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
 import type { SetPieceKind } from "../core/features/schema";
 import { distanceFrom } from "../core/math/grid";
+import { hash32 } from "../core/math/hash";
 import { toTimberFile } from "../core/gen/pack";
 import { thumbnailJpeg } from "../core/render/shade";
 import type { EntitySpec } from "../core/format/entities";
@@ -49,6 +50,7 @@ import { applyMergePatch } from "../core/spec/mergepatch";
 import { validateMap, type Validation } from "../core/validate/checks";
 import { canonicalRun, canonicalSettle, type CanonicalWater } from "../core/sim/prefill";
 import { PreviewJob, TICKS_PER_DAY, type WarmState } from "../core/sim/preview";
+import type { TerrainState } from "../core/features/raster/strokePreview";
 import { droughtStorage } from "../core/sim/drought";
 import { rulesFor } from "../core/validate/playability";
 import { mapObjects, waterModel } from "../core/sim/model";
@@ -82,11 +84,16 @@ export interface SessionInfo {
   projectName: string;
   /** Bumped on every change (the page's autosave and checks key on it). */
   version: number;
+  /** Changes only when the features do (the page keeps its copy, and its index, meanwhile). */
+  featuresKey: string;
 }
 
 /** The parts of the map view that changed. */
 export interface ViewUpdate {
   heights?: Uint8Array;
+  /** What the build's last terrain steps start from, when it changed (the page paints strokes on
+   *  its own copy, exactly as the build applies them). */
+  terrain?: TerrainState;
   terrainRect?: { x0: number; y0: number; x1: number; y1: number } | null;
   water?: WaterView;
   entities?: EntityView;
@@ -116,6 +123,8 @@ export interface InstantCheck {
 export interface SessionOpen {
   info: SessionInfo;
   view: MapView;
+  /** The terrain the page paints strokes on (see ViewUpdate.terrain). */
+  terrain: TerrainState;
   ms: number;
 }
 
@@ -153,7 +162,7 @@ export interface ExportCheck {
 let session: MapSession | null = null;
 let version = 0;
 /** What the page last received, to send only what changed. */
-let sent: { heights: Uint8Array; water: unknown; stored: boolean; entities: unknown; soil: unknown } | null = null;
+let sent: { heights: Uint8Array; water: unknown; stored: boolean; entities: unknown; soil: unknown; terrain: unknown } | null = null;
 /** The imported map as it was opened, with every check (the problems it had already, D43). */
 let originalFull: Validation | null = null;
 let lastCheck: ExportCheck | null = null;
@@ -161,6 +170,15 @@ let lastCheck: ExportCheck | null = null;
 function need(): MapSession {
   if (!session) throw new Error("no map is open in the editor");
   return session;
+}
+
+/** A key for the features as they are (the page keeps its own copy while it stays the same). */
+let featuresMemo: { json: string; key: string } | null = null;
+function featuresKeyOf(features: readonly Feature[]): string {
+  const json = JSON.stringify(features);
+  if (featuresMemo?.json === json) return featuresMemo.key;
+  featuresMemo = { json, key: `${json.length}:${hash32(json)}` };
+  return featuresMemo.key;
 }
 
 export function sessionInfo(s: MapSession = need()): SessionInfo {
@@ -185,6 +203,7 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
     importReport: s.meta.source?.report ?? null,
     timberName: s.exportTimberName(),
     projectName: documentFileName(doc),
+    featuresKey: featuresKeyOf(s.features),
     version,
   };
 }
@@ -271,9 +290,33 @@ function columnsOf(s: MapSession): MapView["columns"] {
   return { tiles, voxels };
 }
 
+/** The objects the page has (to send only what changed). */
+let sentEntities: EntityView | null = null;
+
+/** A copy that stays here (the view itself is handed over to the page, its arrays with it). */
+function copyEntityView(v: EntityView): EntityView {
+  return { ...v, templates: [...v.templates], owners: [...v.owners], template: v.template.slice(), x: v.x.slice(), y: v.y.slice(), z: v.z.slice(), orientation: v.orientation.slice(), flags: v.flags.slice(), owner: v.owner.slice() };
+}
+
+function sameEntityView(a: EntityView, b: EntityView | null): boolean {
+  if (!b || a.count !== b.count || a.templates.join() !== b.templates.join() || a.owners.join() !== b.owners.join()) return false;
+  const eq = (p: ArrayLike<number>, q: ArrayLike<number>) => {
+    for (let i = 0; i < p.length; i++) if (p[i] !== q[i]) return false;
+    return true;
+  };
+  return eq(a.template, b.template) && eq(a.x, b.x) && eq(a.y, b.y) && eq(a.z, b.z) && eq(a.orientation, b.orientation) && eq(a.flags, b.flags) && eq(a.owner, b.owner);
+}
+
 function markSent(s: MapSession): void {
   const b = s.built;
-  sent = { heights: b.heights, water: s.showsStoredWater ? "stored" : b.water, stored: s.showsStoredWater, entities: b.entities, soil: soilKey(s) };
+  sent = { heights: b.heights, water: s.showsStoredWater ? "stored" : b.water, stored: s.showsStoredWater, entities: b.entities, soil: soilKey(s), terrain: b.cache.terrain };
+}
+
+/** The map's heights and the terrain the page paints on, as they stand (the page takes them
+ *  again when the worker refused a stroke it had shown). */
+export function terrainNow(): { heights: Uint8Array; terrain: TerrainState } {
+  const s = need();
+  return { heights: s.built.heights.slice(), terrain: s.terrainState() };
 }
 
 /** The whole map view (opening a map, or after a regeneration). */
@@ -282,15 +325,22 @@ export function sessionView(): SessionOpen {
   const s = need();
   const b = s.built;
   const view: MapView = { W: b.W, H: b.H, heights: b.heights.slice(), columns: columnsOf(s), water: waterOf(s), entities: entityView(entityInputs(b.entities)), soil: soilOf(s) };
+  sentEntities = copyEntityView(view.entities);
   markSent(s);
-  return { info: sessionInfo(s), view, ms: Math.round(performance.now() - t0) };
+  return { info: sessionInfo(s), view, terrain: s.terrainState(), ms: Math.round(performance.now() - t0) };
 }
 
 function viewUpdate(s: MapSession): ViewUpdate {
   const b = s.built;
   const out: ViewUpdate = {};
   const prev = sent;
-  if (!prev || prev.heights.length !== b.heights.length) return { heights: b.heights.slice(), terrainRect: null, water: waterOf(s), entities: entityView(entityInputs(b.entities)), soil: soilOf(s) };
+  if (!prev || prev.heights.length !== b.heights.length) {
+    const all: ViewUpdate = { heights: b.heights.slice(), terrainRect: null, water: waterOf(s), entities: entityView(entityInputs(b.entities)), soil: soilOf(s), terrain: s.terrainState() };
+    sentEntities = copyEntityView(all.entities!);
+    markSent(s);
+    return all;
+  }
+  if (prev.terrain !== b.cache.terrain) out.terrain = s.terrainState();
   if (prev.heights !== b.heights) {
     const rect = changedRect(b.W, b.H, prev.heights, b.heights);
     if (rect) {
@@ -301,7 +351,12 @@ function viewUpdate(s: MapSession): ViewUpdate {
   const water = s.showsStoredWater ? "stored" : b.water;
   if (water !== prev.water) out.water = waterOf(s);
   if (water !== prev.water || soilKey(s) !== prev.soil) out.soil = soilOf(s);
-  if (b.entities !== prev.entities) out.entities = entityView(entityInputs(b.entities));
+  // (a rebuild that placed the same objects again sends none: the page keeps its own)
+  if (b.entities !== prev.entities) {
+    const v = entityView(entityInputs(b.entities));
+    if (!sameEntityView(v, sentEntities)) out.entities = v;
+    sentEntities = copyEntityView(v);
+  }
   markSent(s);
   return out;
 }
@@ -877,9 +932,22 @@ export interface BackgroundResult {
 
 let bgToken = 0;
 
-/** Let the page's messages in (edits, hover checks) between slices of work. */
+/** Let the page's messages in (edits, hover checks) between slices of work: a message to itself,
+ *  queued behind any the page sent, without the few milliseconds a timer waits. */
+const yieldChannel = typeof MessageChannel !== "undefined" ? new MessageChannel() : null;
+const yielding: (() => void)[] = [];
+if (yieldChannel) {
+  yieldChannel.port1.onmessage = () => yielding.shift()?.();
+  // (in Node the port must not keep the process alive)
+  (yieldChannel.port1 as unknown as { unref?: () => void }).unref?.();
+  (yieldChannel.port2 as unknown as { unref?: () => void }).unref?.();
+}
 function breathe(): Promise<void> {
-  return new Promise((r) => setTimeout(r, 0));
+  return new Promise((r) => {
+    if (!yieldChannel) return void setTimeout(r, 0);
+    yielding.push(r);
+    yieldChannel.port2.postMessage(0);
+  });
 }
 
 /** Run a canonical settle a slice at a time; null when `current` turns false (a newer edit). */

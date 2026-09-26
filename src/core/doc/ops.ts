@@ -22,6 +22,7 @@ import { REQUIRED } from "../validate/checks";
 import type { Feature, FeatureKind } from "../features/schema";
 import type { Runs } from "../math/grid";
 import { checkSchema, validateFeatures } from "../spec/schema";
+import { brushProblems, type BrushParams } from "../features/raster/brush";
 import type { Region } from "../spec/mapspec";
 import { applyMergePatch, clone } from "../spec/mergepatch";
 import opsSchema from "./ops.schema.json" with { type: "json" };
@@ -44,6 +45,8 @@ export interface OpParams {
   deleteFeature: { id: string };
   reorderFeature: { id: string; index: number };
   sculpt: { mode: SculptMode; cells: Runs; amount?: number; level?: number; step?: number };
+  /** A terrain brush stroke (live editing): the brush and its dabs (features/raster/brush.ts). */
+  brush: BrushParams;
   placeEntity: PlaceEntityParams;
   moveEntity: { id: string; x: number; y: number; orientation?: Orientation };
   deleteEntities: { entities: string[] };
@@ -87,13 +90,13 @@ export type AppliedOpOf<K extends OpName> = OpOf<K> & Applied;
 
 /** Operations kept in the document's log and replayed on every generation. */
 export const LOG_OPS: readonly OpName[] = [
-  "addFeature", "updateFeature", "deleteFeature", "reorderFeature", "sculpt", "placeEntity", "moveEntity",
+  "addFeature", "updateFeature", "deleteFeature", "reorderFeature", "sculpt", "brush", "placeEntity", "moveEntity",
   "deleteEntities", "setEntityProps", "pinSlope", "removeSlope", "setLock",
 ];
 export const ENTITY_OPS: readonly OpName[] = ["placeEntity", "moveEntity", "deleteEntities", "setEntityProps"];
 export const SLOPE_OPS: readonly OpName[] = ["pinSlope", "removeSlope"];
 
-export type SculptOp = AppliedOpOf<"sculpt">;
+export type SculptOp = AppliedOpOf<"sculpt"> | AppliedOpOf<"brush">;
 export type SlopeOp = AppliedOpOf<"pinSlope"> | AppliedOpOf<"removeSlope">;
 export type EntityOp = AppliedOpOf<"placeEntity"> | AppliedOpOf<"moveEntity"> | AppliedOpOf<"deleteEntities"> | AppliedOpOf<"setEntityProps">;
 
@@ -234,6 +237,7 @@ export function applyOp(state: DocState, op: AppliedOp): void {
       return;
     }
     case "sculpt":
+    case "brush":
       state.sculpts.push(op);
       return;
     case "pinSlope":
@@ -290,6 +294,7 @@ export function invertOp(state: DocState, op: AppliedOp): void {
       return;
     }
     case "sculpt":
+    case "brush":
       removeFromList(state.sculpts, op.seq);
       return;
     case "pinSlope":
@@ -347,6 +352,8 @@ export function opFitsMap(op: EditOp, W: number, H: number): string | null {
     }
     case "sculpt":
       return runsProblems(op.params.cells, W, H, "its cells").length ? "its cells are outside the map" : null;
+    case "brush":
+      return brushProblems(op.params, W, H).length ? "its dabs are outside the map" : null;
     case "placeEntity":
     case "moveEntity":
     case "pinSlope":
@@ -531,6 +538,8 @@ export function validateOp(op: EditOp, ctx: OpContext): string[] {
       }
       return [];
     }
+    case "brush":
+      return brushProblems(op.params, W, H);
     case "placeEntity": {
       const p = op.params;
       if (!GUID.test(p.id)) return [`${p.id} is not a lowercase GUID`];

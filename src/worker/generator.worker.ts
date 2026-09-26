@@ -20,7 +20,7 @@ function sendUpdate<T extends ed.SessionUpdate>(u: T): T {
 }
 
 function sendOpen(o: ed.SessionOpen): ed.SessionOpen {
-  return transfer(o, viewBuffers(o.view) as Transferable[]);
+  return transfer(o, viewBuffers({ ...o.view, terrain: o.terrain }) as Transferable[]);
 }
 
 function eventBuffers(e: ed.EditorEvent): Transferable[] {
@@ -52,6 +52,10 @@ const api = {
     return sendOpen(ed.openTimber(r.bytes, r.fileName));
   },
   sessionView: () => sendOpen(ed.sessionView()),
+  terrainNow() {
+    const t = ed.terrainNow();
+    return transfer(t, viewBuffers({ heights: t.heights, terrain: t.terrain }) as Transferable[]);
+  },
   /** Where the worker sends the live water and the settled water after each edit. */
   listen(fn: ((e: ed.EditorEvent) => void) | null) {
     ed.listen(fn ? (e) => void fn(transfer(e, eventBuffers(e))) : null);

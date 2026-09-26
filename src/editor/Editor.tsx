@@ -30,6 +30,10 @@ import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
+import { BrushBar } from "./BrushBar";
+import { BRUSHES, BrushPainter, DEFAULT_BRUSH, nextSize, paste, type BrushSettings, type BrushTool, type Stroke } from "./brushes";
+import type { TerrainState } from "../core/features/raster/strokePreview";
+import type { BrushParams } from "../core/features/raster/brush";
 import {
   BAD,
   BARE,
@@ -74,7 +78,8 @@ interface Mirror {
   heights: Uint8Array;
   water: SurfaceWater;
   entities: EntityView;
-  entitiesAt: Map<number, number[]>;
+  /** The objects on each tile, made when first asked for after the objects change. */
+  entitiesAt: Map<number, number[]> | null;
   soil?: SoilView;
 }
 
@@ -98,6 +103,12 @@ declare global {
       startCheck(): StartCheck | null;
       /** The worker, for timing its answers (tests/e2e/preview.spec.ts). */
       worker: Remote<GeneratorApi>;
+      /** Strokes whose painted terrain differed from the worker's build (0 when all is well). */
+      strokeMismatches(): number;
+      /** Strokes, undos and redos on their way to the worker. */
+      pendingTerrain(): number;
+      /** The last stroke painted (its operation's params), or null. */
+      lastStroke(): BrushParams | null;
     };
   }
 }
@@ -194,6 +205,12 @@ export default function Editor(props: EditorProps) {
       setBusy((b) => b + 1);
       try {
         const u = await fn();
+        // an edit other than a stroke: the strokes the page could undo on its own are no longer
+        // the latest steps of the history
+        if (u.ok) {
+          localUndo.current = [];
+          localRedo.current = [];
+        }
         applyUpdate(u);
         if (!u.ok && u.errors.length) setMessage({ kind: "error", text: plain(u.errors[0]) });
         else if (u.ok) setMessage(null);
@@ -210,23 +227,37 @@ export default function Editor(props: EditorProps) {
 
   function applyUpdate(u: SessionUpdate): void {
     applyView(u.view);
-    // the instant checks: the problems this edit made, in the region it changed
+    // the instant checks: the problems this edit made, in the region it changed (with the checks
+    // worker they come as an event a moment later)
     if (u.instant) setInstant(u.instant.items.filter((c) => c.here && c.class === "load"));
-    setInfo(u.info);
-    props.onChange(u.info);
+    // the same features keep the page's own copy (its index and lists are not worked out again)
+    const i = u.info.featuresKey === infoRef.current.featuresKey ? { ...u.info, features: infoRef.current.features } : u.info;
+    setInfo(i);
+    props.onChange(i);
   }
 
-  /** Apply what changed on the map to the mirror and the renderer. */
+  /** Apply what changed on the map to the mirror and the renderer. While strokes the page painted
+   *  are on their way to the worker, the page's own terrain is ahead of the worker's: its
+   *  terrain waits for the last of them (it is the same, byte for byte). */
   function applyView(v: ViewUpdate): void {
     const r = renderer.current;
     const m = mirror.current;
-    if (v.heights) {
+    if (v.heights && pendingTerrain.current === 0) {
+      if (checkStroke.current) {
+        checkStroke.current = false;
+        if (!sameBytes(m.heights, v.heights)) {
+          strokeMismatches.current++;
+          console.warn("a stroke painted on the page differs from the map the worker built; the worker's is shown");
+        }
+      }
       m.heights = v.heights;
       r?.updateTerrain(v.heights);
     }
+    if (v.terrain && pendingTerrain.current === 0) terrain.current = v.terrain;
     if (v.water) {
-      m.water = surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
+      // (the renderer works out the surface water: the page reads it from there)
       r?.updateWater(v.water);
+      m.water = r?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
     }
     // the soil follows the water (the preview's, then the exact settle's): the ground's colours,
     // and the ivy on ruins, so it comes before the objects
@@ -236,15 +267,111 @@ export default function Editor(props: EditorProps) {
     }
     if (v.entities) {
       m.entities = v.entities;
-      m.entitiesAt = entitiesByTile(v.entities, infoRef.current.W);
+      m.entitiesAt = null;
       r?.updateEntities(v.entities);
     }
     if (v.water || v.entities) setWaterTick((t) => t + 1);
   }
 
   const apply = (op: EditOp, label?: string) => run(() => api.apply(op, "user", label));
-  const undo = () => run(() => api.undo());
-  const redo = () => run(() => api.redo());
+
+  // ------------------------------------------------------------------------------ the brushes
+
+  const [brushTool, setBrushTool] = useState<BrushTool | null>(null);
+  const [brush, setBrushState] = useState<BrushSettings>(loadBrush);
+  const brushRef = useRef(brush);
+  brushRef.current = brush;
+  const brushToolRef = useRef(brushTool);
+  brushToolRef.current = brushTool;
+  const setBrush = (s: BrushSettings) => {
+    setBrushState(s);
+    saveBrush(s);
+  };
+  /** The terrain the page paints strokes on (the build's, from the worker), and the strokes on
+   *  their way to the worker. */
+  const terrain = useRef<TerrainState>(props.opened.terrain);
+  const pendingTerrain = useRef(0);
+  const checkStroke = useRef(false);
+  const strokeMismatches = useRef(0);
+  /** Strokes at the top of the history, which the page undoes and redoes at once. */
+  const localUndo = useRef<Stroke[]>([]);
+  const localRedo = useRef<Stroke[]>([]);
+  const painter = useRef<BrushPainter | null>(null);
+  const holdTimer = useRef(0);
+
+  /** Put a stroke's terrain before or after it back on the map, at once. */
+  function showStroke(s: Stroke, which: "before" | "after") {
+    const r = renderer.current;
+    const W = infoRef.current.W;
+    const snap = s[which];
+    paste(mirror.current.heights, snap.shown, s.rect, W);
+    const pre = terrain.current.pre;
+    paste(pre, snap.pre, s.rect, W);
+    if (r) {
+      r.updateTerrainRect(mirror.current.heights, s.rect);
+      r.refreshShadows();
+    }
+  }
+
+  /** Send the worker a stroke, an undo or a redo of one; the page has shown it already. */
+  function sendTerrain(fn: () => Promise<SessionUpdate>) {
+    pendingTerrain.current++;
+    const next = queue.current.then(async () => {
+      setBusy((b) => b + 1);
+      try {
+        const u = await fn();
+        pendingTerrain.current--;
+        if (pendingTerrain.current === 0) checkStroke.current = true;
+        if (!u.ok) {
+          // the worker refused it: the page takes the worker's terrain again
+          localUndo.current = [];
+          localRedo.current = [];
+          if (u.errors.length) setMessage({ kind: "error", text: plain(u.errors[0]) });
+          const now = await api.terrainNow();
+          if (pendingTerrain.current === 0) {
+            mirror.current.heights = now.heights;
+            terrain.current = now.terrain;
+            renderer.current?.updateTerrain(now.heights);
+          }
+        }
+        applyUpdate(u);
+      } catch (e) {
+        pendingTerrain.current = Math.max(0, pendingTerrain.current - 1);
+        setMessage({ kind: "error", text: String(e instanceof Error ? e.message : e) });
+      } finally {
+        setBusy((b) => b - 1);
+      }
+    });
+    queue.current = next;
+  }
+
+  const undo = () => {
+    if (painter.current?.painting) return painter.current.cancel();
+    const s = localUndo.current.pop();
+    if (!s) return run(() => api.undo());
+    showStroke(s, "before");
+    localRedo.current.push(s);
+    sendTerrain(() => api.undo());
+  };
+  const redo = () => {
+    if (painter.current?.painting) return;
+    const s = localRedo.current.pop();
+    if (!s) return run(() => api.redo());
+    showStroke(s, "after");
+    localUndo.current.push(s);
+    sendTerrain(() => api.redo());
+  };
+
+  function pickBrush(t: BrushTool | null) {
+    painter.current?.end();
+    setBrushTool(t);
+    if (t) {
+      setTool(null);
+      cancelTool();
+      setSelected(null);
+      setPicked(null);
+    }
+  }
   const applyFix = (fix: FixOp[]) => run(() => api.applyAll(fix.map(({ label: _l, ...op }) => op as EditOp), fix[0]?.label || "Fix", "fix"));
 
   // the map's health (export profile), checked in the background a moment after each change
@@ -315,9 +442,9 @@ export default function Editor(props: EditorProps) {
       proxy((e: EditorEvent) => {
         if (e.version !== infoRef.current.version) return;
         if (e.kind === "water") {
-          mirror.current.water = surfaceWater(infoRef.current.W, infoRef.current.H, e.water);
           renderer.current?.updateWater(e.water);
-          setFlowing(e.done);
+          mirror.current.water = renderer.current?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, e.water);
+          setFlowing((f) => (f === null ? e.done : f));
         } else if (e.kind === "settled") {
           applyView(e.view);
           setFlowing(null);
@@ -329,7 +456,12 @@ export default function Editor(props: EditorProps) {
 
   // ------------------------------------------------------------------------------- the view
 
-  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: mirror.current.entitiesAt, index: indexed, soil: mirror.current.soil });
+  const entitiesAt = (): Map<number, number[]> => {
+    const m = mirror.current;
+    m.entitiesAt ??= entitiesByTile(m.entities, info.W);
+    return m.entitiesAt;
+  };
+  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: entitiesAt(), index: indexed, soil: mirror.current.soil });
 
   // where the start is: its feature, or an imported map's own StartingLocation
   const startHere = useMemo((): StartHere | null => {
@@ -473,7 +605,7 @@ export default function Editor(props: EditorProps) {
    *  its high side toward the higher neighbour (the one whose opposite tile is level with it). */
   function slopeAt(x: number, y: number) {
     const m = mirror.current;
-    const here = m.entitiesAt.get(y * info.W + x) ?? [];
+    const here = entitiesAt().get(y * info.W + x) ?? [];
     if (here.some((k) => m.entities.templates[m.entities.template[k]] === "Slope")) {
       void apply({ op: "removeSlope", params: { x, y } }, "Remove a slope");
       return;
@@ -516,7 +648,7 @@ export default function Editor(props: EditorProps) {
     const r = renderer.current;
     if (!r) return;
     if (!tool) {
-      r.tool = null;
+      if (!brushToolRef.current) r.tool = null;
       return;
     }
     const g = gestureOf(tool);
@@ -590,6 +722,28 @@ export default function Editor(props: EditorProps) {
   function onReady(r: MapRenderer) {
     renderer.current = r;
     setReady(r);
+    painter.current = new BrushPainter({
+      renderer: r,
+      W: infoRef.current.W,
+      H: infoRef.current.H,
+      heights: () => mirror.current.heights,
+      terrain: () => terrain.current,
+      settings: () => ({ ...brushRef.current, tool: brushToolRef.current ?? "raise" }),
+      commit: (stroke, pre) => {
+        terrain.current = { ...terrain.current, pre };
+        localUndo.current.push(stroke);
+        localRedo.current = [];
+        sendTerrain(() => api.apply({ op: "brush", params: stroke.params }, "user", stroke.label));
+      },
+      picked: (level) => setBrush({ ...brushRef.current, level }),
+      strength: (value) => setBrush({ ...brushRef.current, strength: value }),
+      painting: (on) => {
+        clearTimeout(holdTimer.current);
+        if (!brushRef.current.holdWater) return;
+        if (on) void api.holdWater(true);
+        else holdTimer.current = window.setTimeout(() => void api.holdWater(false), 900);
+      },
+    });
     r.onClick = (hit) => {
       if (advancedRef.current && hit) {
         setSelected(null);
@@ -617,6 +771,22 @@ export default function Editor(props: EditorProps) {
     };
     setViewTick((n) => n + 1);
   }
+  // a brush out takes the map's left button; put away, the brush under the cursor goes
+  useEffect(() => {
+    const r = renderer.current;
+    const p = painter.current;
+    if (!r || !p) return;
+    if (brushTool) {
+      r.tool = p.tool;
+      p.showCursor();
+    } else {
+      if (r.tool === p.tool) r.tool = null;
+      p.hideCursor();
+    }
+  }, [brushTool, ready]);
+  // a new size, strength or level shows on the brush under the cursor at once
+  useEffect(() => painter.current?.showCursor(), [brush]);
+
   const indexedRef = useRef(indexed);
   indexedRef.current = indexed;
   const selectedRef = useRef(selected);
@@ -784,6 +954,25 @@ export default function Editor(props: EditorProps) {
       const target = ev.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
       const mod = ev.ctrlKey || ev.metaKey;
+      // the brushes: 1–5 pick one, [ and ] size it, Esc cancels a stroke, then puts it away
+      if (!mod && !ev.altKey && /^[1-5]$/.test(ev.key)) {
+        const b = BRUSHES[Number(ev.key) - 1].tool;
+        pickBrush(brushToolRef.current === b ? null : b);
+        return;
+      }
+      if (!mod && (ev.key === "[" || ev.key === "]") && brushToolRef.current) {
+        ev.preventDefault();
+        setBrush({ ...brushRef.current, size: nextSize(brushRef.current.size, ev.key === "]" ? 1 : -1) });
+        return;
+      }
+      if (ev.key === "Escape" && painter.current?.painting) {
+        painter.current.cancel();
+        return;
+      }
+      if (ev.key === "Escape" && brushToolRef.current && !planRef.current) {
+        pickBrush(null);
+        return;
+      }
       if (mod && ev.key.toLowerCase() === "z") {
         ev.preventDefault();
         void (ev.shiftKey ? redo() : undo());
@@ -823,6 +1012,9 @@ export default function Editor(props: EditorProps) {
       fit: () => fitRef.current,
       startCheck: () => startDragRef.current?.check ?? null,
       worker: api,
+      strokeMismatches: () => strokeMismatches.current,
+      lastStroke: () => localUndo.current.at(-1)?.params ?? null,
+      pendingTerrain: () => pendingTerrain.current,
     };
     return () => {
       delete window.dgmEditor;
@@ -926,6 +1118,7 @@ export default function Editor(props: EditorProps) {
           onSelect={(id) => setSelected(id)}
           tool={tool}
           onTool={(t) => {
+            if (t) pickBrush(null);
             setTool(t);
             cancelTool();
             setSelected(null);
@@ -970,6 +1163,7 @@ export default function Editor(props: EditorProps) {
             }}
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
+            <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} />
             {hint ? (
               <div class="tool-hint" role="status">
                 {hint}
@@ -1077,6 +1271,38 @@ export default function Editor(props: EditorProps) {
 
 const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
 
+const BRUSH_KEY = "dgm.brush";
+
+/** The brush the viewer last used: its size, strength and water option (not its level). */
+function loadBrush(): BrushSettings {
+  try {
+    const s = JSON.parse(localStorage.getItem(BRUSH_KEY) ?? "null") as Partial<BrushSettings> | null;
+    if (!s) return DEFAULT_BRUSH;
+    return {
+      ...DEFAULT_BRUSH,
+      size: typeof s.size === "number" ? Math.min(24, Math.max(1, s.size)) : DEFAULT_BRUSH.size,
+      strength: typeof s.strength === "number" ? Math.min(10, Math.max(1, Math.round(s.strength))) : DEFAULT_BRUSH.strength,
+      holdWater: s.holdWater === true,
+    };
+  } catch {
+    return DEFAULT_BRUSH;
+  }
+}
+
+function saveBrush(s: BrushSettings): void {
+  try {
+    localStorage.setItem(BRUSH_KEY, JSON.stringify({ size: s.size, strength: s.strength, holdWater: s.holdWater }));
+  } catch {
+    // the brush lasts for this visit only
+  }
+}
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 /** The overlay of a water layer: moisture in three greens, badwater brown and the soil it spoils
  *  lighter, the drought's kept water blue and the water that dries up orange, the tiles under
  *  roofs violet. */
@@ -1125,7 +1351,7 @@ function cornerToCentre(x: number, y: number, o: Orientation): [number, number] 
 }
 
 function mirrorOf(v: MapView): Mirror {
-  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), entities: v.entities, entitiesAt: entitiesByTile(v.entities, v.W), soil: v.soil };
+  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), entities: v.entities, entitiesAt: null, soil: v.soil };
 }
 
 /** Dropping a .timber or project file on the editor opens it. */

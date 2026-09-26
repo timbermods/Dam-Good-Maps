@@ -35,8 +35,9 @@ import {
   LinearSRGBColorSpace,
   ColorManagement,
 } from "three";
+import { BrushCursor, type BrushCursorState } from "./brushCursor";
 import { buildEntities, disposeGroup } from "./entities3d";
-import { objectCasters, shadowMap, skyVisibility, tileData } from "./light";
+import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
 import { drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
 import { columnMap, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
@@ -93,6 +94,12 @@ export interface PointerTool {
   down(hit: TileHit | null, ev: PointerEvent): boolean;
   move(hit: TileHit | null, ev: PointerEvent): void;
   up(hit: TileHit | null, ev: PointerEvent): void;
+  /** The pointer moved over the map with no button down (a brush follows it). */
+  hover?(hit: TileHit | null, ev: PointerEvent): void;
+  /** The wheel turned over the map: return true to take it (Alt+wheel sets a brush's strength). */
+  wheel?(ev: WheelEvent): boolean;
+  /** The drag was lost (the pointer went away without a release). */
+  cancel?(): void;
 }
 
 interface MapState {
@@ -189,6 +196,14 @@ export class MapRenderer {
   private highlight: Uint8Array | null = null;
   /** The page's overlay as it painted it, without the highlight. */
   private pageOverlay: Uint8Array | null = null;
+  /** The brush under the cursor (live editing), made on first use. */
+  private cursor: BrushCursor | null = null;
+  /** The sun's shadows wait while a brush paints when they cannot be redone round it. */
+  private shadowsStale = false;
+  private shadowChanged = false;
+  /** The shadow tops of the whole map (redone round each change), and the objects' casters. */
+  private tops: { hi: Float32Array; lo: Float32Array } | null = null;
+  private casters: Float32Array | null | undefined = undefined;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -304,7 +319,9 @@ export class MapRenderer {
     this.overlay = overlayTexture(W, H);
     this.marks = overlayTexture(W, H);
     this.tileTex = tileTexture(W, H, tiles);
-    this.lightTex = lightTexture(W, H, shadowMap(W, H, heights, objectCasters(W, H, v.entities)));
+    this.casters = objectCasters(W, H, v.entities);
+    this.tops = { hi: new Float32Array(0), lo: new Float32Array(0) };
+    this.lightTex = lightTexture(W, H, shadowMap(W, H, heights, this.casters, this.tops));
     const u = this.uniforms;
     u.overlay.value = this.overlay;
     u.marks.value = this.marks;
@@ -447,12 +464,20 @@ export class MapRenderer {
     return quads;
   }
 
-  /** Bake the sun's shadows again (the ground or the objects that cast them changed). */
-  private bakeShadows(): void {
+  /** Bake the sun's shadows again (the ground or the objects that cast them changed): round the
+   *  objects that changed when the ground did not, else the whole map. */
+  private bakeShadows(onlyCasters = false): void {
     const m = this.map;
     if (!m || !this.lightTex) return;
-    const data = shadowMap(m.W, m.H, m.heights, objectCasters(m.W, m.H, m.entities));
-    (this.lightTex.image.data as Uint8Array).set(data);
+    const casters = objectCasters(m.W, m.H, m.entities);
+    const rect = onlyCasters && this.tops ? castersChanged(this.casters, casters, m.W, m.H) : undefined;
+    this.casters = casters;
+    if (rect === null) return;
+    if (rect && this.tops) shadowPairRect(this.tops, this.lightTex.image.data as Uint8Array, m.W, m.H, m.heights, casters, rect.x0, rect.y0, rect.x1, rect.y1);
+    else {
+      this.tops = { hi: new Float32Array(0), lo: new Float32Array(0) };
+      (this.lightTex.image.data as Uint8Array).set(shadowMap(m.W, m.H, m.heights, casters, this.tops));
+    }
     this.lightTex.needsUpdate = true;
   }
 
@@ -488,10 +513,18 @@ export class MapRenderer {
     if (!rect) return 0;
     const chunks = dirtyChunks(m.W, m.H, rect);
     for (const [cx, cy] of chunks) this.meshTerrain(cx, cy);
-    // the light: the sky each tile sees, the tile data, the shadows; and the water's shores there
-    m.sky = skyVisibility(m.W, m.H, heights);
-    this.bakeTiles();
-    this.bakeShadows();
+    // the light round what changed: the sky each tile sees, the tile data, the shadows (the same
+    // bytes as baking the whole map); and the water's shores there
+    const r = SKY_REACH;
+    skyVisibilityRect(m.W, m.H, heights, m.sky, rect.x0 - r, rect.y0 - r, rect.x1 + r, rect.y1 + r);
+    if (this.tileTex) {
+      tileDataRect(m.W, m.H, heights, m.sky, m.soil, m.surface, m.tiles, rect.x0 - r, rect.y0 - r, rect.x1 + r, rect.y1 + r);
+      this.tileTex.needsUpdate = true;
+    }
+    if (this.tops && this.lightTex && this.casters !== undefined) {
+      shadowPairRect(this.tops, this.lightTex.image.data as Uint8Array, m.W, m.H, heights, this.casters, rect.x0, rect.y0, rect.x1, rect.y1);
+      this.lightTex.needsUpdate = true;
+    } else this.bakeShadows();
     if (m.water.count) {
       const lower = lowerByTile(m.surface, m.water);
       for (const [cx, cy] of chunks) this.meshWater(cx, cy, lower);
@@ -533,9 +566,63 @@ export class MapRenderer {
   updateEntities(e: EntityView): void {
     if (!this.map) return;
     this.setEntitiesInner(e);
-    this.bakeShadows();
+    this.bakeShadows(true);
     this.requestRender();
     this.onMapChange?.();
+  }
+
+  /** Heights changed inside `rect` only (a brush painting): remesh the chunks there, and the sky
+   *  and tile data round it; the sun's shadows wait for `refreshShadows` (they reach far). The
+   *  cheap path, fit for every frame: about a millisecond for a large brush at 256². */
+  updateTerrainRect(heights: Uint8Array, rect: { x0: number; y0: number; x1: number; y1: number }): number {
+    const m = this.map;
+    if (!m) return 0;
+    m.heights = heights;
+    m.source = { ...m.source, heights };
+    const chunks = dirtyChunks(m.W, m.H, rect);
+    for (const [cx, cy] of chunks) this.meshTerrain(cx, cy);
+    const r = SKY_REACH;
+    skyVisibilityRect(m.W, m.H, heights, m.sky, rect.x0 - r, rect.y0 - r, rect.x1 + r, rect.y1 + r);
+    if (this.tileTex) {
+      tileDataRect(m.W, m.H, heights, m.sky, m.soil, m.surface, m.tiles, rect.x0 - r, rect.y0 - r, rect.x1 + r, rect.y1 + r);
+      this.tileTex.needsUpdate = true;
+    }
+    if (m.water.count) {
+      const lower = lowerByTile(m.surface, m.water);
+      for (const [cx, cy] of chunks) this.meshWater(cx, cy, lower);
+    }
+    // the sun's shadows round what changed (they reach south-east of it)
+    if (this.tops && this.lightTex && this.casters !== undefined) {
+      shadowPairRect(this.tops, this.lightTex.image.data as Uint8Array, m.W, m.H, heights, this.casters, rect.x0, rect.y0, rect.x1, rect.y1);
+      this.lightTex.needsUpdate = true;
+    } else this.shadowsStale = true;
+    this.shadowChanged = true;
+    this.requestRender();
+    return chunks.length;
+  }
+
+  /** After a brush has painted: the shadows, if they waited, and the legend. */
+  refreshShadows(): void {
+    if (this.shadowsStale) {
+      this.shadowsStale = false;
+      this.bakeShadows();
+    }
+    if (!this.shadowChanged) return;
+    this.shadowChanged = false;
+    this.requestRender();
+    this.onMapChange?.();
+  }
+
+  /** Show the brush under the cursor (null hides it). */
+  setBrushCursor(s: BrushCursorState | null): void {
+    const m = this.map;
+    if (!m) return;
+    if (!this.cursor) {
+      if (!s) return;
+      this.cursor = new BrushCursor(this.scene);
+    }
+    this.cursor.set(s, m.heights, m.W, m.H);
+    this.requestRender();
   }
 
   /** Remesh every terrain chunk the renderer would touch for the tiles in rect (tests). */
@@ -734,7 +821,7 @@ export class MapRenderer {
   }
 
   /** The tile under a point on the screen, on a level plane (steady while dragging). */
-  pickAtLevel(clientX: number, clientY: number, level: number): { x: number; y: number } | null {
+  pickAtLevel(clientX: number, clientY: number, level: number): { x: number; y: number; point: [number, number, number] } | null {
     return pickPlane(this.rayAt(clientX, clientY), level);
   }
 
@@ -808,6 +895,7 @@ export class MapRenderer {
       }
       const hit = this.pick(ev.clientX, ev.clientY);
       this.setHoverTile(hit ? hit.x : null, hit?.y ?? 0);
+      this.tool?.hover?.(hit, ev);
       this.onHover?.(hit);
     });
     const end = (e: Event) => {
@@ -816,14 +904,17 @@ export class MapRenderer {
       if (!d || d.id !== ev.pointerId) return;
       this.drag = null;
       if (c.hasPointerCapture(ev.pointerId)) c.releasePointerCapture(ev.pointerId);
-      if (d.kind === "tool") this.tool?.up(this.pick(ev.clientX, ev.clientY), ev);
-      else if (d.button === 0 && d.moved < 4 && ev.type === "pointerup") this.onClick?.(this.pick(ev.clientX, ev.clientY), ev);
+      if (d.kind === "tool") {
+        if (ev.type === "pointercancel" && this.tool?.cancel) this.tool.cancel();
+        else this.tool?.up(this.pick(ev.clientX, ev.clientY), ev);
+      } else if (d.button === 0 && d.moved < 4 && ev.type === "pointerup") this.onClick?.(this.pick(ev.clientX, ev.clientY), ev);
     };
     this.on(c, "pointerup", end);
     this.on(c, "pointercancel", end);
-    this.on(c, "pointerleave", () => {
+    this.on(c, "pointerleave", (e) => {
       if (this.drag) return;
       this.setHoverTile(null);
+      this.tool?.hover?.(null, e as PointerEvent);
       this.onHover?.(null);
     });
     this.on(
@@ -832,6 +923,7 @@ export class MapRenderer {
       (e) => {
         const ev = e as WheelEvent;
         ev.preventDefault();
+        if (this.tool?.wheel?.(ev)) return;
         this.zoom(Math.exp(ev.deltaY * 0.0012));
       },
       { passive: false },
@@ -987,6 +1079,7 @@ export class MapRenderer {
     this.seen?.disconnect();
     for (const [type, fn, opts] of this.listeners) this.canvas.removeEventListener(type, fn, opts);
     this.clearMap();
+    this.cursor?.dispose();
     this.terrainMat.dispose();
     this.waterMat.dispose();
     this.objectMat.dispose();
@@ -997,6 +1090,26 @@ export class MapRenderer {
     // free the context now: browsers keep only a few, and the editor opens a view per map
     this.gl.forceContextLoss();
   }
+}
+
+/** The rectangle of tiles whose shadow casters differ (null: none; undefined: all of them). */
+function castersChanged(a: Float32Array | null | undefined, b: Float32Array | null, W: number, H: number): { x0: number; y0: number; x1: number; y1: number } | null | undefined {
+  if (a === undefined) return undefined;
+  if (!a && !b) return null;
+  let x0 = W;
+  let y0 = H;
+  let x1 = -1;
+  let y1 = -1;
+  for (let i = 0; i < W * H; i++) {
+    if ((a ? a[i] : 0) === (b ? b[i] : 0)) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    if (y > y1) y1 = y;
+  }
+  return x1 < 0 ? null : { x0, y0, x1, y1 };
 }
 
 /** The legend's highlight over the overlay: the tiles lightly tinted, their edge strongly. */

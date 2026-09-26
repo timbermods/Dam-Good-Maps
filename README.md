@@ -21,6 +21,9 @@ The generator:
 
 The editor:
 - **Refine this map** opens the map in 3D.
+- The brushes paint the ground: **Raise**, **Lower**, **Flatten**, **Smooth** and **Naturalize**
+  (keys 1–5). Drag to paint. Shift inverts, [ and ] size the brush, Alt+wheel sets its strength,
+  Ctrl+click picks the level to flatten to. Esc cancels a stroke.
 - **Land**: draw a **Hill**, **Plateau**, **Ridge**, **Canyon**, **Valley** or **Island**, and pick
   its height and edges. Add **Terraced cliffs**. Click a step to add a **Slope**, or a slope to
   remove it. Draw a **Thorn belt**.
@@ -39,8 +42,8 @@ The editor:
 - **Start**: drag the start. Green means the district center fits and the start has its water,
   trees and bushes.
 - **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
-- Water settles within a couple of seconds of an edit. The full check follows in the background.
-  The pill shows **Settling water** with its progress, then **Ready to play** or the problems.
+- An edit shows at once. The water then flows into the new shape, and the full check follows.
+  The pill shows **Water flowing** and **Settling water**, then **Ready to play** or the problems.
 - Each tool shows what it will do first. **Place** adds it.
 - Select a feature to move it, change it or delete it. This works on most of what the generator
   made too.
@@ -50,7 +53,7 @@ The editor:
 - The preview's **3D** switch shows the map in 3D.
 - In 3D the ground looks as in the game: green where the soil is moist, cracked earth where it is
   dry, rusty red where badwater spoils it. **Height colours** colours it by height instead. The
-  legend says what each colour means.
+  legend beside the map says what each colour means. Click a line to see those on the map.
 
 Your map is saved in the browser as you work.
 
@@ -104,6 +107,7 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 ```
 
 - `npm run dev` serves the site at <http://localhost:5173/dam-good-maps/>.
+- `npm run try` builds the site and serves it at a local address, to try it as it runs live.
 - `npm test` runs the unit and contract tests. `npm run test:quick` skips the four heaviest, as CI
   does on every push; `npm run test:heavy` runs only those, as CI does nightly.
 - `npm run oracle` generates 50 seeds × 3 sizes, checks each map with the Python validator and
@@ -120,6 +124,8 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 - `npm run bench:preview` times the editor's water preview after local edits at 256².
 - `npm run bench:3d` measures the 3D view's build time and frame rate at 256² in Chrome. It opens
   browser windows, so it runs locally only. It writes `out/m4/bench3d.json`.
+- `npm run bench:brush` measures painting with a brush at 256² in Chrome: the time from the pointer
+  to the frame, the frame times and undo. It runs locally only and writes `out/live/bench-brush.json`.
 - `npm run fixtures` rewrites the water golden vectors from the Python reference.
 - `npm run build:spike` builds the Claude artifact test page into `dist-spike/`.
 - `npm run spike:check` runs that page and the Messages API CORS page in Chrome. It writes

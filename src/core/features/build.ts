@@ -315,6 +315,17 @@ function featureKey(f: Feature): string {
   return JSON.stringify(f);
 }
 
+/** A sculpt edit's or stroke's params as a key (a stroke's dabs are long: each is written once). */
+const paramKeys = new WeakMap<object, string>();
+function paramsKey(p: object): string {
+  let k = paramKeys.get(p);
+  if (k === undefined) {
+    k = JSON.stringify(p);
+    paramKeys.set(p, k);
+  }
+  return k;
+}
+
 /** The tiles whose terrain may differ from the previous build's. */
 function dirtyTerrain(prev: BuildCache, input: BuildInput, target: BuildTarget): TileRegion | null {
   const { W, H } = input;
@@ -351,7 +362,7 @@ function dirtyTerrain(prev: BuildCache, input: BuildInput, target: BuildTarget):
   // sculpts: from the first difference on, old and new
   const sculpts = input.sculpts ?? [];
   let k = 0;
-  while (k < sculpts.length && k < prev.sculpts.length && prev.sculpts[k] === JSON.stringify(sculpts[k].params)) k++;
+  while (k < sculpts.length && k < prev.sculpts.length && prev.sculpts[k] === paramsKey(sculpts[k].params)) k++;
   for (let j = k; j < sculpts.length; j++) rb.add(clipRect(sculptBounds(sculpts[j])!, W, H));
   for (let j = k; j < prev.sculptEdits.length; j++) rb.add(clipRect(sculptBounds(prev.sculptEdits[j])!, W, H));
   if (prev.locked !== (input.locked ?? null)) return fullRegion(W, H);
@@ -419,8 +430,9 @@ function terrainStage(input: BuildInput, prev: BuildCache | null, fields: FieldC
   for (const f of input.features) if (f.kind === "river" && live(f)) rasterizeRiver(f, t);
   // 5. the start bench (and, later, object pads)
   for (const f of input.features) if (f.kind === "start" && live(f)) rasterizeBench(f, t);
-  // 6. sculpt edits, in order
-  for (const s of input.sculpts ?? []) applySculpt(s, t);
+  // 6. sculpt edits and brush strokes, in order (the brushes leave an import's caves alone)
+  const caves = base && base.columns.size ? (i: number) => base.columns.has(i) : undefined;
+  for (const s of input.sculpts ?? []) applySculpt(s, t, caves);
   //    an imported map's caves and overhangs are left exactly as they are
   if (base) t.forEach((i) => {
     if (base.columns.has(i)) {
@@ -662,8 +674,9 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   const makeCache = (over: Partial<BuildCache>): BuildCache => ({
     keys: new Map(features.map((f) => [f.id, featureKey(f)])),
     terrainFeatures: features.filter((f) => isTerrainKind(f) && live(f)).map((f) => JSON.parse(featureKey(f)) as Feature),
-    sculpts: (input.sculpts ?? []).map((s) => JSON.stringify(s.params)),
-    sculptEdits: (input.sculpts ?? []).map((s) => ({ params: JSON.parse(JSON.stringify(s.params)) })),
+    sculpts: (input.sculpts ?? []).map((s) => paramsKey(s.params)),
+    // (applied operations are never changed: their params are kept as they are)
+    sculptEdits: (input.sculpts ?? []).map((s) => ({ params: s.params })),
     base,
     locked: input.locked ?? null,
     terrain,

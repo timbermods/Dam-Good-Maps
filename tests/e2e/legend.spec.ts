@@ -40,7 +40,7 @@ test("the legend sits beside the map, lists what is on it, points to it, and fol
   expect(box.width).toBeLessThan(260);
 
   // only what is on this map: every line it lists has things on the map to point to
-  const lines = legend.locator("button.legend-line");
+  const lines = legend.locator("button.pick-line");
   await expect.poll(() => lines.count()).toBeGreaterThan(4);
   const n = await lines.count();
   expect(n).toBeLessThan(25);
@@ -71,10 +71,10 @@ test("the legend sits beside the map, lists what is on it, points to it, and fol
   box = (await legend.boundingBox())!;
   expect(box.width).toBeGreaterThan(20);
   expect(box.width).toBeLessThan(50);
-  await expect(legend.locator(".legend-line")).toHaveCount(0);
+  await expect(legend.locator(".pick-line")).toHaveCount(0);
   await fold.click();
   await expect(fold).toHaveAttribute("aria-expanded", "true");
-  await expect(legend.locator("button.legend-line")).toHaveCount(n);
+  await expect(legend.locator("button.pick-line")).toHaveCount(n);
   expect(errors).toEqual([]);
 });
 
@@ -83,16 +83,16 @@ test("while another map is open in the editor, the generator's page says which m
   const g = generate(makeSpec({ seed: 7, size: { x: 48, y: 48 } }));
   await page.goto("./#s=4242&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 120_000 });
-  await expect(page.locator(".preview-caption")).toContainText("This map: River Valley");
+  await expect(page.locator(".view-caption")).toContainText("This map: River Valley");
   await page.getByLabel("Open a map or a project file in the editor").setInputFiles({ name: "My island.timber", mimeType: "application/zip", buffer: Buffer.from(g.bytes) });
   await page.waitForFunction(() => !!window.dgmEditor, null, { timeout: 60_000 });
   // back on the generator's page: the banner names the map being edited, the preview says it is a
   // new one from the settings
   await page.getByRole("button", { name: "New map" }).click();
-  const banner = page.locator(".banner.editing");
+  const banner = page.getByRole("status").filter({ hasText: "You're editing" });
   await expect(banner).toContainText("You're editing My island");
   await expect(banner).toContainText("The map below is a new one");
-  await expect(page.locator(".preview-caption")).toContainText("New map from these settings");
+  await expect(page.locator(".view-caption")).toContainText("New map from these settings");
   await banner.getByRole("button", { name: "Back to editing" }).click();
   await page.waitForFunction(() => !!window.dgmEditor, null, { timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "My island" })).toBeVisible();

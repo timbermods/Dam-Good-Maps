@@ -8,7 +8,7 @@
   "required": ["op", "params"],
   "properties": {
     "op": {
-      "enum": ["addFeature", "updateFeature", "deleteFeature", "reorderFeature", "sculpt", "placeEntity", "moveEntity", "deleteEntities", "setEntityProps", "pinSlope", "removeSlope", "setLock", "regenerateRegion", "specPatch"]
+      "enum": ["addFeature", "updateFeature", "deleteFeature", "reorderFeature", "sculpt", "brush", "placeEntity", "moveEntity", "deleteEntities", "setEntityProps", "pinSlope", "removeSlope", "setLock", "regenerateRegion", "specPatch"]
     },
     "params": { "type": "object" },
     "label": { "type": "string" }
@@ -19,6 +19,7 @@
     { "if": { "properties": { "op": { "const": "deleteFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/featureRef" } } } },
     { "if": { "properties": { "op": { "const": "reorderFeature" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/reorderFeature" } } } },
     { "if": { "properties": { "op": { "const": "sculpt" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/sculpt" } } } },
+    { "if": { "properties": { "op": { "const": "brush" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/brush" } } } },
     { "if": { "properties": { "op": { "const": "placeEntity" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/placeEntity" } } } },
     { "if": { "properties": { "op": { "const": "moveEntity" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/moveEntity" } } } },
     { "if": { "properties": { "op": { "const": "deleteEntities" } } }, "then": { "properties": { "params": { "$ref": "#/$defs/deleteEntities" } } } },
@@ -44,6 +45,21 @@
       "additionalProperties": false,
       "required": ["runs"],
       "properties": { "runs": { "$ref": "#/$defs/runs" } }
+    },
+    "brush": {
+      "description": "A terrain brush stroke (live editing): the brush, and its dabs as quarter-tile pairs [x0, y0, x1, y1, ...]. Its dabs must lie on the map; the engine checks that.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "size", "strength", "dabs"],
+      "properties": {
+        "tool": { "enum": ["raise", "lower", "flatten", "smooth", "naturalize"] },
+        "size": { "type": "number", "minimum": 0.5, "maximum": 24 },
+        "strength": { "type": "number", "minimum": 1, "maximum": 10 },
+        "level": { "type": "integer", "minimum": 0, "maximum": 16 },
+        "seed": { "type": "integer" },
+        "layer": { "enum": ["top"] },
+        "dabs": { "type": "array", "minItems": 2, "maxItems": 80000, "items": { "type": "integer", "minimum": 0, "maximum": 1023 } }
+      }
     },
     "addFeature": {
       "type": "object",

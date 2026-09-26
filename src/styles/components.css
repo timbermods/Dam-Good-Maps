@@ -1,0 +1,202 @@
+/* Shared components (Kyler, D176): the pieces any screen can use, each styled once from the page's
+   tokens (app.css), so the design pass restyles them rather than rebuilds them. New interface is
+   made of these and the shared buttons and form fields; a screen's own stylesheet only places
+   them. */
+
+/* a floating bar of controls over a view (the camera's buttons, the terrain brushes) */
+.map-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+}
+
+/* a group of fields inside a bar */
+.bar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6px;
+  font-size: 0.8rem;
+}
+
+/* a line of text over a view: a hint, a status, the tile under the pointer */
+.map-note {
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--overlay);
+  box-shadow: var(--shadow);
+  font-size: 0.85rem;
+}
+
+/* a button with an icon and its word (the word hides on narrow screens; the label stays) */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.icon-button svg {
+  flex: none;
+}
+
+@media (max-width: 1100px) {
+  .icon-button .icon-word {
+    display: none;
+  }
+}
+
+/* a slider with its label and its value */
+.slider-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.slider-field input[type="range"] {
+  width: 90px;
+}
+
+.slider-field output {
+  min-width: 2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* a slim panel docked beside a view; folded, a strip that stays on screen */
+.side-panel {
+  flex: none;
+  display: flex;
+  width: var(--side-panel-width, 214px);
+  min-height: 0;
+  border-left: 1px solid var(--rule);
+  background: var(--panel);
+  font-size: 0.8rem;
+}
+
+.side-panel.folded {
+  width: var(--side-strip-width, 34px);
+}
+
+.side-panel-fold {
+  flex: none;
+  width: calc(var(--side-strip-width, 34px) - 1px);
+  padding: 8px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.side-panel-fold span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.side-panel-body {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px 8px 8px 2px;
+}
+
+.side-panel-body .note {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.side-panel-body h3,
+.side-panel-body .panel-head {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .side-panel {
+    width: var(--side-panel-width-narrow, 180px);
+  }
+}
+
+/* a list of lines to pick, each with a swatch (the legend) */
+.pick-list {
+  list-style: none;
+  margin: 2px 0 4px;
+  padding: 0;
+}
+
+.pick-list li {
+  margin: 1px 0;
+}
+
+.pick-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+button.pick-line {
+  cursor: pointer;
+}
+
+button.pick-line:hover,
+button.pick-line[aria-pressed="true"] {
+  color: inherit;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+button.pick-line[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.swatch {
+  flex: none;
+  width: 24px;
+  height: 16px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+/* a row of toggles */
+.toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.toggle-row button {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+/* a banner that says what the page is doing now (you're editing a map) */
+.banner.accent {
+  border-color: var(--accent);
+}
+
+/* a caption above a view: which map it shows */
+.view-caption {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}

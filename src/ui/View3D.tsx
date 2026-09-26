@@ -123,11 +123,16 @@ export function View3D(props: View3DProps) {
     r.setGroundMode(ground);
     r.setMarkers(markers);
     r.onHover = (hit) => onHover.current?.(hit);
-    // the legend reads the map again a moment after it changes (not every frame while painting)
+    // the legend reads the map again a moment after it changes, when the page is idle (never
+    // while a brush paints or the water flows)
     let t = 0;
     r.onMapChange = () => {
       clearTimeout(t);
-      t = window.setTimeout(() => setMapTick((n) => n + 1), 250);
+      t = window.setTimeout(() => {
+        const idle = (window as unknown as { requestIdleCallback?: (fn: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        if (idle) idle(() => setMapTick((n) => n + 1), { timeout: 2000 });
+        else setMapTick((n) => n + 1);
+      }, 400);
     };
     r.onView = (v) => {
       const el = compass.current;
@@ -219,12 +224,12 @@ export function View3D(props: View3DProps) {
   const item = (e: PresentEntry) => (
     <li key={e.label}>
       {e.tiles.length ? (
-        <button type="button" class="legend-line" aria-pressed={pointed === e.key} onClick={() => point(e)} title="Show these on the map">
+        <button type="button" class="pick-line" aria-pressed={pointed === e.key} onClick={() => point(e)} title="Show these on the map">
           <span class="swatch" style={{ background: e.swatch }} aria-hidden="true" />
           {e.label}
         </button>
       ) : (
-        <span class="legend-line">
+        <span class="pick-line">
           <span class="swatch" style={{ background: e.swatch }} aria-hidden="true" />
           {e.label}
         </span>
@@ -265,13 +270,13 @@ export function View3D(props: View3DProps) {
       {props.children}
       </div>
       {error ? null : (
-        <aside class="view3d-legend" aria-label="Legend">
-          <button type="button" class="legend-fold" aria-expanded={legendOpen} aria-controls={legendId} onClick={() => fold(!legendOpen)} title={legendOpen ? "Fold the legend" : "Open the legend"}>
+        <aside class={`side-panel view3d-legend${legendOpen ? "" : " folded"}`} aria-label="Legend">
+          <button type="button" class="side-panel-fold" aria-expanded={legendOpen} aria-controls={legendId} onClick={() => fold(!legendOpen)} title={legendOpen ? "Fold the legend" : "Open the legend"}>
             <span>Legend</span>
           </button>
           {legendOpen ? (
-            <div class="legend-body" id={legendId}>
-              <div class="legend-toggles" role="group" aria-label="Map colours">
+            <div class="side-panel-body" id={legendId}>
+              <div class="toggle-row" role="group" aria-label="Map colours">
                 <button type="button" aria-pressed={ground === "height"} onClick={toggleGround} title="Colour the ground by height instead of by soil">
                   Height colours
                 </button>
@@ -279,13 +284,13 @@ export function View3D(props: View3DProps) {
                   Markers
                 </button>
               </div>
-              <ul>{clean.map(item)}</ul>
+              <ul class="pick-list">{clean.map(item)}</ul>
               {marked.length ? (
                 <>
-                  <p class="legend-head">
+                  <p class="panel-head">
                     With <b>Markers</b> on:
                   </p>
-                  <ul>{marked.map(item)}</ul>
+                  <ul class="pick-list">{marked.map(item)}</ul>
                   <p class="note">From afar, dead trees, slope arrows and the start are drawn larger, and dam sites wider.</p>
                 </>
               ) : null}
