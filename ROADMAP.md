@@ -802,6 +802,11 @@ every place rebuilt without perimeter walls, water free to drain; and the galler
 **Blocking:** every map passes the validators and exports, the page works on desktop and phone,
 and D151 (no edge walls).
 
+
+**Tall places** (D172): Real places and Pick a place get a height option, standard (up to 16) or
+tall (up to 22, top layer empty); dramatic places default to tall. Tall versions come in the round
+after a probe batch confirms maps above 16 load and keep their terrain, water and objects; each
+tall map's description notes that the in-game editor only edits up to level 16.
 ---
 
 ## Resources like the official maps
@@ -1546,6 +1551,10 @@ into play consequences.
 
 **Release:** tagged `weather-view-done` and released like a milestone (CLAUDE.md, Deploying).
 
+
+**Proposals adopted from PR #33** (D173): the bit-identical speedups to the cycle model, each
+re-proved step by step, and the scheduling: the first drought first when it's on screen, a
+background start after generation, caching under the full input hash, cancellable batches.
 ---
 
 ## M10. Sculpting, naturalize, symmetry

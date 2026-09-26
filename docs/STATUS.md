@@ -84,13 +84,15 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D166: Pick a place: real land, designed water; it never fails for lack of water, meets the start rules, and quietly tries other sizes, scales and offsets; #34 held until its designed-water follow-up is finished and green, then merged and adopted with this change.
 - D167–D170: resources like the official maps: a mine site on every map (Mine sites 1–4), tree counts and living/dead share by size, groves and berry patches in clusters, ruins that vary; one shared baseline for the generator, Real places and Pick a place.
 - D171: water sources start rivers: only at heads (edge inflows, springs), clustered for more flow, never inside an existing flow; a check flags any that are.
+- D172: tall maps (up to 22): allowed in both validators once a probe batch confirms; a standard/tall option for Real places and Pick a place, dramatic places tall by default.
+- D173: #33's exact-weather speedups and scheduling, adopted as Weather view proposals.
 
 ## Done and released
 
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
+- **#33** (exact-weather speedups) is merged; its proposals are adopted (D173).
 - **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
-- **Contaminated ground as a layer** (D154), approved by Kyler, with a **Markers** outline where
-  it ends: merged into `dev`; `look-contamination-done` is being released.
+- **Contaminated ground as a layer** is live (`look-contamination-done`, PR #36, live check passed).
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
