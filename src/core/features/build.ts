@@ -549,7 +549,7 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let slopesKey = "";
   if (slopeStart && !base) {
     const targets = landformTargets(features.filter(live), target);
-    rules = { ...SLOPE_RULES, targets: targets.mask, links };
+    rules = { ...SLOPE_RULES, targets: targets.mask, links, water: terrain.channel };
     slopesKey = `${slopeStart.x},${slopeStart.y}|${targets.key}|${JSON.stringify(links)}`;
   } else if (slopeStart && base) {
     // an edited import: join the changed ground to the start's network (the file's own slopes and
@@ -566,7 +566,7 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   }
   let slopes: PlacedSlope[] = [];
   if (rules) {
-    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.reserved, reserved);
+    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.terrain.channel, terrain.channel) && sameBytes(prev.reserved, reserved);
     slopes = reuse ? prev.slopes : placeSlopes(heights, W, H, slopeStart!, reserved, rules);
   }
   for (const s of slopes) {

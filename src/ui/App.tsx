@@ -173,7 +173,7 @@ export function App() {
       ...s,
       hazards: { ...s.hazards, badwaterDistance: r.badwaterWithin },
       resources: { ...s.resources, berriesNearStart: r.berriesTarget },
-      start: { ...s.start, rules: { waterWithin: r.waterWithin, treesWithin20: r.treesWithin20, bushesWithin20: r.bushesWithin20, badwaterWithin: r.badwaterWithin, ruinsWithin: r.ruinsWithin } },
+      start: { ...s.start, rules: { waterWithin: r.waterWithin, woodWithin20: r.woodWithin20, bushesWithin20: r.bushesWithin20, badwaterWithin: r.badwaterWithin, ruinsWithin: r.ruinsWithin } },
     }));
   }
   function chooseSize(z: { x: number; y: number }) {

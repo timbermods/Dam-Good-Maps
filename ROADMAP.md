@@ -487,36 +487,42 @@ in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–
 ## M8. Water preview and background validation in the editor
 
 **Start requirements, built first** (Kyler, 2026-09-24, amended the same day; PLAN §5.6, §11.4,
-§20 D85). Released with `m8-done`.
+§20 D85). Released with `m8-done`. Amended by Kyler on 2026-09-25 and built in the start and edge
+rules step (`docs/progress/start-edge-rules.md`): the water rule walks over the map's own slopes
+(D153), and starting wood counts logs (D164). The requirements as they stand:
 
 Three start requirements, with thresholds by difficulty (Easy / Normal / Hard). They replace the
 start rules as reasons to reject a map:
-1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05, as now)
-   touches a shore tile at the start's own level, and that shore tile is within 12 / 20 / 28
-   tiles' walk of the start without any slope: the same level all the way. Rivers, lakes and ponds
-   all count. A pump on that shore must reach the water surface (0–2 levels below), as now, so
-   the colony can actually drink it.
-2. **Starting trees:** at least 60 / 40 / 20 living trees within 20 tiles' walk of the start
-   (slopes allowed), counted across any number of groves.
+1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05) touches a
+   shore tile the start reaches on foot within 12 / 20 / 28 tiles' walk, over the map's own ground
+   and its natural slopes (the map's Slope entities; no stairs the player would build). Levels may
+   change along the walk, through slopes. Rivers, lakes and ponds all count. A pump on that shore
+   must reach the water surface (0–2 levels below the shore), so the colony can actually drink
+   it. (As built in M8, the walk stayed on the start's own level, without any slope.)
+2. **Starting wood** (D164): at least 120 / 80 / 40 logs of grown trees within 20 tiles' walk of
+   the start (slopes allowed), each tree by its species' yield (oak 8, pine 2, birch 1), alive or
+   dead. A sapling's logs are shown apart, as wood still growing. (As built in M8: 60 / 40 / 20
+   living trees.)
 3. **Starting bushes:** at least 40 / 30 / 20 living berry bushes within 20 tiles' walk of the
    start (slopes allowed), counted across any number of patches.
 
 "Living" means the plant survives at steady state, as now.
 
 - **The thresholds are player settings,** with these defaults for each difficulty: the existing
-  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls for trees and
-  living bushes within 20, renamed **Minimum starting trees** (`st`, 0–400) and **Minimum
-  starting bushes** (`sb`, 0–200). They keep their ranges and share-link keys, so old links still
-  decode. Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
+  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls
+  **Minimum starting wood (logs)** (`sl`, 0–800; before D164 **Minimum starting trees**, `st`,
+  0–400, which old links and project files still carry and open as 2 logs a tree) and **Minimum
+  starting bushes** (`sb`, 0–200). Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
   Imported maps, which have no settings, use their difficulty's defaults (Normal unless the
   document says otherwise).
 - **The generator never aims below a minimum.** Any target that sits lower rises to it: Easy's
   Berries near start target goes from 20 to 40.
-- **The start reaches water on its own level.** The workshop study found none on 82 of 180
-  generated maps at 128²: the bench stands one level above the floodplain, 6–10 tiles from the
-  channel (D26), and its level region is the bench alone (median 113 tiles; official starts stand
-  on level land of median 980 tiles that reaches the water). Move the bench to the bank, or the
-  start onto the floodplain (D26 changes). Batches stay ≥ 98% per theme with the new rules.
+- **The start reaches water on its own level** (as built in M8, D97: the bench ran to the bank).
+  The workshop study found none on 82 of 180 generated maps at 128²: the bench stands one level
+  above the floodplain, 6–10 tiles from the channel (D26). Since the amendment (D153) the
+  bench no longer runs to the bank: the colony walks down to the river over the map's own slopes,
+  and the slope out of the start's own level goes toward the river. Batches stay ≥ 98% per theme
+  with the new rules.
 - **Everything else:** the other start rules stop rejecting maps: the badwater and ruin
   distances, stored drought water near the start (`water.reservoir`, including Hard's 3-deep
   rule) and walkable land from the start (`start.reach`). They stay as settings and generation

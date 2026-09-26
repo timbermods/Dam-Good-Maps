@@ -8,7 +8,9 @@
 //      exactly one level along a boundary.
 // 3.   From the start's region, grow a tree over the regions whose boundary lies within 40 tiles of
 //      the start (Chebyshev): one slope per tree edge, on the boundary pair nearest the start; a
-//      long boundary (60+ pairs) gets a second one. Slopes stand at least 12 tiles apart.
+//      long boundary (60+ pairs) gets a second one. Slopes stand at least 12 tiles apart. Out of
+//      the start's own region, with the rivers given (`water`), the pair nearest the start and the
+//      river together: the colony's way down to its water (the water rule, D153).
 //      Targets are joined too, wherever they are: the regions of a landform with gentle or terraced
 //      edges (its steps are "joined by slopes", PLAN §19.2) and, on an edited import, the ground the
 //      edits changed.
@@ -37,6 +39,8 @@ export interface SlopeRules {
   targets?: Uint8Array | null;
   /** Standing slopes as (low tile, high tile) pairs: their regions are joined already. */
   links?: readonly [number, number][];
+  /** The rivers' channel tiles: the slopes out of the start's own region go toward them. */
+  water?: Uint8Array | null;
 }
 
 /** §7.5 for generated and edited maps. */
@@ -108,14 +112,19 @@ export function placeSlopes(h: Uint8Array, W: number, H: number, start: { x: num
   const placed: PlacedSlope[] = [];
   const used: [number, number][] = [];
   const occ = occupied.slice();
-  const tryPlace = (cand: [number, number, number][], extra: boolean): number => {
+  // steps from each tile to the nearest river tile (4-neighbour), for the slopes out of the start's
+  // region: integers only, so every browser places the same slopes
+  const toWater = rules.water && rules.water.some((v) => v === 1) ? stepsFrom(rules.water, W, H) : null;
+  const tryPlace = (cand: [number, number, number][], extra: boolean, towardWater = false): number => {
     const scored = cand
       .map((c) => {
         const x = c[0] % W;
         const y = (c[0] - x) / W;
-        return { c, x, y, d2: (x - start.x) ** 2 + (y - start.y) ** 2 };
+        const d2 = (x - start.x) ** 2 + (y - start.y) ** 2;
+        const toward = towardWater && toWater ? Math.max(Math.abs(x - start.x), Math.abs(y - start.y)) + toWater[c[0]] : 0;
+        return { c, x, y, d2, toward };
       })
-      .sort((p, q) => p.d2 - q.d2 || p.c[0] - q.c[0] || p.c[1] - q.c[1] || p.c[2] - q.c[2]);
+      .sort((p, q) => p.toward - q.toward || p.d2 - q.d2 || p.c[0] - q.c[0] || p.c[1] - q.c[1] || p.c[2] - q.c[2]);
     let n = 0;
     for (const { c, x, y } of scored) {
       const [i, dx, dy] = c;
@@ -154,7 +163,7 @@ export function placeSlopes(h: Uint8Array, W: number, H: number, start: { x: num
       for (const n of adj[r]) {
         if (joined(n)) continue;
         const cand = inCore(between(r, n));
-        if (cand.length && tryPlace(cand, cand.length > LONG)) {
+        if (cand.length && tryPlace(cand, cand.length > LONG, r === root)) {
           union(root, n);
           next.push(n);
         }
@@ -215,4 +224,30 @@ export function placeSlopes(h: Uint8Array, W: number, H: number, start: { x: num
     }
   }
   return placed;
+}
+
+/** 4-neighbour steps from every tile to the nearest set tile of `mask` (a large number where none
+ *  is reachable). */
+function stepsFrom(mask: Uint8Array, W: number, H: number): Int32Array {
+  const N = W * H;
+  const d = new Int32Array(N).fill(1 << 20);
+  const queue = new Int32Array(N);
+  let tail = 0;
+  for (let i = 0; i < N; i++)
+    if (mask[i]) {
+      d[i] = 0;
+      queue[tail++] = i;
+    }
+  for (let head = 0; head < tail; head++) {
+    const c = queue[head];
+    const x = c % W;
+    const nd = d[c] + 1;
+    const nb = [x > 0 ? c - 1 : -1, x + 1 < W ? c + 1 : -1, c >= W ? c - W : -1, c + W < N ? c + W : -1];
+    for (const n of nb) {
+      if (n < 0 || d[n] <= nd) continue;
+      d[n] = nd;
+      queue[tail++] = n;
+    }
+  }
+  return d;
 }

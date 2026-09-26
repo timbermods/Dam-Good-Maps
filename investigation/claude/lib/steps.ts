@@ -17,6 +17,8 @@ import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../../../src/core/gen/calibra
 import type { Feature, LandformFeature, Point, SetPieceFeature, SetPieceKind, StartFeature } from "../../../src/core/features/schema";
 import { BUILT_KINDS, type PlanRecord } from "../../../src/core/features/setpieces";
 import { tilesToRuns } from "../../../src/core/math/grid";
+import { TREE_LOGS } from "../../../src/core/format/entities";
+import { LOGS_PER_TREE } from "../../../src/core/spec/mapspec";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { newHandle, newId, refContext, type Conversation } from "./conversation";
 import { anchorOf } from "./metrics";
@@ -498,7 +500,8 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
     // validator at HEAD): a grove and a berry patch on moist soil 7–16 tiles out
     const rules = rulesFor(s.spec, s.meta.designedFor);
     const near = (e: { x: number; y: number }) => Math.hypot(e.x - to[0], e.y - to[1]) <= 18;
-    const trees = s.built.entities.filter((e) => /^(Pine|Birch|Oak)$/.test(e.template) && near(e)).length;
+    // starting wood in logs (D164): each tree by its species' yield
+    const wood = s.built.entities.filter((e) => /^(Pine|Birch|Oak)$/.test(e.template) && near(e)).reduce((a, e) => a + TREE_LOGS[e.template], 0);
     const bushes = s.built.entities.filter((e) => e.template === "BlueberryBush" && near(e)).length;
     const ring = new Uint8Array(v.W * v.H);
     for (let y = 0; y < v.H; y++)
@@ -519,10 +522,11 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
       for (const t of tiles) ring[t] = 0;
       const h = newHandle(conv, kind);
       made.push({ handle: h, id, kind });
-      report.push(`plants ${kind === "berryPatch" ? `a berry patch of ${tiles.length} bushes` : `a grove of ${tiles.length} trees`} near the new start, for the start rules (${kind === "berryPatch" ? rules.bushesWithin20 : rules.treesWithin20} within 20 tiles)`);
+      report.push(`plants ${kind === "berryPatch" ? `a berry patch of ${tiles.length} bushes` : `a grove of ${tiles.length} trees`} near the new start, for the start rules (${kind === "berryPatch" ? `${rules.bushesWithin20} bushes` : `${rules.woodWithin20} logs`} within 20 tiles)`);
     };
     const needB = Math.ceil(rules.bushesWithin20 * 1.25) - bushes;
-    const needT = Math.ceil(rules.treesWithin20 * 1.25) - trees;
+    // the grove's mix gives about 3 logs a tree
+    const needT = Math.ceil((Math.ceil(rules.woodWithin20 * 1.25) - wood) / LOGS_PER_TREE);
     if (needB > 0) add("berryPatch", needB);
     if (needT > 0) add("forest", needT);
   }

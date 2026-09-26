@@ -1,8 +1,10 @@
 // The map card (PLAN §14.3): name, premise, key facts, the three start requirements (PLAN §5.6,
 // D85) and the validation report, grouped as File, Terrain and objects, Water, and Start and
 // resources (PLAN §11.6). Failures open their group; advisory warnings (the start targets,
-// water.reservoir, plants.drought) show as warnings and never block the download.
+// water.reservoir, the clean water targets, plants.drought) show as warnings and never block the
+// download.
 
+import { woodDetail, type WoodBySpecies } from "../core/analysis/wood";
 import { groupOf, type CheckGroup, type CheckResult } from "../core/validate/report";
 import type { GenerateResponse } from "../worker/api";
 
@@ -15,19 +17,24 @@ function status(c: CheckResult): "ok" | "bad" | "warn" | "na" {
   return c.advisory || c.severity !== "error" ? "warn" : "bad";
 }
 
-/** The three start requirements (PLAN §5.6, D85), as the map card lists them. */
-export const REQUIREMENTS: { id: string; name: string; text: (c: CheckResult) => string }[] = [
+/** The three start requirements (PLAN §5.6, D85, D164), as the map card lists them. `wood` says
+ *  which species give the starting wood, and how much more is still growing. */
+export const REQUIREMENTS: { id: string; name: string; text: (c: CheckResult, wood?: { bySpecies: WoodBySpecies; growing: number }) => string }[] = [
   {
     id: "start.water",
     name: "Water without stairs",
-    text: (c) => (typeof c.value === "number" ? `${c.value} tiles' walk on the start's level (at most ${c.limit})` : `none on the start's level (at most ${c.limit} tiles' walk)`),
+    text: (c) => (typeof c.value === "number" ? `${c.value} tiles' walk (at most ${c.limit})` : `none within reach (at most ${c.limit} tiles' walk)`),
   },
-  { id: "start.wood", name: "Starting trees", text: (c) => `${c.value} living within 20 tiles' walk (at least ${c.limit})` },
+  {
+    id: "start.wood",
+    name: "Starting wood",
+    text: (c, wood) => `${c.value} logs within 20 tiles' walk${wood ? woodDetail(wood.bySpecies, wood.growing) : ""} (at least ${c.limit})`,
+  },
   { id: "start.food", name: "Starting bushes", text: (c) => `${c.value} living within 20 tiles' walk (at least ${c.limit})` },
 ];
 
 /** The start requirements of a report: each met or not, with its numbers. */
-export function StartRequirements({ checks }: { checks: readonly CheckResult[] }) {
+export function StartRequirements({ checks, wood }: { checks: readonly CheckResult[]; wood?: { bySpecies: WoodBySpecies; growing: number } }) {
   const rows = REQUIREMENTS.map((r) => ({ r, c: checks.find((c) => c.id === r.id) })).filter((x) => x.c && x.c.applicable !== false);
   if (!rows.length) return null;
   return (
@@ -37,7 +44,7 @@ export function StartRequirements({ checks }: { checks: readonly CheckResult[] }
         {rows.map(({ r, c }) => (
           <li key={r.id} class={status(c!)} data-check={r.id}>
             <strong>{r.name}:</strong> {c!.approximate ? "approximate, " : ""}
-            {r.text(c!)}
+            {r.text(c!, wood)}
           </li>
         ))}
       </ul>
@@ -72,7 +79,7 @@ export function MapCard({ result: r }: { result: GenerateResponse }) {
         <div><dt>River</dt><dd>{f.cleanSources} sources, {f.cleanFlow} water/s</dd></div>
         <div><dt>Badwater</dt><dd>{f.badwaterFlow ? `${f.badwaterFlow} water/s from ${f.badwaterSources} source${f.badwaterSources > 1 ? "s" : ""}` : "none"}</dd></div>
         <div><dt>Under water</dt><dd>{Math.round(f.wetShare * 100)}% of the map</dd></div>
-        <div><dt>Water from the start</dt><dd>{f.waterDistance === null ? "none on the start's level" : `${f.waterDistance} tiles' walk`}</dd></div>
+        <div><dt>Water from the start</dt><dd>{f.waterDistance === null ? "none within reach" : `${f.waterDistance} tiles' walk`}</dd></div>
         <div>
           <dt>Best dam site</dt>
           <dd>{f.bestDam ? `${f.bestDam.volume.toLocaleString()} water behind a ${f.bestDam.length}-tile dam` : "none near the start"}</dd>
@@ -84,7 +91,7 @@ export function MapCard({ result: r }: { result: GenerateResponse }) {
         <div><dt>Slopes</dt><dd>{count((t) => t === "Slope")}</dd></div>
         <div><dt>Features</dt><dd>{r.features.length} editable</dd></div>
       </dl>
-      <StartRequirements checks={r.checks} />
+      <StartRequirements checks={r.checks} wood={f.woodBySpecies ? { bySpecies: f.woodBySpecies, growing: f.woodGrowing } : undefined} />
       <details class="report" open={blocking.length > 0}>
         <summary>
           {summary}

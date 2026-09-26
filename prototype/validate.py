@@ -4,7 +4,9 @@ playability rules calibrated on the official maps. A map passes only if every ch
     python prototype/validate.py out/*.timber [--difficulty normal] [--json] [--load-only] [--quiet]
 
 --load-only runs the load and design checks only (file, terrain, placement, slopes, start), as the
-TypeScript generator's M1 acceptance asks (ROADMAP M1); --quiet prints one line per file.
+TypeScript generator's M1 acceptance asks (ROADMAP M1); --quiet prints one line per file. The design
+checks include terrain.edge_wall (no edge walls, Kyler 2026-09-25); water.source_in_flow (D171)
+needs the settled water, so it runs with the playability checks.
 
 A map "<stem>.timber" with a project file "<stem>.damgoodmaps.json" beside it (the website's
 download, gzip JSON) is checked with its spec's thresholds and its planned lakes, as the website's
@@ -172,6 +174,38 @@ def check_terrain(m: TimberMap, rep: Report):
     # the top surface); imported maps report it as information
     multi = int((m.floors() > 1).sum())
     rep.add("terrain.single_floor", multi == 0, f"{multi} columns with caves or overhangs", multi, 0)
+    # a principle (D151, extending D111): no wall raised along a map edge to hold water
+    Y, X = h.shape
+    if X < 2 * (EDGE_BAND + EDGE_INSIDE) or Y < 2 * (EDGE_BAND + EDGE_INSIDE):
+        rep.add("terrain.edge_wall", True, "the map is too small for an edge wall", na=True)
+    else:
+        shares = edge_walls(h)
+        worst = max(shares.values())
+        walled = [e for e, s in shares.items() if s >= EDGE_SHARE]
+        rep.add("terrain.edge_wall", not walled,
+                f"walled edges: {', '.join(walled)}" if walled else f"no edge wall (most walled edge {worst:.0%})",
+                round(worst, 2), EDGE_SHARE)
+
+
+# ---- edge walls (src/core/analysis/edges.ts): along each edge, the outer two tiles against the
+# highest of the next three; a tile is walled when the band stands 2+ levels above them, an edge when
+# 60% of its tiles are
+EDGE_BAND = 2
+EDGE_INSIDE = 3
+EDGE_RISE = 2
+EDGE_SHARE = 0.6
+
+
+def edge_walls(h: np.ndarray) -> dict:
+    """The share of walled tiles on each edge: south (y = 0), north (y = H - 1), west, east."""
+    hi = h.astype(np.int32)
+    profiles = {"south": hi, "north": hi[::-1, :], "west": hi.T, "east": hi.T[::-1, :]}
+    out = {}
+    for name, p in profiles.items():
+        band = p[:EDGE_BAND, :].max(axis=0)
+        inside = p[EDGE_BAND:EDGE_BAND + EDGE_INSIDE, :].max(axis=0)
+        out[name] = float(np.count_nonzero(band - inside >= EDGE_RISE)) / p.shape[1]
+    return out
 
 
 def terrain_unsupported(m: TimberMap, object_tops=()) -> int:
