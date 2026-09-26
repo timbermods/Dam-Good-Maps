@@ -7,13 +7,18 @@
 // (tests/unit/water-palette.test.ts). The 2D preview and the map file's thumbnail keep their own
 // schematic colours; they are not the 3D view.
 //
-// Badwater's colours and opacity are placeholders (`WATER_PLACEHOLDERS`) until Kyler approves the
-// High prototype's badwater (#38): then its body, trough and streak colours and its opacity come
-// from #38's calibration (`WATER_CALIBRATION`). Colours are display values, before the light.
+// Badwater is #38's, as Kyler approved it (the High prototype at e63a3ff): a crimson, matte,
+// nearly opaque body with darker troughs and subdued streaks, see-through only at its shallow
+// edges. Its on-screen colours are #38's calibration targets (`WATER_CALIBRATION`); the inputs here
+// are calibrated so the Standard look lands on them. Colours are display values, before the light.
 //
 // Pure TypeScript, no three.js.
 
 export type Rgb = readonly [number, number, number];
+
+/** Badwater's crimson body (calibrated to #38's targets); the tint of water partly bad takes its
+ *  hue, so mixed water and pure badwater agree. */
+const BAD_BODY: Rgb = [0.431, 0.204, 0.18];
 
 export const WATER = {
   /** Clean water, as in the game (Kyler's clean look): clear in the shallows, where the bed shows
@@ -30,24 +35,22 @@ export const WATER = {
   foam: [0.9, 0.94, 0.95] as Rgb,
   /** The sky the water reflects (clean water's pale flow streaks are this, a little darker). */
   sky: [0.6, 0.72, 0.84] as Rgb,
-  /** Badwater's body in its usual shallow pools (`BADWATER.shallow` deep or less), nearly opaque
-   *  and dull; deeper it darkens toward `badDeep` (Kyler's option A), so it stays darker than clean
-   *  water of the same depth. Placeholder. */
-  bad: [0.292, 0.234, 0.204] as Rgb,
-  badDeep: [0.1, 0.07, 0.06] as Rgb,
-  /** Badwater's troughs, in the ripples' low parts (`BADWATER.trough` of the way). Placeholder:
-   *  none yet, the body's own colour. */
-  badTrough: [0.292, 0.234, 0.204] as Rgb,
-  /** Badwater's lighter flow streaks, where it flows (`BADWATER.streak` of the way). Placeholder. */
-  badStreak: [0.462, 0.35, 0.252] as Rgb,
+  /** Badwater's body in its usual shallow pools (`BADWATER.shallow` deep or less), crimson,
+   *  matte and nearly opaque; deeper it darkens toward `badDeep` (Kyler's option A), so it stays
+   *  darker than clean water of the same depth. */
+  bad: BAD_BODY,
+  badDeep: [0.14, 0.066, 0.058] as Rgb,
+  /** Badwater's darker troughs, in the ripples' low parts (`BADWATER.trough` of the way), and
+   *  its subdued, lighter flow streaks; both in its shallows, darkening with depth as the body. */
+  badTrough: [0.332, 0.163, 0.145] as Rgb,
+  badStreak: [0.478, 0.266, 0.22] as Rgb,
   /** Badwater's slow glowing bubbles, denser the more of the water is bad. */
   badVein: [0.98, 0.5, 0.16] as Rgb,
   /** Foam on badwater: along its shores and below its falls. */
   badFoam: [0.66, 0.5, 0.36] as Rgb,
   /** The warm red that water partly bad turns toward (only its hue: `WATER_BLEND`), so a mixed
-   *  river reads as poisoned at a glance, not as deeper blue. Placeholder until #38's badwater body
-   *  is approved; then its hue. */
-  tint: [0.5, 0.17, 0.15] as Rgb,
+   *  river reads as poisoned at a glance, not as deeper blue: badwater's own crimson. */
+  tint: BAD_BODY,
 } as const;
 
 /** Clean water's surface, as the water shader draws it: foam along the shore and broken foam
@@ -80,28 +83,37 @@ export const WATER_SURFACE = {
   spec: 0.5,
 } as const;
 
-/** Badwater's depth, opacity and surface (Kyler's option A: darker with depth). Placeholders. */
+/** Badwater's depth, opacity and surface. */
 export const BADWATER = {
   /** Down to this depth (levels) badwater shows `WATER.bad`; below it, it darkens toward
-   *  `WATER.badDeep`, this quickly (per level). */
+   *  `WATER.badDeep`, this quickly (per level): Kyler's option A. */
   shallow: 0.25,
-  absorb: 1.3,
-  /** Its opacity from clear shallows to deep water (by clean water's depth curve), and at the
-   *  map's edge. */
-  opacity: [0.95, 0.99] as readonly [number, number],
-  edge: 0.95,
-  /** How far the troughs and the flow streaks turn toward their colours, and how strongly the
-   *  sky's reflection, the sun's glint, the glints and the bubbles show. */
-  trough: 0,
-  streak: 0.3,
-  reflect: 0.25,
-  spec: 0.2,
-  glints: 0.2,
+  absorb: 1.85,
+  /** Its opacity, #38's (`badwaterOpacity`): nearly opaque, `opacity` from `opacityFrom` to
+   *  `opacityTo` levels deep (by #38's own depth near a bank: this share of it at the bank, deepening
+   *  over `bankWidth`), less by `edge` at its shallow edges (depths `edgeDepth`, `edgeShore` tiles
+   *  from a bank, where the poisoned bed shows), and at least `grazing` of the way to opaque when
+   *  seen at a grazing angle. At the map's edge, the water's side. */
+  opacity: [0.975, 0.995] as readonly [number, number],
+  opacityFrom: 0.25,
+  opacityTo: 1.8,
+  bank: 0.1,
+  bankWidth: 0.55,
+  edge: 0.52,
+  edgeDepth: [0.03, 0.18] as readonly [number, number],
+  edgeShore: [0.04, 0.3] as readonly [number, number],
+  grazing: 0.85,
+  side: 0.95,
+  /** Its matte surface (#38's): how far the troughs and the subdued flow streaks turn toward their
+   *  colours, and how little of the sky's reflection, the sun's glint and the glints shows (a
+   *  twelfth of clean water's glints and glint, and a trace of the sky), and its bubbles' glow. */
+  trough: 1,
+  streak: 1,
+  reflect: 0.03,
+  spec: 0.04,
+  glints: 0.028,
   bubbles: 0.55,
 } as const;
-
-/** The values that wait for #38's approved badwater (D177 (1)). */
-export const WATER_PLACEHOLDERS = ["WATER.bad", "WATER.badDeep", "WATER.badTrough", "WATER.badStreak", "WATER.tint", "BADWATER.opacity", "BADWATER.trough", "BADWATER.streak"] as const;
 
 /** How water turns from clean to bad with its badwater share `s` (0–1, blended between tiles by
  *  the water mesh), in parts that each follow their own curve (in linear light, so greyscale
@@ -121,7 +133,7 @@ export const WATER_BLEND = { darken: 1, tint: 3, settle: 4, opacity: 0.5, surfac
  *  all over, its soil as contaminated as the water, drawn by the site's renderer on the GPU (a
  *  browser that draws in software gets the Light look), the camera orbiting at `pitch` (70° down,
  *  or lower), yaw −0.55 and 44 away, the water held at 8 s; the central patch's pixels sorted by
- *  r + 2g + b and each band's mean. */
+ *  r + 2g + b and each band's mean. Every target must land within `tolerance`. */
 export const WATER_CALIBRATION = {
   method: {
     viewport: [1440, 940] as readonly [number, number],
@@ -134,15 +146,16 @@ export const WATER_CALIBRATION = {
     /** Codes a measured band may be off its target, per channel. */
     tolerance: 2,
   },
-  /** On-screen targets (0–255): badwater's is a placeholder, Kyler's in-game #4B3C37, until #38's
-   *  approved body, trough and streak replace it; clean water's are the Standard look as approved
-   *  (they hold it still). */
+  /** On-screen targets (0–255): badwater's are #38's, as Kyler approved them (its check:colour
+   *  at e63a3ff: the typical texture, the troughs and the streaks of pure badwater a quarter level
+   *  deep over a poisoned bed); clean water's are the Standard look as approved (they hold it
+   *  still). */
   targets: [
-    { name: "badwater, a quarter level deep, 70° down", share: 1, depth: 0.25, pitch: 1.22, bands: { body: [75, 60, 55] }, placeholder: true },
+    { name: "badwater, a quarter level deep, 70° down (#38)", share: 1, depth: 0.25, pitch: 1.22, bands: { typical: [110, 52, 49], trough: [94, 46, 43], streak: [124, 69, 56] } },
     { name: "clean water, a quarter level deep, 70° down", share: 0, depth: 0.25, pitch: 1.22, bands: { body: [64, 98, 106] } },
     { name: "clean water, 1.25 deep, 70° down", share: 0, depth: 1.25, pitch: 1.22, bands: { body: [33, 67, 79] } },
     { name: "clean water, 4.25 deep, 70° down", share: 0, depth: 4.25, pitch: 1.22, bands: { body: [29, 53, 69] } },
-  ] as readonly { name: string; share: number; depth: number; pitch: number; bands: Record<string, readonly [number, number, number]>; placeholder?: boolean }[],
+  ] as readonly { name: string; share: number; depth: number; pitch: number; bands: Record<string, readonly [number, number, number]> }[],
   /** The ground level under a bed of water this deep (so the camera sees the same scene as #38's). */
   floor(depth: number): number {
     return depth <= 0.25 ? 8 : depth <= 1.25 ? 7 : 4;
@@ -220,15 +233,24 @@ export function waterBody(depth: number, bad: boolean | number, fromBank = 1): R
   return blendWater(cleanWaterBody(depth, fromBank), badwaterBody(depth), share);
 }
 
+/** Badwater's opacity `depth` levels deep, `fromBank` tiles from a bank, seen at `facing` (the
+ *  view's height over the water: 1 from straight above, 0 edge-on), as #38's `badwaterOpacity`. */
+export function badwaterOpacity(depth: number, fromBank = 1, facing = 1): number {
+  const B = BADWATER;
+  const d = depth * (B.bank + (1 - B.bank) * smooth(0, B.bankWidth, fromBank));
+  const edge = (1 - smooth(B.edgeDepth[0], B.edgeDepth[1], d)) * (1 - smooth(B.edgeShore[0], B.edgeShore[1], fromBank));
+  const grazing = 1 - smooth(0.18, 0.5, facing);
+  return Math.max(B.opacity[0] + (B.opacity[1] - B.opacity[0]) * smooth(B.opacityFrom, B.opacityTo, d) - B.edge * edge, grazing * B.grazing);
+}
+
 /** The water's opacity `depth` levels deep and `fromBank` tiles from a bank, with a badwater share
  *  (clean by default): see-through in clean shallows and toward the banks, murkier the more of it
  *  is bad (as the shader, before foam and glints). */
-export function waterOpacity(depth: number, fromBank = 1, share = 0): number {
+export function waterOpacity(depth: number, fromBank = 1, share = 0, facing = 1): number {
   const S = WATER_SURFACE;
   const a = absorbed(seenDepth(depth, fromBank));
   const clean = S.clearest + (S.deepest - S.clearest) * a;
-  const bad = BADWATER.opacity[0] + (BADWATER.opacity[1] - BADWATER.opacity[0]) * a;
-  return clean + (bad - clean) * waterBlend(share).opacity;
+  return clean + (badwaterOpacity(depth, fromBank, facing) - clean) * waterBlend(share).opacity;
 }
 
 // ------------------------------------------------------------------------------ the shader's copy
@@ -264,7 +286,7 @@ export const WATER_GLSL = /* glsl */ `
   #define BADWATER_SPEC ${f(BADWATER.spec)}
   #define BADWATER_GLINTS ${f(BADWATER.glints)}
   #define BADWATER_BUBBLES ${f(BADWATER.bubbles)}
-  #define BADWATER_EDGE ${f(BADWATER.edge)}
+  #define BADWATER_SIDE ${f(BADWATER.side)}
   /** Clean water's depth as its colour and opacity see it, by how far the point is from a shore. */
   float waterSeenDepth(float depth, float shore) {
     return depth * mix(${f(WATER_SURFACE.bank)}, 1.0, smoothstep(0.0, ${f(WATER_SURFACE.bankWidth)}, shore));
@@ -281,8 +303,19 @@ export const WATER_GLSL = /* glsl */ `
   vec3 badwaterBody(float depth) {
     return mix(BADWATER_BODY, BADWATER_DEEP, 1.0 - exp(-max(0.0, depth - ${f(BADWATER.shallow)}) * ${f(BADWATER.absorb)}));
   }
-  float badwaterAlpha(float absorb) {
-    return mix(${f(BADWATER.opacity[0])}, ${f(BADWATER.opacity[1])}, absorb);
+  /** A badwater colour (its troughs, its streaks) darkened with depth as its body is. */
+  vec3 badwaterShade(vec3 c, float depth) {
+    return c * badwaterBody(depth) / BADWATER_BODY;
+  }
+  /** How edge-on the water is seen (1 at a grazing angle), as #38 has it. */
+  float waterGrazing(vec3 V, vec3 N) {
+    return 1.0 - smoothstep(0.18, 0.5, clamp(V.y + (N.x + N.z) * 0.05, 0.0, 1.0));
+  }
+  /** Badwater's opacity (#38's badwaterOpacity): nearly opaque, less at its shallow edges. */
+  float badwaterAlpha(float depth, float shore, float grazing) {
+    float d = depth * mix(${f(BADWATER.bank)}, 1.0, smoothstep(0.0, ${f(BADWATER.bankWidth)}, shore));
+    float edge = (1.0 - smoothstep(${f(BADWATER.edgeDepth[0])}, ${f(BADWATER.edgeDepth[1])}, d)) * (1.0 - smoothstep(${f(BADWATER.edgeShore[0])}, ${f(BADWATER.edgeShore[1])}, shore));
+    return max(mix(${f(BADWATER.opacity[0])}, ${f(BADWATER.opacity[1])}, smoothstep(${f(BADWATER.opacityFrom)}, ${f(BADWATER.opacityTo)}, d)) - ${f(BADWATER.edge)} * edge, grazing * ${f(BADWATER.grazing)});
   }
   /** The blend's opacity and surface curves at a badwater share. */
   float waterMurk(float s) {

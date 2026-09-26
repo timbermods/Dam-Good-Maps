@@ -9,7 +9,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DataTexture } from "three";
 import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
-import { WATER, WATER_BLEND, WATER_CALIBRATION, WATER_GLSL, WATER_PLACEHOLDERS, type Rgb } from "../../src/render3d/waterPalette";
+import { WATER, WATER_BLEND, WATER_CALIBRATION, WATER_GLSL, type Rgb } from "../../src/render3d/waterPalette";
 
 const HOME = "src/render3d/waterPalette.ts";
 
@@ -77,7 +77,7 @@ describe("the shared water palette", () => {
     for (const lite of [false, true]) {
       const shader = waterMaterial(sceneUniforms(1, 1, t(), t(), t(), t()), lite).fragmentShader;
       expect(shader).toContain(WATER_GLSL);
-      for (const fn of ["cleanWaterBody(d, absorb)", "badwaterBody(depth)", "cleanWaterAlpha(absorb)", "badwaterAlpha(absorb)", "waterBlend(body, murky, cont)", "waterMurk(cont)", "waterDull(cont)"]) expect(shader).toContain(fn);
+      for (const fn of ["cleanWaterBody(d, absorb)", "badwaterBody(depth)", "cleanWaterAlpha(absorb)", "badwaterAlpha(depth, shore, waterGrazing(V, N))", "badwaterShade(BADWATER_STREAK, depth)", "badwaterShade(BADWATER_TROUGH, depth)", "waterBlend(body, murky, cont)", "waterMurk(cont)", "waterDull(cont)"]) expect(shader).toContain(fn);
     }
     // the GLSL is made from the exported values
     const gl = (v: number) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -85,18 +85,18 @@ describe("the shared water palette", () => {
     for (const k of ["tint", "settle", "opacity", "surface"] as const) expect(WATER_GLSL).toContain(gl(WATER_BLEND[k]));
   });
 
-  it("keeps the calibration with the colours: the method, the targets, and which values wait for #38", () => {
+  it("keeps the calibration with the colours: the method, and the targets, #38's for badwater", () => {
     const m = WATER_CALIBRATION.method;
     expect(Object.keys(m.bands)).toEqual(["trough", "body", "typical", "streak"]);
     expect(m.bed).toBe(64);
     expect(m.time).toBe(8);
-    // badwater's target is a placeholder until #38's badwater is approved; clean water's hold the
-    // Standard look as approved
+    expect(m.tolerance).toBe(2);
+    // badwater's targets are #38's approved typical texture, troughs and streaks; clean water's
+    // hold the Standard look as approved
     const bad = WATER_CALIBRATION.targets.filter((t) => t.share === 1);
-    expect(bad.length).toBeGreaterThan(0);
-    for (const t of bad) expect(t.placeholder).toBe(true);
+    expect(bad.length).toBe(1);
+    expect(Object.keys(bad[0].bands).sort()).toEqual(["streak", "trough", "typical"]);
     expect(WATER_CALIBRATION.targets.filter((t) => t.share === 0).length).toBeGreaterThanOrEqual(3);
-    expect(WATER_PLACEHOLDERS.length).toBeGreaterThan(0);
     // the measuring tool reads them from here
     const tool = readFileSync("tools/capture-badwater.ts", "utf8");
     expect(tool).toContain("WATER_CALIBRATION");

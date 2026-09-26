@@ -1,6 +1,7 @@
 // Map look, badwater blends into clean water (PLAN §20 D177): before and after captures of where
 // badwater meets clean water, from above and from the view's default angle, side by side, and a
-// greyscale and a colour-blindness sheet of the after views.
+// greyscale and a colour-blindness sheet of the after views; on River Valley 4242, also the tint
+// views, centred in the middle of the water partly bad.
 //
 //   git archive --output=.scratch/before.tar origin/dev index.html real-places src public vite.config.ts tsconfig.json package.json
 //   mkdir -p .scratch/before && tar -xf .scratch/before.tar -C .scratch/before
@@ -18,7 +19,7 @@
 // targets of the shared water palette (waterPalette.ts WATER_CALIBRATION, as #38's colour check):
 // the site's own renderer on the GPU, its canvas the method's size, a bed of water one badwater
 // share and depth all over. It prints each target's bands, measured and wanted, and a table of
-// shares and depths; it fails when a target that is not a placeholder misses.
+// shares and depths; it fails when a target misses.
 
 import { mkdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -46,10 +47,12 @@ interface MapCase {
   /** Camera distance: from above (the top view's scale) and at the default angle. */
   top: number;
   angled: number;
+  /** Also the tint views: the middle of the water partly bad, near where it meets clean water. */
+  tint?: boolean;
 }
 
 const MAPS: MapCase[] = [
-  { id: "riverValley-4242-256", name: "River Valley (4242), 256×256", fragment: "#s=4242&z=256&d=n&t=riverValley", top: 50, angled: 46 },
+  { id: "riverValley-4242-256", name: "River Valley (4242), 256×256", fragment: "#s=4242&z=256&d=n&t=riverValley", top: 50, angled: 46, tint: true },
   { id: "delta-4242-256", name: "Delta (4242), 256×256", fragment: "#s=4242&z=256&d=n&t=delta", top: 50, angled: 46 },
   { id: "riverValley-5-128", name: "River Valley (5), 128×128", fragment: "#s=5&z=128&d=n&t=riverValley", top: 40, angled: 38 },
   { id: "delta-5-128", name: "Delta (5), 128×128", fragment: "#s=5&z=128&d=n&t=delta", top: 40, angled: 38 },
@@ -94,6 +97,33 @@ const FRONT_JS = `() => {
   if (best < 0) return null;
   const x = best % W, y = Math.floor(best / W);
   return { tile: [x, y], target: [x + 0.5, sf[best], -(y + 0.5)], score };
+}`;
+
+/** The middle of the map's water partly bad (35–50% bad, and no clean water or
+ *  badwater within 4 tiles), nearest the given tile (page side). */
+const TINT_JS = `([tx, ty]) => {
+  const m = window.dgm3d.renderer.map;
+  const s = m.surface;
+  const W = m.W, H = m.H;
+  const c = s.contamination, sf = s.surface, dep = s.depth;
+  const wet = (i) => sf[i] === sf[i] && dep[i] > 0.1;
+  let best = -1, dist = Infinity;
+  for (let y = 4; y < H - 4; y++)
+    for (let x = 4; x < W - 4; x++) {
+      const i = y * W + x;
+      if (!wet(i) || c[i] < 0.35 || c[i] > 0.5) continue;
+      let ok = true;
+      for (let dy = -4; dy <= 4 && ok; dy++)
+        for (let dx = -4; dx <= 4 && ok; dx++) {
+          const j = i + dx + dy * W;
+          if (wet(j) && Math.abs(sf[j] - sf[i]) < 0.35 && (c[j] < 0.15 || c[j] > 0.7)) ok = false;
+        }
+      const d = Math.hypot(x - tx, y - ty);
+      if (ok && d < dist) { dist = d; best = i; }
+    }
+  if (best < 0) return null;
+  const x = best % W, y = Math.floor(best / W);
+  return { tile: [x, y], share: c[best], target: [x + 0.5, sf[best], -(y + 0.5)] };
 }`;
 
 async function site(root: string, label: string, port: number): Promise<PreviewServer> {
@@ -247,8 +277,8 @@ async function measure() {
         const got = bands[band];
         const err = Math.max(...got.map((v, c) => Math.abs(Math.round(v) - want[c])));
         const ok = err <= M.tolerance;
-        if (!ok && !t.placeholder) missed++;
-        console.log(`  ${t.name}, ${band}: ${hex(got)} (L* ${lstar(got)}), wanted ${hex(want)}: ${ok ? "within" : "off by"} ${err}${t.placeholder ? " (placeholder)" : ""}`);
+        if (!ok) missed++;
+        console.log(`  ${t.name}, ${band}: ${hex(got)} (L* ${lstar(got)}), wanted ${hex(want)}: ${ok ? "within" : "off by"} ${err}`);
       }
     }
     console.log("shares and depths, 70° down (body band; lightest band):");
@@ -290,14 +320,24 @@ async function main() {
         top: { mode: "top", yaw: 0, pitch: DEFAULT_PITCH, distance: m.top, target: front.target },
         angled: { mode: "orbit", yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: m.angled, target: front.target },
       };
+      type Tint = { tile: [number, number]; share: number; target: [number, number, number] };
+      const tint = m.tint ? ((await page.evaluate(`(${TINT_JS})(${JSON.stringify(front.tile)})`)) as Tint | null) : null;
+      if (m.tint) {
+        if (!tint) throw new Error(`${m.name}: no stretch of water partly bad`);
+        notes.push(`${m.id}: the tint views centred on tile (${tint.tile.join(", ")}), ${Math.round(tint.share * 100)}% bad`);
+        views["tint-top"] = { mode: "top", yaw: 0, pitch: DEFAULT_PITCH, distance: m.top * 0.7, target: tint.target };
+        views["tint-angled"] = { mode: "orbit", yaw: DEFAULT_YAW, pitch: DEFAULT_PITCH, distance: m.angled * 0.7, target: tint.target };
+      }
       const shotsAfter: Record<string, Buffer> = {};
       for (const [k, v] of Object.entries(views)) shotsAfter[k] = await shot(page, v);
       await open(page, 4193, m);
       for (const [k, v] of Object.entries(views)) {
         const b = await shot(page, v);
-        const where = k === "top" ? "from above" : "at the default angle";
-        await compose(tool, [b, shotsAfter[k]], [`Before (dev): ${m.name}, ${where}`, `After: ${m.name}, ${where}`], 2, 0.75, [null, null], join(OUT, `${m.id}-${k}.jpg`));
-        afterShots.push({ m, view: k, png: shotsAfter[k] });
+        const where = k.endsWith("top") ? "from above" : "at the default angle";
+        const what = k.startsWith("tint") ? `${m.name}, water ${Math.round(tint!.share * 100)}% bad, ${where}` : `${m.name}, ${where}`;
+        const file = k.startsWith("tint") ? `tint-${m.id}-${k.slice(5)}.jpg` : `${m.id}-${k}.jpg`;
+        await compose(tool, [b, shotsAfter[k]], [`Before (dev): ${what}`, `After: ${what}`], 2, 0.75, [null, null], join(OUT, file));
+        if (!k.startsWith("tint")) afterShots.push({ m, view: k, png: shotsAfter[k] });
       }
     }
     // the sheets: every after view in greyscale; the angled after views in the three simulations

@@ -707,7 +707,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         float absorb = waterAbsorb(d);
         vec3 murky = badwaterBody(depth);
         vec3 body = cleanWaterBody(d, absorb);
-        float alpha = mix(cleanWaterAlpha(absorb), badwaterAlpha(absorb), waterMurk(cont));
+        float alpha = cleanWaterAlpha(absorb);
         float foam = 0.0;
         float glints = 0.0;
         float pale = 0.0;
@@ -730,6 +730,8 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
             // badwater's troughs: the ripples' low parts
             trough = (1.0 - smoothstep(0.15, 0.5, 0.5 + 0.42 * (sl.x * 0.7 - sl.y * 0.5))) * near * bad;
           #endif
+          // badwater's opacity (nearly opaque but at its shallow edges), by how bad it is
+          alpha = mix(alpha, badwaterAlpha(depth, shore, waterGrazing(V, N)), waterMurk(cont));
           // foam where the water meets the shore, and below falls
           float fall = 1.0;
           if (bitOf(vFlags, 16.0) > 0.5) fall = min(fall, 1.0 - fr.x);
@@ -769,7 +771,7 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
           foam = (0.3 + 0.6 * streak) * smoothstep(0.12, 0.5, drop) * (1.0 - bad * 0.6);
           // a veil of streaks (badwater's dark, with brown streaks) that the cliff shows through; a
           // small step between two waters is barely there; the map's edge shows the water's side
-          alpha = edge ? mix(WATER_EDGE, BADWATER_EDGE, bad) : mix(0.16, 0.55, streak) * smoothstep(0.08, 0.25, drop);
+          alpha = edge ? mix(WATER_EDGE, BADWATER_SIDE, bad) : mix(0.16, 0.55, streak) * smoothstep(0.08, 0.25, drop);
           if (alpha < 0.01) discard;
         }
         foam = clamp(foam, 0.0, 1.0);
@@ -778,13 +780,13 @@ export function waterMaterial(scene: SceneUniforms, lite = false): ShaderMateria
         vec3 light = skyColor * 1.2 + sunColor * 0.3 * max(dot(N, sunDir), 0.0) * lit;
         c *= light;
         c = mix(c, WATER_CREST * light, crest * WATER_CREST_AMOUNT);
-        c = mix(c, BADWATER_TROUGH * light, trough * BADWATER_TROUGH_AMOUNT);
+        c = mix(c, badwaterShade(BADWATER_TROUGH, depth) * light, trough * BADWATER_TROUGH_AMOUNT);
         // the sky's reflection, stronger at low angles; pale ripples; the sun's glint and glints
         // (none on a fall: a sheet seen edge-on would mirror the sky in patches)
         float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0) * step(0.5, n.y);
         c = mix(c, WATER_SKY, fres * mix(WATER_REFLECT, BADWATER_REFLECT, bad));
         // pale streaks where it flows (badwater's brownish, so it reads as a flowing liquid too)
-        c = mix(c, mix(WATER_PALE, BADWATER_STREAK, bad), pale * mix(WATER_PALE_AMOUNT, BADWATER_STREAK_AMOUNT, bad));
+        c = mix(c, mix(WATER_PALE, badwaterShade(BADWATER_STREAK, depth), bad), pale * mix(WATER_PALE_AMOUNT, BADWATER_STREAK_AMOUNT, bad));
         float spec = pow(max(dot(reflect(-sunDir, N), V), 0.0), 90.0) * lit;
         c += sunColor * (spec * mix(WATER_SPEC, BADWATER_SPEC, bad) + glints * ${f(WS.glints)} * mix(1.0, BADWATER_GLINTS, bad) * (0.3 + 0.7 * lit));
         c += BADWATER_VEIN * bubbles * bad * BADWATER_BUBBLES;

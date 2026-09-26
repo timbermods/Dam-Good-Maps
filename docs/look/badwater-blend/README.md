@@ -4,55 +4,56 @@ Before (dev) on the left, after (branch `look/badwater-blend`) on the right. Bot
 look on our own generated maps, with the same camera and water time. No Real place has badwater, so
 none is shown. Made with `tools/capture-badwater.ts`.
 
-**Status (second round, after Kyler's review of #41):** the water now has one shared palette
-(`src/render3d/waterPalette.ts`), and partly bad water takes a warm red tint early. Badwater's own
-colours and opacity are placeholders until Kyler approves #38's badwater. Then they come from #38's
-calibration, and every capture below is made again.
-
-## The tint (second round)
+Badwater is #38's crimson, as Kyler approved it: matte and nearly opaque, with darker troughs and
+subdued streaks. It is see-through only at its shallow edges, and darker with depth (option A).
+Partly bad water takes that crimson hue early and darkens in proportion to how bad it is. All the
+water's colours come from one shared palette, `src/render3d/waterPalette.ts`.
 
 | Image | What to look at |
 |---|---|
-| [tint-riverValley-4242-256-top.jpg](tint-riverValley-4242-256-top.jpg) | From above: the river above the badwater ditches (about 40% bad) now reads red, clearly tainted. Before, it looked like deep clean water. |
-| [tint-riverValley-4242-256-angled.jpg](tint-riverValley-4242-256-angled.jpg) | Default angle: the same river. The ditches (pure badwater) are still the muddy placeholder until #38's colours arrive. |
-
-## First round
-
-| Image | What to look at |
-|---|---|
-| [riverValley-4242-256-top.jpg](riverValley-4242-256-top.jpg) | From above: the river mixed with badwater is one smooth tone, where dev had dark red blotches. |
-| [riverValley-4242-256-angled.jpg](riverValley-4242-256-angled.jpg) | Default angle: the badwater channels on both sides fade into the river over a few tiles. |
-| [delta-4242-256-top.jpg](delta-4242-256-top.jpg) | From above: the badwater plume in the delta is a soft gradient, not a speckled band. |
-| [delta-4242-256-angled.jpg](delta-4242-256-angled.jpg) | Default angle: the same front. |
-| [riverValley-5-128-top.jpg](riverValley-5-128-top.jpg) | 128² from above: the channel's badwater runs into the river and turns it murky gradually. |
-| [riverValley-5-128-angled.jpg](riverValley-5-128-angled.jpg) | 128² default angle: the murky river meets the clean river in a smooth gradient. |
-| [delta-5-128-top.jpg](delta-5-128-top.jpg) | 128² from above: a badwater stream meets a clean channel, and the water below it turns murky without speckle. |
-| [delta-5-128-angled.jpg](delta-5-128-angled.jpg) | 128² default angle: the same meeting. |
-| [greyscale.jpg](greyscale.jpg) | Every after view in greyscale: badwater and mixed water read darker than clean water, with no speckle. |
+| [tint-riverValley-4242-256-top.jpg](tint-riverValley-4242-256-top.jpg) | The river above the badwater ditches (37% bad), from above. It reads tainted, wine-red, where dev drew blue water with dark blotches. |
+| [tint-riverValley-4242-256-angled.jpg](tint-riverValley-4242-256-angled.jpg) | The same river at the default angle. |
+| [riverValley-4242-256-top.jpg](riverValley-4242-256-top.jpg) | Where the ditches and the river meet clean water, from above. Each front is a soft gradient over a few tiles. |
+| [riverValley-4242-256-angled.jpg](riverValley-4242-256-angled.jpg) | The same meeting at the default angle. The ditches are pure badwater, crimson and matte. |
+| [delta-4242-256-top.jpg](delta-4242-256-top.jpg) | A badwater plume in the delta, from above: a smooth gradient, not a speckled band. |
+| [delta-4242-256-angled.jpg](delta-4242-256-angled.jpg) | The same plume at the default angle. The deep channel is darker (option A). |
+| [riverValley-5-128-top.jpg](riverValley-5-128-top.jpg) | 128² from above: badwater runs into the river and taints it gradually. |
+| [riverValley-5-128-angled.jpg](riverValley-5-128-angled.jpg) | 128² at the default angle: the tainted river meets the clean river in a smooth gradient. |
+| [delta-5-128-top.jpg](delta-5-128-top.jpg) | 128² from above: a badwater stream meets a clean channel and taints the water below it. |
+| [delta-5-128-angled.jpg](delta-5-128-angled.jpg) | 128² at the default angle: the same meeting. |
+| [greyscale.jpg](greyscale.jpg) | Every after view in greyscale: badwater and tainted water are darker than clean water, with no speckle. |
 | [colour-blindness.jpg](colour-blindness.jpg) | The angled after views with deuteranopia, protanopia and tritanopia. |
-| [deep-badwater-options.jpg](deep-badwater-options.jpg) | Deep badwater, A and B. Kyler chose A: darker with depth. |
 
 ## Colour on screen
 
-`npx tsx tools/capture-badwater.ts --measure` measures the water with the method in
-`WATER_CALIBRATION` (`src/render3d/waterPalette.ts`), the same method as #38's colour check. A 64²
-bed of water, all one badwater share and depth, is drawn by the site's renderer on the GPU at
-1440 × 940. The camera looks 70° down, with the water held at 8 s. Pixels in a central 240 × 96
-patch are sorted by r + 2g + b, and each band is averaged. The body band is 15–40%. Second-round
-body colours:
+`npx tsx tools/capture-badwater.ts --measure` measures with the method in `WATER_CALIBRATION`,
+which is #38's colour check:
+- a 64² bed of water, all one badwater share and depth, over a poisoned bed;
+- drawn by the site's renderer on the GPU at 1440 × 940, 70° down, water held at 8 s;
+- pixels in a central 240 × 96 patch sorted by r + 2g + b, and each band averaged.
 
-| Depth | Clean (unchanged) | 10% bad | 25% bad | Half bad | Pure badwater (placeholder) |
+It passes when every target lands within 2 codes.
+
+| Pure badwater, 0.25 deep | #38's target (e63a3ff) | Standard, measured |
+|---|---|---|
+| Typical (45–55%) | #6E3431 [110, 52, 49] | #6E3431 [110, 52, 49] |
+| Troughs (5–15%) | #5E2E2B [94, 46, 43] | #5E2E2B [94, 46, 43] |
+| Streaks (96–98.5%) | #7C4538 [124, 69, 56] | #7C4538 [124, 69, 56] |
+| Body (15–40%, not a target) | #6B3330 [107, 51, 48], as #38 measured it | #6B332F [107, 51, 47] |
+
+Clean water's targets (Standard's approved look) land exactly too: #40626A, #21434F and #1D3545 at
+0.25, 1.25 and 4.25 deep.
+
+Body band by share and depth:
+
+| Depth | Clean | 10% bad | 25% bad | Half bad | Pure badwater |
 |---|---|---|---|---|---|
-| 0.25 | #40626A (L\* 39.3) | #5A5961 (38.2) | #6D4D53 (36.4) | #793D3E (33.4) | **#4B3C38 (26.8)** |
-| 0.8 | #254954 (28.8) | #3E4049 (27.3) | #4E363B (25.3) | #55282A (22.4) | #332724 (17.0) |
-| 1.25 | #21434F (26.3) | #383A44 (24.5) | #453036 (22.4) | #4B2325 (19.3) | #281F1C (12.7) |
-| 4.25 | #1D3545 (21.0) | #2C2D3B (19.0) | #36252E (16.9) | #371A1D (13.5) | #1C1412 (7.1) |
+| 0.25 | #40626A (L\* 39.3) | #555A61 (37.9) | #655053 (36.1) | #6F4342 (33.4) | #6B332F (28.6) |
+| 0.8 | #254954 (28.8) | #394048 (26.8) | #45373B (24.6) | #492B2C (21.4) | #3E1E1C (15.6) |
+| 1.25 | #21434F (26.3) | #333A43 (24.0) | #3D3036 (21.5) | #3F2526 (18.0) | #301716 (11.1) |
+| 4.25 | #1D3545 (21.0) | #292E3A (18.8) | #30262E (16.5) | #311D1E (13.2) | #231110 (7.2) |
 
-- **Clean water is unchanged:** a clean-water map draws the same pixels as dev in three views. The
-  palette's clean targets hold it exactly.
-- **Greyscale:** at every depth, water gets darker as more of it is bad. Its luminance falls in
-  proportion to the share.
-- **The tint:** the hue turns warm red early, over half way at a quarter bad, separately from the
-  darkening.
-- **Placeholder:** pure badwater a quarter level deep is #4B3C38, one code from Kyler's in-game
-  #4B3C37. #38's approved colours replace it.
+- **Greyscale:** at every depth, water gets darker as more of it is bad.
+- **Colour blindness:** tainted water and badwater are dark olive-brown against blue water with
+  deuteranopia and protanopia. With tritanopia they are red against teal.
+- **Clean water is unchanged:** a clean-water map draws the same pixels as dev in three views.

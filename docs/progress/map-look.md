@@ -360,3 +360,29 @@ lightness holds with the final colour; the shallow weak spot is accepted.
   #38's calibration, the margins are re-checked, and the captures are made again.
 - Tests: `look-badwater.test.ts`'s colour tests now check the new rule (the blend's curves, luminance
   in proportion, warm at a quarter bad, the placeholders); `water-palette.test.ts` is new (3).
+
+**#38's badwater, as Kyler approved it (2026-09-25; #38 at e63a3ff).** Kyler: "#38's badwater is
+approved; use its final colours and opacity for #41."
+- **#38's badwater in the shared palette:**
+  - its on-screen targets from #38's `check:colour` (pure badwater 0.25 deep over a poisoned bed,
+    70° down): typical #6E3431, troughs #5E2E2B, streaks #7C4538;
+  - its opacity (`badwaterOpacity`): 0.975–0.995 by depth, 0.52 less at its shallow edges, and at
+    least 0.85 at a grazing angle;
+  - its matte surface: a twelfth of clean water's glints and glint, and a trace of the sky.
+- **Calibrated to #38:** the Standard look's inputs are calibrated so it lands on #38's targets.
+  `--measure` hits all three exactly (0 codes off; 2 allowed). Badwater's troughs and streaks
+  darken with depth as its body does.
+- **Deep badwater stays option A,** re-derived for the crimson (`badDeep`, absorbing 1.85 a level).
+  It stays at least 6.2 L* below clean water at every depth.
+- **Tint:** it takes the crimson body's hue, so tainted water and badwater agree. The placeholders
+  are gone.
+- **The three loosened margins, re-checked:** the order of lightness holds with the crimson. In
+  luma: dead trees 0.784, moist ground 0.610, dry ground 0.401, contaminated ground from afar 0.303
+  at the least, badwater 0.251. All three accepted margins hold:
+  - dry ground is 0.150 lighter than badwater (test 0.15);
+  - clean shallows are 0.301 lighter (test 0.3);
+  - contaminated ground from afar is 0.053 lighter (test 0.05).
+
+  They are thin: badwater sits just under each of them.
+- **Captures:** all made again. The tint views of River Valley 4242 are centred on the river above
+  the ditches (37% bad). `deep-badwater-options.jpg` is gone, since Kyler chose A.

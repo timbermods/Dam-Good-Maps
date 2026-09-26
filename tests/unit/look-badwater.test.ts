@@ -2,15 +2,15 @@
 // badwater share, blended over the connected water a few tiles round and shared at the tops'
 // corners, so where badwater meets clean water the colour turns in a soft gradient over several
 // tiles, never in streaks or patches; clean water stays exactly as it was; water partly bad takes
-// a warm red tint early and darkens in proportion (Kyler's review of #41); badwater's own colours
-// are placeholders until #38's are approved, and darken with depth (option A).
+// a warm red tint early and darkens in proportion (Kyler's review of #41); badwater is #38's
+// approved crimson, matte and nearly opaque, and darkens with depth (option A).
 
 import { describe, expect, it } from "vitest";
 import { DataTexture } from "three";
 import { sceneUniforms, waterMaterial } from "../../src/render3d/materials";
 import { CHUNK } from "../../src/render3d/mesh";
 import { surfaceWater, waterFromDepth, type SurfaceWater } from "../../src/render3d/model";
-import { BADWATER, badwaterBody, cleanWaterBody, WATER, WATER_CALIBRATION, WATER_GLSL, WATER_PLACEHOLDERS, waterBlend, waterBody } from "../../src/render3d/waterPalette";
+import { BADWATER, badwaterBody, badwaterOpacity, cleanWaterBody, WATER, WATER_CALIBRATION, WATER_GLSL, waterBlend, waterBody } from "../../src/render3d/waterPalette";
 import { blendedBadwater, changedWaterChunks, lowerByTile, meshWaterChunk, type WaterMeshData } from "../../src/render3d/waterMesh";
 
 /** CIE L* of a display colour (sRGB). */
@@ -177,14 +177,27 @@ describe("badwater meeting clean water", () => {
 });
 
 describe("badwater's colour", () => {
-  it("waits for #38's: placeholders, for now at the in-game #4B3C37 in its shallows, darker deeper (option A)", () => {
-    // body, troughs, streaks and opacity are placeholders until Kyler approves #38's badwater
-    for (const k of ["WATER.bad", "WATER.badTrough", "WATER.badStreak", "BADWATER.opacity"]) expect(WATER_PLACEHOLDERS).toContain(k);
+  it("is #38's approved crimson: its body, troughs and streaks, matte and nearly opaque, and darker deeper (option A)", () => {
+    // #38's check:colour targets at e63a3ff, on screen (tools/capture-badwater.ts --measure lands on
+    // them); the view draws the body about as it is at 70°
     const target = WATER_CALIBRATION.targets.find((t) => t.share === 1)!;
-    expect(target.placeholder).toBe(true);
-    const measured = target.bands.body.map((v) => v / 255);
-    // the view draws WATER.bad about as it is at 70° (docs/look/badwater-blend/README.md)
-    for (let k = 0; k < 3; k++) expect(Math.abs(WATER.bad[k] - measured[k])).toBeLessThan(0.015);
+    expect(target.bands).toEqual({ typical: [110, 52, 49], trough: [94, 46, 43], streak: [124, 69, 56] });
+    for (let k = 0; k < 3; k++) expect(Math.abs(WATER.bad[k] - target.bands.typical[k] / 255)).toBeLessThan(0.03);
+    // crimson: red well over green and blue; darker troughs, lighter streaks
+    expect(WATER.bad[0]).toBeGreaterThan(2 * WATER.bad[1]);
+    expect(WATER.bad[1]).toBeGreaterThan(WATER.bad[2]);
+    expect(lightness(WATER.badTrough)).toBeLessThan(lightness(WATER.bad) - 2);
+    expect(lightness(WATER.badStreak)).toBeGreaterThan(lightness(WATER.bad) + 2);
+    // water partly bad takes badwater's own hue
+    expect(WATER.tint).toEqual(WATER.bad);
+    // nearly opaque in open water, see-through at its shallow edges, opaque at a grazing angle
+    for (const d of [0.25, 0.5, 1, 3]) expect(badwaterOpacity(d)).toBeGreaterThanOrEqual(0.975);
+    expect(badwaterOpacity(0.1, 0)).toBeLessThan(0.5);
+    expect(badwaterOpacity(0.1, 0, 0)).toBeGreaterThanOrEqual(0.85);
+    // matte: a twelfth of clean water's glints and glint, and a trace of the sky
+    expect(BADWATER.glints).toBeLessThan(0.1);
+    expect(BADWATER.spec).toBeLessThan(0.1);
+    expect(BADWATER.reflect).toBeLessThan(0.1);
     expect(badwaterBody(BADWATER.shallow)).toEqual(WATER.bad);
     // option A: darker with depth
     for (let d = 0.3; d < 5; d += 0.1) expect(lightness(badwaterBody(d))).toBeLessThan(lightness(badwaterBody(d - 0.1)) + 1e-9);
@@ -243,7 +256,7 @@ describe("badwater's colour", () => {
       expect(shader).toContain("float bad = waterDull(cont);");
       expect(shader).toContain("vec3 murky = badwaterBody(depth);");
       expect(shader).toContain("vec3 c = waterBlend(body, murky, cont);");
-      expect(shader).toContain("mix(cleanWaterAlpha(absorb), badwaterAlpha(absorb), waterMurk(cont))");
+      expect(shader).toContain("alpha = mix(alpha, badwaterAlpha(depth, shore, waterGrazing(V, N)), waterMurk(cont));");
       // the old streaks of mixed water are gone; the bubbles grow denser with the share
       expect(shader).not.toContain("mixed");
       expect(shader).toContain("smoothstep(0.93 - 0.1 * bad, 1.03 - 0.1 * bad");
