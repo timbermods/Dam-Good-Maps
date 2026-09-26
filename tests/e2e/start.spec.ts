@@ -6,7 +6,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 type Check = { id: string; ok: boolean; value?: number | string; limit?: number | string; where?: { tiles?: [number, number][] } };
-const WOOD_WORDS = "(, (all|mostly) [a-z]+|, [a-z]+ and [a-z]+)?";
+// the species words, then the saplings' wood, shown apart as growing
+const WOOD_WORDS = "(, (all|mostly) [a-z]+|, [a-z]+ and [a-z]+)?(, plus about \\d+ growing)?";
 
 async function checks(page: Page): Promise<Record<string, Check>> {
   const cur = await page.evaluate(() => window.dgm!.current!());
@@ -25,7 +26,7 @@ test("the map card lists the start requirements, and the editor's start follows 
   let c = await checks(page);
   const req = page.getByRole("region", { name: "Start requirements" });
   await expect(req.locator('[data-check="start.water"]')).toHaveText(`Water without stairs: ${c["start.water"].value} tiles' walk (at most 20)`);
-  await expect(req.locator('[data-check="start.wood"]')).toHaveText(new RegExp(`^Starting wood: ${c["start.wood"].value} logs within 20 tiles' walk${WOOD_WORDS} \\(at least 120\\)$`));
+  await expect(req.locator('[data-check="start.wood"]')).toHaveText(new RegExp(`^Starting wood: ${c["start.wood"].value} logs within 20 tiles' walk${WOOD_WORDS} \\(at least 80\\)$`));
   await expect(req.locator('[data-check="start.food"]')).toHaveText(`Starting bushes: ${c["start.food"].value} living within 20 tiles' walk (at least 30)`);
   for (const id of ["start.water", "start.wood", "start.food"]) await expect(req.locator(`[data-check="${id}"]`)).toHaveClass(/\bok\b/);
 

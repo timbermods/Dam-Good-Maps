@@ -801,6 +801,8 @@ A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built
 - **Starting wood** (D164): the logs of the grown trees within 20 tiles' walk, by species, replace
   the tree count; **Minimum starting wood (logs)**, with saplings' wood shown apart as growing, and
   the page reading a tree's growth correctly (before and after captures of saplings for Kyler).
+- **Tall maps** (D172 (1), after probe run 20260925-tall): both validators allow heights up to 22,
+  with a note above 16 that the in-game map editor edits only up to level 16.
 
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
 D151, and what a player feels.
