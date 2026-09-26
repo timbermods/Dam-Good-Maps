@@ -14,37 +14,29 @@ import { GENERATOR_VERSION, THEME_NAMES, type MapSpec } from "../spec/mapspec";
 /** Written into world.json; never read by the game (FORMAT.md §4.1). Fixed so files reproduce. */
 export const TIMESTAMP = "2026-01-01 00:00:00";
 
+/** The map's name in the game's map list: its theme's, or "Dam Good Map" for Any. */
 export function mapName(spec: MapSpec): string {
-  return THEME_NAMES[spec.theme];
+  return spec.theme === "any" ? "Dam Good Map" : THEME_NAMES[spec.theme];
 }
 
 export function fileName(spec: MapSpec): string {
   return `${mapName(spec)} (${spec.seed}).timber`;
 }
 
-export function description(spec: MapSpec): string {
+/** The map's description in the game (map_metadata.json): what it is, its badwater choice (D200),
+ *  and, on a map whose land rises above 16, that the game's map editor edits only up to 16 (D172).
+ *  Without the built map it says what the settings say. */
+export function description(spec: MapSpec, built?: Pick<BuildResult, "heights" | "entities">): string {
   const size = `${spec.size.x}×${spec.size.y}`;
-  const w = spec.settings.water;
-  const falls = w.waterfalls !== "off";
-  let body: string;
-  switch (spec.archetype) {
-    case "canyon":
-      body =
-        `A river runs deep in a canyon${falls ? ", over falls," : ""} through a narrows where one short dam holds a reservoir. ` +
-        "A flight of steps climbs the canyon wall beside the start.";
-      break;
-    case "lakeBasin":
-      body =
-        `${w.rivers > 1 ? "Rivers run into" : w.rivers === 1 ? "A river runs into" : "A spring fills"} a lake at the heart of the map. ` +
-        "Its one outlet runs through a narrow gap, where a short dam raises the whole lake.";
-      break;
-    default:
-      body =
-        `A river crosses the valley${falls ? " and drops over a cascade" : ""} into a basin that a rock ridge pinches into a gorge ` +
-        `(one short dam there holds a reservoir), then flows on${falls ? " over falls" : ""} and out.`;
-  }
-  const bad = spec.settings.hazards.badwater !== "off" ? " Badwater rises in side basins; a levee on a basin's outlet holds it back." : "";
-  return `${THEME_NAMES[spec.theme]}, ${size}, designed for ${spec.designedFor}. ${body}${bad} Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`;
+  const kind = spec.theme === "any" ? "A map" : `${THEME_NAMES[spec.theme]}`;
+  const out = [`${kind}, ${size}, designed for ${spec.designedFor}. Its land and rivers were shaped by uplift, erosion and flowing water.`];
+  if (spec.settings.hazards.badwater === "off") out.push("No badwater sources; badtides still come.");
+  else if (!built || built.entities.some((e) => e.template === "BadwaterSource")) out.push("Badwater springs up in a hollow away from the start.");
+  let top = 0;
+  if (built) for (const v of built.heights) if (v > top) top = v;
+  if (top > 16) out.push(`The land rises to level ${top}: the game's map editor edits only up to level 16.`);
+  out.push(`Made with Dam Good Maps ${GENERATOR_VERSION}, seed ${spec.seed}.`);
+  return out.join(" ");
 }
 
 export interface PackOptions {
@@ -79,7 +71,7 @@ export function toWorld(spec: MapSpec, built: BuildResult, opts: PackOptions = {
 
 export function toTimberFile(spec: MapSpec, built: BuildResult, opts: PackOptions = {}): TimberFile {
   return {
-    metadata: mapMetadata(built.W, built.H, description(spec) + (opts.emptyWater ? " This copy starts without water." : "")),
+    metadata: mapMetadata(built.W, built.H, description(spec, built) + (opts.emptyWater ? " This copy starts without water." : "")),
     thumbnail: opts.thumbnail ?? thumbnailJpeg(built.heights, built.W, built.H, built.water),
     versionTxt: GAME_VERSION + "\r\n",
     world: toWorld(spec, built, opts),
