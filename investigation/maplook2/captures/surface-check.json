@@ -51,99 +51,100 @@
     1,
     1
   ],
+  "motionBackground": "Uniform dark bed; bright facets/slow glowing bubbles excluded from crest tracking. Search resolution 0.01 tile.",
   "motions": [
     {
       "name": "lake",
       "shift": 0,
-      "error": 0.11519953981478297,
+      "error": 0.12259209938131575,
       "detail": {
         "white": 2,
-        "edges": 1552,
+        "edges": 1564,
         "pixels": 60000
       }
     },
     {
       "name": "slow east",
-      "shift": 0.04,
-      "error": 1.0921507867184044,
+      "shift": 0.03,
+      "error": 1.1772647683746846,
       "detail": {
         "white": 9,
-        "edges": 1611,
+        "edges": 1610,
         "pixels": 60000
       }
     },
     {
       "name": "fast east",
       "shift": 0.12,
-      "error": 1.3586544984602693,
+      "error": 1.3317493930437965,
       "detail": {
         "white": 12,
-        "edges": 1797,
+        "edges": 1776,
         "pixels": 60000
       }
     },
     {
       "name": "fast west",
       "shift": -0.12,
-      "error": 1.1562267884865778,
+      "error": 1.137175955486718,
       "detail": {
-        "white": 4,
-        "edges": 1443,
+        "white": 2,
+        "edges": 1427,
         "pixels": 60000
       }
     },
     {
       "name": "fast north",
       "shift": 0.12,
-      "error": 0.7678186104311314,
+      "error": 0.7508925123252373,
       "detail": {
         "white": 14,
-        "edges": 1653,
+        "edges": 1661,
         "pixels": 60000
       }
     },
     {
       "name": "mixed east",
       "shift": 0.12,
-      "error": 1.3130910868991426,
+      "error": 3.1560040653076262,
       "detail": {
-        "white": 16,
-        "edges": 1313,
+        "white": 2,
+        "edges": 1096,
         "pixels": 60000
       }
     },
     {
       "name": "badwater east",
       "shift": 0.12,
-      "error": 1.3869811472287712,
+      "error": 0.589554033286366,
       "detail": {
-        "white": 17,
-        "edges": 427,
+        "white": 0,
+        "edges": 874,
         "pixels": 60000
       }
     }
   ],
   "previous": {
     "white": 0,
-    "edges": 10,
+    "edges": 5,
     "pixels": 60000
   },
   "phaseChanges": [
     {
       "time": 11.99,
-      "meanDelta": 0.06198151026752843
+      "meanDelta": 0.06202592302567759
     },
     {
       "time": 12,
-      "meanDelta": 0.061628545715921974
+      "meanDelta": 0.06124285597410035
     },
     {
       "time": 17.99,
-      "meanDelta": 0.0550274073468052
+      "meanDelta": 0.054377578569675435
     },
     {
       "time": 18,
-      "meanDelta": 0.05518635827070745
+      "meanDelta": 0.0554411472516684
     }
   ],
   "errors": []

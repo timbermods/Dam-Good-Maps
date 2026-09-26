@@ -80,7 +80,7 @@ try {
         return {label:a.label,W:m.W,H:m.H,objects:m.entities.count,waterColumns:m.water.count,caveColumns:m.columns.tiles.length,badwater:Array.from(m.water.contamination).filter(c=>c>=0.95).length,mixed:Array.from(m.water.contamination).filter(c=>c>0.05&&c<0.95).length,moist:Array.from(m.soil.moisture).filter(v=>v>0).length,contaminated:Array.from(m.soil.contamination).filter(v=>v>0).length,flow:{source:a.flowSource,median:speeds[Math.floor(speeds.length*.5)]??0,p90:speeds[Math.floor(speeds.length*.9)]??0}};
       });
       report.maps.push(entry);console.log('Loaded',i,entry.label);
-      if(i===0){await capture('river-128-badwater','badwater');await capture('river-128-badwater-low','badwater',Math.PI/3,0.35);await capture('river-128-soil','contaminated');await capture('river-128-ruins','ruins');}
+      if(i===0){await capture('river-128-badwater','badwater');await capture('river-128-badwater-low','badwater',0,0.55);await capture('river-128-soil','contaminated');await capture('river-128-ruins','ruins');}
       if(i===1){await capture('river-256-meeting','mixed');await capture('river-256-overview','overview');}
       if(i===6){await capture('lake-128-shore','shore');await capture('lake-128-shore-low','shore',Math.PI/3,0.35);await capture('lake-128-water-above','water-above');await capture('lake-128-water-low','water-low');await capture('lake-128-water-grazing','water-grazing');}
       if(i===7)await capture('lake-256-water-above','water-above');
