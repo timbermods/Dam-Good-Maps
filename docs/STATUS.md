@@ -16,7 +16,11 @@ Most important first. Nothing below was released without your approval.
   - `investigation/generative/REPORT-v2.md`;
   - one contact sheet per theme in `docs/sheets/design-v2/`, plus `docs/sheets/design-v2.png`;
   - the ten briefs in `investigation/generative/briefs/v2/`, with their renders in `investigation/generative/renders/v2/`.
-- **M9a** is running on `feature/m9a`, first on the machine.
+- **M9a** is running on `feature/m9a` ([PR #56](https://github.com/timbermods/dam-good-maps/pull/56), work in progress),
+  first on the machine. Its first slice is in: the generator from the processes, "Any" by default with a
+  Verticality slider, the straight-river check, format 3, generator 0.7.0, and 100% final on its first
+  128² batches, "Any" included. Its in-game gate batch is prepared (15 maps, about 1½ hours) and waits for
+  your yes.
   - It includes "Any" as the default, no ruler-straight rivers, badwater on every map, and every rule since version 2.
   - Its agent definitions (M9a on Opus at xhigh, M9b and M9c at high, routine work on Sonnet at medium) are in `.claude/agents/`. They load from the next session, so tonight's M9a agent runs on Opus 5.5 at this session's effort.
 
@@ -44,9 +48,16 @@ Most important first. Nothing below was released without your approval.
    - Say which places should go: `C:\dgm-workshop\places\sheet.html`, where all 150 are numbered, with a before/after for the walls in `walls.html`.
    - Check the second-map titles: eleven end in "Centre", and one reads "Mahabaleshwar East, Western Ghats".
    - 25 maps needed 8× the official water strength.
-4. **Badwater on every map (D200):** [PR #54](https://github.com/timbermods/dam-good-maps/pull/54), generator 0.6.3.
-   - It adds a "No badwater" option.
-   - CI is green; its batches and contact sheet are finishing. Its sheet is for your look before I merge it.
+4. **Badwater on every map (D200):** [PR #54](https://github.com/timbermods/dam-good-maps/pull/54), generator
+   0.6.3, finished. It adds a "No badwater" option, and the batches finish 100% (2,760 maps). Every
+   official map has lasting badwater: 18 have a badwater source, and Spillage has seeps. Your calls:
+   - **The contact sheet** `docs/sheets/badwater-source.png` (on its branch): most maps now get 2 sources
+     at 128² and 3–4 at 192² and 256². Its badwater streams run ruler-straight with right-angle turns,
+     from today's generator: exactly what D209 fixes in M9a. **My default:** merge #54 into `dev` (Real
+     places and M9a use its placement module), but release it only with M9a, so players never see
+     those straight streams.
+   - **Claude's "remove the badwater spring"** (P09) on a map with one source left: set the map to "No
+     badwater", or refuse? It refuses for now.
 5. **The forces prototypes are held until you say each is ready:**
    - Carve [#47](https://github.com/timbermods/dam-good-maps/pull/47) (one more Codex round: Wander, Width, variation, Try another path);
    - Erupt [#50](https://github.com/timbermods/dam-good-maps/pull/50);
