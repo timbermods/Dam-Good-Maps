@@ -36,8 +36,9 @@ editor is desktop-first (D185).
 ## 3. The screen
 
 - **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve,
-  Craterize, Quake, a visually distinct group) | Remove, with a small options row for the picked tool.
-  The three forces are built on one shared forces core (D203).
+  Craterize, Quake, Erupt, a visually distinct group) | Remove, with a small options row for the picked
+  tool; every force's options row starts with its mode switch. The four forces are built on one shared
+  forces core (D203, D206).
 - **The left shelf:** a clean grid of placeable objects (the start, trees, bushes, ruins, the mine
   site, relics, slopes and the rest), each a small render in the map's look. Picking one shows a live
   ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
@@ -93,11 +94,17 @@ editor is desktop-first (D185).
   another** (including a natural tilt); objects ride with the land; it refuses a fault through the start
   and never adds water; one undo step, and Esc reverts. Prototyped on `investigation/quake` (held until
   Kyler says it's ready).
+- **Erupt, a force of nature** (D206): in the forces group. It raises a volcano: **Mode** (**Vent** or
+  **Fissure**); **Power**; **Shape** (**Steep** or **Broad**); **Summit** (Auto, Peak, Crater, Caldera);
+  **Flows** (Light or Heavy, with or without Ridges); **Try another**. Fresh volcanic rock is hard for
+  Carve; flows can dam rivers; objects ride the rising ground; overlapping eruptions build volcanic
+  fields; it refuses to erupt where the start sits and never adds water; one undo step, and Esc
+  reverts. Prototyped on `investigation/erupt` (held until Kyler says it's ready).
 - **Remove:** click one object or drag to remove many; filters; a red highlight on hover. It never
   changes terrain, and it refuses removals that would break a rule (such as deleting the start).
 - **Heights:** up to 16, or 22 on tall maps (D172); the game's own editor edits up to 16.
 
-(D180, D182, D183, D184, D193, D202, D203.)
+(D180, D182, D183, D184, D193, D202, D203, D206.)
 
 ## 5. Water
 

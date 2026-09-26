@@ -116,6 +116,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D203: Quake (a fault line: Lift or Slide, Power, Sheer or Stepped scarp) joins Carve and Craterize in a visually distinct forces group on the top bar; all three share one forces core; its prototype is held until Kyler says it's ready.
 - D204: Flatten from the stroke's start, cut and fill, Cliff or Ramped edges, a "start fits here" hint, objects ride the ground; and the principle "tools read intent".
 - D205: drag to resize the brush (hold F), juice with optional quiet sounds, a minimap (on at 256²), camera bookmarks (Ctrl+Shift+1–9, Shift+1–9); a build time-lapse near M13.
+- D206: Erupt (a volcano: Vent or Fissure, Power, Steep or Broad, a summit, flows) joins the forces; every force's options row starts with its mode switch; all four share one forces core; its prototype is held until Kyler says it's ready.
 
 ## Done and released
 
@@ -167,8 +168,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) when their
-  PRs open, until Kyler says each is ready.
+- **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) and
+  `investigation/erupt` (Erupt, D206) when their PRs open, until Kyler says each is ready.
 - **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
   round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
   merged when he says it's ready.
