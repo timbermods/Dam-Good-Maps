@@ -10,14 +10,16 @@ export const CLEAN_PALETTE = {
 } as const;
 // Badwater's material input is warmer than the reference pixels: its visible
 // colour includes the existing poisoned bed through the shallow water.
-export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [88,48,39] } as const;
+export const MIX_PALETTE = { mlMix: [44,66,76], mlBad: [95,58,56] } as const;
+// Display-contrast offsets, compensated for the unchanged shallow transmission.
+export const BAD_DETAIL = { mlBadTrough: [-14,-7,-3], mlBadStreak: [41,36,30] } as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
   material.uniforms = { ...material.uniforms };
   material.uniforms.mlFlow = { value: null };
   material.uniforms.mlFlowSize = { value: new Vector2(1, 1) };
-  for (const [name, rgb] of Object.entries({...CLEAN_PALETTE,...MIX_PALETTE})) {
+  for (const [name, rgb] of Object.entries({...CLEAN_PALETTE,...MIX_PALETTE,...BAD_DETAIL})) {
     material.uniforms[name] = { value: new Vector3(...rgb).divideScalar(255) };
   }
   const marker = '      /** The slope of the ripples';
@@ -34,6 +36,7 @@ vec3 rippleNormal(vec2 p, float t) {
 }
 uniform vec3 mlShallow, mlBody, mlDeep, mlStreakAbove, mlStreakLow, mlGrazing, mlStreakGrazing;
 uniform vec3 mlMix, mlBad;
+uniform vec3 mlBadTrough, mlBadStreak;
 uniform sampler2D mlFlow;
 uniform vec2 mlFlowSize;
 float fleckHash(vec2 p) {
@@ -93,6 +96,16 @@ vec4 measuredSurfaceWater(vec2 g, float depth, float shore, float contamination,
   float texture = 0.5+(mix(chop(p),chop(p2),blend)-0.5)/sqrt(blend*blend+(1.0-blend)*(1.0-blend));
   float streak = smoothstep(0.51,0.79,texture) * near;
   vec3 colour = mix(body, streakColour, streak);
+  if(contamination>0.25) {
+    // The same advected texture drives brick-red troughs and lighter crests.
+    // Leave the front, phase, poisoned bed and actual opacity untouched.
+    float trough=(1.0-smoothstep(0.20,0.38,texture))*near;
+    float signalOpacity=mix(0.40,0.94,smoothstep(0.05,1.80,depth));
+    signalOpacity=mix(0.30,signalOpacity,smoothstep(0.0,0.20,shore));
+    signalOpacity=max(signalOpacity,grazing*0.62);
+    colour += (mlBadTrough*trough+mlBadStreak*streak)
+      *((contamination-0.25)/0.75)/signalOpacity;
+  }
   // Palette is anchored in full sun; preserve the existing sun's shadow attenuation.
   vec3 referenceLight = skyColor*1.05 + sunColor*0.42*max(sunDir.y, 0.0);
   vec3 rippleLight = skyColor*1.05 + sunColor*0.42*max(dot(normalize(mix(vec3(0.0,1.0,0.0),N,0.35)),sunDir),0.0)*lit;

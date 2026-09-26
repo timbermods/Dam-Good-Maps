@@ -37,7 +37,7 @@ try{
       }
       pixels.sort((a,b)=>(a[0]+2*a[1]+a[2])-(b[0]+2*b[1]+b[2]));
       function band(lo,hi){const s=pixels.slice(Math.floor(pixels.length*lo),Math.floor(pixels.length*hi));return [0,1,2].map(c=>s.reduce((sum,p)=>sum+p[c],0)/s.length);}
-      return {body:band(.15,.40),streak:band(.96,.985)};
+      return {body:band(.15,.40),typical:band(.45,.55),trough:band(.05,.15),streak:band(.96,.985)};
     }
     const targets={mlShallow:[42,75,85],mlBody:[36,67,77],mlDeep:[29,50,62],mlStreakAbove:[47,84,95],mlStreakLow:[58,87,97],mlGrazing:[52,80,90],mlStreakGrazing:[80,123,129]};
     const measurements=[];
@@ -47,7 +47,7 @@ try{
     }
     for(const [depth,contamination,label] of [[.25,1,'badwater shallow poisoned bed'],[1.25,.25,'mostly clean mixing zone']]){
       const height=bed(depth,contamination),s=sample(height,1.22);
-      measurements.push({label,depth,contamination,pitch:1.22,body:s.body.map(Math.round),bodyHex:hex(s.body),streak:s.streak.map(Math.round),streakHex:hex(s.streak)});
+      measurements.push({label,depth,contamination,pitch:1.22,body:s.body.map(Math.round),bodyHex:hex(s.body),typical:s.typical.map(Math.round),typicalHex:hex(s.typical),trough:s.trough.map(Math.round),troughHex:hex(s.trough),streak:s.streak.map(Math.round),streakHex:hex(s.streak)});
     }
     const {highWater:acceptedWater,CLEAN_PALETTE:acceptedPalette}=await import('/.cache/accepted-water.ts');
     const {CLEAN_PALETTE:currentPalette}=await import('/water.ts');
@@ -70,16 +70,18 @@ try{
     const box=[Math.ceil(Math.min(corner1.x,corner2.x))+2,Math.ceil(Math.min(corner1.y,corner2.y))+2,Math.floor(Math.max(corner1.x,corner2.x))-2,Math.floor(Math.max(corner1.y,corner2.y))-2];
     const waterfallUnchanged=compare(renderWith(accepted),renderWith(material),box);
     accepted.dispose();
-    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,badwaterReference:{range:['#4C3935','#5A423C'],note:'Final request calls for a warmer material, visible poisoned bed and little cool reflection; these are references, not flat-colour equality targets.'},inputs:Object.fromEntries([...keys,'mlBad','mlMix'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
+    return {renderer:a.high.gpu().renderer,preservationBaseline:'9aeac6b',cleanPaletteUnchanged:true,targets,badwaterTargets:{typical:[101,63,53],trough:[91,56,48],streak:[147,101,81]},inputs:Object.fromEntries([...keys,'mlBad','mlMix','mlBadTrough','mlBadStreak'].map(k=>[k,material.uniforms[k].value.toArray().map(v=>v*255)])),measurements,waterfallUnchanged};
   });
   result.errors=errors;
-  // The final request deliberately warms badwater beyond a fixed screenshot swatch
-  // and exposes its poisoned bed. check:badwater checks that appearance response.
+  // Clean calibration is unchanged; the latest badwater request now supplies
+  // separate typical/trough/streak targets, measured through the visible bed.
   const probes=[[0,'body','mlShallow'],[1,'body','mlBody'],[2,'body','mlDeep'],[1,'streak','mlStreakAbove'],[3,'streak','mlStreakLow'],[4,'body','mlGrazing'],[4,'streak','mlStreakGrazing']];
   result.maxTargetError=Math.max(...probes.flatMap(([i,part,key])=>result.measurements[i][part].map((v,c)=>Math.abs(v-result.targets[key][c]))));
+  result.maxBadwaterError=Math.max(...Object.entries(result.badwaterTargets).flatMap(([part,rgb])=>rgb.map((v,c)=>Math.abs(v-result.measurements[5][part][c]))));
   writeFileSync('captures/colour-check.json',JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify(result,null,2));
   if(errors.length)throw new Error(errors.join('\n'));
   if(result.maxTargetError>2)throw new Error('Rendered colour is more than two code values from its target');
+  if(result.maxBadwaterError>2)throw new Error('Badwater trough/body/streak calibration missed its target');
   if(result.waterfallUnchanged.changed||!result.waterfallUnchanged.channels)throw new Error('Accepted waterfall curtain changed');
 }finally{await browser.close();}
