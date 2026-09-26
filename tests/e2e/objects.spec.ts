@@ -94,7 +94,8 @@ test("a forest shows where its trees live before it is placed", async ({ page })
   await page.getByRole("tab", { name: "Resources" }).click();
   await page.getByRole("button", { name: "Forest", exact: true }).click();
   const [x, y] = await riverTile(page, 0.5);
-  await drag(page, [x - 7, y - 7], [x + 7, y + 7]);
+  // (a 21-tile square: generator 0.7.0's rivers run lower between their banks, so less of the land round them is moist)
+  await drag(page, [x - 10, y - 10], [x + 10, y + 10]);
   const p = (await plan(page))!;
   expect(p.ok).toBe(true);
   // green where the soil stays moist; the river itself stays bare

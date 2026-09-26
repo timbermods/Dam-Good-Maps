@@ -50,8 +50,12 @@ for (const theme of ["islands", "lakeBasin"]) {
       let u = await api.apply({ op: "sculpt", params: { mode: "lower", cells, amount: 2 } }, "user", "Lower terrain");
       out.push({ name: "lower ground beside water", ms: performance.now() - t0, ok: u.ok });
       // a weir across the main river
-      const river = u.info.features.find((f) => f.kind === "river" && "edge" in (f.params as { entry: object }).entry && !(f.params as { badwater: boolean }).badwater)!;
-      for (const s of [30, 40, 60, 80]) {
+      // (the map's main river: generator 0.7.0 names it; a map whose rivers all start at springs has one too)
+      const river = u.info.features.find((f) => f.kind === "river" && f.role === "river/main") ?? u.info.features.find((f) => f.kind === "river" && !(f.params as { badwater: boolean }).badwater)!;
+      // (the first places where it fitted on generator 0.6's maps, then every 5 tiles along the river)
+      const along = [30, 40, 60, 80];
+      for (let s = 10; s <= 200; s += 5) if (!along.includes(s)) along.push(s);
+      for (const s of along) {
         const plan = await api.planTool({ tool: "object", kind: "weir", river: { id: river.id, at: s } }, "7a1b2c3d-2222-4222-8333-444455556666");
         if (!plan.ok) continue;
         t0 = performance.now();
