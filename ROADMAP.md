@@ -859,6 +859,9 @@ Real places rebuild on it in their second round.
 byte checks) and the mine-site guarantee. Resource amounts in or out of the official range are
 information.
 
+**Status:** built on `feature/resources` (docs/progress/resources.md), PR #43 into `dev`, merged
+with the start and edge rules; generator 0.6.2.
+
 ---
 
 ## Badwater on every map
@@ -897,7 +900,14 @@ they conflict):
   always zooms, Alt+scroll slices the visible layers, as in the game, D196); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve, Craterize,
+   Quake, Erupt; a visually distinct group, D203, D206) | Remove. Every force's options row starts with
+   its mode switch. Erupt raises a volcano (Vent or Fissure, Power, Steep or Broad, a summit, flows, Try
+   another); built from `investigation/erupt` once Kyler says it's ready. Quake splits the land along a drawn fault (Lift
+   or Slide, Power, Sheer or Stepped scarp, Try another); built from `investigation/quake` once Kyler
+   says it's ready. All four forces share one forces core.
+   Craterize (D202) simulates a giant impact (Strike or Aim, Power, Size, walls, centre, debris, Try
+   another); built from `investigation/craterize` once Kyler says it's ready. A small row
    beneath shows only the picked tool's options. The size ring is drawn on the land; strength shows
    only while Shift+scrolling. Toggles, off by default: square shape, precise mode, straight lines,
    level lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
@@ -906,6 +916,9 @@ they conflict):
    Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
    with an optional "stop at" level (a faint plane, a pulse on arrival); never below the map's bottom
    or under placed objects.
+   Flatten (D204) starts from the stroke's own height, cuts and fills, has Cliff or Ramped edges,
+   hints where the start fits, and carries trees and objects with the ground.
+   Hold F to resize the brush by dragging (D205).
 2. **Water:** a reflection of the land being painted.
    - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
@@ -942,6 +955,11 @@ they conflict):
    clustered at official-like densities.
 4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
    (moisture, contamination, drought). The legend appears only while an overlay is on.
+   Visible layers exactly as in Timberborn (D207): a compact layer widget (∞ until used), slicing
+   that hides everything above the level, the layer pick, and tools that act on the visible land.
+   Also (D205): a corner minimap (on by default at 256², a toggle among the view buttons), small
+   satisfying feedback on every action with optional quiet sounds and reduced-motion support, and
+   camera bookmarks (Ctrl+Shift+1–9 to save, Shift+1–9 to glide back).
 5. **Header:** Undo and Redo icons with their shortcuts; one primary button, **Save to Timberborn**
    (merged in #40; in browsers that can't save to a folder, **Download .timber** takes its place);
    everything else (Open, Save project, Download .timber, History, New map) in one small menu.
@@ -2215,6 +2233,17 @@ the new screens; no second full design pass.
 refine, ask Claude, export, load in Timberborn.
 
 **Effort:** high.
+
+---
+
+## Build time-lapse
+
+Near M13, with the sharing features (Kyler, 2026-09-26; PLAN §20 D205): replay a map's edit history
+at speed from the generated map, with a camera that glides to each edit, and save it as a WebM video
+to share. The history is already a list of operations that replay exactly (D158), so this reads it;
+it adds nothing to the editor's screen until used.
+
+**Blocking:** the replay matches the map exactly at its end; the page never freezes while recording.
 
 ---
 
