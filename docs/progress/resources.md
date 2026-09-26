@@ -2,8 +2,9 @@
 
 **Built** on branch `feature/resources`, from Kyler's four decisions of 2026-09-25 (metal on every
 map; tree counts roughly like the official maps; resources in clusters; ruins that look and vary like
-the official maps). The orchestrator records the decisions in PLAN §20. Generated maps change:
-generator **0.7.0**, and old share links open with the note that the map may differ.
+the official maps; D167–D170). Kyler approved it ("look much better") and it merges after the start
+and edge rules (#44). Generated maps change: generator **0.6.2** (0.7.0 stays for M9a), and old
+share links (0.6.0, 0.6.1) open with the note that the map may differ.
 
 ## The official baselines
 
@@ -96,9 +97,11 @@ often and turns at random. The table's medians changed little: trees at max size
   below).
 - `measure.ts`: the measures, for the official maps and ours alike.
 
-**In the generator** (`gen/resources.ts`): the near-start patches and groves are planned as before
-(they are the start requirements', and the start-and-edge-rules branch changes them), now thinned
-like the rest where the walk has room; the rest of the budget comes from the baseline. Ruin fields
+**In the generator** (`gen/resources.ts`): the near-start patches and groves are planned as the start
+requirements need (with #44, groves grow until their grown trees give 1.35× Minimum starting wood,
+drawing species by the wood they give where the walk's moist land is short), now thinned like the
+rest where the walk has room, and filled where it has little; the rest of the budget comes from the
+baseline. Ruin fields
 carry a new optional feature param `layout: { tallness }`; the rasterizer draws their heights, models
 and turns with `ruinColumns` from the feature's own stream, so a rebuild gives the same bytes, and
 fields without it (old project files, the editor's and Claude's tools) keep the old algorithm. The
@@ -119,7 +122,7 @@ const r = planMapResources({
   start: startCentreOf(startObject),       // resources/measure.ts: the 3×3's centre tile
   settings: defaultSettings("riverValley", "normal", { x: W, y: H }).resources,
   seed: hash32("real-place", place.id),
-  nearStart: { trees: Math.ceil(1.2 * rules.treesWithin20), bushes: Math.max(rules.berriesTarget, Math.ceil(1.15 * rules.bushesWithin20)) },
+  nearStart: { wood: Math.ceil(1.35 * rules.woodWithin20), bushes: Math.max(rules.berriesTarget, Math.ceil(1.15 * rules.bushesWithin20)) },
   ruinsClear: rules.ruinsWithin + 7,
   owner: `real-place:${place.id}`,
 });
@@ -128,14 +131,16 @@ entities.push(...r.entities);             // trees, bushes, ruin columns, mine s
 
 - It places at least one mine site whenever any flat dry 5×5 ground exists: in the generator's band
   first (60+ tiles, scaled below 128²), then down to half of it.
-- `nearStart` is what to grow within 20 tiles' walk (the generator aims a little above the minimums);
-  a place whose start lacks moist land there gets what fits, and its validation says so.
+- `nearStart` is what to grow within 20 tiles' walk: starting wood in logs of grown trees (D164) and
+  living berry bushes (the generator aims at 1.35× Minimum starting wood and 1.15× Minimum starting
+  bushes, never below Berries near start). Groves grow there until their grown trees give the wood;
+  a share of living trees are saplings (the generator's 35%), whose logs do not count. A place whose
+  start lacks moist land there gets what fits, and its validation says so.
 - It is a pure function of the ground, settings and seed: a place can store only its terrain, water
   and start and compute its resources when its `.timber` is built, the same bytes everywhere.
-- After D164 (starting wood) merges, `nearStart.trees` is the wood minimum over the logs a tree
-  gives (the start-and-edge-rules branch's `logsPerTree`).
 - The places tests expect today's places to lack a mine site (`PLACES_LACK_MINE_SITES` in
-  `tests/contract/placesCommon.ts`); the rebuild turns it to `false`.
+  `tests/contract/placesCommon.ts`, beside #44's `PLACES_HAVE_EDGE_WALLS` and
+  `PLACES_SOURCES_IN_FLOW`); the rebuild turns it to `false`.
 - A scratch build of Yosemite Valley through it passes every check but the two advisory ones it
   already had (walkable land and drought water for the bushes), with one mine site.
 
