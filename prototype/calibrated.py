@@ -13,16 +13,17 @@ RESOURCE_BUILDING_RANGE = 20     # walk steps from a gatherer/lumberjack/scaveng
 
 # ---- difficulty: what the first days demand (official medians define Normal)
 DIFFICULTY = {
-    # The start requirements (PLAN.md §5.6, D85, Kyler 2026-09-24): water without stairs within
-    # 12/20/28 tiles' walk on the start's level (the workshop study: official median 13, p90 20.4),
-    # living trees 60/40/20 and living bushes 40/30/20 within 20 tiles' walk; targets with an
+    # The start requirements (PLAN.md §5.6, D85, Kyler 2026-09-24, amended by D153 and D164): water
+    # without stairs within 12/20/28 tiles' walk over the map's own ground and slopes (the workshop
+    # study: official median 13, p90 20.4), starting wood 120/80/40 logs of grown trees (D164: the
+    # old 60/40/20 trees at 2 logs a tree) and living bushes 40/30/20 within 20 tiles' walk; targets with an
     # advisory warning: badwater at least 30/15/8 (official nearest badwater median 14.8, p25 10),
     # ruins 20/15/12.
-    "easy":   {"water_dist": 12, "trees_r20": 60, "bushes_r20": 40, "badwater_min": 30, "ruin_min": 20,
+    "easy":   {"water_dist": 12, "wood_r20": 120, "bushes_r20": 40, "badwater_min": 30, "ruin_min": 20,
                "drought_days": 4, "colony": 40},
-    "normal": {"water_dist": 20, "trees_r20": 40, "bushes_r20": 30, "badwater_min": 15, "ruin_min": 15,
+    "normal": {"water_dist": 20, "wood_r20": 80, "bushes_r20": 30, "badwater_min": 15, "ruin_min": 15,
                "drought_days": 9, "colony": 50},
-    "hard":   {"water_dist": 28, "trees_r20": 20, "bushes_r20": 20, "badwater_min": 8, "ruin_min": 12,
+    "hard":   {"water_dist": 28, "wood_r20": 40, "bushes_r20": 20, "badwater_min": 8, "ruin_min": 12,
                "drought_days": 30, "colony": 50},
 }
 

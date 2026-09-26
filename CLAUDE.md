@@ -16,6 +16,11 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
     editor code; CI flags them. Add a term when a feature is retired;
   - `docs/README.md` says which documents are living and which are history. History (progress logs,
     investigations, the decision log) stays as written; mark superseded parts, never rewrite them.
+- Investigations commit reports, code, small samples and a few captures. Large generated results (bulk JSON,
+  thousands of files, anything over a few MB) stay out of git: in `investigation/<name>/local/` (gitignored) or
+  attached to a GitHub Release, with the report saying how to regenerate them (PLAN §20, D195). Don't rewrite
+  history for what's already merged. Every investigation prompt, for Claude or Codex, includes this rule; the
+  text to paste is in `investigation/README.md`.
 - Claude never launches or drives Timberborn, with one exception: the DGM Probe runner may launch it for an
   automated probe batch, but only after asking Kyler explicitly and getting Kyler's yes in chat, every time (PLAN
   §20, D117).

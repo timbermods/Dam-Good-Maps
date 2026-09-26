@@ -16,3 +16,5 @@ test-results/
 playwright-report/
 # In-game check files made from official and workshop maps (not ours to share)
 out/*/local/
+# Large generated investigation results stay out of git (PLAN.md §20, D195)
+investigation/*/local/

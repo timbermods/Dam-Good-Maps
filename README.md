@@ -13,11 +13,16 @@ The generator:
   map. Each setting shows what the official maps use.
 - **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
   colony's survival.
-- Every map's start has water on its own level, trees and bushes within a short walk. The map card
-  lists the **Start requirements**. **Advanced: start rules** sets them.
+- Every map's start has clean water within a short walk, using only the map's own slopes. Wood and
+  berry bushes grow nearby. The map card lists the **Start requirements**. **Advanced: start
+  rules** sets them.
 - The preview shows water, moisture and reach layers.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
-- **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
+- **Save to Timberborn** puts the map straight into the game's custom maps. The first time, pick
+  `Documents\Timberborn\Maps`; after that it is one click (Chrome and Edge). A map with the same
+  name is kept, and the new one is saved as "Name (2)".
+- In other browsers it downloads the `.timber`: move it to `Documents\Timberborn\Maps`.
+  **Download project file** keeps the map for editing later.
 
 The editor:
 - **Refine this map** opens the map in 3D.
@@ -37,7 +42,7 @@ The editor:
   object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
   them, set a water source's strength, or make it turn on in a later cycle.
 - **Start**: drag the start. Green means the district center fits and the start has its water,
-  trees and bushes.
+  wood and bushes.
 - **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
 - Water settles within a couple of seconds of an edit. The full check follows in the background.
   The pill shows **Settling water** with its progress, then **Ready to play** or the problems.
@@ -57,8 +62,8 @@ Your map is saved in the browser as you work.
 Real places:
 - **Real places**, at the top of the generator, lists 85 maps made from real land. Each is inspired
   by the land near its namesake, at Timberborn's scale. It is not a replica.
-- Filter by **Landform** and size. **Download** gives the map's `.timber`. **Refine** opens it in the
-  editor.
+- Filter by **Landform** and size. **Save to Timberborn** puts the map in the game, as above.
+  **Refine** opens it in the editor.
 - The heights come from public elevation data. The gallery lists its credits, and each map's
   description carries them.
 
