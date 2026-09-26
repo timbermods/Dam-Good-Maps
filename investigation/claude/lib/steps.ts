@@ -651,7 +651,20 @@ function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { o
         break;
       }
       if (best < 0) return fail(step, ["there is no hollow there: water from a spring runs on downhill (dig one first with a brush step, tool lower, size and amount 2 or more)"], undefined, resolved);
-    } else best = (order.slice(0, 400).find(([, i]) => !entityProblem(s, { template, x: i % W, y: Math.floor(i / W), orientation: "Cw0" })) ?? order[0])[1];
+    } else {
+      // the tile nearest the middle where it can stand, well clear of the map's extras (a relic or
+      // a geothermal field keeps 2 tiles from water, D167: the water spreads from a source); failing
+      // that, the nearest where it can stand
+      const extras = nearExtras(s, 4);
+      const far = nearExtras(s, 12);
+      const stands = ([, i]: [number, number]) => !entityProblem(s, { template, x: i % W, y: Math.floor(i / W), orientation: "Cw0" });
+      // well away from them, and its water running downhill (the steepest way down, to water or a
+      // hollow) clear of them
+      const clear = ([, i]: [number, number]) => !far[i] && !downhill(b.heights, b.water, W, H, i).some((t) => extras[t]);
+      const pick = order.slice(0, 2000).find((o) => clear(o) && stands(o)) ?? order.slice(0, 2000).find((o) => !far[o[1]] && stands(o)) ?? order.slice(0, 400).find(stands) ?? order[0];
+      best = pick[1];
+      if (extras[best]) resolved.note = "every spot there is near a relic, a mine site or a geothermal field: its water may reach them";
+    }
     at = [best % W, Math.floor(best / W)];
   }
   const report: string[] = [];
@@ -689,6 +702,35 @@ function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { o
   const kind = step.fillHollow ? "lake" : bad ? "badwaterSource" : "source";
   const made = [{ handle: newHandle(conv, kind, step.handle), id: `${SOURCE_PREFIX}${id}`, kind }];
   return { ok: true, step, ops: r.ops, made, report, resolved: { ...resolved, at }, errors: [], tiles: bad ? 9 : 1 };
+}
+
+/** The way water runs from tile `i`: the steepest way down, tile by tile (a flat stretch spreads to
+ *  its whole level ground), until it meets water, the map's edge or a hollow it fills. */
+function downhill(heights: Uint8Array, water: ArrayLike<number>, W: number, H: number, i: number): number[] {
+  const out = [i];
+  const seen = new Set(out);
+  let cur = i;
+  for (let k = 0; k < 4 * (W + H); k++) {
+    if (water[cur] > 0.05) break;
+    const x = cur % W;
+    const y = (cur - x) / W;
+    if (x === 0 || y === 0 || x === W - 1 || y === H - 1) break;
+    let next = -1;
+    let lo = heights[cur];
+    for (const j of [cur - 1, cur + 1, cur - W, cur + W]) if (heights[j] < lo || (heights[j] === lo && next < 0 && !seen.has(j))) {
+      if (heights[j] < lo) lo = heights[j];
+      next = j;
+    }
+    if (next < 0 || seen.has(next)) {
+      // a hollow: the water fills its level ground round here
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < H && heights[(y + dy) * W + x + dx] <= heights[cur]) out.push((y + dy) * W + x + dx);
+      break;
+    }
+    seen.add(next);
+    out.push(next);
+    cur = next;
+  }
+  return out;
 }
 
 // ------------------------------------------------------------------------------------ brushes

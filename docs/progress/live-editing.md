@@ -484,7 +484,11 @@ on a placed river.
 - **Claude:** two new steps, `placeObject` (one of the shelf's objects, at a tile or where it fits
   in a place nearest its middle, turned; a relic's size, a ruin's height) and `remove` (Remove
   over a place, with its filters). New requests B16 and B17. Reference solutions: 125 of 137 (the
-  same 12 fail on dev).
+  same 12 fail on dev). After merging dev (#43, generator 0.6.2, whose extras keep 2 tiles from
+  water): `addSource` over a place picks a spot well away from the relics, mine sites and
+  geothermal fields, its downhill water clear of them (B10 passes again); B09's corner holds a
+  relic, so its reference tries a spot first. 124 of 137 pass; the 13 failing (S06, C01, W05–W07,
+  J03, M04, M06, I07, X01, X08, X09, Q01) fail on dev too.
 - Tests: `tests/e2e/shelf.spec.ts` (the icons, a medium relic red on the start and refused there,
   green and placed where it fits, R, Esc; a grove painted with a drag and a pine placed with a
   click; the start moved from the shelf; Remove's filters, a click and a drag, the ground and the

@@ -1100,12 +1100,13 @@ R("B08", "compound", "dig a small pond at (80, 70) and fill it with water", "rv9
   },
 });
 R("B09", "simple", "add a strong water source in the northwest corner", "rv96", {
+  note: "the corner holds a small relic (generator 0.6.2): its water must keep 2 tiles from it, so the reference tries a spot first and places it there",
   goals: [G("g1", "a strong water source in the northwest corner")],
   report: { mustSay: ["where the source stands and its strength (4 blocks/s)", "where its water runs"] },
   pass: [VALID, START_RULES_HOLD],
   reference: {
-    calls: [call("resolve_region", { where: "the northwest corner" })],
-    proposal: { steps: [{ op: "addSource", kind: "water", where: "the northwest corner", strength: 4 }] },
+    calls: [call("resolve_region", { where: "the northwest corner" }), call("dry_run", { steps: [{ op: "addSource", kind: "water", at: [22, 80], strength: 4 }] })],
+    proposal: { steps: [{ op: "addSource", kind: "water", at: [22, 80], strength: 4 }] },
     checks: [chk("propose", "steps.0.report.0", "matches", "^a water source of 4 blocks/s at")],
   },
 });

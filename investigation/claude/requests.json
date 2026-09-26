@@ -7543,6 +7543,7 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "the corner holds a small relic (generator 0.6.2): its water must keep 2 tiles from it, so the reference tries a spot first and places it there",
    "goals": [
     {
      "id": "g1",
@@ -7567,6 +7568,22 @@
       "args": {
        "where": "the northwest corner"
       }
+     },
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "addSource",
+         "kind": "water",
+         "at": [
+          22,
+          80
+         ],
+         "strength": 4
+        }
+       ]
+      }
      }
     ],
     "proposal": {
@@ -7574,7 +7591,10 @@
       {
        "op": "addSource",
        "kind": "water",
-       "where": "the northwest corner",
+       "at": [
+        22,
+        80
+       ],
        "strength": 4
       }
      ]
