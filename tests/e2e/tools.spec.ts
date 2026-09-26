@@ -61,9 +61,21 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await idle(page);
   i = await info(page);
   expect(i.history.map((h) => h.label)).toEqual(["Place water source"]);
-  // its water: hover its tile. The source appears at once and its water flows in a moment later
-  // (live editing: an edit never waits on the water)
-  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), spring!);
+  // its water: it flows in a moment later (live editing: an edit never waits on the water), on its
+  // tile or beside it as the ground falls away; hovered, the readout says so
+  const wetNear = () =>
+    page.evaluate(([sx, sy]) => {
+      const m = window.dgm3d!.renderer.mapState()!;
+      for (let dy = -2; dy <= 2; dy++)
+        for (let dx = -2; dx <= 2; dx++) {
+          const x = sx + dx;
+          const y = sy + dy;
+          if (x >= 0 && y >= 0 && x < m.W && y < m.H && m.surface.depth[y * m.W + x] > 0.02) return [x, y] as [number, number];
+        }
+      return null;
+    }, spring!);
+  await expect.poll(wetNear, { timeout: 60_000 }).not.toBeNull();
+  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), (await wetNear())!);
   await expect
     .poll(
       async () => {

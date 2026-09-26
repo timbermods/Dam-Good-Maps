@@ -138,7 +138,7 @@ describe("mine sites", () => {
     expect(MINE.earthTop[0] - MINE.earthTop[2]).toBeGreaterThan(MINE.earth[0] - MINE.earth[2]);
   });
 
-  it("read in greyscale from above: a dark pit, a rusty frame, pale wood, and apart from badwater sources", () => {
+  it("read in greyscale from above: a dark pit, darker than badwater, a rusty frame, pale wood, and apart from badwater sources", () => {
     expect(lum(MINE.frame) - lum(MINE.pit)).toBeGreaterThan(0.1);
     expect(lum(MINE.wood) - lum(MINE.frame)).toBeGreaterThan(0.2);
     expect(lum(MINE.pit)).toBeLessThan(lum(GROUND.dry) - 0.15);
@@ -148,8 +148,15 @@ describe("mine sites", () => {
     let lightest = 0;
     for (let k = 0; k < badwater.length; k += 3) lightest = Math.max(lightest, lum([badwater[k], badwater[k + 1], badwater[k + 2]]));
     expect(lum(MINE.wood)).toBeGreaterThan(lightest + 0.2);
-    // the pit's earth is a grey-brown, lighter than badwater
-    expect(lum(MINE.pit)).toBeGreaterThan(lum(WATER.bad) + 0.05);
+    // the pit's earth is darker than badwater by about 5 L* or more, as in the game (Kyler's review
+    // of D177 and D178, 2026-09-26: both colours stay, #373A34 and #38's crimson; it was lighter than
+    // the red-black badwater before)
+    const lightness = (c: readonly number[]) => {
+      const lin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+      const y = 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+      return y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y;
+    };
+    expect(lightness(WATER.bad) - lightness(MINE.pit)).toBeGreaterThanOrEqual(5);
   });
 
   it("are outlined with Markers on: an orange line between dark edges round the footprint, a few pixels from any distance", () => {

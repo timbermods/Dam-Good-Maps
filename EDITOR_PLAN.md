@@ -75,8 +75,10 @@ editor is desktop-first (D185).
 
 Make a valley, drop a source, and there's a river.
 
-- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill;
-  the brush ring glows blue when it does.
+- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill.
+  The brush ring itself turns a clear water-blue and slightly thicker, with a faint fill as a second
+  cue; ordinary Lower keeps the white ring. Readable over water, badwater, every ground and in
+  colour-blind views (D198).
 - **Source:** click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
   note past the official range); drag to move; clean or bad; select it and press Delete (or use
   Remove) and its water recedes live. A source is always findable, even underwater: a subtle
@@ -92,15 +94,30 @@ Make a valley, drop a source, and there's a river.
   Badwater stays clearly distinct in transparent mode, for colour-blind players too (D196). Sources can go anywhere in the editor;
   the "only where water begins" rule (D171) is for generated maps.
 - **Lakes, waterfalls, joins and branches emerge from the land.**
-- **Water flows visibly** over a few seconds, and the land greens along new water. Time controls:
-  pause, speed up, replay and follow.
+- **Water flows visibly,** and the land greens along new water. It reacts at once: water near an edit
+  starts moving within a frame or two, the rest of the map follows. A speed control (slower, normal,
+  faster, instant) is brisk by default: small edits settle nearby in a second or two, big changes (a
+  new river, a breach) still flow visibly, and instant skips to the settled result. Time controls:
+  pause, replay and follow (D197).
 - **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).
-- **Carve, a force of nature** (D194): its own top-bar button next to Source. Unleash and Aim modes,
-  Defy gravity, and a Power slider from creek to catastrophe; the water cuts its own gorge or valley,
-  with floodplains and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
-  until Kyler says it's ready).
+- **Carve, a force of nature** (D194, D199): its own top-bar button next to Source, with its full set:
+  - **Unleash** (click a spot) and **Aim** (origin to end point), with **Defy gravity** for aimed
+    carves that climb uphill;
+  - **Power** (creek to catastrophe), and **Width** (following Power by default, or set by hand for
+    slot canyons or wide lazy rivers);
+  - **Wander** (straight to winding), natural variation within each carve, and **Try another path**;
+  - **Steep** or **Wide** walls; **Keep river** (the default) or **Dry canyon**. Keep river leaves a
+    source at the origin whose strength follows the river's Width, not its Power, so a slot canyon
+    keeps a modest stream and a wide river a big one; Dry canyon leaves no source. The source is
+    editable afterwards like any other;
+  - an optional camera that follows the river's head, with the visible carving effects (a surging
+    head, crumbling blocks, dust, muddy water);
+  - **Stop** keeps what's carved; Esc or undo reverts the whole carve instantly.
+
+  The water cuts its own gorge or valley, with floodplains and a delta. It's being prototyped on
+  `investigation/carve` (PR #47, held until Kyler says it's ready).
 - **Optional water sounds,** our own.
 - **What you watch is what you'll play:** the final water always matches the game's settled result.
 
@@ -136,9 +153,12 @@ D182.)
 
 ## 10. What's gone, and must not come back
 
+<!-- retired-terms:allow -->
 The landform tools and their handles, the river and lake tools, the Channel tool, the separate plant
 brushes, the busy readouts, the Show dropdown and the Advanced checkbox. Part 3 lists each with the
-decision that replaced it.
+decision that replaced it. CI flags these names if they reappear anywhere else
+(`tools/retired-terms.json`, D188).
+<!-- /retired-terms:allow -->
 
 # Part 2: the technical reference
 

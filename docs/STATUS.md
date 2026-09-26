@@ -72,7 +72,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D153: start water counts over natural slopes within 12 / 20 / 28 tiles (amends D85).
 - D154: contaminated ground is a layer of crack veins over the ground's own look.
 - D155–D157: Real places, second round: short descriptions with a credits page, deploy-time files, clean titles, 3D thumbnails, no walls, about 150 places.
-- D158: **Live editing**, alongside the M9 design: a triage first, then Cities-style terrain brushes, live shape tools, water that never blocks; tried by Kyler on `/preview/`.
+- D158: **Live editing**, alongside the M9 design: a triage first, then Cities-style terrain brushes and water that never blocks; tried by Kyler on `/preview/` (its shape tools removed by D182).
 - D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
 - D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
 - D161: the north-star journey: a striking place → Pick a place → the Weather view → Live editing → play; each step smooth, no gaps.
@@ -91,13 +91,13 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D172 (1) confirmed: the tall-maps probe batch passed, so both validators allow heights up to 22 (built in the start and edge rules).
 - D177: in the Standard look, badwater blends smoothly into clean water by contamination (toward #4B3C37), a soft gradient over several tiles, distinct in greyscale; consistent with #38's High look.
 - D178: mine sites and ruins get models of our own: a sunken pit with a rusty frame and corner scaffolding; ruined scaffold towers with braces, panels and ivy on moist ground.
-- D179: **Live editing is how you edit a map**, the editor's core principle: every tool becomes live, water first (freehand rivers, lakes, sources, visible flow), then brush shapes and a precise mode, one Select tool, resource brushes, objects dragged with live footprints; no plan-confirm-place flow remains.
+- D179: **Live editing is how you edit a map**, the editor's core principle: every tool live, water flowing visibly after every edit, brush shapes and a precise mode, one Select tool; no plan-confirm-place flow remains (its water tools, plant painting and object dragging became D184's smart Lower, Source and left shelf).
 - #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
-- D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), a Demolish tool, water-aware Ctrl-click sampling, the river tool's rules (heads, branches, gorges, waterfalls), player-set source strength, "let the water carve", natural or exact rivers, water time controls, and local-first water that always ends at the game's settled result.
+- D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), Remove (first named Demolish), water-aware Ctrl-click sampling, player-set source strength, "let the water carve" (Carve since D194), water time controls with a "drought" button, and local-first water that always ends at the game's settled result (its drawn-river rules and natural or exact rivers removed by D184).
 - D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
-- D182: **the brush kit is the core of the editor**: every landform tool and its handles removed, no presets; new Terrace and Ramp brushes, pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted).
-- D183: live dimensions: selection size in tiles, straight-stroke length, the target level for Flatten and Terrace, the river's width and depth.
-- D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; the river and lake tools removed.
+- D182: **the brush kit is the core of the editor**: the landform objects and their handles removed, no presets; terraces and ramps (now Flatten and Smooth options, D184), pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted, carving is a brush).
+- D183: live dimensions: a selection's size in tiles, a straight stroke's length, the level while flattening (D184 removed the other cursor readouts).
+- D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; drawn rivers and lakes removed; plain scroll zooms (strength on Shift+scroll since D196).
 - D185–D187: the editor is desktop-first; the editor's Drought and Badtide buttons show each event, and the Weather view is the separate full-cycle timeline; Claude is a summoned chat box.
 - D188: docs are part of done: living docs updated in the same PR, a drift check at each milestone boundary, a CI guard for retired terms, and a docs index (`docs/README.md`). EDITOR_PLAN.md now opens with the editor's vision.
 - D189: design version 2's scope is frozen; anything new goes into the M9a, M9b or M9c builds.
@@ -108,6 +108,10 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D194: Carve becomes a force of nature with its own top-bar button next to Source; PR #47 held until Kyler says it's ready.
 - D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
 - D196: water is never an object (no river selection or panel; flow and clean or bad belong to sources); sources always findable; clear water while a tool is picked or with T; Alt+scroll slices layers and Shift+scroll sets strength, as in the game (replaces #58); water in the hover readout.
+- D197: water near an edit moves within a frame or two; a speed control (slower, normal, faster, instant), brisk by default; the final water is always the game's settled result.
+- D199: Carve's full feature set (Unleash and Aim, Defy gravity, Power, Width, Wander, variation, Try another path, Steep or Wide walls, Keep river or Dry canyon, a following camera with effects, Stop and instant undo), kept whole when #47 lands.
+- D200: at least one permanent badwater source on every map (generated, Real places, Pick a place), placed naturally at the per-difficulty distance, counts and strengths like the official maps. A "No badwater" option makes a peaceful map (badtides still happen).
+- D201: waterfalls with shape and volume in the Standard look (an arcing translucent ribbon, foam at the lip, whitewater below, cascades as small falls); mist and spray in Map look 2's High mode.
 
 ## Done and released
 
@@ -115,6 +119,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   proposals for their steps.
 - **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
 - **Mine sites and ruins** are live (`look-mine-ruins-done`, #42, D178).
+- **Badwater blending** is live (`look-badwater-done`, #41, D177): tainted water turns warm red-brown through
+  the game's mixing grey, never purple; one shared water palette.
 - **The start and edge rules** are live (`start-edge-rules-done`, #44, released in PR #48, live check passed):
   no edge walls, start water over natural slopes, starting wood in logs, sources start rivers, heights up to 22.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
@@ -148,11 +154,18 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **Live editing** (D158, D179–D184), on branch `feature/live-editing`: the camera (approved) and
   water part 1 are on the preview address; next water per D184 (smart Lower, Source, part 2's paced
   water), then the rest of D184's design in pushes.
+- **The docs sweep** (D188), on branch `chore/docs-sweep`: the living docs checked against the
+  editor vision, and CI's retired-terms guard. What the Live editing work must keep, and the
+  editor text it still has to change: [progress/docs-sweep.md](progress/docs-sweep.md).
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
-  `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
+  `look/badwater-blend` (#41, approved: the warm-midpoint blend is in, ready to release as
+  `look-badwater-done`);
+  mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194) until Kyler says it's ready.
+- **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
+  round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
+  merged when he says it's ready.
 
 ## Waiting on Kyler
 
@@ -168,7 +181,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D178.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D197.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.

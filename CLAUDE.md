@@ -84,7 +84,7 @@ text.
   - the start and edge rules are tagged `start-edge-rules-done`; the Real places second round
     `real-places-2-done`; contaminated ground as a layer `look-contamination-done`, once Kyler approves it;
   - the Map look fixes, once Kyler approves each: badwater blending `look-badwater-done`; mine sites and ruins
-    `look-mine-ruins-done`;
+    `look-mine-ruins-done`; waterfalls `look-waterfalls-done`;
   - Map look 2 (after the Map quality checkpoint, before the Frame pass) is tagged `map-look-2-done`;
   - the Frame pass (after Map look 2, before the 3D stages) is tagged `frame-pass-done`;
   - the 3D terrain stages (after the Frame pass, before M10) are tagged `3d-a-done`, `3d-b-done` and `3d-c-done`;
