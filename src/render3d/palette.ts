@@ -15,7 +15,9 @@
 // light lines on dry earth, dark lines on grass, and a darker stain from afar. Clean water's body is
 // about as dark as the stained contaminated earth (Kyler, 2026-09-25: as in the game); it reads as
 // water by its light shore foam, glints and ripple crests and its see-through shallows, and in
-// colour by its blue. Badwater is darker still, brown and dull. Living trees are dark, dead trees
+// colour by its blue. Badwater is the game's murky red-brown (D177), darker than clean water of the
+// same depth, and dull; water partly bad turns smoothly from one to the other, over a few tiles
+// where they meet, never in streaks or patches. Living trees are dark, dead trees
 // pale. The walls, in the side light, are darker than the ground above them. The information
 // layer (**Markers**) adds dam sites, hatched light and dark with a dark rim so they show on any
 // ground or water, slope arrows and a pale line at every level.
@@ -89,13 +91,31 @@ export const WATER = {
   foam: [0.9, 0.94, 0.95] as Rgb,
   /** The sky the water reflects. */
   sky: [0.6, 0.72, 0.84] as Rgb,
-  /** Badwater: much darker than clean water at any depth, a murky red-black liquid with slow
-   *  glowing bubbles. Water mixed with badwater is murkier than clean water all over, and
-   *  streaked with badwater as densely as it is bad. */
-  bad: [0.2, 0.1, 0.08] as Rgb,
-  badDeep: [0.13, 0.06, 0.05] as Rgb,
+  /** Badwater (D177): the game's murky red-brown, nearly opaque and dull, with slow glowing
+   *  bubbles. This is its colour in its usual shallow pools (a quarter level deep or less), which
+   *  the view draws as the game's colour as measured (`BADWATER_MEASURED`, seen 70° down); deeper
+   *  it darkens toward `badDeep`, so it stays darker than clean water of the same depth, as D114's
+   *  order of lightness has it. Water partly bad is coloured by its blended badwater share
+   *  (`badwaterShare`), from clean water's colour to badwater's. */
+  bad: [0.292, 0.234, 0.204] as Rgb,
+  badDeep: [0.1, 0.07, 0.06] as Rgb,
+  /** Badwater's glowing bubbles, denser the more of the water is bad. */
   badVein: [0.98, 0.5, 0.16] as Rgb,
   badFoam: [0.66, 0.5, 0.36] as Rgb,
+} as const;
+
+/** Badwater as Kyler measured it on screen in the game (2026-09-25): a murky red-brown. Pure
+ *  badwater a quarter level deep, seen 70° down at time 8 s, lands on it (within two code values;
+ *  docs/look/badwater-blend/README.md says how it was measured). */
+export const BADWATER_MEASURED: Rgb = [75 / 255, 60 / 255, 55 / 255];
+
+/** How water turns from clean water to badwater (D177). */
+export const BADWATER = {
+  /** Down to this depth (levels) badwater shows `WATER.bad`; below it, it darkens. */
+  shallow: 0.25,
+  /** How far the colour turns toward badwater is the badwater share to this power: a little
+   *  ahead of the share, so a small share shows too. */
+  curve: 0.75,
 } as const;
 
 /** Contamination as a layer (Kyler, 2026-09-25: as in the game): red-orange veins over the ground's
@@ -169,11 +189,12 @@ export const WATER_SURFACE = {
   bank: 0.3,
   bankWidth: 0.45,
   /** How quickly clean water turns from its clear shallows to its teal body (per level), and
-   *  between which depths the teal turns navy; how quickly badwater turns to its deep colour. */
+   *  between which depths the teal turns navy; how quickly badwater turns to its deep colour below
+   *  its shallows (`BADWATER.shallow`). */
   absorb: 4,
   navyFrom: 0.6,
   navyTo: 2.8,
-  badAbsorb: 1.4,
+  badAbsorb: 1.3,
 } as const;
 
 const smooth = (a: number, b: number, x: number) => {
@@ -187,14 +208,43 @@ function seenDepth(depth: number, fromBank: number): number {
   return depth * (S.bank + (1 - S.bank) * smooth(0, S.bankWidth, fromBank));
 }
 
-/** The body colour of water `depth` levels deep, clean or bad, `fromBank` tiles from a bank (open
- *  water by default): before the light, the ripples, the foam and the glints (as the shader). */
-export function waterBody(depth: number, bad: boolean, fromBank = 1): Rgb {
-  const S = WATER_SURFACE;
-  if (bad) return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-depth * S.badAbsorb));
-  const d = seenDepth(depth, fromBank);
-  return mixRgb(mixRgb(WATER.shallow, WATER.teal, 1 - Math.exp(-d * S.absorb)), WATER.navy, smooth(S.navyFrom, S.navyTo, d));
+/** How far water's colour has turned from clean water's to badwater's (0–1) at a badwater share
+ *  (0–1; the water mesh blends it between tiles): 0 for clean water, 1 for pure badwater, and
+ *  continuous between, a little ahead of the share (`BADWATER.curve`). The water shader draws the
+ *  same (`BADWATER_GLSL`); so should any other water shader (the High look). */
+export function badwaterShare(level: number): number {
+  return level > 0 ? Math.min(1, level) ** BADWATER.curve : 0;
 }
+
+/** Badwater's body `depth` levels deep, before the light: `WATER.bad` in its shallows, darker
+ *  below them. */
+export function badwaterBody(depth: number): Rgb {
+  return mixRgb(WATER.bad, WATER.badDeep, 1 - Math.exp(-Math.max(0, depth - BADWATER.shallow) * WATER_SURFACE.badAbsorb));
+}
+
+/** The body colour of water `depth` levels deep, `fromBank` tiles from a bank (open water by
+ *  default), clean (false), pure badwater (true) or with a badwater share (0–1): before the light,
+ *  the ripples, the foam and the glints (as the shader). */
+export function waterBody(depth: number, bad: boolean | number, fromBank = 1): Rgb {
+  const S = WATER_SURFACE;
+  const t = badwaterShare(bad === true ? 1 : bad === false ? 0 : bad);
+  const d = seenDepth(depth, fromBank);
+  const clean = mixRgb(mixRgb(WATER.shallow, WATER.teal, 1 - Math.exp(-d * S.absorb)), WATER.navy, smooth(S.navyFrom, S.navyTo, d));
+  return t === 0 ? clean : t === 1 ? badwaterBody(depth) : mixRgb(clean, badwaterBody(depth), t);
+}
+
+const glf = (v: number) => (Number.isInteger(v) ? `${v}.0` : String(v));
+const glv = (c: Rgb) => `vec3(${c.map((v) => glf(v)).join(", ")})`;
+
+/** `badwaterShare` and `badwaterBody` in GLSL, for the water shaders. */
+export const BADWATER_GLSL = /* glsl */ `
+  float badwaterShare(float level) {
+    return level > 0.0 ? pow(min(level, 1.0), ${glf(BADWATER.curve)}) : 0.0;
+  }
+  vec3 badwaterBody(float depth) {
+    return mix(${glv(WATER.bad)}, ${glv(WATER.badDeep)}, 1.0 - exp(-max(0.0, depth - ${glf(BADWATER.shallow)}) * ${glf(WATER_SURFACE.badAbsorb)}));
+  }
+`;
 
 /** Clean water's opacity, `depth` levels deep and `fromBank` tiles from a bank: see-through in
  *  the shallows and toward the banks (as the shader, before foam and glints). */
@@ -378,8 +428,11 @@ export function objectLegend(): LegendEntry[] {
   const dry = c(GROUND.dry);
   return [
     {
-      swatch: icon(`<path d="M0 5 Q7 2 12 6 T24 5 V9 Q16 12 10 9 T0 10Z" fill="${c(WATER.bad)}"/><path d="M0 12 Q8 10 14 13 T24 12 V14 Q15 16 9 14 T0 15Z" fill="${c(WATER.bad)}"/>`, c(WATER.teal)),
-      label: "Water mixed with badwater: murkier, with dark streaks",
+      // clean water turning to badwater, with badwater's bubbles at its end
+      swatch:
+        icon(`<circle cx="18" cy="6" r="1.1" fill="${c(WATER.badVein)}"/><circle cx="21.5" cy="11" r="1.1" fill="${c(WATER.badVein)}"/>`) +
+        `, linear-gradient(90deg, ${c(waterBody(BADWATER.shallow, 0))}, ${c(waterBody(BADWATER.shallow, 0.5))}, ${c(waterBody(BADWATER.shallow, 1))})`,
+      label: "Water mixed with badwater: fades to murky brown",
     },
     {
       swatch: icon(`<circle cx="7" cy="8" r="5" fill="${c(LIVING_TREE)}"/><path d="M16 2 L21 14 H11Z" fill="${c([0.11, 0.28, 0.17])}"/>`, grass),
