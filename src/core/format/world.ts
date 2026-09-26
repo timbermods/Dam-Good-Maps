@@ -8,6 +8,10 @@ export const GAME_VERSION = "1.1.2.4-52e959e-sw";
 export const LAYERS = 23; // MaxGameTerrainHeight 22 + 1
 export const MAX_OBJECT_Z = 33; // terrain layers + 10 above
 export const EDITOR_MAX_HEIGHT = 16;
+/** The highest surface a map may have: 22, with voxel layer 22 empty. Maps above 16 load and keep
+ *  their terrain, water, sources, flow, objects and start (D172 (1), after probe run
+ *  20260925-tall); the in-game map editor edits only up to `EDITOR_MAX_HEIGHT`. */
+export const GAME_MAX_HEIGHT = 22;
 
 export interface WorldModel {
   gameVersion: string;

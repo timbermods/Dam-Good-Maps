@@ -487,36 +487,42 @@ in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–
 ## M8. Water preview and background validation in the editor
 
 **Start requirements, built first** (Kyler, 2026-09-24, amended the same day; PLAN §5.6, §11.4,
-§20 D85). Released with `m8-done`.
+§20 D85). Released with `m8-done`. Amended by Kyler on 2026-09-25 and built in the start and edge
+rules step (`docs/progress/start-edge-rules.md`): the water rule walks over the map's own slopes
+(D153), and starting wood counts logs (D164). The requirements as they stand:
 
 Three start requirements, with thresholds by difficulty (Easy / Normal / Hard). They replace the
 start rules as reasons to reject a map:
-1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05, as now)
-   touches a shore tile at the start's own level, and that shore tile is within 12 / 20 / 28
-   tiles' walk of the start without any slope: the same level all the way. Rivers, lakes and ponds
-   all count. A pump on that shore must reach the water surface (0–2 levels below), as now, so
-   the colony can actually drink it.
-2. **Starting trees:** at least 60 / 40 / 20 living trees within 20 tiles' walk of the start
-   (slopes allowed), counted across any number of groves.
+1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05) touches a
+   shore tile the start reaches on foot within 12 / 20 / 28 tiles' walk, over the map's own ground
+   and its natural slopes (the map's Slope entities; no stairs the player would build). Levels may
+   change along the walk, through slopes. Rivers, lakes and ponds all count. A pump on that shore
+   must reach the water surface (0–2 levels below the shore), so the colony can actually drink
+   it. (As built in M8, the walk stayed on the start's own level, without any slope.)
+2. **Starting wood** (D164): at least 120 / 80 / 40 logs of grown trees within 20 tiles' walk of
+   the start (slopes allowed), each tree by its species' yield (oak 8, pine 2, birch 1), alive or
+   dead. A sapling's logs are shown apart, as wood still growing. (As built in M8: 60 / 40 / 20
+   living trees.)
 3. **Starting bushes:** at least 40 / 30 / 20 living berry bushes within 20 tiles' walk of the
    start (slopes allowed), counted across any number of patches.
 
 "Living" means the plant survives at steady state, as now.
 
 - **The thresholds are player settings,** with these defaults for each difficulty: the existing
-  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls for trees and
-  living bushes within 20, renamed **Minimum starting trees** (`st`, 0–400) and **Minimum
-  starting bushes** (`sb`, 0–200). They keep their ranges and share-link keys, so old links still
-  decode. Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
+  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls
+  **Minimum starting wood (logs)** (`sl`, 0–800; before D164 **Minimum starting trees**, `st`,
+  0–400, which old links and project files still carry and open as 2 logs a tree) and **Minimum
+  starting bushes** (`sb`, 0–200). Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
   Imported maps, which have no settings, use their difficulty's defaults (Normal unless the
   document says otherwise).
 - **The generator never aims below a minimum.** Any target that sits lower rises to it: Easy's
   Berries near start target goes from 20 to 40.
-- **The start reaches water on its own level.** The workshop study found none on 82 of 180
-  generated maps at 128²: the bench stands one level above the floodplain, 6–10 tiles from the
-  channel (D26), and its level region is the bench alone (median 113 tiles; official starts stand
-  on level land of median 980 tiles that reaches the water). Move the bench to the bank, or the
-  start onto the floodplain (D26 changes). Batches stay ≥ 98% per theme with the new rules.
+- **The start reaches water on its own level** (as built in M8, D97: the bench ran to the bank).
+  The workshop study found none on 82 of 180 generated maps at 128²: the bench stands one level
+  above the floodplain, 6–10 tiles from the channel (D26). Since the amendment (D153) the
+  bench no longer runs to the bank: the colony walks down to the river over the map's own slopes,
+  and the slope out of the start's own level goes toward the river. Batches stay ≥ 98% per theme
+  with the new rules.
 - **Everything else:** the other start rules stop rejecting maps: the badwater and ruin
   distances, stored drought water near the start (`water.reservoir`, including Hard's 3-deep
   rule) and walkable land from the start (`start.reach`). They stay as settings and generation
@@ -531,11 +537,13 @@ start rules as reasons to reject a map:
   outflow, badwater containment).
 - **Build rules:**
   - Change both validators together (TypeScript and the Python oracle), with 0 disagreements.
-  - A unit test for each requirement: water reachable only by a slope fails; water beyond the
-    walking distance fails; only badwater fails; trees or bushes below the minimum, or too far
-    away, fail; changing any of the three settings moves the result.
+  - A unit test for each requirement: water beyond the walking distance fails; only badwater
+    fails; trees or bushes below the minimum, or too far away, fail; changing any of the three
+    settings moves the result. As M8 built it, water reachable only by a slope failed; since D153
+    water down a natural slope passes and water that needs stairs fails, and since D164 wood below
+    the minimum fails, each species counting its own logs.
   - The three settings have a measured target in `tools/settings-suite.ts`, like the M6 settings
-    (the water distance's experiment measures the walk on the start's level).
+    (the water distance's experiment measures the walk; since D153 over the map's own slopes).
   - The editor's start indicators and its green or red footprint follow the three requirements,
     using the map's settings. The map card lists them.
   - This changes which attempt wins and where the start stands: bump the generator version and
@@ -727,6 +735,12 @@ The deviations are PLAN §20 D110, D114 and D115; decisions-pending #49 (the def
 **The clean-look round** (D135) is being built on branch `look/clean`: the clean default view and
 the information layer. Kyler approves the look from its captures; `map-look-done` waits for it.
 
+**Fix rounds after the clean look,** each on its own branch, judged by Kyler from before and after
+captures and released under its own tag; rendering only, so the map files don't change:
+contaminated ground as a layer (D154, `look-contamination-done`, released); badwater blending
+smoothly into clean water (D177, `look/badwater-blend`, `look-badwater-done`); and mine sites and
+ruins as models of our own (D178, `look/mine-site`, `look-mine-ruins-done`).
+
 ---
 
 ## Real places
@@ -784,9 +798,17 @@ A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built
   and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
   editor's start indicators and the start text change together. Generated maps change: the
   generator version goes up.
+- **Starting wood** (D164): the logs of the grown trees within 20 tiles' walk, by species, replace
+  the tree count; **Minimum starting wood (logs)**, with saplings' wood shown apart as growing, and
+  the page reading a tree's growth correctly (before and after captures of saplings for Kyler).
+- **Tall maps** (D172 (1), after probe run 20260925-tall): both validators allow heights up to 22,
+  with a note above 16 that the in-game map editor edits only up to level 16.
 
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
 D151, and what a player feels.
+
+**Status:** built on `feature/start-edge-rules` (docs/progress/start-edge-rules.md), a PR into
+`dev`; generator 0.6.1.
 
 ---
 
@@ -828,43 +850,89 @@ information.
 ## Live editing
 
 Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20
-D158). Built on branch `feature/live-editing`, tried by Kyler on the preview address
-<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every iteration),
-and released as `live-editing-done` when Kyler says it feels right.
+D158, D179–D184). Built on branch `feature/live-editing`, tried by Kyler on the preview address
+<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every push), and
+released as `live-editing-done` when Kyler says it feels right.
 
-- **First, a quick triage** of the current editor: drive it like a first-time player (open a
-  generated map; place and change rivers, lakes, landforms and the start; undo and redo;
-  regenerate keeping edits; export), fix the bugs and stalls in everything Live editing won't
-  replace, and bring Kyler a short ranked list of confusing spots with a proposed fix for each.
-  Kyler's notes: placement never waits on the water; limits show before or while placing, and the
-  result matches what was shown; the placed hill looked like a flat slab, not a stepped hill.
-  Also: the legend becomes a slim panel beside the map that collapses to a small always-visible
-  strip, lists only what's on the current map, and highlights those things when an entry is
-  clicked (its styling waits for the design pass); and it must be obvious which map is shown and
-  which is being edited (the generator page said "You are editing …" over a different map).
-- **Principles:** responsive above all; direct manipulation (no confirm steps, no Place button, no
-  waiting); everything reversible; show, don't ask; good defaults.
-- **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
-  naturalize, in whole levels with natural slopes at the brush's edge; a brush cursor projected on
-  the terrain; Cities: Skylines-style controls; a compact brush bar with shortcut tooltips.
-- **Water never blocks:** terrain updates instantly, water re-settles and flows live in the
-  background; an option pauses it while painting.
-- **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
-  resize and raise it live; limits show while dragging.
-- **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
-  an operation that replays exactly and survives regeneration and format 3; quiet background
-  checks.
-- **Polish:** only changed chunks rebuilt; keyboard access and screen-reader labels; a one-line
-  first-use hint.
-- **Keep M12 ready** (D134): Claude tool entries for the brushes and the live shape tools.
+**The design** (D184, Kyler's editor design principles; it replaces earlier editor decisions where
+they conflict):
+- **Principles:** the land is the interface (feedback from the land itself, not from panels,
+  dialogs or readouts); direct manipulation; few tools, each obvious; smart defaults, with options
+  hidden until wanted; forgiveness (instant undo, Esc always backs out); one grammar (pick, paint or
+  place, see the result; [ and ] for size, scroll for strength, in every tool); things just work
+  (painting never waits on water and keeps full frame rate on 256²); landforms come from the
+  brushes, never from buttons (D182).
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove. A small row beneath
+   shows only the picked tool's options. The size ring is drawn on the land; strength shows only
+   while scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
+   lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
+   the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
+   slot. Pen pressure sets strength on a tablet.
+   Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
+   with an optional "stop at" level (a faint plane, a pulse on arrival); never below the map's bottom
+   or under placed objects.
+2. **Water:** a reflection of the land being painted.
+   - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
+     downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
+     ordinary Lower.
+   - **Source:** click to place, and water spreads at once; options: clean or bad, and strength.
+     Hover any source and scroll to change its strength live (a friendly note past the official
+     range, never a block); drag to move it. Anywhere in the editor (D171 is for generated maps).
+   - **Everything else emerges:** lakes fill hollows, waterfalls form at drops, rivers join where
+     they meet, and branches form wherever the land is cut from water.
+   - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
+     follow, drought and badtide (the game's badtide rules, from `investigation/cycles`); moisture
+     spreading as the land greens; optional sounds of our own; "Let the water carve", forming
+     valleys (D181). Local first, then the rest of the map in the background; the final water is
+     always the game's settled result.
+3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
+   start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
+   geothermal fields and thorns. Picking one shows a live ghost on the terrain, its footprint green
+   where it fits and red where it doesn't, with a quiet reason ("needs flat ground"). Click places,
+   R rotates, Esc puts it back. Trees and bushes: click places one, drag paints many, naturally
+   clustered at official-like densities.
+4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
+   (moisture, contamination, drought). The legend appears only while an overlay is on.
+5. **Header:** Undo and Redo icons with their shortcuts; one primary button, **Save to Timberborn**
+   (until `feature/save-to-timberborn` lands, and in browsers that can't save to a folder,
+   **Download .timber** takes its place); everything else (Open, Save project, Download .timber,
+   History, New map) in one small menu.
+6. **Quiet checks:** a small dot, green or amber; a click lists the problems, each highlighted on
+   the map. Never a pop-up.
+7. **The start:** its water, wood and berry reach appears around it while hovered or dragged, then
+   fades.
+8. **Remove:** click one, drag many; filters; a red highlight on hover; Delete removes a selection;
+   one undo step each; water re-flows live; never changes terrain; a removal that breaks a rule is
+   refused live; instant on 256².
+9. **First run:** three one-line hints (paint the land, place things, add water), then never again.
+
+**Removed:** the landform tools and their handles (D182); the river tool with its start and end
+rules, Natural or exact, width, depth and strength controls; the lake click-fill; the Channel tool;
+separate plant brushes; the cursor readouts (only the level number while flattening stays); the
+text tabs, the Advanced checkbox, the Show dropdown and the help paragraphs.
+
+**Kept:** the smooth camera (D180, approved by Kyler); every edit live, as one undo step, with
+limits shown while dragging, never dialogs afterwards (D179); the Select tool (rectangle, freehand,
+same level; Shift adds, Alt subtracts; raise or lower by N levels, flatten or set to a level, dig
+out, clear trees and objects); Ctrl-click samples a level (on water, its bed); heavy operations
+(regenerate an area, "Generate, keeping my edits") shown growing, never a frozen wait; every stroke
+an operation that replays exactly and survives regeneration and format 3; only changed chunks
+rebuilt; keyboard access and screen-reader labels; saved projects keep their land exactly (any
+landforms already in a project open as plain terrain); Keep M12 ready (D134): Claude tool entries
+for every tool. Until the Frame pass, new interface uses the existing shared styles and components
+(D176).
+
+Built in pushes, water first, each put on the preview for Kyler.
 
 **Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
 rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
-breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost).
-Kyler decides when it feels right.
+breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost; after
+any edit the water ends exactly at the settled result, so exports are unchanged). Kyler decides when
+it feels right.
 
-**Later:** the 3D terrain steps extend the same brushes to caves and tunnels; M10 keeps symmetry and
-the advanced extras.
+**Later:** every future editing tool is live and brush-first from the start (D179, D182): M10's
+symmetry mirrors strokes live, M11's stamps are painted onto the land, and the 3D terrain steps
+extend the same brushes to caves and tunnels.
 
 ---
 
@@ -1313,6 +1381,8 @@ contracts byte for byte, no state shown by colour alone, the test hooks kept.
 
 ## Terrain above terrain (3D-a, 3D-b, 3D-c)
 
+Its carving tools are built live from the start (D179).
+
 After the M9 build and the Frame pass, and before the Weather view and M10 (Kyler, 2026-09-25;
 PLAN §20 D118–D127). Real 3D terrain is essential: caves, overhangs, tunnels and arches must be
 possible to generate and to edit, not only to import and keep (83% of the 1.0+ workshop maps use
@@ -1531,6 +1601,9 @@ background start after generation, caching under the full input hash, cancellabl
 
 ## M10. Sculpting, naturalize, symmetry
 
+Built live and brush-first (D179, D182): symmetry mirrors strokes live, and the advanced brushes follow
+Live editing's principles.
+
 **Delivers:** E6.
 - Advanced sculpt brushes and the naturalize brush.
 - Symmetry across all tools:
@@ -1566,6 +1639,10 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 ---
 
 ## M11. Stamps, heightmap import, regenerate area, locks
+
+Built live and brush-first (D179, D182): stamps are painted onto the land; locks and regenerate area
+follow Live editing's principles;
+regenerating an area shows its result growing, never a frozen wait.
 
 **Delivers:** E7.
 - The built-in stamp library, and user stamps with export and import (the entity transform rules
@@ -1642,12 +1719,15 @@ One smooth flow inside Dam Good Maps, from exploring the real world to a finishe
 7. **Phones** get a simpler version: a flatter view and a lighter preview.
 8. **Credits** as in Real places (D155): a short credit and link in each map's in-game description,
    the full notices on the credits page, and any region-specific notice the data's provider
-   requires.
+   requires; ESA WorldCover (observed water, CC BY 4.0, D192) is credited like the
+   elevation data, on the Pick a place credits and in each map's credits.
 
 It follows every current rule: designed water (sources only where water begins, D166, D171; the
-designed-water prototype from `investigation/pickplace`, PR #34, adopted once it's complete), no
+designed-water prototype from `investigation/pickplace`, PR #34, merged, its INTEGRATION.md adopted as
+proposals; where `investigation/pickplace-water2` differs, its designed water replaces #34's), no
 walls or rims (D151), maps may drain (D152), Kyler's start requirements (D153, D164), and
-official-like trees, ruins, mines and clusters (D167–D170).
+official-like trees, ruins, mines and clusters (D167–D170). When the quiet retries change the
+player's framing, size or scale, the page says so plainly.
 
 **Blocking:** breakage (the map passes the validators and exports; the share link rebuilds it
 exactly; attribution present; no edge walls) and what a player feels (the explore view and the

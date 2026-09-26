@@ -230,9 +230,21 @@ export const START = {
   banner: [1.0, 0.82, 0.16] as Rgb,
 } as const;
 
-/** Ruins: open scaffold towers, one storey per level: weathered posts, rusty rails and braces,
- *  grey-brown decks (so they stand apart from rusty contaminated ground), beige crates and sheets. */
-export const RUIN = { body: [0.5, 0.46, 0.42] as Rgb, frame: [0.68, 0.5, 0.3] as Rgb, rust: [0.52, 0.26, 0.12] as Rgb, panel: [0.8, 0.72, 0.54] as Rgb } as const;
+/** Ruins (Kyler's rounds, D178; his colours, measured in the game): ruined scaffold towers, one
+ *  storey per level: thin rusty posts, beams and braces (#8D5631), beige slab panels (#B8A775) and,
+ *  on moist ground, ivy (#405634, the brighter green on its clusters' edges) draped over about the
+ *  lower half of the storeys, the panels' middles showing through. From afar each storey is a block in the scaffolding's rust (what
+ *  makes ruins read from afar), a pale panel set in where it has one. The rust and the panels are
+ *  lighter than rusty contaminated ground. */
+export const RUIN = {
+  rust: [0.553, 0.337, 0.192] as Rgb,
+  panel: [0.722, 0.655, 0.459] as Rgb,
+  ivy: [0.251, 0.337, 0.204] as Rgb,
+  /** The ivy's brighter leaves, on its clusters' edges. */
+  leaf: [0.36, 0.5, 0.24] as Rgb,
+  /** From afar: the top of a storey (its beams, lit from above), a brighter rust. */
+  top: [0.6, 0.38, 0.22] as Rgb,
+} as const;
 
 /** Slopes: a stone ramp; with **Markers** on, a pale arrow rimmed dark points uphill. */
 export const SLOPE = { ramp: [0.5, 0.46, 0.4] as Rgb, side: [0.3, 0.31, 0.28] as Rgb, arrow: [0.97, 0.93, 0.78] as Rgb, rim: [0.14, 0.1, 0.07] as Rgb } as const;
@@ -251,8 +263,38 @@ export const THORNS: Rgb = [0.34, 0.16, 0.14];
  *  colour, so distant ground fades into it). */
 export const SKY = { zenith: [0.36, 0.55, 0.8] as Rgb, horizon: [0.64, 0.75, 0.87] as Rgb, below: [0.46, 0.6, 0.77] as Rgb, cloud: [0.93, 0.95, 0.97] as Rgb } as const;
 
-/** Mine sites: a dark pit in an orange frame. */
-export const MINE = { pit: [0.06, 0.06, 0.06] as Rgb, frame: [0.88, 0.45, 0.14] as Rgb } as const;
+/** Mine sites (Kyler's rounds, D178; his colours, measured in the game): a rusty frame in a dull
+ *  brown-orange (#844D2F) round the edge of the 5 × 5 footprint, and a pit with real depth filling
+ *  the rest, its earth a dark grey-brown with roots, rubble and cracks; scaffold towers on the
+ *  frame's corners with pale wooden platforms, crates and planks (#A78E65). With **Markers** on, an
+ *  orange line between dark edges outlines the footprint, a few pixels wide from any distance. */
+export const MINE = {
+  /** The pit as it shows in its shade (about #373A34): the legend's colour. */
+  pit: [0.216, 0.227, 0.204] as Rgb,
+  /** The pit's earth as the model colours it: lit only by the sky down there, it shows about as
+   *  `pit`. The walls' topsoil is browner and lighter, with a pale seam, and the earth darkens
+   *  toward the floor; the floor darkens toward its edges. */
+  earthTop: [0.66, 0.58, 0.45] as Rgb,
+  earth: [0.56, 0.55, 0.46] as Rgb,
+  earthLow: [0.43, 0.43, 0.37] as Rgb,
+  seam: [0.68, 0.64, 0.53] as Rgb,
+  floor: [0.43, 0.45, 0.37] as Rgb,
+  floorEdge: [0.34, 0.35, 0.3] as Rgb,
+  crack: [0.16, 0.16, 0.15] as Rgb,
+  floorCrack: [0.24, 0.24, 0.21] as Rgb,
+  /** The shaft in the pit's floor. */
+  shaft: [0.2, 0.2, 0.18] as Rgb,
+  root: [0.34, 0.25, 0.17] as Rgb,
+  rootPale: [0.74, 0.64, 0.48] as Rgb,
+  rubble: [[0.62, 0.58, 0.5], [0.44, 0.41, 0.36], [0.72, 0.67, 0.58]] as readonly Rgb[],
+  ladder: [0.52, 0.42, 0.29] as Rgb,
+  rope: [0.22, 0.17, 0.12] as Rgb,
+  frame: [0.518, 0.302, 0.184] as Rgb,
+  wood: [0.655, 0.557, 0.396] as Rgb,
+  /** **Markers**: the outline round the footprint. */
+  outline: [1.0, 0.56, 0.18] as Rgb,
+  outlineDark: [0.1, 0.05, 0.02] as Rgb,
+} as const;
 
 /** The light: a warm sun from the north-west, a cool sky (violet in the shadows of the earth),
  *  and a blue-grey haze over distant ground. */
@@ -398,14 +440,26 @@ export function objectLegend(): LegendEntry[] {
       label: "Slopes: stone ramps",
     },
     {
+      // a rusty skeleton with beige panels, one askew, its top storey partly there
       swatch: icon(
-        `<rect x="7" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="15.6" y="1" width="1.4" height="14" fill="${c(RUIN.frame)}"/><rect x="7" y="7" width="10" height="1.4" fill="${c(RUIN.rust)}"/><rect x="7" y="13.6" width="10" height="1.4" fill="${c(RUIN.rust)}"/><path d="M8 2 L16 7" stroke="${c(RUIN.frame)}" stroke-width="1"/>` +
-          `<rect x="9" y="3" width="4" height="4" fill="${c(RUIN.panel)}"/><rect x="11" y="10" width="4" height="3.6" fill="${c(RUIN.panel)}"/>`,
+        `<rect x="8.3" y="9.6" width="7.4" height="5.6" fill="${c(RUIN.panel)}"/><rect x="9" y="4.4" width="5" height="4.2" fill="${c(RUIN.panel)}" transform="rotate(-9 11.5 6.5)"/>` +
+          `<rect x="7" y="3" width="1.3" height="13" fill="${c(RUIN.rust)}"/><rect x="15.7" y="0.5" width="1.3" height="15.5" fill="${c(RUIN.rust)}"/><rect x="7" y="8.6" width="10" height="1.1" fill="${c(RUIN.rust)}"/>` +
+          `<path d="M8 8.6 L16 1.5" stroke="${c(RUIN.rust)}" stroke-width="0.9"/>`,
         dry,
       ),
-      label: "Ruins: scaffold towers, a storey per level",
+      label: "Ruins: ruined scaffold towers, a storey per level",
     },
-    { swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="6.5" y="3.5" width="11" height="9" fill="${c(MINE.pit)}"/>`, dry), label: "Mine site" },
+    {
+      // the rusty frame round the footprint, the pit filling it, pale platforms on the frame's
+      // corners, beams across
+      swatch: icon(
+        `<rect x="4" y="1" width="16" height="14" fill="${c(MINE.frame)}"/><rect x="5.3" y="2.3" width="13.4" height="11.4" fill="${c(MINE.pit)}"/>` +
+          `<rect x="4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="1" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/><rect x="16.4" y="11.6" width="3.6" height="3.4" fill="${c(MINE.wood)}"/>` +
+          `<rect x="4" y="6.2" width="16" height="0.9" fill="${c(MINE.frame)}"/><rect x="4" y="8.9" width="16" height="0.9" fill="${c(MINE.frame)}"/>`,
+        dry,
+      ),
+      label: "Mine site: a pit in a rusty frame",
+    },
     {
       swatch: icon(`<circle cx="12" cy="8" r="6" fill="#77746d"/><circle cx="12" cy="8" r="4.2" fill="${c([0.32, 0.62, 0.95])}"/>`, dry) + `, ${dry}`,
       label: "Water source",
@@ -443,6 +497,11 @@ export function objectLegend(): LegendEntry[] {
           `<rect x="10" width="4" height="16" fill="${c(CONTAMINATION_OUTLINE.dark)}"/><rect x="11" width="2" height="16" fill="${c(CONTAMINATION_OUTLINE.light)}"/>`,
       ),
       label: "Contaminated ground: an outline where it ends",
+      markers: true,
+    },
+    {
+      swatch: icon(`<rect x="4" y="1" width="16" height="14" fill="${c(MINE.outlineDark)}"/><rect x="5" y="2" width="14" height="12" fill="${c(MINE.outline)}"/><rect x="7" y="4" width="10" height="8" fill="${c(MINE.outlineDark)}"/><rect x="8" y="5" width="8" height="6" fill="${c(MINE.pit)}"/>`, dry),
+      label: "Mine sites: an orange outline",
       markers: true,
     },
   ];

@@ -22,8 +22,44 @@ export function placeData(entry: PlaceIndexEntry): PlaceData {
 /** Checks that fail and count: not advisory, applicable, not approximate. */
 export const failing = (checks: readonly CheckResult[]) => checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false && !c.approximate).map((c) => `${c.id}: ${c.message}`);
 
+/** No edge walls (Kyler, 2026-09-25, D151): every place as converted for real-places-done stands in
+ *  a full-height wall round the whole map, which `terrain.edge_wall` flags, a principle that blocks
+ *  the export profile the places are built in. placeTimber refuses only what would not load, so the
+ *  gallery keeps serving them until Real places 2 converts them without it and turns this to
+ *  false. */
+export const PLACES_HAVE_EDGE_WALLS = true;
+
+/** Water sources start rivers (D171): the places whose conversion puts a source inside a flow
+ *  another source already feeds (`water.source_in_flow`, a design check: it warns in the export
+ *  profile). Real places 2 places sources only at heads and empties this list. */
+export const PLACES_SOURCES_IN_FLOW = new Set([
+  "near-altiplano", "near-atacama-fan", "near-badlands-national-park", "near-bandiagara",
+  "near-blue-mountains-jamison", "near-blyde-river-canyon", "near-brahmaputra-near-majuli",
+  "near-bungle-bungle", "near-capitol-reef", "near-chilean-aysen-fjord", "near-chocolate-hills",
+  "near-cliffs-of-moher", "near-colca-canyon", "near-copper-canyon", "near-death-valley",
+  "near-dinaric-karst-plitvice", "near-drakensberg-amphitheatre", "near-ennedi-plateau",
+  "near-ethiopian-highlands", "near-finnish-saimaa", "near-geirangerfjord", "near-glencoe",
+  "near-godavari-delta", "near-goosenecks-san-juan", "near-gullfoss", "near-ilulissat-icefjord",
+  "near-kenai-aialik-bay", "near-lake-toba", "near-lena-delta", "near-lower-mississippi-oxbows",
+  "near-mamore-river", "near-monument-valley", "near-mount-mayon", "near-na-pali-coast",
+  "near-ngorongoro", "near-niagara-falls", "near-painted-desert", "near-phong-nha",
+  "near-rhine-and-moselle", "near-roaring-river-fan", "near-sete-cidades", "near-skeidara-outwash",
+  "near-taklimakan-kunlun-fan", "near-tara-gorge", "near-tiger-leaping-gorge", "near-todgha-gorge",
+  "near-toklat-river", "near-torres-del-paine", "near-tsingy-bemaraha", "near-twelve-apostles",
+  "near-victoria-falls", "near-waimakariri-river", "near-western-ghats-mahabaleshwar",
+  "near-yosemite-valley",
+]);
+
+/** The failing checks of a place, the two known conversion faults apart, and which of them fail. */
+export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean; sourceInFlow: boolean } {
+  const all = failing(checks);
+  const known = (f: string) => f.startsWith("terrain.edge_wall:") || f.startsWith("water.source_in_flow:");
+  return { other: all.filter((f) => !known(f)), edgeWall: all.some((f) => f.startsWith("terrain.edge_wall:")), sourceInFlow: all.some((f) => f.startsWith("water.source_in_flow:")) };
+}
+
 /** Every place in shard `k` of `n`: its .timber, built as the page builds it (build, settle,
- *  validate, write), passes the export profile and every check of the generate profile, and is the
+ *  validate, write), passes the export profile and every check of the generate profile but the edge
+ *  wall, which flags it as long as the places stand in one (`PLACES_HAVE_EDGE_WALLS`), and is the
  *  same bytes as the index records. */
 export function checkShard(k: number, n: number): void {
   const places = INDEX.places.filter((_, i) => i % n === k);
@@ -31,13 +67,19 @@ export function checkShard(k: number, n: number): void {
     it.each(places.map((p) => [p.name, p] as const))("%s", (_name, entry) => {
       const r = placeTimber(placeData(entry));
       expect(r.validation.report.profile).toBe("export");
-      expect(r.validation.report.passed).toBe(true);
+      // the export profile passes but for the edge wall, a principle it blocks (D151); the gallery
+      // still gets the file, as placeTimber refuses only what would not load
+      expect(r.validation.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS);
       expect(r.fileName).toBe(`${entry.name}.timber`);
       // the written file, read back: every check of the strictest profile, on its own settle
       const file = readTimber(r.bytes);
       const v = validateMap(file, { profile: "generate", designedFor: "normal", features: [], water: { model: r.validation.model!, settled: r.validation.water! } });
-      expect(failing(v.report.checks)).toEqual([]);
-      expect(v.report.passed).toBe(true);
+      const f = placeFailures(v.report.checks);
+      expect(f.other).toEqual([]);
+      expect(f.edgeWall).toBe(PLACES_HAVE_EDGE_WALLS);
+      expect(f.sourceInFlow).toBe(PLACES_SOURCES_IN_FLOW.has(entry.id));
+      expect(v.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS);
+      expect(r.validation.report.checks.find((c) => c.id === "terrain.edge_wall")!.severity).toBe(PLACES_HAVE_EDGE_WALLS ? "error" : "info");
       expect(sha256(r.bytes)).toBe(entry.sha256);
       expect(r.bytes.length).toBe(entry.bytes);
     });

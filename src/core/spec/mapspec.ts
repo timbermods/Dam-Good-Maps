@@ -1,7 +1,7 @@
 // MapSpec v1 (PLAN §19.1): everything that determines a generated map. The settings panel, the
 // URL codec, the editor's SpecPatch and Claude all produce one. Complete, never a diff.
 
-export const GENERATOR_VERSION = "0.6.0";
+export const GENERATOR_VERSION = "0.6.1";
 export const SPEC_VERSION = 1;
 
 export type ThemeId = "riverValley" | "canyon" | "highlands" | "lakeBasin" | "delta" | "islands";
@@ -60,10 +60,10 @@ export interface Settings {
   start: {
     area: "small" | "normal" | "large";
     /** The start requirements and targets (PLAN §5.6, D85). The first three reject a map:
-     *  water without stairs, Minimum starting trees and Minimum starting bushes. */
+     *  water without stairs, Minimum starting wood and Minimum starting bushes. */
     rules: {
-      waterWithin: number; // water without stairs: tiles' walk on the start's level to clean pumpable water (4–40)
-      treesWithin20: number; // Minimum starting trees: living, within 20 tiles' walk (0–400)
+      waterWithin: number; // water without stairs: tiles' walk over the map's own ground and slopes to a shore a pump works from (4–40)
+      woodWithin20: number; // Minimum starting wood: logs of grown trees within 20 tiles' walk (0–800; D164)
       bushesWithin20: number; // Minimum starting bushes: living, within 20 tiles' walk (0–200)
       badwaterWithin: number; // target: no badwater within this many tiles (8–60)
       ruinsWithin: number; // target: no ruins within this many tiles
@@ -126,15 +126,41 @@ export const THEME_PRESETS: Record<ThemeId, ThemePreset> = {
   islands: { relief: 35, terracing: 30, buildableLand: "normal", rivers: 1, riverStyle: "meandering", riverFlow: "lush", droughtReserve: "plenty", lakes: "none", waterfalls: "off", badwater: "low", thornBelts: "off", forestDensity: 100, ruins: 100 },
 };
 
+/** Starting wood a tree of the old count stands for (D164): the living trees the start rule
+ *  counted before, on seeds 1–30 of every theme at 128² with the default settings, gave 3.0 logs
+ *  each (2.8–3.4 by theme, as the default species mix does: pine 2, birch 1, oak 8 logs), and 66%
+ *  of those logs stood on grown trees (a third of the living trees are saplings): 2 logs of grown
+ *  wood a tree. It turns the tree counts of old share links and project files into logs, and set
+ *  the difficulties' defaults. */
+export const LOGS_PER_TREE = 2;
+
 /** Start rules by difficulty (PLAN §5.6; D85, Kyler's start requirements): water without stairs
- *  within 12 / 20 / 28 tiles' walk, Minimum starting trees 60 / 40 / 20, Minimum starting bushes
- *  40 / 30 / 20, badwater distance 30 / 15 / 8 (a target). Berries near start never aims below
- *  Minimum starting bushes (Easy's 20 became 40). */
+ *  within 12 / 20 / 28 tiles' walk, Minimum starting wood 120 / 80 / 40 logs of grown trees (D164:
+ *  the tree counts 60 / 40 / 20 at `LOGS_PER_TREE`), Minimum starting bushes 40 / 30 / 20, badwater
+ *  distance 30 / 15 / 8 (a target). Berries near start never aims below Minimum starting bushes
+ *  (Easy's 20 became 40). */
 export const DIFFICULTY_RULES: Record<Difficulty, Settings["start"]["rules"] & { berriesTarget: number }> = {
-  easy: { waterWithin: 12, treesWithin20: 60, bushesWithin20: 40, badwaterWithin: 30, ruinsWithin: 20, berriesTarget: 40 },
-  normal: { waterWithin: 20, treesWithin20: 40, bushesWithin20: 30, badwaterWithin: 15, ruinsWithin: 15, berriesTarget: 48 },
-  hard: { waterWithin: 28, treesWithin20: 20, bushesWithin20: 20, badwaterWithin: 8, ruinsWithin: 12, berriesTarget: 60 },
+  easy: { waterWithin: 12, woodWithin20: 120, bushesWithin20: 40, badwaterWithin: 30, ruinsWithin: 20, berriesTarget: 40 },
+  normal: { waterWithin: 20, woodWithin20: 80, bushesWithin20: 30, badwaterWithin: 15, ruinsWithin: 15, berriesTarget: 48 },
+  hard: { waterWithin: 28, woodWithin20: 40, bushesWithin20: 20, badwaterWithin: 8, ruinsWithin: 12, berriesTarget: 60 },
 };
+
+/** The wood a tree count of before D164 stands for: `LOGS_PER_TREE` logs a tree, within the
+ *  setting's range. */
+export function woodForTrees(trees: number): number {
+  return Math.max(0, Math.min(800, Math.round(trees * LOGS_PER_TREE)));
+}
+
+/** A spec stored before D164 (a project file, a saved autosave) counts starting trees: its
+ *  `treesWithin20` becomes `woodWithin20` by `woodForTrees`. Changes the spec in place; anything
+ *  else is left for the schema to judge. */
+export function upgradeSpec(spec: unknown): void {
+  const rules = (spec as { settings?: { start?: { rules?: Record<string, unknown> } } } | null)?.settings?.start?.rules;
+  if (!rules || typeof rules !== "object" || !("treesWithin20" in rules)) return;
+  const trees = rules.treesWithin20;
+  delete rules.treesWithin20;
+  if (!("woodWithin20" in rules) && typeof trees === "number" && Number.isFinite(trees)) rules.woodWithin20 = woodForTrees(trees);
+}
 
 export function mineSitesForSize(x: number, y: number): number {
   const area = x * y;
@@ -170,7 +196,7 @@ export function defaultSettings(theme: ThemeId, designedFor: Difficulty, size: {
       area: "normal",
       rules: {
         waterWithin: d.waterWithin,
-        treesWithin20: d.treesWithin20,
+        woodWithin20: d.woodWithin20,
         bushesWithin20: d.bushesWithin20,
         badwaterWithin: d.badwaterWithin,
         ruinsWithin: d.ruinsWithin,

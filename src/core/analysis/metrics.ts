@@ -60,7 +60,10 @@ export interface MapMetrics {
   groveMedian: number;
   species: { pine: number; birch: number; oak: number; succulent: number };
   bushesNearStart: number;
+  /** Living trees within 20 tiles' walk of the start, and starting wood: the logs of the grown
+   *  trees there (D164). */
   treesNearStart: number;
+  woodNearStart: number;
   bushesPer10k: number;
   scrapPer1k: number;
   ruinsNearest: number;
@@ -287,7 +290,8 @@ export function measure(m: Measurable): MapMetrics {
       ? { pine: sp.pine / trees, birch: sp.birch / trees, oak: sp.oak / trees, succulent: sp.succulent / trees }
       : { pine: 0, birch: 0, oak: 0, succulent: 0 },
     bushesNearStart: checkValue(m.report, "start.food"),
-    treesNearStart: checkValue(m.report, "start.wood"),
+    treesNearStart: a ? a.treesNear : Infinity,
+    woodNearStart: checkValue(m.report, "start.wood"),
     bushesPer10k: bushes * per10k,
     scrapPer1k: (scrap * 1e3) / N,
     ruinsNearest,

@@ -9,11 +9,12 @@ import type { Orientation } from "../core/format/footprints";
 import type { Feature, MapObjectFeature, SetPieceFeature } from "../core/features/schema";
 import { isLine, OBJECT_NAMES } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
-import { saveFile } from "../platform";
+import { saveFile, saveToTimberborn, type SaveToTimberbornResult } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
+import { woodDetail } from "../core/analysis/wood";
 import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
 import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
 
@@ -203,7 +204,7 @@ function TabNote({ tab, info }: { tab: Tab; info: SessionInfo }) {
   const imported = info.kind === "import";
   if (tab === "start") {
     if (imported) return <p class="note">Drag the start's handle to move it. The district center needs level ground and a free tile at its door.</p>;
-    return <p class="note">Select the start, then drag its handle. Green means the district center fits and meets the start requirements: water on its level without stairs, and enough trees and berry bushes within 20 tiles' walk.</p>;
+    return <p class="note">Select the start, then drag its handle. Green means the district center fits and meets the start requirements: clean water within a short walk, and enough wood and berry bushes within 20 tiles' walk.</p>;
   }
   if (imported && tab === "land") return <p class="note">Imported maps have no features to select yet. Draw new land on top of the map.</p>;
   return null;
@@ -450,10 +451,11 @@ export function PreviewCard({ plan, pending, onPlace, onCancel }: PreviewProps) 
 }
 
 /** The start's footprint check while it is dragged: whether it fits, the three start requirements
- *  (PLAN §5.6, D85) with the map's numbers, and the targets it misses as warnings. */
-export function StartIndicators({ check, rules }: { check: StartCheck; rules: { waterWithin: number; treesWithin20: number; bushesWithin20: number } }) {
+ *  (PLAN §5.6, D85, D164) with the map's numbers, and the targets it misses as warnings. */
+export function StartIndicators({ check, rules }: { check: StartCheck; rules: { waterWithin: number; woodWithin20: number; bushesWithin20: number } }) {
   const mark = (ok: boolean) => (ok ? "ok" : "low");
   const waterOk = check.water !== null && check.water <= rules.waterWithin;
+
   return (
     <div class="start-indicators" role="status">
       <p class={check.problem || !check.meets ? "bad" : "ok"}>
@@ -461,10 +463,10 @@ export function StartIndicators({ check, rules }: { check: StartCheck; rules: { 
       </p>
       <ul>
         <li class={mark(waterOk)} data-need="water">
-          Water without stairs: {check.water === null ? "none on this level" : `${check.water} tiles' walk`} (at most {rules.waterWithin})
+          Water without stairs: {check.water === null ? "none in reach" : `${check.water} tiles' walk`} (at most {rules.waterWithin})
         </li>
-        <li class={mark(check.trees >= rules.treesWithin20)} data-need="trees">
-          Starting trees: {check.trees} (at least {rules.treesWithin20})
+        <li class={mark(check.wood >= rules.woodWithin20)} data-need="wood">
+          Starting wood: {check.wood} logs{woodDetail(check.woodBySpecies, check.woodGrowing)} (at least {rules.woodWithin20})
         </li>
         <li class={mark(check.bushes >= rules.bushesWithin20)} data-need="bushes">
           Starting bushes: {check.bushes} (at least {rules.bushesWithin20})
@@ -979,8 +981,9 @@ export function ExportDialog(p: ExportDialogProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [savedVia, setSavedVia] = useState<SaveToTimberbornResult | null>(null);
   const [progress, setProgress] = useState<CheckProgress | null>(null);
-  const [exportingNow, setExportingNow] = useState(false);
+  const [exportingNow, setExportingNow] = useState<"download" | "timberborn" | null>(null);
   const first = useRef<HTMLButtonElement>(null);
   const onProgress = proxy((q: CheckProgress) => setProgress(q));
   // the checks run after the canonical settle, in slices with progress (EDITOR_PLAN §6)
@@ -1017,16 +1020,21 @@ export function ExportDialog(p: ExportDialogProps) {
     };
   }, []);
   const canExport = !!check && !check.blocking.length && (!check.warnings.length || confirmed);
-  async function doExport() {
+  async function doExport(kind: "download" | "timberborn") {
     setError(null);
-    setExportingNow(true);
+    setExportingNow(kind);
     try {
       const r = await p.queue(() => p.api.exportTimber(confirmed, onProgress));
       if (!r.ok) return setError(r.errors.join(" "));
-      saveFile(r.bytes, r.fileName);
+      if (kind === "download") {
+        saveFile(r.bytes, r.fileName);
+        setSavedVia(null);
+      } else {
+        setSavedVia(await saveToTimberborn(r.bytes, r.fileName));
+      }
       setSaved(r.fileName);
     } finally {
-      setExportingNow(false);
+      setExportingNow(null);
       setProgress(null);
     }
   }
@@ -1102,15 +1110,32 @@ export function ExportDialog(p: ExportDialogProps) {
         ) : null}
         {saved ? (
           <p class="ok-line" role="status">
-            Saved <strong>{saved}</strong>. Move it to <code>Documents\Timberborn\Maps</code>, then start a new game and pick the map.
+            {savedVia?.via === "fsa" ? (
+              <>
+                Saved <strong>{saved}</strong> to <strong>{savedVia.folder}</strong>. It'll show up in Timberborn's custom maps.
+                {savedVia.savedAs ? (
+                  <>
+                    {" "}
+                    Saved as <strong>{savedVia.savedAs}</strong>.
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <>
+                Saved <strong>{saved}</strong>. Move it to <code>Documents\Timberborn\Maps</code>, then start a new game and pick the map.
+              </>
+            )}
           </p>
         ) : null}
         <footer>
           <button type="button" class="ghost" onClick={p.onClose}>
             {saved ? "Done" : "Cancel"}
           </button>
-          <button type="button" class="primary" disabled={!canExport || exportingNow} onClick={() => void doExport()}>
-            {exportingNow ? "Exporting…" : "Export"}
+          <button type="button" class="ghost" disabled={!canExport || !!exportingNow} onClick={() => void doExport("timberborn")}>
+            {exportingNow === "timberborn" ? "Saving…" : "Save to Timberborn"}
+          </button>
+          <button type="button" class="primary" disabled={!canExport || !!exportingNow} onClick={() => void doExport("download")}>
+            {exportingNow === "download" ? "Exporting…" : "Export"}
           </button>
         </footer>
       </div>

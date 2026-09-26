@@ -1,11 +1,14 @@
 // The start requirements (PLAN §5.6, §11.4; D85, Kyler 2026-09-24): a unit test for each. On a
 // small made-up map the validator's playability checks run on water given directly (no settle), so
-// each case changes one thing: where the water is, what it is, how the start walks to it, and how
-// many living trees and berry bushes stand within 20 tiles' walk.
+// each case changes one thing: where the water is, what it is, how the start walks to it, how much
+// wood and how many living berry bushes stand within 20 tiles' walk.
 //
-//   1. Water without stairs: clean water a pump reaches touches a shore tile on the start's own
-//      level, within the rule's walk of the start and without any slope.
-//   2. Starting trees: living trees within 20 tiles' walk (slopes allowed) ≥ Minimum starting trees.
+//   1. Water without stairs (amended by Kyler, 2026-09-25, D153): clean water touches a shore tile the
+//      start reaches on foot over the map's own ground and its slopes (never player stairs), within
+//      the rule's walk, and a pump on that shore reaches the water's surface.
+//   2. Starting wood (D164): the logs of the grown trees within 20 tiles' walk (slopes allowed),
+//      alive or dead, by species (oak 8, pine 2, birch 1) ≥ Minimum starting wood; a sapling's
+//      logs are still growing and do not count.
 //   3. Starting bushes: living berry bushes within 20 tiles' walk ≥ Minimum starting bushes.
 
 import { describe, expect, it } from "vitest";
@@ -14,7 +17,8 @@ import type { Orientation } from "../../src/core/format/footprints";
 import { moisture } from "../../src/core/sim/moisture";
 import { waterModel, type MapObject } from "../../src/core/sim/model";
 import type { CanonicalWater } from "../../src/core/sim/prefill";
-import { DIFFICULTY_RULES, makeSpec } from "../../src/core/spec/mapspec";
+import { F } from "../../src/core/format/json";
+import { DIFFICULTY_RULES, makeSpec, woodForTrees } from "../../src/core/spec/mapspec";
 import { checkPlayability, rulesFor, type Rules } from "../../src/core/validate/playability";
 import { Collector, type CheckResult } from "../../src/core/validate/report";
 
@@ -50,8 +54,8 @@ function obj(template: string, x: number, y: number, z: number, orientation: Ori
   return { template, x, y, z, orientation, flipped: false, components: components as MapObject["components"] };
 }
 
-function plant(s: Scene, template: "Pine" | "BlueberryBush", tiles: [number, number][], dead = false): void {
-  for (const [x, y] of tiles) s.objects.push(obj(template, x, y, s.heights[y * W + x], "Cw0", dead ? { LivingNaturalResource: { IsDead: true } } : {}));
+function plant(s: Scene, template: "Pine" | "Birch" | "Oak" | "Succulent" | "BlueberryBush", tiles: [number, number][], dead = false, components: Record<string, unknown> = {}): void {
+  for (const [x, y] of tiles) s.objects.push(obj(template, x, y, s.heights[y * W + x], "Cw0", { ...(dead ? { LivingNaturalResource: { IsDead: true } } : {}), ...components }));
 }
 
 /** The moist, dry-footed tiles of a scene (where living plants survive). */
@@ -94,22 +98,26 @@ function check(s: Scene, rules: Partial<Rules> = {}): Record<string, CheckResult
   return Object.fromEntries(c.checks.map((r) => [r.id, r]));
 }
 
-/** A scene that meets all three requirements at Normal: 45 living trees and 35 living bushes
- *  within 20 tiles' walk. */
+/** A scene that meets all three requirements at Normal: 150 logs (30 pines, 10 oaks and 10
+ *  birches) and 35 living bushes within 20 tiles' walk. */
 function good(): Scene {
   const s = scene();
   const taken = new Set<number>();
-  plant(s, "Pine", spots(s, 45, 2, 18, taken));
+  plant(s, "Pine", spots(s, 30, 2, 18, taken));
+  plant(s, "Oak", spots(s, 10, 2, 18, taken));
+  plant(s, "Birch", spots(s, 10, 2, 18, taken));
   plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
   return s;
 }
 
-describe("the three start requirements (PLAN §5.6, D85)", () => {
-  it("Normal's defaults are 20 tiles' walk, 40 trees and 30 bushes; Easy 12, 60, 40; Hard 28, 20, 20", () => {
+describe("the three start requirements (PLAN §5.6, D85, D164)", () => {
+  it("Normal's defaults are 20 tiles' walk, 80 logs and 30 bushes; Easy 12, 120, 40; Hard 28, 40, 20", () => {
     const r = (d: "easy" | "normal" | "hard") => DIFFICULTY_RULES[d];
-    expect([r("easy").waterWithin, r("easy").treesWithin20, r("easy").bushesWithin20]).toEqual([12, 60, 40]);
-    expect([r("normal").waterWithin, r("normal").treesWithin20, r("normal").bushesWithin20]).toEqual([20, 40, 30]);
-    expect([r("hard").waterWithin, r("hard").treesWithin20, r("hard").bushesWithin20]).toEqual([28, 20, 20]);
+    expect([r("easy").waterWithin, r("easy").woodWithin20, r("easy").bushesWithin20]).toEqual([12, 120, 40]);
+    expect([r("normal").waterWithin, r("normal").woodWithin20, r("normal").bushesWithin20]).toEqual([20, 80, 30]);
+    expect([r("hard").waterWithin, r("hard").woodWithin20, r("hard").bushesWithin20]).toEqual([28, 40, 20]);
+    // D164: the tree counts before it (60 / 40 / 20) at 2 logs of grown wood a tree
+    for (const [d, trees] of [["easy", 60], ["normal", 40], ["hard", 20]] as const) expect(r(d).woodWithin20).toBe(woodForTrees(trees));
     // an imported map uses its difficulty's defaults; a generated one its settings
     expect(rulesFor(null, "hard").waterWithin).toBe(28);
     const spec = makeSpec({ seed: 1, designedFor: "easy" });
@@ -122,7 +130,8 @@ describe("the three start requirements (PLAN §5.6, D85)", () => {
     expect(c["start.water"].ok).toBe(true);
     expect(c["start.water"].value).toBe(20);
     expect(c["start.wood"].ok).toBe(true);
-    expect(c["start.wood"].value).toBe(45);
+    expect(c["start.wood"].value).toBe(150);
+    expect(c["start.wood"].message).toMatch(/^150 logs within 20 tiles' walk of the start, oak and pine \(at least 80\)$/);
     expect(c["start.food"].ok).toBe(true);
     expect(c["start.food"].value).toBe(35);
     for (const id of ["start.badwater", "start.reach", "start.ruins_clear", "water.reservoir"]) expect(c[id].advisory, id).toBe(true);
@@ -141,16 +150,41 @@ describe("the three start requirements (PLAN §5.6, D85)", () => {
     expect(check(s, { waterWithin: 40 })["start.water"].ok).toBe(true);
   });
 
-  it("water reached only by a slope fails: the shore is on another level", () => {
+  it("water reached down a natural slope passes; the same step without one needs stairs and fails", () => {
     const s = good();
-    // the start's side rises one level; the bank below it is reached by a slope
+    // the start's side rises one level; the bank below it, beside the river, is reached by the
+    // map's own slope (D153: levels may change along the walk, through slopes)
     for (let y = 0; y < H; y++) for (let x = 0; x <= 29; x++) s.heights[y * W + x] = 6;
     s.objects = s.objects.map((o) => (o.x <= 29 ? { ...o, z: 6 } : o));
     s.objects.push(obj("Slope", 30, 24, 5, "Cw90"));
+    // the walk: 16 tiles on the start's level, 1 down the slope, 3 on the bank to the shore tile;
+    // a pump on the bank (level 5) reaches the river's surface (4.6)
+    const c = check(s, { waterWithin: 20 });
+    expect(c["start.water"].ok).toBe(true);
+    expect(c["start.water"].value).toBe(20);
+    expect(check(s, { waterWithin: 19 })["start.water"].ok).toBe(false);
+    // without the slope, reaching the bank takes stairs the player would build: no water
+    s.objects = s.objects.filter((o) => o.template !== "Slope");
+    const none = check(s, { waterWithin: 40 });
+    expect(none["start.water"].ok).toBe(false);
+    expect(none["start.water"].value).toBe("none");
+  });
+
+  it("the pump works from the shore it stands on: water too far below that shore fails, on any level", () => {
+    const s = good();
+    // the same slope down to the bank, but the river's bed drops to level 2: its surface (2.6) is
+    // 2.4 below the bank, out of a pump's reach there, though the walk is short
+    for (let y = 0; y < H; y++) for (let x = 0; x <= 29; x++) s.heights[y * W + x] = 6;
+    s.objects = s.objects.map((o) => (o.x <= 29 ? { ...o, z: 6 } : o));
+    s.objects.push(obj("Slope", 30, 24, 5, "Cw90"));
+    for (let y = 0; y < H; y++) for (let x = 34; x <= 36; x++) s.heights[y * W + x] = 2;
+    expect(check(s, { waterWithin: 40 })["start.water"].value).toBe("none");
+    // a second slope down to a lower bank (level 4) beside it brings the pump within reach
+    for (let y = 0; y < H; y++) s.heights[y * W + 33] = 4;
+    s.objects.push(obj("Slope", 33, 24, 4, "Cw90"));
     const c = check(s, { waterWithin: 40 });
-    // a pump on the start's level would reach the water (0–2 levels below), but not without stairs
-    expect(c["start.water"].ok).toBe(false);
-    expect(c["start.water"].value).toBe("none");
+    expect(c["start.water"].ok).toBe(true);
+    expect(c["start.water"].value).toBe(20);
   });
 
   it("only badwater fails", () => {
@@ -170,40 +204,83 @@ describe("the three start requirements (PLAN §5.6, D85)", () => {
     expect(check(deep)["start.water"].ok).toBe(false);
   });
 
-  it("trees below the minimum fail, and Minimum starting trees moves the result", () => {
+  it("wood below the minimum fails, and Minimum starting wood moves the result", () => {
     const s = scene();
     const taken = new Set<number>();
-    plant(s, "Pine", spots(s, 39, 2, 18, taken));
+    plant(s, "Pine", spots(s, 39, 2, 18, taken)); // 78 logs
     plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
+    expect(check(s)["start.wood"].value).toBe(78);
     expect(check(s)["start.wood"].ok).toBe(false);
-    expect(check(s, { treesWithin20: 39 })["start.wood"].ok).toBe(true);
-    expect(check(good(), { treesWithin20: 46 })["start.wood"].ok).toBe(false);
+    expect(check(s, { woodWithin20: 78 })["start.wood"].ok).toBe(true);
+    expect(check(good(), { woodWithin20: 151 })["start.wood"].ok).toBe(false);
   });
 
-  it("trees too far away, dead trees, and trees on soil that kills them do not count", () => {
+  it("each species gives its own yield: an oak 8 logs, a pine 2, a birch 1; a succulent none", () => {
     const s = scene();
     const taken = new Set<number>();
     plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
-    plant(s, "Pine", spots(s, 30, 2, 18, taken));
+    plant(s, "Oak", spots(s, 1, 2, 18, taken));
+    plant(s, "Pine", spots(s, 1, 2, 18, taken));
+    plant(s, "Birch", spots(s, 1, 2, 18, taken));
+    expect(check(s)["start.wood"].value).toBe(11);
+    // a succulent yields water, not logs
+    plant(s, "Succulent", spots(s, 1, 2, 18, taken));
+    expect(check(s)["start.wood"].value).toBe(11);
+    // the logs a tree holds in the file are what a lumberjack cuts
+    plant(s, "Oak", spots(s, 1, 2, 18, taken), false, { "Yielder:Cuttable": { Yield: { Good: "Log", Amount: 3 } } });
+    const c = check(s, { woodWithin20: 14 });
+    expect(c["start.wood"].value).toBe(14);
+    expect(c["start.wood"].ok).toBe(true);
+    expect(c["start.wood"].message).toMatch(/mostly oak/);
+  });
+
+  it("a sapling's logs are still growing: shown apart, never counted, whatever form its growth takes", () => {
+    const s = scene();
+    const taken = new Set<number>();
+    plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
+    plant(s, "Oak", spots(s, 10, 2, 18, taken)); // 80 grown logs
+    // saplings: the growth as a plain number, as the parser's float, and in the older {"Value": …} form
+    plant(s, "Oak", spots(s, 1, 2, 18, taken), false, { Growable: { GrowthProgress: 0.5 } });
+    plant(s, "Pine", spots(s, 1, 2, 18, taken), false, { Growable: { GrowthProgress: F(0.25) } });
+    plant(s, "Birch", spots(s, 1, 2, 18, taken), false, { Growable: { GrowthProgress: { Value: 0.8 } } });
+    let c = check(s);
+    expect(c["start.wood"].value).toBe(80);
+    expect(c["start.wood"].ok).toBe(true);
+    expect(c["start.wood"].message).toBe("80 logs within 20 tiles' walk of the start, all oak, plus about 11 growing (at least 80)");
+    expect(check(s, { woodWithin20: 81 })["start.wood"].ok).toBe(false);
+    // grown: no Growable, a growth of 1, or no readable growth (never a number made up)
+    plant(s, "Pine", spots(s, 1, 2, 18, taken), false, { Growable: { GrowthProgress: F(1) } });
+    plant(s, "Pine", spots(s, 1, 2, 18, taken), false, { Growable: {} });
+    plant(s, "Pine", spots(s, 1, 2, 18, taken), false, { Growable: { GrowthProgress: "half" } });
+    c = check(s);
+    expect(c["start.wood"].value).toBe(86);
+    expect(check(s, { woodWithin20: 86 })["start.wood"].ok).toBe(true);
+  });
+
+  it("wood beyond 20 tiles' walk does not count; dead trees, and trees that will die, keep their logs", () => {
+    const s = scene();
+    const taken = new Set<number>();
+    plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
+    plant(s, "Pine", spots(s, 30, 2, 18, taken)); // 60
     plant(s, "Pine", spots(s, 20, 21.5, 40, taken)); // beyond 20 tiles' walk
-    plant(s, "Pine", spots(s, 20, 2, 18, taken), true); // dead
-    // living trees on dry ground (moisture 0) die: they are not counted either
+    plant(s, "Pine", spots(s, 20, 2, 18, taken), true); // dead: 40
+    // living trees on dry ground (moisture 0) die, and keep their logs: 20
     const dry: [number, number][] = [];
     const m = moist(s);
     for (let y = 18; y <= 30 && dry.length < 10; y++) for (let x = 3; x <= 8 && dry.length < 10; x++) if (!m[y * W + x]) dry.push([x, y]);
     expect(dry.length).toBe(10);
     plant(s, "Pine", dry);
     const c = check(s);
-    expect(c["start.wood"].value).toBe(30);
-    expect(c["start.wood"].ok).toBe(false);
+    expect(c["start.wood"].value).toBe(120);
+    expect(c["start.wood"].ok).toBe(true);
+    expect(check(s, { woodWithin20: 121 })["start.wood"].ok).toBe(false);
   });
 
-  it("trees across a slope count (slopes allowed); trees on a cliff top beyond reach do not", () => {
+  it("wood across a slope counts (slopes allowed); wood on a cliff top beyond reach does not", () => {
     const s = scene();
     const taken = new Set<number>();
     plant(s, "BlueberryBush", spots(s, 35, 2, 18, taken));
     // a raised shelf north of the start, joined by a slope, with a pond on it that keeps it moist
-    // (the pond's surface is above the start's level: no pump on the start's level reaches it)
     for (let y = 30; y <= 40; y++) for (let x = 8; x <= 20; x++) s.heights[y * W + x] = 6;
     for (let y = 34; y <= 36; y++)
       for (let x = 13; x <= 15; x++) {
@@ -216,10 +293,11 @@ describe("the three start requirements (PLAN §5.6, D85)", () => {
     for (let y = 31; y <= 39 && shelf.length < 42; y++) for (let x = 9; x <= 19 && shelf.length < 42; x++) if (m[y * W + x]) shelf.push([x, y]);
     expect(shelf.length).toBe(42);
     plant(s, "Pine", shelf);
-    // with the slope the shelf is within reach; without it, only its edge trees are cut from below
-    const withSlope = check(s, { treesWithin20: 40 });
+    // with the slope the shelf is within reach (84 logs); without it, only its edge trees are cut
+    // from below
+    const withSlope = check(s, { woodWithin20: 80 });
     s.objects = s.objects.filter((o) => o.template !== "Slope");
-    const without = check(s, { treesWithin20: 40 });
+    const without = check(s, { woodWithin20: 80 });
     expect(withSlope["start.wood"].ok).toBe(true);
     expect(Number(without["start.wood"].value)).toBeLessThan(Number(withSlope["start.wood"].value));
     expect(without["start.wood"].ok).toBe(false);
