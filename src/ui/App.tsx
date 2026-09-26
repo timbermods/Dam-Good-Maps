@@ -7,7 +7,7 @@
 
 import type { ComponentType } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { createGenerator, readFile, saveFile, storage, type Autosave } from "../platform";
+import { createGenerator, readFile, saveFile, saveToTimberborn, storage, type Autosave, type SaveToTimberbornResult } from "../platform";
 import {
   decodeSpecFragment,
   defaultSettings,
@@ -127,6 +127,8 @@ export function App() {
   const [note, setNote] = useState<string | undefined>(init.note);
   const [layers, setLayers] = useState<Layers>({ water: true, moisture: false, contamination: false, reach: false, dam: true, entities: true, features: false });
   const [downloaded, setDownloaded] = useState(false);
+  const [timberborn, setTimberborn] = useState<SaveToTimberbornResult | null>(null);
+  const [savingToTimberborn, setSavingToTimberborn] = useState(false);
   const [preview, setPreview] = useState<"2d" | "3d">("2d");
   const [screen, setScreen] = useState<"settings" | "editor">("settings");
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -191,12 +193,23 @@ export function App() {
     window.setTimeout(() => setCopied(""), 4000);
   }
 
+  async function saveToTimberbornClick(bytes: Uint8Array, name: string) {
+    setSavingToTimberborn(true);
+    try {
+      setTimberborn(await saveToTimberborn(bytes, name));
+      setDownloaded(true);
+    } finally {
+      setSavingToTimberborn(false);
+    }
+  }
+
   // ------------------------------------------------------------------------------ generating
 
   async function run(s: MapSpec) {
     setBusy(true);
     setError(null);
     setDownloaded(false);
+    setTimberborn(null);
     try {
       if (edited) {
         // keep the player's edits: regenerate the open document with the new settings
@@ -625,6 +638,9 @@ export function App() {
                     >
                       Download {result.timberName}
                     </button>
+                    <button type="button" class="ghost" disabled={!result.passed || savingToTimberborn} onClick={() => void saveToTimberbornClick(result.timber, result.timberName)}>
+                      {savingToTimberborn ? "Saving…" : "Save to Timberborn"}
+                    </button>
                     <button type="button" class="ghost" onClick={() => saveFile(result.project, result.projectName, "application/gzip")}>
                       Download project file
                     </button>
@@ -640,6 +656,19 @@ export function App() {
                     >
                       Without pre-filled water
                     </button>
+                    {timberborn ? (
+                      <span class="muted" role="status">
+                        {timberborn.via === "fsa" ? (
+                          <>
+                            Saved to <strong>{timberborn.folder}</strong>. It'll show up in Timberborn's custom maps.
+                          </>
+                        ) : (
+                          <>
+                            Downloaded. Move the file to <code>Documents\Timberborn\Maps</code>.
+                          </>
+                        )}
+                      </span>
+                    ) : null}
                   </>
                 )}
               </div>

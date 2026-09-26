@@ -9,7 +9,7 @@ import type { Orientation } from "../core/format/footprints";
 import type { Feature, MapObjectFeature, SetPieceFeature } from "../core/features/schema";
 import { isLine, OBJECT_NAMES } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
-import { saveFile } from "../platform";
+import { saveFile, saveToTimberborn, type SaveToTimberbornResult } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
@@ -979,8 +979,9 @@ export function ExportDialog(p: ExportDialogProps) {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [savedVia, setSavedVia] = useState<SaveToTimberbornResult | null>(null);
   const [progress, setProgress] = useState<CheckProgress | null>(null);
-  const [exportingNow, setExportingNow] = useState(false);
+  const [exportingNow, setExportingNow] = useState<"download" | "timberborn" | null>(null);
   const first = useRef<HTMLButtonElement>(null);
   const onProgress = proxy((q: CheckProgress) => setProgress(q));
   // the checks run after the canonical settle, in slices with progress (EDITOR_PLAN §6)
@@ -1017,16 +1018,21 @@ export function ExportDialog(p: ExportDialogProps) {
     };
   }, []);
   const canExport = !!check && !check.blocking.length && (!check.warnings.length || confirmed);
-  async function doExport() {
+  async function doExport(kind: "download" | "timberborn") {
     setError(null);
-    setExportingNow(true);
+    setExportingNow(kind);
     try {
       const r = await p.queue(() => p.api.exportTimber(confirmed, onProgress));
       if (!r.ok) return setError(r.errors.join(" "));
-      saveFile(r.bytes, r.fileName);
+      if (kind === "download") {
+        saveFile(r.bytes, r.fileName);
+        setSavedVia(null);
+      } else {
+        setSavedVia(await saveToTimberborn(r.bytes, r.fileName));
+      }
       setSaved(r.fileName);
     } finally {
-      setExportingNow(false);
+      setExportingNow(null);
       setProgress(null);
     }
   }
@@ -1102,15 +1108,26 @@ export function ExportDialog(p: ExportDialogProps) {
         ) : null}
         {saved ? (
           <p class="ok-line" role="status">
-            Saved <strong>{saved}</strong>. Move it to <code>Documents\Timberborn\Maps</code>, then start a new game and pick the map.
+            {savedVia?.via === "fsa" ? (
+              <>
+                Saved <strong>{saved}</strong> to <strong>{savedVia.folder}</strong>. It'll show up in Timberborn's custom maps.
+              </>
+            ) : (
+              <>
+                Saved <strong>{saved}</strong>. Move it to <code>Documents\Timberborn\Maps</code>, then start a new game and pick the map.
+              </>
+            )}
           </p>
         ) : null}
         <footer>
           <button type="button" class="ghost" onClick={p.onClose}>
             {saved ? "Done" : "Cancel"}
           </button>
-          <button type="button" class="primary" disabled={!canExport || exportingNow} onClick={() => void doExport()}>
-            {exportingNow ? "Exporting…" : "Export"}
+          <button type="button" class="ghost" disabled={!canExport || !!exportingNow} onClick={() => void doExport("timberborn")}>
+            {exportingNow === "timberborn" ? "Saving…" : "Save to Timberborn"}
+          </button>
+          <button type="button" class="primary" disabled={!canExport || !!exportingNow} onClick={() => void doExport("download")}>
+            {exportingNow === "download" ? "Exporting…" : "Export"}
           </button>
         </footer>
       </div>

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { wrap, type Remote } from "comlink";
 import { CHANGES, ELEVATION_SOURCE, ELEVATION_SOURCE_URL, PROVIDER_NOTICES } from "../core/places/attribution";
 import type { PlaceIndex, PlaceIndexEntry } from "../core/places/place";
-import { saveFile } from "../platform";
+import { saveFile, saveToTimberborn, type SaveToTimberbornResult } from "../platform";
 import { fetchIndex, fetchPlace, PLACES_URL } from "./data";
 import type { PlaceWorkerApi } from "./place.worker";
 
@@ -41,6 +41,24 @@ window.dgmPlaces = {
 /** A card's download: building, or failed. */
 type Building = { busy: true } | { error: string };
 
+/** A card's Save to Timberborn: building, failed, or where the map ended up. */
+type Saving = { busy: true } | { error: string } | SaveToTimberbornResult;
+
+/** Per-card async state, keyed by place id, with a ref so a stale closure can't clobber a newer update. */
+function usePerCard<T>(): [Record<string, T>, (id: string, v: T | null) => void] {
+  const [state, setState] = useState<Record<string, T>>({});
+  const live = useRef(state);
+  live.current = state;
+  function set(id: string, v: T | null) {
+    const next = { ...live.current };
+    if (v) next[id] = v;
+    else delete next[id];
+    live.current = next;
+    setState(next);
+  }
+  return [state, set];
+}
+
 /** The filters, kept in the page's query so Back returns to the same list. */
 function initialFilters(): { family: string; size: number | null } {
   const q = new URLSearchParams(location.search);
@@ -54,9 +72,8 @@ export function Gallery() {
   const init = useMemo(initialFilters, []);
   const [family, setFamily] = useState(init.family);
   const [size, setSize] = useState<number | null>(init.size);
-  const [building, setBuilding] = useState<Record<string, Building>>({});
-  const live = useRef(building);
-  live.current = building;
+  const [building, setBuilding] = usePerCard<Building>();
+  const [saving, setSaving] = usePerCard<Saving>();
 
   useEffect(() => {
     fetchIndex().then(setIndex, (e) => setLoadError(String(e instanceof Error ? e.message : e)));
@@ -72,23 +89,26 @@ export function Gallery() {
 
   const shown = useMemo(() => (index ? index.places.filter((p) => (!family || p.family === family) && (!size || p.size === size)) : []), [index, family, size]);
 
-  function set(id: string, b: Building | null) {
-    const next = { ...live.current };
-    if (b) next[id] = b;
-    else delete next[id];
-    live.current = next;
-    setBuilding(next);
-  }
-
   async function download(p: PlaceIndexEntry) {
-    if (live.current[p.id] && !("error" in live.current[p.id])) return;
-    set(p.id, { busy: true });
+    if (building[p.id] && !("error" in building[p.id])) return;
+    setBuilding(p.id, { busy: true });
     try {
       const r = await buildPlace(p.id);
       saveFile(r.bytes, r.fileName);
-      set(p.id, null);
+      setBuilding(p.id, null);
     } catch (e) {
-      set(p.id, { error: `${p.name} could not be built: ${String(e instanceof Error ? e.message : e)}` });
+      setBuilding(p.id, { error: `${p.name} could not be built: ${String(e instanceof Error ? e.message : e)}` });
+    }
+  }
+
+  async function saveToPlace(p: PlaceIndexEntry) {
+    if (saving[p.id] && "busy" in saving[p.id]) return;
+    setSaving(p.id, { busy: true });
+    try {
+      const r = await buildPlace(p.id);
+      setSaving(p.id, await saveToTimberborn(r.bytes, r.fileName));
+    } catch (e) {
+      setSaving(p.id, { error: `${p.name} could not be built: ${String(e instanceof Error ? e.message : e)}` });
     }
   }
 
@@ -160,6 +180,8 @@ export function Gallery() {
               {shown.map((p) => {
                 const b = building[p.id];
                 const busy = !!b && !("error" in b);
+                const s = saving[p.id];
+                const savingBusy = !!s && "busy" in s;
                 return (
                   <li class="place" key={p.id}>
                     <img src={PLACES_URL + p.image} width={240} height={240} loading="lazy" decoding="async" alt={`${p.name} from above, north up`} />
@@ -173,6 +195,9 @@ export function Gallery() {
                         <button type="button" class="primary" aria-label={`Download ${p.name}`} disabled={busy} aria-busy={busy} onClick={() => void download(p)}>
                           {busy ? "Building…" : "Download"}
                         </button>
+                        <button type="button" class="ghost" aria-label={`Save ${p.name} to Timberborn`} disabled={savingBusy} aria-busy={savingBusy} onClick={() => void saveToPlace(p)}>
+                          {savingBusy ? "Building…" : "Save to Timberborn"}
+                        </button>
                         <a class="button ghost" href={`${HOME}#place=${p.id}`} aria-label={`Refine ${p.name} in the editor`}>
                           Refine
                         </a>
@@ -181,6 +206,25 @@ export function Gallery() {
                       {b && "error" in b ? (
                         <p class="error" role="alert">
                           {b.error}
+                        </p>
+                      ) : null}
+                      {savingBusy ? <progress aria-label={`Saving ${p.name}`} /> : null}
+                      {s && "error" in s ? (
+                        <p class="error" role="alert">
+                          {s.error}
+                        </p>
+                      ) : null}
+                      {s && "via" in s ? (
+                        <p class="muted" role="status">
+                          {s.via === "fsa" ? (
+                            <>
+                              Saved to <strong>{s.folder}</strong>. It'll show up in Timberborn's custom maps.
+                            </>
+                          ) : (
+                            <>
+                              Downloaded. Move the file to <code>Documents\Timberborn\Maps</code>.
+                            </>
+                          )}
                         </p>
                       ) : null}
                     </div>
