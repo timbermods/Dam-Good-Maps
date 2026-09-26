@@ -76,7 +76,7 @@ export interface PainterHost {
   strength(value: number): void;
   /** A stroke started or ended (the water waits while painting, when asked). */
   painting(on: boolean): void;
-  /** Words beside the pointer (flatten's level: "level 7", "riverbed: level 7" on water), or null. */
+  /** Words beside the pointer (flatten's level: "level 7"), or null. */
   note?(text: string | null, ev: PointerEvent | null): void;
   /** Whether water stands on the tile. */
   wet?(x: number, y: number): boolean;
@@ -137,15 +137,14 @@ export class BrushPainter {
           host.note?.(null, null);
           return;
         }
-        // flatten says its level beside the pointer; with Ctrl, the level a click would pick (on
-        // water, its bed: a channel flattened to it lets the water in)
+        // flatten says its level beside the pointer (the only words the tools show, D184); with
+        // Ctrl, the level a click picks (on water, its bed: the ground under it)
         if (host.settings().tool === "flatten") {
           const s = host.settings();
           const here = host.renderer.heightAt(hit.x, hit.y);
           const picking = ev.ctrlKey || ev.metaKey;
-          const wet = host.wet?.(hit.x, hit.y) ?? false;
           const level = picking || s.level === undefined ? here : s.level;
-          host.note?.(`${picking ? (wet ? "riverbed: " : "pick ") : ""}level ${level}`, ev);
+          host.note?.(`level ${level}`, ev);
         } else host.note?.(null, null);
         const p = host.renderer.pickAtLevel(ev.clientX, ev.clientY, host.renderer.heightAt(hit.x, hit.y));
         self.cursorAt = p ? [p.point[0], -p.point[2]] : [hit.x + 0.5, hit.y + 0.5];
@@ -171,7 +170,24 @@ export class BrushPainter {
     const s = this.host.settings();
     const tool = this.stroke ? (this.stroke.settings.tool as BrushTool) : s.tool;
     const level = tool === "flatten" ? (this.stroke ? this.stroke.level : (s.level ?? this.host.renderer.heightAt(Math.floor(at[0]), Math.floor(at[1])))) : null;
-    this.host.renderer.setBrushCursor({ x: at[0], y: at[1], radius: s.size, tool, level });
+    // smart Lower: blue where a stroke would carve a bed the water follows
+    const water = this.stroke ? !!this.stroke.settings.channel : tool === "lower" && this.byWater(at[0], at[1]);
+    this.host.renderer.setBrushCursor({ x: at[0], y: at[1], radius: s.size, tool, level, water });
+  }
+
+  /** Whether water stands on the tile at (x, y) or beside it. */
+  private byWater(x: number, y: number): boolean {
+    const wet = this.host.wet;
+    if (!wet) return false;
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = tx + dx;
+        const ny = ty + dy;
+        if (nx >= 0 && ny >= 0 && nx < this.host.W && ny < this.host.H && wet(nx, ny)) return true;
+      }
+    return false;
   }
 
   hideCursor(): void {
@@ -192,6 +208,8 @@ export class BrushPainter {
       strength: s.strength,
       ...(tool === "flatten" ? { level } : {}),
       ...(tool === "naturalize" ? { seed: (Math.random() * 0x7fffffff) | 0 } : {}),
+      // smart Lower (D184): a stroke that starts in or beside water carves a bed it follows
+      ...(tool === "lower" && this.byWater(x, y) ? { channel: true } : {}),
     };
     const preview = new StrokePreview(settings, h.terrain(), h.heights(), h.W, h.H);
     // the stroke follows the cursor on the level it started on, so the brush stays under the

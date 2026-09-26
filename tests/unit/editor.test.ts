@@ -8,7 +8,7 @@ import type { Feature } from "../../src/core/features/schema";
 import { generate } from "../../src/core/gen/generate";
 import { makeSpec } from "../../src/core/spec/mapspec";
 import { anchorOf, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, movePatch, rectOf, rectOutline, rectRuns, tabOf } from "../../src/editor/features";
-import { DEFAULT_OPTIONS, featureFromRect, paintOverlay, SELECTED, type ToolKind } from "../../src/editor/tools";
+import { paintOverlay, SELECTED } from "../../src/editor/tools";
 import { entityView, surfaceWater, waterFromDepth } from "../../src/render3d/model";
 
 const W = 64;
@@ -107,7 +107,9 @@ describe("moving a feature", () => {
     expect(clampMove(forest, -10, -10, W, H)).toEqual([-2, -3]);
     expect(clampMove(start, 100, 0, W, H)).toEqual([W - 1 - 21, 0]);
     expect(moveBlocked(forest)).toBeNull();
-    expect(moveBlocked({ ...plateau, params: { kind: "valley", edgeStyle: "gentle", along: { river: "r", halfWidth: 4, floorAboveBed: 1 } } } as Feature)).toMatch(/follows its river/);
+    // the ground the generator built is shaped with the brushes, never moved (D182)
+    expect(moveBlocked({ ...plateau, params: { kind: "valley", edgeStyle: "gentle", along: { river: "r", halfWidth: 4, floorAboveBed: 1 } } } as Feature)).toMatch(/shape it with the brushes/);
+    expect(moveBlocked(plateau)).toMatch(/shape it with the brushes/);
   });
 });
 
@@ -115,19 +117,6 @@ describe("the drawing tools", () => {
   const heights = new Uint8Array(W * H).fill(3);
   heights[5 * W + 5] = 11;
   const rect = rectOf([8, 9], [2, 3], W, H);
-
-  it("make features the worker accepts", () => {
-    expect(rect).toEqual({ x0: 2, y0: 3, x1: 8, y1: 9 });
-    const ctx = { state: emptyState([]), W, H, generated: true, entityIds: new Set<string>(), slopeTiles: new Set<number>(), lockedColumns: null };
-    for (const kind of ["plateau", "forest", "berryPatch", "ruinField"] as ToolKind[]) {
-      const f = featureFromRect(kind, rect, { ...DEFAULT_OPTIONS, height: 0, density: 0.5, species: "mixed" }, W, heights);
-      expect(f.origin).toBe("user");
-      expect(validateOp({ op: "addFeature", params: { feature: f } }, ctx), kind).toEqual([]);
-    }
-    // a plateau two levels above the highest ground under it, unless a height is picked
-    expect((featureFromRect("plateau", rect, { ...DEFAULT_OPTIONS, height: 0, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(13);
-    expect((featureFromRect("plateau", rect, { ...DEFAULT_OPTIONS, height: 7, density: 1, species: "Pine" }, W, heights).params as { height: number }).height).toBe(7);
-  });
 
   it("paint the overlay", () => {
     const data = new Uint8Array(W * H * 4);

@@ -1,9 +1,8 @@
-// Live editing's water tools (PLAN §20 D179, D180): a river drawn freehand carves its channel under
-// the pointer while its water flows in behind, says its size and what it does beside the pointer,
-// and is placed on release as one step; Esc mid-draw leaves no trace; drawn from a river, it is a
-// branch of it; a water source spreads its water at once, and its strength, changed with a
-// slider, is one undo step; the Lake tool fills a hollow from a spring; with Ctrl, Flatten reads a
-// river's bed.
+// Live editing's water (PLAN §20 D184): a Lower stroke that starts in or beside water carves a bed
+// that keeps flowing downhill (its ring turns blue), and the water follows it; a Source click puts
+// a clean or a bad source down and its water spreads at once; Alt+scroll over a source changes its
+// strength live, one undo step for the adjustment; a source drags to a new place (Esc puts it
+// back); with Ctrl, Flatten picks the level under the pointer, on water the bed.
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -17,27 +16,42 @@ const wet = (page: Page) =>
     for (let i = 0; i < d.length; i++) if (d[i] > 0.05) n++;
     return n;
   });
+const wetAt = (page: Page, tiles: [number, number][]) =>
+  page.evaluate((ts) => {
+    const m = window.dgm3d!.renderer.mapState()!;
+    return ts.filter(([x, y]) => m.surface.depth[y * m.W + x] > 0.05).length;
+  }, tiles);
+const sources = (page: Page, x: number, y: number) =>
+  page.evaluate(async ([a, b]) => (await window.dgmEditor!.worker.entitiesAt(a, b)).filter((e) => /Source$/.test(e.template)).map((e) => ({ template: e.template, x: e.x, y: e.y })), [x, y] as const);
 
 async function client(page: Page, x: number, y: number) {
   return page.evaluate(([a, b]) => window.dgmEditor!.tileToClient(a, b), [x, y] as const);
 }
 
-/** A freehand stroke through these tiles; `mid` runs halfway with the button down. */
-async function draw(page: Page, pts: [number, number][], mid?: () => Promise<void>) {
-  const p = await client(page, ...pts[0]);
-  await page.mouse.move(p.x, p.y);
-  await page.mouse.down();
-  for (let k = 1; k < pts.length; k++) {
-    const q = await client(page, ...pts[k]);
-    await page.mouse.move(q.x, q.y, { steps: 3 });
-    await page.waitForTimeout(40);
-    if (mid && k === Math.floor(pts.length / 2)) await mid();
-  }
-  await page.waitForTimeout(400);
+/** Flat, dry, empty ground away from the start and from `not`: a tile with `r` tiles of it all
+ *  round. */
+async function flatDry(page: Page, start: [number, number], r: number, not: [number, number][] = []) {
+  return page.evaluate(
+    ([s0, s1, rr, avoid]) => {
+      const m = window.dgm3d!.renderer.mapState()!;
+      const w = m.W;
+      for (let y = 8; y < m.H - 8; y++)
+        for (let x = 8; x < w - 8; x++) {
+          if (Math.hypot(x - s0, y - s1) < 16 || avoid.some(([ax, ay]) => Math.hypot(x - ax, y - ay) < 12)) continue;
+          const h0 = m.heights[y * w + x];
+          let ok = true;
+          for (let dy = -rr; dy <= rr && ok; dy++) for (let dx = -rr; dx <= rr && ok; dx++) if (m.heights[(y + dy) * w + x + dx] !== h0 || m.surface.depth[(y + dy) * w + x + dx] > 0) ok = false;
+          for (let k = 0; k < m.entities.count && ok; k++) if (Math.abs(m.entities.x[k] - x) <= rr + 2 && Math.abs(m.entities.y[k] - y) <= rr + 2) ok = false;
+          if (ok) return [x, y] as [number, number];
+        }
+      return null;
+    },
+    [start[0], start[1], r, not] as const,
+  );
 }
 
-test("water tools: freehand rivers with their water flowing in, branches, sources and lakes", async ({ page }) => {
-  test.setTimeout(240_000);
+test("water: smart Lower carves a bed the water follows; sources placed, strengthened with Alt+scroll, moved", async ({ page }) => {
+  test.setTimeout(300_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   await page.setViewportSize({ width: 1400, height: 900 });
@@ -51,127 +65,119 @@ test("water tools: freehand rivers with their water flowing in, branches, source
   const start = (i.features.find((f) => f.kind === "start")!.params as { position: [number, number] }).position;
   const main = i.features.find((f) => f.kind === "river")!;
   const path = (main.params as { path: [number, number][] }).path;
-  // a column away from the start, where the main river crosses it
+
+  // smart Lower: over the river the ring is blue, over dry ground it is not
   const x = start[0] < W / 2 ? Math.round(W * 0.78) : Math.round(W * 0.22);
-  const join = path.reduce((best, p) => (Math.abs(p[0] - x) < Math.abs(best[0] - x) ? p : best));
-  const course = (from: number, to: number, n: number) => Array.from({ length: n + 1 }, (_, k) => [x, Math.round(from + ((to - from) * k) / n)] as [number, number]);
+  const on = path.reduce((best, p) => (Math.abs(p[0] - x) < Math.abs(best[0] - x) ? p : best));
+  const from: [number, number] = [Math.round(on[0]), Math.round(on[1])];
+  const dir = from[1] < W / 2 ? 1 : -1;
+  const line = Array.from({ length: 15 }, (_, k) => [from[0], from[1] + dir * k] as [number, number]);
+  await page.getByRole("button", { name: "Lower brush (2)" }).click();
+  const far = await client(page, ...line[14]);
+  await page.mouse.move(far.x, far.y);
+  await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.brushCursorState?.water ?? false)).toBe(false);
+  const p0 = await client(page, ...from);
+  await page.mouse.move(p0.x, p0.y, { steps: 4 });
+  await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.brushCursorState?.water ?? false)).toBe(true);
+
+  // a stroke from the river out over dry ground: a bed that never rises, and the water in it
+  const dryBefore = line.slice(6);
+  expect(await wetAt(page, dryBefore)).toBe(0);
+  const bed = (await heights(page))[from[1] * W + from[0]];
+  await page.mouse.down();
+  for (let k = 1; k < line.length; k++) {
+    const q = await client(page, ...line[k]);
+    await page.mouse.move(q.x, q.y, { steps: 3 });
+    await page.waitForTimeout(30);
+  }
+  await page.mouse.up();
+  await page.waitForFunction(() => window.dgmEditor!.pendingTerrain() === 0, null, { timeout: 30_000 });
+  await idle(page);
+  expect(await page.evaluate(() => window.dgmEditor!.lastStroke()?.channel)).toBe(true);
+  const after = await heights(page);
+  let last = Infinity;
+  for (const [tx, ty] of line.slice(1, 13)) {
+    const h = after[ty * W + tx];
+    expect(h, `(${tx}, ${ty})`).toBeLessThanOrEqual(bed);
+    expect(h).toBeLessThanOrEqual(last);
+    last = h;
+  }
+  await expect.poll(() => wetAt(page, dryBefore), { timeout: 120_000, intervals: [1000] }).toBeGreaterThanOrEqual(4);
+  expect((await info(page)).history.at(-1)!.label).toMatch(/^Lower/);
+  await page.keyboard.press("Escape");
+
+  // Source: a click puts a clean source down, and its water spreads at once
+  const spot = await flatDry(page, start, 3, [from]);
+  expect(spot).not.toBeNull();
+  const [sx, sy] = spot!;
   await page.getByRole("tab", { name: "Water" }).click();
   const add = page.getByRole("region", { name: "Add" });
-  await add.getByRole("button", { name: "River", exact: true }).click();
-
-  // Esc mid-draw: the ground and the history as they were
-  const ground0 = await heights(page);
-  await draw(page, course(W - 1, Math.round((W - 1 + join[1]) / 2), 8), async () => {
-    await page.waitForFunction(() => !!window.dgmEditor!.shapePreview(), null, { timeout: 30_000 });
-  });
-  await page.keyboard.press("Escape");
-  await page.mouse.up();
-  await idle(page);
-  await page.waitForTimeout(500);
-  expect(await heights(page)).toEqual(ground0);
-  expect((await info(page)).history).toEqual([]);
-
-  // a river from the north edge into the main river: its channel and its water while drawing
-  const wet0 = await wet(page);
-  let during = 0;
-  await draw(page, course(W - 1, Math.round(join[1]) + 1, 14), async () => {
-    await page.waitForFunction(() => !!window.dgmEditor!.shapePreview()?.cursor, null, { timeout: 30_000 });
-    await expect(page.locator(".shape-note")).toContainText(/wide, \d deep/);
-    await page.waitForTimeout(1200);
-    during = await wet(page);
-  });
-  await expect(page.locator(".shape-note")).toContainText(/joins the river/);
-  await page.mouse.up();
-  await idle(page);
-  expect(during).toBeGreaterThan(wet0);
-  i = await info(page);
-  expect(i.history.map((h) => h.label)).toEqual(["Add river"]);
-  const drawn = i.features.find((f) => f.kind === "river" && f.origin === "user")!.params as { entry: object; exit: object };
-  expect(drawn.entry).toEqual({ edge: "north" });
-  expect(drawn.exit).toEqual({ river: main.id });
-
-  // a branch: from the main river to the south edge, with no source of its own
-  const bx = start[0] < W / 2 ? Math.round(W * 0.62) : Math.round(W * 0.38);
-  const from = path.reduce((best, p) => (Math.abs(p[0] - bx) < Math.abs(best[0] - bx) ? p : best));
-  await draw(page, Array.from({ length: 13 }, (_, k) => [Math.round(from[0]), Math.round(from[1] - (from[1] * k) / 12)] as [number, number]), async () => {
-    await expect(page.locator(".shape-note")).toContainText(/a branch of the water it leaves/, { timeout: 30_000 });
-  });
-  await page.mouse.up();
-  await idle(page);
-  i = await info(page);
-  expect(i.history.at(-1)!.label).toBe("Add river");
-  const branch = i.features.filter((f) => f.kind === "river" && f.origin === "user").at(-1)!.params as { entry: object; exit: object };
-  expect(Object.keys(branch.entry)).toEqual(["branch"]);
-  expect(branch.exit).toEqual({ edge: "south" });
-
-  // a water source: its water spreads at once
-  await add.getByRole("button", { name: "Water source", exact: true }).click();
-  const sx = start[0] < W / 2 ? Math.round(W * 0.85) : Math.round(W * 0.15);
-  const sy = Math.round(W * 0.9);
+  await add.getByRole("button", { name: "Source", exact: true }).click();
   const sp = await client(page, sx, sy);
-  await page.mouse.move(sp.x, sp.y);
-  await expect(page.locator(".shape-note")).toContainText(/Water source: [\d.]+ water\/s/);
   const wet1 = await wet(page);
+  await page.mouse.move(sp.x + 3, sp.y);
   await page.mouse.click(sp.x, sp.y);
   await idle(page);
   expect((await info(page)).history.at(-1)!.label).toBe("Place water source");
-  await expect.poll(() => wet(page), { timeout: 10_000 }).toBeGreaterThan(wet1);
+  expect(await sources(page, sx, sy)).toEqual([{ template: "WaterSource", x: sx, y: sy }]);
+  await expect.poll(() => wet(page), { timeout: 30_000 }).toBeGreaterThan(wet1);
 
-  // selected with no tool out, its strength changes live, one undo step for the adjustment
-  await page.getByRole("button", { name: "Done" }).click();
-  await page.mouse.click(sp.x, sp.y);
-  const insp = page.getByRole("complementary", { name: /Water source, selected/ });
-  await expect(insp).toBeVisible();
+  // Alt+scroll over it: stronger, the new strength beside the pointer, one undo step
   const steps = (await info(page)).history.length;
-  await insp.getByRole("slider").focus();
-  for (let k = 0; k < 3; k++) await page.keyboard.press("ArrowRight");
-  await expect.poll(async () => (await info(page)).history.length, { timeout: 10_000 }).toBe(steps + 1);
+  await page.mouse.move(sp.x, sp.y);
+  await page.keyboard.down("Alt");
+  for (let k = 0; k < 3; k++) {
+    await page.mouse.wheel(0, -120);
+    await page.waitForTimeout(120);
+  }
+  await page.keyboard.up("Alt");
+  await expect(page.locator(".shape-note")).toHaveText("4 water/s");
+  await expect.poll(async () => (await info(page)).history.at(-1)!.label, { timeout: 20_000 }).toBe("Water source: 4 water/s");
   await idle(page);
-  expect((await info(page)).history.at(-1)!.label).toMatch(/^Water source: [\d.]+ water\/s$/);
-  await insp.getByRole("button", { name: "Close" }).click();
+  expect((await info(page)).history.length).toBe(steps + 1);
 
-  // a lake: a click in a hollow puts a spring at its lowest point (a hollow dug with one click of
-  // Lower on flat, dry ground)
-  const flat = await page.evaluate(
-    ([w, s0, s1]) => {
-      const m = window.dgm3d!.renderer.mapState()!;
-      for (let y = 8; y < w - 8; y++)
-        for (let x2 = 8; x2 < w - 8; x2++) {
-          if (Math.hypot(x2 - s0, y - s1) < 16) continue;
-          const h0 = m.heights[y * w + x2];
-          let ok = true;
-          for (let dy = -6; dy <= 6 && ok; dy++) for (let dx = -6; dx <= 6 && ok; dx++) if (m.heights[(y + dy) * w + x2 + dx] !== h0 || m.surface.depth[(y + dy) * w + x2 + dx] > 0) ok = false;
-          if (ok) return [x2, y] as [number, number];
-        }
-      return null;
-    },
-    [W, start[0], start[1]] as const,
-  );
-  expect(flat).not.toBeNull();
-  await page.getByRole("button", { name: "Lower brush (2)" }).click();
-  const fp = await client(page, ...flat!);
-  await page.mouse.click(fp.x, fp.y);
-  await page.waitForFunction(() => window.dgmEditor!.pendingTerrain() === 0, null, { timeout: 30_000 });
+  // dragged somewhere else: one step; Esc mid-drag puts it back
+  const to = await client(page, sx + 3, sy);
+  await page.mouse.move(sp.x, sp.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 6 });
   await page.keyboard.press("Escape");
-  expect((await page.evaluate(([a, b]) => window.dgmEditor!.lakeAt(a, b), flat!)).fills).toBe(true);
-  await page.getByRole("tab", { name: "Water" }).click();
-  await add.getByRole("button", { name: "Lake", exact: true }).click();
-  await page.mouse.move(fp.x + 2, fp.y);
-  await page.mouse.move(fp.x, fp.y);
-  await expect(page.locator(".shape-note")).toContainText(/Lake: fills to level \d+ here/);
-  await page.mouse.click(fp.x, fp.y);
+  await page.mouse.up();
   await idle(page);
-  expect((await info(page)).history.at(-1)!.label).toBe("Place water source");
-  await expect(page.locator(".editor-message.info")).toContainText(/Lake: a spring fills it to level \d+/);
+  expect((await info(page)).history.length).toBe(steps + 1);
+  expect(await sources(page, sx, sy)).toHaveLength(1);
+  await page.mouse.move(sp.x, sp.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 6 });
+  await page.mouse.up();
+  await idle(page);
+  expect((await info(page)).history.at(-1)!.label).toBe("Move a water source");
+  expect(await sources(page, sx, sy)).toEqual([]);
+  expect(await sources(page, sx + 3, sy)).toEqual([{ template: "WaterSource", x: sx + 3, y: sy }]);
 
-  // Flatten with Ctrl over the river reads its bed
+  // a bad source: its 3 × 3 round the click
+  const bad = await flatDry(page, start, 3, [from, [sx, sy], [sx + 3, sy]]);
+  expect(bad).not.toBeNull();
+  await page.getByLabel("Water", { exact: true }).selectOption("bad");
+  const bp = await client(page, ...bad!);
+  await page.mouse.move(bp.x + 3, bp.y);
+  await page.mouse.click(bp.x, bp.y);
+  await idle(page);
+  i = await info(page);
+  expect(i.history.at(-1)!.label).toBe("Place badwater source");
+  expect(await sources(page, bad![0] + 1, bad![1] + 1)).toEqual([{ template: "BadwaterSource", x: bad![0] - 1, y: bad![1] - 1 }]);
+  await page.keyboard.press("Escape");
+
+  // Flatten with Ctrl over the river: the level of its bed, and no other words
   await page.getByRole("button", { name: "Flatten brush (3)" }).click();
   const mid = path[Math.floor(path.length / 2)];
-  const mp = await client(page, Math.round(mid[0]), Math.round(mid[1]));
+  const m = [Math.round(mid[0]), Math.round(mid[1])] as [number, number];
+  const mp = await client(page, ...m);
   await page.mouse.move(mp.x + 4, mp.y);
   await page.keyboard.down("Control");
   await page.mouse.move(mp.x, mp.y);
-  await expect(page.locator(".shape-note")).toContainText(/riverbed: level \d+/);
+  const level = (await heights(page))[m[1] * W + m[0]];
+  await expect(page.locator(".shape-note")).toHaveText(`level ${level}`);
   await page.keyboard.up("Control");
   expect(errors).toEqual([]);
 });

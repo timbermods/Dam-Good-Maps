@@ -1,8 +1,7 @@
-// ROADMAP M7 through the page: a forest dragged on the map shows where its trees live while it is
-// dragged, and is placed on release; an object shows its footprint under the pointer, green where the game keeps it and red
-// where the game would delete it, and a click there is refused; a weir closes a river; a river
-// turned to badwater shows its warnings first; advanced mode places an object by hand and delays a
-// water source with numeric fields.
+// ROADMAP M7 through the page: an object shows its footprint under the pointer, green where the
+// game keeps it and red where the game would delete it, and a click there is refused; a weir closes
+// a river; a river turned to badwater shows its warnings first; advanced mode places an object by
+// hand and delays a water source with numeric fields.
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -86,34 +85,6 @@ async function greenSpot(page: Page, W: number): Promise<[number, number]> {
   }
   throw new Error("no place for the object");
 }
-
-test("a forest shows where its trees live while it is dragged, and is placed on release", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
-  await refine(page, "s=4242&z=96&d=n&t=riverValley");
-  await page.getByRole("tab", { name: "Resources" }).click();
-  await page.getByRole("button", { name: "Forest", exact: true }).click();
-  const [x, y] = await riverTile(page, 0.5);
-  // (live editing: the forest's area shows as it is dragged, and letting go places it)
-  const a = await client(page, x - 7, y - 7);
-  const b = await client(page, x + 7, y + 7);
-  await page.mouse.move(a.x, a.y);
-  await page.mouse.down();
-  await page.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2, { steps: 3 });
-  await page.mouse.move(b.x, b.y, { steps: 3 });
-  await page.waitForFunction(() => !!window.dgmEditor!.shapePreview()?.area, null, { timeout: 30_000 });
-  const p = (await page.evaluate(() => window.dgmEditor!.shapePreview()))!;
-  expect(p.ok).toBe(true);
-  // green where the soil stays moist; the river itself stays bare
-  expect(p.area!.alive.length).toBeGreaterThan(10);
-  expect(p.area!.bare.length).toBeGreaterThan(0);
-  expect(p.report.join(" ")).toMatch(/alive where the soil stays moist/);
-  await expect(page.locator(".shape-note")).toBeVisible();
-  await page.mouse.up();
-  await idle(page);
-  expect((await info(page)).history.map((h) => h.label)).toEqual(["Add forest"]);
-  expect(errors).toEqual([]);
-});
 
 test("an object is red where the game would delete it, refused there, and placed where it fits", async ({ page }) => {
   const errors: string[] = [];

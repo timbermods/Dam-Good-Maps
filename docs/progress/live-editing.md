@@ -119,6 +119,8 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 
 ## Live editing: the shape tools
 
+*Superseded by D182 and D184 (push 1, below): the shape tools and their handles are gone; the brushes shape the land.*
+
 - **Hills, plateaus, ridges, canyons, valleys, islands, lakes, forests, berry patches and ruin
   fields** show their real result while they are dragged: the worker plans the shape with the
   tools' own planners and builds its terrain with the build's own steps (`previewShape`), round
@@ -142,6 +144,9 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 - Set pieces (waterfalls, dam sites, …) and objects keep their preview and **Place** for now.
 
 ## Claude's tools (M12 stays ready, D134)
+
+*Partly superseded by push 1 (above): `resizeFeature`, landform changes and `addRiver`'s `live`
+and `natural` are gone; `addRiver` and `addLake` are setup-only.*
 
 In `investigation/claude/`, the shape of its tools:
 
@@ -181,6 +186,8 @@ In `investigation/claude/`, the shape of its tools:
   M12-INTEGRATION §11).
 
 ## Water, part 1 (D179, D180, D183)
+
+*Superseded by D184 (push 1, below), except the sources: the river tool and its rules, Natural or exact, its width, depth and strength controls, the lake click and the words beside the pointer are gone. Flatten keeps its level.*
 
 - **Rivers drawn freehand.** Drag from the source to where its water goes: the channel carves in
   under the pointer (the worker plans it with the river planner and builds the whole map with it,
@@ -238,6 +245,58 @@ Not yet: BadtideDrains running during a badtide (the water model keeps no streng
 they are off; none on generated maps), water sounds (D181 (4)), lakes by painting a shore, handles
 on a placed river.
 
+## D184, push 1: smart Lower, Source, and the old tools removed (D182, D184)
+
+- **Removed.** The landform tools and their handles (hill, plateau, ridge, canyon, valley,
+  island), the lake tool, the forest, berry patch and ruin field areas, the river tool with its
+  rules, Natural or exact, its width, depth and strength controls, the lake click, and the words
+  beside the pointer except Flatten's level. The generator's features stay its plan: selected, one
+  says "The generator's ground. Shape it with the brushes." and has no Delete. Trees and bushes come
+  back on the left shelf (push 3).
+- **Saved projects with drawn landforms** open with their land exactly as it was: the landforms
+  become plain terrain, one step in the history, "Turn the drawn landforms into terrain" (flatten
+  edits, a level at a time). If the land would not come out identical, nothing changes (tested).
+- **Smart Lower.** A Lower stroke that starts in or beside water carves a bed that keeps flowing
+  downhill. Its bed starts at the lowest ground round the first dab (the water's bed) and never
+  rises: over lower ground it drops a level below it; higher ground is cut straight down under the
+  brush's middle. The ring glows soft blue where a stroke would do this. The operation records
+  `channel: true`, so it replays the same, page and worker alike.
+- **Source.** **Water** → **Source**, clean or bad, with its strength; a click places it, a bad
+  source's 3 × 3 round the click. Over a source, Alt+scroll steps its strength up or down: the new
+  strength shows beside the pointer ("4 water/s"; past the official maps' 8, "stronger than any
+  official map"), the water answers, and one adjustment is one undo step. Drag a source to move it:
+  its footprint follows the pointer, the drop is one step ("Move a water source"), Esc puts it back.
+  A click selects it. With a brush out, strokes paint over sources.
+- **Flatten** says "level N" beside the pointer; with Ctrl, the level under it, on water the bed.
+- **The brush kit's options, in the operation** (push 2 adds their toggles): square brushes,
+  precise (hard edges, one level per tile per stroke), and a pen's pressure per dab. Tested.
+- **The journey keeps time on slow machines.** The player's clock runs on time, not on frames:
+  on a slow software renderer (CI's) it skips frames to keep pace, and still ends at the settled
+  water. This was the waterFlow mismatch in CI since 3226de4.
+- **The time controls** moved to the map's top edge, out of the painting area.
+
+### Claude's tools (M12 stays ready)
+
+- `addRiver` and `addLake` are no longer offered; a step that asks for one is told how rivers and
+  lakes are made now. Corpus setups still use them, as documents from before D184 hold them.
+- `brush` takes a `path` (2–24 points, `size` its width, 1–9): one stroke, a dab on each tile. A
+  Lower path that starts in or beside water, or beside a source, is smart Lower. Its report: "carves
+  a bed 2 tiles wide from the source at (60, 95) along 56 tiles, from level 9 down to level 4, never
+  rising: the water follows it"; where it runs into water or off the map edge; how deep it cuts.
+- A brush patch (`size`) sits near the place's middle, clear of the start's own area, of the water
+  (Lower) and of relics, geothermal fields and mine sites, on the spot with the fewest objects.
+- `addSource` with `fillHollow` fills the hollow nearest the place's middle (9 tiles or more, off
+  the start), its spring on a free tile of the floor. It is measured as `new:lake` (its area and
+  level), or `new:source`.
+- `find_sites` kind `lake` digs each candidate on a copy of the ground (2 levels, deeper on slopes,
+  up to 6) and measures the hollow; its `step` digs it and its `then` puts the spring in. Both are
+  checked with a real build.
+- `limits` for `lake` and `river` say how to make them.
+- Requests rewritten: P01, P08, C01, R04, W04, W10, J11, M02, M07, Z04, Z05, B11. J11 asks for a
+  large lake, not a huge one: a huge dug lake finds no dry ground in that map's south third clear
+  of the river, the relics and the mine sites. M07's lake goes within 30 tiles of the start, not
+  20: the woods there hold exactly the 40 trees the start needs.
+
 ## The camera keys (D180)
 
 Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.
@@ -277,14 +336,18 @@ enables it at once), and the brushes could be picked before the map could be pai
   mid-stroke leaving no trace, Ctrl+click, [ ], Alt+wheel, and the strokes after a reload.
 - `tests/e2e/legend.spec.ts`: the legend beside the map, only what the map has, the highlight by
   mouse and keyboard, the strip; which map is which on the generator's page.
-- `tests/e2e/waterTools.spec.ts`: a freehand river's water flows in while it is drawn, its words
-  beside the pointer, one step on release, Esc leaving no trace; a branch from the main river; a
-  source's water spreading at once and its strength slider as one undo step; a lake filling a
-  hollow dug with one click of Lower; Flatten with Ctrl reading a river's bed.
-- `tests/contract/drawn-rivers.test.ts`: a branch has no source and starts at its water's bed; an
-  end on dry ground fills its hollow or runs on downhill (and the same stroke, not drawn in the
-  editor, is refused as before); a drawn river's bed never drops below the river it joins;
-  Natural's meanders are the same for the same stroke; a hollow fills to its lowest rim.
+- `tests/e2e/waterTools.spec.ts` (D184): the ring is blue over the river and not over dry ground;
+  a stroke from the river carves a bed that never rises and the water flows into it; a Source
+  click places a clean source whose water spreads; Alt+scroll over it makes it 4 water/s as one
+  undo step; a drag moves it (one step), Esc mid-drag puts it back; a bad source's 3 × 3 round the
+  click; Flatten with Ctrl over the river says the bed's level and nothing else.
+- `tests/contract/brush.test.ts`, the brush kit and smart Lower: precise at size 1 moves one tile
+  one level however long it is held; square reaches the corners; light pen pressure is slower and
+  replays the same; a smart Lower bed never rises and replays the same, whole or in pieces, and
+  through a session and the project file equals what the page paints.
+- `tests/contract/bake.test.ts`: a project with drawn landforms opens with the same land, as one
+  undoable step, and the landforms gone.
+- `tests/unit/hollow.test.ts`: a hollow fills to its lowest rim; on a slope, water runs on.
 - `tests/e2e/waterFlow.spec.ts`: a source's water grows over several frames; Pause holds it; it
   ends at the worker's water; Replay starts over and Skip returns to the end; a drought drains the
   map and a badtide turns its water to badwater, each coming back to the map's water.
@@ -292,10 +355,8 @@ enables it at once), and the brushes could be picked before the map could be pai
   reservoir sizes) and the badtide's curve.
 - `tests/e2e/camera.spec.ts`: held keys move the view in many small steps and glide to a stop;
   Shift is faster; Q turns; nothing moves while a field has the focus.
-- `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release
-  places it and the worker's map is the one shown; Esc mid-drag leaves no trace; its height handle
-  by keyboard and a corner handle by mouse, each one step; a hill over the start is refused while
-  dragged and places nothing.
+- `tests/e2e/liveShapes.spec.ts` (removed in push 1, with the shape tools): a hill rose while it
+  was dragged; its handles; a hill over the start refused.
 
 ### Tests changed to the new flow (D148)
 
@@ -317,6 +378,18 @@ enables it at once), and the brushes could be picked before the map could be pai
 - `tests/contract/randomOps.ts`: the random operations include brush strokes (half of the draws
   that were sculpts), because `properties.test.ts` checks that every kind of log operation is
   exercised.
+- Push 1 (D182, D184), for tools that are gone:
+  - `tests/e2e/liveShapes.spec.ts` is removed: the shape tools and their handles are gone.
+  - `tests/contract/drawn-rivers.test.ts` is removed with the river tool's rules; its hollow test
+    moved to `tests/unit/hollow.test.ts` (Claude's `fillHollow` still uses it).
+  - `tests/e2e/waterTools.spec.ts` is rewritten for smart Lower and Source.
+  - `tests/e2e/editor.spec.ts` placed a river with the River tool as the player's second edit; it
+    places a water source now, and checks it survives regenerating and a reload.
+  - `tests/e2e/objects.spec.ts` dragged a forest area; that tool is gone (trees come from the
+    shelf in push 3), so the test is removed.
+  - `tests/unit/editor.test.ts` made plateau, forest, berry and ruin features from a dragged
+    rectangle; those tools are gone, so that case is removed. A generated landform's move is
+    refused with "shape it with the brushes".
 
 ## Try it
 
@@ -328,5 +401,7 @@ enables it at once), and the brushes could be picked before the map could be pai
 
 ## Next
 
-The water option's polish, objects following the ground while painting, set pieces shown live
-under the pointer, the remaining proposed fixes above.
+D184's pushes 2–4: the top bar and its options row (square, precise, straight lines, level lines,
+Flatten "in steps", Smooth "make walkable", pen pressure, Select); the left shelf with live ghosts,
+and Remove; the view buttons and overlays, the header and its menu, the quiet dot, the start's
+reach and the first-run hints. Then "Let the water carve", from the carve investigation.

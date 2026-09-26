@@ -266,26 +266,6 @@
     }
    ]
   },
-  "rv96-hill": {
-   "base": "rv96",
-   "edits": [
-    {
-     "request": "add a small hill far from the start",
-     "steps": [
-      {
-       "op": "addLandform",
-       "kind": "hill",
-       "where": "far from the start",
-       "size": "small",
-       "height": 8,
-       "handle": "hill"
-      }
-     ]
-    }
-   ],
-   "select": "hill",
-   "note": "a small drawn hill (level 8 asked), far from the start; selected"
-  },
   "import-name": {
    "base": "rv96",
    "import": {
@@ -1000,6 +980,7 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it; find_sites gives both steps ready to use",
    "goals": [
     {
      "id": "g1",
@@ -1020,8 +1001,8 @@
    ],
    "report": {
     "mustSay": [
-     "the lake's size and water level",
-     "the spring that keeps it full and where its outlet drains"
+     "how deep the hollow was dug, over how many tiles",
+     "the spring, and the level its water fills the hollow to before it spills"
     ]
    },
    "pass": [
@@ -1040,12 +1021,23 @@
     ],
     "proposal": {
      "steps": [
-      {
-       "op": "addLake",
-       "where": "near the start"
-      }
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "sites.0.then.fillHollow",
+      "op": "true"
+     },
+     {
+      "on": "propose",
+      "path": "steps.1.report.1",
+      "op": "matches",
+      "value": "^fills the hollow to level [0-9]+"
+     }
+    ]
    }
   },
   {
@@ -1055,40 +1047,50 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "the landform tools are gone (D182): a hill is raised with the brush step",
    "goals": [
     {
      "id": "g1",
      "text": "a small hill in the southwest corner",
-     "expect": [
-      {
-       "subject": "new:hill",
-       "metric": "at",
-       "in": "southwest corner"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "its height and gentle edges joined by slopes"
+     "how many levels it rises, over how many tiles, its edges sloping a level a tile"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the hill lies in the southwest corner"
+    "raised ground in the southwest corner"
    ],
    "reference": {
     "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "hill",
+       "op": "brush",
+       "tool": "raise",
        "where": "the southwest corner",
-       "size": "small"
+       "size": "small",
+       "amount": 3
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^raises [0-9]+ tiles"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.compass",
+      "op": "equals",
+      "value": "southwest"
+     }
+    ]
    }
   },
   {
@@ -1356,38 +1358,28 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a new river is a source and a Lower stroke from it: its bed keeps flowing downhill and the water follows it",
    "goals": [
     {
      "id": "g1",
      "text": "a creek from the north edge into the river",
-     "expect": [
-      {
-       "subject": "new:river",
-       "metric": "flows",
-       "equals": "north to south"
-      },
-      {
-       "subject": "new:river",
-       "metric": "joins.river",
-       "equals": "the main river"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "its flow (gentle), its width and its sealed mouth on the north edge",
-     "where it joins the river"
+     "the source on the north edge and its strength",
+     "the bed carved from it, never rising, and where it joins the main river"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the creek flows from the north edge into the main river"
+    "a bed from a source on the north edge into the main river"
    ],
    "reference": {
     "calls": [
      {
-      "tool": "list_features",
+      "tool": "limits",
       "args": {
        "kind": "river"
       }
@@ -1396,29 +1388,52 @@
     "proposal": {
      "steps": [
       {
-       "op": "addRiver",
-       "points": [
+       "op": "addSource",
+       "kind": "water",
+       "at": [
+        60,
+        95
+       ],
+       "strength": 1
+      },
+      {
+       "op": "brush",
+       "tool": "lower",
+       "path": [
         [
-         82.5,
+         60,
          95
         ],
         [
-         92.5,
-         70
+         62,
+         72
         ],
         [
-         70.5,
-         58
+         59,
+         56
         ],
         [
-         72.5,
+         60,
          40
         ]
        ],
-       "flow": "gentle"
+       "size": 2
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.1.resolved.channel",
+      "op": "true"
+     },
+     {
+      "on": "propose",
+      "path": "steps.1.resolved.joins",
+      "op": "equals",
+      "value": "the main river"
+     }
+    ]
    }
   },
   {
@@ -1477,45 +1492,52 @@
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "the landform tools are gone (D182): a plateau is raised with the brush step, cliff edges",
    "goals": [
     {
      "id": "g1",
      "text": "a cliff-edged plateau in the east third",
-     "expect": [
-      {
-       "subject": "new:plateau",
-       "metric": "at",
-       "in": "east third"
-      },
-      {
-       "subject": "new:plateau",
-       "metric": "edgeStyle",
-       "equals": "cliff"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "its level, and that cliff edges need player stairs to climb"
+     "how many levels it rises, over how many tiles",
+     "cliff edges need player stairs to climb"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the plateau lies in the east third with cliff edges"
+    "raised ground with cliff edges in the east third"
    ],
    "reference": {
     "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "plateau",
+       "op": "brush",
+       "tool": "raise",
        "where": "the east third",
-       "edgeStyle": "cliff"
+       "size": "medium",
+       "amount": 3,
+       "edges": "cliff"
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report",
+      "op": "includes",
+      "value": "with cliff edges"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.compass",
+      "op": "equals",
+      "value": "east"
+     }
+    ]
    }
   },
   {
@@ -1525,40 +1547,51 @@
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "the landform tools are gone (D182): a canyon is lowered with the brush step, cliff edges",
    "goals": [
     {
      "id": "g1",
      "text": "a canyon in the south third",
-     "expect": [
-      {
-       "subject": "new:canyon",
-       "metric": "at",
-       "in": "south third"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "how deep it is cut, and that it holds no river"
+     "how deep it is cut, over how many tiles, and that it holds no river"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "a lowered canyon landform in the south third"
+    "lowered ground with cliff edges in the south third"
    ],
    "reference": {
     "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "canyon",
+       "op": "brush",
+       "tool": "lower",
        "where": "the south third",
-       "edgeStyle": "cliff"
+       "size": "medium",
+       "amount": 3,
+       "edges": "cliff"
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^lowers [0-9]+ tiles"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.compass",
+      "op": "equals",
+      "value": "south"
+     }
+    ]
    }
   },
   {
@@ -2037,6 +2070,7 @@
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
    "goals": [
     {
      "id": "g1",
@@ -2064,15 +2098,24 @@
      {
       "tool": "resolve_region",
       "args": {
-       "where": "the southeast corner"
+       "where": "the northeast corner"
       }
      }
     ],
     "proposal": {
      "steps": [
       {
-       "op": "addLake",
-       "where": "the northeast corner"
+       "op": "brush",
+       "tool": "lower",
+       "where": "the northeast corner",
+       "size": "small",
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": "the northeast corner",
+       "fillHollow": true
       }
      ]
     }
@@ -2089,23 +2132,18 @@
     {
      "id": "g1",
      "text": "a hill in the north",
-     "expect": [
-      {
-       "subject": "new:hill",
-       "metric": "at",
-       "in": "north third"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "'the top of the map' read as the north (the top of the top-down view)"
+     "'the top of the map' read as the north (the top of the top-down view)",
+     "how many levels it rises"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the hill lies in the north third"
+    "raised ground in the north third"
    ],
    "reference": {
     "calls": [
@@ -2119,12 +2157,28 @@
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "hill",
-       "where": "the top of the map"
+       "op": "brush",
+       "tool": "raise",
+       "where": "the top of the map",
+       "size": "small",
+       "amount": 3
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.compass",
+      "op": "equals",
+      "value": "north"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^raises"
+     }
+    ]
    }
   },
   {
@@ -2228,36 +2282,46 @@
     {
      "id": "g1",
      "text": "a small plateau in the center",
-     "expect": [
-      {
-       "subject": "new:plateau",
-       "metric": "at",
-       "in": "center"
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "its level and cliff edges"
+     "how many levels it rises, and its cliff edges"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the plateau lies in the center"
+    "raised ground with cliff edges in the center"
    ],
    "reference": {
     "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "plateau",
+       "op": "brush",
+       "tool": "raise",
        "where": "the center",
-       "size": "small"
+       "size": "small",
+       "amount": 2,
+       "edges": "cliff"
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.compass",
+      "op": "equals",
+      "value": "center"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report",
+      "op": "includes",
+      "value": "with cliff edges"
+     }
+    ]
    }
   },
   {
@@ -2487,6 +2551,7 @@
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
    "goals": [
     {
      "id": "g1",
@@ -2511,13 +2576,19 @@
     "the lake is within about 12 tiles of the start at its nearest"
    ],
    "reference": {
-    "calls": [],
-    "proposal": {
-     "steps": [
-      {
-       "op": "addLake",
+    "calls": [
+     {
+      "tool": "find_sites",
+      "args": {
+       "kind": "lake",
        "where": "close to the start"
       }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
     }
    }
@@ -2533,37 +2604,46 @@
     {
      "id": "g1",
      "text": "a hill beside the lake",
-     "expect": [
-      {
-       "subject": "new:hill",
-       "metric": "distanceTo:lake",
-       "max": 20
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
      "which lake",
-     "the hill's height"
+     "how many levels the hill rises"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the hill stands within about 8 tiles of the lake's edge"
+    "raised ground within about 8 tiles of the lake's edge"
    ],
    "reference": {
     "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "addLandform",
-       "kind": "hill",
+       "op": "brush",
+       "tool": "raise",
        "where": "beside the lake",
-       "size": "small"
+       "size": "small",
+       "amount": 3
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^raises [0-9]+ tiles"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.place.near",
+      "op": "equals",
+      "value": "lake"
+     }
+    ]
    }
   },
   {
@@ -2793,6 +2873,7 @@
    "setup": "rv128-tribs",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
    "goals": [
     {
      "id": "g1",
@@ -2825,7 +2906,8 @@
     "proposal": {
      "steps": [
       {
-       "op": "addLake",
+       "op": "brush",
+       "tool": "lower",
        "where": {
         "course": [
          0,
@@ -2833,7 +2915,20 @@
         ],
         "river": "south tributary"
        },
-       "size": "small"
+       "size": "small",
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": {
+        "course": [
+         0,
+         0.25
+        ],
+        "river": "south tributary"
+       },
+       "fillHollow": true
       }
      ]
     }
@@ -3108,6 +3203,7 @@
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
    "goals": [
     {
      "id": "g1",
@@ -3141,18 +3237,17 @@
    "reference": {
     "calls": [
      {
-      "tool": "resolve_region",
+      "tool": "find_sites",
       "args": {
+       "kind": "lake",
        "where": "on the start's bank, downstream of the start"
       }
      }
     ],
     "proposal": {
      "steps": [
-      {
-       "op": "addLake",
-       "where": "on the start's bank, downstream of the start"
-      }
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
     }
    }
@@ -3797,19 +3892,20 @@
   {
    "id": "J11",
    "kind": "words",
-   "text": "add a huge lake in the south third",
+   "text": "add a large lake in the south third",
    "setup": "rv128",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it; a huge dug lake finds no dry ground there clear of the river, the relics and the mine sites, so the size word asked is large",
    "goals": [
     {
      "id": "g1",
-     "text": "a huge lake in the south",
+     "text": "a large lake in the south",
      "expect": [
       {
        "subject": "new:lake",
        "metric": "area",
-       "min": 400
+       "min": 197
       },
       {
        "subject": "new:lake",
@@ -3821,13 +3917,13 @@
    ],
    "report": {
     "mustSay": [
-     "'huge' read as 3–6% of the map (491–983 tiles here)",
-     "the lake's area, level and outlet"
+     "'large' read as 1.2–3% of the map (197–492 tiles here)",
+     "the lake's area and level, and where it spills"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "a lake of 400+ tiles in the south third"
+    "a lake of 197+ tiles in the south third"
    ],
    "reference": {
     "calls": [
@@ -3836,17 +3932,14 @@
       "args": {
        "kind": "lake",
        "where": "the south third",
-       "size": "huge"
+       "size": "large"
       }
      }
     ],
     "proposal": {
      "steps": [
-      {
-       "op": "addLake",
-       "where": "the south third",
-       "size": "huge"
-      }
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
     }
    }
@@ -4121,8 +4214,17 @@
        "where": "the north"
       },
       {
-       "op": "addLake",
-       "where": "near the start"
+       "op": "brush",
+       "tool": "lower",
+       "where": "near the start",
+       "size": "small",
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": "near the start",
+       "fillHollow": true
       }
      ]
     }
@@ -4427,10 +4529,11 @@
      ]
     }
    ],
+   "note": "near the start the woods hold exactly the 40 trees the start needs: a pond dug there drowns some, so the lake goes a little further out",
    "report": {
     "mustSay": [
      "settings first, then the berries and lake on the new map",
-     "the lake's place (near the start, as an assumption)"
+     "the lake's place (an assumption: within 30 tiles of the start, clear of the trees the start needs)"
     ]
    },
    "pass": [
@@ -4451,9 +4554,23 @@
        "where": "near the start"
       },
       {
-       "op": "addLake",
-       "where": "near the start",
-       "size": "small"
+       "op": "brush",
+       "tool": "lower",
+       "where": {
+        "near": "start",
+        "within": 30
+       },
+       "size": "small",
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": {
+        "near": "start",
+        "within": 30
+       },
+       "fillHollow": true
       }
      ]
     }
@@ -5244,23 +5361,17 @@
     {
      "id": "g1",
      "text": "a 20-level mountain",
-     "expect": [
-      {
-       "subject": "new:hill",
-       "metric": "height",
-       "min": 20
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
      "terrain stops at level 16, the in-game editor's limit",
-     "offer: a hill to level 16"
+     "offer: a hill raised to level 16"
     ]
    },
    "pass": [
-    "no landform above 16 is proposed",
+    "no ground above 16 is proposed",
     "the limit and the offer are reported"
    ],
    "reference": {
@@ -5268,14 +5379,14 @@
      {
       "tool": "limits",
       "args": {
-       "kind": "hill"
+       "kind": "brush"
       }
      }
     ],
     "checks": [
      {
       "on": "call:0",
-      "path": "height.max",
+      "path": "level.max",
       "op": "equals",
       "value": 16
      }
@@ -6514,7 +6625,7 @@
    ],
    "report": {
     "mustSay": [
-     "flows run 0.1–64 blocks/s for a drawn river; the map's river setting tops out at Lush (4× Normal)",
+     "a river's flow runs 0.1–64 blocks/s; the map's River flow setting tops out at Lush (4× Normal)",
      "offer: Lush"
     ]
    },
@@ -6529,26 +6640,11 @@
       "args": {
        "steps": [
         {
-         "op": "addRiver",
-         "points": [
-          [
-           82.5,
-           95
-          ],
-          [
-           92.5,
-           70
-          ],
-          [
-           70.5,
-           58
-          ],
-          [
-           72.5,
-           40
-          ]
-         ],
-         "flow": 99999
+         "op": "changeFeature",
+         "target": "the main river",
+         "set": {
+          "flow": 99999
+         }
         }
        ]
       }
@@ -6571,6 +6667,7 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
    "goals": [
     {
      "id": "g1",
@@ -6601,8 +6698,17 @@
       "args": {
        "steps": [
         {
-         "op": "addLake",
+         "op": "brush",
+         "tool": "lower",
          "where": "near the start",
+         "size": "small",
+         "amount": 2
+        },
+        {
+         "op": "addSource",
+         "kind": "water",
+         "where": "near the start",
+         "fillHollow": true,
          "handle": "<img src=x onerror=alert(1)>"
         }
        ]
@@ -6612,8 +6718,17 @@
     "proposal": {
      "steps": [
       {
-       "op": "addLake",
+       "op": "brush",
+       "tool": "lower",
        "where": "near the start",
+       "size": "small",
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": "near the start",
+       "fillHollow": true,
        "handle": "lake"
       }
      ]
@@ -7247,50 +7362,52 @@
   },
   {
    "id": "B05",
-   "kind": "followup",
-   "text": "make the hill bigger",
-   "setup": "rv96-hill",
+   "kind": "simple",
+   "text": "raise a gentle hill 4 levels high near (70, 70)",
+   "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
+   "note": "a brush's edge slopes a level a tile: a small patch rises less than asked in its middle, and the report says so",
    "goals": [
     {
      "id": "g1",
-     "text": "the hill made before, bigger",
-     "expect": [
-      {
-       "subject": "hill",
-       "metric": "area",
-       "change": "up"
-      }
-     ]
+     "text": "a gentle hill near (70, 70), 4 levels high",
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "its new size in tiles",
-     "the level it reaches now"
+     "how many tiles rose, and by how much",
+     "if the patch is too small for 4 levels, what its middle reaches and how wide it would need to be"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "every start requirement the validator checks still holds (guards never traded away)",
-    "the same hill, about 1.5 times as wide"
+    "every start requirement the validator checks still holds (guards never traded away)"
    ],
    "reference": {
     "calls": [
      {
-      "tool": "measure",
+      "tool": "limits",
       "args": {
-       "subject": "hill"
+       "kind": "brush"
       }
      }
     ],
     "proposal": {
      "steps": [
       {
-       "op": "resizeFeature",
-       "target": "hill",
-       "factor": 1.5
+       "op": "brush",
+       "tool": "raise",
+       "where": {
+        "near": [
+         70,
+         70
+        ],
+        "within": 8
+       },
+       "size": "medium",
+       "amount": 4
       }
      ]
     },
@@ -7299,69 +7416,66 @@
       "on": "propose",
       "path": "steps.0.report.0",
       "op": "matches",
-      "value": "^now about \\d+ by \\d+ tiles"
+      "value": "^raises [0-9]+ tiles: [0-9]+ by 4"
      }
     ]
    }
   },
   {
    "id": "B06",
-   "kind": "followup",
-   "text": "make the hill as tall as it can go",
-   "setup": "rv96-hill",
-   "feasible": "partly",
+   "kind": "simple",
+   "text": "make a mesa with cliff edges near (80, 20), 3 levels high",
+   "setup": "rv96",
+   "feasible": "yes",
    "expressible": true,
-   "note": "16 is the editor's limit; a small hill's gentle edge climbs a level every 3 tiles, so its top reaches less",
    "goals": [
     {
      "id": "g1",
-     "text": "the hill made before, level 16",
-     "expect": [
-      {
-       "subject": "hill",
-       "metric": "height",
-       "equals": 16
-      }
-     ]
+     "text": "a cliff-edged mesa near (80, 20), 3 levels high",
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "level 16 is the editor's limit",
-     "the level its top reaches in this outline, and that a bigger hill would reach higher"
+     "how many tiles rose by 3",
+     "cliff edges need player stairs to climb"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "every start requirement the validator checks still holds (guards never traded away)",
-    "the report says the level reached, not 16, when the outline is too small"
+    "every start requirement the validator checks still holds (guards never traded away)"
    ],
    "reference": {
-    "calls": [
-     {
-      "tool": "measure",
-      "args": {
-       "subject": "hill"
-      }
-     }
-    ],
+    "calls": [],
     "proposal": {
      "steps": [
       {
-       "op": "changeFeature",
-       "target": "hill",
-       "set": {
-        "height": 16
-       }
+       "op": "brush",
+       "tool": "raise",
+       "where": {
+        "near": [
+         80,
+         20
+        ],
+        "within": 6
+       },
+       "amount": 3,
+       "edges": "cliff"
       }
      ]
     },
     "checks": [
      {
       "on": "propose",
+      "path": "steps.0.report",
+      "op": "includes",
+      "value": "with cliff edges"
+     },
+     {
+      "on": "propose",
       "path": "steps.0.report.0",
       "op": "matches",
-      "value": "reaches level \\d+ here, not 16|level 16"
+      "value": "by 3$|by 3 "
      }
     ]
    }
@@ -7553,7 +7667,7 @@
    "setup": "rv96",
    "feasible": "yes",
    "expressible": true,
-   "note": "drawn from the river it is a branch of it (the editor's river rules): no source of its own",
+   "note": "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
    "goals": [
     {
      "id": "g1",
@@ -7563,7 +7677,7 @@
    ],
    "report": {
     "mustSay": [
-     "it is a branch: the river's own water feeds it",
+     "the river's own water feeds it: its bed starts at the river's and never rises",
      "how deep it cuts through higher ground on its way"
     ]
    },
@@ -7586,8 +7700,9 @@
     "proposal": {
      "steps": [
       {
-       "op": "addRiver",
-       "points": [
+       "op": "brush",
+       "tool": "lower",
+       "path": [
         [
          72,
          40
@@ -7601,17 +7716,27 @@
          0
         ]
        ],
-       "flow": "gentle",
-       "live": true
+       "size": 2
       }
      ]
     },
     "checks": [
      {
       "on": "propose",
-      "path": "steps.0.report",
-      "op": "includes",
-      "value": "a branch: the water it leaves feeds it"
+      "path": "steps.0.resolved.channel",
+      "op": "true"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.joins",
+      "op": "equals",
+      "value": "the map edge"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^carves a bed"
      }
     ]
    }

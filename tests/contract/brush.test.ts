@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { decodeProject } from "../../src/core/doc/document";
 import type { EditOp } from "../../src/core/doc/ops";
 import { MapSession } from "../../src/core/doc/session";
-import { applyBrush, BrushStroke, type BrushParams, type BrushTool } from "../../src/core/features/raster/brush";
+import { applyBrush, brushProblems, BrushStroke, type BrushParams, type BrushTool } from "../../src/core/features/raster/brush";
 import { StrokePreview } from "../../src/core/features/raster/strokePreview";
 import { writeTimber } from "../../src/core/format/timber";
 import { generate } from "../../src/core/gen/generate";
@@ -111,6 +111,113 @@ describe("a brush stroke is exact", () => {
     expect(Array.from(again.built.heights)).toEqual(Array.from(s.built.heights));
     s.settleCanonical();
     expect(Buffer.from(s.exportTimber().bytes).equals(Buffer.from(again.exportTimber().bytes))).toBe(true);
+  });
+});
+
+describe("the brush kit (D182) and smart Lower (D184)", () => {
+  const W = 40;
+  const H = 30;
+  const tile = (x: number, y: number) => [4 * x + 2, 4 * y + 2];
+
+  it("precise: at size 1 a click moves one tile one level, and holding it still moves it no more", () => {
+    const g = new Uint8Array(W * H).fill(5);
+    const dabs: number[] = [];
+    for (let k = 0; k < 50; k++) dabs.push(...tile(10, 10));
+    applyBrush({ tool: "raise", size: 1, strength: 10, precise: true, dabs }, g, W, H);
+    expect(g[10 * W + 10]).toBe(6);
+    expect(Array.from(g).filter((v) => v !== 5).length).toBe(1);
+    // size 2: the 3 × 3 round it, each a level
+    const h = new Uint8Array(W * H).fill(5);
+    applyBrush({ tool: "lower", size: 2, strength: 1, precise: true, dabs: tile(20, 15) }, h, W, H);
+    expect(Array.from(h).filter((v) => v === 4).length).toBe(9);
+  });
+
+  it("square reaches the corners a round brush leaves; round and square agree along the axes", () => {
+    const round = new Uint8Array(W * H).fill(5);
+    const square = new Uint8Array(W * H).fill(5);
+    applyBrush({ tool: "raise", size: 3, strength: 1, precise: true, dabs: tile(20, 15) }, round, W, H);
+    applyBrush({ tool: "raise", size: 3, strength: 1, precise: true, shape: "square", dabs: tile(20, 15) }, square, W, H);
+    expect(square[(15 + 2) * W + 20 + 2]).toBe(6);
+    expect(round[(15 + 2) * W + 20 + 2]).toBe(5);
+    expect(square[15 * W + 22]).toBe(round[15 * W + 22]);
+    expect(Array.from(square).filter((v) => v === 6).length).toBe(25);
+  });
+
+  it("a pen's light pressure works more slowly than a full press, and the same pressures replay the same", () => {
+    const dabs: number[] = [];
+    for (let k = 0; k < 40; k++) dabs.push(...tile(20, 15));
+    const full = new Uint8Array(W * H).fill(3);
+    const light = new Uint8Array(W * H).fill(3);
+    applyBrush({ tool: "raise", size: 4, strength: 5, dabs }, full, W, H);
+    const pressure = dabs.filter((_, k) => k % 2 === 0).map(() => 60);
+    applyBrush({ tool: "raise", size: 4, strength: 5, dabs, pressure }, light, W, H);
+    expect(light[15 * W + 20]).toBeGreaterThan(3);
+    expect(light[15 * W + 20]).toBeLessThan(full[15 * W + 20]);
+    // handed in piece by piece, with their pressures
+    const chunked = new Uint8Array(W * H).fill(3);
+    const s = new BrushStroke({ tool: "raise", size: 4, strength: 5 }, chunked, W, H);
+    for (let k = 0; k < dabs.length; k += 8) s.add(dabs.slice(k, k + 8), pressure.slice(k / 2, k / 2 + 4));
+    expect(Array.from(chunked)).toEqual(Array.from(light));
+    expect(brushProblems({ tool: "raise", size: 4, strength: 5, dabs, pressure: [1] }, W, H)).not.toEqual([]);
+    expect(brushProblems({ tool: "raise", size: 4, strength: 5, dabs, shape: "hex" as "square" }, W, H)).not.toEqual([]);
+  });
+
+  it("smart Lower: from water, its bed starts at the water's bed and never rises along the stroke", () => {
+    // a pond at level 2 on the west (x < 6), ground at 6 with a hill of 9 on the way east
+    const g = new Uint8Array(W * H).fill(6);
+    for (let y = 0; y < H; y++) for (let x = 0; x < 6; x++) g[y * W + x] = 2;
+    for (let y = 10; y < 20; y++) for (let x = 18; x < 24; x++) g[y * W + x] = 9;
+    const dabs: number[] = [];
+    for (let x = 6; x <= 34; x++) dabs.push(4 * x + 2, 4 * 15 + 2);
+    const carved = g.slice();
+    applyBrush({ tool: "lower", size: 3, strength: 3, channel: true, dabs }, carved, W, H);
+    // along the stroke's middle: never above the pond's bed, and never rising toward its end
+    let last = Infinity;
+    for (let x = 6; x <= 34; x++) {
+      const h = carved[15 * W + x];
+      expect(h, `x ${x}`).toBeLessThanOrEqual(2);
+      expect(h).toBeLessThanOrEqual(last);
+      last = h;
+    }
+    // the same stroke without it lowers as a plain brush: the hill stays above the pond
+    const plain = g.slice();
+    applyBrush({ tool: "lower", size: 3, strength: 3, dabs }, plain, W, H);
+    expect(plain[15 * W + 20]).toBeGreaterThan(2);
+    // and it replays the same, whole or in pieces
+    const chunked = g.slice();
+    const s = new BrushStroke({ tool: "lower", size: 3, strength: 3, channel: true }, chunked, W, H);
+    for (let k = 0; k < dabs.length; k += 6) s.add(dabs.slice(k, k + 6));
+    expect(Array.from(chunked)).toEqual(Array.from(carved));
+  });
+
+  it("smart Lower through a session: the page's stroke is the operation's, and it replays from the project", () => {
+    const r = generate(makeSpec({ seed: 3, theme: "riverValley", size: { x: 96, y: 96 } }));
+    const s = MapSession.fromGenerated(r, r.file);
+    s.setWaterMode("defer");
+    const W2 = 96;
+    // from a river's channel, away from the start
+    const start = s.built.start!;
+    let from = -1;
+    for (let i = 0; i < W2 * W2 && from < 0; i++) {
+      const x = i % W2;
+      const y = Math.floor(i / W2);
+      if (s.built.channel[i] && x > 8 && x < W2 - 20 && Math.hypot(x - start.x, y - start.y) > 24) from = i;
+    }
+    expect(from).toBeGreaterThanOrEqual(0);
+    const fx = from % W2;
+    const fy = Math.floor(from / W2);
+    const dabs: number[] = [];
+    for (let k = 0; k <= 16; k++) dabs.push(4 * (fx + k) + 2, 4 * fy + 2);
+    const p: BrushParams = { tool: "lower", size: 2, strength: 4, channel: true, dabs };
+    const shown = s.built.heights.slice();
+    const { dabs: d, ...settings } = p;
+    const preview = new StrokePreview(settings, s.terrainState(), shown, W2, W2);
+    for (let j = 0; j < d.length; j += 4) preview.add(d.slice(j, j + 4));
+    const u = s.apply({ op: "brush", params: p }, "user", "Lower");
+    expect(u.errors).toEqual([]);
+    expect(Array.from(shown)).toEqual(Array.from(s.built.heights));
+    const again = MapSession.open(decodeProject(s.project()));
+    expect(Array.from(again.built.heights)).toEqual(Array.from(s.built.heights));
   });
 });
 

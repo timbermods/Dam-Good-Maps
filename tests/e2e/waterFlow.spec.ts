@@ -58,7 +58,7 @@ test("the water's journey plays over a few seconds, pauses, skips, replays, and 
 
   // a strong water source on high ground away from the start: its water spreads over seconds
   await page.getByRole("tab", { name: "Water" }).click();
-  await page.getByRole("region", { name: "Add" }).getByRole("button", { name: "Water source", exact: true }).click();
+  await page.getByRole("region", { name: "Add" }).getByRole("button", { name: "Source", exact: true }).click();
   const at: [number, number] = [start[0] < W / 2 ? Math.round(W * 0.85) : Math.round(W * 0.15), Math.round(W * 0.9)];
   const p = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), at);
   const w0 = await wet(page);

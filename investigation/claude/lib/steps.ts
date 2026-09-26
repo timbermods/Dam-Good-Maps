@@ -25,6 +25,10 @@ import { BUILT_KINDS, type PlanRecord } from "../../../src/core/features/setpiec
 import { tilesToRuns } from "../../../src/core/math/grid";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { newHandle, newId, refContext, type Conversation } from "./conversation";
+import { entityTiles } from "../../../src/core/features/edits";
+import { locate, network } from "./flow";
+import { SOURCE_PREFIX } from "./metrics";
+import { nearExtras, patchStrokes } from "./dig";
 import { anchorOf } from "./metrics";
 import { compassWords, resolve, resolveRef, type Place } from "./places";
 import { findSites, resourceArea, setVerifier, type SiteKind, type SitesResult } from "./sites";
@@ -47,12 +51,13 @@ export type Step =
   | { op: "addSetPiece"; kind: SetPieceKind; request?: PlanRecord; where?: Where; size?: SizeWord | number; handle?: string; keepReservoirsClean?: boolean; nearStart?: boolean; awayFromStart?: number }
   | { op: "changeSetPiece"; target: string; request?: PlanRecord; change?: string }
   | { op: "changeFeature"; target: string; set: { level?: number; floorDepth?: number; spring?: number; flow?: number; width?: number; height?: number; edgeStyle?: "gentle" | "terraced" | "cliff"; density?: number } }
-  | { op: "addRiver"; points: Point[]; flow?: number | "gentle" | "steady" | "strong"; width?: number; bedDepth?: number; badwater?: boolean; handle?: string; live?: boolean; natural?: boolean }
-  /** A water or badwater source (the editor's source tools, live editing): where water starts, or,
-   *  with fillHollow, a spring at the lowest point of the hollow there, which fills it into a lake. */
-  | { op: "addSource"; kind: "water" | "badwater"; where?: Where; at?: [number, number]; strength?: number; fillHollow?: boolean }
+  /** Setups only (a corpus map with a drawn creek, as documents from before D184 hold them). */
+  | { op: "addRiver"; points: Point[]; flow?: number | "gentle" | "steady" | "strong"; width?: number; bedDepth?: number; badwater?: boolean; handle?: string }
+  /** A water or badwater source (the editor's Source, live editing): where water starts, or, with
+   *  fillHollow, a spring at the lowest point of the hollow there, which fills it into a lake. */
+  | { op: "addSource"; kind: "water" | "badwater"; where?: Where; at?: [number, number]; strength?: number; fillHollow?: boolean; handle?: string }
+  /** Setups only (a corpus map with a lake, as documents from before D184 hold them). */
   | { op: "addLake"; outline?: Point[]; where?: Where; size?: SizeWord | number; level?: number; floorDepth?: number; spring?: number; handle?: string }
-  | { op: "addLandform"; kind: LandformFeature["params"]["kind"]; outline?: Point[]; where?: Where; size?: SizeWord; height?: number; edgeStyle?: LandformFeature["params"]["edgeStyle"]; handle?: string }
   | { op: "addResource"; kind: "forest" | "berryPatch" | "ruinField"; where: Where; amount?: number; size?: SizeWord; at?: [number, number]; handle?: string }
   | { op: "removeResources"; kind: "trees" | "bushes" | "ruins"; where: Where }
   | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] | Where }
@@ -60,13 +65,37 @@ export type Step =
   | { op: "deleteFeature"; target: string }
   | { op: "setRiverBadwater"; target: string; badwater: boolean }
   | { op: "sculpt"; mode: "raise" | "lower" | "flatten" | "smooth"; where: Where; amount?: number; level?: number }
-  /** The editor's terrain brushes (live editing), painted over a place. */
-  | { op: "brush"; tool: BrushTool; where: Where; amount?: number; level?: number; passes?: number }
-  /** A drawn landform or lake made bigger or smaller about its middle (the editor's corner handles). */
-  | { op: "resizeFeature"; target: string; factor: number }
+  /** The editor's terrain brushes (live editing; the brush kit is the editor's core, D182),
+   *  painted over a place: all of it, or with `size` a round patch of it near its middle; edges
+   *  "slope" (the brushes' own: a level a tile) or "cliff" (every tile the full amount). Or one
+   *  stroke along a `path`, `size` tiles wide: a Lower stroke that starts in or beside water, or
+   *  beside a source, carves a bed that keeps flowing downhill, and the water follows it (smart
+   *  Lower, D184). */
+  | { op: "brush"; tool: BrushTool; where?: Where; path?: Point[]; amount?: number; level?: number; passes?: number; size?: SizeWord | number; edges?: "slope" | "cliff" }
   | { op: "undoLast" };
 
-export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "resizeFeature", "addRiver", "addSource", "addLake", "addLandform", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
+export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
+
+/** Steps only a corpus map's setup may use: its drawn creeks and lakes, as saved documents from
+ *  before D184 hold them. Claude is never offered them. */
+const SETUP_OPS: readonly string[] = ["addRiver", "addLake"];
+let setupSteps = false;
+/** Run `fn` with the setup-only steps allowed (building a corpus map). */
+export function withSetupSteps<T>(fn: () => T): T {
+  const was = setupSteps;
+  setupSteps = true;
+  try {
+    return fn();
+  } finally {
+    setupSteps = was;
+  }
+}
+
+/** Hills and valleys come from the brushes (PLAN §20 D182): what a step that asks for a shape
+ *  object is told. */
+const NO_LANDFORMS = "hills, plateaus, ridges, canyons and valleys come from the brushes: use the brush step (raise, lower, flatten, smooth, naturalize), with where, size, amount or level, and edges slope or cliff";
+/** Rivers and lakes come from the land and the water (D184). */
+const NO_RIVERS = "rivers and lakes come from the land and the water: carve a river with a brush step, tool lower, along a path that starts in or beside water or beside a source (its bed keeps flowing downhill and the water follows it); for a lake, dig a hollow with a lower brush and fill it with addSource and fillHollow";
 
 export interface Expanded {
   ok: boolean;
@@ -134,7 +163,9 @@ function checkRequest(r: unknown): string[] {
 export function checkStep(step: unknown, W: number, H: number): string[] {
   if (typeof step !== "object" || step === null || Array.isArray(step)) return ["each step is an object with an op"];
   const s = step as Record<string, unknown>;
-  if (!STEP_OPS.includes(s.op as (typeof STEP_OPS)[number])) return [`unknown op ${String(s.op).slice(0, 40)}: use one of ${STEP_OPS.join(", ")}`];
+  if (s.op === "addLandform" || s.op === "resizeFeature") return [NO_LANDFORMS];
+  if (SETUP_OPS.includes(String(s.op)) && !setupSteps) return [NO_RIVERS];
+  if (!STEP_OPS.includes(s.op as (typeof STEP_OPS)[number]) && !SETUP_OPS.includes(String(s.op))) return [`unknown op ${String(s.op).slice(0, 40)}: use one of ${STEP_OPS.join(", ")}`];
   if (JSON.stringify(s).length > 4000) return [`the ${s.op} step is too large`];
   if (s.handle !== undefined && !(str(s.handle, 40) && /^[a-z0-9][a-z0-9-]*$/i.test(String(s.handle)))) return ["handle is a short name of letters, digits and dashes"];
   if (s.size !== undefined && !(num(s.size, 1, 4096) || (typeof s.size === "string" && ["tiny", "small", "medium", "large", "huge"].includes(s.size)))) return ["size is tiny, small, medium, large, huge or a number"];
@@ -194,14 +225,6 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       if (s.floorDepth !== undefined && !num(s.floorDepth, 1, 4)) errs.push("floorDepth is 1–4");
       if (s.spring !== undefined && !num(s.spring, 0, 8)) errs.push("spring is 0–8 blocks/s");
       return errs;
-    case "addLandform":
-      if (!["hill", "plateau", "ridge", "canyon", "valley", "island"].includes(String(s.kind))) return ["kind is hill, plateau, ridge, canyon, valley or island"];
-      if (s.outline !== undefined) errs.push(...checkPoints(s.outline, W, H, "outline", 3, 32));
-      else if (s.where === undefined) errs.push("addLandform needs an outline or a where");
-      errs.push(...checkPlace(s.where, "where", W, H));
-      if (s.height !== undefined && !num(s.height, 0, 16)) errs.push("height is 0–16 (16 is the editor's limit)");
-      if (s.edgeStyle !== undefined && !["gentle", "terraced", "cliff"].includes(String(s.edgeStyle))) errs.push("edgeStyle is gentle, terraced or cliff");
-      return errs;
     case "addResource":
       if (!["forest", "berryPatch", "ruinField"].includes(String(s.kind))) return ["kind is forest, berryPatch or ruinField"];
       if (s.amount !== undefined && !num(s.amount, 1, 20000)) errs.push("amount is 1–20,000 (trees, bushes or scrap)");
@@ -229,15 +252,14 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       return [...errs, ...checkPlace(s.where, "where", W, H)];
     case "brush":
       if (!BRUSH_TOOLS.includes(s.tool as BrushTool)) return [`tool is ${BRUSH_TOOLS.join(", ")}`];
-      if (s.where === undefined) errs.push("brush needs a where: the place it paints");
+      if (s.where === undefined && s.path === undefined) errs.push("brush needs a where (the place it paints) or a path (one stroke along it)");
+      if (s.path !== undefined) errs.push(...checkPoints(s.path, W, H, "path", 2, 24));
+      if (s.path !== undefined && typeof s.size === "number" && !num(s.size, 1, 9)) errs.push("along a path, size is the stroke's width: 1–9 tiles, or tiny, small, medium, large, huge");
       if (s.amount !== undefined && !(Number.isInteger(s.amount) && num(s.amount, 1, 8))) errs.push("amount is 1–8 whole levels (raise and lower)");
       if (s.level !== undefined && !(Number.isInteger(s.level) && num(s.level, 0, BRUSH_MAX_LEVEL))) errs.push(`level is a whole level, 0–${BRUSH_MAX_LEVEL} (flatten)`);
       if (s.passes !== undefined && !(Number.isInteger(s.passes) && num(s.passes, 1, 8))) errs.push("passes is 1–8 (smooth and naturalize)");
+      if (s.edges !== undefined && s.edges !== "slope" && s.edges !== "cliff") errs.push("edges is slope or cliff");
       return [...errs, ...checkPlace(s.where, "where", W, H)];
-    case "resizeFeature":
-      if (!str(s.target, 80)) return ["target names the feature"];
-      if (!num(s.factor, 0.5, 2)) return ["factor is 0.5–2: 1.25 a bit bigger, 1.5 bigger, 2 twice as wide; 0.75 smaller"];
-      return [];
     case "undoLast":
       return [];
   }
@@ -356,18 +378,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
         if (!r.ok) return fail(step, r.errors);
         return done([{ op: "updateFeature", params: { id: f.id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)], r.report);
       }
-      if (f.kind === "landform") {
-        if (!f.params.outline) return fail(step, ["this landform follows the river; change the relief or terracing settings instead"]);
-        const patch: Record<string, unknown> = {};
-        if (set.height !== undefined) patch.height = set.height;
-        if (set.edgeStyle !== undefined) patch.edgeStyle = set.edgeStyle;
-        if (!Object.keys(patch).length) return fail(step, ["a landform changes its height or edgeStyle"]);
-        // the level its steps reach in its outline, as the editor's height handle says it
-        const params = { ...f.params, ...patch } as LandformFeature["params"];
-        const top = set.height !== undefined ? landformTop(params, polygonMask(f.params.outline, W, H), W, H) : undefined;
-        const reach = set.height !== undefined ? (top !== set.height ? `reaches level ${top} here, not ${set.height}` : `level ${set.height}`) : "";
-        return done([{ op: "updateFeature", params: { id: f.id, patch: { params: patch } } }], [`now ${reach}${set.edgeStyle ? ` with ${set.edgeStyle} edges` : ""}`.trim()]);
-      }
+      if (f.kind === "landform") return fail(step, [NO_LANDFORMS]);
       if ((f.kind === "forest" || f.kind === "berryPatch") && set.density !== undefined) return done([{ op: "updateFeature", params: { id: f.id, patch: { params: { density: set.density } } } }], [`density ${set.density}`]);
       return fail(step, [`a ${f.kind} has none of these to change: ${Object.keys(set).join(", ")}`]);
     }
@@ -376,9 +387,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     case "addRiver": {
       const id = newId(conv, "river");
       const flow = typeof step.flow === "string" ? { gentle: 1, steady: 2, strong: 4 }[step.flow] : (step.flow ?? 2);
-      // live: the editor's river tool's rules (a branch from water, an end on dry ground)
-      const ctx = step.live ? { ...planContextOf(s), water: s.built.water } : planContextOf(s);
-      const r = planRiver({ points: step.points, flow, ...(step.width ? { width: step.width } : {}), ...(step.bedDepth ? { bedDepth: step.bedDepth } : {}), ...(step.live ? { drawn: true, ...(step.natural ? { natural: true } : {}) } : {}) }, ctx, id, "claude");
+      const r = planRiver({ points: step.points, flow, ...(step.width ? { width: step.width } : {}), ...(step.bedDepth ? { bedDepth: step.bedDepth } : {}) }, planContextOf(s), id, "claude");
       if (step.badwater) return fail(step, ["a river's badwater switch is not built yet: draw the river clean and add a badwater spring that drains into it"]);
       if (r.ok && step.badwater && r.feature.kind === "river") {
         r.feature.params.badwater = true;
@@ -394,29 +403,13 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       let outline = step.outline;
       let resolved: Record<string, unknown> = {};
       if (!outline) {
-        const r = findSites(s, { kind: "lake", where: step.where, size: step.size, request: { ...(step.level ? { level: step.level } : {}) }, limit: 1 }, refs);
+        const r = findSites(s, { kind: "lake", where: step.where, size: step.size, request: { ...(step.level ? { level: step.level } : {}) }, limit: 1, planned: true }, refs);
         resolved = siteSummary(r);
         if (!r.ok) return fail(step, [r.reason ?? "no place for the lake"], alternativeOf(r), resolved);
         outline = r.sites[0].step.outline as Point[];
       }
       const r = planLake({ outline, ...(step.level ? { level: step.level } : {}), ...(step.floorDepth ? { floorDepth: step.floorDepth } : {}), ...(step.spring !== undefined ? { spring: step.spring } : {}) }, planContextOf(s), id, "claude");
       return fromPlanned(step, r, conv, "lake", step.handle, id, resolved);
-    }
-    case "addLandform": {
-      const id = newId(conv, step.kind);
-      hintIds({ ...conv, counter: conv.counter - 1 });
-      let outline = step.outline;
-      let height = step.height;
-      let resolved: Record<string, unknown> = {};
-      if (!outline) {
-        const r = findSites(s, { kind: step.kind as SiteKind, where: step.where, size: step.size, request: { ...(step.height !== undefined ? { height: step.height } : {}), ...(step.edgeStyle ? { edgeStyle: step.edgeStyle } : {}) }, limit: 1 }, refs);
-        resolved = siteSummary(r);
-        if (!r.ok) return fail(step, [r.reason ?? "no place for it"], alternativeOf(r), resolved);
-        outline = r.sites[0].step.outline as Point[];
-        height ??= Number(r.sites[0].step.height);
-      }
-      const r = planLandform({ outline, kind: step.kind, ...(height !== undefined ? { height } : {}), edgeStyle: step.edgeStyle ?? (step.kind === "plateau" ? "cliff" : "gentle") }, planContextOf(s), id, "claude");
-      return fromPlanned(step, r, conv, step.kind, step.handle, id, resolved);
     }
     case "addResource": {
       const where = resolve(v, step.where, refs);
@@ -495,8 +488,6 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     }
     case "brush":
       return expandBrush(s, conv, step);
-    case "resizeFeature":
-      return expandResize(s, conv, step);
     case "sculpt": {
       const where = resolve(v, step.where, refs);
       if (!where.ok) return fail(step, where.errors);
@@ -536,19 +527,31 @@ function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { o
       }
     const cx = sx / n;
     const cy = sy / n;
-    // a hollow's spring: its lowest tile; any other source: the dry tile nearest the middle where
-    // it can stand (a badwater source takes 3×3 level tiles)
+    // a hollow's spring: the hollow nearest the middle (a dry hollow of 9 tiles or more, off the
+    // start); any other source: the dry tile nearest the middle where it can stand (a badwater
+    // source takes 3×3 level tiles)
     const order: [number, number][] = [];
     for (let i = 0; i < where.mask.length; i++) {
       if (!where.mask[i] || b.water[i] > 0.05) continue;
-      const d = Math.hypot((i % W) - cx, Math.floor(i / W) - cy);
-      order.push([step.fillHollow ? b.heights[i] * 10000 + d : d, i]);
+      order.push([Math.hypot((i % W) - cx, Math.floor(i / W) - cy), i]);
     }
     order.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
     if (!order.length) return fail(step, ["that place is all water: a source goes on dry ground"], undefined, resolved);
     const template = step.kind === "badwater" ? "BadwaterSource" : "WaterSource";
-    const fits = order.slice(0, 400).find(([, i]) => step.fillHollow || !entityProblem(s, { template, x: i % W, y: Math.floor(i / W), orientation: "Cw0" }));
-    const best = (fits ?? order[0])[1];
+    let best = -1;
+    if (step.fillHollow) {
+      const seen = new Set<number>();
+      const start = b.start;
+      for (const [, i] of order.slice(0, 3000)) {
+        const h = hollowAt(b.heights, b.water, W, H, i % W, Math.floor(i / W));
+        if (seen.has(h.low)) continue;
+        seen.add(h.low);
+        if (!h.fills || h.tiles < 9 || (start && Math.hypot((h.low % W) - start.x, Math.floor(h.low / W) - start.y) < 6)) continue;
+        best = i;
+        break;
+      }
+      if (best < 0) return fail(step, ["there is no hollow there: water from a spring runs on downhill (dig one first with a brush step, tool lower, size and amount 2 or more)"], undefined, resolved);
+    } else best = (order.slice(0, 400).find(([, i]) => !entityProblem(s, { template, x: i % W, y: Math.floor(i / W), orientation: "Cw0" })) ?? order[0])[1];
     at = [best % W, Math.floor(best / W)];
   }
   const report: string[] = [];
@@ -556,15 +559,36 @@ function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { o
     const h = hollowAt(b.heights, b.water, W, H, at[0], at[1]);
     if (!h.fills) return fail(step, ["there is no hollow there: water from a spring there runs on downhill (dig one with a lower brush first)"], undefined, { ...resolved, at });
     at = [h.low % W, Math.floor(h.low / W)];
+    // a free tile of its floor (a thorn or a tree may stand on the lowest one)
+    const floor = b.heights[h.low];
+    const template = step.kind === "badwater" ? "BadwaterSource" : "WaterSource";
+    if (entityProblem(s, { template, x: at[0], y: at[1], orientation: "Cw0" })) {
+      let best: [number, number] | null = null;
+      let bd = Infinity;
+      for (let dy = -4; dy <= 4; dy++)
+        for (let dx = -4; dx <= 4; dx++) {
+          const x = at[0] + dx;
+          const y = at[1] + dy;
+          if (x < 0 || y < 0 || x >= W || y >= H || b.heights[y * W + x] !== floor || dx * dx + dy * dy >= bd) continue;
+          if (entityProblem(s, { template, x, y, orientation: "Cw0" })) continue;
+          best = [x, y];
+          bd = dx * dx + dy * dy;
+        }
+      if (best) at = best;
+    }
     report.push(`fills the hollow to level ${h.level}, about ${h.tiles} tiles, then spills over its rim`);
   }
   const bad = step.kind === "badwater";
   const strength = step.strength ?? (bad ? 1 : 1.5);
   const req = { template: bad ? "BadwaterSource" : "WaterSource", x: at[0], y: at[1], orientation: "Cw0" as const, components: { WaterSource: { SpecifiedStrength: strength, CurrentStrength: strength } } };
-  const r = planEntity(s, req, newId(conv, "source"));
+  const id = newId(conv, "source");
+  const r = planEntity(s, req, id);
   if (!r.ok) return fail(step, r.errors, undefined, { ...resolved, at });
   report.unshift(`a ${bad ? "badwater" : "water"} source of ${strength} blocks/s at (${at[0]}, ${at[1]})${strength > OFFICIAL_FLOW ? ": stronger than any official map" : ""}`);
-  return { ok: true, step, ops: r.ops, made: [], report, resolved: { ...resolved, at }, errors: [], tiles: bad ? 9 : 1 };
+  // the lake it fills, or the source itself, measured as `new:lake`, `new:source` or `new:badwaterSource`
+  const kind = step.fillHollow ? "lake" : bad ? "badwaterSource" : "source";
+  const made = [{ handle: newHandle(conv, kind, step.handle), id: `${SOURCE_PREFIX}${id}`, kind }];
+  return { ok: true, step, ops: r.ops, made, report, resolved: { ...resolved, at }, errors: [], tiles: bad ? 9 : 1 };
 }
 
 // ------------------------------------------------------------------------------------ brushes
@@ -579,12 +603,13 @@ function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { o
  *  cliffs); smooth and naturalize stroke once per pass. A pass over a big place is split into
  *  strokes of at most MAX_DABS dabs (every tile of a pass moves one level either way). */
 function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op: "brush" }>): Expanded {
+  if (step.path) return expandBrushPath(s, step);
   const { x: W, y: H } = s.size;
-  const where = resolve(viewOf(s), step.where, refContext(conv));
+  const where = resolve(viewOf(s), step.where!, refContext(conv));
   const resolved: Record<string, unknown> = { place: where.place, assumptions: where.assumptions };
   if (!where.ok) return fail(step, where.errors, undefined, resolved);
   const cap = Math.floor(MAX_AREA_SHARE * W * H);
-  if (where.tiles > cap) return fail(step, [`that area is ${where.tiles} tiles; one proposal may brush at most ${cap} (30% of the map)`], undefined, resolved);
+  if (where.tiles > cap && step.size === undefined) return fail(step, [`that area is ${where.tiles} tiles; one proposal may brush at most ${cap} (30% of the map)`], undefined, resolved);
   const state = s.terrainState();
   const pre = state.pre;
   // an imported map's caves and overhangs: the brushes leave them as they are
@@ -597,32 +622,82 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
       mask[i] = 0;
       underRoof++;
     }
+  // a round patch of the place near its middle (a small hill in the south-west corner), clear of
+  // the start's own area; a lowered one also clear of the water (a pond, not a bay)
+  if (step.size !== undefined) {
+    const radius = typeof step.size === "number" ? Math.max(1, Math.min(40, step.size / 2)) : ({ tiny: 3, small: 5, medium: 8, large: 12, huge: 18 } as Record<string, number>)[step.size];
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (let i = 0; i < mask.length; i++)
+      if (mask[i]) {
+        sx += i % W;
+        sy += Math.floor(i / W);
+        n++;
+      }
+    const b = s.built;
+    const start = b.start;
+    const extras = step.tool === "lower" ? nearExtras(s, 3) : null;
+    const clear = (i: number): boolean => {
+      const x = i % W;
+      const y = Math.floor(i / W);
+      if (start && Math.hypot(x - start.x, y - start.y) < radius + 5) return false;
+      if (step.tool !== "lower") return true;
+      const r = Math.ceil(radius) + 1;
+      for (let yy = Math.max(0, y - r); yy <= Math.min(H - 1, y + r); yy++)
+        for (let xx = Math.max(0, x - r); xx <= Math.min(W - 1, x + r); xx++) if ((xx - x) ** 2 + (yy - y) ** 2 <= r * r && (b.water[yy * W + xx] > 0.05 || b.channel[yy * W + xx] || extras![yy * W + xx])) return false;
+      return true;
+    };
+    const byDistance: [number, number][] = [];
+    for (let i = 0; i < mask.length && n; i++) if (mask[i]) byDistance.push([((i % W) - sx / n) ** 2 + (Math.floor(i / W) - sy / n) ** 2, i]);
+    byDistance.sort((a, q) => a[0] - q[0] || a[1] - q[1]);
+    // a lowered patch holds water: of the clear spots nearest the middle, the one with fewest
+    // objects on it (a pond drowns the plants on it, and a ruin on changed ground floats); any
+    // other patch, the clear spot nearest the middle
+    const occ = new Uint8Array(W * H);
+    if (step.tool === "lower") for (const e of b.entities) for (const [tx, ty] of entityTiles(e)) if (tx >= 0 && ty >= 0 && tx < W && ty < H) occ[ty * W + tx] = 1;
+    const reach = Math.ceil(radius) + 1;
+    const objectsOn = (i: number): number => {
+      const x = i % W;
+      const y = Math.floor(i / W);
+      let k = 0;
+      for (let yy = Math.max(0, y - reach); yy <= Math.min(H - 1, y + reach); yy++)
+        for (let xx = Math.max(0, x - reach); xx <= Math.min(W - 1, x + reach); xx++) if ((xx - x) ** 2 + (yy - y) ** 2 <= reach * reach) k += occ[yy * W + xx];
+      return k;
+    };
+    let c = -1;
+    let fewest = Infinity;
+    let looked = 0;
+    for (const [, i] of byDistance) {
+      if (!clear(i)) continue;
+      if (++looked > 4000) break;
+      const k = objectsOn(i);
+      if (k < fewest) {
+        fewest = k;
+        c = i;
+        if (!k) break;
+      }
+    }
+    if (c < 0) {
+      c = byDistance[0][1];
+      resolved.note = step.tool === "lower" ? "no spot there is clear of the start and the water: the patch is at the place's middle" : "no spot there is clear of the start: the patch is at the place's middle";
+    } else if (fewest) resolved.objectsOnPatch = fewest;
+    const cx = c % W;
+    const cy = Math.floor(c / W);
+    for (let i = 0; i < mask.length; i++) if (mask[i] && ((i % W) - cx) ** 2 + (Math.floor(i / W) - cy) ** 2 > radius * radius) mask[i] = 0;
+    resolved.patch = { at: [cx, cy], radius };
+  }
   const tiles: number[] = [];
   for (let i = 0; i < mask.length; i++) if (mask[i]) tiles.push(i);
   if (!tiles.length) return fail(step, ["every tile there lies over a cave or an overhang of the imported map: the brushes leave those as they are"], undefined, resolved);
   const tool = step.tool;
-  const pointwise = tool === "raise" || tool === "lower" || tool === "flatten";
   const amount = step.amount ?? 1;
   const level = tool === "flatten" ? (step.level ?? medianLevel(pre, tiles)) : undefined;
   if (tool === "flatten") resolved.level = level;
-  const inward = pointwise ? inwardDistance(mask, W, H) : null;
-  const moves = (i: number, k: number): boolean => {
-    if (!inward) return true;
-    if (inward[i] <= k) return false;
-    if (tool === "raise") return k < amount && pre[i] + k < BRUSH_MAX_LEVEL;
-    if (tool === "lower") return k < amount && pre[i] - k > 0;
-    return Math.abs(pre[i] - level!) > k;
-  };
-  const passes = pointwise ? (tool === "flatten" ? BRUSH_MAX_LEVEL : amount) : (step.passes ?? 2);
+  // cliff edges: every tile the full amount (the brush's own edges slope a level a tile)
+  const cliff = step.edges === "cliff";
   const seed = tool === "naturalize" ? fmix32(Math.imul(tiles[0] + 1, 0x9e3779b1) ^ tiles.length) : undefined;
-  const strokes: BrushParams[] = [];
-  for (let k = 0; k < passes; k++) {
-    const dabs: number[] = [];
-    for (const i of tiles) if (moves(i, k)) dabs.push(4 * (i % W) + 2, 4 * Math.floor(i / W) + 2);
-    if (!dabs.length) break;
-    for (let a = 0; a < dabs.length; a += 2 * MAX_DABS)
-      strokes.push({ tool, size: 0.5, strength: 5, ...(level !== undefined ? { level } : {}), ...(seed !== undefined ? { seed } : {}), layer: "top", dabs: dabs.slice(a, a + 2 * MAX_DABS) });
-  }
+  const { strokes, inward } = patchStrokes(pre, mask, tiles, W, H, { tool, amount, level, cliff, passes: step.passes ?? 2, seed });
   // what it does, measured by running the strokes on the build's own terrain
   const after = pre.slice();
   for (const p of strokes) applyBrush(p, after, W, H, (i) => !roofed[i]);
@@ -646,14 +721,15 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
     const counts = [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, n]) => `${n} by ${d}`);
     const verb = tool === "raise" ? "raises" : "lowers";
     report.push(`${verb} ${moved} tiles: ${counts.join(", ")}${by.size > 1 ? " (its edge slopes a level a tile to the ground round it: a brush makes no cliffs)" : ""}${roof}`);
-    let deepest = 0;
-    for (const i of tiles) deepest = Math.max(deepest, inward![i]);
+    let deepest = cliff ? amount : 0;
+    if (inward) for (const i of tiles) deepest = Math.max(deepest, inward[i]);
+    if (cliff) report.push("with cliff edges: beavers need stairs to climb them");
     if (deepest < amount) report.push(`the place is too narrow to ${tool === "raise" ? "rise" : "sink"} ${amount} anywhere: its middle moves ${deepest}; a place about ${2 * amount - 1} tiles across moves ${amount}`);
     if (atTop) report.push(`${atTop} tiles stop at level ${BRUSH_MAX_LEVEL}, the editor's limit`);
   } else if (tool === "flatten") {
     if (!moved) return fail(step, [`it is already level ${level} there`], undefined, resolved);
     const rest = tiles.length - reached;
-    report.push(`flattens ${reached} of ${tiles.length} tiles to level ${level}${step.level === undefined ? " (the place's middle level)" : ""}${rest ? `; the other ${rest} slope toward it from the ground round the place, a level a tile (a brush makes no cliffs)` : ""}${roof}`);
+    report.push(`flattens ${reached} of ${tiles.length} tiles to level ${level}${step.level === undefined ? " (the place's middle level)" : ""}${rest ? `; the other ${rest} slope toward it from the ground round the place, a level a tile (a brush makes no cliffs)` : ""}${cliff ? " with cliff edges" : ""}${roof}`);
   } else {
     if (!moved) return fail(step, [tool === "smooth" ? "that ground is already smooth: no tile stands apart from its neighbours" : "that ground has no cliffs or straight edges for naturalize to wear"], undefined, resolved);
     const before = steepest(pre, tiles, W, H);
@@ -664,23 +740,108 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
   return { ok: true, step, ops, made: [], report, resolved: { ...resolved, tiles: tiles.length, strokes: strokes.length }, errors: [], tiles: tiles.length };
 }
 
-/** Each tile's distance in from the place's edge (4 neighbours; 1 on the edge), the map's edge
- *  counting as outside: the brush's own edge rule. */
-function inwardDistance(mask: Uint8Array, W: number, H: number): Uint16Array {
-  const d = new Uint16Array(W * H);
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      const i = y * W + x;
-      if (!mask[i]) continue;
-      d[i] = 1 + Math.min(x > 0 ? d[i - 1] : 0, y > 0 ? d[i - W] : 0);
+/** Whether water stands on tile (x, y) or beside it, or a source stands there or beside it: where
+ *  a Lower stroke starts a bed the water follows (the page's rule, with sources). */
+function besideWater(s: MapSession, x: number, y: number): "water" | "source" | null {
+  const { x: W, y: H } = s.size;
+  const b = s.built;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && ny >= 0 && nx < W && ny < H && b.water[ny * W + nx] > 0.05) return "water";
     }
-  for (let y = H - 1; y >= 0; y--)
-    for (let x = W - 1; x >= 0; x--) {
-      const i = y * W + x;
-      if (!mask[i]) continue;
-      d[i] = Math.min(d[i], 1 + (x < W - 1 ? d[i + 1] : 0), 1 + (y < H - 1 ? d[i + W] : 0));
+  for (const e of b.entities) {
+    if (e.template !== "WaterSource" && e.template !== "BadwaterSource") continue;
+    if (entityTiles(e).some(([tx, ty]) => Math.abs(tx - x) <= 1 && Math.abs(ty - y) <= 1)) return "source";
+  }
+  return null;
+}
+
+/** One brush stroke along a path, the way a player paints it: a dab on each tile the path crosses,
+ *  the brush `size` tiles wide. A Lower stroke that starts in or beside water, or beside a source,
+ *  carves a bed that keeps flowing downhill, and the water follows it (smart Lower, D184); any
+ *  other stroke moves the ground as the page's brush does, `amount` strokes for raise and lower. */
+function expandBrushPath(s: MapSession, step: Extract<Step, { op: "brush" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const b = s.built;
+  const pts = step.path!.map(([x, y]) => [Math.max(0, Math.min(W - 1, Math.round(x))), Math.max(0, Math.min(H - 1, Math.round(y)))] as [number, number]);
+  const line: number[] = [];
+  for (let k = 0; k + 1 < pts.length; k++) {
+    const [ax, ay] = pts[k];
+    const [bx, by] = pts[k + 1];
+    const n = Math.max(Math.abs(bx - ax), Math.abs(by - ay), 1);
+    for (let j = 0; j <= n; j++) {
+      const i = Math.round(ay + ((by - ay) * j) / n) * W + Math.round(ax + ((bx - ax) * j) / n);
+      if (line[line.length - 1] !== i) line.push(i);
     }
-  return d;
+  }
+  const width = typeof step.size === "number" ? Math.max(1, Math.min(9, Math.round(step.size))) : ({ tiny: 1, small: 2, medium: 3, large: 5, huge: 7 } as Record<string, number>)[step.size ?? "medium"];
+  const size = Math.max(0.5, width / 2);
+  const tool = step.tool;
+  const state = s.terrainState();
+  const pre = state.pre;
+  const roofed = new Uint8Array(W * H);
+  for (const i of state.columns) roofed[i] = 1;
+  const [x0, y0] = pts[0];
+  const from = tool === "lower" ? besideWater(s, x0, y0) : null;
+  const channel = from !== null;
+  const level = tool === "flatten" ? (step.level ?? pre[line[0]]) : undefined;
+  const seed = tool === "naturalize" ? fmix32(Math.imul(line[0] + 1, 0x9e3779b1) ^ line.length) : undefined;
+  const dabs = line.flatMap((i) => [4 * (i % W) + 2, 4 * Math.floor(i / W) + 2]);
+  const stroke: BrushParams = { tool, size, strength: 5, ...(level !== undefined ? { level } : {}), ...(seed !== undefined ? { seed } : {}), ...(channel ? { channel: true } : {}), layer: "top", dabs };
+  // raise and lower: a stroke per level; flatten: strokes until the path reaches its level
+  const passes = channel ? 1 : tool === "raise" || tool === "lower" ? (step.amount ?? 1) : tool === "flatten" ? BRUSH_MAX_LEVEL : (step.passes ?? 2);
+  const after = pre.slice();
+  const strokes: BrushParams[] = [];
+  for (let k = 0; k < passes; k++) {
+    const was = after.slice();
+    applyBrush(stroke, after, W, H, (i) => !roofed[i]);
+    let moved = false;
+    for (const i of line) if (after[i] !== was[i]) moved = true;
+    if (!moved && k > 0) break;
+    strokes.push(stroke);
+  }
+  let changed = 0;
+  let deepest = 0;
+  for (let i = 0; i < after.length; i++)
+    if (after[i] !== pre[i]) {
+      changed++;
+      deepest = Math.max(deepest, Math.abs(after[i] - pre[i]));
+    }
+  const resolved: Record<string, unknown> = { path: pts, tiles: line.length, width, strokes: strokes.length };
+  if (!changed) return fail(step, [tool === "raise" ? `the ground along the path is already level ${BRUSH_MAX_LEVEL}, the editor's limit` : tool === "lower" ? "the ground along the path is already level 0, the lowest" : "the stroke changes nothing along that path"], undefined, resolved);
+  const report: string[] = [];
+  const last = line[line.length - 1];
+  const lx = last % W;
+  const ly = Math.floor(last / W);
+  if (channel) {
+    const net = network(viewOf(s));
+    const nameAt = (x: number, y: number): string | null => {
+      const l = locate(net, W, x, y);
+      return l && l.d <= l.course.width / 2 + 1.5 ? l.course.name : null;
+    };
+    const fromName = from === "water" ? nameAt(x0, y0) : null;
+    const endWet = besideWater(s, lx, ly) === "water";
+    const joins = endWet ? (nameAt(lx, ly) ?? "water") : null;
+    const edge = lx === 0 || ly === 0 || lx === W - 1 || ly === H - 1;
+    let cut = 0;
+    for (const i of line) cut = Math.max(cut, pre[i] - after[i]);
+    resolved.channel = true;
+    resolved.from = from === "source" ? "a source" : (fromName ?? "water");
+    resolved.bed = [after[line[0]], after[last]];
+    if (joins) resolved.joins = joins;
+    else if (edge) resolved.joins = "the map edge";
+    report.push(`carves a bed ${width} tile${width > 1 ? "s" : ""} wide from ${from === "source" ? "the source" : (fromName ?? "the water")} at (${x0}, ${y0}) along ${line.length} tiles, from level ${after[line[0]]} down to level ${after[last]}, never rising: the water follows it`);
+    report.push(joins ? `it runs into ${joins === "water" ? "the water" : joins} at (${lx}, ${ly})` : edge ? `it runs off the map edge at (${lx}, ${ly}), where its water leaves the map` : `it ends on dry ground at (${lx}, ${ly}): the water pools there, then spills on downhill`);
+    if (cut > 2) report.push(`it cuts up to ${cut} levels through higher ground: steep banks, beavers need stairs to cross`);
+  } else {
+    const verb = tool === "raise" ? "raises" : tool === "lower" ? "lowers" : tool === "flatten" ? `flattens toward level ${level}` : tool === "smooth" ? "smooths" : "weathers";
+    report.push(`${verb} ${changed} tiles along ${line.length} tiles of path, ${width} tile${width > 1 ? "s" : ""} wide${tool === "raise" || tool === "lower" ? `, by up to ${deepest}` : ""}`);
+    if (tool === "lower") report.push("it starts on dry ground, so it is a plain Lower stroke: for water to follow it, start it in or beside water, or put a source at its start first");
+  }
+  const ops = strokes.map((params) => ({ op: "brush", params }) as EditOp);
+  return { ok: true, step, ops, made: [], report, resolved, errors: [], tiles: changed };
 }
 
 /** The middle level of a place (flatten's level when none is given). */
@@ -704,62 +865,6 @@ function steepest(heights: Uint8Array, tiles: readonly number[], W: number, H: n
     if (i + W < W * H) m = Math.max(m, Math.abs(heights[i] - heights[i + W]));
   }
   return m;
-}
-
-/** A drawn landform or lake resized about its middle (the editor's corner handles). A landform
- *  keeps its base, as a move does; a lake is planned again at its new size. */
-function expandResize(s: MapSession, conv: Conversation, step: Extract<Step, { op: "resizeFeature" }>): Expanded {
-  const { x: W, y: H } = s.size;
-  const f = targetFeature(s, conv, step.target);
-  if (typeof f === "string") return fail(step, [f]);
-  const resolved = { target: f.id, factor: step.factor };
-  if (f.kind === "lake" && (f.params.planned || f.params.river || !f.params.outlet.path)) return fail(step, ["this lake is part of the generated layout (a reservoir site or its river's basin): change the settings, or dam it"], undefined, resolved);
-  if (f.kind === "landform" && !f.params.outline) return fail(step, ["this landform follows the river; change the relief or terracing settings instead"], undefined, resolved);
-  const outline0 = f.kind === "landform" ? f.params.outline : f.kind === "lake" ? f.params.outline : undefined;
-  if (!outline0) return fail(step, [`only a drawn landform or lake can be resized; a ${f.kind === "setPiece" ? f.params.kind : f.kind} cannot`], undefined, resolved);
-  let x0 = Infinity;
-  let y0 = Infinity;
-  let x1 = -Infinity;
-  let y1 = -Infinity;
-  for (const [x, y] of outline0) {
-    x0 = Math.min(x0, x);
-    y0 = Math.min(y0, y);
-    x1 = Math.max(x1, x);
-    y1 = Math.max(y1, y);
-  }
-  const cx = (x0 + x1) / 2;
-  const cy = (y0 + y1) / 2;
-  let clipped = false;
-  const clip = (v: number, max: number) => {
-    const c = Math.max(-0.5, Math.min(max - 0.5, v));
-    if (c !== v) clipped = true;
-    return Math.round(c * 100) / 100;
-  };
-  const outline = outline0.map(([x, y]) => [clip(cx + (x - cx) * step.factor, W), clip(cy + (y - cy) * step.factor, H)] as Point);
-  const mask = polygonMask(outline, W, H);
-  let n = 0;
-  for (let i = 0; i < mask.length; i++) n += mask[i];
-  const size = `now about ${Math.round((x1 - x0) * step.factor)} by ${Math.round((y1 - y0) * step.factor)} tiles${clipped ? ", clipped at the map's edge" : ""}`;
-  if (f.kind === "lake") {
-    const spring = "spring" in f.params.inflow ? f.params.inflow.spring : 0;
-    const r = planLake({ outline, level: f.params.outlet.sill, floorDepth: f.params.floorDepth, spring }, planContextOf(s, f.id), f.id, f.origin);
-    if (!r.ok) return fail(step, r.errors, undefined, resolved);
-    const ops: EditOp[] = [{ op: "updateFeature", params: { id: f.id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)];
-    const extra = objectsOnNewGround(s, ops, new Set([f.id]));
-    return { ok: true, step, ops: [...ops, ...extra.ops], made: [], report: [size, ...r.report, ...extra.report], resolved, errors: [], tiles: n };
-  }
-  if (f.kind !== "landform") return fail(step, ["only a drawn landform or lake can be resized"], undefined, resolved);
-  if (n < 4) return fail(step, ["that would make it smaller than 2 by 2 tiles"], undefined, resolved);
-  const start = planContextOf(s).start;
-  if (start)
-    for (let i = 0; i < mask.length; i++)
-      if (mask[i] && Math.abs((i % W) - start.x) <= start.radius && Math.abs(Math.floor(i / W) - start.y) <= start.radius)
-        return fail(step, ["at that size it would cover the start's area: resize it less, or move it away from the start first"], undefined, resolved);
-  const ops: EditOp[] = [{ op: "updateFeature", params: { id: f.id, patch: { params: { outline } } } }];
-  const extra = objectsOnNewGround(s, ops, new Set([f.id]));
-  const height = f.params.height ?? 0;
-  const top = landformTop({ ...f.params, outline }, mask, W, H);
-  return { ok: true, step, ops: [...ops, ...extra.ops], made: [], report: [size, top !== height ? `reaches level ${top} here, not ${height}` : `level ${height}`, ...extra.report], resolved, errors: [], tiles: n };
 }
 
 function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, { op: "moveStart" }>): Expanded {
@@ -857,8 +962,19 @@ setVerifier((s, raw) => {
   if (!ex.ops.length) return { broken: [] };
   const r = ex.ops[0].op === "specPatch" ? s.apply(ex.ops[0], "claude") : s.applyAll(ex.ops, "claude");
   if (!r.ok) return { broken: [], error: r.errors[0] ?? "it cannot be built" };
+  // a site's second step (a lake's spring, after its hollow is dug) on the map the first left
+  let applied = 1;
+  if (raw.then && typeof raw.then === "object") {
+    const next = expandStep(s, scratch, raw.then as unknown as Step);
+    const r2 = next.ok && next.ops.length ? s.applyAll(next.ops, "claude") : null;
+    if (!next.ok || (r2 && !r2.ok)) {
+      s.undo();
+      return { broken: [], error: next.errors[0] ?? r2?.errors[0] ?? "it cannot be built" };
+    }
+    if (r2) applied++;
+  }
   const after = guardsOf(s.validate().report);
-  s.undo();
+  for (let k = 0; k < applied; k++) s.undo();
   return { broken: after.filter((g) => !g.ok && g.applicable && before!.get(g.id) !== false).map((g) => g.id) };
 });
 

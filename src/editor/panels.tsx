@@ -10,6 +10,7 @@ import type { Feature, MapObjectFeature, SetPieceFeature } from "../core/feature
 import { isLine, OBJECT_NAMES } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
 import { OFFICIAL_FLOW } from "../core/gen/calibrated";
+import { BADWATER_STRENGTHS, SOURCE_STRENGTHS } from "./tools";
 import { saveFile } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
@@ -267,12 +268,13 @@ const FLOW_CHOICES: [FlowWord, string][] = [
   ["steady", "Steady (2 water/s)"],
   ["strong", "Strong (4 water/s)"],
 ];
-/** A drawn river's strengths, blocks of water per second: up to 64, the most its sources can give. */
-const RIVER_FLOWS = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+const SOURCE_KINDS: ["clean" | "bad", string][] = [
+  ["clean", "Clean"],
+  ["bad", "Badwater"],
+];
 /** A water source's strengths (one tile: at most 8, the game's most per tile), and a badwater
  *  source's (its 3×3 tiles: at most 72). */
-const SOURCE_STRENGTHS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8];
-const BADWATER_STRENGTHS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 72];
+
 
 /** Water's strength, blocks per second, with the brushes' slider: a few steps from a trickle to
  *  the most the game handles; past the official maps' range it says so, never a block. */
@@ -289,13 +291,6 @@ export function StrengthSlider(p: { value: number; steps: readonly number[]; onC
     </>
   );
 }
-const RIVER_WIDTHS: [string, string][] = [["0", "As its flow needs"], ...[2, 3, 4, 5, 6, 7, 8, 9].map((w): [string, string] => [String(w), `${w} tiles`])];
-const RIVER_DEPTHS: [string, string][] = [
-  ["1", "1 level: moist soil 16 tiles out"],
-  ["2", "2 levels: moist soil 10 tiles out"],
-  ["3", "3 levels: moist soil 4 tiles out"],
-  ["4", "4 levels: no moist soil"],
-];
 const EDGE_CHOICES: [Edge, string][] = [
   ["gentle", "Gentle: 1-level steps, joined by slopes"],
   ["terraced", "Terraced: wide 1-level bands"],
@@ -304,38 +299,17 @@ const EDGE_CHOICES: [Edge, string][] = [
 
 function ToolOptionsForm({ tool, options: o, onOptions }: { tool: ToolKind; options: ToolOptions; onOptions(o: ToolOptions): void }) {
   const set = (patch: Partial<ToolOptions>) => onOptions({ ...o, ...patch });
-  const land = ["hill", "plateau", "ridge", "canyon", "valley", "island"].includes(tool);
   return (
     <div class="tool-options">
       <p class="note">{TOOL_HINTS[tool]}</p>
-      {land ? (
+      {tool === "source" ? (
         <>
-          <label>
-            Height
-            <select value={String(o.height)} onChange={(e) => set({ height: Number((e.target as HTMLSelectElement).value) })}>
-              <option value="0">{tool === "canyon" || tool === "valley" ? "2 below the ground" : tool === "plateau" && o.edge === "cliff" ? "2 above the ground" : "3 above the ground"}</option>
-              {Array.from({ length: 16 }, (_, k) => k + 1).map((h) => (
-                <option value={String(h)} key={h}>
-                  Height {h}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Pick label="Edges" value={o.edge} choices={EDGE_CHOICES} onChange={(edge) => set({ edge })} />
-          {o.edge === "terraced" ? <Num label="Band depth (tiles)" value={o.bandDepth} min={6} max={12} onChange={(bandDepth) => set({ bandDepth })} /> : null}
-        </>
-      ) : null}
-      {tool === "source" || tool === "lake" ? <StrengthSlider value={o.sourceStrength} steps={SOURCE_STRENGTHS} onChange={(sourceStrength) => set({ sourceStrength })} /> : null}
-      {tool === "badwaterSource" ? <StrengthSlider value={o.badwaterStrength} steps={BADWATER_STRENGTHS} onChange={(badwaterStrength) => set({ badwaterStrength })} /> : null}
-      {tool === "river" ? (
-        <>
-          <StrengthSlider value={o.riverFlow} steps={RIVER_FLOWS} onChange={(riverFlow) => set({ riverFlow })} />
-          <Pick label="Width" value={String(o.riverWidth)} choices={RIVER_WIDTHS} onChange={(w) => set({ riverWidth: Number(w) })} />
-          <Pick label="Depth" value={String(o.riverDepth)} choices={RIVER_DEPTHS} onChange={(d) => set({ riverDepth: Number(d) })} />
-          <label class="toggle-row">
-            <input type="checkbox" checked={o.riverNatural} onChange={(e) => set({ riverNatural: (e.target as HTMLInputElement).checked })} />
-            Natural: gentle meanders (off: exactly as drawn, for canals)
-          </label>
+          <Pick label="Water" value={o.sourceBad ? "bad" : "clean"} choices={SOURCE_KINDS} onChange={(v) => set({ sourceBad: v === "bad" })} />
+          {o.sourceBad ? (
+            <StrengthSlider value={o.badwaterStrength} steps={BADWATER_STRENGTHS} onChange={(badwaterStrength) => set({ badwaterStrength })} />
+          ) : (
+            <StrengthSlider value={o.sourceStrength} steps={SOURCE_STRENGTHS} onChange={(sourceStrength) => set({ sourceStrength })} />
+          )}
         </>
       ) : null}
       {tool === "waterfall" ? (
@@ -391,29 +365,6 @@ function ToolOptionsForm({ tool, options: o, onOptions }: { tool: ToolKind; opti
       {tool === "thornBelt" ? (
         <label>
           Thorns: {Math.round(o.density * 100)}% of the area
-          <input type="range" min="10" max="100" step="10" value={Math.round(o.density * 100)} onInput={(e) => set({ density: Number((e.target as HTMLInputElement).value) / 100 })} />
-        </label>
-      ) : null}
-      {tool === "forest" ? (
-        <label class="check">
-          <input type="checkbox" checked={o.life === "alive"} onChange={() => set({ life: o.life === "alive" ? "auto" : "alive" })} />
-          Only where trees live
-        </label>
-      ) : null}
-      {tool === "forest" ? (
-        <label>
-          Trees
-          <select value={o.species} onChange={(e) => set({ species: (e.target as HTMLSelectElement).value as Species })}>
-            <option value="mixed">Mixed</option>
-            <option value="Pine">Pine</option>
-            <option value="Birch">Birch</option>
-            <option value="Oak">Oak</option>
-          </select>
-        </label>
-      ) : null}
-      {tool === "forest" || tool === "berryPatch" ? (
-        <label>
-          Density: {Math.round(o.density * 100)}%
           <input type="range" min="10" max="100" step="10" value={Math.round(o.density * 100)} onInput={(e) => set({ density: Number((e.target as HTMLInputElement).value) / 100 })} />
         </label>
       ) : null}
@@ -568,7 +519,6 @@ export function Inspector(p: InspectorProps) {
           />
         </label>
       )}
-      {f.kind === "landform" && f.params.outline && f.params.height !== undefined ? <LandformControls f={f} name={name} onPatch={p.onPatch} onReplan={p.onReplan} /> : null}
       {f.kind === "river" ? <RiverControls f={f} onPatch={p.onPatch} onReplan={p.onReplan} onPlan={p.onPlan} /> : null}
       {f.kind === "lake" && !f.params.planned && f.params.outlet.path ? <LakeControls f={f} onReplan={p.onReplan} /> : null}
       {f.kind === "setPiece" ? <PieceControls f={f} onReplan={p.onReplan} /> : null}
@@ -578,42 +528,18 @@ export function Inspector(p: InspectorProps) {
           Turn
         </button>
       ) : null}
-      <p class="note">
-        {p.blocked ??
-          (f.kind === "landform" && f.params.outline && f.params.height !== undefined
-            ? "Drag its handles on the map to move it, resize it or change its height. The arrow keys work on a focused handle."
-            : "Drag the handle on the map to move it, or focus the handle and use the arrow keys.")}
-      </p>
-      <button type="button" class="ghost danger" onClick={p.onDelete}>
-        Delete
-      </button>
+      {f.kind === "landform" ? (
+        // the ground the generator built: shaped with the brushes (D182)
+        <p class="note">The generator's ground. Shape it with the brushes.</p>
+      ) : (
+        <>
+          <p class="note">{p.blocked ?? "Drag the handle on the map to move it, or focus the handle and use the arrow keys."}</p>
+          <button type="button" class="ghost danger" onClick={p.onDelete}>
+            Delete
+          </button>
+        </>
+      )}
     </aside>
-  );
-}
-
-function LandformControls({ f, name, onPatch, onReplan }: { f: Extract<Feature, { kind: "landform" }>; name: string; onPatch: InspectorProps["onPatch"]; onReplan: InspectorProps["onReplan"] }) {
-  const pr = f.params;
-  const own = f.origin !== "generated";
-  const replan = (patch: { height?: number; edgeStyle?: Edge; bandDepth?: number }) =>
-    onReplan({ tool: "landform", outline: pr.outline!, kind: pr.kind, height: patch.height ?? pr.height, edgeStyle: patch.edgeStyle ?? pr.edgeStyle, ...(pr.bandDepth || patch.bandDepth ? { bandDepth: patch.bandDepth ?? pr.bandDepth } : {}) });
-  return (
-    <>
-      <label>
-        Height
-        <input
-          type="number"
-          min="0"
-          max="16"
-          value={pr.height}
-          onChange={(e) => {
-            const v = Math.round(Number((e.target as HTMLInputElement).value));
-            if (v >= 0 && v <= 16 && v !== pr.height) onPatch({ params: { height: v } }, `Change ${name.toLowerCase()} height`);
-          }}
-        />
-      </label>
-      {own ? <Pick label="Edges" value={pr.edgeStyle} choices={EDGE_CHOICES} onChange={(edgeStyle) => edgeStyle !== pr.edgeStyle && replan({ edgeStyle })} /> : null}
-      {own && pr.edgeStyle === "terraced" ? <Num label="Band depth (tiles)" value={pr.bandDepth ?? 8} min={6} max={12} onChange={(bandDepth) => replan({ bandDepth })} /> : null}
-    </>
   );
 }
 

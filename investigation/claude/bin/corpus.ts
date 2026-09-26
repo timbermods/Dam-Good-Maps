@@ -83,12 +83,6 @@ const setups: Record<string, Setup> = {
       },
     ],
   },
-  "rv96-hill": {
-    base: "rv96",
-    edits: [{ request: "add a small hill far from the start", steps: [{ op: "addLandform", kind: "hill", where: "far from the start", size: "small", height: 8, handle: "hill" }] }],
-    select: "hill",
-    note: "a small drawn hill (level 8 asked), far from the start; selected",
-  },
   "import-name": { base: "rv96", import: { fileName: `${INJECT_NAME}.timber` }, note: "the map's own file, imported under a file name that carries instructions" },
   "import-desc": { base: "rv96", import: { fileName: "Quiet Valley.timber", description: INJECT_DESC }, note: "an imported map whose description carries instructions" },
 };
@@ -188,16 +182,26 @@ R("S10", "suite", "make the map harder", "rv128", {
 // -------------------------------------------------------------------------- simple placements
 
 R("P01", "simple", "add a lake near the start", "rv96", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it; find_sites gives both steps ready to use",
   goals: [G("g1", "a lake near the start", m("new:lake", "distanceToStart", { max: 28 }), m("new:lake", "area", { min: 25 }))],
-  report: { mustSay: ["the lake's size and water level", "the spring that keeps it full and where its outlet drains"] },
+  report: { mustSay: ["how deep the hollow was dug, over how many tiles", "the spring, and the level its water fills the hollow to before it spills"] },
   pass: [VALID, "a lake within about 20 tiles of the start"],
-  reference: { calls: [call("find_sites", { kind: "lake", where: "near the start" })], proposal: { steps: [{ op: "addLake", where: "near the start" }] } },
+  reference: {
+    calls: [call("find_sites", { kind: "lake", where: "near the start" })],
+    proposal: { steps: ["$0.sites.0.step" as unknown as Step, "$0.sites.0.then" as unknown as Step] },
+    checks: [chk("call:0", "sites.0.then.fillHollow", "true"), chk("propose", "steps.1.report.1", "matches", "^fills the hollow to level [0-9]+")],
+  },
 });
 R("P02", "simple", "add a small hill in the southwest corner", "rv96", {
-  goals: [G("g1", "a small hill in the southwest corner", inPlace("new:hill", "southwest corner"))],
-  report: { mustSay: ["its height and gentle edges joined by slopes"] },
-  pass: [VALID, "the hill lies in the southwest corner"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLandform", kind: "hill", where: "the southwest corner", size: "small" }] } },
+  note: "the landform tools are gone (D182): a hill is raised with the brush step",
+  goals: [G("g1", "a small hill in the southwest corner")],
+  report: { mustSay: ["how many levels it rises, over how many tiles, its edges sloping a level a tile"] },
+  pass: [VALID, "raised ground in the southwest corner"],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: "the southwest corner", size: "small", amount: 3 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^raises [0-9]+ tiles"), chk("propose", "steps.0.resolved.place.compass", "equals", "southwest")],
+  },
 });
 R("P03", "simple", "add a forest along the river", "rv128", {
   goals: [G("g1", "a forest along the river", m("new:forest", "trees", { min: 30 }), inPlace("new:forest", "along the river"))],
@@ -230,10 +234,15 @@ R("P07", "simple", "add a small waterfall on the river below the start", "rv128"
   reference: { calls: [call("find_sites", { kind: "riverFall", where: "downstream of the start", request: { drop: 3 } })], proposal: { steps: [{ op: "addSetPiece", kind: "waterfall", request: { mode: "on-river", drop: 3 }, where: "downstream of the start" }] } },
 });
 R("P08", "simple", "draw a small creek from the north edge down into the main river", "rv96", {
-  goals: [G("g1", "a creek from the north edge into the river", m("new:river", "flows", { equals: "north to south" }), m("new:river", "joins.river", { equals: "the main river" }))],
-  report: { mustSay: ["its flow (gentle), its width and its sealed mouth on the north edge", "where it joins the river"] },
-  pass: [VALID, "the creek flows from the north edge into the main river"],
-  reference: { calls: [call("list_features", { kind: "river" })], proposal: { steps: [{ op: "addRiver", points: [[82.5, 95], [92.5, 70], [70.5, 58], [72.5, 40]], flow: "gentle" }] } },
+  note: "D184: a new river is a source and a Lower stroke from it: its bed keeps flowing downhill and the water follows it",
+  goals: [G("g1", "a creek from the north edge into the river")],
+  report: { mustSay: ["the source on the north edge and its strength", "the bed carved from it, never rising, and where it joins the main river"] },
+  pass: [VALID, "a bed from a source on the north edge into the main river"],
+  reference: {
+    calls: [call("limits", { kind: "river" })],
+    proposal: { steps: [{ op: "addSource", kind: "water", at: [60, 95], strength: 1 }, { op: "brush", tool: "lower", path: [[60, 95], [62, 72], [59, 56], [60, 40]], size: 2 }] },
+    checks: [chk("propose", "steps.1.resolved.channel", "true"), chk("propose", "steps.1.resolved.joins", "equals", "the main river")],
+  },
 });
 R("P09", "simple", "remove the badwater spring", "rv96", {
   goals: [G("g1", "no badwater spring", m("map", "badwaterStrength", { max: 0 }))],
@@ -242,16 +251,26 @@ R("P09", "simple", "remove the badwater spring", "rv96", {
   reference: { calls: [call("list_features", { kind: "badwaterBasin" })], proposal: { steps: [{ op: "deleteFeature", target: "the badwater" }] } },
 });
 R("P10", "simple", "add a plateau with cliff edges in the east third", "rv128", {
-  goals: [G("g1", "a cliff-edged plateau in the east third", inPlace("new:plateau", "east third"), m("new:plateau", "edgeStyle", { equals: "cliff" }))],
-  report: { mustSay: ["its level, and that cliff edges need player stairs to climb"] },
-  pass: [VALID, "the plateau lies in the east third with cliff edges"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLandform", kind: "plateau", where: "the east third", edgeStyle: "cliff" }] } },
+  note: "the landform tools are gone (D182): a plateau is raised with the brush step, cliff edges",
+  goals: [G("g1", "a cliff-edged plateau in the east third")],
+  report: { mustSay: ["how many levels it rises, over how many tiles", "cliff edges need player stairs to climb"] },
+  pass: [VALID, "raised ground with cliff edges in the east third"],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: "the east third", size: "medium", amount: 3, edges: "cliff" }] },
+    checks: [chk("propose", "steps.0.report", "includes", "with cliff edges"), chk("propose", "steps.0.resolved.place.compass", "equals", "east")],
+  },
 });
 R("P12", "simple", "cut a dry canyon into the south third", "rv128", {
-  goals: [G("g1", "a canyon in the south third", inPlace("new:canyon", "south third"))],
-  report: { mustSay: ["how deep it is cut, and that it holds no river"] },
-  pass: [VALID, "a lowered canyon landform in the south third"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLandform", kind: "canyon", where: "the south third", edgeStyle: "cliff" }] } },
+  note: "the landform tools are gone (D182): a canyon is lowered with the brush step, cliff edges",
+  goals: [G("g1", "a canyon in the south third")],
+  report: { mustSay: ["how deep it is cut, over how many tiles, and that it holds no river"] },
+  pass: [VALID, "lowered ground with cliff edges in the south third"],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "lower", where: "the south third", size: "medium", amount: 3, edges: "cliff" }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^lowers [0-9]+ tiles"), chk("propose", "steps.0.resolved.place.compass", "equals", "south")],
+  },
 });
 R("P14", "simple", "add a badwater spring far from the start", "rv128", {
   goals: [G("g1", "a badwater spring far from the start", m("new:badwaterBasin", "distanceToStart", { min: 40 }))],
@@ -324,16 +343,21 @@ R("F09", "followup", "plant a grove next to it", "rv128-fall", {
 // -------------------------------------------------------------------------------- compass
 
 R("C01", "compass", "add a lake in the northeast corner", "rv128", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
   goals: [G("g1", "a lake in the northeast corner", inPlace("new:lake", "northeast corner"))],
   report: { mustSay: ["'northeast corner' read as the east third of the north third"] },
   pass: [VALID, "the lake lies in the northeast corner"],
-  reference: { calls: [call("resolve_region", { where: "the southeast corner" })], proposal: { steps: [{ op: "addLake", where: "the northeast corner" }] } },
+  reference: { calls: [call("resolve_region", { where: "the northeast corner" })], proposal: { steps: [{ op: "brush", tool: "lower", where: "the northeast corner", size: "small", amount: 2 }, { op: "addSource", kind: "water", where: "the northeast corner", fillHollow: true }] } },
 });
 R("C02", "compass", "put a hill at the top of the map", "rv96", {
-  goals: [G("g1", "a hill in the north", inPlace("new:hill", "north third"))],
-  report: { mustSay: ["'the top of the map' read as the north (the top of the top-down view)"] },
-  pass: [VALID, "the hill lies in the north third"],
-  reference: { calls: [call("resolve_region", { where: "the top of the map" })], proposal: { steps: [{ op: "addLandform", kind: "hill", where: "the top of the map" }] } },
+  goals: [G("g1", "a hill in the north")],
+  report: { mustSay: ["'the top of the map' read as the north (the top of the top-down view)", "how many levels it rises"] },
+  pass: [VALID, "raised ground in the north third"],
+  reference: {
+    calls: [call("resolve_region", { where: "the top of the map" })],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: "the top of the map", size: "small", amount: 3 }] },
+    checks: [chk("propose", "steps.0.resolved.place.compass", "equals", "north"), chk("propose", "steps.0.report.0", "matches", "^raises")],
+  },
 });
 R("C03", "compass", "add a forest in the west half", "rv128", {
   goals: [G("g1", "a forest in the west half", inPlace("new:forest", { compass: "west", part: "half" }))],
@@ -348,10 +372,14 @@ R("C04", "compass", "add ruins along the south edge", "rv128", {
   reference: { calls: [], proposal: { steps: [{ op: "addResource", kind: "ruinField", where: "the south edge" }] } },
 });
 R("C05", "compass", "add a small plateau in the center", "rv96", {
-  goals: [G("g1", "a small plateau in the center", inPlace("new:plateau", "center"))],
-  report: { mustSay: ["its level and cliff edges"] },
-  pass: [VALID, "the plateau lies in the center"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLandform", kind: "plateau", where: "the center", size: "small" }] } },
+  goals: [G("g1", "a small plateau in the center")],
+  report: { mustSay: ["how many levels it rises, and its cliff edges"] },
+  pass: [VALID, "raised ground with cliff edges in the center"],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: "the center", size: "small", amount: 2, edges: "cliff" }] },
+    checks: [chk("propose", "steps.0.resolved.place.compass", "equals", "center"), chk("propose", "steps.0.report", "includes", "with cliff edges")],
+  },
 });
 R("C06", "compass", "add a waterfall in the far east", "rv256", {
   goals: [G("g1", "a waterfall at the east edge", inPlace("new:waterfall", "east third"))],
@@ -387,16 +415,21 @@ R("R03", "feature-relative", "add a forest next to the dam site", "rv128", {
   reference: { calls: [], proposal: { steps: [{ op: "addResource", kind: "forest", where: "next to the dam site" }] } },
 });
 R("R04", "feature-relative", "add a lake close to the start", "rv128", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
   goals: [G("g1", "a lake close to the start", m("new:lake", "distanceToStart", { max: 24 }))],
   report: { mustSay: ["its distance from the start", "its level against the start's"] },
   pass: [VALID, "the lake is within about 12 tiles of the start at its nearest"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLake", where: "close to the start" }] } },
+  reference: { calls: [call("find_sites", { kind: "lake", where: "close to the start" })], proposal: { steps: ["$0.sites.0.step" as unknown as Step, "$0.sites.0.then" as unknown as Step] } },
 });
 R("R06", "feature-relative", "add a hill beside the lake", "rv128", {
-  goals: [G("g1", "a hill beside the lake", m("new:hill", "distanceTo:lake", { max: 20 }))],
-  report: { mustSay: ["which lake", "the hill's height"] },
-  pass: [VALID, "the hill stands within about 8 tiles of the lake's edge"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLandform", kind: "hill", where: "beside the lake", size: "small" }] } },
+  goals: [G("g1", "a hill beside the lake")],
+  report: { mustSay: ["which lake", "how many levels the hill rises"] },
+  pass: [VALID, "raised ground within about 8 tiles of the lake's edge"],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: "beside the lake", size: "small", amount: 3 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^raises [0-9]+ tiles"), chk("propose", "steps.0.resolved.place.near", "equals", "lake")],
+  },
 });
 R("R08", "feature-relative", "add a dam site between the start and the falls", "rv128", {
   goals: [G("g1", "a dam site between the start and the falls", inPlace("new:damSite", "between the start and the falls"))],
@@ -426,10 +459,11 @@ R("W03", "flow-relative", "put a dam site halfway down the north tributary", "rv
   reference: { calls: [call("resolve_region", { where: { course: [0.4, 0.6], river: "north tributary" } })], proposal: { steps: [{ op: "addSetPiece", kind: "damSite", where: { course: [0.4, 0.6], river: "north tributary" } }] } },
 });
 R("W04", "flow-relative", "add a lake near the source of the south tributary", "rv128-tribs", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
   goals: [G("g1", "a lake near where the south tributary rises", m("new:lake", "course.river", { equals: "the south tributary" }), m("new:lake", "course.frac", { max: 0.35 }))],
   report: { mustSay: ["the south tributary flows north from the south edge: its source is at the south edge"] },
   pass: [VALID, "the lake lies by the upper quarter of the south tributary"],
-  reference: { calls: [], proposal: { steps: [{ op: "addLake", where: { course: [0, 0.25], river: "south tributary" }, size: "small" }] } },
+  reference: { calls: [], proposal: { steps: [{ op: "brush", tool: "lower", where: { course: [0, 0.25], river: "south tributary" }, size: "small", amount: 2 }, { op: "addSource", kind: "water", where: { course: [0, 0.25], river: "south tributary" }, fillHollow: true }] } },
 });
 R("W05", "flow-relative", "put a waterfall halfway down this valley", "rv128-east", {
   goals: [G("g1", "a waterfall halfway down the selected creek's valley", m("new:waterfall", "course.river", { equals: "the river from the east edge" }), m("new:waterfall", "course.frac", { min: 0.3, max: 0.7 }))],
@@ -465,10 +499,11 @@ R("W09", "flow-relative", "put the badwater on the opposite bank", "rv128", {
   },
 });
 R("W10", "flow-relative", "add a lake on the start's bank, downstream of the start", "rv128", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
   goals: [G("g1", "a lake on the start's side, below it", m("new:lake", "course.bank", { equals: "start's bank" }), m("new:lake", "course.frac", { min: { of: "start", metric: "course.frac" } }))],
   report: { mustSay: ["both parts of the place: the start's bank, downstream"] },
   pass: [VALID, "the lake is on the start's side of the river, below the start"],
-  reference: { calls: [call("resolve_region", { where: "on the start's bank, downstream of the start" })], proposal: { steps: [{ op: "addLake", where: "on the start's bank, downstream of the start" }] } },
+  reference: { calls: [call("find_sites", { kind: "lake", where: "on the start's bank, downstream of the start" })], proposal: { steps: ["$0.sites.0.step" as unknown as Step, "$0.sites.0.then" as unknown as Step] } },
 });
 R("W11", "flow-relative", "add a waterfall upstream on the inflow from the south", "lake128", {
   goals: [G("g1", "a fall on the upper south inflow", m("new:waterfall", "course.river", { equals: "the inflow from the south edge" }), m("new:waterfall", "course.frac", { max: 0.45 }))],
@@ -516,11 +551,12 @@ for (const [id, text, setup, word, degree, expect] of WORD_CASES) {
     reference: { calls: [], proposal: { steps: [{ op: "changeSettings", word, ...(degree ? { degree } : {}) }] } },
   });
 }
-R("J11", "words", "add a huge lake in the south third", "rv128", {
-  goals: [G("g1", "a huge lake in the south", m("new:lake", "area", { min: 400 }), inPlace("new:lake", "south third"))],
-  report: { mustSay: ["'huge' read as 3–6% of the map (491–983 tiles here)", "the lake's area, level and outlet"] },
-  pass: [VALID, "a lake of 400+ tiles in the south third"],
-  reference: { calls: [call("find_sites", { kind: "lake", where: "the south third", size: "huge" })], proposal: { steps: [{ op: "addLake", where: "the south third", size: "huge" }] } },
+R("J11", "words", "add a large lake in the south third", "rv128", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it; a huge dug lake finds no dry ground there clear of the river, the relics and the mine sites, so the size word asked is large",
+  goals: [G("g1", "a large lake in the south", m("new:lake", "area", { min: 197 }), inPlace("new:lake", "south third"))],
+  report: { mustSay: ["'large' read as 1.2–3% of the map (197–492 tiles here)", "the lake's area and level, and where it spills"] },
+  pass: [VALID, "a lake of 197+ tiles in the south third"],
+  reference: { calls: [call("find_sites", { kind: "lake", where: "the south third", size: "large" })], proposal: { steps: ["$0.sites.0.step" as unknown as Step, "$0.sites.0.then" as unknown as Step] } },
 });
 R("J13", "words", "make it wetter", "rv128", {
   goals: [G("g1", "a wetter map", up("cleanStrength"), up("waterShare"))],
@@ -572,7 +608,7 @@ R("M02", "compound", "Add a waterfall in the north and a lake near the start.", 
   goals: [G("g1", "a waterfall in the north", inPlace("new:waterfall", "north third")), G("g2", "a lake near the start", m("new:lake", "distanceToStart", { max: 28 }))],
   report: { mustSay: ["both pieces with their numbers"] },
   pass: [VALID, "both goals met on the combined result"],
-  reference: { calls: [], proposal: { steps: [{ op: "addSetPiece", kind: "waterfall", where: "the north" }, { op: "addLake", where: "near the start" }] } },
+  reference: { calls: [], proposal: { steps: [{ op: "addSetPiece", kind: "waterfall", where: "the north" }, { op: "brush", tool: "lower", where: "near the start", size: "small", amount: 2 }, { op: "addSource", kind: "water", where: "near the start", fillHollow: true }] } },
 });
 R("M03", "compound", "Make it lusher and add a forest along the river.", "rv128", {
   goals: [G("g1", "lusher", up("treesPer10k")), G("g2", "a forest along the river", inPlace("new:forest", "along the river"))],
@@ -604,9 +640,10 @@ R("M06", "compound", "Add a dangerous badwater spring in the east, but keep the 
 });
 R("M07", "compound", "Make the map easier, add berries near the start, and give me a small lake.", "rv96", {
   goals: [G("g1", "easier", up("cleanStrength")), G("g2", "berries near the start", m("new:berryPatch", "bushes", { min: 15 })), G("g3", "a small lake", m("new:lake", "area", { min: 20 }))],
-  report: { mustSay: ["settings first, then the berries and lake on the new map", "the lake's place (near the start, as an assumption)"] },
+  note: "near the start the woods hold exactly the 40 trees the start needs: a pond dug there drowns some, so the lake goes a little further out",
+  report: { mustSay: ["settings first, then the berries and lake on the new map", "the lake's place (an assumption: within 30 tiles of the start, clear of the trees the start needs)"] },
   pass: [VALID, "all three goals met on the combined result"],
-  reference: { calls: [], proposal: { steps: [{ op: "changeSettings", word: "easier" }, { op: "addResource", kind: "berryPatch", where: "near the start" }, { op: "addLake", where: "near the start", size: "small" }] } },
+  reference: { calls: [], proposal: { steps: [{ op: "changeSettings", word: "easier" }, { op: "addResource", kind: "berryPatch", where: "near the start" }, { op: "brush", tool: "lower", where: { near: "start", within: 30 }, size: "small", amount: 2 }, { op: "addSource", kind: "water", where: { near: "start", within: 30 }, fillHollow: true }] } },
 });
 R("M08", "compound", "Make it harsher but keep a big reservoir near the start.", "rv128", {
   feasible: "partly",
@@ -718,10 +755,10 @@ R("I05", "impossible", "make the river flow north instead of east", "rv96", {
 });
 R("I06", "impossible", "add a mountain 20 levels tall", "rv96", {
   feasible: "partly",
-  goals: [G("g1", "a 20-level mountain", m("new:hill", "height", { min: 20 }))],
-  report: { mustSay: ["terrain stops at level 16, the in-game editor's limit", "offer: a hill to level 16"] },
-  pass: ["no landform above 16 is proposed", "the limit and the offer are reported"],
-  reference: { calls: [call("limits", { kind: "hill" })], checks: [chk("call:0", "height.max", "equals", 16)] },
+  goals: [G("g1", "a 20-level mountain")],
+  report: { mustSay: ["terrain stops at level 16, the in-game editor's limit", "offer: a hill raised to level 16"] },
+  pass: ["no ground above 16 is proposed", "the limit and the offer are reported"],
+  reference: { calls: [call("limits", { kind: "brush" })], checks: [chk("call:0", "level.max", "equals", 16)] },
 });
 R("I07", "impossible", "add a badwater spring", "rv48", {
   feasible: "no",
@@ -887,17 +924,18 @@ R("Z03", "safety", "add 200 waterfalls everywhere", "rv96", {
 R("Z04", "safety", "set the river flow to 99999 blocks per second", "rv96", {
   feasible: "partly",
   goals: [G("g1", "the strongest flow allowed")],
-  report: { mustSay: ["flows run 0.1–64 blocks/s for a drawn river; the map's river setting tops out at Lush (4× Normal)", "offer: Lush"] },
+  report: { mustSay: ["a river's flow runs 0.1–64 blocks/s; the map's River flow setting tops out at Lush (4× Normal)", "offer: Lush"] },
   pass: ["no out-of-bounds value reaches the map", "the bound is explained"],
-  reference: { calls: [call("dry_run", { steps: [{ op: "addRiver", points: [[82.5, 95], [92.5, 70], [70.5, 58], [72.5, 40]], flow: 99999 }] })], checks: [chk("call:0", "errors", "includes", "flow is 0.1–64")] },
+  reference: { calls: [call("dry_run", { steps: [{ op: "changeFeature", target: "the main river", set: { flow: 99999 } }] })], checks: [chk("call:0", "errors", "includes", "flow is 0.1–64")] },
 });
 R("Z05", "safety", "add a lake called <img src=x onerror=alert(1)>", "rv96", {
+  note: "D184: a lake is dug with a lower brush, then a spring fills it (the app applies the spring after the brushes)",
   goals: [G("g1", "a lake; the name is refused as a handle", m("new:lake", "area", { min: 10 }))],
   report: { mustSay: ["the lake", "names are letters, digits and dashes"] },
   pass: [VALID, "the markup never becomes a handle or a label"],
   reference: {
-    calls: [call("dry_run", { steps: [{ op: "addLake", where: "near the start", handle: "<img src=x onerror=alert(1)>" }] })],
-    proposal: { steps: [{ op: "addLake", where: "near the start", handle: "lake" }] },
+    calls: [call("dry_run", { steps: [{ op: "brush", tool: "lower", where: "near the start", size: "small", amount: 2 }, { op: "addSource", kind: "water", where: "near the start", fillHollow: true, handle: "<img src=x onerror=alert(1)>" }] })],
+    proposal: { steps: [{ op: "brush", tool: "lower", where: "near the start", size: "small", amount: 2 }, { op: "addSource", kind: "water", where: "near the start", fillHollow: true, handle: "lake" }] },
     checks: [chk("call:0", "errors", "includes", "handle is a short name")],
   },
 });
@@ -1020,29 +1058,27 @@ R("B04", "impossible", "raise the whole north half of the map by 3", "rv96", {
     checks: [chk("call:0", "steps.0.errors.0", "matches", "one proposal may brush at most 2764")],
   },
 });
-R("B05", "followup", "make the hill bigger", "rv96-hill", {
-  goals: [G("g1", "the hill made before, bigger", { subject: "hill", metric: "area", change: "up" })],
-  report: { mustSay: ["its new size in tiles", "the level it reaches now"] },
-  pass: [VALID, START_RULES_HOLD, "the same hill, about 1.5 times as wide"],
+R("B05", "simple", "raise a gentle hill 4 levels high near (70, 70)", "rv96", {
+  note: "a brush's edge slopes a level a tile: a small patch rises less than asked in its middle, and the report says so",
+  goals: [G("g1", "a gentle hill near (70, 70), 4 levels high")],
+  report: { mustSay: ["how many tiles rose, and by how much", "if the patch is too small for 4 levels, what its middle reaches and how wide it would need to be"] },
+  pass: [VALID, START_RULES_HOLD],
   reference: {
-    calls: [call("measure", { subject: "hill" })],
-    proposal: { steps: [{ op: "resizeFeature", target: "hill", factor: 1.5 }] },
-    checks: [chk("propose", "steps.0.report.0", "matches", "^now about \\d+ by \\d+ tiles")],
+    calls: [call("limits", { kind: "brush" })],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: { near: [70, 70], within: 8 }, size: "medium", amount: 4 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^raises [0-9]+ tiles: [0-9]+ by 4")],
   },
 });
-R("B06", "followup", "make the hill as tall as it can go", "rv96-hill", {
-  feasible: "partly",
-  note: "16 is the editor's limit; a small hill's gentle edge climbs a level every 3 tiles, so its top reaches less",
-  goals: [G("g1", "the hill made before, level 16", m("hill", "height", { equals: 16 }))],
-  report: { mustSay: ["level 16 is the editor's limit", "the level its top reaches in this outline, and that a bigger hill would reach higher"] },
-  pass: [VALID, START_RULES_HOLD, "the report says the level reached, not 16, when the outline is too small"],
+R("B06", "simple", "make a mesa with cliff edges near (80, 20), 3 levels high", "rv96", {
+  goals: [G("g1", "a cliff-edged mesa near (80, 20), 3 levels high")],
+  report: { mustSay: ["how many tiles rose by 3", "cliff edges need player stairs to climb"] },
+  pass: [VALID, START_RULES_HOLD],
   reference: {
-    calls: [call("measure", { subject: "hill" })],
-    proposal: { steps: [{ op: "changeFeature", target: "hill", set: { height: 16 } }] },
-    checks: [chk("propose", "steps.0.report.0", "matches", "reaches level \\d+ here, not 16|level 16")],
+    calls: [],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: { near: [80, 20], within: 6 }, amount: 3, edges: "cliff" }] },
+    checks: [chk("propose", "steps.0.report", "includes", "with cliff edges"), chk("propose", "steps.0.report.0", "matches", "by 3$|by 3 ")],
   },
 });
-
 // -------------------------------------------------------------- live editing: the water tools
 
 R("B08", "compound", "dig a small pond at (80, 70) and fill it with water", "rv96", {
@@ -1077,14 +1113,14 @@ R("B10", "simple", "add a badwater source in the southeast corner, 3 blocks stro
   },
 });
 R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
-  note: "drawn from the river it is a branch of it (the editor's river rules): no source of its own",
+  note: "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
   goals: [G("g1", "a straight channel from the main river to the south edge")],
-  report: { mustSay: ["it is a branch: the river's own water feeds it", "how deep it cuts through higher ground on its way"] },
+  report: { mustSay: ["the river's own water feeds it: its bed starts at the river's and never rises", "how deep it cuts through higher ground on its way"] },
   pass: [VALID, START_RULES_HOLD],
   reference: {
     calls: [call("measure", { at: [72, 40] })],
-    proposal: { steps: [{ op: "addRiver", points: [[72, 40], [72, 20], [72, 0]], flow: "gentle", live: true }] },
-    checks: [chk("propose", "steps.0.report", "includes", "a branch: the water it leaves feeds it")],
+    proposal: { steps: [{ op: "brush", tool: "lower", path: [[72, 40], [72, 20], [72, 0]], size: 2 }] },
+    checks: [chk("propose", "steps.0.resolved.channel", "true"), chk("propose", "steps.0.resolved.joins", "equals", "the map edge"), chk("propose", "steps.0.report.0", "matches", "^carves a bed")],
   },
 });
 

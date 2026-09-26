@@ -1,8 +1,8 @@
 // ROADMAP M5 through the page: the land and water tools plan on the map, show a preview with their
-// report, and place as one step (a drawn river is placed on its last click, live editing, and
-// says what it did); a river drawn from the map edge carries water; a standalone
-// waterfall and a dam site are placed with one click; moving the start shows its footprint and what
-// is nearby; an edit that breaks the start shows the problem at once, with a one-click fix.
+// report, and place as one step; a source placed with a click carries water at once (live editing,
+// D184); a standalone waterfall and a dam site are placed with one click; moving the start shows
+// its footprint and what is nearby; an edit that breaks the start shows the problem at once, with
+// a one-click fix.
 
 import { expect, test, type Page } from "@playwright/test";
 import type { Feature } from "../../src/core/features/schema";
@@ -38,27 +38,32 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   const path = (main.params as { path: [number, number][] }).path;
   const start = (i.features.find((f) => f.kind === "start")!.params as { position: [number, number] }).position;
 
-  // a river from the north edge into the generated river, away from the start
+  // a water source near the north edge, away from the start, on dry and empty ground
   await page.getByRole("tab", { name: "Water" }).click();
-  await page.locator(".tools").getByRole("button", { name: "River", exact: true }).click();
+  await page.locator(".tools").getByRole("button", { name: "Source", exact: true }).click();
   const far = start[0] < W / 2 ? 74 : 22;
-  const join = path.reduce((best, p) => (Math.abs(p[0] - far) < Math.abs(best[0] - far) ? p : best));
-  await clickTile(page, far, W - 1);
-  await clickTile(page, far, Math.round((W - 1 + join[1]) / 2));
-  await clickTile(page, Math.round(join[0]), Math.round(join[1]), true);
-  // (live editing: the last click places it, and what the tool did shows in the editor's message)
+  const spring = await page.evaluate(
+    ([cx, y0]) => {
+      const m = window.dgm3d!.renderer.mapState()!;
+      for (let y = y0; y > y0 - 20; y--)
+        for (const x of [cx, cx - 3, cx + 3, cx - 6, cx + 6]) {
+          if (m.surface.depth[y * m.W + x] > 0) continue;
+          let empty = true;
+          for (let k = 0; k < m.entities.count && empty; k++) if (Math.abs(m.entities.x[k] - x) <= 1 && Math.abs(m.entities.y[k] - y) <= 1) empty = false;
+          if (empty) return [x, y] as [number, number];
+        }
+      return null;
+    },
+    [far, W - 4] as const,
+  );
+  expect(spring).not.toBeNull();
+  await clickTile(page, ...spring!);
   await idle(page);
-  await expect(page.locator(".editor-message.info")).toContainText(/a sealed mouth on the north edge feeds it/i);
   i = await info(page);
-  expect(i.history.map((h) => h.label)).toEqual(["Add river"]);
-  const drawn = i.features.find((f) => f.kind === "river" && f.origin === "user") as Extract<Feature, { kind: "river" }>;
-  expect(drawn.params.entry).toEqual({ edge: "north" });
-  expect(drawn.params.exit).toEqual({ river: main.id });
-  // its channel carries water: hover a tile of it. The river appears at once and its water flows
-  // in a moment later (live editing: an edit never waits on the water)
-  // (the new river is selected, and its inspector may lie over that tile: put it away first)
-  await page.getByRole("complementary", { name: /River, selected/ }).getByRole("button", { name: "Close" }).click();
-  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), [far, W - 6]);
+  expect(i.history.map((h) => h.label)).toEqual(["Place water source"]);
+  // its water: hover its tile. The source appears at once and its water flows in a moment later
+  // (live editing: an edit never waits on the water)
+  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), spring!);
   await expect
     .poll(
       async () => {
@@ -78,7 +83,7 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await expect(card).toContainText(/holds about|would not hold water/);
   await card.getByRole("button", { name: "Place" }).click();
   await idle(page);
-  expect((await info(page)).history.map((h) => h.label)).toEqual(["Add river", "Add dam site"]);
+  expect((await info(page)).history.map((h) => h.label)).toEqual(["Place water source", "Add dam site"]);
 
   // a standalone waterfall, 12 wide: the first spot in the south-west where it fits
   await page.locator(".tools").getByRole("button", { name: "Waterfall", exact: true }).click();

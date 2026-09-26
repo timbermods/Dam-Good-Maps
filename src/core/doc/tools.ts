@@ -16,7 +16,6 @@ import { buildMap, START_CLEAR_RADIUS, type BuildResult } from "../features/buil
 import { bedAt, pathField, pointAtArc, polygonMask } from "../features/geometry";
 import { bankFor, edgeStep, landformLevel } from "../features/raster/terrain";
 import { distanceFrom } from "../math/grid";
-import { hollowAt } from "../features/hollow";
 import { channelWidth, routeChannel } from "../features/route";
 import { BUILDERS, planSetPiece, type PlanContext, type PlanRecord } from "../features/setpieces";
 import { FLOW_PRESETS, type Facing } from "../features/setpieces/common";
@@ -30,7 +29,7 @@ import { isLine, OBJECT_NAMES, objectTiles } from "../features/objects";
 import type { MapSession } from "./session";
 
 export type PlannedEdit<F extends Feature = Feature> =
-  | { ok: true; ops: EditOp[]; feature: F; report: string[]; label: string; tiles: number[]; open?: boolean; end?: RiverEnd }
+  | { ok: true; ops: EditOp[]; feature: F; report: string[]; label: string; tiles: number[] }
   | { ok: false; errors: string[] };
 
 const fail = (...errors: string[]): { ok: false; errors: string[] } => ({ ok: false, errors });
@@ -94,33 +93,9 @@ export interface RiverRequest {
   width?: number;
   /** Levels the bed sits below its banks (1–4): moisture reaches 16, 10, 4 or 0 tiles. */
   bedDepth?: number;
-  /** A river still being drawn (live editing): its end may lie anywhere, and says so (`open`);
-   *  only a draft, never placed like that. */
-  open?: boolean;
-  /** Drawn in the editor (live editing, PLAN §20 D180's rules): a start in existing water makes a
-   *  branch of it (no source; its bed starts at that water's bed); an end on dry ground lets its
-   *  water fill the hollow there into a lake, or run on downhill; its bed never drops below the
-   *  bed of the river it joins (it crosses lower ground on its banks). */
-  drawn?: boolean;
-  /** With `drawn`: slight meanders along the course (D180 (7), Natural); as drawn otherwise. */
-  natural?: boolean;
-}
-
-/** What a drawn river does at its end, for the words beside the pointer. */
-export interface RiverEnd {
-  kind: "edge" | "river" | "lake" | "hollow" | "downhill" | "open";
-  /** A hollow: the level its water fills to, and about how many tiles. */
-  level?: number;
-  tiles?: number;
-  /** How deep its channel cuts below the ground at its end (0 on lower ground). */
-  cut: number;
-  /** Where it starts: a spring, the map edge, or a branch of existing water. */
-  start: "spring" | "edge" | "branch" | "lake";
 }
 
 const EDGE_SNAP = 2.5;
-/** Why a river must end where its water drains. */
-export const OPEN_END = "end the river at the map edge, in another river or in a lake, so its water drains";
 
 /** The channel width a drawn river gets for its flow: its water, about 0.3·S/w deep, stays deeper
  *  than a thin sheet (0.1, which spreads and flickers) and well inside its banks. A width of 1.5
@@ -159,7 +134,7 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
 export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origin: Feature["origin"] = "user"): PlannedEdit {
   const { W, H } = ctx;
   const pts: Point[] = [];
-  for (const p of req.drawn && req.natural ? meandered(req.points, req.width ?? riverWidthFor(r2(req.flow)), W, H) : req.points) {
+  for (const p of req.points) {
     const q: Point = [r2(Math.min(W - 1, Math.max(0, p[0]))), r2(Math.min(H - 1, Math.max(0, p[1])))];
     if (!pts.length || Math.abs(q[0] - pts[pts.length - 1][0]) + Math.abs(q[1] - pts[pts.length - 1][1]) >= 1) pts.push(q);
   }
@@ -180,12 +155,7 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
       const y = first.edge === "west" || first.edge === "east" ? Math.round(my) + d : my;
       if (x >= 0 && y >= 0 && x < W && y < H && ctx.channel?.[y * W + x]) return fail("the river would start beside another river on the map edge: start it a few tiles away");
     }
-  } else {
-    // drawn from existing water: a branch of it, fed by that water
-    const t0 = Math.round(pts[0][1]) * W + Math.round(pts[0][0]);
-    const wet = req.drawn && ((ctx.water?.[t0] ?? 0) > 0.2 || !!ctx.channel?.[t0]);
-    entry = wet ? { branch: [pts[0][0], pts[0][1]] } : { spring: [pts[0][0], pts[0][1]] };
-  }
+  } else entry = { spring: [pts[0][0], pts[0][1]] };
   // where it ends: the map edge, another river or a lake
   const lastP = pts[pts.length - 1];
   const last = nearestEdge(lastP, W, H);
@@ -213,35 +183,13 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
       }
     }
   }
-  // drawn in the editor, it may end on dry ground: its water fills the hollow there into a lake,
-  // or runs on downhill; a draft (not drawn so) ends where the pointer is, its water pooling there
-  let open = false;
-  let hollow: ReturnType<typeof hollowAt> | null = null;
-  if (!exit && req.drawn) {
-    hollow = hollowAt(ctx.heights, ctx.water ?? null, W, H, Math.round(lastP[0]), Math.round(lastP[1]));
-    exit = { basin: [lastP[0], lastP[1]] };
-  } else if (!exit && req.open) {
-    exit = { edge: last.edge };
-    open = true;
-  }
-  if (!exit) return fail(OPEN_END);
+  if (!exit) return fail("end the river at the map edge, in another river or in a lake, so its water drains");
   const length = arcLength(pts);
-  if (length < 4 && !open) return fail("the river is too short: draw it at least 4 tiles long");
+  if (length < 4) return fail("the river is too short: draw it at least 4 tiles long");
   // a river that comes back on itself would dam its own lower course with its upper one
   const clearance = Math.min(9, Math.max(1.5, req.width ?? riverWidthFor(flow))) + 3;
-  // (a path drawn freehand has many short segments: neighbours along it are near each other by
-  // nature, and only a bend that turns back on itself counts there)
-  const along = [0];
-  const heading: number[] = [];
-  for (let i = 0; i + 1 < pts.length; i++) {
-    along.push(along[i] + Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]));
-    heading.push(Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0]));
-  }
-  const turn = (a: number, b: number) => Math.abs(((b - a + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
-  for (let i = 0; i + 1 < pts.length; i++) {
-    let turned = 0;
+  for (let i = 0; i + 1 < pts.length; i++)
     for (let j = i + 1; j + 1 < pts.length; j++) {
-      turned += turn(heading[j - 1], heading[j]);
       if (j === i + 1) {
         // a bend sharper than 120 degrees folds the river back along itself
         const ux = pts[i + 1][0] - pts[i][0];
@@ -251,12 +199,8 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
         if (ux * vx + uy * vy < -0.5 * Math.sqrt((ux * ux + uy * uy) * (vx * vx + vy * vy))) return fail("the river turns back on itself: draw it without hairpin turns");
         continue;
       }
-      const near = segmentSegment(pts[i], pts[i + 1], pts[j], pts[j + 1]) < clearance;
-      if (!near) continue;
-      if (along[j] - along[i + 1] >= 2 * clearance) return fail("the river comes back too close to itself: draw it without loops");
-      if (turned > 2.6) return fail("the river turns back on itself: draw it without hairpin turns");
+      if (segmentSegment(pts[i], pts[i + 1], pts[j], pts[j + 1]) < clearance) return fail("the river comes back too close to itself: draw it without loops");
     }
-  }
   const exitLake = "lake" in exit ? ctx.features.find((f) => f.id === (exit as { lake: string }).lake) : undefined;
   const lakeMask = exitLake?.kind === "lake" ? polygonMask(exitLake.params.outline, W, H) : null;
   const exitRiver = "river" in exit ? exit.river : null;
@@ -276,9 +220,6 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
       }
     if (tb !== Infinity) joinBed = tb;
   }
-  // a branch: the bed of the water it leaves, where it leaves it
-  let branchBed = -1;
-  if ("branch" in entry) branchBed = ctx.heights[Math.round(pts[0][1]) * W + Math.round(pts[0][0])];
   // the bed: the lowest ground along the channel (its banks included), never rising downstream.
   // The rivers it crosses on the way pour into it where its bed is lower than theirs.
   const profile = (width: number) => {
@@ -308,11 +249,8 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
           if (ctx.heights[i] < g) g = ctx.heights[i];
         }
       let want = Math.max(0, Math.min(g === Infinity ? bed : g - bedDepth, under));
-      // the last reach meets the river it joins at that river's bed; a drawn river never drops
-      // below it anywhere (it crosses lower ground on its banks, and its water never runs back)
-      if (joinBed >= 0 && (req.drawn || s > length - reach - 3)) want = Math.max(want, joinBed);
-      // a branch starts at the bed of the water it leaves
-      if (branchBed >= 0) want = Math.min(want, branchBed);
+      // the last reach meets the river it joins at that river's bed
+      if (joinBed >= 0 && s > length - reach - 3) want = Math.max(want, joinBed);
       if (start < 0) {
         bed = Math.min(bed, want);
         start = bed;
@@ -414,64 +352,10 @@ export function planRiver(req: RiverRequest, ctx: PlanContext, id: string, origi
   };
   report.push(`${flowWord(flow)}, ${width} tiles wide, its bed from level ${start} down to ${bed}`);
   if (steps.length) report.push(`${steps.length} step${steps.length > 1 ? "s" : ""} down where the ground falls`);
-  report.push("edge" in entry ? `a sealed mouth on the ${entry.edge} edge feeds it` : "branch" in entry ? "a branch: the water it leaves feeds it" : "a spring feeds it");
-  if (open) report.unshift("its water has nowhere to go yet: end it at the map edge, in another river or in a lake");
-  if (hollow) report.push(hollow.fills ? `its water fills the hollow at its end into a lake, up to level ${hollow.level} (about ${hollow.tiles} tiles)` : "its water runs on downhill from its end");
-  // what it does at its end, for the words beside the pointer
-  const endTile = Math.round(pts[pts.length - 1][1]) * W + Math.round(pts[pts.length - 1][0]);
-  const endKind: RiverEnd["kind"] = open ? "open" : hollow ? (hollow.fills ? "hollow" : "downhill") : "edge" in exit ? "edge" : "river" in exit ? "river" : "lake";
-  const end: RiverEnd = {
-    kind: endKind,
-    ...(hollow?.fills ? { level: hollow.level, tiles: hollow.tiles } : {}),
-    cut: Math.max(0, ctx.heights[endTile] - bed),
-    start: "edge" in entry ? "edge" : "branch" in entry ? "branch" : "lake" in entry ? "lake" : "spring",
-  };
+  report.push("edge" in entry ? `a sealed mouth on the ${entry.edge} edge feeds it` : "a spring feeds it");
   const tiles: number[] = [];
   for (let i = 0; i < W * H; i++) if (field.d[i] < half) tiles.push(i);
-  return { ok: true, ops: [{ op: "addFeature", params: { feature } }, ...extra], feature, report, label: "Add river", tiles, ...(open ? { open } : {}), ...(req.drawn || req.open ? { end } : {}) };
-}
-
-/** A drawn course with slight meanders (a drawn river, Natural): the line smoothed, then a gentle
- *  sideways wave about half its width, a few widths long, held still at both ends (so the source
- *  and the join stay where they were drawn). The same points give the same course. */
-export function meandered(points: readonly Point[], width: number, W: number, H: number): Point[] {
-  if (points.length < 2) return points.slice();
-  // resample every 2 tiles along the drawn line
-  const len = arcLength(points);
-  if (len < 6) return points.slice();
-  const n = Math.max(2, Math.round(len / 2));
-  const base: Point[] = [];
-  for (let k = 0; k <= n; k++) base.push(pointAtArc(points as Point[], (len * k) / n).p);
-  // smooth (three passes of a moving average; the ends stay)
-  let cur = base;
-  for (let pass = 0; pass < 3; pass++) {
-    const next: Point[] = [cur[0]];
-    for (let k = 1; k < cur.length - 1; k++) next.push([(cur[k - 1][0] + 2 * cur[k][0] + cur[k + 1][0]) / 4, (cur[k - 1][1] + 2 * cur[k][1] + cur[k + 1][1]) / 4]);
-    next.push(cur[cur.length - 1]);
-    cur = next;
-  }
-  // the wave: its phase from where the course starts, so a redraw nearby keeps its look
-  const phase = ((Math.round(points[0][0]) * 73 + Math.round(points[0][1]) * 151) % 628) / 100;
-  const amp = Math.min(3, Math.max(0.8, width * 0.5));
-  const wave = Math.max(10, width * 6);
-  const out: Point[] = [];
-  for (let k = 0; k < cur.length; k++) {
-    const s = (len * k) / n;
-    const a = cur[Math.max(0, k - 1)];
-    const b = cur[Math.min(cur.length - 1, k + 1)];
-    const dx = b[0] - a[0];
-    const dy = b[1] - a[1];
-    const l = Math.hypot(dx, dy) || 1;
-    // no wave at the ends
-    const hold = Math.min(1, s / (2 * width + 2), (len - s) / (2 * width + 2));
-    const off = amp * hold * Math.sin((2 * Math.PI * s) / wave + phase);
-    out.push([r2(Math.min(W - 1, Math.max(0, cur[k][0] - (dy / l) * off))), r2(Math.min(H - 1, Math.max(0, cur[k][1] + (dx / l) * off)))]);
-  }
-  // keep a point every 4 tiles or so (the planner's segments)
-  const kept: Point[] = [out[0]];
-  for (let k = 1; k < out.length - 1; k++) if (Math.hypot(out[k][0] - kept[kept.length - 1][0], out[k][1] - kept[kept.length - 1][1]) >= 3.5) kept.push(out[k]);
-  kept.push(out[out.length - 1]);
-  return kept;
+  return { ok: true, ops: [{ op: "addFeature", params: { feature } }, ...extra], feature, report, label: "Add river", tiles };
 }
 
 function flowWord(flow: number): string {

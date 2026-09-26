@@ -15,15 +15,20 @@ export interface BrushCursorState {
   tool: "raise" | "lower" | "flatten" | "smooth" | "naturalize";
   /** Flatten's level (its plane), or null. */
   level: number | null;
+  /** Smart Lower: a stroke here carves a bed the water follows (the ring turns softly blue). */
+  water?: boolean;
 }
 
 const TINT: Record<BrushCursorState["tool"], [number, number, number]> = {
   raise: [1.0, 0.72, 0.3],
-  lower: [0.35, 0.65, 1.0],
+  lower: [0.66, 0.6, 0.86],
   flatten: [0.95, 0.95, 0.9],
   smooth: [0.5, 0.95, 0.55],
   naturalize: [0.85, 0.62, 0.38],
 };
+
+/** Smart Lower, where the water will follow the brush: a soft water blue. */
+const WATER_TINT: [number, number, number] = [0.3, 0.72, 1.0];
 
 /** Most quads the disc can take: a 24-tile radius, and the ring. */
 const MAX_QUADS = 49 * 49 + 256;
@@ -68,7 +73,7 @@ export class BrushCursor {
       return;
     }
     const r = Math.max(0.5, Math.min(24, s.radius));
-    const [cr, cg, cb] = TINT[s.tool];
+    const [cr, cg, cb] = s.water ? WATER_TINT : TINT[s.tool];
     const pos = this.pos;
     const col = this.col;
     let q = 0;

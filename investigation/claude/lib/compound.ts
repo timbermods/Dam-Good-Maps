@@ -19,7 +19,7 @@ import type { MapSession } from "../../../src/core/doc/session";
 import type { Feature } from "../../../src/core/features/schema";
 import type { Conversation } from "./conversation";
 import { checkExpectations, valuesBefore, type Checked, type Expectation } from "./intent";
-import { guardsOf, measureFeature, measureSession, reservoirTiles, type Guard, type Measured } from "./metrics";
+import { guardsOf, measureFeature, measureMade, measureSession, reservoirTiles, type Guard, type Measured } from "./metrics";
 import { locate, network } from "./flow";
 import { compassWords } from "./places";
 import { writeReport } from "./report";
@@ -93,9 +93,7 @@ const PRIORITY: Record<string, number> = {
   "addSource:hollow": 9.5,
   setRiverBadwater: 4,
   addLake: 5,
-  addLandform: 5,
   changeFeature: 3,
-  resizeFeature: 3,
   "addSetPiece:damSite": 6,
   "addSetPiece:gorge": 6,
   changeSetPiece: 6,
@@ -220,13 +218,13 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
     .map((g) => ({ ...g, causedBy: results.find((r) => r.broke.includes(g.id))?.index ?? null }));
   const tradeoffs = interference(s, work, p, before, after, results, reordered, damsBefore);
   const measured = made.map((m) => {
-    const f = s.features.find((g) => g.id === m.id);
-    return f ? { handle: m.handle, ...measureFeature(s, f) } : { handle: m.handle, gone: true };
+    const f = measureMade(s, m.id);
+    return f ? { handle: m.handle, ...f } : { handle: m.handle, gone: true };
   });
   // features a step changed or moved are measured too, under their handle when they have one
   const handleOf = (id: string) => Object.entries(work.handles).find(([, v]) => v === id)?.[0];
   for (const r of results) {
-    const id = r.ok && (r.op === "changeSetPiece" || r.op === "changeFeature" || r.op === "resizeFeature" || r.op === "moveFeature") ? r.resolved.target : undefined;
+    const id = r.ok && (r.op === "changeSetPiece" || r.op === "changeFeature" || r.op === "moveFeature") ? r.resolved.target : undefined;
     if (typeof id !== "string" || measured.some((m) => (m as { id?: string }).id === id)) continue;
     const f = s.features.find((g) => g.id === id);
     if (f) measured.push({ handle: handleOf(id) ?? "", changed: true, ...measureFeature(s, f) } as (typeof measured)[number]);

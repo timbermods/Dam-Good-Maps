@@ -550,6 +550,12 @@ export class MapSession {
     return true;
   }
 
+  /** Forget the steps Redo would bring back (a step taken back that must not return). */
+  forgetRedo(): void {
+    this.redoStack = [];
+    for (const k of [...this.snaps.keys()]) if (k > this.undoStack.length) this.snaps.delete(k);
+  }
+
   private pushHistory(e: HistoryEntry): void {
     this.undoStack.push(e);
     this.redoStack = [];

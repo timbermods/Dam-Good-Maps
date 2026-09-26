@@ -354,7 +354,7 @@ export function moveBlocked(f: Feature): string | null {
     case "mapObject":
       return null;
     case "landform":
-      return f.params.outline ? null : "This follows its river: move the river instead.";
+      return "The generator's ground: shape it with the brushes.";
     case "lake":
       return f.params.river ? "This belongs to its river's dam site: it moves with the river." : null;
     default:

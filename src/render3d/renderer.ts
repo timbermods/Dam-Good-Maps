@@ -206,6 +206,14 @@ export class MapRenderer {
   onHover: ((hit: TileHit | null) => void) | null = null;
   /** A left click (a press and release without dragging) on the map. */
   onClick: ((hit: TileHit | null, ev: PointerEvent) => void) | null = null;
+  /** Before the tool and the camera: something under the pointer that a left-drag moves (a water
+   *  source, D184), as a pointer tool for that drag, or null. */
+  grab: ((hit: TileHit | null, ev: PointerEvent) => PointerTool | null) | null = null;
+  /** Before the tool and the camera: a wheel over something it changes (Alt+scroll over a
+   *  source sets its strength); true when used. */
+  onWheel: ((ev: WheelEvent, hit: TileHit | null) => boolean) | null = null;
+  /** The drag a grab started (its own pointer tool). */
+  private grabbed: PointerTool | null = null;
   /** The map drawn changed (its terrain, water, soil or objects): the legend reads it again. */
   onMapChange: (() => void) | null = null;
   lastBuild: BuildStats | null = null;
@@ -698,10 +706,14 @@ export class MapRenderer {
     this.onMapChange?.();
   }
 
+  /** The brush under the cursor, as last shown (tests). */
+  brushCursorState: BrushCursorState | null = null;
+
   /** Show the brush under the cursor (null hides it). */
   setBrushCursor(s: BrushCursorState | null): void {
     const m = this.map;
     if (!m) return;
+    this.brushCursorState = s;
     if (!this.cursor) {
       if (!s) return;
       this.cursor = new BrushCursor(this.scene);
@@ -959,6 +971,13 @@ export class MapRenderer {
     this.on(c, "pointerdown", (e) => {
       const ev = e as PointerEvent;
       c.focus({ preventScroll: true });
+      const grab = ev.button === 0 && this.grab ? this.grab(this.pick(ev.clientX, ev.clientY), ev) : null;
+      if (grab) {
+        this.grabbed = grab;
+        this.drag = { kind: "tool", x: ev.clientX, y: ev.clientY, id: ev.pointerId, moved: 0, button: 0 };
+        capture(ev.pointerId);
+        return;
+      }
       if (ev.button === 0 && this.tool) {
         const hit = this.pick(ev.clientX, ev.clientY);
         if (this.tool.down(hit, ev)) {
@@ -981,7 +1000,7 @@ export class MapRenderer {
         d.y = ev.clientY;
         d.moved += Math.abs(dx) + Math.abs(dy);
         if (d.kind !== "tool" && d.moved < 4) return;
-        if (d.kind === "tool") this.tool?.move(this.pick(ev.clientX, ev.clientY), ev);
+        if (d.kind === "tool") (this.grabbed ?? this.tool)?.move(this.pick(ev.clientX, ev.clientY), ev);
         else if (d.kind === "orbit") this.setView({ yaw: this.view.yaw - dx * 0.006, pitch: this.view.pitch + dy * 0.005 });
         else this.panPixels(dx, dy);
         return;
@@ -998,8 +1017,10 @@ export class MapRenderer {
       this.drag = null;
       if (c.hasPointerCapture(ev.pointerId)) c.releasePointerCapture(ev.pointerId);
       if (d.kind === "tool") {
-        if (ev.type === "pointercancel" && this.tool?.cancel) this.tool.cancel();
-        else this.tool?.up(this.pick(ev.clientX, ev.clientY), ev);
+        const t = this.grabbed ?? this.tool;
+        this.grabbed = null;
+        if (ev.type === "pointercancel" && t?.cancel) t.cancel();
+        else t?.up(this.pick(ev.clientX, ev.clientY), ev);
       } else if (d.button === 0 && d.moved < 4 && ev.type === "pointerup") this.onClick?.(this.pick(ev.clientX, ev.clientY), ev);
     };
     this.on(c, "pointerup", end);
@@ -1016,6 +1037,7 @@ export class MapRenderer {
       (e) => {
         const ev = e as WheelEvent;
         ev.preventDefault();
+        if (this.onWheel?.(ev, this.pick(ev.clientX, ev.clientY))) return;
         if (this.tool?.wheel?.(ev)) return;
         this.zoom(Math.exp(ev.deltaY * 0.0012));
       },

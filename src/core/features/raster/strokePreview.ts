@@ -59,9 +59,10 @@ export class StrokePreview {
     this.candidate = base ? (i) => pre[i] !== base[i] : locked ? (i) => !locked[i] : () => true;
   }
 
-  /** Apply more dabs. Returns the rectangle of shown heights that changed, or null. */
-  add(dabs: ArrayLike<number>): Rect | null {
-    const r = this.stroke.add(dabs);
+  /** Apply more dabs (with a pen's pressures). Returns the rectangle of shown heights that
+   *  changed, or null. */
+  add(dabs: ArrayLike<number>, pressure?: ArrayLike<number>): Rect | null {
+    const r = this.stroke.add(dabs, pressure);
     if (!r) return null;
     const { W, H, heights, last } = this;
     // the integrity pass reads each tile's neighbours: one tile round what changed
