@@ -9,7 +9,7 @@ export default defineConfig({
     three: fileURLToPath(new URL('./node_modules/three', import.meta.url)),
     fflate: fileURLToPath(new URL('./node_modules/fflate/esm/browser.js', import.meta.url))
   }},
-  server: { host: '127.0.0.1', port: 5198, strictPort: true, fs: { allow: [fileURLToPath(new URL('../../', import.meta.url))] } },
+  server: { host: '127.0.0.1', port: 5198, strictPort: false, fs: { allow: [fileURLToPath(new URL('../../', import.meta.url))] } },
   build: { outDir: 'dist', emptyOutDir: true, copyPublicDir: false },
   worker: { format: 'es' }
 });

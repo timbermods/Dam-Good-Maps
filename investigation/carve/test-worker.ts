@@ -64,4 +64,3 @@ try{
  writeFileSync('captures/worker-checks.json',JSON.stringify({passed,operationBytes:JSON.stringify(op).length},null,2)+'\n');
  console.log(passed.map(p=>'PASS '+p).join('\n'));
 }finally{await worker.terminate();}
-

@@ -68,4 +68,3 @@ export function changedChunks(m:CarveMap,old:CarveMap|null): {cx:number;cy:numbe
 export function snapshot(m:CarveMap):CarveMap {
   return {...m,heights:m.heights.slice(),entities:m.entities.slice(),water:{depth:m.water.depth.slice(),contamination:m.water.contamination.slice()}};
 }
-

@@ -54,5 +54,3 @@ export function fixture(kind = 'mountain', W = 96): CarveMap {
     entities.push((x%2 ? tree({ ...at(x,y,'tree-'+x+'-'+y),species:'Pine' }) : bush({ ...at(x,y,'bush-'+x+'-'+y),ripe:true })));
   return { name: 'Process study: '+kind, W,H,heights:h,entities:plainEntities(entities),water:{depth,contamination:new Float64Array(h.length)},maxHeight:16 };
 }
-
-

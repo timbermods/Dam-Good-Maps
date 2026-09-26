@@ -106,4 +106,3 @@ self.onmessage=async(event:MessageEvent)=>{
     busy=false;send({type:'ready',ms:performance.now()-t});
   }
 };
-

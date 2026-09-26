@@ -218,7 +218,3 @@ function animate(t:number){
 requestAnimationFrame(animate);
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H,mode,head};}}});
 load();
-
-
-
-

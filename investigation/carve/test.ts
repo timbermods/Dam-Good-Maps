@@ -134,6 +134,3 @@ for(const size of [128,256]){
 mkdirSync('captures',{recursive:true});
 writeFileSync('captures/checks.json',JSON.stringify({passed,timings,terrainHashes:{mountain:hash(high.map.heights),ridge:hash(ridgeHigh.map.heights),defy:hash(defy.map.heights)},hardwareFPS:'User PC acceptance required; CPU timings are not frame rates'},null,2)+'\n');
 console.log(timings);
-
-
-

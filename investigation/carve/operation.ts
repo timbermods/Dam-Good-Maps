@@ -46,4 +46,3 @@ export function applyOperation(map: CarveMap, op: CarveOperation, undo = false):
   return { ...map, heights: h, entities: freeze(undo ? p.entitiesBefore : p.entitiesAfter).slice(),
     water: { depth: Float64Array.from(w.depth), contamination: Float64Array.from(w.contamination) } };
 }
-

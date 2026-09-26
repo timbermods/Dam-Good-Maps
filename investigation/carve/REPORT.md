@@ -87,4 +87,3 @@ this standalone prototype has no painting tool.
 All changes stay under investigation/carve. The branch remains based on dev.
 M9 v2 c77026b was read from investigation/generative-v2, without merging it.
 Adoption and changes after PR #32 are proposals in [INTEGRATION.md](INTEGRATION.md).
-

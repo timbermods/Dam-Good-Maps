@@ -71,4 +71,3 @@ for(let y=16;y<112;y++)for(let x=16;x<112;x++){const i=y*128+x;if(m.water.depth[
 }
 sequence('generated-force','Unleash · M9 Highlands seed 18 · 128²',m,{power:90,walls:'wide'},{origin});
 writeFileSync('captures/scenarios.json',JSON.stringify(results,null,2)+'\n');
-
