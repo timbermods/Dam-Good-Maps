@@ -79,6 +79,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D160 (moved): Pick a place right after Live editing, alongside M9.
 - D162: Save to Timberborn, soon: pick the Maps folder once, then save straight into it (Chrome, Edge).
 - D163: later, proposed: a companion mod that lists and starts new Dam Good Maps maps from the game's menu.
+- D164: starting wood: the start counts logs by species (oak 8, pine 2 plus resin, birch 1), not trees; "Minimum starting wood"; species as a generator lever.
 
 ## Done and released
 
