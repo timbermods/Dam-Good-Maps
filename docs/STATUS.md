@@ -67,8 +67,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Done and released
 
-- **Real places** (85 real-terrain maps, PR #23) is merged into `dev`; `real-places-done` is being
-  released.
+- **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
+- **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
@@ -83,7 +83,6 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **PR #18**, the DGM Probe, is a draft. It is merged at a boundary when it's marked ready.
 
 ## Waiting on Kyler
 
@@ -94,7 +93,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    feedback proposal (D137).
 4. A yes before each probe batch; the first is M9a's.
 5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
+   #51–#55 (#54, #55: two probe proposals that conflict with recorded decisions).
 6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), and the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 

@@ -44,3 +44,4 @@ list of every decision since M8 is in [STATUS.md](../STATUS.md).
 - Dependabot (weekly npm and GitHub Actions updates, into `dev`) and CodeQL code scanning are added; both start on their schedules once these files reach `main` with the next release.
 
 - Kyler's roadmap decisions: a Map quality checkpoint after the M9 build (D146) and Map look 2: high fidelity before the Frame pass (D147, `map-look-2-done`).
+- PR #18 (the DGM Probe) merged into `dev`; its INTEGRATION.md adopted as proposals (D149); two conflicts logged as pending #54 (where results go) and #55 (a manual play after the probe), with the recorded decisions as defaults.
