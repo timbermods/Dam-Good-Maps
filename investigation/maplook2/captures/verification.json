@@ -1919,6 +1919,652 @@
       }
     },
     {
+      "file": "lake-128-water-above.jpg",
+      "kind": "water-above",
+      "camera": {
+        "mode": "orbit",
+        "yaw": -0.55,
+        "pitch": 1.22,
+        "distance": 102.4,
+        "target": [
+          64.5,
+          9.280601501464844,
+          -64.5
+        ]
+      },
+      "meanings": {
+        "clean water": [
+          {
+            "meaning": "clean water",
+            "tile": [
+              64,
+              64
+            ],
+            "pixel": [
+              359,
+              297
+            ],
+            "depth": 3.280601978302002,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 0.0000013079834957352443
+          },
+          {
+            "meaning": "clean water",
+            "tile": [
+              64,
+              65
+            ],
+            "pixel": [
+              355,
+              291
+            ],
+            "depth": 3.2806220054626465,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 7.610212899060157
+          }
+        ],
+        "moist": [
+          {
+            "meaning": "moist",
+            "tile": [
+              76,
+              88
+            ],
+            "pixel": [
+              342,
+              111
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 187.61197654857412
+          },
+          {
+            "meaning": "moist",
+            "tile": [
+              78,
+              87
+            ],
+            "pixel": [
+              359,
+              109
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 188.05857653272798
+          }
+        ],
+        "moist contaminated": [
+          {
+            "meaning": "moist contaminated",
+            "tile": [
+              49,
+              99
+            ],
+            "pixel": [
+              127,
+              141
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 114,
+            "contamination": 28,
+            "distance": 280.16474532424314
+          },
+          {
+            "meaning": "moist contaminated",
+            "tile": [
+              50,
+              100
+            ],
+            "pixel": [
+              130,
+              132
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 105,
+            "contamination": 49,
+            "distance": 282.442721507089
+          }
+        ],
+        "dry": [
+          {
+            "meaning": "dry",
+            "tile": [
+              72,
+              104
+            ],
+            "pixel": [
+              258,
+              35
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 280.9445060667409
+          },
+          {
+            "meaning": "dry",
+            "tile": [
+              73,
+              104
+            ],
+            "pixel": [
+              265,
+              32
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 281.67233200401347
+          }
+        ],
+        "dry contaminated": [
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              51,
+              105
+            ],
+            "pixel": [
+              119,
+              97
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 109,
+            "distance": 312.88721820642013
+          },
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              48,
+              103
+            ],
+            "pixel": [
+              103,
+              114
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 167,
+            "distance": 315.2990202775604
+          }
+        ],
+        "badwater": [
+          {
+            "meaning": "badwater",
+            "tile": [
+              46,
+              106
+            ],
+            "pixel": [
+              81,
+              108
+            ],
+            "depth": 1.2541849613189697,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 336.7691140309112
+          },
+          {
+            "meaning": "badwater",
+            "tile": [
+              45,
+              106
+            ],
+            "pixel": [
+              75,
+              111
+            ],
+            "depth": 1.2542619705200195,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 340.5775611843453
+          }
+        ]
+      }
+    },
+    {
+      "file": "lake-128-water-low.jpg",
+      "kind": "water-low",
+      "camera": {
+        "mode": "orbit",
+        "yaw": -0.55,
+        "pitch": 0.5235987755982988,
+        "distance": 44,
+        "target": [
+          64.5,
+          9.280601501464844,
+          -64.5
+        ]
+      },
+      "meanings": {
+        "clean water": [
+          {
+            "meaning": "clean water",
+            "tile": [
+              64,
+              64
+            ],
+            "pixel": [
+              360,
+              297
+            ],
+            "depth": 3.280601978302002,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 0.00000767130336498667
+          },
+          {
+            "meaning": "clean water",
+            "tile": [
+              64,
+              65
+            ],
+            "pixel": [
+              350,
+              290
+            ],
+            "depth": 3.2806220054626465,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 12.322747122266412
+          }
+        ],
+        "moist": [
+          {
+            "meaning": "moist",
+            "tile": [
+              78,
+              87
+            ],
+            "pixel": [
+              358,
+              126
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 171.95155326269833
+          },
+          {
+            "meaning": "moist",
+            "tile": [
+              76,
+              88
+            ],
+            "pixel": [
+              331,
+              126
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 173.5248947872842
+          }
+        ],
+        "dry": [
+          {
+            "meaning": "dry",
+            "tile": [
+              85,
+              99
+            ],
+            "pixel": [
+              355,
+              69
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 228.06906575198545
+          },
+          {
+            "meaning": "dry",
+            "tile": [
+              83,
+              100
+            ],
+            "pixel": [
+              332,
+              70
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 229.1483334852557
+          }
+        ]
+      }
+    },
+    {
+      "file": "lake-128-water-grazing.jpg",
+      "kind": "water-grazing",
+      "camera": {
+        "mode": "orbit",
+        "yaw": -0.55,
+        "pitch": 0.18,
+        "distance": 44,
+        "target": [
+          64.5,
+          9.280601501464844,
+          -64.5
+        ]
+      },
+      "meanings": {
+        "clean water": [
+          {
+            "meaning": "clean water",
+            "tile": [
+              64,
+              64
+            ],
+            "pixel": [
+              359,
+              297
+            ],
+            "depth": 3.280601978302002,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 0.000008714944442544947
+          },
+          {
+            "meaning": "clean water",
+            "tile": [
+              65,
+              65
+            ],
+            "pixel": [
+              365,
+              293
+            ],
+            "depth": 3.280579090118408,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 7.417699296197169
+          }
+        ],
+        "moist": [
+          {
+            "meaning": "moist",
+            "tile": [
+              78,
+              87
+            ],
+            "pixel": [
+              358,
+              233
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 64.22824314651359
+          },
+          {
+            "meaning": "moist",
+            "tile": [
+              78,
+              88
+            ],
+            "pixel": [
+              353,
+              232
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 225,
+            "contamination": 0,
+            "distance": 65.58985564287984
+          }
+        ],
+        "dry": [
+          {
+            "meaning": "dry",
+            "tile": [
+              85,
+              99
+            ],
+            "pixel": [
+              356,
+              210
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 87.80492852244498
+          },
+          {
+            "meaning": "dry",
+            "tile": [
+              86,
+              99
+            ],
+            "pixel": [
+              364,
+              209
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 88.20747130156454
+          }
+        ]
+      }
+    },
+    {
+      "file": "lake-256-water-above.jpg",
+      "kind": "water-above",
+      "camera": {
+        "mode": "orbit",
+        "yaw": -0.55,
+        "pitch": 1.22,
+        "distance": 140,
+        "target": [
+          128.5,
+          9.49177360534668,
+          -128.5
+        ]
+      },
+      "meanings": {
+        "clean water": [
+          {
+            "meaning": "clean water",
+            "tile": [
+              128,
+              128
+            ],
+            "pixel": [
+              359,
+              297
+            ],
+            "depth": 3.491774082183838,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 9.566965673002431e-7
+          },
+          {
+            "meaning": "clean water",
+            "tile": [
+              128,
+              129
+            ],
+            "pixel": [
+              356,
+              293
+            ],
+            "depth": 3.491779088973999,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 5.5705692666058635
+          }
+        ],
+        "moist": [
+          {
+            "meaning": "moist",
+            "tile": [
+              144,
+              151
+            ],
+            "pixel": [
+              368,
+              153
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 145.19528540515657
+          },
+          {
+            "meaning": "moist",
+            "tile": [
+              141,
+              153
+            ],
+            "pixel": [
+              349,
+              152
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 240,
+            "contamination": 0,
+            "distance": 145.988569403591
+          }
+        ],
+        "dry": [
+          {
+            "meaning": "dry",
+            "tile": [
+              151,
+              163
+            ],
+            "pixel": [
+              367,
+              85
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 212.93928588239532
+          },
+          {
+            "meaning": "dry",
+            "tile": [
+              154,
+              161
+            ],
+            "pixel": [
+              386,
+              85
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 0,
+            "distance": 213.82269904223764
+          }
+        ],
+        "dry contaminated": [
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              159,
+              159
+            ],
+            "pixel": [
+              414,
+              81
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 28,
+            "distance": 223.08947935521408
+          },
+          {
+            "meaning": "dry contaminated",
+            "tile": [
+              155,
+              162
+            ],
+            "pixel": [
+              388,
+              76
+            ],
+            "depth": 0,
+            "bad": 0,
+            "moisture": 0,
+            "contamination": 36,
+            "distance": 223.3953881099952
+          }
+        ],
+        "badwater": [
+          {
+            "meaning": "badwater",
+            "tile": [
+              156,
+              165
+            ],
+            "pixel": [
+              383,
+              67
+            ],
+            "depth": 0.36479490995407104,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 231.4323878861141
+          },
+          {
+            "meaning": "badwater",
+            "tile": [
+              157,
+              165
+            ],
+            "pixel": [
+              388,
+              65
+            ],
+            "depth": 0.3646875023841858,
+            "bad": 1,
+            "moisture": 0,
+            "contamination": 255,
+            "distance": 234.23606273020397
+          }
+        ]
+      }
+    },
+    {
       "file": "real-victoria-falls.jpg",
       "kind": "falls",
       "camera": {
@@ -2629,35 +3275,35 @@
           "shadows": false,
           "standard": 4121280312,
           "high": 4121280312,
-          "passes": 13
+          "passes": 12
         },
         {
           "water": true,
           "shadows": false,
           "standard": 4121280312,
-          "high": 2271841562,
-          "passes": 13
+          "high": 2028011029,
+          "passes": 12
         },
         {
           "water": false,
           "shadows": true,
           "standard": 4121280312,
           "high": 2597898124,
-          "passes": 15
+          "passes": 14
         },
         {
           "water": true,
           "shadows": true,
           "standard": 4121280312,
-          "high": 1174565146,
-          "passes": 17
+          "high": 3572180847,
+          "passes": 16
         }
       ],
       "turned": {
         "standard": 4121280312,
-        "high": 2671782383
+        "high": 2496260289
       },
-      "movedWater": 1338003299
+      "movedWater": 4294825106
     },
     "syncedCamera": true
   },

@@ -38,6 +38,6 @@ export function pose(view: MapView, kind: string): { camera: Partial<ViewState>;
   }
   if(tile<0) return {found:false,camera:{}};
   const x=tile%W,y=Math.floor(tile/W);
-  if(kind.startsWith('water-'))return {found:true,tile,camera:{mode:'orbit',target:[x+0.5,water.surface[tile],-y-0.5],distance:44,pitch:kind==='water-above'?1.22:kind==='water-low'?Math.PI/6:0.18,yaw:-0.55}};
+  if(kind.startsWith('water-'))return {found:true,tile,camera:{mode:'orbit',target:[x+0.5,water.surface[tile],-y-0.5],distance:kind==='water-above'?Math.min(140,Math.max(W,H)*0.8):44,pitch:kind==='water-above'?1.22:kind==='water-low'?Math.PI/6:0.18,yaw:-0.55}};
   return {found:true,tile,camera:{mode:'orbit',target:[x+0.5, Math.max(heights[tile],water.surface[tile]||0),-y-0.5],distance:kind==='falls'?32:44,pitch:kind==='falls'?0.58:0.9,yaw}};
 }
