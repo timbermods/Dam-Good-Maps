@@ -70,7 +70,7 @@ differently, this file wins.
 | Places | Real places, right after Map look is released | the landscape survey (investigation/landscapes/) · PLAN §20 D136 | optional (a probe batch, if Kyler approves one) | high |
 | M9 | Interestingness, names, candidates, premises and variety (staged M9a–M9c) | PLAN §7.1, §7.9, §8, §12, §13 · the workshop study (D87) · EDITOR §7 words (D84) · the M9 design (D112) | a probe batch for M9a (D116) | xhigh |
 | Quality | Map quality checkpoint, after the M9 build: contact sheets, a probe batch, tuning rounds until Kyler says go | PLAN §20 D146 | yes (a probe batch, asked first) | high |
-| Look 2 | Map look 2: high fidelity (High / Standard / Light quality), after the checkpoint | PLAN §20 D147 | no | high |
+| Look 2 | Map look 2: water and shadows (a High quality mode), after the checkpoint | PLAN §20 D147 | no | high |
 | Frame | Frame pass, after Map look 2, before the 3D stages | the impeccable-app-flow skill · PLAN §20 D113 | no | high |
 | 3D-a | Terrain above terrain: model, water and checks | investigation/terrain3d/DESIGN.md §2–4, §9 · PLAN §10, §11, §19.6, §19.8 · D118–D122 | no (the Probe's test maps are written) | xhigh |
 | 3D-b | Terrain above terrain: generation and Verticality | DESIGN.md §5 · PLAN §5.9 · D123, D132 | a probe batch (T1–T4, T6, T7; D145) | xhigh |
@@ -1263,25 +1263,25 @@ D146).
 
 ---
 
-## Map look 2: high fidelity
+## Map look 2: water and shadows
 
-After the Map quality checkpoint and before the Frame pass (Kyler, 2026-09-25; PLAN §20 D147).
+After the Map quality checkpoint and just before the Frame pass (Kyler, 2026-09-25; PLAN §20 D147,
+made smaller by Kyler the same day).
 
 **Delivers**
 - A graphics quality setting: **High** (chosen automatically on capable GPUs), **Standard**
   (today's clean look) and **Light** (the existing software-rendering look).
-- High adds:
-  - a real water shader: ripples catching the light, clear shallows, colour by depth,
-    reflections by angle, shore foam;
-    Kyler's direction (2026-09-25): fewer, subtler sparkle flecks on the water than the clean
-    look, and more depth and transparency;
-  - Kyler's direction (2026-09-25): dry contaminated ground's cracks a little more visible from
-    far away;
-  - real-time soft shadows, ambient occlusion and a warm colour grade;
-  - higher-resolution procedural grass, earth and cobbles with surface detail;
-  - softened block edges and grass lips;
-  - full-resolution rendering and anti-aliasing;
-  - more detailed tree, bush and ruin models of our own.
+- High adds only the two biggest effects:
+  - a proper water shader: colour by depth, clear shallows, gentle ripples catching the light,
+    shore and fall foam, badwater distinct; Kyler's direction: fewer, subtler sparkle flecks
+    than the clean look, and more depth and transparency;
+  - soft real-time shadows from a warm sun.
+- Today's grass and dirt textures stay exactly as they are (Kyler likes them).
+
+**Later, optional** (not part of this step): ambient occlusion, colour grading, richer or
+higher-resolution textures, softened block edges and grass lips, full-resolution rendering and
+anti-aliasing, more detailed tree, bush and ruin models, and dry contaminated ground's cracks a
+little more visible from far away.
 
 **Rules:** still our own art only, generated or modelled by us; never game assets. No map file
 changes.
@@ -1291,7 +1291,6 @@ and he decides. Speed numbers are information only, but no mode may feel sluggis
 it's chosen for (blocking: what a player feels).
 
 **Release:** tag `map-look-2-done` and release it like a milestone.
-
 ---
 
 ## Frame pass
