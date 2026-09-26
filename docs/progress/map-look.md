@@ -302,3 +302,5 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
   legend) and `tests/e2e/look-outline.spec.ts` (Markers off: no outline; on: the outline; a soil
   update without contamination: none). The walls' lip shows the top's own ground under
   contamination (it was the rust).
+
+Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the live check now runs inside the deploy workflow; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged: no map file changes).

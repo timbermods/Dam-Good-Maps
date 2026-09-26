@@ -63,7 +63,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   are approved as M9's stages; what goes into each waits for design version 2.
 - **Design version 2** is built on `investigation/generative-v2` (not started).
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
-- D147: **Map look 2: high fidelity** after the checkpoint and before the Frame pass: High / Standard / Light quality; High adds a real water shader, soft shadows, AO, finer procedural detail, softened edges, anti-aliasing and richer models; our own art; judged by eye; `map-look-2-done`.
+- D147: **Map look 2: water and shadows** before the Frame pass: a High mode with a proper water shader and soft sun shadows only; today's textures stay; AO, grading, richer textures and models later, optional.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
 - D149: the DGM Probe's integration, adopted as proposals; Kyler decided its two conflicts: results go to `C:\dgm-probe\`, and the probe batch alone is M9a's gate.
 - D150: dependency updates: Actions and minor or patch npm updates merged when CI is green; majors held for a deliberate upgrade step (refinement); one weekly Dependabot pull request per ecosystem.
@@ -76,19 +76,25 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
 - D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
 - D161: the north-star journey: a striking place → Pick a place → the Weather view → Live editing → play; each step smooth, no gaps.
-- D160 (moved): Pick a place right after Live editing, alongside M9.
+- D160/D175: Pick a place, the full experience (explore a 3D world map, frame a square with a live block preview, one click to build), right after M11 and before the refinement phase.
 - D162: Save to Timberborn, soon: pick the Maps folder once, then save straight into it (Chrome, Edge).
 - D163: later, proposed: a companion mod that lists and starts new Dam Good Maps maps from the game's menu.
 - D164: starting wood: the start counts logs by species (oak 8, pine 2 plus resin, birch 1), not trees; "Minimum starting wood"; species as a generator lever.
 - D165: Kyler's four intentions (start under a cliff with water below; a snaking river down a hill; a crater where rivers converge; a cliff waterfall into a large round lake), plus 10–15 candidates for him to pick.
 - D166: Pick a place: real land, designed water; it never fails for lack of water, meets the start rules, and quietly tries other sizes, scales and offsets; #34 held until its designed-water follow-up is finished and green, then merged and adopted with this change.
+- D167–D170: resources like the official maps: a mine site on every map (Mine sites 1–4), tree counts and living/dead share by size, groves and berry patches in clusters, ruins that vary; one shared baseline for the generator, Real places and Pick a place.
+- D171: water sources start rivers: only at heads (edge inflows, springs), clustered for more flow, never inside an existing flow; a check flags any that are.
+- D172: tall maps (up to 22): allowed in both validators once a probe batch confirms; a standard/tall option for Real places and Pick a place, dramatic places tall by default.
+- D173: #33's exact-weather speedups and scheduling, adopted as Weather view proposals.
+- D174: Real places review: 3D thumbnails with a crisp 2D top-down (two layouts to pick from), tighter framing, the survey patches may be re-downloaded, credits confirmed, three titles changed.
+- D176: design timing: new interface uses the existing shared styles and components until the Frame pass; after it, the design records; M12 and M13 get the finish review, no second full design pass.
 
 ## Done and released
 
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
+- **#33** (exact-weather speedups) is merged; its proposals are adopted (D173).
 - **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
-- **Contaminated ground as a layer** (D154), approved by Kyler, with a **Markers** outline where
-  it ends: merged into `dev`; `look-contamination-done` is being released.
+- **Contaminated ground as a layer** is live (`look-contamination-done`, PR #36, live check passed).
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
@@ -104,6 +110,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
 - **The start and edge rules** (D151–D153), on branch `feature/start-edge-rules`.
+- **Resources like the official maps** (D167–D170), on branch `feature/resources`.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
 - **Live editing** (D158), on branch `feature/live-editing`: the triage first, then a playable

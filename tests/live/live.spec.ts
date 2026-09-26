@@ -2,7 +2,8 @@
 // errors, is noindex until launch (DGM_PUBLIC), and its download for seed 4242 at 128² River Valley,
 // Normal, default settings, is the file tools/gen.ts makes from the checked-out commit, byte for
 // byte. Pages can take a few minutes to serve a new build, so a failed attempt is retried before the
-// check fails.
+// check fails. It checks the main site only: a preview build under /preview/ (deploy.yml) is not
+// part of the release and is never checked here.
 //
 //   npx playwright test -c playwright.live.config.ts
 

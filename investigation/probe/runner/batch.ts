@@ -22,7 +22,7 @@ import { makeJob, prepare, type Prepared, summary } from './jobs';
 import { type LaunchLog, resultsDir, runJob } from './launch';
 import { runModel, type ModelRun } from './model';
 import { prefsValueName, probeOnly } from './mods';
-import { CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY, REPO } from './paths';
+import { CACHE, CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY } from './paths';
 import { waitQuiet } from './quiet';
 import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, marker, parseRegFile, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
@@ -108,7 +108,7 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     restored = true;
     const r = restore(join(dir, 'game-files'), { registry: !keepMods });
     writeFileSync(join(dir, 'restore.json'), JSON.stringify(r, null, 1));
-    log(`restored: registry ${r.registryRestored ? `put back (${r.registryChanged.length} values had changed)` : 'unchanged'}; logs ${r.logsRestored.join(', ') || '-'}; player data ${r.playerDataRestored.join(', ') || 'unchanged'}; saves deleted ${r.savesDeleted.length}, saves changed ${r.savesChanged.length}; other new files moved ${r.docsMoved.length}`);
+    log(`restored: registry ${r.registryRestored ? `put back (${r.registryChanged.length} values had changed)` : 'unchanged'}; logs ${r.logsRestored.join(', ') || '-'}; player data ${r.playerDataRestored.join(', ') || 'unchanged'}; saves deleted ${r.savesDeleted.length}, saves changed ${r.savesChanged.length}; other new files and folders moved out ${r.docsMoved.length}; changed files put back ${r.docsRestored.join(', ') || 'none'}; changed and left (Steam's own, or too large to copy) ${r.docsChanged.join(', ') || 'none'}`);
   };
   const onSignal = () => {
     log('interrupted: stopping the game and restoring');
@@ -298,7 +298,8 @@ async function main(): Promise<void> {
     return;
   }
   if (flag('job-only')) {
-    writeFileSync(join(REPO, 'investigation', 'probe', '.cache', 'job-preview.json'), JSON.stringify(makeJob(plan.runId, prepared, plan.speed), null, 1));
+    mkdirSync(CACHE, { recursive: true });
+    writeFileSync(join(CACHE, 'job-preview.json'), JSON.stringify(makeJob(plan.runId, prepared, plan.speed), null, 1));
     console.log(describe(s));
     return;
   }
