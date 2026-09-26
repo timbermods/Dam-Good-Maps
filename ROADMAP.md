@@ -801,6 +801,45 @@ and D151 (no edge walls).
 
 ---
 
+## Live editing
+
+Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20
+D158). Built on branch `feature/live-editing`, tried by Kyler on the preview address
+<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every iteration),
+and released as `live-editing-done` when Kyler says it feels right.
+
+- **First, a quick triage** of the current editor: drive it like a first-time player (open a
+  generated map; place and change rivers, lakes, landforms and the start; undo and redo;
+  regenerate keeping edits; export), fix the bugs and stalls in everything Live editing won't
+  replace, and bring Kyler a short ranked list of confusing spots with a proposed fix for each.
+  Kyler's notes: placement never waits on the water; limits show before or while placing, and the
+  result matches what was shown; the placed hill looked like a flat slab, not a stepped hill.
+- **Principles:** responsive above all; direct manipulation (no confirm steps, no Place button, no
+  waiting); everything reversible; show, don't ask; good defaults.
+- **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
+  naturalize, in whole levels with natural slopes at the brush's edge; a brush cursor projected on
+  the terrain; Cities: Skylines-style controls; a compact brush bar with shortcut tooltips.
+- **Water never blocks:** terrain updates instantly, water re-settles and flows live in the
+  background; an option pauses it while painting.
+- **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
+  resize and raise it live; limits show while dragging.
+- **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
+  an operation that replays exactly and survives regeneration and format 3; quiet background
+  checks.
+- **Polish:** only changed chunks rebuilt; keyboard access and screen-reader labels; a one-line
+  first-use hint.
+- **Keep M12 ready** (D134): Claude tool entries for the brushes and the live shape tools.
+
+**Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
+rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
+breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost).
+Kyler decides when it feels right.
+
+**Later:** the 3D terrain steps extend the same brushes to caves and tunnels; M10 keeps symmetry and
+the advanced extras.
+
+---
+
 ## M9. Interestingness, names, candidates, premises and variety
 
 **M9 design step first** (Kyler, 2026-09-25; PLAN §20 D108, D109). M9 is not built as written

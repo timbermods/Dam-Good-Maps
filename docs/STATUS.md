@@ -72,6 +72,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D153: start water counts over natural slopes within 12 / 20 / 28 tiles (amends D85).
 - D154: contaminated ground is a layer of crack veins over the ground's own look.
 - D155–D157: Real places, second round: short descriptions with a credits page, deploy-time files, clean titles, 3D thumbnails, no walls, about 150 places.
+- D158: **Live editing**, alongside the M9 design: a triage first, then Cities-style terrain brushes, live shape tools, water that never blocks; tried by Kyler on `/preview/`.
 
 ## Done and released
 
@@ -94,6 +95,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **The start and edge rules** (D151–D153), on branch `feature/start-edge-rules`.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
+- **Live editing** (D158), on branch `feature/live-editing`: the triage first, then a playable
+  version for Kyler on the preview address.
 - **Contaminated ground as a layer** (D154), on branch `look/contamination`; Kyler decides from
   captures.
 - Dependabot: the GitHub Actions updates (#26–#30) merge when CI is green; the majors (#24, #25)
