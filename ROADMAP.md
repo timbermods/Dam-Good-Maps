@@ -814,6 +814,10 @@ and released as `live-editing-done` when Kyler says it feels right.
   replace, and bring Kyler a short ranked list of confusing spots with a proposed fix for each.
   Kyler's notes: placement never waits on the water; limits show before or while placing, and the
   result matches what was shown; the placed hill looked like a flat slab, not a stepped hill.
+  Also: the legend becomes a slim panel beside the map that collapses to a small always-visible
+  strip, lists only what's on the current map, and highlights those things when an entry is
+  clicked (its styling waits for the design pass); and it must be obvious which map is shown and
+  which is being edited (the generator page said "You are editing …" over a different map).
 - **Principles:** responsive above all; direct manipulation (no confirm steps, no Place button, no
   waiting); everything reversible; show, don't ask; good defaults.
 - **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
