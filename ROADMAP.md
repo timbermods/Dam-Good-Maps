@@ -769,6 +769,38 @@ validators and is byte-identical in Node and Chromium; the page works on desktop
 
 ---
 
+## Start and edge rules
+
+A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built on branch
+`feature/start-edge-rules` and released as `start-edge-rules-done`:
+- **No edge walls** (D151): a blocking check, in both validators, beside D111's dam-wall check; the
+  generator raises no wall along a map edge.
+- **Maps don't have to hold their water** (D152): no walls or rims to keep water on the map; rivers
+  leave naturally and lakes may drain; the settle check accepts a steady flow off the map.
+- **The start water rule** (D153): clean water counts if a walking path over the map's own terrain
+  and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
+  editor's start indicators and the start text change together. Generated maps change: the
+  generator version goes up.
+
+**Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
+D151, and what a player feels.
+
+---
+
+## Real places, second round
+
+After the start and edge rules (Kyler, 2026-09-25; PLAN §20 D155–D157), built on branch
+`feature/real-places-2` and released as `real-places-2-done`: short in-game descriptions with a
+link to a credits page; the maps built at deploy time and served as finished files; the byte check
+nightly and in the release check; clean titles; 3D thumbnails rendered on a GPU and lazy-loaded;
+every place rebuilt without perimeter walls, water free to drain; and the gallery grown to about
+150 places. Kyler sees a contact sheet of the whole gallery and says if any should go.
+
+**Blocking:** every map passes the validators and exports, the page works on desktop and phone,
+and D151 (no edge walls).
+
+---
+
 ## M9. Interestingness, names, candidates, premises and variety
 
 **M9 design step first** (Kyler, 2026-09-25; PLAN §20 D108, D109). M9 is not built as written

@@ -67,6 +67,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
 - D149: the DGM Probe's integration, adopted as proposals; Kyler decided its two conflicts: results go to `C:\dgm-probe\`, and the probe batch alone is M9a's gate.
 - D150: dependency updates: Actions and minor or patch npm updates merged when CI is green; majors held for a deliberate upgrade step (refinement); one weekly Dependabot pull request per ecosystem.
+- D151: no edge walls (extends D111); a blocking check.
+- D152: maps don't have to hold their water; no walls or rims; the settle check accepts a steady flow off the map.
+- D153: start water counts over natural slopes within 12 / 20 / 28 tiles (amends D85).
+- D154: contaminated ground is a layer of crack veins over the ground's own look.
+- D155–D157: Real places, second round: short descriptions with a credits page, deploy-time files, clean titles, 3D thumbnails, no walls, about 150 places.
 
 ## Done and released
 
@@ -86,6 +91,13 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
+- **The start and edge rules** (D151–D153), on branch `feature/start-edge-rules`.
+- **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
+  walls and the growth to about 150 places wait for the start and edge rules.
+- **Contaminated ground as a layer** (D154), on branch `look/contamination`; Kyler decides from
+  captures.
+- Dependabot: the GitHub Actions updates (#26–#30) merge when CI is green; the majors (#24, #25)
+  wait for the deliberate upgrade step (D150).
 
 ## Waiting on Kyler
 
