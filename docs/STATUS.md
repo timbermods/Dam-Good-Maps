@@ -4,6 +4,93 @@ One page, rewritten at every step and stop. Updated 2026-09-25, after the tall-m
 the Live editing preview. The decisions' full text is in
 [PLAN.md §20](../PLAN.md#20-editor-decisions), and the order of work in [ROADMAP.md](../ROADMAP.md).
 
+## Morning summary, 2026-09-26
+
+Most important first. Nothing below was released without your approval.
+
+### 1. Design version 2: approved by you overnight, and M9a is being built
+
+- Merged: PR #32 (f04674d). Your conditions and decisions are D209 and D210.
+- The review material stays on `dev`:
+  - [docs/m9-design.md](m9-design.md): §0 changes, §6 intentions, §17 risks, §18 the M9a–c split, §19 your decisions;
+  - `investigation/generative/REPORT-v2.md`;
+  - one contact sheet per theme in `docs/sheets/design-v2/`, plus `docs/sheets/design-v2.png`;
+  - the ten briefs in `investigation/generative/briefs/v2/`, with their renders in `investigation/generative/renders/v2/`.
+- **M9a** is running on `feature/m9a`, first on the machine.
+  - It includes "Any" as the default, no ruler-straight rivers, badwater on every map, and every rule since version 2.
+  - Its agent definitions (M9a on Opus at xhigh, M9b and M9c at high, routine work on Sonnet at medium) are in `.claude/agents/`. They load from the next session, so tonight's M9a agent runs on Opus 5.5 at this session's effort.
+
+### 2. Waiting on you
+
+1. **Try Live editing:** <https://timbermods.github.io/dam-good-maps/preview/> → **Refine this map**. All four D184 pushes are there (59f826c):
+   - the top bar and brush kit, and Flatten (D204);
+   - the left shelf with live ghosts;
+   - **Remove**;
+   - the view buttons with the game's layers (D207);
+   - the header with **Save to Timberborn** and the quiet dot;
+   - the minimap and camera bookmarks.
+
+   Say when it feels right, and it releases as `live-editing-done`. Three defaults to confirm or flip:
+   - the camera's old R/F zoom is gone, so F can resize the brush and R can turn objects;
+   - juice sounds are on by default, quiet, with a volume and an off switch;
+   - picking a layer takes the game's Alt+middle-click, and Alt+click is kept too.
+2. **Waterfalls (D201):** [PR #53](https://github.com/timbermods/dam-good-maps/pull/53), captures in `docs/look/waterfalls/` on its branch. Judge:
+   - how far falls reach, how white they are, and how strong the splash is;
+   - L-shaped lips make a V with a gap.
+
+   Approving releases it as `look-waterfalls-done`.
+3. **Real places, second round:** [PR #35](https://github.com/timbermods/dam-good-maps/pull/35).
+   - 150 places, rebuilt without walls. Only badwater is still to come; it's added once #54 merges.
+   - Say which places should go: `C:\dgm-workshop\places\sheet.html`, where all 150 are numbered, with a before/after for the walls in `walls.html`.
+   - Check the second-map titles: eleven end in "Centre", and one reads "Mahabaleshwar East, Western Ghats".
+   - 25 maps needed 8× the official water strength.
+4. **Badwater on every map (D200):** [PR #54](https://github.com/timbermods/dam-good-maps/pull/54), generator 0.6.3.
+   - It adds a "No badwater" option.
+   - CI is green; its batches and contact sheet are finishing. Its sheet is for your look before I merge it.
+5. **The forces prototypes are held until you say each is ready:**
+   - Carve [#47](https://github.com/timbermods/dam-good-maps/pull/47) (one more Codex round: Wander, Width, variation, Try another path);
+   - Erupt [#50](https://github.com/timbermods/dam-good-maps/pull/50);
+   - Craterize [#51](https://github.com/timbermods/dam-good-maps/pull/51);
+   - Quake [#52](https://github.com/timbermods/dam-good-maps/pull/52).
+6. **The docs sweep's two readings of your decisions** (#46, merged):
+   - whether 3D carving gets its own Carve and Fill buttons, or makes Lower and Raise smarter;
+   - how M12's Claude steps map onto the new editor (ROADMAP M12, "The model").
+7. **Pending #66:** your pick of the candidate intentions.
+
+### 3. Released, merged and finished overnight
+
+- **Released** (each live check passed):
+  - `look-mine-ruins-done`, `start-edge-rules-done` and `save-to-timberborn-done` (PR #48);
+  - `look-badwater-done` (PR #49).
+- **Merged into `dev`:**
+  - #40 Save to Timberborn;
+  - #41 the badwater blend;
+  - #42 mine sites and ruins;
+  - #43 resources (generator 0.6.2; 2,760 maps, 100% final);
+  - #44 the start and edge rules;
+  - #45 Pick a place's signature water;
+  - #38 Map look 2's investigation;
+  - #46 the docs sweep and the retired-terms guard;
+  - #32 design version 2.
+- **Live editing:** pushes 1–4 are on the preview, with your D193–D207.
+- **Recorded:** decisions D192–D210, and the repository size rule for investigations (D195).
+- **Probe batches:** none ran. The machine was never quiet: M9a and the batches ran all night. M9a's in-game gate batch will be ready later and needs your yes (the usual rule applies again today).
+
+### 4. What failed or got stuck, and what I did
+
+- **Two agents stopped by accident** (design version 2 and resources): replaced in their own worktrees, and no work was lost.
+- **The resources agent handed back early once:** it was resumed and finished.
+- **A leftover Hill message on the preview:** removed. The retired-terms guard now also catches retired interface text, with a test.
+- **The water on screen could lag the map's water on slow machines:** fixed in Live editing.
+- **Not addressed:** where a Blockage raises the water floor, the 3D view draws the water at ground level, so a small fall shows there that the simulation doesn't have. This is older than tonight's work.
+- **The Claude reference suite:** 13 failures on `dev` come from generator changes moving their setups; the re-tune is scheduled after the generator steps.
+
+### 5. Still running
+
+- M9a (`feature/m9a`).
+- The badwater step's final checks (#54).
+- The Real places rebuild's badwater stage, after #54 merges.
+
 ## Decisions since M8
 
 Every decision Kyler sent since `m8-done`, in the version in force.
@@ -153,6 +240,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Running
 
+- **M9a**, the generator from design version 2 (D209: "Any" as the default, no ruler-straight rivers,
+  every rule since version 2), on branch `feature/m9a`; first on the machine (D210).
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
 - **Badwater on every map** (D200), on branch `feature/badwater-source`.
