@@ -34,6 +34,13 @@ fs.mkdirSync(path.dirname(save), { recursive: true });
 fs.writeFileSync(save, 'save');
 fs.mkdirSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Error reports'), { recursive: true });
 fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Error reports', `report-${process.pid}.zip`), 'report');
+// a stray DGMProbe folder (older runners kept their results there), and a player mod's own folder: a new
+// file and a rewritten one
+fs.mkdirSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'DGMProbe', 'shots'), { recursive: true });
+fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'DGMProbe', 'shots', `shot-${process.pid}.jpg`), 'shot');
+fs.writeFileSync(path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Mods', 'SomeMod', `session-${process.pid}.log`), 'session');
+const modConfig = path.join(process.env.DGM_PROBE_DOCUMENTS, 'Timberborn', 'Mods', 'SomeMod', 'config.txt');
+if (fs.existsSync(modConfig)) fs.writeFileSync(modConfig, `rewritten by the game ${process.pid}`);
 execFileSync('reg.exe', ['add', process.env.DGM_PROBE_REGISTRY_KEY, '/v', 'FakeSetting_h1', '/t', 'REG_DWORD', '/d', String(process.pid), '/f'], { stdio: 'ignore' });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

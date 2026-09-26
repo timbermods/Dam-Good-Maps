@@ -34,7 +34,7 @@ If any of these is missing, stop and tell me.
 
 These guide every design decision. When a choice isn't covered elsewhere, decide by these, and note the decision in "Editor decisions."
 
-1. **Edit features, not blocks.** The main way to edit is by working with things players think in: a river, a lake, a hill, a plateau, a canyon, a waterfall, a forest, a ruin field, the start. Each is an object with handles that can be moved, reshaped, resized or deleted at any time, like shapes in a drawing program. Block-level sculpting exists, but as a secondary tool.
+1. **The brush kit is the core of the editor** (Kyler, PLAN §20 D182). The land is shaped by painting it: Raise, Lower, Flatten, Smooth, Naturalize, Terrace and Ramp, with the Select tool, the water tools, Demolish and the forest and berry brushes. There are no landform objects with handles and no presets; the generator and analysis recognise landforms by reading the terrain. (This replaces "edit features, not blocks".)
 2. **Valid by default.** Tools produce playable results without the user having to know the rules:
    - rivers always flow downhill to an outlet, and a river entering at the map edge gets a sealed mouth, so its water can't drain back off the map;
    - a lake fills to its outlet sill and has an inflow;
@@ -43,7 +43,7 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
    - forests grow only where they'll survive, unless the user overrides it.
 
    When something does go wrong, the issue comes with a one-click fix ("move the start to the nearest valid spot," "open an outlet for this lake").
-3. **See it before you commit.** Every tool previews its result live, including its effect on water, before the click that applies it.
+3. **Live editing is how you edit** (Kyler, PLAN §20 D179, the editor's core principle). Every edit happens as you drag: the result appears at once, the water catches up visibly, and one undo takes it back. No tool plans, confirms and then places; limits and checks show while dragging, never as dialogs afterwards.
 4. **Nothing is scary.** Unlimited undo, a visible history, autosave, and non-destructive edits. Trying something should never risk losing work.
 5. **Few concepts, plain language.** The interface is organized around four ideas: Land, Water, Resources and Start. No jargon: "flow: gentle / steady / strong," not "SpecifiedStrength 1.5"; "height," not "voxel layer." Exact numbers appear in advanced mode.
 6. **Start from something good.** Users begin from a generated map, a template or an imported map, never a blank grid unless they ask for one.
@@ -195,6 +195,8 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 **Built in roadmap M7** (`PLAN.md` §20, D69, D71, D78–D80): the resources and the map objects. Resources: forests, berry patches and ruin fields drawn as areas (drag a rectangle or click the corners); the preview shows where trees and bushes live (green), where trees would stand dead (brown, when **Only where trees live** is off) and what stays bare, and ruin areas become fields of the official shape. Mine sites, relics (small, medium, large) and geothermal fields are placed with a click and a facing, and their report says how far out they are and where the generator puts them. Land gains thorn belts (drawn, with a density); Water gains weirs and plugs (a click on a river closes it wall to wall) and the plugged spillway (a click on a lake's shore). A river turns to badwater from its inspector, with its warnings shown first. Every object shows its footprint under the pointer before the click: green where the game keeps it, red with the reason where it would delete it, and a click there is refused. **Advanced** adds unstable cores (radius and countdown) and any object placed by hand, and opens the objects on a clicked tile: move by a tile, turn, delete, and numeric fields (a water source's strength, and **Turns on later** with its cycle and day). The brushes, locks and overlays of advanced mode come with their milestones.
 
 **Built in roadmap M8** (`PLAN.md` §20, D97–D105): the water preview and the background checks. After an edit the water re-settles from its previous state in about a second on 256²; the exact settle and every check follow in the background, and the health pill shows their progress; export settles exactly first, with progress. Imported maps get their water and colony checks too. **Show** in every tab adds **Soil moisture**, **Badwater**, **Drought** (what the water keeps through the map's drought) and, on imported maps with caves, **Water under roofs** (the file's own water, kept there). The start's indicators and its footprint follow the three start requirements: water on its own level without stairs, and living trees and berry bushes within 20 tiles' walk, with the map's settings; the other start targets show as warnings. Set pieces, lakes, landforms and moves clear or move the objects on the ground they reshape, and say so.
+
+**Live editing** (`PLAN.md` §20, D158, D179) replaces every plan-confirm-place flow above with a live version, water first, and retires each old flow once its live version exists. The land and resource-area tools above are removed outright (D182): the brush kit replaces them.
 
 ## 5. Creative features
 

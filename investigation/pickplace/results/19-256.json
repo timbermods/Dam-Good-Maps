@@ -1,0 +1,658 @@
+{
+  "id": 19,
+  "family": "badlands",
+  "name": "Badlands National Park",
+  "lat": 43.75,
+  "lon": -102.49,
+  "size": 256,
+  "choices": [
+    {
+      "mpt": 60,
+      "metrics": {
+        "min": 795.148193359375,
+        "max": 986.9611206054688,
+        "relief": 133.14923095703125,
+        "fullRelief": 191.81292724609375,
+        "seaProxy": 0,
+        "flatShare": 0.5120287698412699,
+        "steepShare": 0,
+        "channelCells": 123,
+        "channelIndex": 1338
+      },
+      "prediction": {
+        "score": 92,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [
+          "Try 6.9 km southeast, towards inferred drainage (43.72521, -102.41091). A real river is unverified."
+        ],
+        "metresPerTile": 60,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 30,
+      "metrics": {
+        "min": 811.0100708007812,
+        "max": 921.9293823242188,
+        "relief": 80.2154541015625,
+        "fullRelief": 110.9193115234375,
+        "seaProxy": 0,
+        "flatShare": 0.4802827380952381,
+        "steepShare": 0,
+        "channelCells": 131,
+        "channelIndex": 570
+      },
+      "prediction": {
+        "score": 92,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 30,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 120,
+      "metrics": {
+        "min": 756.0050659179688,
+        "max": 989.1791381835938,
+        "relief": 126.34368896484375,
+        "fullRelief": 233.174072265625,
+        "seaProxy": 0,
+        "flatShare": 0.5235615079365079,
+        "steepShare": 0,
+        "channelCells": 112,
+        "channelIndex": 1146
+      },
+      "prediction": {
+        "score": 92,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 120,
+        "riverVerified": false
+      }
+    }
+  ],
+  "selected": {
+    "mpt": 60,
+    "metrics": {
+      "min": 795.148193359375,
+      "max": 986.9611206054688,
+      "relief": 133.14923095703125,
+      "fullRelief": 191.81292724609375,
+      "seaProxy": 0,
+      "flatShare": 0.5120287698412699,
+      "steepShare": 0,
+      "channelCells": 123,
+      "channelIndex": 1338
+    },
+    "prediction": {
+      "score": 92,
+      "verdict": "promising",
+      "warnings": [],
+      "suggestions": [
+        "Try 6.9 km southeast, towards inferred drainage (43.72521, -102.41091). A real river is unverified."
+      ],
+      "metresPerTile": 60,
+      "riverVerified": false
+    }
+  },
+  "vertical": {
+    "min": 792.7113647460938,
+    "max": 993.3563842773438,
+    "levels": 15,
+    "gamma": 1,
+    "cliffShare": 0.007354764709529419,
+    "padShare": 0.5659216318432637
+  },
+  "pixelMetres": 55.21535460013907,
+  "passed": false,
+  "legacyPassed": false,
+  "current": {
+    "passed": false,
+    "failures": [
+      {
+        "id": "water.settles",
+        "message": "the water is still moving after 4 game days"
+      }
+    ],
+    "waterDistance": 19.071067811865476,
+    "shore": 19642,
+    "retainedLegacyFailures": [
+      "water.settles",
+      "start.water"
+    ],
+    "policy": "LOCAL D151–D153 adapter; Normal start; base load/design/resource checks; water amount, connected-body size and outflow advisory; canonical settle required; D164 log thresholds pending shared implementation"
+  },
+  "checks": [
+    {
+      "id": "file.size",
+      "class": "load",
+      "ok": true,
+      "value": "256x256",
+      "limit": "4..256",
+      "message": "map is 256×256 (the game allows 4–256 per side)",
+      "severity": "info"
+    },
+    {
+      "id": "file.layers",
+      "class": "load",
+      "ok": true,
+      "value": 23,
+      "limit": 23,
+      "message": "23 voxel layers (exactly 23)",
+      "severity": "info"
+    },
+    {
+      "id": "file.version",
+      "class": "load",
+      "ok": true,
+      "value": "1.1.2.4-52e959e-sw",
+      "limit": "1.1.2.4-52e959e-sw",
+      "message": "version 1.1.2.4-52e959e-sw, version.txt 1.1.2.4-52e959e-sw",
+      "severity": "info"
+    },
+    {
+      "id": "file.singletons",
+      "class": "load",
+      "ok": true,
+      "message": "all present, WaterSimulationMigrator.IsMigrated true",
+      "severity": "info"
+    },
+    {
+      "id": "file.arrays",
+      "class": "load",
+      "ok": true,
+      "value": 1,
+      "limit": 1,
+      "message": "every packed array has W·H tokens per slot",
+      "severity": "info"
+    },
+    {
+      "id": "file.metadata",
+      "class": "load",
+      "ok": true,
+      "message": "metadata 256×256",
+      "severity": "info"
+    },
+    {
+      "id": "file.thumbnail",
+      "class": "load",
+      "ok": true,
+      "message": "960×540 JPEG",
+      "severity": "info"
+    },
+    {
+      "id": "entities.templates",
+      "class": "load",
+      "ok": true,
+      "message": "every template is in the common collections",
+      "severity": "info"
+    },
+    {
+      "id": "entities.enums",
+      "class": "load",
+      "ok": true,
+      "message": "every orientation is a valid enum name",
+      "severity": "info"
+    },
+    {
+      "id": "entities.components",
+      "class": "load",
+      "ok": true,
+      "message": "required components present",
+      "severity": "info"
+    },
+    {
+      "id": "entities.ids",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "0 duplicate or malformed ids",
+      "severity": "info"
+    },
+    {
+      "id": "entities.placement",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every object would load",
+      "severity": "info"
+    },
+    {
+      "id": "start.clear",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "nothing overlaps the start",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.max_height",
+      "class": "design",
+      "ok": true,
+      "value": 16,
+      "limit": 16,
+      "message": "highest column 16 (the in-game editor's limit is 16)",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.top_layer_free",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "layer 22 is empty",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.single_floor",
+      "class": "design",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "one floor per tile",
+      "severity": "info"
+    },
+    {
+      "id": "terrain.supported",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "all terrain is supported",
+      "severity": "info"
+    },
+    {
+      "id": "slopes.connect",
+      "class": "load",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "2750 slopes join level z to z+1",
+      "severity": "info"
+    },
+    {
+      "id": "start.count",
+      "class": "load",
+      "ok": true,
+      "value": 1,
+      "limit": 1,
+      "message": "1 StartingLocation(s) (a vanilla map needs exactly one)",
+      "severity": "info"
+    },
+    {
+      "id": "start.flat",
+      "class": "load",
+      "ok": true,
+      "message": "the district center's 3×3 is flat ground at the start level",
+      "severity": "info"
+    },
+    {
+      "id": "start.entrance",
+      "class": "load",
+      "ok": true,
+      "where": {
+        "tiles": [
+          [
+            192,
+            92
+          ]
+        ]
+      },
+      "message": "entrance tile (192,92) is free ground at level 3",
+      "severity": "info"
+    },
+    {
+      "id": "water.settles",
+      "class": "playability",
+      "ok": false,
+      "value": 3072,
+      "limit": 3072,
+      "message": "the water is still moving after 4 game days",
+      "severity": "error"
+    },
+    {
+      "id": "water.no_flood",
+      "class": "playability",
+      "ok": true,
+      "value": 0.031,
+      "limit": 0.35,
+      "message": "3% of the map is under water (at most 35%; official maps reach 40% at p90)",
+      "severity": "info"
+    },
+    {
+      "id": "water.clean_exists",
+      "class": "playability",
+      "ok": true,
+      "value": 2062,
+      "limit": 1310,
+      "message": "2062 tiles of clean water (at least 2% of the map, 1310)",
+      "severity": "info"
+    },
+    {
+      "id": "water.outflow",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every source's water drains to a map edge or a planned lake",
+      "severity": "info"
+    },
+    {
+      "id": "water.clean_reach",
+      "class": "playability",
+      "ok": true,
+      "value": 1650,
+      "limit": 40,
+      "message": "the largest body of clean water badwater never reaches has 1650 tiles (at least 40)",
+      "severity": "info"
+    },
+    {
+      "id": "water.badwater_contained",
+      "class": "playability",
+      "ok": true,
+      "applicable": false,
+      "message": "no badwater basin with a planned outlet on this map",
+      "severity": "info"
+    },
+    {
+      "id": "start.dry",
+      "class": "playability",
+      "ok": true,
+      "where": {
+        "tiles": [
+          [
+            192,
+            94
+          ]
+        ]
+      },
+      "message": "the district center and its ring stay dry after the water settles",
+      "severity": "info"
+    },
+    {
+      "id": "start.water",
+      "class": "playability",
+      "ok": false,
+      "value": "none",
+      "limit": 20,
+      "message": "no clean water a pump reaches on the start's own level within 64 tiles' walk: beavers would need stairs to drink",
+      "severity": "error"
+    },
+    {
+      "id": "start.badwater",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": "none",
+      "limit": 15,
+      "message": "no badwater or contaminated soil on the map",
+      "severity": "info"
+    },
+    {
+      "id": "start.reach",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": 58704,
+      "limit": 1300,
+      "message": "58704 dry tiles are walkable from the start through slopes (the target is 1300; official p10 1,007)",
+      "severity": "info"
+    },
+    {
+      "id": "start.food",
+      "class": "playability",
+      "ok": true,
+      "value": 48,
+      "limit": 30,
+      "message": "48 living berry bushes within 20 tiles' walk of the start (at least 30)",
+      "severity": "info"
+    },
+    {
+      "id": "start.wood",
+      "class": "playability",
+      "ok": true,
+      "value": 60,
+      "limit": 40,
+      "message": "60 living trees within 20 tiles' walk of the start (at least 40)",
+      "severity": "info"
+    },
+    {
+      "id": "start.ruins_clear",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "0 ruin columns within 15 tiles of the start (the target is none)",
+      "severity": "info"
+    },
+    {
+      "id": "plants.survive",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every living plant is on soil where it survives",
+      "severity": "info"
+    },
+    {
+      "id": "plants.drought",
+      "class": "playability",
+      "advisory": true,
+      "ok": false,
+      "value": 49,
+      "limit": 0,
+      "message": "49 berry bushes near the start dry out in a 9-day drought (their water drains; a blueberry dies after about 9 dry days). Irrigate or dam upstream.",
+      "where": {
+        "entities": [
+          "43703547-4b1f-632a-9978-3df90238e114",
+          "4c76ff37-4a21-a02e-9a76-00f5893166d4",
+          "4b76fda4-4b21-a1c1-9975-ff628a316867",
+          "4e77025d-4821-9d08-9875-fdcf8b3169fa",
+          "4d7700ca-4921-9e9b-9775-fc3c8c316b8d",
+          "4876f8eb-4e21-a67a-9675-faa985316088",
+          "4776f758-4f21-a80d-9575-f9168631621b",
+          "4a76fc11-4c21-a354-9475-f783873163ae",
+          "4976fa7e-4d21-a4e7-9375-f5f088316541",
+          "4476f29f-4221-9396-a276-0d8d81315a3c",
+          "4376f10c-4321-9529-a176-0bfa82315bcf",
+          "4674b72e-5023-e837-9473-b8ec8f33aedd",
+          "4774b8c1-4f23-e6a4-9573-ba7f8e33ad4a",
+          "4474b408-5223-eb5d-9673-bc128d33abb7",
+          "4574b59b-5123-e9ca-9773-bda58c33aa24",
+          "4a74bd7a-4c23-e1eb-9073-b2a08b33a891",
+          "4b74bf0d-4b23-e058-9173-b4338a33a6fe",
+          "4874ba54-4e23-e511-9273-b5c68933a56b",
+          "4974bbe7-4d23-e37e-9373-b7598833a3d8",
+          "3e74aa96-4823-db9f-9c73-c5848733a245",
+          "3f74ac29-4723-da0c-9d73-c7178633a0b2",
+          "38544d79-35fe-ee70-1e5d-38db8d4077aa",
+          "37544be6-36fe-f003-1d5d-37488e40793d",
+          "36544a53-37fe-f196-205d-3c018b407484",
+          "355448c0-38fe-f329-1f5d-3a6e8c407617",
+          "3c5453c5-39fe-f4bc-225d-3f278940715e",
+          "3b545232-3afe-f64f-215d-3d948a4072f1",
+          "3a54509f-3bfe-f7e2-245d-424d87406e38",
+          "39544f0c-3cfe-f975-235d-40ba88406fcb",
+          "40545a11-3dfe-fb08-165d-2c4385406b12",
+          "3f54587e-3efe-fc9b-155d-2ab086406ca5",
+          "32520570-3c01-3679-185a-f0d273428d53",
+          "33520703-3b01-34e6-195a-f26572428bc0",
+          "34520896-3a01-3353-165a-edac75429079",
+          "35520a29-3901-31c0-175a-ef3f74428ee6",
+          "36520bbc-4001-3cc5-145a-ea867742939f",
+          "37520d4f-3f01-3b32-155a-ec197642920c",
+          "38520ee2-3e01-399f-125a-e760794296c5",
+          "39521075-3d01-380c-135a-e8f378429532",
+          "3a521208-4401-4311-205a-fd6a7b4299eb",
+          "3b52139b-4301-417e-215a-fefd7a429858",
+          "9ed42044-e77b-5b8d-d16d-a522ba2fd903",
+          "9fd421d7-e67b-59fa-d26d-a6b5b92fd770",
+          "a0d4236a-e57b-5867-cf6d-a1fcbc2fdc29",
+          "a1d424fd-e47b-56d4-d06d-a38fbb2fda96",
+          "9ad419f8-e37b-5541-cd6d-9ed6be2fdf4f",
+          "9bd41b8b-e27b-53ae-ce6d-a069bd2fddbc",
+          "9cd41d1e-e17b-521b-cb6d-9bb0c02fe275",
+          "d6042f5a-af0e-17f7-aa79-d3bce123aa69"
+        ]
+      },
+      "severity": "warning"
+    },
+    {
+      "id": "water.reservoir",
+      "class": "playability",
+      "advisory": true,
+      "ok": true,
+      "value": 869,
+      "limit": 380,
+      "where": {
+        "tiles": [
+          [
+            195,
+            62
+          ]
+        ]
+      },
+      "message": "the best dam site within 40 tiles holds 869 and natural pools keep 0; 380 carries 50 beavers through a 9-day drought",
+      "severity": "info"
+    },
+    {
+      "id": "resources.scrap",
+      "class": "playability",
+      "ok": true,
+      "value": 15630,
+      "limit": 7766,
+      "message": "15630 scrap metal in ruins (at least 7766: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "resources.trees",
+      "class": "playability",
+      "ok": true,
+      "value": 3277,
+      "limit": 1638,
+      "message": "3277 trees (at least 1638: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "resources.bushes",
+      "class": "playability",
+      "ok": true,
+      "value": 250,
+      "limit": 125,
+      "message": "250 berry bushes (at least 125: half the official median for this map size)",
+      "severity": "info"
+    },
+    {
+      "id": "ruins.fields",
+      "class": "playability",
+      "ok": true,
+      "value": 1,
+      "limit": 0.8,
+      "message": "100% of ruin columns are in fields of 10 or more (at least 80%; official median 97%)",
+      "severity": "info"
+    },
+    {
+      "id": "ruins.access",
+      "class": "playability",
+      "ok": true,
+      "value": 0,
+      "limit": 0,
+      "message": "every ruin column can be scavenged from its own level",
+      "severity": "info"
+    },
+    {
+      "id": "extras.placement",
+      "class": "playability",
+      "ok": true,
+      "applicable": false,
+      "message": "no relics, geothermal fields, mine sites, thorn belts or unstable cores on this map",
+      "severity": "info"
+    }
+  ],
+  "settled": false,
+  "ticks": 3072,
+  "sourceCount": 8,
+  "edgeChanges": 0,
+  "start": {
+    "x": 191,
+    "y": 93,
+    "z": 3,
+    "orientation": "Cw0"
+  },
+  "roundTripPassed": true,
+  "bytes": 404646,
+  "timings": {
+    "settingsMs": 159.89999997615814,
+    "fetchMs": 133.69999998807907,
+    "convertMs": 8388.900000035763,
+    "exportMs": 417.0999999642372,
+    "totalMs": 9099.599999964237
+  },
+  "requests": [
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/220/373.png",
+      "sha256": "7cc8445e3cfeba0bbadeaf2e630d166bf8775efb149b0ce00092f099807a239b",
+      "bytes": 41151,
+      "ms": 5.399999976158142,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/9/110/186.png",
+      "sha256": "88596d4f1d7c0a313ac19d64f304769458a40d88f54fb52748ec4e02d40e2bf4",
+      "bytes": 55348,
+      "ms": 3.5,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/55/93.png",
+      "sha256": "8df272def8bce9b11cac7f178cba5a0af7faa676957cf7ec952e143507ba891f",
+      "bytes": 66052,
+      "ms": 117.5,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/54/93.png",
+      "sha256": "c9bd6b08736d2ce6063167faa9250c621327ceb982a6675bb68ae784c30662b3",
+      "bytes": 73822,
+      "ms": 123.20000004768372,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/440/747.png",
+      "sha256": "259dcad3016b7311105cf6b466b6945cf9a503db0785c48e8a088da037367614",
+      "bytes": 124628,
+      "ms": 6.599999964237213,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/440/746.png",
+      "sha256": "8cd77a136c7bdf766735965c570e096e8d7052d20d4b8d492b535be0d8eacf98",
+      "bytes": 118964,
+      "ms": 7.200000047683716,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/441/746.png",
+      "sha256": "640af07ea327cc48c08049809145060e1aee6055eb9e30f00cce87c3e70682c9",
+      "bytes": 117910,
+      "ms": 7.900000035762787,
+      "cached": true
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/441/747.png",
+      "sha256": "50566c0409f50cb9f35f22b12abac0ed3dae89092deb397650700d285e306956",
+      "bytes": 124276,
+      "ms": 8.5,
+      "cached": true
+    }
+  ],
+  "heartbeats": 182
+}
