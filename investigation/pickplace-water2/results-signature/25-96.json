@@ -1,0 +1,1338 @@
+{
+  "id": 25,
+  "family": "glacial",
+  "name": "Yosemite Valley",
+  "lat": 37.74,
+  "lon": -119.59,
+  "size": 96,
+  "requested": {
+    "lat": 37.74,
+    "lon": -119.59,
+    "size": 96
+  },
+  "choices": [
+    {
+      "mpt": 60,
+      "metrics": {
+        "min": 1205.521240234375,
+        "max": 2471.251953125,
+        "relief": 1174.383544921875,
+        "fullRelief": 1265.730712890625,
+        "seaProxy": 0,
+        "flatShare": 0.10433114035087719,
+        "steepShare": 0.16584429824561403,
+        "channelCells": 214,
+        "channelIndex": 1925
+      },
+      "prediction": {
+        "score": 85.36622807017544,
+        "verdict": "promising",
+        "warnings": [
+          "Extreme relief may leave little room for a start."
+        ],
+        "suggestions": [
+          "Try a finer scale on the valley floor."
+        ],
+        "metresPerTile": 60,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 120,
+      "metrics": {
+        "min": 1189.1075439453125,
+        "max": 2731.677978515625,
+        "relief": 1343.5343017578125,
+        "fullRelief": 1542.5704345703125,
+        "seaProxy": 0,
+        "flatShare": 0.05712719298245614,
+        "steepShare": 0.09605263157894736,
+        "channelCells": 277,
+        "channelIndex": 2885
+      },
+      "prediction": {
+        "score": 88.15789473684211,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 120,
+        "riverVerified": false
+      }
+    },
+    {
+      "mpt": 240,
+      "metrics": {
+        "min": 1025.77685546875,
+        "max": 3147.24072265625,
+        "relief": 1559.9110107421875,
+        "fullRelief": 2121.4638671875,
+        "seaProxy": 0,
+        "flatShare": 0.054989035087719296,
+        "steepShare": 0.03245614035087719,
+        "channelCells": 263,
+        "channelIndex": 3749
+      },
+      "prediction": {
+        "score": 90.70175438596492,
+        "verdict": "promising",
+        "warnings": [],
+        "suggestions": [],
+        "metresPerTile": 240,
+        "riverVerified": false
+      }
+    }
+  ],
+  "selected": {
+    "mpt": 240,
+    "metrics": {
+      "min": 1025.77685546875,
+      "max": 3147.24072265625,
+      "relief": 1559.9110107421875,
+      "fullRelief": 2121.4638671875,
+      "seaProxy": 0,
+      "flatShare": 0.054989035087719296,
+      "steepShare": 0.03245614035087719,
+      "channelCells": 263,
+      "channelIndex": 3749
+    },
+    "prediction": {
+      "score": 90.70175438596492,
+      "verdict": "promising",
+      "warnings": [],
+      "suggestions": [],
+      "metresPerTile": 240,
+      "riverVerified": false
+    }
+  },
+  "vertical": {
+    "min": 1025.77685546875,
+    "max": 3147.24072265625,
+    "levels": 15,
+    "gamma": 1
+  },
+  "passed": true,
+  "playabilityPassed": true,
+  "signatureWaterDistance": 4.82842712474619,
+  "directPassed": false,
+  "firstPlanPassed": false,
+  "current": {
+    "passed": true,
+    "failures": [],
+    "waterDistance": 4.82842712474619,
+    "shore": 8344,
+    "retainedLegacyFailures": [
+      "start.water"
+    ],
+    "policy": "LOCAL D151–D153 adapter; Normal start; base load/design/resource checks; water amount, connected-body size and outflow advisory; canonical settle required; D164 log thresholds pending shared implementation"
+  },
+  "settled": true,
+  "ticks": 640,
+  "sourceCount": 3,
+  "waterDesign": {
+    "features": [
+      {
+        "id": "water-0",
+        "kind": "river",
+        "cells": 12,
+        "referenceArea": 7.9113855212926865,
+        "heads": 3,
+        "rawRange": [2489.04931640625,2504.17578125]
+      }
+    ],
+    "sources": [
+      {
+        "i": 8639,
+        "area": 12,
+        "strength": 1.2,
+        "featureId": "water-0",
+        "headId": "water-0",
+        "kind": "upstream river entry"
+      },
+      {
+        "i": 8735,
+        "area": 12,
+        "strength": 1.2,
+        "featureId": "water-0",
+        "headId": "water-0",
+        "kind": "upstream river entry"
+      },
+      {
+        "i": 8831,
+        "area": 12,
+        "strength": 1.2,
+        "featureId": "water-0",
+        "headId": "water-0",
+        "kind": "upstream river entry"
+      }
+    ],
+    "outlets": [],
+    "variant": 0,
+    "algorithm": "signature-water-v4",
+    "originAudit": {
+      "policy": "LOCAL: exact edge entries or head/single-basin origins; whole-head counterfactual prefill removes springs inside existing flow; lake spring may fill its own lake",
+      "removedHeads": [],
+      "prefillChecked": true,
+      "canonical": {
+        "checked": true,
+        "passed": true,
+        "checks": [
+          {
+            "head": "water-0",
+            "kind": "boundary opening",
+            "passed": true
+          }
+        ],
+        "policy": "LOCAL canonical whole-head audit: turn off each interior head, keeping footprints; other heads must settle with its origin dry. Boundary openings are origins by definition."
+      }
+    },
+    "bedCells": 12,
+    "landEdits": 0
+  },
+  "drama": {
+    "referenceCoverage": 1,
+    "referenceWaterCells": 15.317548095830716,
+    "retainedWaterFraction": 0.638759308259432,
+    "waterPrecision": 0.01877970523209867,
+    "wetShare": 0.05653211805555555,
+    "targetCoverage": 1,
+    "features": [
+      {
+        "id": "water-0",
+        "kind": "river",
+        "cells": 12,
+        "referenceArea": 7.9113855212926865,
+        "heads": 3,
+        "rawRange": [2489.04931640625,2504.17578125],
+        "coverage": 1,
+        "present": true
+      }
+    ],
+    "signaturePresent": true,
+    "observedSignature": true,
+    "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+    "anchor": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 23.66402127034962,
+      "retained": 0.766922861393747,
+      "precision": 0.005969894376558889,
+      "signaturePresent": null,
+      "features": [],
+      "wetShare": 0.3298611111111111
+    },
+    "ownSignaturePresent": true
+  },
+  "landEdits": 0,
+  "edgeChanges": 0,
+  "bedCells": 12,
+  "start": {
+    "x": 82,
+    "y": 88,
+    "z": 13,
+    "orientation": "Cw0"
+  },
+  "roundTripPassed": true,
+  "bytes": 144482,
+  "reference": {
+    "coverage": 1,
+    "errors": [],
+    "requests": [
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "window": [4527,14809,5313,15431],
+        "nativePixels": 488892,
+        "ms": 1602,
+        "status": "read"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "window": [4134,14499,5706,15741],
+        "nativePixels": 1952424,
+        "ms": 78.69999998807907,
+        "status": "read"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "window": [3349,13878,6491,16362],
+        "nativePixels": 7804728,
+        "ms": 2483.399999976158,
+        "status": "read"
+      }
+    ],
+    "ranges": [
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=0-65536",
+        "status": 206,
+        "bytes": 65537,
+        "ms": 911.1999999880791,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "20c2e8f103f469ee9debe896fcaa49a744b1cc974ce7389370df9941967e3756"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=67305472-67502080",
+        "status": 206,
+        "bytes": 196609,
+        "ms": 376.5999999642372,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "b9809045023190f09591ea9ab2582d3a4792b6ea0510f2f59a7d007cf9731311"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=69533696-69664768",
+        "status": 206,
+        "bytes": 131073,
+        "ms": 587.2000000476837,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "4d192c56f0d9f556a1047c4d3e08e2495973911c20e1390e8cadefc6b2700978"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=65470464-65798144",
+        "status": 206,
+        "bytes": 327681,
+        "ms": 1156.699999988079,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "b5906137abdf3e873788b27baed234fb92b93901fa135426173d4431dc2c12be"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=67239936-67305472",
+        "status": 206,
+        "bytes": 65537,
+        "ms": 1353.800000011921,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "5a9b269c87994b5de641a2736402368d3e85d935ec5ab5d63afa889079582de5"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=67502080-67567616",
+        "status": 206,
+        "bytes": 65537,
+        "ms": 1560.199999988079,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "33f4c499cad19506d666e5569379466374c9e221127c7d514c81640a44cb95ae"
+      },
+      {
+        "name": "ESA_WorldCover_10m_2021_v200_N36W120_Map.tif",
+        "range": "bytes=69664768-69795840",
+        "status": 206,
+        "bytes": 131073,
+        "ms": 2299.7000000476837,
+        "etag": "\"71495d1ab2ce752b50fb08dbdf36f360-14\"",
+        "sha256": "880c38b63bb73bc98d9d8809f72b1ed13c72f8470e649a164f99de0d112fef8d"
+      }
+    ]
+  },
+  "autoTry": {
+    "attempts": [
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "variant": 0,
+        "passed": true,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.4752235888863476,
+          "waterPrecision": 0.006378730071229956,
+          "wetShare": 0.19129774305555555,
+          "targetCoverage": 0.5661375661375662,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 189,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.5661375661375662,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.4752235888863476,
+            "precision": 0.006378730071229956,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.19129774305555555
+          },
+          "ownSignaturePresent": false
+        },
+        "failures": [],
+        "sources": [
+          {
+            "i": 1312,
+            "area": 34,
+            "score": 78.576732640615,
+            "kind": "tributary head spring",
+            "headId": "designed-drainage",
+            "upstreamChannels": 0,
+            "entryFrom": null,
+            "routeLength": 188,
+            "downstreamInterest": 62.57673264061501,
+            "strength": 5.196152422706632,
+            "featureId": "designed-drainage",
+            "x": 64,
+            "y": 13
+          }
+        ],
+        "bedCells": 0,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 1391.5
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "variant": 1,
+        "passed": true,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.09531861446269246,
+          "waterPrecision": 0.002376840590205911,
+          "wetShare": 0.10297309027777778,
+          "targetCoverage": 0.21693121693121692,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 189,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.21693121693121692,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.09531861446269246,
+            "precision": 0.002376840590205911,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.10297309027777778
+          },
+          "ownSignaturePresent": false
+        },
+        "failures": [],
+        "sources": [
+          {
+            "i": 1312,
+            "area": 34,
+            "score": 78.576732640615,
+            "kind": "tributary head spring",
+            "headId": "designed-drainage",
+            "upstreamChannels": 0,
+            "entryFrom": null,
+            "routeLength": 188,
+            "downstreamInterest": 62.57673264061501,
+            "strength": 10.392304845413264,
+            "featureId": "designed-drainage",
+            "x": 64,
+            "y": 13
+          }
+        ],
+        "bedCells": 0,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 648.5
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "variant": 2,
+        "passed": true,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.022386808097224556,
+          "waterPrecision": 0.0011772486733065712,
+          "wetShare": 0.048828125,
+          "targetCoverage": 0.31896551724137934,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 116,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.31896551724137934,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.022386808097224556,
+            "precision": 0.0011772486733065712,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.048828125
+          },
+          "ownSignaturePresent": false
+        },
+        "failures": [],
+        "sources": [
+          {
+            "i": 8871,
+            "area": 30,
+            "score": 55.86172556223019,
+            "kind": "tributary head spring",
+            "headId": "designed-drainage",
+            "upstreamChannels": 0,
+            "entryFrom": null,
+            "routeLength": 115,
+            "downstreamInterest": 39.86172556223019,
+            "strength": 5.196152422706632,
+            "featureId": "designed-drainage",
+            "x": 39,
+            "y": 92
+          }
+        ],
+        "bedCells": 0,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 584.6000000238419
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "variant": 0,
+        "passed": false,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.4225719118462744,
+          "waterPrecision": 0.008395852588556622,
+          "wetShare": 0.09657118055555555,
+          "targetCoverage": 0.3076923076923077,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.3076923076923077,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.7591252087867072,
+            "precision": 0.008489581799426861,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.22960069444444445
+          },
+          "ownSignaturePresent": false
+        },
+        "failures": [
+          {
+            "id": "start.food",
+            "message": "28 living berry bushes within 20 tiles' walk of the start (at least 30)"
+          },
+          {
+            "id": "start.wood",
+            "message": "0 living trees within 20 tiles' walk of the start (at least 40)"
+          },
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "sources": [
+          {
+            "i": 4789,
+            "area": 13,
+            "strength": 1.5,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "river head spring",
+            "x": 85,
+            "y": 49
+          }
+        ],
+        "bedCells": 13,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 437.19999998807907
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "variant": 1,
+        "passed": false,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.4484807883404346,
+          "waterPrecision": 0.008312844453121788,
+          "wetShare": 0.103515625,
+          "targetCoverage": 0.3076923076923077,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.3076923076923077,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.765162101147954,
+            "precision": 0.008336469722297695,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.23567708333333334
+          },
+          "ownSignaturePresent": false
+        },
+        "failures": [
+          {
+            "id": "start.wood",
+            "message": "0 living trees within 20 tiles' walk of the start (at least 40)"
+          },
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "sources": [
+          {
+            "i": 4789,
+            "area": 13,
+            "strength": 3,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "river head spring",
+            "x": 85,
+            "y": 49
+          }
+        ],
+        "bedCells": 13,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 416.69999998807907
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "variant": 2,
+        "passed": false,
+        "accepted": false,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.5915406982670449,
+          "waterPrecision": 0.011247496487152191,
+          "wetShare": 0.10091145833333333,
+          "targetCoverage": 0.9230769230769231,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.9230769230769231,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.7591252087867072,
+            "precision": 0.008347562773042397,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.23350694444444445
+          },
+          "ownSignaturePresent": true
+        },
+        "failures": [
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "sources": [
+          {
+            "i": 4789,
+            "area": 13,
+            "strength": 1.5,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "river head spring",
+            "x": 85,
+            "y": 49
+          }
+        ],
+        "bedCells": 13,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 543.3000000119209
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 240,
+        "reason": "different scale",
+        "variant": 0,
+        "passed": true,
+        "accepted": true,
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 15.317548095830716,
+          "retainedWaterFraction": 0.638759308259432,
+          "waterPrecision": 0.01877970523209867,
+          "wetShare": 0.05653211805555555,
+          "targetCoverage": 1,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 12,
+              "referenceArea": 7.9113855212926865,
+              "heads": 3,
+              "rawRange": [2489.04931640625,2504.17578125],
+              "coverage": 1,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.766922861393747,
+            "precision": 0.005969894376558889,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.3298611111111111
+          },
+          "ownSignaturePresent": true
+        },
+        "failures": [],
+        "sources": [
+          {
+            "i": 8639,
+            "area": 12,
+            "strength": 1.2,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "upstream river entry",
+            "x": 95,
+            "y": 89
+          },
+          {
+            "i": 8735,
+            "area": 12,
+            "strength": 1.2,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "upstream river entry",
+            "x": 95,
+            "y": 90
+          },
+          {
+            "i": 8831,
+            "area": 12,
+            "strength": 1.2,
+            "featureId": "water-0",
+            "headId": "water-0",
+            "kind": "upstream river entry",
+            "x": 95,
+            "y": 91
+          }
+        ],
+        "bedCells": 12,
+        "landEdits": 0,
+        "settled": true,
+        "ms": 301.69999998807907
+      }
+    ],
+    "selectedAttempt": 6,
+    "suggestions": [
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "passed": false,
+        "failures": [],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.4752235888863476,
+          "waterPrecision": 0.006378730071229956,
+          "wetShare": 0.19129774305555555,
+          "targetCoverage": 0.5661375661375662,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 189,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.5661375661375662,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.4752235888863476,
+            "precision": 0.006378730071229956,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.19129774305555555
+          },
+          "ownSignaturePresent": false
+        },
+        "preview": {
+          "size": 40,
+          "heights": [3,3,4,4,4,5,5,7,8,9,11,13,14,14,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,15,14,13,11,11,10,9,7,6,8,9,2,3,3,3,4,4,5,6,8,8,12,13,12,14,14,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,14,13,11,10,10,9,7,6,7,9,2,2,2,3,3,4,4,5,8,10,8,9,11,13,14,14,14,14,14,13,14,14,14,14,15,15,15,15,15,14,13,13,11,10,9,9,8,5,5,6,2,2,2,2,3,3,3,4,5,6,8,9,11,13,13,13,13,14,13,13,13,14,14,15,15,15,15,14,14,14,13,12,11,10,9,9,8,6,4,5,1,1,2,2,2,3,3,4,5,5,8,9,11,12,13,13,13,14,13,13,13,14,14,15,15,15,15,14,14,14,14,13,11,10,9,8,8,6,4,4,1,1,1,1,2,2,2,3,4,6,7,8,10,11,11,11,11,13,13,13,13,14,15,15,15,15,15,14,14,14,13,13,12,10,10,8,7,5,3,3,1,1,1,1,1,2,2,2,2,3,6,8,9,10,9,10,11,13,13,13,14,14,15,16,15,15,15,14,14,13,13,12,12,11,9,7,7,5,3,2,1,1,1,1,1,1,1,1,2,2,4,7,7,8,8,10,9,11,12,13,14,14,15,16,16,15,15,14,14,13,13,12,12,11,9,6,5,3,2,2,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6,8,11,12,13,14,14,14,15,15,15,15,14,13,13,13,12,11,11,9,7,4,3,2,2,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,5,7,10,12,13,13,13,14,14,15,15,15,14,13,13,13,12,11,10,8,5,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,6,9,11,12,11,11,11,12,14,14,14,14,13,13,13,13,12,11,10,8,4,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,5,9,12,10,10,10,10,12,12,14,14,13,12,12,12,13,11,10,9,8,4,2,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1,2,2,3,4,6,7,7,8,9,11,12,13,13,13,12,12,12,11,11,10,8,6,3,2,1,1,1,3,3,3,2,2,1,1,1,1,1,1,1,1,1,2,3,3,5,5,7,8,9,11,12,13,13,12,10,11,10,8,7,6,5,4,2,2,1,1,1,4,4,4,2,2,1,1,1,1,1,1,1,1,1,1,2,3,4,6,7,8,9,11,12,12,12,11,10,9,5,5,5,4,3,3,2,1,1,1,1,6,5,4,3,5,4,2,1,1,1,1,1,1,1,1,2,2,4,5,7,8,10,10,10,10,8,7,6,5,4,3,2,2,1,1,1,1,1,1,1,7,6,4,4,6,5,2,1,1,1,1,1,1,1,1,1,2,4,4,6,7,8,9,9,9,6,7,5,4,2,2,2,2,1,1,1,1,1,1,1,7,7,5,6,8,7,4,2,1,1,1,1,1,1,1,1,1,2,3,5,6,6,7,6,5,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,8,7,6,7,9,8,6,3,1,1,1,1,1,1,1,1,1,1,1,2,4,5,6,5,4,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,10,8,7,8,10,11,8,5,2,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,10,9,9,9,10,12,10,7,3,2,1,1,1,1,1,1,1,1,1,1,1,1,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,10,10,10,11,12,11,8,4,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,12,11,11,13,13,12,11,9,6,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,12,12,12,13,14,13,12,9,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,13,12,13,14,14,13,12,10,7,4,3,3,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,13,13,13,14,14,14,13,11,9,7,6,6,5,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,3,3,3,4,4,3,3,14,14,13,14,14,14,13,12,11,10,8,7,5,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,5,5,6,6,7,7,7,4,15,14,13,14,14,14,13,12,12,11,10,8,7,6,5,2,1,1,1,1,1,1,1,1,1,2,4,3,3,3,5,6,7,7,7,8,8,8,8,6,15,15,14,14,14,13,13,12,12,12,10,10,8,8,6,2,3,2,1,1,1,1,2,2,2,3,5,5,5,8,7,7,7,8,8,9,9,9,8,7,15,15,13,13,14,14,13,12,12,12,12,10,9,8,5,3,4,3,2,2,2,2,2,2,3,4,6,6,7,8,8,7,8,8,9,9,10,10,9,9,15,15,13,13,13,13,13,12,13,13,13,13,10,7,5,4,5,5,5,5,4,4,3,3,3,6,7,8,10,9,9,9,9,9,10,10,11,12,12,11,15,14,13,13,13,13,13,13,13,13,13,13,8,6,6,5,6,6,7,6,6,5,4,4,4,6,7,9,10,10,9,9,9,10,10,11,11,13,13,11,15,14,13,13,13,13,13,13,13,13,13,13,8,9,9,7,9,12,12,8,9,7,6,5,4,7,9,11,11,10,10,10,10,11,11,12,12,13,14,12,15,14,13,13,13,13,13,13,13,13,13,14,10,9,10,11,11,12,12,10,10,9,6,6,5,8,9,11,11,11,11,11,11,11,12,12,12,13,14,13,15,14,14,13,13,13,13,13,13,13,14,14,12,10,10,11,11,12,12,11,11,10,7,6,6,8,10,12,12,11,11,11,12,12,12,13,13,13,14,13,15,14,14,14,13,13,13,13,13,13,14,14,13,12,11,11,11,12,12,13,13,12,8,7,7,8,11,12,12,12,12,12,12,12,12,13,14,14,13,13,15,14,14,14,13,13,12,13,13,13,14,13,13,12,11,11,11,11,12,13,13,13,10,8,7,10,10,12,12,12,12,12,12,13,13,13,13,14,14,13,15,14,14,14,13,12,12,12,13,13,13,13,12,11,11,11,11,12,12,13,13,13,12,10,9,11,11,12,12,12,13,12,12,12,13,13,13,14,15,14,15,14,14,14,13,12,12,12,12,12,12,13,11,11,11,11,11,12,12,13,13,13,12,12,10,11,12,12,12,12,13,13,12,12,13,13,14,14,15,15,15,14,14,14,13,12,12,12,12,12,12,12,11,11,11,11,12,12,12,13,13,13,13,12,11,11,12,12,12,12,13,13,13,13,12,13,13,14,15,15],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.027772547175664613,0,0.018871129647993052,0.010843133395381616,0.020189677965651093,0.041914548444934904,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.025720733097284804,0.035295693507444666,0.05282384414170132,0.04670336671536931,0.03738731230748687,0.04383664211993764,0.06437834251934411,0.041899625368711314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.07162832451593688,0.07110573957263694,0.050677388443021845,0.06724274812860329,0.06377529667999604,0.07213444236424907,0.04472432586868181,0.05215272258283114,0.11065738335957002,0.10869494672153433,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0643279736430348,0.06428149363852019,0.13670369868757404,0.1356615489650544,0.1075762692803634,0.09451168761496376,0.09553692376153149,0.07791219205034704,0.07105298705316848,0.07747533570130831,0.05839180139121023,0.05536485112509791,0.055685804973312034,0.18229045297480848,0.004735094593172085,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06444174582704086,0.06439786439955864,0.06426280549178594,0.192415809720975,0.14214325405242947,0.1295264227007791,0.06478167877668076,0.056892216204148034,0.08421562819347969,0.0733238300599977,0.08395902770383269,0.0960566761284151,0.049786287874071376,0.05155119259017875,0.1641178634002594,0.1252493562041632,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06449723287235634,0.20910145954225995,0.35100057513202143,0.18500879912956988,0.11881642544834314,0.11779507172645495,0.09046675082854147,0.05682333689704387,0.07458507338774722,0.041771828322839155,0.060476887912823095,0.06810336948732267,0.07787128538137414,0.15053478507074966,0.15492897642674205,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06431182923914247,0.06386665655207985,0.31208696700198996,0.17726290415785467,0.18830006753403217,0.10443352829593618,0.11803639938032559,0.07231067248491563,0.05276018560151548,0.07696253162830734,0.0830099430292275,0.05099733988172605,0.05053993127389706,0.14825852498440698,0.17249858561348608,0,0,0,0.049756830276494225,0.04976774450884458,0.0497865509973696,0.04979335944732018,0.04981843277714988,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.13750754851163602,0.07299774889972281,0.13257719804943233,0.06986703601769016,0.08475072206217076,0.056047963047362565,0.05653070348781105,0.05501315909624099,0.14113830099014296,0.2277319984667068,0.08560125745509393,0.1271718877891647,0.09301141495677114,0,0,0,0.04975725894768148,0.04976635475059291,0.04978441066579638,0.049798581990519265,0.049837866484237166,0.04987355697165439,0.04989837523026785,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08184704319708518,0.11891816598195358,0.0994918753504131,0.05248325095570885,0.07966100503256941,0.06626144021598117,0.046325034744688506,0.0457342335441083,0.0013506646210247608,0.024400058062435784,0.07387580797710441,0.0906264213358261,0.0720972791129358,0,0,0,0.04975877191872765,0.049767326782541775,0.049788697727756626,0.0498131406820274,0.0498560758146205,0.049891448743953404,0.04992087052705805,0.049938573698076257,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08221051609200916,0.073328414936252,0.03663934261291189,0.0671554579198951,0.0620100858872068,0.07345824312261817,0.07581938684584921,0.15410404364918742,0.07694037331445704,0.08663731789113197,0.07465545149184152,0.05811794482496811,0,0,0,0.04978271195914993,0.04979165925279495,0.04982675487676332,0.04985666273748921,0.04989914696220938,0.04992700550442414,0.049949387801468306,0.04995764798623506,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05256725041127851,0.05168205953471158,0.036120637996174695,0.011650147712252496,0.034967982912580665,0.0384705239991611,0.0014730250552660602,0.0023788066906356084,0.007933323278984172,0.08684127109680284,0.06370650087881147,0.08979205519013292,0.02333719325783216,0,0,0,0.04979968086898932,0.04981895758415846,0.04986362869757206,0.049891534107844505,0.049926802100831634,0.04994692907213133,0.049962697426068854,0.049975348466190866,0.04997957686636487,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06427450642693935,0.08357382873266327,0.08371605666870974,0,0.039239113300009294,0.0437085486851073,0.044029195227392286,0.00043738790202609186,0.00008326994335831007,0.05574250364402506,0.0763130807797962,0.0773930213765085,0.0687305323675162,0,0,0,0,0,0.049913398969375314,0.049933904167189715,0.04994979276726294,0.04995976070937931,0.0499682106747964,0.04998238480410086,0.04999270636041338,0.04999733485232996,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05288160206606923,0.05381008297318846,0.0021177070708720087,0,0,0,0.027034166638727927,0.026151603738987464,0.004884522069694908,0.02503712317800299,0.07000875663205935,0.06764974344731456,0.06779407866193361,0,0,0,0,0,0.04994169775892406,0.04995369134843338,0.04996196039324841,0.0499678145848395,0.04997024481671313,0.04998103064268523,0.04998954696297269,0.04999350071406704,0.04998606844343749,0,0,0,0,0,0,0,0,0,0,0,0,0.010181293235855288,0.17653224060693717,0.00792363978680483,0.028550495959643925,0.0056169508036152315,0,0,0.012962176877085667,0.01642223211291758,0.022678679375955167,0.010493446285616949,0.06614074688740537,0.06427454998110703,0.04976845296169911,0,0,0,0,0,0.04995834168587234,0.049963638007835307,0.049966686004292285,0.04996747387431445,0.049968000370398925,0.04997841762855563,0.0499859791683929,0.04998923872688511,0.04998633795417613,0.04998643273849457,0,0,0,0,0,0,0,0,0,0,0,0.003993546783226664,0.09118918901654578,0.0012542366583193122,0.02323804342621785,0.0014052330272354935,0,0,0.012133991655177222,0.003671366823175948,0.009818328491706057,0.050841565460415905,0.05081735099700631,0.05052491711773431,0.049367257498987384,0,0,0,0,0,0,0,0.04995809250568065,0.04995359394489621,0.04994954581560686,0.049951384007359406,0.04996319773929535,0.049976786048305646,0.04997800896420128,0.04997804050429739,0,0,0,0,0,0,0,0,0,0,0,0.024572831278109396,0.06932565287111009,0.045719842507764064,0.03233229809388718,0.014166870427228336,0.012236065204527736,0.012151116902532762,0.05038723816797787,0.05035676067240041,0.05034632222809546,0.05034152471583224,0.05012978622963231,0.049850710524528656,0.04956246739454095,0,0,0,0,0,0,0,0.04994600585251729,0.049938217780720724,0.04993193569318441,0.04992769085311877,0.04993913316231499,0.049958289200072135,0.04996814190828133,0.049974007997463224,0.04997774235677601,0,0,0,0,0,0,0,0,0,0,0,0.03663698794645173,0.027340041725596488,0.04561637927709233,0.0213662716576168,0.011443789872561899,0,0.05033162130834712,0.050297644731503596,0.05022704713310548,0.050161471470027766,0.04998024062580585,0.04981831736869184,0.049701659926879437,0,0,0,0,0,0,0,0,0.049910989139052196,0.04990564091211679,0.04990066613460742,0.04991379999140975,0.04993550636436697,0.049952945719450983,0.04996945287184669,0.0500044132767493,0.05003344429370988,0,0,0,0,0,0,0,0,0,0,0.05101113398745533,0.050977875188838874,0.050957351326462404,0.05074792369192474,0.050591267702439,0.05038851526103632,0.05029396170986502,0.050218846110380064,0.05009443747054075,0.04998830725573186,0.0498154129940515,0.04970473287318628,0.04962699861849963,0,0,0,0,0,0,0,0,0.04989570942143191,0.04989178052890491,0.049890871633176036,0.049902641836205734,0.049926062558552205,0.04994581286696607,0.04996945991557686,0.05002147754217216,0.05005866585386561,0.050134697645859386,0.050182471026250536,0,0,0,0,0,0,0,0,0.05077465093775691,0.050788308187072466,0.05076184978233621,0.050631989369205224,0.050516534251347674,0.050348228629683606,0.050252122913278935,0.05016629683704818,0.05002118675631823,0.04990011554701816,0.04971181374037283,0.04957899601097618,0.0494663409601776,0,0,0,0,0,0,0,0,0,0.04988160738063041,0.04988385797179601,0.04989085533710165,0.04991867845945391,0.04993694698710968,0.04996935252087797,0.05003362163212966,0.050075101290144176,0.050145050111826024,0.05018361252945014,0.05019888650389064,0,0,0,0,0,0,0.050542837566315016,0.05062490769924181,0.050634040148573915,0.05061159629852647,0.05052504669825575,0.05044023613801321,0.050299367220648455,0.05020433462779562,0.05011347211131848,0.049963154868811775,0.0498373319969782,0.04961389550212371,0.04945025915991811,0.049301525887420324,0,0,0,0,0,0,0,0,0,0,0.04987240945562803,0.04987023189873784,0.049898000032467325,0.04993058771645819,0.04997552536657637,0.050045692907045934,0.05008353393220743,0.05014286344767756,0.05017872656755458,0.05020266263749468,0.05024260155669757,0.0502457937892692,0,0,0.050367162978151914,0.05040798919294548,0.050437703209557316,0.050467804524087334,0.050468176242449876,0.050450005637391514,0.05039988856009304,0.050344198489067425,0.050230774764298186,0.05014366035920566,0.050054966162322904,0.04989272640017161,0.049762501296783994,0.04950427848667639,0.04927083744952189,0.04880394933074838,0,0,0,0,0,0,0,0,0,0,0.049865141955532516,0.0498571210121998,0.04989030830573884,0.04993313097895055,0.049979231912326706,0.050047855023270464,0.050084777501778074,0.05014043014560562,0.05017756212559074,0.05020295123802632,0.05024169697109959,0.05025712096183357,0.050296515141471765,0.05032952766619845,0.05034707525174912,0.050365678809774224,0.05037616955803076,0.05039465147830112,0.05039170872341758,0.05037492245776891,0.05033585600374857,0.05029240936075984,0.05018701624883216,0.0501071190045046,0.05001637523466682,0.049857361663114795,0.04972956259263885,0.04948671835821222,0.04927418322666141,0.04900320733153189,0,0,0,0,0,0,0,0,0,0,0,0,0.04989842376283375,0.04993866371329352,0.04998456230180137,0.050047131054799,0.05008367935819578,0.050140175114554604,0.05017606774006001,0.05020474485891572,0.05024080785210628,0.050257408860449625,0.0502868298588023,0.05029753074882391,0.05030409651408239,0.05031013150856304,0.050311127584204564,0.050311340668735036,0.05030510757169227,0.05029285358776664,0.05026583219746009,0.05022960168974694,0.05014128869939155,0.05006880372701534,0.04998313447898569,0.04983508375832877,0.04971462140476592,0.04950095672168907,0.049339270715385256,0.04922212348710416,0,0,0,0,0,0,0,0,0,0,0,0,0.04991062395057262,0.04994608204080738,0.049992857239812824,0.050048216422582364,0.05008306362971555,0.05014190258979835,0.050174967123595926,0.05020223674919698,0.05022695319266033,0.050244711060590905,0.05026621468754609,0.05027432700779109,0.05027338877971525,0.05027823059272146,0.05026418184036031,0.05026173022122419,0.050256092040531664,0.050243543112676294,0.050230258773482264,0.050196147132262,0.05011573576607357,0.0500548872629809,0.04997537777686745,0.04982878907171041,0.04971513633999074,0.04952518131788489,0.04933252068857466,0.049063226019186654,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.050009564464323,0.050049211226063296,0.05008153695144954,0.05013783739678608,0.05016234538386893,0.050180229177848125,0.05020379850876319,0.050215831448962744,0.050235665879195174,0.05024472661356629,0.05024501307646945,0.05024058741686306,0.0502241668765446,0.050224363574353274,0.05021947863846723,0.05021200582882696,0.050197848502040246,0.050174801784884204,0.050108461194149766,0.05005225665448462,0.04998276931054293,0.04982649963225491,0.04971995038695206,0.04958606337556148,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05006038899220036,0.05008050526154708,0.050114659052928376,0.050137083560666054,0.050148319563393474,0.05015803022729434,0.05016925903408471,0.050182318452643065,0.050191482646061054,0.050194548245685804,0.05019651171518628,0.050197749077331495,0.05020194831666168,0.05019724232835499,0.05019196148737421,0.05019382790464222,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05006854836668185,0.050073786917523365,0.0500944300851832,0.05011757029516601,0.050132133941117436,0.050142080090269776,0.050145070716845444,0.050152531042892454,0.050159039394252716,0.05016487291909198,0.05017605354868083,0.05018532433155757,0.050189421254059625,0.05018907126323093,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05008865773472119,0.05009060720381592,0.05009933202966527,0.05011151553381741,0.05012166340489749,0.050126676560892015,0.050135530641402686,0.05013618328317225,0.05013913076762998,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05010090676915901,0.05010689172193625,0.05011756809226084,0.05012199999117571,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "passed": false,
+        "failures": [],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.09531861446269246,
+          "waterPrecision": 0.002376840590205911,
+          "wetShare": 0.10297309027777778,
+          "targetCoverage": 0.21693121693121692,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 189,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.21693121693121692,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.09531861446269246,
+            "precision": 0.002376840590205911,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.10297309027777778
+          },
+          "ownSignaturePresent": false
+        },
+        "preview": {
+          "size": 40,
+          "heights": [3,3,4,4,4,5,5,7,8,9,11,13,14,14,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,15,14,13,11,11,10,9,7,6,8,9,2,3,3,3,4,4,5,6,8,8,12,13,12,14,14,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,14,13,11,10,10,9,7,6,7,9,2,2,2,3,3,4,4,5,8,10,8,9,11,13,14,14,14,14,14,13,14,14,14,14,15,15,15,15,15,14,13,13,11,10,9,9,8,5,5,6,2,2,2,2,3,3,3,4,5,6,8,9,11,13,13,13,13,14,13,13,13,14,14,15,15,15,15,14,14,14,13,12,11,10,9,9,8,6,4,5,1,1,2,2,2,3,3,4,5,5,8,9,11,12,13,13,13,14,13,13,13,14,14,15,15,15,15,14,14,14,14,13,11,10,9,8,8,6,4,4,1,1,1,1,2,2,2,3,4,6,7,8,10,11,11,11,11,13,13,13,13,14,15,15,15,15,15,14,14,14,13,13,12,10,10,8,7,5,3,3,1,1,1,1,1,2,2,2,2,3,6,8,9,10,9,10,11,13,13,13,14,14,15,16,15,15,15,14,14,13,13,12,12,11,9,7,7,5,3,2,1,1,1,1,1,1,1,1,2,2,4,7,7,8,8,10,9,11,12,13,14,14,15,16,16,15,15,14,14,13,13,12,12,11,9,6,5,3,2,2,1,1,1,1,1,1,1,1,1,1,2,3,6,6,6,6,8,11,12,13,14,14,14,15,15,15,15,14,13,13,13,12,11,11,9,7,4,3,2,2,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,5,7,10,12,13,13,13,14,14,15,15,15,14,13,13,13,12,11,10,8,5,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,6,9,11,12,11,11,11,12,14,14,14,14,13,13,13,13,12,11,10,8,4,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,5,9,12,10,10,10,10,12,12,14,14,13,12,12,12,13,11,10,9,8,4,2,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1,2,2,3,4,6,7,7,8,9,11,12,13,13,13,12,12,12,11,11,10,8,6,3,2,1,1,1,3,3,3,2,2,1,1,1,1,1,1,1,1,1,2,3,3,5,5,7,8,9,11,12,13,13,12,10,11,10,8,7,6,5,4,2,2,1,1,1,4,4,4,2,2,1,1,1,1,1,1,1,1,1,1,2,3,4,6,7,8,9,11,12,12,12,11,10,9,5,5,5,4,3,3,2,1,1,1,1,6,5,4,3,5,4,2,1,1,1,1,1,1,1,1,2,2,4,5,7,8,10,10,10,10,8,7,6,5,4,3,2,2,1,1,1,1,1,1,1,7,6,4,4,6,5,2,1,1,1,1,1,1,1,1,1,2,4,4,6,7,8,9,9,9,6,7,5,4,2,2,2,2,1,1,1,1,1,1,1,7,7,5,6,8,7,4,2,1,1,1,1,1,1,1,1,1,2,3,5,6,6,7,6,5,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,8,7,6,7,9,8,6,3,1,1,1,1,1,1,1,1,1,1,1,2,4,5,6,5,4,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,10,8,7,8,10,11,8,5,2,1,1,1,1,1,1,1,1,1,1,1,2,3,4,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,10,9,9,9,10,12,10,7,3,2,1,1,1,1,1,1,1,1,1,1,1,1,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,11,10,10,10,11,12,11,8,4,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,12,11,11,13,13,12,11,9,6,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,12,12,12,13,14,13,12,9,5,4,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,13,12,13,14,14,13,12,10,7,4,3,3,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,13,13,13,14,14,14,13,11,9,7,6,6,5,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,3,3,3,4,4,3,3,14,14,13,14,14,14,13,12,11,10,8,7,5,4,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,5,5,6,6,7,7,7,4,15,14,13,14,14,14,13,12,12,11,10,8,7,6,5,2,1,1,1,1,1,1,1,1,1,2,4,3,3,3,5,6,7,7,7,8,8,8,8,6,15,15,14,14,14,13,13,12,12,12,10,10,8,8,6,2,3,2,1,1,1,1,2,2,2,3,5,5,5,8,7,7,7,8,8,9,9,9,8,7,15,15,13,13,14,14,13,12,12,12,12,10,9,8,5,3,4,3,2,2,2,2,2,2,3,4,6,6,7,8,8,7,8,8,9,9,10,10,9,9,15,15,13,13,13,13,13,12,13,13,13,13,10,7,5,4,5,5,5,5,4,4,3,3,3,6,7,8,10,9,9,9,9,9,10,10,11,12,12,11,15,14,13,13,13,13,13,13,13,13,13,13,8,6,6,5,6,6,7,6,6,5,4,4,4,6,7,9,10,10,9,9,9,10,10,11,11,13,13,11,15,14,13,13,13,13,13,13,13,13,13,13,8,9,9,7,9,12,12,8,9,7,6,5,4,7,9,11,11,10,10,10,10,11,11,12,12,13,14,12,15,14,13,13,13,13,13,13,13,13,13,14,10,9,10,11,11,12,12,10,10,9,6,6,5,8,9,11,11,11,11,11,11,11,12,12,12,13,14,13,15,14,14,13,13,13,13,13,13,13,14,14,12,10,10,11,11,12,12,11,11,10,7,6,6,8,10,12,12,11,11,11,12,12,12,13,13,13,14,13,15,14,14,14,13,13,13,13,13,13,14,14,13,12,11,11,11,12,12,13,13,12,8,7,7,8,11,12,12,12,12,12,12,12,12,13,14,14,13,13,15,14,14,14,13,13,12,13,13,13,14,13,13,12,11,11,11,11,12,13,13,13,10,8,7,10,10,12,12,12,12,12,12,13,13,13,13,14,14,13,15,14,14,14,13,12,12,12,13,13,13,13,12,11,11,11,11,12,12,13,13,13,12,10,9,11,11,12,12,12,13,12,12,12,13,13,13,14,15,14,15,14,14,14,13,12,12,12,12,12,12,13,11,11,11,11,11,12,12,13,13,13,12,12,10,11,12,12,12,12,13,13,12,12,13,13,14,14,15,15,15,14,14,14,13,12,12,12,12,12,12,12,11,11,11,11,12,12,12,13,13,13,13,12,11,11,12,12,12,12,13,13,13,13,12,13,13,14,15,15],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04118535330775273,0,0.012302311684843135,0.015948042576302522,0.029275859301340773,0.0572698316404364,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05823016865691432,0,0,0,0,0,0,0,0.017010753249468512,0.027132225511245524,0.05918249508408775,0.059710406286045584,0.048077397421899544,0.05868247870515,0.08574979011446524,0.0572423607039237,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05379464529595197,0,0.0580477077308613,0.058234905385596114,0.058448160623588194,0.04329160680886852,0.043441269261577736,0,0,0,0.10009589838309024,0.09989979874532766,0.06365813357731531,0.09236437024051487,0.0874069421658614,0.09706326624076206,0.058960714342982876,0.06996891321210813,0.14877816176480546,0.146289554257563,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.053748433986089,0.05380803200216367,0.09450061335822689,0.057806492496028934,0.05817465069012129,0,0.043257780578861406,0.043533739063234544,0.04350714598626175,0.19232299470423436,0.19066310839271558,0.15020194840354598,0.1328461933302074,0.1330205613641629,0.10801533115938516,0.0983162042645836,0.1064757113709663,0.08001210586392067,0.07496273002848987,0.07431241185545492,0.24141377285226726,0.009103850345688948,0.012937580857739871,0.01772797949727172,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05368432264536016,0.05430005963551302,0.09392864432303799,0.057614850048352755,0.059339908218841955,0.04305787572027368,0.04335306016652051,0.0504279843122344,0.06847009035503145,0.22741760813915163,0.1921704890454746,0.18201716751725946,0.09449761909191685,0.08067789760074058,0.11652165399392829,0.10152936717945608,0.11559073065327118,0.12813961383488848,0.06773294497619571,0.06914412784792486,0.21921589718904957,0.16829173247161872,0.016681424975527784,0.02144325371094146,0.024460477654039196,0.026295380377572078,0,0,0,0,0,0,0,0,0,0,0,0.02175311799224646,0.035586974462001104,0.04111737221028928,0.05328850690466455,0.05363166968451285,0.06916757272541611,0.05128647106204804,0.03911287175954111,0.043103914690730806,0.04447551476034183,0.07152943999061989,0.447973545189389,0.4732435973265855,0.2511977245523492,0.16826363841393266,0.16163309359258218,0.12391558599803171,0.07881304218472383,0.10314324067846455,0.05791875039333599,0.08271447705260547,0.09265273497614053,0.10579355530679461,0.20274287208050323,0.2081945165676496,0.019044633698342025,0.023245399688230986,0.025863932456394245,0.027782459480914116,0.02951656130785116,0,0,0,0,0,0,0,0,0,0.0216873639961342,0.03901888525037261,0.021912823066007434,0.039557939083091895,0.05167179591465733,0.052930406459393536,0,0,0,0,0.04461841681977536,0.045916809300667945,0.04661306817923472,0.4197339090520447,0.2406495846647513,0.2558426412368548,0.1431525217804514,0.1606988484661196,0.0984798900046574,0.073174237979573,0.1061647883587899,0.11399191289050815,0.07095065748229495,0.0688420740135862,0.1993977527823214,0.22709135525517624,0.02142741161298003,0.02454850685525445,0.027833853702146298,0.029704772766747732,0.030890387905794275,0.03331177626213486,0.03399336165271542,0.03577745272162356,0,0,0,0,0,0,0.026406841639551756,0,0.03803480663727829,0.0770629855195209,0.06944875446904152,0.04697921980467879,0,0,0,0,0,0.04473667494406972,0,0.18817263326759506,0.10112566296775835,0.18023776591967905,0.09588920826697774,0.11558163251566339,0.07700256827309802,0.07753113694153481,0.07489435886451293,0.19000420790890055,0.3072146228541926,0.11730187234278693,0.17130739111103768,0.1256513068089493,0.023511245108183525,0.025376314072453936,0.029264004177334806,0.030381951543316948,0.03234281347115244,0.03368427480508125,0.03538512161208423,0.03620050340310197,0.03644830078630544,0.03661823404581644,0,0,0,0.029843445515472942,0.006389273880348347,0.07508518087505535,0.07888524209143576,0.0025656225572777127,0.016859912581508655,0,0,0,0,0,0.044733491141544554,0.04473316652577245,0,0.11238305159897609,0.16191961108722075,0.1356917415969167,0.07292635697046233,0.10906206221557088,0.09083254607460438,0.06361192050644235,0.06260807152585986,0.00288170453431625,0.03992230633552952,0.10142146801260404,0.12357076318709226,0.09816348800278496,0.022778365180367986,0.026666658245932236,0.030035536142875727,0.0306292740228652,0.0323627706507496,0.03487114222475776,0.03592629444164532,0.03628678222803093,0.036512261579576384,0.03670729970999476,0.03692720408735231,0.01656319978996984,0.01612240929556962,0.05131947210114323,0.06370656089698205,0.08734698036249705,0.016079955644660707,0,0,0,0,0,0,0,0,0,0,0.024876733966340357,0.11596975167739898,0.10212500150513487,0.05109490587298909,0.0922948764867244,0.08514462223188342,0.1004547178070983,0.10191983083522935,0.2089299003247917,0.10616835286169167,0.11848485022599925,0.10206990770233704,0.0795479948875337,0.024093826589465538,0.028235046376357355,0.03048268219749534,0.030753290410671038,0.03267621552568824,0.03598061823465006,0.03619173634443553,0.036493194601005155,0.0366669392831626,0.036868550467840794,0.0371644500252643,0.018155105426210995,0.03323671702790886,0.04354903643647317,0.04957707308574169,0,0,0,0,0,0,0,0,0,0,0,0.026398986259077932,0.07269432392496789,0.0731169716384482,0.05039051785578527,0.016582217289612275,0.04877053520911493,0.05339690511086657,0.0031978255444743008,0.005396551125183647,0.012428130073849008,0.11879557882602153,0.08754162266732929,0.1225053278198614,0.03233437236554624,0.025982752916007348,0.030278344032537166,0.030590427284709395,0.03091208331599499,0.034193132380554686,0.036222449350408886,0.036391946887678876,0.0366226676080098,0.03677804508163917,0.03695807002455596,0.03719694604931346,0.03735117441564845,0.02715707181048765,0.036626030565799224,0.03822374534487349,0,0,0,0,0,0,0,0,0,0,0,0.02615982271557207,0.0891657681408207,0.11701486205538049,0.11721333028544105,0,0.05460563525202216,0.06052113894558943,0.061165007925623835,0.0013195851385699683,0.0002985924874336608,0.07586842458847987,0.10513123368071961,0.10650428427443048,0.09499673509147158,0,0,0,0,0,0.036537689699979316,0.03671167341533056,0.036861586895873856,0.036934537117909984,0.03703277382776566,0.037280615245104294,0.03742398107275334,0.03764491483305259,0.02424781652563488,0.02433877930812315,0,0,0,0,0,0,0,0,0,0,0,0,0.07024948436432604,0.075147028073257,0.004056066781118089,0,0,0,0.03797407282382552,0.03670071558759176,0.007251497895954145,0.035552865313076776,0.09690354165795236,0.09351767174609596,0.09371840344531274,0,0,0,0,0,0.03673740246806991,0.03686437119474766,0.036985906244138736,0.03704824809647622,0.03713261825044519,0.03734581954333252,0.03748429181056054,0.037648962830016265,0.03779577938646634,0.02417136774805374,0,0,0,0,0,0,0,0,0,0,0,0.013804770796532658,0.23489912428619195,0.01143406018024528,0.037405430357336275,0.007844857549782498,0,0,0.018565094771864774,0.023565548551889172,0.032399349987537046,0.0153637330952677,0.09128176169252683,0.08908893338951371,0.06812458121051009,0,0,0,0,0,0.03691807247341014,0.03699024012330913,0.037107318257007894,0.03715254003120265,0.03721772699069065,0.03738168721711605,0.03754878202124869,0.03766571678559717,0.03770552260180971,0.03775256620201693,0,0,0,0,0,0,0,0,0,0,0,0.005815798806268173,0.12154258043342676,0.006924896924360098,0.034066056822016536,0.002260788747015217,0,0,0.01759640917554393,0.0055484253779016154,0.01443078237067655,0.07065315891977532,0.07031470956639695,0.066855963013803,0.051120830239764686,0,0,0,0,0,0,0,0.03729835641938272,0.03734779852243686,0.03739155753324221,0.037493591657194576,0.037616774432712045,0.037721328440145516,0.03771624427211299,0.03773070857442365,0,0,0,0,0,0,0,0,0,0,0,0.018885343142723363,0.0887074527449721,0.06093180472880792,0.044798913599454086,0.020490814188909218,0.02536307626011462,0.02183376582897463,0.040095368493668744,0.04056467090347657,0.04071668513135902,0.045109144216345855,0.045832830003595525,0.04347226450311401,0.03736250863048965,0,0,0,0,0,0,0,0.03740839196182957,0.03749535240939749,0.03752488830625808,0.0375819114423322,0.037671738850174975,0.03778944569409839,0.03779851881273838,0.037791601673017615,0.03782920059630129,0,0,0,0,0,0,0,0,0,0,0.01757045119063734,0.044704918372402584,0.036261133809129896,0.061390472535766426,0.030182300149346496,0.016607741806032732,0,0.040422635538748315,0.040169574855909336,0.04038745687969929,0.040315844523072915,0.04019098450014324,0.039233190758730684,0.03842798919592521,0,0,0,0,0,0,0,0,0.03767642867667998,0.037724360459327234,0.03774154654813679,0.037799455810826305,0.037894797277574555,0.037930937812973346,0.03797109392251802,0.03803439042494596,0.038113347823419505,0,0,0,0,0,0,0,0,0,0.005127524454206946,0.04096372437691856,0.04102719513340134,0.05025505534804589,0.04067451399518195,0.040480844361808516,0.040432304673826684,0.04013134270159488,0.04013195877206972,0.040164490415646306,0.0398383459054235,0.03928866537229985,0.03896212205299398,0.03869252224640668,0,0,0,0,0,0,0,0,0.03780570025003686,0.03783317904485954,0.03785926592185968,0.037915988922732236,0.03797847050471791,0.03804052092401003,0.03812937835703246,0.03819715574263539,0.038260026707014214,0.03836386915903208,0.03850592783428415,0,0,0,0,0,0,0,0,0.04059808174350829,0.04070955737427597,0.040543184537378825,0.040456844873980206,0.040402544123241256,0.040307374254957874,0.040299627276178175,0.03995731416541712,0.039845938958205776,0.039817369902267544,0.03915781394569683,0.0389863030391389,0.03870090035513697,0,0,0,0,0,0,0,0,0,0.03793323589184326,0.03799406123903711,0.038026022445724096,0.03807703113445364,0.03814380608347475,0.038219575968071164,0.03832532491329009,0.03838183787386667,0.038485959853087115,0.03855368021225966,0.038619153088046504,0,0,0,0,0,0,0.040160230926699785,0.04044706568544374,0.04034177197719441,0.04055491665295069,0.04027248367818216,0.04024519129935635,0.04013804718711892,0.04008686015713076,0.03998484657489437,0.03975109687514717,0.039496487708153866,0.03917154054930767,0.0389839718972919,0.03861875857621764,0,0,0,0,0,0,0,0,0,0,0.03814602637443447,0.03819354353080582,0.0382304697828474,0.0382896035666692,0.03836451279052973,0.03847122757073924,0.03854411712383199,0.03860088147535761,0.03863784893000663,0.038744576421356494,0.03891641987608479,0.0389826309386158,0,0,0.03959059747555218,0.03978524981993629,0.039894762261757796,0.040110747254961755,0.04021515638601232,0.04018748759509909,0.04011880201924836,0.039988796840159255,0.03984016206958801,0.03976732896688905,0.039635004486668964,0.039438607511362626,0.03934883166222534,0.039156786063629864,0.03888219925595022,0.038837322839080694,0,0,0,0,0,0,0,0,0,0,0.0381895705038973,0.038245749494406706,0.03831501771106681,0.03837953147948903,0.03844226748244434,0.03853620811750056,0.03862301178465607,0.03866122712654759,0.03871837062474621,0.03882905277687772,0.038962424765796116,0.03906664325406355,0.03928754285487117,0.03942650355875769,0.039541593946860194,0.039702768149938825,0.03993910923214065,0.039995985438037215,0.040013006344496886,0.04004597908854818,0.03998312865633941,0.03991620173526045,0.03988875179661485,0.03986128730085676,0.03973735240255417,0.03947291421735113,0.039318103258073105,0.03910337161714025,0.038886365412861626,0.038699425961433546,0,0,0,0,0,0,0,0,0,0,0,0,0.03838701790669604,0.03847296288059703,0.03853043113526723,0.0386076946473133,0.038673942697181385,0.03870812331561119,0.03875929611998036,0.038834308031364916,0.03900655162292419,0.039114668925028406,0.03926081233750476,0.03940931105233575,0.039500777573573856,0.03966812895050369,0.03972362706494261,0.03985260339627863,0.039920081783192264,0.039948177249148,0.03990794235786101,0.03987748356122821,0.03982002847827607,0.03973416631400947,0.03960221160511123,0.03942327197361227,0.03925393515609219,0.039060574575756936,0.03878928495302636,0.038526179937420316,0,0,0,0,0,0,0,0,0,0,0,0,0.038438097686309965,0.03848590643977809,0.03856346584582424,0.03863901802411311,0.0387029848073431,0.03872265391232853,0.03876266431857442,0.038833243891230884,0.03901662056612664,0.039117239859060994,0.039263344417632275,0.03936207842562097,0.03944572963732676,0.039635985985960326,0.03966706721872021,0.0397908391718767,0.03985963988992995,0.03987093677507285,0.03989647994995086,0.039838899944394046,0.03971616708580656,0.03961372000512151,0.039543808682965996,0.03940055400371367,0.03925896250427495,0.039045928315191616,0.038816846018552495,0.038531309856780015,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03856402445083709,0.03864385145194105,0.038706951077501286,0.03873513893621719,0.03877171751002124,0.03883598127647125,0.03900854234663576,0.03909079511730407,0.03924020812261428,0.039321620269602356,0.03949699621784676,0.03955371675827388,0.03962924453945419,0.03971307225342816,0.039752523132525516,0.03979131099118833,0.03982622697467199,0.03978686385728623,0.03973097014997599,0.03961736922039331,0.039570144745008404,0.03935110793420583,0.03924414498474488,0.03915937841113225,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03867931812063728,0.03873856986139423,0.038778890580143804,0.03878103538513603,0.0388097375287864,0.03895359379333031,0.03903903558999851,0.03920413346688706,0.0393349825052191,0.039375495932001174,0.03949614687640596,0.03959412534803041,0.03968464617382521,0.03970241690635432,0.03978207061071952,0.039769369589085106,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03874049995496713,0.03878262187096047,0.03882674831109857,0.038811157313187454,0.038799788990184804,0.038940320749092545,0.03901754417224819,0.039175605272604296,0.03926073332493583,0.03934534789140692,0.03942647141563747,0.039509392183953634,0.039589432532229143,0.039649675360607595,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.038835217910900686,0.03888661398127775,0.03885181574705578,0.03881815795748168,0.038896509261607336,0.03900831293661364,0.039142794592457064,0.03923787973570124,0.03929521411354309,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03885013176462633,0.038820129147594404,0.038886421226050696,0.03895081296325706,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 60,
+        "reason": "requested area",
+        "passed": false,
+        "failures": [],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 23.66402127034962,
+          "retainedWaterFraction": 0.022386808097224556,
+          "waterPrecision": 0.0011772486733065712,
+          "wetShare": 0.048828125,
+          "targetCoverage": 0.31896551724137934,
+          "features": [
+            {
+              "id": "designed-drainage",
+              "kind": "designed drainage (no observed water)",
+              "cells": 116,
+              "referenceArea": 0,
+              "heads": 1,
+              "coverage": 0.31896551724137934,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.022386808097224556,
+            "precision": 0.0011772486733065712,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.048828125
+          },
+          "ownSignaturePresent": false
+        },
+        "preview": {
+          "size": 40,
+          "heights": [2,2,3,3,3,3,3,5,5,6,7,8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,8,7,7,6,6,5,4,5,6,2,2,2,2,3,3,3,4,5,5,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,8,7,6,6,6,5,4,5,6,2,2,2,2,2,3,3,3,5,6,5,6,7,8,9,9,9,9,9,8,9,9,9,9,9,9,9,9,9,9,8,8,7,6,6,6,5,3,3,4,2,2,2,2,2,2,2,3,3,4,5,6,7,8,8,8,8,9,8,8,8,9,9,9,9,9,9,9,9,9,8,8,7,6,6,6,5,4,3,3,1,1,2,2,2,2,2,3,3,3,5,6,7,8,8,8,8,9,8,8,8,9,9,9,9,9,9,9,9,9,9,8,7,6,6,5,5,4,3,3,1,1,1,1,2,2,2,2,3,4,5,5,6,7,7,7,7,8,8,8,8,9,9,9,9,9,9,9,9,9,8,8,8,6,6,5,5,3,2,2,1,1,1,1,1,2,2,2,2,2,4,5,6,6,6,6,7,8,8,8,9,9,9,10,9,9,9,9,9,8,8,8,8,7,6,5,5,3,2,2,1,1,1,1,1,1,1,1,2,2,3,5,5,5,5,6,6,7,8,8,9,9,9,10,10,9,9,9,9,8,8,8,8,7,6,4,3,2,2,2,1,1,1,1,1,1,1,1,1,1,2,2,4,4,4,4,5,7,8,8,9,9,9,9,9,9,9,9,8,8,8,8,7,7,6,5,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,3,5,6,8,8,8,8,9,9,9,9,9,9,8,8,8,8,7,6,5,3,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,4,6,7,8,7,7,7,8,9,9,9,9,8,8,8,8,8,7,6,5,3,2,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,6,8,6,6,6,6,8,8,9,9,8,8,8,8,8,7,6,6,5,3,2,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1,2,2,2,3,4,5,5,5,6,7,8,8,8,8,8,8,8,7,7,6,5,4,2,2,1,1,1,2,2,2,2,2,1,1,1,1,1,1,1,1,1,2,2,2,3,3,5,5,6,7,8,8,8,8,6,7,6,5,5,4,3,3,2,2,1,1,1,3,3,3,2,2,1,1,1,1,1,1,1,1,1,1,2,2,3,4,5,5,6,7,8,8,8,7,6,6,3,3,3,3,2,2,2,1,1,1,1,4,3,3,2,3,3,2,1,1,1,1,1,1,1,1,2,2,3,3,5,5,6,6,6,6,5,5,4,3,3,2,2,2,1,1,1,1,1,1,1,5,4,3,3,4,3,2,1,1,1,1,1,1,1,1,1,2,3,3,4,5,5,6,6,6,4,5,3,3,2,2,2,2,1,1,1,1,1,1,1,5,5,3,4,5,5,3,2,1,1,1,1,1,1,1,1,1,2,2,3,4,4,5,4,3,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,5,5,4,5,6,5,4,2,1,1,1,1,1,1,1,1,1,1,1,2,3,3,4,3,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,6,5,5,5,6,7,5,3,2,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,6,6,6,6,6,8,6,5,2,2,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,7,6,6,6,7,8,7,5,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,8,7,7,8,8,8,7,6,4,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,8,8,8,8,9,8,8,6,3,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,8,8,8,9,9,8,8,6,5,3,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,8,8,8,9,9,9,8,7,6,5,4,4,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3,3,2,2,9,9,8,9,9,9,8,8,7,6,5,5,3,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,3,4,4,5,5,5,3,9,9,8,9,9,9,8,8,8,7,6,5,5,4,3,2,1,1,1,1,1,1,1,1,1,2,3,2,2,2,3,4,5,5,5,5,5,5,5,4,9,9,9,9,9,8,8,8,8,8,6,6,5,5,4,2,2,2,1,1,1,1,2,2,2,2,3,3,3,5,5,5,5,5,5,6,6,6,5,5,9,9,8,8,9,9,8,8,8,8,8,6,6,5,3,2,3,2,2,2,2,2,2,2,2,3,4,4,5,5,5,5,5,5,6,6,6,6,6,6,9,9,8,8,8,8,8,8,8,8,8,8,6,5,3,3,3,3,3,3,3,3,2,2,2,4,5,5,6,6,6,6,6,6,6,6,7,8,8,7,9,9,8,8,8,8,8,8,8,8,8,8,5,4,4,3,4,4,5,4,4,3,3,3,3,4,5,6,6,6,6,6,6,6,6,7,7,8,8,7,9,9,8,8,8,8,8,8,8,8,8,8,5,6,6,5,6,8,8,5,6,5,4,3,3,5,6,7,7,6,6,6,6,7,7,8,8,8,9,8,9,9,8,8,8,8,8,8,8,8,8,9,6,6,6,7,7,8,8,6,6,6,4,4,3,5,6,7,7,7,7,7,7,7,8,8,8,8,9,8,9,9,9,8,8,8,8,8,8,8,9,9,8,6,6,7,7,8,8,7,7,6,5,4,4,5,6,8,8,7,7,7,8,8,8,8,8,8,9,8,9,9,9,9,8,8,8,8,8,8,9,9,8,8,7,7,7,8,8,8,8,8,5,5,5,5,7,8,8,8,8,8,8,8,8,8,9,9,8,8,9,9,9,9,8,8,8,8,8,8,9,8,8,8,7,7,7,7,8,8,8,8,6,5,5,6,6,8,8,8,8,8,8,8,8,8,8,9,9,8,9,9,9,9,8,8,8,8,8,8,8,8,8,7,7,7,7,8,8,8,8,8,8,6,6,7,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,8,8,8,8,8,8,8,8,7,7,7,7,7,8,8,8,8,8,8,8,6,7,8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,8,7,7,7,7,8,8,8,8,8,8,8,8,7,7,8,8,8,8,8,8,8,8,8,8,8,9,9,9],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.016027483647450495,0.021924823304242082,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.020508007385376517,0.025686651590406798,0.029459555089463543,0.03149204852383062,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.02304155841206921,0.027683061503548635,0.031138334099476247,0.03325955778923728,0.03522941300491198,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.025831112377368834,0.029717720337471987,0.033376748054719345,0.03552987592993574,0.03696747261835157,0.039991001646938196,0.04074555623931918,0.042550177284282106,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.02869583713934347,0.030566785499295285,0.035048543807635946,0.03635292255291769,0.03872956842570005,0.04031517712179765,0.042246830644633436,0.043356285565040786,0.043549943656752986,0.043664647812581774,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.02764744446736767,0.03213285114211325,0.035964429691978016,0.03670311980020426,0.038779227364837354,0.04163016395049073,0.04304268652115877,0.043532697533773146,0.04368387791862268,0.0438077441666651,0.04400085233252491,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.028872044383369676,0.033902517578385034,0.03649113869147296,0.03686819425157337,0.03915428492908997,0.043254393216404695,0.04348092977659956,0.04381058903221409,0.04395546734641133,0.04405419267132511,0.044263122253994314,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03144728901867418,0.03606926462660149,0.03652417416186059,0.03703220691684373,0.04093220030365924,0.04355094526429911,0.04374304888931637,0.04394974187597783,0.044080616227136236,0.04418472657046556,0.044448096523304365,0.044668790700482255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04385616451354393,0.04417559662340405,0.04431566507195896,0.04444329441312818,0.04463441951010519,0.0448162805282599,0.04487423897345849,0.04523507444931241,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03165546783915242,0.03147119827323693,0.03131537344490596,0,0,0,0,0,0.04418292943423694,0.04438427432640151,0.04459659270325691,0.0446963729192872,0.044920059454958756,0.04504818317406819,0.045090767546214765,0.045410473636137476,0.045641100135765944,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.031766103809961435,0.031513055202930546,0.031159417640079828,0,0,0,0,0,0.04430164061831755,0.04450877138739404,0.0447059784022808,0.04485116515067081,0.04505362318314106,0.04517857776376528,0.04521523201056217,0.04550695210899479,0.045552161074179816,0.045617200129595005,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03506900563244487,0.03346957137830553,0.03155031167315063,0.031097511576606944,0,0,0,0,0,0,0,0.04501723931282684,0.04514310705283281,0.045227678642849996,0.04557351831133806,0.04575524834969992,0.045853887018356694,0.045957642086880565,0.046134904614964375,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.043595909300454996,0.043538064647432005,0.0430919742999741,0.04283076027440141,0.0392473179625405,0.034669027760820814,0.03233776945159762,0,0,0,0,0,0,0,0.04541992378456585,0.04549893877335882,0.04549099746818084,0.04578653411965465,0.04603023123131431,0.04617628882593324,0.04635461143221204,0.046501897020172975,0.04670345839410543,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.043815638134008766,0.04369440013376509,0.043428742832998954,0.04304736477624228,0.0418555092057542,0.03834131266977991,0.0323381256260332,0,0,0,0,0,0,0,0,0.045896542655898175,0.04585274417967877,0.04611691241150667,0.04630780607658675,0.046387578818072636,0.046537796163126796,0.04674256075614633,0.04689036970236696,0.04703474828694047,0,0,0,0,0,0,0,0,0,0,0.045758063040809795,0.045548502402382306,0.04502112825593508,0.044936441208514796,0.044666215068736914,0.044170956079091786,0.044051490821433045,0.04384418676628853,0.04345433213695754,0.04326930146879201,0.042870389610615935,0.04272726298430292,0.036695758158643954,0,0,0,0,0,0,0,0,0.04601985666415157,0.046078999981358316,0.04643363471842761,0.04649469401756099,0.046595085038119675,0.046790617314747075,0.04705424816824463,0.04721589919546577,0.047359356778741875,0.04782069771571292,0.04800250049857858,0,0,0,0,0,0,0,0,0.04563330943369038,0.04562209004664664,0.04521943020013299,0.04497101106572128,0.04475736492298945,0.044291052955680046,0.044219694444266246,0.043922246185935626,0.043501066373299056,0.043237243584093525,0.04314598600323179,0.043049529545948095,0.04276932392561287,0,0,0,0,0,0,0,0,0,0.046348060640405545,0.0467629922468371,0.046824334597798785,0.04692088406864736,0.04709602429455959,0.04742040730307957,0.04738110298671188,0.04742669801460696,0.04767963231769094,0.04789103030603407,0.0477904157763242,0,0,0,0,0,0,0.045817075235516286,0.045593641126467035,0.04541423173332215,0.04535013404598049,0.044995451408389966,0.04472749914207036,0.04435374303478413,0.04436003079416689,0.044142819574028914,0.04355040501131151,0.04338515832701075,0.04343479058575031,0.04317797866555831,0.043084224904484485,0,0,0,0,0,0,0,0,0,0,0.04696482897034295,0.04708642857327994,0.04728747187596321,0.04746341612955226,0.047614510227099505,0.04775497261871424,0.0477558432575123,0.04800747792726006,0.04818445644761866,0.048165832677241206,0.048188935277736024,0.04816445581405574,0,0,0.046895298533366096,0.04688278538219474,0.046522184571591685,0.04586826223731493,0.045651809074672846,0.04540668256597557,0.04522163849557062,0.04487235693095656,0.04448799402761201,0.04434007851282009,0.04430058119661204,0.043734055491152425,0.04368552086326587,0.04360296880645734,0.04330525003069899,0.04321557018775559,0,0,0,0,0,0,0,0,0,0,0.04695233189244458,0.047181873361939644,0.047347680097341326,0.04748342285661236,0.04775481647814018,0.048092109962009175,0.048187457028882885,0.04839307524468732,0.048613377504730056,0.04858226179861142,0.04843541876551713,0.04827349163286961,0.047861667496427625,0.04726558105809377,0.046906751660158584,0.046793803066955915,0.04666449296235026,0.04623539974285069,0.04583174431695244,0.04558191275139323,0.04527501052884528,0.04503436648786645,0.04455294237324084,0.04437681082998347,0.0442456936988872,0.04368505952666659,0.04372886908475868,0.043560023054936614,0.04334858666341273,0.04323472944063142,0,0,0,0,0,0,0,0,0,0,0,0,0.04767014220635413,0.04770554307803595,0.04804245361944297,0.04858990476981943,0.04867165398657156,0.04866587040363743,0.04874937460152274,0.04871732432932172,0.048441666494648754,0.048244933468974585,0.048225875325473753,0.04810886390587165,0.04759609825552844,0.04671117380964013,0.046506389376658776,0.0465182384589799,0.04597393728132612,0.04548757844652677,0.04526117246133164,0.04522387167921783,0.044686140220037265,0.04447428449453839,0.04422965422877065,0.043966911211655225,0.04367770415271074,0.04351149451728622,0.04343901891709154,0.043267717114310565,0,0,0,0,0,0,0,0,0,0,0,0,0.04791568902516899,0.0479214491950291,0.04820834191318731,0.04880217162104188,0.048893676311612656,0.04893509271487288,0.048979857592611725,0.04899002648123858,0.04868451080320323,0.048383329006330744,0.04825366811730197,0.048142618323621586,0.047957072881917855,0.04700435053595802,0.04661856306073609,0.04641041923258353,0.04620052096839741,0.04557993849801491,0.045329970273159007,0.045201478230483295,0.044823325113475025,0.04449819487639369,0.04423545474559271,0.04406907861098791,0.04376748598335631,0.043553844793990694,0.04351745611983358,0.04325524644443518,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0483991253319095,0.051831692471735864,0.05687226513650697,0.055193291464121816,0.05350924847394302,0.05165123756201675,0.04933117456339904,0.048760325866539,0.04822363533385875,0.04815388892663005,0.04794561162086856,0.04723539769062327,0.046683580932466995,0.04653226586022729,0.046429001831577034,0.04579485329262932,0.045438758592146675,0.04520737422054463,0.04479152838917985,0.04446613776277438,0.04426769431429223,0.044177230381926634,0.04386955691474598,0.043496969361203126,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08084581600950207,0.07467384794039686,0.07074313776162625,0.0667616285418474,0.06249816628480946,0.05595456836669587,0.05184903691618713,0.048474429043357595,0.04773448087825137,0.04777504118136045,0.04782699654872632,0.04712182247002776,0.04660930690389669,0.04648057131039053,0.046252873974644414,0.04559975354342789,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08158238828003178,0.1135626825093556,0.0899118655726208,0.07759893948363185,0.07047105604323879,0.061871649855085024,0.05661696268706509,0.04928965900984388,0.04821647816436476,0.04792024266969321,0.04818443469884597,0.047149184363864116,0.04662850374630197,0.04645388610044051,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0343085879574276,0.22465142491182433,0.1296659956319272,0.09620919114063861,0.08043888594463762,0.0703911294189788,0.0643554642620765,0.05614691560943052,0.048555337789097354,0.04791523748453769,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.28542687256742644,0.1400702799874819,0.0503883392624445,0.10530062035136939,0.08510271712521697,0.07364236853198439,0.06431884012179301,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.20346323673279135,0.47776659034504015,0.07736050924456465,0.09070126795817116,0.06278474453954065,0.019546928628234754,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.20552990364779192,0.21844768975328682,0.20258570599451703,0.07406744824448322,0.03866711533503168,0.021219090471833933,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12065730074807687,0.16693021769939875,0.09840714694330771,0.22582646360193595,0.009495631468770001,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.13167989724885246,0.08113010730642486,0.07553004375215319,0.06451062645487388,0.059836907467956967,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08244256189596848,0.14212267725301697,0.16428655257703645,0.11132718240113933,0.1228375851429504,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1820278308224094,0.2625532773529888,0.13140484825004953,0.13087796290805517,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.13968796572194128,0.13991221690254016,0.15045440075336966,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1412487995693701,0.15093667283485276,0.1605626814739032,0.16777620599889373,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.14197364238778767,0.14266664367116638,0.19596192938957957,0.2467482347936681,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1096517847108914,0.1340694090108489,0.14351834512022343,0.23054165983233452,1.5588457268119895,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.10875565310385618,0.10907094546519464,0.13493088793163244,0.22345530861384497,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "passed": false,
+        "failures": [
+          {
+            "id": "start.food",
+            "message": "28 living berry bushes within 20 tiles' walk of the start (at least 30)"
+          },
+          {
+            "id": "start.wood",
+            "message": "0 living trees within 20 tiles' walk of the start (at least 40)"
+          },
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.4225719118462744,
+          "waterPrecision": 0.008395852588556622,
+          "wetShare": 0.09657118055555555,
+          "targetCoverage": 0.3076923076923077,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.3076923076923077,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.7591252087867072,
+            "precision": 0.008489581799426861,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.22960069444444445
+          },
+          "ownSignaturePresent": false
+        },
+        "preview": {
+          "size": 40,
+          "heights": [11,11,11,11,11,10,10,10,10,10,9,10,10,10,11,11,11,12,13,13,12,12,12,12,12,11,10,10,9,8,8,8,8,8,9,9,9,9,10,10,11,11,11,10,10,10,10,10,10,10,9,10,10,11,11,11,11,12,13,13,13,12,12,13,12,12,11,10,9,9,8,8,8,8,8,9,9,10,10,10,11,11,11,10,10,9,9,10,9,9,10,10,10,11,11,12,12,12,12,13,13,13,13,14,13,13,12,10,10,9,8,8,9,9,9,9,10,10,10,10,11,11,10,10,10,10,9,9,9,10,10,10,11,11,11,12,12,13,13,13,13,13,13,14,14,13,12,10,9,8,8,8,9,9,9,10,10,10,11,11,11,11,10,10,10,10,9,9,10,10,10,11,11,11,11,12,12,13,13,13,12,13,13,14,14,13,12,10,9,8,8,8,9,9,10,10,10,12,12,12,11,11,10,10,9,7,9,9,10,10,11,10,11,11,12,12,12,13,12,12,12,13,13,13,14,12,11,10,9,8,8,9,9,10,10,11,11,12,12,12,10,11,10,9,8,7,9,9,10,10,11,11,11,11,12,12,12,13,13,12,12,13,13,13,14,12,11,9,8,8,8,9,10,10,10,11,12,12,13,13,5,7,8,7,6,7,8,7,8,7,9,8,10,9,10,11,12,13,13,12,12,13,13,13,13,11,10,8,8,7,8,9,9,10,10,11,12,13,13,14,3,6,7,5,5,7,8,7,6,6,9,6,7,7,9,11,12,12,13,12,12,13,13,13,13,11,10,8,7,7,8,9,9,9,10,11,11,13,13,13,2,3,6,5,6,8,6,7,4,4,6,5,5,8,8,12,12,12,12,12,12,12,13,13,13,11,10,8,7,7,8,9,9,9,10,11,11,12,12,12,1,1,4,5,7,8,5,3,3,3,3,3,4,5,7,11,11,12,12,12,12,12,13,13,12,11,9,8,5,7,9,10,9,10,10,10,10,11,11,11,1,1,4,6,3,5,4,2,2,2,2,2,3,4,7,8,10,12,12,11,11,12,13,12,12,11,9,7,6,4,8,10,10,10,9,9,9,10,10,11,1,1,1,1,1,1,1,1,1,1,1,2,2,3,4,7,9,10,11,11,12,12,12,12,12,11,9,7,6,3,4,5,9,9,8,8,8,9,10,10,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,6,7,9,10,11,12,13,13,12,11,10,10,6,4,2,2,3,5,6,6,6,6,8,8,8,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,3,5,5,8,11,12,12,13,12,11,10,9,5,3,2,2,2,4,6,5,5,5,7,8,8,4,4,2,2,2,2,2,2,2,2,1,1,1,1,1,1,2,5,10,9,9,10,12,11,10,10,8,4,2,1,4,5,4,5,5,6,6,10,8,8,6,5,3,3,3,11,9,5,6,4,2,2,1,1,1,1,2,3,4,5,8,10,11,10,10,8,7,3,1,1,3,5,7,7,6,7,8,9,9,8,9,8,5,6,9,12,11,9,9,7,5,3,3,1,1,1,1,2,3,5,8,9,8,6,4,2,2,1,1,1,3,6,8,9,8,8,9,8,7,8,11,11,10,8,9,12,11,10,10,9,5,4,6,2,1,1,1,1,2,4,7,6,5,4,2,1,1,1,1,1,3,6,9,10,9,8,8,8,8,8,12,11,11,11,9,12,12,11,10,10,7,6,8,4,1,1,1,1,1,1,4,4,2,1,1,1,1,1,1,1,3,6,9,10,10,10,9,8,8,8,12,11,12,12,12,12,12,11,11,10,8,8,10,7,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,6,7,11,13,14,10,9,10,12,12,11,12,12,12,13,12,12,11,10,10,11,8,4,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,5,7,9,15,13,11,11,12,12,12,12,12,12,13,12,12,12,11,11,12,10,5,5,4,1,1,1,1,1,1,1,1,1,2,2,3,3,2,2,2,3,5,6,8,14,14,12,12,12,12,12,12,12,12,12,13,13,12,11,12,10,10,7,5,2,1,1,1,1,1,2,2,4,6,6,6,5,3,2,2,2,3,7,9,11,12,13,13,13,12,12,12,12,13,13,13,13,12,11,11,10,10,8,7,2,2,1,2,2,3,5,6,6,6,8,8,7,6,4,2,2,2,6,9,10,11,12,12,12,12,12,12,13,13,13,13,13,12,11,11,11,11,11,6,4,5,6,4,4,5,8,8,8,8,9,11,10,8,5,2,2,2,2,4,5,6,8,12,12,12,12,13,13,14,14,14,14,12,11,11,11,11,11,7,8,9,9,7,5,6,9,9,9,9,10,11,11,9,7,3,2,2,2,2,3,4,6,13,13,13,13,13,13,14,14,14,14,12,12,11,11,11,12,10,9,10,11,10,7,7,10,10,10,10,11,12,11,10,10,5,4,3,2,2,2,3,3,14,13,13,13,13,14,13,14,14,14,12,12,11,11,11,11,10,9,10,11,11,9,9,10,10,10,10,11,12,12,11,11,8,6,5,4,3,3,3,4,14,14,14,13,13,13,13,14,14,13,12,12,11,11,11,11,9,10,10,11,11,10,10,10,10,11,10,11,12,12,11,11,9,8,7,5,5,5,5,6,14,14,14,14,13,12,13,13,14,14,12,12,10,10,10,10,9,10,10,11,11,11,10,10,10,11,11,11,12,13,13,12,10,9,8,8,8,8,9,9,15,15,15,14,13,12,12,13,14,13,12,12,10,10,10,10,10,10,11,11,11,11,10,10,10,11,11,12,12,13,13,13,11,10,9,9,8,8,9,10,16,16,15,14,14,13,12,12,13,13,12,11,10,10,10,10,10,11,11,11,11,11,10,11,11,11,11,12,13,13,13,13,13,11,10,9,9,10,10,11,16,16,15,14,14,13,12,12,12,13,12,11,10,10,10,10,10,11,11,11,11,11,10,11,11,11,11,12,13,13,14,14,13,12,11,10,10,10,11,12,15,15,15,14,14,13,12,11,12,12,11,10,10,10,10,11,11,11,11,12,11,11,11,11,11,12,11,12,12,13,14,14,13,12,11,10,10,11,11,12,15,15,15,14,13,12,12,11,11,11,10,10,10,10,10,11,12,11,11,12,12,11,11,12,12,13,12,12,12,13,13,14,13,12,11,10,10,11,12,12,14,15,14,14,13,13,12,11,11,10,10,10,10,10,10,10,11,11,12,13,12,12,11,12,12,13,13,12,12,13,14,14,13,12,12,11,10,11,12,12,14,14,14,14,14,13,12,12,11,11,10,10,10,10,10,11,11,12,12,13,13,12,12,13,13,13,13,13,13,13,13,13,13,13,12,11,10,12,12,12,14,14,14,15,14,13,12,12,12,11,10,10,10,10,10,11,12,12,12,13,13,12,12,13,13,13,13,13,13,13,12,12,13,13,12,11,11,12,12,12,14,14,14,14,15,13,13,12,12,11,10,10,10,10,10,11,12,12,12,13,13,12,13,13,14,13,13,13,13,13,13,12,12,12,12,11,11,12,12,12],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06768769396136927,0.06826819228224734,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06837381357889512,0.068625102036356,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.083666732284439,0.10577661209689576,0.12979957785980376,0.13076418188063707,0.131542742474601,0.1325413244259309,0.13301870802295712,0.13367306984201482,0.1340877466221491,0.13448851812929397,0.1349996677717951,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.10017591261354017,0.11685682506708345,0.13000481314430692,0.1308694658643385,0.13158962623607837,0.13248692478736088,0.13297619664621105,0.13372389041488164,0.13417635881887416,0.13464086324116128,0.13524255137552416,0.13568079974757752,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.037241866987002346,0.03747607073324385,0,0,0,0,0,0,0,0,0,0,0,0,0.13108695349880903,0.13171126535675753,0.1324814866333268,0.13300878415562506,0.13379238661382212,0.13429904608521862,0.1348088411698438,0.13547174562578645,0.13591283576208718,0.13660737403120154,0.1370755635490491,0.13751102730892717,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.037006250979693914,0.0375327340180959,0.07203598637349076,0,0,0.006089898099409148,0.009030884013823046,0.009038524036462225,0,0,0,0,0,0,0,0,0,0,0,0,0,0.13567528262339204,0.13618834851902398,0.13711215330113996,0.1375814740280062,0.13795470961332681,0.13837422353908282,0,0,0,0,0,0,0,0,0,0,0,0,0.006288527878841623,0.14869181875705967,0,0,0,0,0.04256628337162867,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.137724556919061,0.13805847861189435,0.13843493022718928,0.13886166066937822,0,0,0,0,0,0,0,0,0,0,0,0,0.14815959791422692,0.14828402339777808,0,0,0,0,0.00981750412791549,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1389358693565592,0.13914971536405296,0.13951490741919062,0.1397916149742627,0,0,0,0,0,0,0,0,0,0,0.14749705235639843,0.14774815252059567,0.1478775482291853,0,0,0,0,0,0,0,0.0022807997280784504,1.0021595649968724,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.13948001327256374,0.13987581137322816,0.14019330918080294,0.14084553956517243,0,0,0,0,0,0,0,0.14672515739166317,0.1469262468346316,0.14739768363138844,0.14765170416209103,0.14781851691198036,0,0,0,0,0,0.010313111409692167,0.0094124421736403,0.00437074289563178,0.002136417961231359,0.0021552528457856016,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.139763139302242,0.1401703569565702,0.1404440429672395,0.14106812557137743,0.14149214403112345,0.1419504803591627,0,0,0,0.14604039930451976,0.14620648414518284,0.14665083131981874,0.1468752158380172,0.1473292165240342,0.1476276771211088,0.1479061578628006,0,0,0,0.027907227817925,0.02797915010410802,0.016801603059151543,0,0,0.002175357238446188,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.14065754458767007,0.1409051126926314,0.14148928960746204,0.14196457871176033,0.14242386173794583,0.14326850976399252,0.14430360048731372,0.14504007422980644,0.1454902269356969,0.14587532513879403,0.1464082208629064,0.1467562024295083,0.14728644632164806,0.14770123380282157,0.14823213947798977,0.14915703992734128,0,0.002466720103695005,0.025213353383394147,0.029091428925671434,0.44999999999999996,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1413064381433096,0.14186181102748804,0.14228668430437738,0.14270903562933498,0.1434621744005882,0.14404026551201926,0.14484208338132848,0.14528700613144252,0.14564651302306245,0.14622415778942977,0.14662030967997894,0.14727591034637705,0.14776942421288838,0.14844339273539944,0.15001022767031547,0.2819813920791515,0.022503727960725747,0.0290142180994473,0.07508398472270278,0.1437826262424662,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.14243947259332457,0.14262939265184077,0.14289963921199328,0.14345151544860205,0.1438977807722804,0.14458393109275905,0.14507972681160622,0.1454573379123241,0.1458857092979555,0,0,0,0,0.06105593593440809,0.07784901583996527,0.08487793081869936,0.0669597491598837,0.10047777187825577,0.09729770508016396,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.14267407737885143,0.14284679227727445,0.14335903204564085,0.14377783632949584,0.14429936535695376,0,0,0,0,0,0,0,0,0.07801338678608105,0.08507649473755327,0.0855804345299339,0.08924516567759265,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.14279987239270017,0,0,0,0,0,0,0,0,0,0,0,0,0.08519565732447199,0.08541340987514058,0.08545809847834249,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08529682956844066,0.08534899842579859,0.08537640278453454,0.08537357770699613,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0853567443762743,0.08536619735169428,0.08536865046457846,0.08536659135323782,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08536549960022546,0.08536449982228476,0.08536323699426024,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "passed": false,
+        "failures": [
+          {
+            "id": "start.wood",
+            "message": "0 living trees within 20 tiles' walk of the start (at least 40)"
+          },
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.4484807883404346,
+          "waterPrecision": 0.008312844453121788,
+          "wetShare": 0.103515625,
+          "targetCoverage": 0.3076923076923077,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.3076923076923077,
+              "present": false
+            }
+          ],
+          "signaturePresent": false,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.765162101147954,
+            "precision": 0.008336469722297695,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.23567708333333334
+          },
+          "ownSignaturePresent": false
+        },
+        "preview": {
+          "size": 40,
+          "heights": [11,11,11,11,11,10,10,10,10,10,9,10,10,10,11,11,11,12,13,13,12,12,12,12,12,11,10,10,9,8,8,8,8,8,9,9,9,9,10,10,11,11,11,10,10,10,10,10,10,10,9,10,10,11,11,11,11,12,13,13,13,12,12,13,12,12,11,10,9,9,8,8,8,8,8,9,9,10,10,10,11,11,11,10,10,9,9,10,9,9,10,10,10,11,11,12,12,12,12,13,13,13,13,14,13,13,12,10,10,9,8,8,9,9,9,9,10,10,10,10,11,11,10,10,10,10,9,9,9,10,10,10,11,11,11,12,12,13,13,13,13,13,13,14,14,13,12,10,9,8,8,8,9,9,9,10,10,10,11,11,11,11,10,10,10,10,9,9,10,10,10,11,11,11,11,12,12,13,13,13,12,13,13,14,14,13,12,10,9,8,8,8,9,9,10,10,10,12,12,12,11,11,10,10,9,7,9,9,10,10,11,10,11,11,12,12,12,13,12,12,12,13,13,13,14,12,11,10,9,8,8,9,9,10,10,11,11,12,12,12,10,11,10,9,8,7,9,9,10,10,11,11,11,11,12,12,12,13,13,12,12,13,13,13,14,12,11,9,8,8,8,9,10,10,10,11,12,12,13,13,5,7,8,7,6,7,8,7,8,7,9,8,10,9,10,11,12,13,13,12,12,13,13,13,13,11,10,8,8,7,8,9,9,10,10,11,12,13,13,14,3,6,7,5,5,7,8,7,6,6,9,6,7,7,9,11,12,12,13,12,12,13,13,13,13,11,10,8,7,7,8,9,9,9,10,11,11,13,13,13,2,3,6,5,6,8,6,7,4,4,6,5,5,8,8,12,12,12,12,12,12,12,13,13,13,11,10,8,7,7,8,9,9,9,10,11,11,12,12,12,1,1,4,5,7,8,5,3,3,3,3,3,4,5,7,11,11,12,12,12,12,12,13,13,12,11,9,8,5,7,9,10,9,10,10,10,10,11,11,11,1,1,4,6,3,5,4,2,2,2,2,2,3,4,7,8,10,12,12,11,11,12,13,12,12,11,9,7,6,4,8,10,10,10,9,9,9,10,10,11,1,1,1,1,1,1,1,1,1,1,1,2,2,3,4,7,9,10,11,11,12,12,12,12,12,11,9,7,6,3,4,5,9,9,8,8,8,9,10,10,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,6,7,9,10,11,12,13,13,12,11,10,10,6,4,2,2,3,5,6,6,6,6,8,8,8,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,3,5,5,8,11,12,12,13,12,11,10,9,5,3,2,2,2,4,6,5,5,5,7,8,8,4,4,2,2,2,2,2,2,2,2,1,1,1,1,1,1,2,5,10,9,9,10,12,11,10,10,8,4,2,1,4,5,4,5,5,6,6,10,8,8,6,5,3,3,3,11,9,5,6,4,2,2,1,1,1,1,2,3,4,5,8,10,11,10,10,8,7,3,1,1,3,5,7,7,6,7,8,9,9,8,9,8,5,6,9,12,11,9,9,7,5,3,3,1,1,1,1,2,3,5,8,9,8,6,4,2,2,1,1,1,3,6,8,9,8,8,9,8,7,8,11,11,10,8,9,12,11,10,10,9,5,4,6,2,1,1,1,1,2,4,7,6,5,4,2,1,1,1,1,1,3,6,9,10,9,8,8,8,8,8,12,11,11,11,9,12,12,11,10,10,7,6,8,4,1,1,1,1,1,1,4,4,2,1,1,1,1,1,1,1,3,6,9,10,10,10,9,8,8,8,12,11,12,12,12,12,12,11,11,10,8,8,10,7,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,6,7,11,13,14,10,9,10,12,12,11,12,12,12,13,12,12,11,10,10,11,8,4,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,5,7,9,15,13,11,11,12,12,12,12,12,12,13,12,12,12,11,11,12,10,5,5,4,1,1,1,1,1,1,1,1,1,2,2,3,3,2,2,2,3,5,6,8,14,14,12,12,12,12,12,12,12,12,12,13,13,12,11,12,10,10,7,5,2,1,1,1,1,1,2,2,4,6,6,6,5,3,2,2,2,3,7,9,11,12,13,13,13,12,12,12,12,13,13,13,13,12,11,11,10,10,8,7,2,2,1,2,2,3,5,6,6,6,8,8,7,6,4,2,2,2,6,9,10,11,12,12,12,12,12,12,13,13,13,13,13,12,11,11,11,11,11,6,4,5,6,4,4,5,8,8,8,8,9,11,10,8,5,2,2,2,2,4,5,6,8,12,12,12,12,13,13,14,14,14,14,12,11,11,11,11,11,7,8,9,9,7,5,6,9,9,9,9,10,11,11,9,7,3,2,2,2,2,3,4,6,13,13,13,13,13,13,14,14,14,14,12,12,11,11,11,12,10,9,10,11,10,7,7,10,10,10,10,11,12,11,10,10,5,4,3,2,2,2,3,3,14,13,13,13,13,14,13,14,14,14,12,12,11,11,11,11,10,9,10,11,11,9,9,10,10,10,10,11,12,12,11,11,8,6,5,4,3,3,3,4,14,14,14,13,13,13,13,14,14,13,12,12,11,11,11,11,9,10,10,11,11,10,10,10,10,11,10,11,12,12,11,11,9,8,7,5,5,5,5,6,14,14,14,14,13,12,13,13,14,14,12,12,10,10,10,10,9,10,10,11,11,11,10,10,10,11,11,11,12,13,13,12,10,9,8,8,8,8,9,9,15,15,15,14,13,12,12,13,14,13,12,12,10,10,10,10,10,10,11,11,11,11,10,10,10,11,11,12,12,13,13,13,11,10,9,9,8,8,9,10,16,16,15,14,14,13,12,12,13,13,12,11,10,10,10,10,10,11,11,11,11,11,10,11,11,11,11,12,13,13,13,13,13,11,10,9,9,10,10,11,16,16,15,14,14,13,12,12,12,13,12,11,10,10,10,10,10,11,11,11,11,11,10,11,11,11,11,12,13,13,14,14,13,12,11,10,10,10,11,12,15,15,15,14,14,13,12,11,12,12,11,10,10,10,10,11,11,11,11,12,11,11,11,11,11,12,11,12,12,13,14,14,13,12,11,10,10,11,11,12,15,15,15,14,13,12,12,11,11,11,10,10,10,10,10,11,12,11,11,12,12,11,11,12,12,13,12,12,12,13,13,14,13,12,11,10,10,11,12,12,14,15,14,14,13,13,12,11,11,10,10,10,10,10,10,10,11,11,12,13,12,12,11,12,12,13,13,12,12,13,14,14,13,12,12,11,10,11,12,12,14,14,14,14,14,13,12,12,11,11,10,10,10,10,10,11,11,12,12,13,13,12,12,13,13,13,13,13,13,13,13,13,13,13,12,11,10,12,12,12,14,14,14,15,14,13,12,12,12,11,10,10,10,10,10,11,12,12,12,13,13,12,12,13,13,13,13,13,13,13,12,12,13,13,12,11,11,12,12,12,14,14,14,14,15,13,13,12,12,11,10,10,10,10,10,11,12,12,12,13,13,12,13,13,14,13,13,13,13,13,13,12,12,12,12,11,11,12,12,12],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12213600165344796,0.12339601516448231,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11979565107630319,0.1342133620479304,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1794352774100366,0.2270227097625614,0.27836403247961616,0.28030470638478006,0.282022464275593,0.2843315655094241,0.28534518509749784,0.28679464281508926,0.28764227374808804,0.2884516169602351,0.2897964140543253,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.21505849509249,0.2506663492300097,0.2786949063051607,0.28041691012240477,0.2820509362829932,0.28410217995791964,0.2852320452591023,0.2867947544931191,0.2877533356113272,0.28876892158150824,0.2901721017316483,0.29100865421245725,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11221190885565117,0.11292261504432054,0.005015347779017761,0,0,0,0,0,0,0,0,0,0,0,0.2807758087688837,0.28222573572602894,0.2840174995953874,0.2851660695562656,0.28678773941334224,0.28788301346642564,0.2889971007764294,0.29045023406502446,0.29130033857784055,0.2925978071797197,0.29360275111858936,0.2944011590468918,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11150206570355813,0.11307440920394908,0.20885035836424234,0,0,0.02775729919432761,0.03154820895866563,0.03161226909209233,0,0,0,0,0,0,0,0,0,0,0,0,0,0.29070725508971196,0.29169545381899187,0.29362905576104714,0.29470213583587074,0.29541240141953956,0.2965660460450133,0,0,0,0,0,0,0,0,0,0,0,0,0.021748530504856013,0.32042779834835095,0,0,0,0,0.11073041795802001,0,0.006467965953468361,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.29492823709272487,0.2957516082895052,0.29643225824384145,0.2974443580420721,0,0,0,0,0,0,0,0,0,0,0,0,0.31816437853443735,0.3185017694739907,0,0,0,0,0.04983855145509004,0,0.004047733027603695,0,0,0.001299585110539167,0,0,0,0,0,0,0,0,0,0,0,0,0,0.297486025630736,0.298019889597403,0.29881239400945553,0.2994688805304619,0,0,0,0,0,0,0,0,0,0,0.31576296224060685,0.31669893475349786,0.31699593750003185,0,0,0,0.037890403268134004,0.018716411634692846,0,0,0.008208167482817202,1.0058607289166819,0.005265713307777138,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.2988601545303029,0.2996734042916215,0.3004128407304737,0.3016461246620456,0,0,0,0,0,0,0,0.3139096273218106,0.31454892122195777,0.31558559030804,0.3162516505806971,0.3168108962176305,0,0,0,0,0.037964240591598156,0.03159414136364815,0.028579391330781724,0.012822302104214008,0.008748797524830277,0.005370997151987441,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.29956985264785213,0.30039109569653194,0.30123253972459063,0.3024803603745485,0.30346755169689665,0.30430650588160346,0,0,0,0.3121345894656528,0.3125505469073407,0.31380066424107766,0.3145006714939507,0.3154122935246417,0.3160631359280654,0.316580590858897,0,0,0,0.02871361923734922,0.04235643874187567,0.04764032942642775,0.005165488135301193,0.013933177861057534,0.010736967437351159,0.006246998639550264,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.30119561388762434,0.3021765145341164,0.3034294929285031,0.30439706103716996,0.3053066899858824,0.30664519746120616,0.30904819942216794,0.3107017351589228,0.3116054935109631,0.3123171950715605,0.3136019070447023,0.3143840446462464,0.31539791430402364,0.31607881020897166,0.31665141402166025,0.3177169963076831,0.0000312395709518105,0.0026784612772989404,0.030857629180896,0.05874961557591905,0.8999999999999999,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.3027424360806463,0.3038453772172229,0.304750067709023,0.30564156746398463,0.30715924552595214,0.3085032621774416,0.310364140319637,0.31131414862152135,0.3122133292759577,0.31344268000755504,0.31426207441192755,0.31534916712283195,0.31601475716683225,0.3169088938485242,0.32012369630318277,0.5290635316209763,0.038672299323481395,0.053346120231931075,0.13943848356315902,0.2654187157875592,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.3044795337161967,0.30516268844079014,0.30597816466515826,0.3072192681196596,0.30821679118579765,0.3098283529985834,0.3109711221641616,0.3118089377967908,0.3131570245533278,0,0,0,0,0.11093942007928956,0.14424072083115455,0.1556348100078594,0.12036911875675853,0.17995417909540168,0.1834534764734995,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.3056966196104501,0.3063003004623029,0.30729342630993656,0.30802659231199675,0.30898727055103364,0,0,0,0,0,0,0,0,0.14453806659928795,0.15600378005332471,0.15691462234390735,0.16537689921770368,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.3067154254455554,0,0,0,0,0,0,0,0,0,0,0,0,0.1562310525307354,0.15663579135640143,0.15674205698827148,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.15642573957376932,0.15652680474373418,0.15658170682274838,0.1565810947341946,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1565437023260301,0.15656466180484746,0.15657213231387798,0.15657018238927753,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1565670522331884,0.15656703032747768,0.1565659817092339,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 120,
+        "reason": "different scale",
+        "passed": false,
+        "failures": [
+          {
+            "id": "start.water.D153",
+            "message": "No clean pumpable shore within 20 tiles walking over natural slopes."
+          },
+          {
+            "id": "start.signature",
+            "message": "No walking path from the start to the signature water within 20 tiles."
+          }
+        ],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 17.682928264606744,
+          "retainedWaterFraction": 0.5915406982670449,
+          "waterPrecision": 0.011247496487152191,
+          "wetShare": 0.10091145833333333,
+          "targetCoverage": 0.9230769230769231,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 13,
+              "referenceArea": 4.725419528782368,
+              "heads": 1,
+              "rawRange": [1821.5831298828125,2228.286376953125],
+              "coverage": 0.9230769230769231,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.7591252087867072,
+            "precision": 0.008347562773042397,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.23350694444444445
+          },
+          "ownSignaturePresent": true
+        },
+        "preview": {
+          "size": 40,
+          "heights": [7,7,7,7,7,6,6,6,6,6,6,6,6,6,7,7,7,8,8,8,8,8,8,8,8,7,6,6,6,5,5,5,5,5,6,6,6,6,6,6,7,7,7,6,6,6,6,6,6,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,8,7,6,6,6,5,5,5,5,5,6,6,6,6,6,7,7,7,6,6,6,6,6,6,6,6,6,6,7,7,8,8,8,8,8,8,8,8,9,8,8,8,6,6,6,5,5,6,6,6,6,6,6,6,6,7,7,6,6,6,6,6,6,6,6,6,6,7,7,7,8,8,8,8,8,8,8,8,9,9,8,8,6,6,5,5,5,6,6,6,6,6,6,7,7,7,7,6,6,6,6,6,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,9,9,8,8,6,6,5,5,5,6,6,6,6,6,8,8,8,7,7,6,6,6,5,6,6,6,6,7,6,7,7,8,8,8,8,8,8,8,8,8,8,9,8,7,6,6,5,5,6,6,6,6,7,7,8,8,8,6,7,6,6,5,5,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,8,7,6,5,5,5,6,6,6,6,7,8,8,8,8,3,5,5,5,4,5,5,5,5,5,6,5,6,6,6,7,8,8,8,8,8,8,8,8,8,7,6,5,5,5,5,6,6,6,6,7,8,8,8,9,2,4,5,3,3,5,5,5,4,4,6,4,5,5,6,7,8,8,8,8,8,8,8,8,8,7,6,5,5,5,5,6,6,6,6,7,7,8,8,8,2,2,4,3,4,5,4,5,3,3,4,3,3,5,5,8,8,8,8,8,8,8,8,8,8,7,6,5,5,5,5,6,6,6,6,7,7,8,8,8,1,1,3,3,5,5,3,2,2,2,2,2,3,3,5,7,7,8,8,8,8,8,8,8,8,7,6,5,3,5,6,6,6,6,6,6,6,7,7,7,1,1,3,4,2,3,3,2,2,2,2,2,2,3,5,5,6,8,8,7,7,8,8,8,8,7,6,5,4,3,5,6,6,6,6,6,6,6,6,7,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3,5,6,6,7,7,8,8,8,8,8,7,6,5,4,2,3,3,6,6,5,5,5,6,6,6,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,4,5,6,6,7,8,8,8,8,7,6,6,4,3,2,2,2,3,4,4,4,4,5,5,5,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,2,3,3,5,7,8,8,8,8,7,6,6,3,2,2,2,2,3,4,3,3,3,5,5,5,3,3,2,2,2,2,2,2,2,2,1,1,1,1,1,1,2,3,6,6,6,6,8,7,6,6,5,3,2,1,3,3,3,3,3,4,4,6,5,5,4,3,2,2,2,7,6,3,4,3,2,2,1,1,1,1,2,2,3,3,5,6,7,6,6,5,5,2,1,1,2,3,5,5,4,5,5,6,6,5,6,5,3,4,6,8,7,6,6,5,3,2,2,1,1,1,1,2,2,3,5,6,5,4,3,2,2,1,1,1,2,4,5,6,5,5,6,5,5,5,7,7,6,5,6,8,7,6,6,6,3,3,4,2,1,1,1,1,2,3,5,4,3,3,2,1,1,1,1,1,2,4,6,6,6,5,5,5,5,5,8,7,7,7,6,8,8,7,6,6,5,4,5,3,1,1,1,1,1,1,3,3,2,1,1,1,1,1,1,1,2,4,6,6,6,6,6,5,5,5,8,7,8,8,8,8,8,7,7,6,5,5,6,5,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,4,5,7,8,9,6,6,6,8,8,7,8,8,8,8,8,8,7,6,6,7,5,3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,5,4,9,8,7,7,8,8,8,8,8,8,8,8,8,8,7,7,8,6,3,3,3,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,4,9,9,8,8,8,8,8,8,8,8,8,8,8,8,7,8,6,6,5,3,2,1,1,1,1,1,2,2,3,4,4,4,3,2,2,2,2,2,5,6,7,8,8,8,8,8,8,8,8,8,8,8,8,8,7,7,6,6,5,5,2,2,1,2,2,2,3,4,4,4,5,5,5,4,3,2,2,2,4,6,6,7,8,8,8,8,8,8,8,8,8,8,8,8,7,7,7,7,7,4,3,3,4,3,3,3,5,5,5,5,6,7,6,5,3,2,2,2,2,3,3,4,5,8,8,8,8,8,8,9,9,9,9,8,7,7,7,7,7,5,5,6,6,5,3,4,6,6,6,6,6,7,7,6,5,2,2,2,2,2,2,3,4,8,8,8,8,8,8,9,9,9,9,8,8,7,7,7,8,6,6,6,7,6,5,5,6,6,6,6,7,8,7,6,6,3,3,2,2,2,2,2,2,9,8,8,8,8,9,8,9,9,9,8,8,7,7,7,7,6,6,6,7,7,6,6,6,6,6,6,7,8,8,7,7,5,4,3,3,2,2,2,3,9,9,9,8,8,8,8,9,9,8,8,8,7,7,7,7,6,6,6,7,7,6,6,6,6,7,6,7,8,8,7,7,6,5,5,3,3,3,3,4,9,9,9,9,8,8,8,8,9,9,8,8,6,6,6,6,6,6,6,7,7,7,6,6,6,7,7,7,8,8,8,8,6,6,5,5,5,5,6,6,9,9,9,9,8,8,8,8,9,8,8,8,6,6,6,6,6,6,7,7,7,7,6,6,6,7,7,8,8,8,8,8,7,6,6,6,5,5,6,6,10,10,9,9,9,8,8,8,8,8,8,7,6,6,6,6,6,7,7,7,7,7,6,7,7,7,7,8,8,8,8,8,8,7,6,6,6,6,6,7,10,10,9,9,9,8,8,8,8,8,8,7,6,6,6,6,6,7,7,7,7,7,6,7,7,7,7,8,8,8,9,9,8,8,7,6,6,6,7,8,9,9,9,9,9,8,8,7,8,8,7,6,6,6,6,7,7,7,7,8,7,7,7,7,7,8,7,8,8,8,9,9,8,8,7,6,6,7,7,8,9,9,9,9,8,8,8,7,7,7,6,6,6,6,6,7,8,7,7,8,8,7,7,8,8,8,8,8,8,8,8,9,8,8,7,6,6,7,8,8,9,9,9,9,8,8,8,7,7,6,6,6,6,6,6,6,7,7,8,8,8,8,7,8,8,8,8,8,8,8,9,9,8,8,8,7,6,7,8,8,9,9,9,9,9,8,8,8,7,7,6,6,6,6,6,7,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,6,8,8,8,9,9,9,9,9,8,8,8,8,7,6,6,6,6,6,7,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,7,8,8,8,9,9,9,9,9,8,8,8,8,7,6,6,6,6,6,7,8,8,8,8,8,8,8,8,9,8,8,8,8,8,8,8,8,8,8,7,7,8,8,8],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.05494288889600808,0.05543492634385613,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.055504164277077626,0.05570033297433899,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06795276457202871,0.08591388438742108,0.1054094234811314,0.10616906376051607,0.10679453627619172,0.10760784602742121,0.10802711711058251,0.10861276762957572,0.10893895339444418,0.10924057647893587,0.10966566453561835,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.08135667957697738,0.09492609550348412,0.10556999779839396,0.10625150161422302,0.10682871856055443,0.10757299674562139,0.10801663966762845,0.10861861161677437,0.10896952436063018,0.10931189522603463,0.10985262967526965,0.11020905657376642,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.10642035140147832,0.10692701343538685,0.10756328880644994,0.10802955868706862,0.10865556907970955,0.1090189830277303,0.1093914731369505,0.10997412974836503,0.11038795484373892,0.11111866528657409,0.1115473458752992,0.11185839100414519,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.03434398051365465,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11011421419097896,0.11058988163214048,0.1115080038322521,0.11188094180400235,0.11217821216021968,0.11256903650865065,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11999245755663969,0,0,0,0,0.006478087836659781,0.0009044831463071017,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11196027285626248,0.11219615822506071,0.11248126946096228,0.1129113816412436,0,0,0,0,0,0,0,0,0,0,0,0,0.11999793922711,0.12000034244012249,0,0,0,0,0,0.006032195083704255,0,0,0,0.0015521109674128339,0,0,0,0,0,0,0,0,0,0,0,0,0,0.1127557534192096,0.1129766866804747,0.11341269750321521,0.11366245373277989,0,0,0,0,0,0,0,0,0,0,0.11982118605206157,0.11994945199141584,0.12001418246509916,0,0,0,0.030663771314729832,0.007482033421385371,0.007496805570804415,0,0.003552197324679377,0.002805923542942253,0.0026238430648752886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11331200113238621,0.11374145726465681,0.11402706054212015,0.11447210225553603,0,0,0,0,0,0,0,0.11916472552105749,0.11941413665133485,0.11978134876508384,0.11995466433046026,0.12008055531477078,0,0,0,0.03066302089890673,0.03068938989072881,0.0075291987993261755,0.011057212041308759,0.006763505036766649,0.0036622649415263032,0.0028060105552202208,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11365704221239416,0.11404322680166651,0.11432013825640676,0.11471664499499137,0.11501655988038025,0.11528266896750593,0,0,0,0.11855211930996791,0.11871880591625819,0.11910698809351578,0.1193840537978993,0.11978697860987933,0.1200435813471504,0.12025054096483816,0,0,0,0.0306369544569457,0.030717885260651043,0.030728662931032654,0.007610299795000672,0.006173949932823719,0.005181185437277489,0.0028053358699693344,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11441355415116851,0.1146693205669968,0.1151172009507267,0.11540678302620255,0.11568610761825066,0.11624098283899989,0.11726896855781867,0.11784273598135729,0.11821544467389122,0.11854971475529329,0.1190190033375013,0.11935103182180895,0.11984731843616071,0.12019278102292992,0.12058477711057602,0.12266789570694635,0,0,0.03148180555248648,0.010859140550998753,0.44999999999999996,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11493966730379881,0.1153566675851851,0.11566402853559701,0.11593817585729646,0.11650490044280358,0.11704704478426024,0.11768898104763537,0.11808093716397768,0.11844564939742203,0.11895656311991407,0.11930910851324954,0.11987275287107647,0.12023978049795073,0.12070222152588389,0.14121439291019708,0.26076465985051916,0.05225822525184455,0.02680623156284337,0.03872468967089071,1.1168788970610428,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11576412150443881,0.11594652873378272,0.11617170580919135,0.11659557678316003,0.11696721177295635,0.11754250301156326,0.11791999198285276,0.11826737218115083,0.11874444956081426,0,0,0.05320447337526453,0.05372751059332646,0.05410154097020435,0.058020516980005,0.061821025555854336,0.08157733894225613,0.12551106199826062,1.253277946601662,0.2537851444606398,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11610411363438473,0.11626012530443533,0.11657411487928614,0.11693216378001517,0.11737555782480134,0,0,0,0,0,0,0,0.05595388493708663,0.06113690280579595,0.06383735391242104,0.07073183123327294,0.12755356671074397,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.11632102791106746,0,0,0,0,0,0,0,0,0,0,0,0,0.06392174985051088,0.0641908978476796,0.0642969502212498,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06394620309343746,0.06399282562493945,0.06399728576162299,0.06389847740181907,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06394444885951023,0.0639347093078859,0.06390921323657187,0.06381535992926218,0.0637172440622176,0.06356285088085122,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06383993891928348,0.06373446182795428,0.06364197340870587,0.06347694357247606,0.06331852104046796,0.0630955380848033,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06361172056335306,0.06346376128733915,0.06335829061791928,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      },
+      {
+        "lat": 37.74,
+        "lon": -119.59,
+        "size": 96,
+        "mpt": 240,
+        "reason": "different scale",
+        "passed": true,
+        "failures": [],
+        "drama": {
+          "referenceCoverage": 1,
+          "referenceWaterCells": 15.317548095830716,
+          "retainedWaterFraction": 0.638759308259432,
+          "waterPrecision": 0.01877970523209867,
+          "wetShare": 0.05653211805555555,
+          "targetCoverage": 1,
+          "features": [
+            {
+              "id": "water-0",
+              "kind": "river",
+              "cells": 12,
+              "referenceArea": 7.9113855212926865,
+              "heads": 3,
+              "rawRange": [2489.04931640625,2504.17578125],
+              "coverage": 1,
+              "present": true
+            }
+          ],
+          "signaturePresent": true,
+          "observedSignature": true,
+          "method": "WorldCover class 80 fractional native-pixel recall; feature coverage >=70%; features >=3% of reference water or 3 tile-equivalents; no observed water uses designed route coverage, not real-water retention",
+          "anchor": {
+            "referenceCoverage": 1,
+            "referenceWaterCells": 23.66402127034962,
+            "retained": 0.766922861393747,
+            "precision": 0.005969894376558889,
+            "signaturePresent": null,
+            "features": [],
+            "wetShare": 0.3298611111111111
+          },
+          "ownSignaturePresent": true
+        },
+        "preview": {
+          "size": 40,
+          "heights": [7,7,6,6,7,6,7,8,8,9,10,10,9,10,10,10,10,10,9,9,9,10,11,11,11,11,11,11,11,11,11,11,11,10,10,11,11,12,12,12,7,7,7,7,8,7,8,8,9,9,10,10,10,10,10,10,10,9,9,9,10,10,11,11,11,10,10,11,11,11,11,11,10,10,10,11,11,12,11,11,7,7,7,7,8,8,8,9,10,10,11,10,9,9,10,10,9,9,9,9,10,10,10,10,10,10,10,10,10,11,11,11,10,10,10,11,11,10,11,12,5,6,7,8,8,9,9,10,10,10,10,10,9,9,10,9,9,9,9,9,9,10,10,10,10,10,10,10,11,11,11,11,10,9,10,11,11,10,12,12,5,6,8,8,9,8,9,10,10,10,10,10,9,9,9,9,9,9,9,9,9,10,10,9,9,10,11,11,11,10,10,10,11,10,9,11,10,11,11,11,5,6,7,8,9,9,9,10,9,10,10,10,9,9,9,9,9,9,9,10,10,10,9,9,9,10,11,11,11,10,9,9,9,9,9,9,10,10,11,11,5,6,7,8,9,9,9,9,9,10,10,10,9,9,9,9,9,9,9,9,10,9,9,9,9,11,11,10,10,9,9,9,9,9,9,10,10,10,11,11,4,5,6,7,8,8,9,9,10,10,10,10,9,9,9,9,9,9,10,10,9,9,9,9,9,10,9,9,9,9,9,9,9,9,9,10,10,10,11,11,4,5,6,7,7,7,8,9,9,10,10,10,9,9,9,9,9,10,10,11,9,9,9,9,9,8,8,8,8,8,9,9,9,9,9,10,10,10,10,11,4,5,6,6,6,7,7,9,9,10,10,10,9,9,9,9,9,9,10,11,10,10,9,8,8,8,8,8,8,9,9,9,10,10,10,10,10,11,11,11,4,4,5,6,7,8,9,10,9,9,10,9,9,9,9,9,9,10,10,11,10,10,10,9,8,7,7,8,8,9,10,10,11,11,10,10,11,11,11,11,3,4,6,7,8,9,10,10,9,9,10,9,9,9,8,9,9,10,10,11,11,11,11,10,8,7,8,8,9,9,10,11,11,11,11,11,11,12,12,12,3,5,7,8,8,9,8,9,9,9,10,9,7,8,9,9,10,10,11,11,11,11,11,9,8,8,8,9,10,10,12,12,11,11,11,12,11,12,12,13,3,4,6,7,7,7,7,6,7,8,7,8,6,8,8,8,9,10,11,11,11,11,10,8,7,8,8,9,11,11,12,11,11,11,11,12,12,13,12,13,2,4,5,5,6,6,5,4,4,3,4,6,7,7,5,6,6,10,10,11,11,11,10,8,7,8,8,9,10,11,11,11,11,11,11,12,12,13,13,13,1,3,4,3,3,3,3,2,2,2,2,5,6,3,3,3,4,8,10,10,10,11,9,7,5,9,9,8,9,9,10,11,11,10,10,11,12,13,13,13,2,1,1,2,2,3,4,4,3,3,2,2,2,2,2,3,3,6,8,10,11,11,9,7,5,5,7,7,7,8,9,9,10,9,9,10,12,12,12,12,4,4,5,6,6,6,7,8,7,7,4,3,3,3,3,2,2,3,4,8,9,10,9,5,3,5,4,5,7,7,7,8,7,7,7,7,10,11,11,12,5,6,6,7,7,8,8,9,9,9,6,4,10,8,7,3,3,3,3,4,8,8,5,3,3,5,8,7,7,7,7,7,7,7,7,7,8,10,11,11,6,7,7,7,8,9,9,10,10,10,10,9,10,9,9,5,4,2,2,3,6,4,2,3,3,5,8,8,7,7,7,8,7,9,9,8,7,9,11,10,8,7,7,7,8,9,10,10,10,10,10,10,11,10,10,8,8,3,2,2,2,2,3,3,3,3,4,9,12,9,9,9,9,10,10,10,10,7,8,8,8,8,8,8,9,10,10,10,10,10,10,10,10,11,11,10,10,5,3,2,2,2,3,4,4,3,3,6,9,11,10,9,10,10,10,11,11,8,8,9,9,9,9,9,9,10,11,11,11,11,11,10,11,11,11,10,10,9,5,5,4,6,7,8,9,6,3,3,5,7,10,10,11,11,11,11,11,10,10,11,9,9,9,9,9,10,10,11,12,11,11,10,11,11,12,10,9,10,8,9,6,7,8,9,10,8,4,3,3,4,7,9,11,12,13,12,11,11,11,12,9,9,10,9,10,10,10,11,12,12,11,11,11,11,12,10,9,10,8,9,9,8,9,9,10,10,7,4,4,4,5,6,10,12,14,13,12,12,12,12,10,10,10,10,10,11,10,11,11,12,12,12,11,11,12,10,9,9,9,9,9,9,9,10,11,11,9,8,7,8,7,5,7,9,12,15,13,13,13,13,10,10,10,10,10,11,11,11,12,12,13,12,11,10,11,10,9,9,9,9,10,9,10,10,11,11,11,8,9,9,11,8,6,8,11,13,14,13,13,13,10,10,10,10,10,10,11,11,12,12,12,12,11,10,10,9,9,9,10,10,10,10,11,10,11,12,11,9,9,10,12,11,9,7,9,12,14,14,13,13,10,11,10,10,10,10,11,11,11,12,12,12,11,10,9,9,9,9,10,11,10,10,11,11,11,12,11,9,9,10,11,12,10,7,8,10,11,13,13,13,9,10,11,11,11,10,10,11,12,12,12,12,11,10,10,9,9,9,10,11,10,11,11,11,11,11,11,9,10,10,11,11,11,9,9,10,10,12,13,13,9,10,10,11,11,10,11,11,11,11,12,12,11,11,10,10,9,10,11,11,11,12,12,12,11,11,10,10,10,11,12,12,11,10,10,11,11,10,11,13,9,10,10,10,11,11,11,11,11,12,12,13,11,10,10,10,9,10,11,11,11,12,12,12,11,11,11,11,10,10,12,12,11,11,11,11,12,10,11,13,9,10,10,10,11,11,11,11,11,12,12,12,12,11,11,10,9,9,10,10,11,12,12,11,11,11,11,11,11,11,11,12,11,11,12,11,12,11,11,12,9,9,10,11,11,11,11,12,11,12,13,12,12,11,12,10,9,9,10,10,11,11,12,11,12,12,12,12,11,11,11,12,12,11,12,12,12,11,11,12,10,9,10,10,11,11,11,12,12,12,13,13,12,12,11,10,10,9,10,10,11,12,11,11,12,12,13,13,12,12,11,12,12,12,12,12,12,12,11,12,10,10,10,10,10,11,12,12,12,13,13,12,12,12,11,10,10,10,9,10,11,11,12,12,12,12,13,13,13,13,13,12,12,13,12,13,13,11,12,12,10,10,10,10,10,11,12,12,12,13,13,12,11,11,11,10,10,10,9,10,11,11,12,12,12,13,14,14,14,13,14,12,13,13,13,13,12,11,11,12,11,11,10,10,10,11,12,12,13,13,13,12,12,11,11,11,11,10,10,10,10,11,12,12,12,13,14,15,14,14,14,13,13,13,13,13,12,12,12,10,11,11,11,11,10,11,12,12,12,13,13,12,12,11,11,11,11,10,10,10,10,10,12,12,12,13,14,15,15,15,14,14,14,14,13,13,12,12,12,12,10,11,11,11,11,11,11,11,12,12,13,13,11,11,11,11,11,10,10,11,10,10,11,12,13,13,13,14,14,15,16,15,15,15,14,13,13,12,12,12],
+          "depth": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.06900227485475806,0,0,0,0,0,0,0,0,0.5103208474401323,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.33182507592488,0,0,0,0,0.18568120269615354,0.5005012658265965,1.5066678222131284,1.5086498553131058,1.5114794261011082,1.5138361351259713,0,0,0.5239786077709455,0.5250585287404885,0.5276009572459842,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4950604225331475,1.4981247237074902,1.5048290898791892,0.5098967344063775,0.515073002652495,0,0,0,0.508530370273007,0.5124509557623206,1.5165658591511226,1.516000520508536,1.5207007409146902,1.524060064794222,1.5241392481956024,0.5266795551095256,0.5285135243044433,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.518898330637051,0.5229110576278844,0.5241030515595414,0.5242139200353778,1.5287914810491028,1.5316558660655315,0.5324597226678659,0,0,0,0,0,0,0.5572111416089931,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5327347245090928,0.5331465339298873,0.5339679628274636,0.5361462318014407,0,0,0,0,0.5529994741496936,0.5555615911737974,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.5343617137390275,1.5378574548394184,0.5386095557108196,0,0,1.5538866554563122,0.5532533387123933,0.5547736837971645,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5402373541087286,1.5407142146257182,1.5403994622516377,1.5432390489156071,1.5498854715300043,0.5492906886687087,0.5536459527226559,0.5587224151858666,0.5711581853330132,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5418863709597398,1.540273386259526,1.5441616228505037,1.5494675133618494,0.5439836895894291,0,0,0.5705577969810819,0.5693694090718543,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.6108721753619004,0.6140302441923194,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.614928962458721,0.619060833070887,0.19735303861646342,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.00017321823902391223,0.1155224672669482,0.41818452735045575,0.5102030517122609,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.006208593557763,0.1536289654962045,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.505680817338679,0.001906625877442124,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0089283397301017,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0195358586514467,0.41014546050673234,0.1318251833132755,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.12576748917255925,0.4984625931017978,0.9985751367648279,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.0031360025801136487,0.01059294884414571,0.0159606563639567,1.0210065797831347,0.02517560831524092,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.010682229180022252,0,1.0241157846816842,0.05984243644849523,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.401203497020477,0.3539998264746454,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4050440878637698,0.5186556226261583,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.007565122565508564,0,0.5324628636036066,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0079132516775566,0.01166420046174723,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.0111508885341107,1.0135314255644954,0.01766381360276789,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.017504951797498367,0.019842441732617944,2.0203819738972766,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.017011070844015434,0.02126689133887533,0.021124091755459987,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        }
+      }
+    ]
+  },
+  "timings": {
+    "fetchMs": 4494.499999940395,
+    "convertMs": 4323.5,
+    "directMs": 4423,
+    "retryMs": 4573.800000011921,
+    "exportMs": 256.0999999642372,
+    "totalMs": 9252.899999976158
+  },
+  "requests": [
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/686/1583.png",
+      "sha256": "47912403d82ac1c1282251926be14607423f86825c054205f7dae0a83b4450aa",
+      "bytes": 133993,
+      "ms": 460,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/686/1584.png",
+      "sha256": "b732c96fac2adb22d946fc6491b30a9506e68913f78a0e608b45210cc9bd1cd3",
+      "bytes": 132803,
+      "ms": 460.80000001192093,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/687/1583.png",
+      "sha256": "885e3ec46559c43df30d1f75c00fe0d2e08fe5fd31f34900bb7ec0eac981d587",
+      "bytes": 136323,
+      "ms": 477.39999997615814,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/687/1584.png",
+      "sha256": "a5ba8f644b57ab35c1c3f64d03a473792d7bbdce3ccfa0d657c644cd416f185e",
+      "bytes": 129284,
+      "ms": 534.5,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/343/792.png",
+      "sha256": "8b79fb26c98ed3915a516691dd6ed15f8ca7ecccb8866daada5ff7ac9c9115d1",
+      "bytes": 139525,
+      "ms": 274.30000001192093,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/344/792.png",
+      "sha256": "41908b77f8d5a518076dd39dca529d9d674eed9ff5edecd86c5c14f780600d29",
+      "bytes": 140967,
+      "ms": 281.30000001192093,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/344/791.png",
+      "sha256": "d446bc9f21a89d084254027e11a5a760496ead8d2f0c39ae73385b9267c10bfc",
+      "bytes": 143722,
+      "ms": 281.80000001192093,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/11/343/791.png",
+      "sha256": "680b2ca0a6deb3be561bf5a13344caa789dbbe24d06d49226f452642f074c201",
+      "bytes": 140859,
+      "ms": 282.5,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/172/395.png",
+      "sha256": "a4d6e81aea90eacbd9ff62b941fd5fb74acac339268f2dfd5349bb3d0c778c48",
+      "bytes": 76633,
+      "ms": 242.80000001192093,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/171/396.png",
+      "sha256": "b73a4a6745314dfd9ea7bb1fcb788da86d77d5359215a932630095183152f56a",
+      "bytes": 73481,
+      "ms": 246.0999999642372,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/172/396.png",
+      "sha256": "09e167146defa61e16bde46bbba7abdf088d9462f1092fb0a962c68ee89b1d9d",
+      "bytes": 72122,
+      "ms": 247,
+      "cached": false
+    },
+    {
+      "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/171/395.png",
+      "sha256": "0ad731483bf11feaacb6579e9f38a3941bac124a0eb4ae41776ce20822ed1e53",
+      "bytes": 72603,
+      "ms": 251,
+      "cached": false
+    }
+  ],
+  "heartbeats": 186,
+  "comparison": {
+    "before": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 17.682928264606744,
+      "retained": 0.33512545443419395,
+      "precision": 0.006351553451665153,
+      "signaturePresent": false,
+      "features": [
+        {
+          "cells": 13,
+          "area": 4.725419528782368,
+          "coverage": 0
+        }
+      ],
+      "wetShare": 0.10123697916666667
+    },
+    "afterOnBeforeExtent": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 17.682928264606744,
+      "retained": 0.33878388420871947,
+      "precision": 0.004800233270567006,
+      "signaturePresent": false,
+      "features": [
+        {
+          "cells": 13,
+          "area": 4.725419528782368,
+          "coverage": 0
+        }
+      ],
+      "wetShare": 0.13541666666666666
+    },
+    "afterOwnExtent": {
+      "referenceCoverage": 1,
+      "referenceWaterCells": 15.317548095830716,
+      "retained": 0.638759308259432,
+      "precision": 0.01877970523209867,
+      "signaturePresent": true,
+      "features": [
+        {
+          "cells": 12,
+          "area": 7.9113855212926865,
+          "coverage": 1
+        }
+      ],
+      "wetShare": 0.05653211805555555
+    },
+    "beforeExtent": {
+      "lat": 37.74,
+      "lon": -119.59,
+      "size": 96,
+      "mpt": 120
+    }
+  }
+}
