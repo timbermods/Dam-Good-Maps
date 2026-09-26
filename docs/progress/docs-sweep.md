@@ -102,9 +102,10 @@ is not touched.
 - Links this entry.
 
 **README.md**
-- The editor section: the old tool list (landform, River, Lake, Forest tools, Advanced, Show, the pill, Place) replaced by what is true now and a status line: the editor is being rebuilt around brushes.
-- The generator list gains **Save to Timberborn**, merged from #40 while this sweep ran (D162, D191; checked against `src/platform/index.ts` and `App.tsx`).
-- The table links the docs index.
+- The table links the docs index. Nothing else: README and the site's help text describe the site
+  as released on `main`, which keeps the old editor (its land, water and resource tools) until
+  `live-editing-done` ships. The Live editing release PR rewrites the editor section (D188); the
+  Save to Timberborn lines are the release's own.
 
 **docs/README.md**
 - Retired terms: the test's path, the allowed places and markers, and `pendingRemoval`.
@@ -224,7 +225,9 @@ Found on `dev` and on `feature/live-editing` (9b75c93). Each contradicts D182 or
 - Outside `src/editor/`, in files the branch also changes: `src/ui/View3D.tsx:6` says "the editor
   puts its handles on top". `src/ui/App.tsx:1` and `View3D.tsx:1` cite "EDITOR_PLAN §4", an old
   section number. `App.tsx` lazy-loads `ExportDialog`, the confirm dialog above.
-- README.md's editor section is a status line until the new editor lands; that change writes its
-  tool list (docs are part of done, D188).
+- README.md's editor section still lists the released editor's tools (Land, Water, Resources,
+  Advanced, Show, the pill, Place, "Select a feature to move it"), which is right while `main` has
+  that editor. The Live editing release PR rewrites it for the new editor, following CLAUDE.md's
+  writing rules (D188).
 - Not contradictions: BrushBar's "Strength (Alt+wheel)", and WaterBar's Drought and Badtide
   buttons (D186).

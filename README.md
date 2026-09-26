@@ -19,17 +19,35 @@ The generator:
 - The preview shows water, moisture and reach layers.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
 - **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
-- **Save to Timberborn** saves the map straight into your maps folder, in Chrome and Edge. Pick
-  `Documents\Timberborn\Maps` the first time. Other browsers download the file instead.
 
 The editor:
-- **Refine this map** opens the map in the editor, in 3D. **Open a map** opens any `.timber`, from
-  0.6 to 1.1.
-- The editor is being rebuilt around brushes: paint the land, place things, and the water
-  follows.
+- **Refine this map** opens the map in 3D.
+- **Land**: draw a **Hill**, **Plateau**, **Ridge**, **Canyon**, **Valley** or **Island**, and pick
+  its height and edges. Add **Terraced cliffs**. Click a step to add a **Slope**, or a slope to
+  remove it. Draw a **Thorn belt**.
+- **Water**: click a **River** from its source to where it ends. Draw a **Lake** by its shore. Add
+  a **Waterfall**, a **Dam site**, a **Gorge** or a **Badwater spring**. Click a river to add a
+  **Weir** or a **Plug**. Click a lake's shore to add a **Plugged spillway**. **Show dam sites**
+  marks the best places for a dam. Select a river and click **Make it badwater** to turn its
+  water bad.
+- **Resources**: draw a **Forest**, **Berry patch** or **Ruin field**. Green shows where trees and
+  bushes live. Click to place a **Mine site**, **Relic** or **Geothermal field**.
+- Objects show under the pointer before you click. Green means the game keeps them there. Red
+  means it would delete them, and says why.
+- Tick **Advanced** to add **Unstable core** and **Object** to **Resources**. **Object** places any
+  object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
+  them, set a water source's strength, or make it turn on in a later cycle.
+- **Start**: drag the start. Green means the district center fits and the start has its water,
+  wood and bushes.
+- **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
 - Water settles within a couple of seconds of an edit. The full check follows in the background.
+  The pill shows **Settling water** with its progress, then **Ready to play** or the problems.
+- Each tool shows what it will do first. **Place** adds it.
+- Select a feature to move it, change it or delete it. This works on most of what the generator
+  made too.
 - A problem shows as soon as you make it, with a button that fixes it.
 - **Back to settings** keeps your edits. Generate again and they stay.
+- **Open a map** opens any `.timber`, from 0.6 to 1.1.
 - The preview's **3D** switch shows the map in 3D.
 - In 3D the ground looks as in the game: green where the soil is moist, cracked earth where it is
   dry, rusty red where badwater spoils it. **Height colours** colours it by height instead. The
