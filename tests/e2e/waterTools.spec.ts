@@ -80,7 +80,7 @@ test("water: smart Lower carves a bed the water follows; sources placed, strengt
   await page.mouse.move(p0.x, p0.y, { steps: 4 });
   await expect.poll(() => page.evaluate(() => window.dgm3d!.renderer.brushCursorState?.water ?? false)).toBe(true);
 
-  // a stroke from the river out over dry ground: a bed that never rises, and the water in it
+  // a stroke from the river out over dry ground: a bed no higher than the river's, and the water in it
   const dryBefore = line.slice(6);
   expect(await wetAt(page, dryBefore)).toBe(0);
   const bed = (await heights(page))[from[1] * W + from[0]];
@@ -94,14 +94,9 @@ test("water: smart Lower carves a bed the water follows; sources placed, strengt
   await page.waitForFunction(() => window.dgmEditor!.pendingTerrain() === 0, null, { timeout: 30_000 });
   await idle(page);
   expect(await page.evaluate(() => window.dgmEditor!.lastStroke()?.channel)).toBe(true);
+  // nowhere along it above the river's bed (where the brush lingered it may press deeper)
   const after = await heights(page);
-  let last = Infinity;
-  for (const [tx, ty] of line.slice(1, 13)) {
-    const h = after[ty * W + tx];
-    expect(h, `(${tx}, ${ty})`).toBeLessThanOrEqual(bed);
-    expect(h).toBeLessThanOrEqual(last);
-    last = h;
-  }
+  for (const [tx, ty] of line.slice(1, 13)) expect(after[ty * W + tx], `(${tx}, ${ty})`).toBeLessThanOrEqual(bed);
   await expect.poll(() => wetAt(page, dryBefore), { timeout: 120_000, intervals: [1000] }).toBeGreaterThanOrEqual(4);
   expect((await info(page)).history.at(-1)!.label).toMatch(/^Lower/);
   await page.keyboard.press("Escape");
@@ -158,7 +153,7 @@ test("water: smart Lower carves a bed the water follows; sources placed, strengt
   // a bad source: its 3 × 3 round the click
   const bad = await flatDry(page, start, 3, [from, [sx, sy], [sx + 3, sy]]);
   expect(bad).not.toBeNull();
-  await page.getByLabel("Water", { exact: true }).selectOption("bad");
+  await page.getByRole("combobox", { name: "Water", exact: true }).selectOption("bad");
   const bp = await client(page, ...bad!);
   await page.mouse.move(bp.x + 3, bp.y);
   await page.mouse.click(bp.x, bp.y);

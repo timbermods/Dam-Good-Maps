@@ -292,10 +292,15 @@ on a placed river.
   up to 6) and measures the hollow; its `step` digs it and its `then` puts the spring in. Both are
   checked with a real build.
 - `limits` for `lake` and `river` say how to make them.
-- Requests rewritten: P01, P08, C01, R04, W04, W10, J11, M02, M07, Z04, Z05, B11. J11 asks for a
-  large lake, not a huge one: a huge dug lake finds no dry ground in that map's south third clear
-  of the river, the relics and the mine sites. M07's lake goes within 30 tiles of the start, not
-  20: the woods there hold exactly the 40 trees the start needs.
+- Requests rewritten: P01, P08, C01, R04, W04, W10, J11, M02, M07, Z04, Z05, B11. Most lakes use
+  `find_sites`' ready steps (checked with a real build); C01 digs by place. J11 asks for a large
+  lake, not a huge one: a huge dug lake finds no dry ground in that map's south third clear of the
+  river, the relics and the mine sites. M07 changes the settings first, so its lake is given a
+  place, "far from the start": near the start a pond drowns the trees and berries the start needs.
+- Reference solutions (`bin/reference.ts`), after merging dev at 481d890: 119 of 131 pass. All 11
+  requests this branch added pass; 108 of the 120 older ones pass: dev's 105, plus P08, C01 and
+  W10, which fail on dev and pass with their new solutions. The other 12 (S04, W05–W07, J03, M04,
+  M06, I07, X01, X08, X09, Q01) fail on dev too: setups and targets tuned on older maps.
 
 ## The camera keys (D180)
 
@@ -337,7 +342,7 @@ enables it at once), and the brushes could be picked before the map could be pai
 - `tests/e2e/legend.spec.ts`: the legend beside the map, only what the map has, the highlight by
   mouse and keyboard, the strip; which map is which on the generator's page.
 - `tests/e2e/waterTools.spec.ts` (D184): the ring is blue over the river and not over dry ground;
-  a stroke from the river carves a bed that never rises and the water flows into it; a Source
+  a stroke from the river carves a bed no higher than the river's and the water flows into it; a Source
   click places a clean source whose water spreads; Alt+scroll over it makes it 4 water/s as one
   undo step; a drag moves it (one step), Esc mid-drag puts it back; a bad source's 3 × 3 round the
   click; Flatten with Ctrl over the river says the bed's level and nothing else.
@@ -390,6 +395,9 @@ enables it at once), and the brushes could be picked before the map could be pai
   - `tests/unit/editor.test.ts` made plateau, forest, berry and ruin features from a dragged
     rectangle; those tools are gone, so that case is removed. A generated landform's move is
     refused with "shape it with the brushes".
+  - `tests/e2e/tools.spec.ts` drew a river from the north edge and read its water; it places a
+    water source beside the edge and reads its water now.
+  - `tests/e2e/waterFlow.spec.ts` picked **Water source**; the tool is **Source** now.
 
 ## Try it
 

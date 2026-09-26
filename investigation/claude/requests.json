@@ -2902,34 +2902,25 @@
     "the lake lies by the upper quarter of the south tributary"
    ],
    "reference": {
-    "calls": [],
+    "calls": [
+     {
+      "tool": "find_sites",
+      "args": {
+       "kind": "lake",
+       "where": {
+        "course": [
+         0,
+         0.25
+        ],
+        "river": "south tributary"
+       }
+      }
+     }
+    ],
     "proposal": {
      "steps": [
-      {
-       "op": "brush",
-       "tool": "lower",
-       "where": {
-        "course": [
-         0,
-         0.25
-        ],
-        "river": "south tributary"
-       },
-       "size": "small",
-       "amount": 2
-      },
-      {
-       "op": "addSource",
-       "kind": "water",
-       "where": {
-        "course": [
-         0,
-         0.25
-        ],
-        "river": "south tributary"
-       },
-       "fillHollow": true
-      }
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
     }
    }
@@ -4205,7 +4196,15 @@
     "both goals met on the combined result"
    ],
    "reference": {
-    "calls": [],
+    "calls": [
+     {
+      "tool": "find_sites",
+      "args": {
+       "kind": "lake",
+       "where": "near the start"
+      }
+     }
+    ],
     "proposal": {
      "steps": [
       {
@@ -4213,19 +4212,8 @@
        "kind": "waterfall",
        "where": "the north"
       },
-      {
-       "op": "brush",
-       "tool": "lower",
-       "where": "near the start",
-       "size": "small",
-       "amount": 2
-      },
-      {
-       "op": "addSource",
-       "kind": "water",
-       "where": "near the start",
-       "fillHollow": true
-      }
+      "$0.sites.0.step",
+      "$0.sites.0.then"
      ]
     }
    }
@@ -4529,11 +4517,11 @@
      ]
     }
    ],
-   "note": "near the start the woods hold exactly the 40 trees the start needs: a pond dug there drowns some, so the lake goes a little further out",
+   "note": "the settings change regenerates the map, so the lake is given a place, not a site; near the start a pond would drown the trees and berries the start needs",
    "report": {
     "mustSay": [
      "settings first, then the berries and lake on the new map",
-     "the lake's place (an assumption: within 30 tiles of the start, clear of the trees the start needs)"
+     "the lake's place (an assumption: away from the start, clear of the trees and berries it needs)"
     ]
    },
    "pass": [
@@ -4556,20 +4544,14 @@
       {
        "op": "brush",
        "tool": "lower",
-       "where": {
-        "near": "start",
-        "within": 30
-       },
+       "where": "far from the start",
        "size": "small",
        "amount": 2
       },
       {
        "op": "addSource",
        "kind": "water",
-       "where": {
-        "near": "start",
-        "within": 30
-       },
+       "where": "far from the start",
        "fillHollow": true
       }
      ]
@@ -6705,24 +6687,19 @@
         }
        ]
       }
+     },
+     {
+      "tool": "find_sites",
+      "args": {
+       "kind": "lake",
+       "where": "near the start"
+      }
      }
     ],
     "proposal": {
      "steps": [
-      {
-       "op": "brush",
-       "tool": "lower",
-       "where": "near the start",
-       "size": "small",
-       "amount": 2
-      },
-      {
-       "op": "addSource",
-       "kind": "water",
-       "where": "near the start",
-       "fillHollow": true,
-       "handle": "lake"
-      }
+      "$1.sites.0.step",
+      "$1.sites.0.then"
      ]
     },
     "checks": [

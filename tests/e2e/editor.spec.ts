@@ -42,20 +42,28 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   await drag(page, [lowered[0] - 3, lowered[1]], [lowered[0] + 3, lowered[1]]);
   await page.waitForFunction(() => window.dgmEditor!.pendingTerrain() === 0, null, { timeout: 30_000 });
   await page.keyboard.press("Escape");
-  // a spring on dry, empty ground north of the stroke
+  // a spring on dry, empty ground beside the river, its water running straight in: away from the
+  // start and from the relics, mine sites and geothermal fields, which must stay off water
   const spring = await page.evaluate(
-    ([cx, y0]) => {
+    ([s0, s1]) => {
       const m = window.dgm3d!.renderer.mapState()!;
-      for (let y = y0; y < m.H - 4; y++)
-        for (const x2 of [cx, cx - 4, cx + 4]) {
-          if (m.surface.depth[y * m.W + x2] > 0) continue;
+      const e = m.entities;
+      const extras: [number, number][] = [];
+      for (let k = 0; k < e.count; k++) if (/Relic|Geothermal|Mine|Underground/i.test(e.templates[e.template[k]])) extras.push([e.x[k], e.y[k]]);
+      for (let y = 4; y < m.H - 4; y++)
+        for (let x2 = 4; x2 < m.W - 4; x2++) {
+          const i = y * m.W + x2;
+          if (m.surface.depth[i] > 0 || Math.hypot(x2 - s0, y - s1) < 20 || extras.some(([ex, ey]) => Math.hypot(ex - x2, ey - y) < 16)) continue;
+          let wet = false;
+          for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (m.surface.depth[(y + dy) * m.W + x2 + dx] > 0.2) wet = true;
+          if (!wet) continue;
           let empty = true;
-          for (let k = 0; k < m.entities.count && empty; k++) if (Math.abs(m.entities.x[k] - x2) <= 2 && Math.abs(m.entities.y[k] - y) <= 2) empty = false;
-          if (empty) return [x2, y] as [number, number];
+          for (let k = 0; k < e.count && empty; k++) if (Math.abs(e.x[k] - x2) <= 2 && Math.abs(e.y[k] - y) <= 2) empty = false;
+          if (empty && m.heights[i] <= m.heights[i - 1] + 1 && m.heights[i] <= m.heights[i + 1] + 1) return [x2, y] as [number, number];
         }
       return null;
     },
-    [x, 20] as const,
+    [start0[0], start0[1]] as const,
   );
   expect(spring).not.toBeNull();
   await page.getByRole("tab", { name: "Water" }).click();

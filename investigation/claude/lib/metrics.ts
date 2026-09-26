@@ -219,7 +219,9 @@ export function measureSource(s: MapSession, id: string): FeatureMeasure | null 
   const tiles = entityTiles(e);
   const at = tiles[Math.floor(tiles.length / 2)] as [number, number];
   const comps = (e.raw ? e.raw.Components : { ...(e.before ?? {}), ...e.components }) as Record<string, unknown>;
-  const strength = (comps.WaterSource as { SpecifiedStrength?: number } | undefined)?.SpecifiedStrength ?? null;
+  const raw = (comps.WaterSource as { SpecifiedStrength?: unknown } | undefined)?.SpecifiedStrength;
+  // a number, or the file's float wrapper ({ value })
+  const strength = typeof raw === "number" ? raw : raw && typeof raw === "object" && "value" in raw ? Number((raw as { value: unknown }).value) : null;
   const out: FeatureMeasure = { id: `${SOURCE_PREFIX}${eid}`, kind: e.template === "BadwaterSource" ? "badwaterSource" : "source", at, where: compassWords(v, at[0], at[1]), strength, ...placeOf(v, at) };
   const h = hollowAt(s.built.heights, null, v.W, v.H, at[0], at[1]);
   if (h.fills) Object.assign(out, { lake: true, area: h.tiles, level: h.level });
