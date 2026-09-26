@@ -46,6 +46,7 @@ import {
 } from "./raster/terrain";
 import { rasterizeResource, resourceOrder, type Placed } from "./raster/resources";
 import { objectTiles, rasterizeObjects } from "./objects";
+import { markBrushTiles, type BrushParams } from "./raster/brush";
 import type { DistrictPlan } from "./setpieces/secondDistrict";
 import { BuildTarget, clipRect, fullRegion, type FieldCache, type Rect, type TileRegion } from "./target";
 import type { Feature, MapObjectFeature, SetPieceFeature, StartFeature } from "./schema";
@@ -589,6 +590,14 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let slopesKey = "";
   if (slopeStart && !base) {
     const targets = landformTargets(features.filter(live), target);
+    // the ground a walkable smooth stroke went over: the natural slopes join its steps too
+    for (const sc of input.sculpts ?? []) {
+      const p = sc.params as BrushParams;
+      if (!("dabs" in p) || p.tool !== "smooth" || !p.walkable) continue;
+      targets.mask ??= new Uint8Array(N);
+      markBrushTiles(p, W, H, targets.mask);
+      targets.key += `|walk:${paramsKey(p)}`;
+    }
     rules = { ...SLOPE_RULES, targets: targets.mask, links, water: terrain.channel };
     slopesKey = `${slopeStart.x},${slopeStart.y}|${targets.key}|${JSON.stringify(links)}`;
   } else if (slopeStart && base) {

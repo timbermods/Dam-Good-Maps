@@ -221,6 +221,98 @@ describe("the brush kit (D182) and smart Lower (D184)", () => {
   });
 });
 
+describe("hold to dig, terraces and walkable ground (D184, D193)", () => {
+  const W = 40;
+  const H = 30;
+  const tile = (x: number, y: number) => [4 * x + 2, 4 * y + 2];
+
+  it("a precise hold digs a level deeper for each level its dabs carry, with vertical walls, and stops at its floor", () => {
+    const g = new Uint8Array(W * H).fill(8);
+    const dabs = [...tile(20, 15), ...tile(20, 15), ...tile(20, 15), ...tile(20, 15)];
+    const deep = g.slice();
+    applyBrush({ tool: "lower", size: 2, strength: 5, precise: true, levels: [1, 2, 3, 4], dabs }, deep, W, H);
+    expect(deep[15 * W + 20]).toBe(4);
+    expect(deep[15 * W + 21]).toBe(4);
+    // vertical walls: the ground right beside the pit is untouched
+    expect(deep[15 * W + 22]).toBe(8);
+    // a floor at level 6: the hold stops there however long it lasts
+    const floored = g.slice();
+    applyBrush({ tool: "lower", size: 2, strength: 5, precise: true, levels: [1, 2, 3, 4], stop: 6, dabs }, floored, W, H);
+    expect(floored[15 * W + 20]).toBe(6);
+    // a ceiling for raise
+    const raised = g.slice();
+    applyBrush({ tool: "raise", size: 2, strength: 5, precise: true, levels: [1, 2, 3, 4], stop: 10, dabs }, raised, W, H);
+    expect(raised[15 * W + 20]).toBe(10);
+    // the kept tiles stay as they are
+    const kept = g.slice();
+    applyBrush({ tool: "lower", size: 2, strength: 5, precise: true, levels: [1, 2, 3, 4], keep: [[15, 20, 20]], dabs }, kept, W, H);
+    expect(kept[15 * W + 20]).toBe(8);
+    expect(kept[15 * W + 21]).toBe(4);
+    expect(brushProblems({ tool: "lower", size: 2, strength: 5, levels: [1, 2, 3, 4], dabs }, W, H)).not.toEqual([]);
+  });
+
+  it("flatten in steps makes benches every few levels from its level", () => {
+    const g = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) g[y * W + x] = 2 + Math.floor(x / 4);
+    const dabs: number[] = [];
+    for (let k = 0; k < 60; k++) for (let x = 4; x <= 36; x += 2) dabs.push(...tile(x, 15));
+    applyBrush({ tool: "flatten", size: 3, strength: 10, level: 6, steps: 3, dabs }, g, W, H);
+    const row = Array.from({ length: 29 }, (_, k) => g[15 * W + 6 + k]);
+    // every level on the row is a bench: 6 plus a multiple of 3
+    for (const v of row) expect(Math.abs((v - 6) % 3), `${row}`).toBe(0);
+    expect(new Set(row).size).toBeGreaterThan(1);
+    expect(brushProblems({ tool: "raise", size: 3, strength: 5, steps: 3, dabs: tile(5, 5) }, W, H)).not.toEqual([]);
+  });
+
+  it("smooth, make walkable wears cliffs to 1-level steps, and the build puts natural slopes on the steps under it", () => {
+    const g = new Uint8Array(W * H).fill(4);
+    for (let y = 0; y < H; y++) for (let x = 20; x < W; x++) g[y * W + x] = 8;
+    const dabs: number[] = [];
+    for (let k = 0; k < 40; k++) for (let y = 8; y <= 22; y += 2) dabs.push(...tile(20, y));
+    const walk = g.slice();
+    applyBrush({ tool: "smooth", size: 4, strength: 10, walkable: true, dabs }, walk, W, H);
+    for (let y = 12; y <= 18; y++) for (let x = 16; x < 24; x++) expect(Math.abs(walk[y * W + x] - walk[y * W + x + 1]), `(${x}, ${y})`).toBeLessThanOrEqual(1);
+    // on a map: a walkable stroke over a cliff near the start gets slopes on its steps
+    const r = generate(makeSpec({ seed: 3, theme: "riverValley", size: { x: 96, y: 96 } }));
+    const s = MapSession.fromGenerated(r, r.file);
+    s.setWaterMode("defer");
+    const st = s.built.start!;
+    const path: number[] = [];
+    for (let k = 0; k < 30; k++) for (let x = st.x + 8; x <= st.x + 16; x++) path.push(4 * x + 2, 4 * (st.y + 8) + 2);
+    const raise: BrushParams = { tool: "raise", size: 3, strength: 10, precise: true, levels: path.filter((_, k) => k % 2 === 0).map(() => 3), dabs: path };
+    expect(s.apply({ op: "brush", params: raise }, "user", "Raise").errors).toEqual([]);
+    const slopesBefore = s.built.entities.filter((e) => e.template === "Slope").length;
+    const u = s.apply({ op: "brush", params: { tool: "smooth", size: 5, strength: 10, walkable: true, dabs: path } }, "user", "Smooth");
+    expect(u.errors).toEqual([]);
+    expect(s.built.entities.filter((e) => e.template === "Slope").length).toBeGreaterThan(slopesBefore);
+    // a full build agrees
+    expect(Array.from(s.fullBuild().heights)).toEqual(Array.from(s.built.heights));
+  });
+
+  it("a precise one-tile pit stays a pit through the build, and the page paints what the build makes", () => {
+    const r = generate(makeSpec({ seed: 3, theme: "riverValley", size: { x: 96, y: 96 } }));
+    const s = MapSession.fromGenerated(r, r.file);
+    s.setWaterMode("defer");
+    const st = s.built.start!;
+    const x = st.x + 14;
+    const y = st.y - 14;
+    const p: BrushParams = { tool: "lower", size: 1, strength: 5, precise: true, levels: [1, 2, 2], dabs: [4 * x + 2, 4 * y + 2, 4 * x + 2, 4 * y + 2, 4 * x + 2, 4 * y + 2] };
+    const h0 = s.built.heights[y * 96 + x];
+    const shown = s.built.heights.slice();
+    const { dabs, levels, ...settings } = p;
+    const preview = new StrokePreview(settings, s.terrainState(), shown, 96, 96);
+    preview.add(dabs.slice(0, 2), undefined, levels!.slice(0, 1));
+    preview.add(dabs.slice(2), undefined, levels!.slice(1));
+    expect(s.apply({ op: "brush", params: p }, "user", "Lower").errors).toEqual([]);
+    expect(s.built.heights[y * 96 + x]).toBe(Math.max(0, h0 - 2));
+    expect(Array.from(shown)).toEqual(Array.from(s.built.heights));
+    expect(Array.from(preview.protect)).toEqual(Array.from(s.terrainState().protect));
+    expect(Array.from(s.fullBuild().heights)).toEqual(Array.from(s.built.heights));
+    const again = MapSession.open(decodeProject(s.project()));
+    expect(Array.from(again.built.heights)).toEqual(Array.from(s.built.heights));
+  });
+});
+
 describe("undo and redo of strokes", () => {
   it("random strokes, undone and redone: undo all gives back the map exactly, and each state equals a full build", () => {
     const r = generate(makeSpec({ seed: 13, size: { x: 96, y: 96 } }));

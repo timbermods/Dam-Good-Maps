@@ -37,6 +37,10 @@ export class StrokePreview {
   readonly start: Uint8Array;
   /** The shown heights as they were after the last `add` (to find what the next one changes). */
   private readonly last: Uint8Array;
+  /** The tiles the integrity pass leaves alone: the map's, and a precise stroke's own (the build
+   *  leaves them out too). */
+  readonly protect: Uint8Array;
+  private readonly precise: boolean;
 
   /** `heights` are the map's heights as shown (changed in place as the stroke goes on). */
   constructor(settings: Omit<BrushParams, "dabs">, state: TerrainState, heights: Uint8Array, W: number, H: number) {
@@ -47,6 +51,8 @@ export class StrokePreview {
     this.start = heights.slice();
     this.last = heights.slice();
     this.pre = state.pre.slice();
+    this.precise = settings.precise === true;
+    this.protect = this.precise ? state.protect.slice() : state.protect;
     let keep: Uint8Array | null = null;
     if (state.columns.length) {
       keep = new Uint8Array(W * H);
@@ -59,18 +65,25 @@ export class StrokePreview {
     this.candidate = base ? (i) => pre[i] !== base[i] : locked ? (i) => !locked[i] : () => true;
   }
 
-  /** Apply more dabs (with a pen's pressures). Returns the rectangle of shown heights that
-   *  changed, or null. */
-  add(dabs: ArrayLike<number>, pressure?: ArrayLike<number>): Rect | null {
-    const r = this.stroke.add(dabs, pressure);
+  /** Apply more dabs (with a pen's pressures, and precise's levels). Returns the rectangle of
+   *  shown heights that changed, or null. */
+  add(dabs: ArrayLike<number>, pressure?: ArrayLike<number>, levels?: ArrayLike<number>): Rect | null {
+    const r = this.stroke.add(dabs, pressure, levels);
     if (!r) return null;
     const { W, H, heights, last } = this;
+    // a precise stroke's tiles stay as it leaves them (build step 6 marks them the same way)
+    if (this.precise)
+      for (let y = r.y0; y <= r.y1; y++)
+        for (let x = r.x0; x <= r.x1; x++) {
+          const i = y * W + x;
+          if (this.pre[i] !== this.state.pre[i]) this.protect[i] = 1;
+        }
     // the integrity pass reads each tile's neighbours: one tile round what changed
     const x0 = Math.max(0, r.x0 - 1);
     const y0 = Math.max(0, r.y0 - 1);
     const x1 = Math.min(W - 1, r.x1 + 1);
     const y1 = Math.min(H - 1, r.y1 + 1);
-    integrityAt(this.pre, heights, W, H, this.state.protect, this.state.channel, this.candidate, x0, y0, x1, y1);
+    integrityAt(this.pre, heights, W, H, this.protect, this.state.channel, this.candidate, x0, y0, x1, y1);
     // what actually changed since the last call: the page redraws only that
     let cx0 = W;
     let cy0 = H;

@@ -17,9 +17,19 @@
 //   smooth moves a tile toward the mean of its neighbours; naturalize wears cliffs into slopes and
 //   breaks long straight edges (noise from the stroke's seed), as weather would.
 // - Shapes (the brush kit, PLAN §20 D182, D179 (3)): round, or square (by the larger of the two
-//   distances, on the tile grid). Precise: hard edges and no falloff, every tile under the brush
-//   moved exactly one level (or one step) by the stroke, however long it is held: at size 1 one
-//   tile, each click one level. A pen's pressure scales each dab's pressure (a mouse presses fully).
+//   distances, on the tile grid). A pen's pressure scales each dab's pressure (a mouse presses
+//   fully).
+// - Precise (D182, D193): hard edges, no falloff and vertical walls. Each dab moves every tile under
+//   it to a depth of its level (1 unless the page's hold gave it more: a level more every so often
+//   while the button is held); a tile takes the deepest dab that covered it. Raise and lower stop at
+//   `stop` when it is set (a ceiling, a floor), never past the map's bottom or top, and leave the
+//   `keep` tiles (the start, the objects standing there) as they are. The build leaves the tiles a
+//   precise stroke changed out of its integrity pass, so a one-tile pit stays a pit. Smooth and
+//   naturalize move each tile one step per stroke.
+// - Flatten in steps (D184's Terrace): benches every `steps` levels from the flatten level, each tile
+//   to its nearest bench. Smooth, make walkable (D184's Ramp): steps of 2 levels or more wear down to
+//   1, and the build's derived slopes join the 1-level steps under the stroke (the game's natural
+//   slopes).
 // - Smart Lower (D184): a Lower stroke that starts in or beside water (`channel`) carves a bed that
 //   keeps flowing downhill, so the water follows the brush. Its bed starts at the lowest ground
 //   round the first dab (the water's bed) and never rises along the stroke: over lower ground it
@@ -45,8 +55,21 @@ export interface BrushParams {
   seed?: number;
   /** Square (by the larger distance, on the tile grid); round when absent. */
   shape?: "square";
-  /** Precise: hard edges, no falloff, one level (or one step) per tile per stroke. */
+  /** Precise: hard edges, no falloff, vertical walls (see `levels`). */
   precise?: boolean;
+  /** Precise raise, lower and flatten: each dab's depth in levels, 1–16 (a hold digs deeper); 1 when
+   *  absent. */
+  levels?: number[];
+  /** Precise raise and lower: the level they stop at (a ceiling for raise, a floor for lower). */
+  stop?: number;
+  /** Tiles the stroke leaves as they are, as runs [y, x0, x1] (a hold never digs out from under the
+   *  start or the objects standing there, D193). */
+  keep?: [number, number, number][];
+  /** Flatten in steps: benches every `steps` levels (2–8) from the flatten level. */
+  steps?: number;
+  /** Smooth, make walkable: steps of 2 levels or more wear down to 1, and the game's natural slopes
+   *  join the steps under the stroke. */
+  walkable?: boolean;
   /** Each dab's pressure, 1–255 (a pen's); full when absent. */
   pressure?: number[];
   /** Lower: a stroke that starts in or beside water carves a bed that keeps flowing downhill. */
@@ -123,6 +146,26 @@ export function brushBounds(p: Pick<BrushParams, "size" | "dabs" | "tool" | "pre
   return out.x0 <= out.x1 && out.y0 <= out.y1 ? out : null;
 }
 
+/** Mark in `out` the tiles a stroke presses on (its dabs' discs or squares, as `add` reaches). */
+export function markBrushTiles(p: Pick<BrushParams, "size" | "dabs" | "shape" | "precise">, W: number, H: number, out: Uint8Array): void {
+  const r4 = p.precise ? preciseReach(p.size) : radius4(p.size);
+  const R2 = p.precise ? r4 * r4 : r4 * r4 - 1;
+  const r = Math.ceil((r4 + 2) / 4);
+  for (let k = 0; k + 1 < p.dabs.length; k += 2) {
+    const cx = p.dabs[k];
+    const cy = p.dabs[k + 1];
+    const tx = Math.floor(cx / 4);
+    const ty = Math.floor(cy / 4);
+    for (let y = Math.max(0, ty - r); y <= Math.min(H - 1, ty + r); y++)
+      for (let x = Math.max(0, tx - r); x <= Math.min(W - 1, tx + r); x++) {
+        const dx = 4 * x + 2 - cx;
+        const dy = 4 * y + 2 - cy;
+        const d2 = p.shape === "square" ? Math.max(dx * dx, dy * dy) : dx * dx + dy * dy;
+        if (d2 <= R2) out[y * W + x] = 1;
+      }
+  }
+}
+
 /** Whether a stroke reads its tiles' neighbours (smooth, naturalize): a rebuild that touches its
  *  tiles applies it over all of them. */
 export function brushReadsNeighbours(p: Pick<BrushParams, "tool">): boolean {
@@ -137,7 +180,7 @@ export class BrushStroke {
   readonly H: number;
   private readonly heights: Uint8Array;
   private readonly settings: Omit<BrushParams, "dabs">;
-  private readonly write: (i: number) => boolean;
+  private write: (i: number) => boolean;
   private readonly r4: number;
   private readonly table: Uint16Array;
   private readonly rate: number;
@@ -149,6 +192,8 @@ export class BrushStroke {
   /** Smart Lower: the bed so far along the stroke, and each tile's deepest cut (255: none). */
   private bed = -1;
   private readonly cap: Uint8Array | null;
+  /** Precise raise, lower and flatten: each tile's depth in levels (the deepest dab over it). */
+  private readonly depth: Uint8Array | null;
   /** Tiles the middle of the brush has passed over (the first pass moves them a whole level). */
   private readonly swept: Uint8Array;
   private dabCount = 0;
@@ -171,6 +216,14 @@ export class BrushStroke {
     this.before = pointwise ? heights.slice() : null;
     this.steps = settings.tool === "naturalize" ? new Uint16Array(W * H) : null;
     this.cap = settings.channel && settings.tool === "lower" ? new Uint8Array(W * H).fill(255) : null;
+    this.depth = settings.precise && pointwise ? new Uint8Array(W * H) : null;
+    // the tiles the stroke leaves alone
+    if (settings.keep?.length) {
+      const kept = new Uint8Array(W * H);
+      for (const [y, a, b] of settings.keep) if (y >= 0 && y < H) for (let x = Math.max(0, a); x <= Math.min(W - 1, b); x++) kept[y * W + x] = 1;
+      const inner = this.write;
+      this.write = (i) => !kept[i] && inner(i);
+    }
     this.swept = new Uint8Array(W * H);
   }
 
@@ -184,9 +237,9 @@ export class BrushStroke {
     return this.box;
   }
 
-  /** Apply more dabs (quarter-tile pairs), with their pressures (1–255) when a pen gave them.
-   *  Returns the rectangle whose tiles may have changed. */
-  add(dabs: ArrayLike<number>, pressure?: ArrayLike<number>): Rect | null {
+  /** Apply more dabs (quarter-tile pairs), with their pressures (1–255) when a pen gave them, and
+   *  precise's levels. Returns the rectangle whose tiles may have changed. */
+  add(dabs: ArrayLike<number>, pressure?: ArrayLike<number>, levels?: ArrayLike<number>): Rect | null {
     const { W, H, r4, table } = this;
     const R2 = r4 * r4;
     const square = this.settings.shape === "square";
@@ -217,8 +270,16 @@ export class BrushStroke {
           const d2 = square ? Math.max(dx * dx, dy * dy) : dx * dx + dy * dy;
           const i = y * W + x;
           if (precise) {
-            // hard edges, no falloff: every tile under it moves one level (one step) per stroke
-            if (d2 > reach * reach || this.swept[i]) continue;
+            // hard edges, no falloff
+            if (d2 > reach * reach) continue;
+            if (this.depth) {
+              // raise, lower, flatten: the tile takes the deepest dab over it
+              const lv = levels ? Math.max(1, Math.min(BRUSH_MAX_LEVEL, levels[k >> 1] | 0)) : 1;
+              if (lv > this.depth[i]) this.depth[i] = lv;
+              continue;
+            }
+            // smooth and naturalize: one step per tile per stroke
+            if (this.swept[i]) continue;
             this.swept[i] = 1;
             this.acc[i] += LEVEL;
             if (sequential) this.stepTile(i);
@@ -278,6 +339,23 @@ export class BrushStroke {
       const y = (i - x) / W;
       const h = heights[i];
       if (this.settings.tool === "smooth") {
+        if (this.settings.walkable) {
+          // make walkable: a step of 2 levels or more wears down to 1 first
+          let lo = h;
+          let hi = h;
+          if (x > 0) ({ lo, hi } = mm(heights[i - 1], lo, hi));
+          if (x < W - 1) ({ lo, hi } = mm(heights[i + 1], lo, hi));
+          if (y > 0) ({ lo, hi } = mm(heights[i - W], lo, hi));
+          if (y < H - 1) ({ lo, hi } = mm(heights[i + W], lo, hi));
+          if (h - lo >= 2) {
+            heights[i] = h - 1;
+            continue;
+          }
+          if (hi - h >= 2 && h < BRUSH_MAX_LEVEL) {
+            heights[i] = h + 1;
+            continue;
+          }
+        }
         let sum = 0;
         let n = 0;
         for (let yy = Math.max(0, y - 1); yy <= Math.min(H - 1, y + 1); yy++)
@@ -319,11 +397,40 @@ export class BrushStroke {
     const n = bw * bh;
     if (!this.moved || this.moved.length < n) this.moved = new Int16Array(Math.max(n, 256));
     const m = this.moved;
+    const depth = this.depth;
     for (let y = 0; y < bh; y++) {
       const row = (b.y0 + y) * W + b.x0;
-      for (let x = 0; x < bw; x++) m[y * bw + x] = Math.min(BRUSH_MAX_LEVEL, Math.floor(acc[row + x] / LEVEL));
+      for (let x = 0; x < bw; x++) m[y * bw + x] = depth ? depth[row + x] : Math.min(BRUSH_MAX_LEVEL, Math.floor(acc[row + x] / LEVEL));
     }
-    // the edge rule: a 4-neighbour distance transform from the ground round the stroke (0 outside)
+    // the edge rule: a 4-neighbour distance transform from the ground round the stroke (0 outside);
+    // precise strokes have vertical walls
+    if (!depth) this.edgeRule(m, bw, bh);
+    const { tool, level, stop, steps } = this.settings;
+    const L = Math.max(0, Math.min(BRUSH_MAX_LEVEL, level ?? 0));
+    const ceil = Math.min(BRUSH_MAX_LEVEL, stop ?? BRUSH_MAX_LEVEL);
+    const floor = Math.max(0, stop ?? 0);
+    for (let y = 0; y < bh; y++) {
+      const row = (b.y0 + y) * W + b.x0;
+      for (let x = 0; x < bw; x++) {
+        const i = row + x;
+        if (!this.write(i)) continue;
+        const h0 = before[i];
+        const d = m[y * bw + x];
+        let h = h0;
+        if (tool === "raise") h = h0 >= ceil ? h0 : Math.min(ceil, h0 + d);
+        else if (tool === "lower") h = h0 <= floor ? h0 : Math.max(floor, Math.min(h0 - d, this.cap ? this.cap[i] : 255));
+        else {
+          // flatten, in steps: toward the nearest bench
+          const T = steps ? Math.max(0, Math.min(BRUSH_MAX_LEVEL, L + steps * Math.round((h0 - L) / steps))) : L;
+          h = h0 > T ? Math.max(T, h0 - d) : Math.min(T, h0 + d);
+        }
+        heights[i] = h;
+      }
+    }
+  }
+
+  /** The edge rule on `m`: a 4-neighbour distance transform from the ground round the stroke. */
+  private edgeRule(m: Int16Array, bw: number, bh: number): void {
     for (let y = 0; y < bh; y++)
       for (let x = 0; x < bw; x++) {
         const k = y * bw + x;
@@ -344,22 +451,6 @@ export class BrushStroke {
         if (down + 1 < v) v = down + 1;
         m[k] = v;
       }
-    const { tool, level } = this.settings;
-    const L = Math.max(0, Math.min(BRUSH_MAX_LEVEL, level ?? 0));
-    for (let y = 0; y < bh; y++) {
-      const row = (b.y0 + y) * W + b.x0;
-      for (let x = 0; x < bw; x++) {
-        const i = row + x;
-        if (!this.write(i)) continue;
-        const h0 = before[i];
-        const d = m[y * bw + x];
-        let h = h0;
-        if (tool === "raise") h = h0 >= BRUSH_MAX_LEVEL ? h0 : Math.min(BRUSH_MAX_LEVEL, h0 + d);
-        else if (tool === "lower") h = Math.max(0, Math.min(h0 - d, this.cap ? this.cap[i] : 255));
-        else h = h0 > L ? Math.max(L, h0 - d) : Math.min(L, h0 + d);
-        heights[i] = h;
-      }
-    }
   }
 }
 
@@ -378,8 +469,8 @@ function pad(r: Rect, n: number, W: number, H: number): Rect {
 
 /** Apply a whole stroke to `heights` (the build's step 6). */
 export function applyBrush(p: BrushParams, heights: Uint8Array, W: number, H: number, write: (i: number) => boolean = () => true): void {
-  const { dabs, pressure, ...settings } = p;
-  new BrushStroke(settings, heights, W, H, write).add(dabs, pressure);
+  const { dabs, pressure, levels, ...settings } = p;
+  new BrushStroke(settings, heights, W, H, write).add(dabs, pressure, levels);
 }
 
 /** Why a stroke's parameters are not a stroke this map can take (empty when they are). */
@@ -393,6 +484,11 @@ export function brushProblems(p: BrushParams, W: number, H: number): string[] {
   if (p.dabs.length > 2 * MAX_DABS) return [`a stroke holds at most ${MAX_DABS} dabs`];
   if (p.shape !== undefined && p.shape !== "square") return ["a brush is round or square"];
   if (p.pressure !== undefined && (p.pressure.length !== p.dabs.length / 2 || !p.pressure.every((v) => Number.isInteger(v) && v >= 1 && v <= 255))) return ["a stroke's pressures are one whole number from 1 to 255 for each dab"];
+  if (p.levels !== undefined && (!p.precise || p.levels.length !== p.dabs.length / 2 || !p.levels.every((v) => Number.isInteger(v) && v >= 1 && v <= BRUSH_MAX_LEVEL))) return [`a precise stroke's levels are one whole number from 1 to ${BRUSH_MAX_LEVEL} for each dab`];
+  if (p.stop !== undefined && (!Number.isInteger(p.stop) || p.stop < 0 || p.stop > BRUSH_MAX_LEVEL)) return [`a stroke stops at a level from 0 to ${BRUSH_MAX_LEVEL}`];
+  if (p.steps !== undefined && (p.tool !== "flatten" || !Number.isInteger(p.steps) || p.steps < 2 || p.steps > 8)) return ["flatten's steps are 2 to 8 levels apart"];
+  if (p.walkable !== undefined && (p.tool !== "smooth" || typeof p.walkable !== "boolean")) return ["only smooth makes the ground walkable"];
+  if (p.keep !== undefined && !(Array.isArray(p.keep) && p.keep.every((r) => Array.isArray(r) && r.length === 3 && r.every((v) => Number.isInteger(v)) && r[1] <= r[2]))) return ["a stroke's kept tiles are runs [y, x0, x1]"];
   for (let k = 0; k < p.dabs.length; k += 2) {
     const x = p.dabs[k];
     const y = p.dabs[k + 1];
