@@ -53,6 +53,12 @@ editor is desktop-first (D185).
   dust when it's lowered, a pop and a wiggle when something is placed, a splash when a source starts,
   fitting touches for the forces). Sounds are quiet and optional, with a volume and an off switch;
   micro-animations follow the reduced-motion setting. Nothing new stays on screen unless in use.
+- **Visible layers, identical to Timberborn** (D207): a compact layer widget with the view buttons,
+  showing the visible level (∞ when everything shows) with up and down arrows, quiet at ∞ until used.
+  Everything above the chosen level is hidden (terrain, water, objects) and the cut surfaces show as
+  the tops of what remains. The layer pick (Alt+click) slices to a tile's level, and again on the same
+  level returns to ∞. Brushes and placement act on the visible land, never on hidden terrain above
+  the cursor. Esc never resets the slice; the widget's ∞ does.
 - **The hover readout:** a quiet corner line for what's under the cursor ("Height 11, dry soil"); over
   water, its depth, the bed level and its contamination (D196).
 - **The header:** Undo and Redo; one primary button, **Save to Timberborn** (**Download .timber** in
@@ -167,7 +173,8 @@ mode with the water shader and soft shadows (Map look 2, D147).
 ## 7. Controls
 
 Like the game: WASD and the arrow keys move (Shift moves faster), Q and E rotate, scroll zooms,
-Alt+scroll slices the visible layers from the top down, Alt+click jumps to a tile's layer, and T
+Alt+scroll slices the visible layers from the top down, Alt+click jumps to a tile's layer (again on
+the same level returns to ∞), and T
 toggles clear water. Shift+scroll sets strength (brushes and a hovered source), [ and ] set size, Esc
 backs out. Hold F and move the mouse to resize the brush live, then click to set. Ctrl+Shift+1 to 9
 saves a camera bookmark (position, angle, zoom), and Shift+1 to 9 glides back to it; the number keys

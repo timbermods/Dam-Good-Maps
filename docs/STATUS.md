@@ -117,9 +117,15 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D204: Flatten from the stroke's start, cut and fill, Cliff or Ramped edges, a "start fits here" hint, objects ride the ground; and the principle "tools read intent".
 - D205: drag to resize the brush (hold F), juice with optional quiet sounds, a minimap (on at 256²), camera bookmarks (Ctrl+Shift+1–9, Shift+1–9); a build time-lapse near M13.
 - D206: Erupt (a volcano: Vent or Fissure, Power, Steep or Broad, a summit, flows) joins the forces; every force's options row starts with its mode switch; all four share one forces core; its prototype is held until Kyler says it's ready.
+- D207: visible layers identical to Timberborn: a compact layer widget, slicing, the layer pick, tools acting on the visible land; Esc never resets the slice.
+- D208 (for M9b): themes become optional leanings; the default is "Any" (Surprise me), combining landforms, water and intentions freely; measured for coherence, playability and no archetype clusters.
+- D209: design version 2 approved; M9a builds it with "Any" as the default and no ruler-straight rivers; M9b fixes Islands' sameness and raises Kyler's crater and waterfall-lake intentions; pending #59–#68 decided (#66 later).
+- D210: M9a on Opus 5.5 at xhigh, M9b and M9c at high, routine work on Sonnet 5 at medium; M9a first when work competes.
 
 ## Done and released
 
+- **Resources like the official maps** (#43, D167–D170, generator 0.6.2) are merged into `dev`; they ship with
+  the next release.
 - **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
   proposals for their steps.
 - **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
@@ -147,10 +153,13 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Running
 
+- **M9a**, the generator from design version 2 (D209: "Any" as the default, no ruler-straight rivers,
+  every rule since version 2), on branch `feature/m9a`; first on the machine (D210).
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
-- **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
-  and edge rules, then the Real places are rebuilt through its planner.
+- **Badwater on every map** (D200), on branch `feature/badwater-source`.
+- **Real places, second round**: the rebuild through the resources planner, without walls, about 150
+  places, on `feature/real-places-2` (PR #35).
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
   setups tuned on M7's maps that later generator changes moved (M12-INTEGRATION §11). They are re-tuned
   once the start and edge rules and the resources step land, since both change generated maps again.

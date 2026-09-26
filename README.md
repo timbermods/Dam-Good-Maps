@@ -17,6 +17,8 @@ The generator:
   berry bushes grow nearby. The map card lists the **Start requirements**. **Advanced: start
   rules** sets them.
 - The preview shows water, moisture and reach layers.
+- Trees, berry bushes and ruins come in about the amounts official maps of that size have. They
+  grow in groves, patches and fields. Every map has at least one mine site.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
 - **Save to Timberborn** puts the map straight into the game's custom maps. The first time, pick
   `Documents\Timberborn\Maps`; after that it is one click (Chrome and Edge). A map with the same

@@ -857,6 +857,9 @@ Real places rebuild on it in their second round.
 byte checks) and the mine-site guarantee. Resource amounts in or out of the official range are
 information.
 
+**Status:** built on `feature/resources` (docs/progress/resources.md), PR #43 into `dev`, merged
+with the start and edge rules; generator 0.6.2.
+
 ---
 
 ## Badwater on every map
@@ -950,6 +953,8 @@ they conflict):
    clustered at official-like densities.
 4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
    (moisture, contamination, drought). The legend appears only while an overlay is on.
+   Visible layers exactly as in Timberborn (D207): a compact layer widget (∞ until used), slicing
+   that hides everything above the level, the layer pick, and tools that act on the visible land.
    Also (D205): a corner minimap (on by default at 256², a toggle among the view buttons), small
    satisfying feedback on every action with optional quiet sounds and reduced-motion support, and
    camera bookmarks (Ctrl+Shift+1–9 to save, Shift+1–9 to glide back).
@@ -1098,6 +1103,22 @@ a little noise, and two maps must play differently, not only look different.
 
 M9, M10 and M11 wait for that approval.
 
+**Design version 2 is approved** (Kyler, 2026-09-26; PLAN §20 D209). M9a builds on it, with:
+- **"Any" (Surprise me) as the default** (D208, D209): the genome drawn from broad ranges across all
+  themes, combining landforms, water features and intentions freely; a chosen theme only leans the
+  ranges. "Any" is measured like each theme (coherent, playable, no clones, no archetypes; the ≥98%
+  rule blocks) and is in the contact sheets.
+- **No ruler-straight rivers** (D209): rivers and badwater streams follow the land; the longest straight
+  run is measured against real terrain and the official maps, and a channel straighter than they ever
+  are blocks.
+- **Badwater on every map** (D200), and every rule since version 2 (D151–D153, D164, D167–D171, D172).
+- **The pending decisions:** #59, #60, #61, #62, #64, #65 and #68 as their defaults; no Dam site tool
+  (the natural narrows stays an internal operation for M12, #63); `water.storage_possible` is
+  information the generator prefers, not a guard (#67); Kyler picks the candidate intentions later
+  (#66).
+- **Models and priority** (D210): the M9a build on Opus 5.5 at xhigh, M9b and M9c at high, routine work
+  on Sonnet 5 at medium; M9a comes first when work competes for the machine.
+
 **Staging: M9a, M9b and M9c, approved by Kyler** (2026-09-25; PLAN §20 D145). From design version 1
 (`docs/m9-design.md` §16). M9 is built in three stages, each with its own deliverables, acceptance
 and release, tagged and released like a milestone. What goes into each stage waits for Kyler's
@@ -1188,6 +1209,9 @@ become recipes inside the system (design §3).
     version 2), and the measures as permanent measures (information, D115; the dam-wall check
     blocks). Surprise me and high Variety may reach high Verticality now and then; most maps
     never do (D132).
+  - **From Kyler's approval of version 2** (D209): Islands' sameness fixed (archipelagos across the
+    whole map, a sea off one edge, island chains, atolls), and his crater (26%) and waterfall-lake
+    (16%) intentions emerging more often through the steering. ("Any" moved to M9a.)
   - **Keep M12 ready** (D134): "make it more surprising", Variety, the recipes and the flow
     direction as tool entries; suite requests for them; every reference solution re-run.
   - Acceptance (D115): blocking: M6, the dam-wall check, finds no built wall; information: the

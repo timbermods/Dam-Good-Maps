@@ -182,6 +182,11 @@ export interface RuinFieldParams {
   heightMix: number[];
   /** Lean of tall columns toward the middle (PLAN §9.7). */
   centerBias: number;
+  /** The official maps' look (resources/baseline.ts `ruinColumns`): the field's own storey mix,
+   *  tilted from the official shares by `tallness` (−1 short, 1 tall), a few towers among shorter
+   *  columns, and the official shares of models and turns. Without it, heights follow `heightMix`
+   *  and `centerBias` and the models are even. */
+  layout?: { tallness: number };
 }
 
 export type MapObjectKind = "mineSite" | "relicSmall" | "relicMedium" | "relicLarge" | "geothermal" | "thornBelt" | "weir" | "plug" | "bridge" | "unstableCore";
