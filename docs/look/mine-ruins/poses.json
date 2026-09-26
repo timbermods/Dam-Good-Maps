@@ -1,0 +1,268 @@
+{
+ "viewport": {
+  "width": 1280,
+  "height": 800
+ },
+ "shots": [
+  {
+   "id": "mine-close",
+   "what": "a mine site close up, from the game's default angle (30° east of north, 70° down)",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 1.2217304763960306,
+    "distance": 15,
+    "target": [
+     133.5,
+     13,
+     -9.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "mine-low",
+   "what": "the same mine site from a low angle (25° down): the pit's depth",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.023598775598298816,
+    "pitch": 0.44,
+    "distance": 12,
+    "target": [
+     133.5,
+     12.6,
+     -9.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "mine-top",
+   "what": "the same mine site from straight above (north up)",
+   "view": {
+    "mode": "top",
+    "yaw": 0,
+    "pitch": 1.5,
+    "distance": 14,
+    "target": [
+     133.5,
+     13,
+     -9.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "ruins-close",
+   "what": "a ruin field on dry ground close up, from the game's default angle",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 1.2217304763960306,
+    "distance": 26,
+    "target": [
+     75.5,
+     11,
+     -41.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "ruins-low",
+   "what": "the same ruin field from a low angle (20° down)",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 0.35,
+    "distance": 20,
+    "target": [
+     75.5,
+     12.5,
+     -41.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "overview",
+   "what": "the whole 256² map from the default camera, Markers off; the insets enlarge the mine site and the ruin field 3 times, pixels as drawn",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 1.2217304763960306,
+    "distance": 409.6,
+    "target": [
+     128,
+     9.210220336914062,
+     -128
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "overview-markers",
+   "what": "the same, with Markers on (the information layer)",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 1.2217304763960306,
+    "distance": 409.6,
+    "target": [
+     128,
+     9.210220336914062,
+     -128
+    ]
+   },
+   "markers": true,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "ruins-showcase",
+   "what": "ruins in the five variants A–E (the row at the back, heights 5, 3, 6, 4, 7) and a field of neighbouring columns (front), on moist ground (left) and dry ground (right), at the game's default pitch (70° down), looking north",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 1.2217304763960306,
+    "distance": 40,
+    "target": [
+     19,
+     5,
+     -11
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "ruins-moist",
+   "what": "the five variants A–E on moist ground, close up (35° down, looking north)",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.6,
+    "distance": 17,
+    "target": [
+     9.5,
+     6.5,
+     -15.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "ruins-dry",
+   "what": "the five variants A–E on dry ground, close up (35° down, looking north)",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.6,
+    "distance": 17,
+    "target": [
+     27.5,
+     6.5,
+     -15.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "ruins-showcase-low",
+   "what": "the whole test ground from a low angle (20° down), looking north",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.35,
+    "distance": 30,
+    "target": [
+     19,
+     6,
+     -13
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "lineup-far",
+   "what": "from as far as a view of a whole 256² map: the start, a badwater source, a mine site, a geothermal field, a ruin field, a water source and a relic, left to right on dry ground, enlarged in whole pixels as drawn",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 1.2217304763960306,
+    "distance": 409.6,
+    "target": [
+     29,
+     3,
+     -8
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "lineup-mid",
+   "what": "the same objects closer, at the game's default pitch, looking north: the start, a badwater source, a mine site, a geothermal field, a ruin field, a water source and a relic",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 1.2217304763960306,
+    "distance": 55,
+    "target": [
+     29,
+     3,
+     -8
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  }
+ ]
+}

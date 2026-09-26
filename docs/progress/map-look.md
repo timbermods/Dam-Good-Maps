@@ -304,3 +304,42 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
   contamination (it was the rust).
 
 Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the live check now runs inside the deploy workflow; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged: no map file changes).
+
+### Mine sites and ruins, models of our own (2026-09-25, branch `look/mine-site`, D178)
+
+- Kyler: a small fix round, judged from before and after captures (no blind review). Captures and
+  what to look at: [docs/look/mine-ruins/](../look/mine-ruins/README.md), made with the new
+  `tools/capture-objects.ts` (the same cameras before and after, side by side, with greyscale and
+  colour-blindness sheets; `--bench` measures frame times).
+- **Mine sites** (`src/render3d/entities3d.ts`, `mesh.ts`): a pit 1.6 levels deep sunk into the
+  middle 3 × 3 tiles of the 5 × 5 footprint. The terrain leaves those tops out (the mesher's
+  `cutout`, as the game hides the terrain under the site; every other top and wall stays) and the
+  model closes the hole: earthen walls and floor showing about #373A34 in the pit's shade, with
+  roots, rubble, cracks and a ladder; a dull rusty frame (#844D2F); scaffolding at each corner with
+  pale platforms, crates and planks (#A78E65) and beams over the edge, one with a bucket on a rope.
+  About 1,200 triangles, a few sites a map. It does not grow from afar (its footprint is 13 pixels
+  across in a view of a whole 256² map); with **Markers** on, the terrain shader outlines the
+  footprint in orange between dark edges, a few pixels wide from any distance.
+- **Ruins**: ruined scaffold towers, a storey per level: thin rusty posts (#8D5631), a beam round
+  every storey, braces on some faces, beige slab panels (#B8A775) with some missing, tilted or
+  broken, the top storey often only partly there, ivy (#405634) on moist ground. The file's
+  variant (A to E) now reaches the 3D view; each has two layouts that alternate up a column.
+  Columns turn by (x + 2y) mod 4, so no two neighbours turn alike, and no layout looks the same
+  turned. Under 9 pixels a tile each storey is a solid block (the object shader picks close-up or
+  far parts per instance): at most 228 triangles close up, 10 from afar.
+- **Frame time** (information, the 256² map above, orbiting): on the RTX 4080 the whole map drew
+  in 2.5 ms of GPU time (2.7 before) and the ruin field in 0.6 ms (1.3); on the integrated Radeon
+  with the page's CPU 4× slower, 5.0 ms (5.5) and 5.1 ms (5.2), with CPU time up from 1.6 to 2.6
+  ms (17 more draw calls: 124 against 107). Frames stayed at the display's rate (156 to 165 a
+  second).
+- **Tests updated to Kyler's decision (D178):** `tests/unit/look-water-slopes.test.ts`'s "ruins
+  are grey-brown metal, apart from rusty contaminated ground" checked the old grey-brown deck; it
+  is now "stand apart from rusty contaminated ground: rusty posts and beige panels far lighter,
+  and lighter from afar" (Kyler's colours: posts 0.13 lighter than the rust, panels 0.35, both far
+  colours 0.12, panels far less red). `tests/unit/look.test.ts`'s "…ruins as scrap heaps…" is
+  renamed "…ruins as scaffold storeys…" (its name was older than the scaffolds).
+- **New tests:** `tests/unit/look-mine-ruins.test.ts` (14: footprints in every orientation, the
+  cutout and the hole closed, Kyler's colours as drawn, greyscale, the outline with Markers,
+  variants, turns, layouts, ivy, far blocks, the legend) and `tests/contract/look-mine-ruins.test.ts`
+  (2: the live check's download for seed 4242 keeps sha256 `5118b6a6…`; a generated map's
+  variants reach the view and its sites and ruins stay within their footprints).
