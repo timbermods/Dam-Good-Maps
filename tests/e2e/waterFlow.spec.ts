@@ -14,6 +14,20 @@ const wet = (page: Page) =>
     for (let i = 0; i < d.length; i++) if (d[i] > 0.05) n++;
     return n;
   });
+/** The water on screen ends at the worker's (the exact settle can come a moment after the quick
+ *  one on a slow machine: the journey then eases into it). */
+async function endsAtMapWater(page: Page) {
+  await expect
+    .poll(
+      async () => {
+        const v = await volumes(page);
+        return Math.abs(v.shown - v.worker) < 1e-3 * Math.max(1, v.worker);
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(true);
+}
+
 /** The water on screen and the worker's, as total depth (they must match once settled). */
 const volumes = (page: Page) =>
   page.evaluate(async () => {
@@ -69,9 +83,7 @@ test("the water's journey plays over a few seconds, pauses, skips, replays, and 
 
   // it ends at the map's water: what the worker has, what the export gets
   await expect(bar.getByRole("status")).toHaveText("Water settled", { timeout: 60_000 });
-  await page.waitForTimeout(1500);
-  let v = await volumes(page);
-  expect(Math.abs(v.shown - v.worker)).toBeLessThan(1e-3 * Math.max(1, v.worker));
+  await endsAtMapWater(page);
 
   // replay: from the water right after the edit, then back to the same end
   const settled = await wet(page);
@@ -80,8 +92,7 @@ test("the water's journey plays over a few seconds, pauses, skips, replays, and 
   expect(await wet(page)).not.toBe(settled);
   await bar.getByRole("button", { name: "Skip" }).click();
   await expect(bar.getByRole("status")).toHaveText("Water settled");
-  v = await volumes(page);
-  expect(Math.abs(v.shown - v.worker)).toBeLessThan(1e-3 * Math.max(1, v.worker));
+  await endsAtMapWater(page);
 
   // a drought: the water drains and dries, then comes back to the map's water
   await bar.getByRole("button", { name: "Drought" }).click();
@@ -89,8 +100,7 @@ test("the water's journey plays over a few seconds, pauses, skips, replays, and 
   await expect.poll(() => wet(page), { timeout: 30_000 }).toBeLessThan(settled / 2);
   await expect(bar.getByRole("status")).toHaveText("Water settled", { timeout: 120_000 });
   await expect(bar.getByRole("button", { name: "Drought" })).toHaveAttribute("aria-pressed", "false");
-  v = await volumes(page);
-  expect(Math.abs(v.shown - v.worker)).toBeLessThan(1e-3 * Math.max(1, v.worker));
+  await endsAtMapWater(page);
 
   // a badtide: the clean water turns to badwater, then washes out to the map's water
   const bad = () =>
@@ -106,7 +116,6 @@ test("the water's journey plays over a few seconds, pauses, skips, replays, and 
   await expect.poll(bad, { timeout: 30_000 }).toBeGreaterThan(bad0 + 50);
   await expect(bar.getByRole("status")).toHaveText("Water settled", { timeout: 180_000 });
   await expect(bar.getByRole("button", { name: "Badtide" })).toHaveAttribute("aria-pressed", "false");
-  v = await volumes(page);
-  expect(Math.abs(v.shown - v.worker)).toBeLessThan(1e-3 * Math.max(1, v.worker));
+  await endsAtMapWater(page);
   expect(errors).toEqual([]);
 });
