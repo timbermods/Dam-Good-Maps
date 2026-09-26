@@ -12,6 +12,7 @@ export const MAPS = [
   ['fixture:mountain', 'Study · mountain to lake'],
   ['fixture:ridge', 'Study · ridge breakthrough'],
   ['fixture:uphill', 'Study · uphill destination'],
+  ['fixture:oxbow', 'Study · meander cutoff'],
 ] as const;
 export async function loadMap(id: string): Promise<CarveMap> {
   const [kind, name, seed, size] = id.split(':');
@@ -43,8 +44,9 @@ export function fixture(kind = 'mountain', W = 96): CarveMap {
     if (y < 3 && side < W*.23) level = 4;
     if(kind==='ridge')level=Math.round(5+9*Math.exp(-Math.pow((y-W*.5)/(W*.1),2))+1.3*Math.sin(x*.11));
     if(kind==='uphill')level=Math.round(4+11*(1-u)+Math.max(0,side-8)*.18);
+    if(kind==='oxbow')level=14;
     h[y*W+x] = Math.min(16, level);
-    if (kind!=='ridge'&&kind!=='uphill'&&u < .3 && side < W*.23) depth[y*W+x] = Math.max(0, 4-h[y*W+x]);
+    if (kind!=='ridge'&&kind!=='uphill'&&kind!=='oxbow'&&u < .3 && side < W*.23) depth[y*W+x] = Math.max(0, 4-h[y*W+x]);
   }
   const sy=Math.floor(W*.35),level=h[sy*W+9];
   for(let yy=sy-2;yy<=sy+4;yy++)for(let xx=7;xx<=13;xx++)h[yy*W+xx]=level;

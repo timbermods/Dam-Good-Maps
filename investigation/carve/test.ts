@@ -104,7 +104,7 @@ check('check status and start reach update from changed terrain and resources wi
  const c=consequences(severed);assert.equal(c.trees,0);assert.equal(c.bushes,0);assert.equal(c.meets,false);assert.ok(c.reach<a.reach);
 });
 const large=fixture('ridge',96),largeAim={origin:80*96+48,end:14*96+48};
-const straight=complete(large,{mode:'aim',power:85,wander:0,seed:1},largeAim),winding=complete(large,{mode:'aim',power:85,wander:100,seed:1},largeAim);
+const straight=complete(large,{mode:'aim',power:85,width:6,wander:0,seed:1},largeAim),winding=complete(large,{mode:'aim',power:85,width:6,wander:100,seed:1},largeAim);
 function totalTurn(r:CarveRun){return r.path.reduce((sum,p,k)=>{const a=r.path[k-1];return sum+(a?Math.abs(Math.atan2(p.dx*a.dy-p.dy*a.dx,p.dx*a.dx+p.dy*a.dy)):0);},0);}
 check('Wander makes a longer, overshooting course through actual terrain and still reaches the aimed destination',()=>{
  assert.equal(straight.metrics.reason,'destination');assert.equal(winding.metrics.reason,'destination');

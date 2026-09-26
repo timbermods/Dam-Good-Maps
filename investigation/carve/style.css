@@ -10,3 +10,5 @@ summary{cursor:pointer;font-size:12px}details[open] label{padding:7px 0;font-siz
 #seed-label{font-variant-numeric:tabular-nums;margin-top:-7px}#reroll{border-color:#829d88}#tools label input[type=range]{accent-color:#2c5b51}
 
 #tools .settings{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:3px}#tools>.row,#tools>small{flex-shrink:0}
+
+#bottom{pointer-events:none}#bottom>*{pointer-events:auto}

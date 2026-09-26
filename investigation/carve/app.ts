@@ -128,7 +128,7 @@ worker.onmessage=(event:MessageEvent)=>{
     canReroll=!!m.canReroll;historyIndex=m.undo;if(m.seed!==null)$('seed-label').textContent='Personality '+m.seed;
     heights=m.heights;head=m.head;if(!m.metrics&&!active)$('metrics').textContent='';
     surge.set(head,m.trail,heights,W);
-    if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · '+m.metrics.cut.toLocaleString()+' blocks cut · '+m.metrics.deposited+' deposited';}
+    if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · '+m.metrics.cut.toLocaleString()+' blocks cut · '+m.metrics.deposited+' deposited'+(m.metrics.oxbows?' · '+m.metrics.oxbows+' oxbow':'');}
     $<HTMLButtonElement>('undo').disabled=!active&&!m.undo;$<HTMLButtonElement>('redo').disabled=active||!m.redo;
   }
   if(m.type==='status')notice.textContent=m.text;
@@ -249,7 +249,7 @@ function animate(t:number){
   if(t-fpsAt>=1000){const sorted=frameMs.sort((a,b)=>a-b);$('fps').textContent=Math.round(frames*1000/(t-fpsAt))+' fps · p95 '+Math.round(sorted[Math.floor(sorted.length*.95)]??0)+' ms';frameMs=[];frames=0;fpsAt=t;}
   if(!busy&&!uploads.length){
     if(pending){const msg=pending;pending=null;send(msg);}
-    else if(active&&!paused&&t>=nextAt){const dramatic=motion()&&input('follow').checked&&head&&['breakthrough','waterfall'].includes(head.event);nextAt=t+(dramatic?150:100)/speed;send({type:'advance'});}
+    else if(active&&!paused&&t>=nextAt){const dramatic=motion()&&input('follow').checked&&head&&['breakthrough','waterfall','oxbow'].includes(head.event);nextAt=t+(dramatic?150:100)/speed;send({type:'advance'});}
   }
 }
 requestAnimationFrame(animate);

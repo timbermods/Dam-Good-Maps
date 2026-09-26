@@ -5,7 +5,7 @@
   "scripts": {
     "demo": "node launch.mjs",
     "build": "vite build",
-    "test": "node run.mjs test.ts && node run.mjs test-worker.ts",
+    "test": "node run.mjs test.ts && node run.mjs test-course.ts && node run.mjs test-worker.ts",
     "captures": "node run.mjs captures.ts",
     "typecheck": "tsc --noEmit"
   },

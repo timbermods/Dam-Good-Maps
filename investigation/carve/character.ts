@@ -42,13 +42,14 @@ export class RiverCharacter {
     const throat=1-.17*Math.pow(Math.max(0,Math.sin(distance*.19+this.phase2)),6);
     return Math.max(1.05,this.radius*reach*throat);
   }
-  bend(distance:number):number {
-    return this.wander*(.16*Math.sin(distance*.055+this.phase)+.035*Math.sin(distance*.13+this.phase2));
+  swing(progress:number,available=Infinity):number {
+    // Width and wavelength are distances. All Wander values share the same
+    // navigation turn limit; none integrates another turn into its guide.
+    const amplitude=Math.min(.7+this.wander*(8+this.radius*5),available*.3);
+    const wavelength=95*(1-this.wander)+this.wander*(25+this.radius*3);
+    const k=2*Math.PI/wavelength,phase=k*progress+this.phase;
+    return Math.atan(amplitude*k*(Math.cos(phase)+.12*Math.cos(phase*.5+this.phase2)));
   }
-  aimOffset(distance:number):number {
-    return (.06+this.wander*1.1)*Math.sin(distance*.07+this.phase);
-  }
-  initialOffset():number{return (this.phase/Math.PI-1)*(.035+.14*this.wander);}
   /** A seeded sequence of pools, single-level rapids and occasional two-level falls. */
   grade(distance:number,power:number):number {
     const first=13+(this.seed%13),spacing=15+(mixSeed(this.seed)%14);
