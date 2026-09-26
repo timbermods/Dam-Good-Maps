@@ -23,10 +23,11 @@ import { DROUGHT, officialRange, REACH_MIN, RESERVE, reservoirNeeded } from "../
 import { distanceFrom } from "../math/grid";
 import { soilContamination } from "../sim/contamination";
 import { droughtStorage } from "../sim/drought";
-import { moistureBarrier, type MapObject } from "../sim/model";
+import { moistureBarrier, specifiedStrength, type MapObject } from "../sim/model";
 import { moisture } from "../sim/moisture";
 import type { CanonicalWater } from "../sim/prefill";
 import { TICKS_PER_DAY, type WaterModel } from "../sim/water";
+import { asksForBadwater } from "../resources/badwater";
 import { DIFFICULTY_RULES, type Difficulty, type MapSpec } from "../spec/mapspec";
 import type { Collector, FixOp } from "./report";
 
@@ -64,9 +65,12 @@ export interface Rules {
   reservoirDepth: number;
   maxWaterShare: number;
   multipliers: { scrap: number; trees: number; bushes: number };
+  /** Whether the map should have a badwater source (D200): its Badwater setting is anything but No
+   *  badwater, or, for a map without its settings, its description does not say No badwater. */
+  badwaterSource: boolean;
 }
 
-export function rulesFor(spec: MapSpec | null, designedFor: Difficulty = "normal"): Rules {
+export function rulesFor(spec: MapSpec | null, designedFor: Difficulty = "normal", description = ""): Rules {
   const difficulty = spec?.designedFor ?? designedFor;
   const d = DIFFICULTY_RULES[difficulty];
   const s = spec?.settings;
@@ -87,6 +91,7 @@ export function rulesFor(spec: MapSpec | null, designedFor: Difficulty = "normal
     multipliers: s
       ? { scrap: s.resources.ruins / 100, trees: s.resources.forestDensity / 100, bushes: s.resources.berryBushes / 100 }
       : { scrap: 1, trees: 1, bushes: 1 },
+    badwaterSource: asksForBadwater(s?.hazards.badwater ?? null, description),
   };
 }
 
@@ -238,6 +243,25 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     value: mines,
     limit: 1,
     message: mines ? `${mines} mine site${mines > 1 ? "s" : ""} (every map needs at least one)` : "no mine site: every map needs at least one, the late game's lasting source of scrap metal",
+  });
+
+  // ---- a badwater source on every map (Kyler, 2026-09-26, D200): the late game's lasting badwater
+  //      (Extract, then Catalyst, Grease and Explosives); a badwater seep counts, as on the official
+  //      Spillage; a map whose player chose No badwater needs none
+  let badSources = 0;
+  for (const o of objects) if ((o.template === "BadwaterSource" || o.template === "BadwaterSeep") && specifiedStrength(o.components) > 0) badSources++;
+  const wantsBad = inp.rules.badwaterSource;
+  c.add({
+    id: "resources.badwater_source",
+    class: "playability",
+    ok: badSources >= 1 || !wantsBad,
+    value: badSources,
+    limit: wantsBad ? 1 : 0,
+    message: !wantsBad
+      ? `No badwater: a peaceful map needs no badwater source${badSources ? ` (it has ${badSources})` : ""}`
+      : badSources
+        ? `${badSources} badwater source${badSources > 1 ? "s" : ""} (every map needs at least one, unless it is set to No badwater)`
+        : "no badwater source: every map needs at least one, the late game's lasting badwater, unless it is set to No badwater",
   });
 
   // ---- the start (vanilla: exactly one; `start.count` reports anything else)

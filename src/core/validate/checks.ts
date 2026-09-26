@@ -463,7 +463,7 @@ export function validateMap(file: TimberFile, opts: ValidateOptions): Validation
         objects,
         model,
         water,
-        rules: rulesFor(opts.spec ?? null, opts.designedFor ?? "normal"),
+        rules: rulesFor(opts.spec ?? null, opts.designedFor ?? "normal", String((file.metadata as { MapDescription?: unknown } | null)?.MapDescription ?? "")),
         features: opts.features ?? null,
         ids: w.entities.filter((e) => placementOf(e)).map((e) => String(e.Id)),
       },
