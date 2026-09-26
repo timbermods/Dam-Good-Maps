@@ -221,4 +221,3 @@ Object.assign(window,{craterize:{
   get renderer(){return {calls:view.gl.info.render.calls,triangles:view.gl.info.render.triangles,geometries:view.gl.info.memory.geometries};}
 }});
 labels();requestAnimationFrame(animate);load();
-

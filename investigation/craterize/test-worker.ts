@@ -50,4 +50,3 @@ try{
  await command({type:'reroll'});assert.deepEqual((await snap()).heights,expected.heights);await command({type:'cancel'});note('Portable replay retains the original land, exact undo and deterministic reroll');
  writeFileSync('captures/worker-checks.json',JSON.stringify({passed,operationBytes:JSON.stringify(op).length},null,2)+'\n');
 }finally{await worker.terminate();}
-

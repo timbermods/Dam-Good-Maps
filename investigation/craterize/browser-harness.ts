@@ -13,4 +13,3 @@ export async function browserHarness(width=1440,height=1000){
   await idle();
   return {server,browser,page,errors,idle,close:async()=>{await browser.close();await server.close();}};
 }
-

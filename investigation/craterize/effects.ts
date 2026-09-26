@@ -35,4 +35,3 @@ export class ImpactEffects {
     }this.chunks.visible=t>=arrival;this.chunks.instanceMatrix.needsUpdate=true;
   }
 }
-

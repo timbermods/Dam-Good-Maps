@@ -13,4 +13,3 @@ export default defineConfig({
   build: { outDir: 'dist', emptyOutDir: true, copyPublicDir: false },
   worker: { format: 'es' }
 });
-

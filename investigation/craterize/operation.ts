@@ -34,4 +34,3 @@ export function applyOperation(map:CraterMap,op:CraterOperation,undo=false):Crat
   out.entities=structuredClone(entities);out.fallen=structuredClone(fallen);
   out.water={depth:Float64Array.from(water.depth),contamination:Float64Array.from(water.contamination)};return out;
 }
-
