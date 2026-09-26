@@ -661,6 +661,12 @@ export function App() {
                         {timberborn.via === "fsa" ? (
                           <>
                             Saved to <strong>{timberborn.folder}</strong>. It'll show up in Timberborn's custom maps.
+                            {timberborn.savedAs ? (
+                              <>
+                                {" "}
+                                Saved as <strong>{timberborn.savedAs}</strong>.
+                              </>
+                            ) : null}
                           </>
                         ) : (
                           <>

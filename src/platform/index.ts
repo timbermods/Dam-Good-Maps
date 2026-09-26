@@ -202,7 +202,36 @@ async function writeIntoFolder(folder: FileSystemDirectoryHandle, name: string, 
   await writable.close();
 }
 
-export type SaveToTimberbornResult = { via: "fsa"; folder: string } | { via: "download" };
+async function nameTaken(folder: FileSystemDirectoryHandle, name: string): Promise<boolean> {
+  try {
+    await folder.getFileHandle(name);
+    return true;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "NotFoundError") return false;
+    throw e; // some other failure (permission, a blocked folder): let the caller fall back
+  }
+}
+
+/** "River Valley.timber" -> "River Valley (2).timber". */
+function withSuffix(name: string, n: number): string {
+  const dot = name.lastIndexOf(".");
+  const stem = dot === -1 ? name : name.slice(0, dot);
+  const ext = dot === -1 ? "" : name.slice(dot);
+  return `${stem} (${n})${ext}`;
+}
+
+/** Never overwrite a map with the same name (D162 amendment, Kyler 2026-09): the first name not
+ *  already in the folder, trying "Name (2)", "Name (3)" and so on after the plain name. */
+async function freeName(folder: FileSystemDirectoryHandle, name: string): Promise<string> {
+  if (!(await nameTaken(folder, name))) return name;
+  for (let n = 2; ; n++) {
+    const candidate = withSuffix(name, n);
+    if (!(await nameTaken(folder, candidate))) return candidate;
+  }
+}
+
+/** `savedAs` is set only when the name had to change to avoid overwriting an existing map. */
+export type SaveToTimberbornResult = { via: "fsa"; folder: string; savedAs?: string } | { via: "download" };
 
 /** Swapped out in tests so the fallback and the write can be checked without a real browser. */
 export interface SaveToTimberbornDeps {
@@ -210,18 +239,29 @@ export interface SaveToTimberbornDeps {
   recall(): Promise<FileSystemDirectoryHandle | null>;
   remember(handle: FileSystemDirectoryHandle): Promise<void>;
   pick(): Promise<FileSystemDirectoryHandle>;
+  freeName(folder: FileSystemDirectoryHandle, name: string): Promise<string>;
   write(folder: FileSystemDirectoryHandle, name: string, bytes: Uint8Array): Promise<void>;
   download(bytes: Uint8Array, name: string): void;
 }
 
 /** Exported so a test can reach the real IndexedDB-backed folder store without a real browser's `window`. */
-export const liveDeps: SaveToTimberbornDeps = { supported: canSaveToTimberborn, recall: recallFolder, remember: rememberFolder, pick: pickFolder, write: writeIntoFolder, download: saveFile };
+export const liveDeps: SaveToTimberbornDeps = {
+  supported: canSaveToTimberborn,
+  recall: recallFolder,
+  remember: rememberFolder,
+  pick: pickFolder,
+  freeName,
+  write: writeIntoFolder,
+  download: saveFile,
+};
 
 /**
  * Save straight into the player's Timberborn Maps folder (D162): the first call asks the player
  * to pick it and remembers the folder; later calls reuse it, asking again only if permission has
- * lapsed. Falls back to the normal download - the same bytes, just not placed in the folder - on
- * every other browser, a declined picker or permission, or a write that fails.
+ * lapsed. Never overwrites an existing map: a taken name is saved as "Name (2)" (then "(3)", and so
+ * on), reported back as `savedAs`. Falls back to the normal download - the same bytes, just not
+ * placed in the folder - on every other browser, a declined picker or permission, or a failure
+ * finding a free name or writing the file.
  */
 export async function saveToTimberborn(bytes: Uint8Array, name: string, deps: SaveToTimberbornDeps = liveDeps): Promise<SaveToTimberbornResult> {
   if (deps.supported()) {
@@ -231,8 +271,9 @@ export async function saveToTimberborn(bytes: Uint8Array, name: string, deps: Sa
         folder = await deps.pick();
         await deps.remember(folder);
       }
-      await deps.write(folder, name, bytes);
-      return { via: "fsa", folder: folder.name };
+      const savedName = await deps.freeName(folder, name);
+      await deps.write(folder, savedName, bytes);
+      return { via: "fsa", folder: folder.name, ...(savedName !== name ? { savedAs: savedName } : {}) };
     } catch {
       // the player's browser refused, they closed the picker, or the write failed: fall back
     }

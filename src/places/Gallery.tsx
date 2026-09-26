@@ -219,6 +219,12 @@ export function Gallery() {
                           {s.via === "fsa" ? (
                             <>
                               Saved to <strong>{s.folder}</strong>. It'll show up in Timberborn's custom maps.
+                              {s.savedAs ? (
+                                <>
+                                  {" "}
+                                  Saved as <strong>{s.savedAs}</strong>.
+                                </>
+                              ) : null}
                             </>
                           ) : (
                             <>

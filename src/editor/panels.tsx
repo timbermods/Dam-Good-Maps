@@ -1111,6 +1111,12 @@ export function ExportDialog(p: ExportDialogProps) {
             {savedVia?.via === "fsa" ? (
               <>
                 Saved <strong>{saved}</strong> to <strong>{savedVia.folder}</strong>. It'll show up in Timberborn's custom maps.
+                {savedVia.savedAs ? (
+                  <>
+                    {" "}
+                    Saved as <strong>{savedVia.savedAs}</strong>.
+                  </>
+                ) : null}
               </>
             ) : (
               <>

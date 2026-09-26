@@ -29,6 +29,30 @@ function fakeFolder(name: string, writes: { name: string; bytes: Uint8Array }[])
   } as unknown as FileSystemDirectoryHandle;
 }
 
+/** A folder that already holds the names in `existing`, for testing the free-name search
+ *  (`liveDeps.freeName`) against a real `getFileHandle(name)` existence check. */
+function fakeFolderWithFiles(name: string, existing: Set<string>, writes: { name: string; bytes: Uint8Array }[]): FileSystemDirectoryHandle {
+  return {
+    name,
+    kind: "directory",
+    async getFileHandle(fileName: string, opts?: { create?: boolean }) {
+      if (!opts?.create && !existing.has(fileName)) throw new DOMException("not found", "NotFoundError");
+      return {
+        name: fileName,
+        kind: "file",
+        async createWritable() {
+          return {
+            async write(data: ArrayBuffer) {
+              writes.push({ name: fileName, bytes: new Uint8Array(data) });
+            },
+            async close() {},
+          };
+        },
+      };
+    },
+  } as unknown as FileSystemDirectoryHandle;
+}
+
 const neverCalled = async () => {
   throw new Error("should not be called");
 };
@@ -43,6 +67,7 @@ describe("saveToTimberborn: the write is byte for byte", () => {
       recall: async () => folder,
       remember: neverCalled,
       pick: neverCalled,
+      freeName: async (_f, requested) => requested,
       write: async (f, name, b) => {
         const file = await f.getFileHandle(name, { create: true });
         const w = await file.createWritable();
@@ -78,6 +103,7 @@ describe("saveToTimberborn: the write is byte for byte", () => {
         picks++;
         return folder;
       },
+      freeName: async (_f, requested) => requested,
       write: async (f, name, b) => {
         writes.push({ name, bytes: b });
       },
@@ -104,6 +130,7 @@ describe("saveToTimberborn: the fallback", () => {
       recall: neverCalled,
       remember: neverCalled,
       pick: neverCalled,
+      freeName: neverCalled,
       write: neverCalled,
       download: (bytes, name) => downloads.push({ bytes, name }),
     };
@@ -124,6 +151,7 @@ describe("saveToTimberborn: the fallback", () => {
       pick: async () => {
         throw new DOMException("The user aborted a request.", "AbortError");
       },
+      freeName: neverCalled,
       write: neverCalled,
       download: (bytes, name) => downloads.push({ bytes, name }),
     };
@@ -146,6 +174,7 @@ describe("saveToTimberborn: the fallback", () => {
       pick: async () => {
         throw new DOMException("permission refused", "NotAllowedError");
       },
+      freeName: neverCalled,
       write: neverCalled,
       download: (bytes, name) => downloads.push({ bytes, name }),
     };
@@ -164,6 +193,7 @@ describe("saveToTimberborn: the fallback", () => {
       recall: async () => folder,
       remember: neverCalled,
       pick: neverCalled,
+      freeName: async (_f, requested) => requested,
       write: async () => {
         throw new Error("disk full");
       },
@@ -175,6 +205,80 @@ describe("saveToTimberborn: the fallback", () => {
 
     expect(r).toEqual({ via: "download" });
     expect(downloads).toEqual([{ bytes, name: "a.timber" }]);
+  });
+});
+
+describe("saveToTimberborn: never overwrites an existing map", () => {
+  it("keeps the plain name when it's free", async () => {
+    const writes: { name: string; bytes: Uint8Array }[] = [];
+    const folder = fakeFolderWithFiles("Maps", new Set(), writes);
+    const bytes = new Uint8Array([1, 2, 3]);
+    const deps: SaveToTimberbornDeps = {
+      supported: () => true,
+      recall: async () => folder,
+      remember: neverCalled,
+      pick: neverCalled,
+      freeName: liveDeps.freeName,
+      write: async (f, name, b) => {
+        writes.push({ name, bytes: b });
+      },
+      download: () => {
+        throw new Error("should have saved to the folder, not fallen back");
+      },
+    };
+
+    const r = await saveToTimberborn(bytes, "River Valley.timber", deps);
+
+    expect(r).toEqual({ via: "fsa", folder: "Maps" }); // no savedAs: the name didn't change
+    expect(writes).toEqual([{ name: "River Valley.timber", bytes }]);
+  });
+
+  it("saves as 'Name (2)' when the plain name is already taken, with the same bytes", async () => {
+    const writes: { name: string; bytes: Uint8Array }[] = [];
+    const folder = fakeFolderWithFiles("Maps", new Set(["River Valley.timber"]), writes);
+    const bytes = new Uint8Array([1, 2, 3, 250, 255]);
+    const deps: SaveToTimberbornDeps = {
+      supported: () => true,
+      recall: async () => folder,
+      remember: neverCalled,
+      pick: neverCalled,
+      freeName: liveDeps.freeName,
+      write: async (f, name, b) => {
+        writes.push({ name, bytes: b });
+      },
+      download: () => {
+        throw new Error("should have saved to the folder, not fallen back");
+      },
+    };
+
+    const r = await saveToTimberborn(bytes, "River Valley.timber", deps);
+
+    expect(r).toEqual({ via: "fsa", folder: "Maps", savedAs: "River Valley (2).timber" });
+    expect(writes).toEqual([{ name: "River Valley (2).timber", bytes }]);
+  });
+
+  it("keeps counting up when '(2)' is taken too", async () => {
+    const writes: { name: string; bytes: Uint8Array }[] = [];
+    const folder = fakeFolderWithFiles("Maps", new Set(["River Valley.timber", "River Valley (2).timber"]), writes);
+    const bytes = new Uint8Array([1, 2, 3]);
+    const deps: SaveToTimberbornDeps = {
+      supported: () => true,
+      recall: async () => folder,
+      remember: neverCalled,
+      pick: neverCalled,
+      freeName: liveDeps.freeName,
+      write: async (f, name, b) => {
+        writes.push({ name, bytes: b });
+      },
+      download: () => {
+        throw new Error("should have saved to the folder, not fallen back");
+      },
+    };
+
+    const r = await saveToTimberborn(bytes, "River Valley.timber", deps);
+
+    expect(r).toEqual({ via: "fsa", folder: "Maps", savedAs: "River Valley (3).timber" });
+    expect(writes).toEqual([{ name: "River Valley (3).timber", bytes }]);
   });
 });
 
