@@ -16,6 +16,7 @@ const M = read("measures-v2.json");
 const SIM = read("simplay-v2.json");
 const LAND = read("landscapes-v2.json");
 const BENCH = read("bench-v2.json");
+const LAKES = read("lakes-v2.json");
 const pc = (v: number) => (Number.isFinite(v) ? `${Math.round(v * 1000) / 10}%` : "–");
 const n2 = (v: number) => (Number.isFinite(v) ? `${Math.round(v * 100) / 100}` : "–");
 const sections: Record<string, string[]> = {};
@@ -191,6 +192,44 @@ for (const s of ["v2-128", "v2-128-vt85", "v2-128-v100", "v2-96", "v2-192", "v2-
   p(row([s, x.otherLevel === null ? "–" : pc(x.otherLevel), x.d85Fails === null ? "–" : pc(x.d85Fails), x.treesFails === null ? "–" : pc(x.treesFails), b(x.waterWalk), b(x.woodLogs), w, `${x.edgeWalls} of ${x.maps}`, `${x.noMine ?? "–"}`]));
 }
 p();
+
+// lake shapes and island seas (lakes.ts)
+sec("lakes");
+if (LAKES) {
+  const b = (v: any) => (v && Number.isFinite(v.median) ? `${v.median} (${v.p10}–${v.p90})` : "–");
+  p("### Lake shapes (lakes of 150+ tiles at 128², not ponds or craters; median, p10–p90)");
+  p();
+  p(head(["Source", "Lakes", "Roundness 4πA/P²", "Fill", "Elongation", "Branching", "Round lakes"]));
+  const shapeRow = (name: string, x: any) => x && p(row([name, x.lakes, b(x.roundness), b(x.fill), b(x.elongation), b(x.branching), pc(x.roundShare)]));
+  shapeRow("Real terrain (the survey's library)", LAKES.survey?.lakes);
+  shapeRow("Workshop maps", LAKES.refs?.workshop?.lakes);
+  shapeRow("Official maps", LAKES.refs?.official?.lakes);
+  shapeRow("v2 before the fix", LAKES.sets?.["v2-128-before"]?.classes?.lakes);
+  shapeRow("v2", LAKES.sets?.["v2-128"]?.classes?.lakes);
+  shapeRow("v1", LAKES.sets?.["v1-128"]?.classes?.lakes);
+  shapeRow("current", LAKES.sets?.["cur-128"]?.classes?.lakes);
+  p();
+  p("Kept round on purpose (v2): the lakes in calderas and cone craters, and the maps where Kyler's crater or round-lake intention emerged.");
+  p();
+  p(head(["v2 lakes", "Lakes", "Roundness", "Fill", "Elongation", "Branching"]));
+  for (const [k, name] of [["craters", "In calderas and cone craters"], ["intentionMaps", "On maps where Kyler's crater or round lake emerged"], ["ponds", "Ponds (60–150 tiles)"]] as const) {
+    const x = LAKES.sets?.["v2-128"]?.classes?.[k];
+    if (x) p(row([name, x.lakes, b(x.roundness), b(x.fill), b(x.elongation), b(x.branching)]));
+  }
+  p();
+  p("### Island seas (Islands maps; median, p10–p90)");
+  p();
+  p(head(["Source", "Maps", "Water share", "The largest body", "Land in islands", "Islands of 30+ tiles", "Island size (tiles)", "Read as islands in a sea"]));
+  const seaRow = (name: string, x: any) => x && p(row([name, x.maps, b(x.water), b(x.mainWater), b(x.apart), b(x.islands), b(x.islandMedian), pc(x.reads)]));
+  seaRow("v2 before the fix", LAKES.sets?.["v2-128-before"]?.islands);
+  seaRow("v2", LAKES.sets?.["v2-128"]?.islands);
+  seaRow("v1", LAKES.sets?.["v1-128"]?.islands);
+  seaRow("current", LAKES.sets?.["cur-128"]?.islands);
+  const ti = LAKES.refs?.official?.named?.oThousandIslands;
+  if (ti) p(row(["Official: Thousand Islands", 1, pc(ti.water), pc(ti.mainWater), pc(ti.apart), ti.islands, ti.islandMedian, ti.reads ? "yes" : "no"]));
+  if (LAKES.refs?.workshop?.seas) p(row(["Workshop maps (all)", LAKES.refs.workshop.seas.maps, "–", "–", "–", "–", "–", pc(LAKES.refs.workshop.seas.islandSeas / LAKES.refs.workshop.seas.maps)]));
+  p();
+}
 
 // start drought
 sec("drought");

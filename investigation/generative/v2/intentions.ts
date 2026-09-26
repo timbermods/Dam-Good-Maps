@@ -190,7 +190,7 @@ export function nudgeFor(id: IntentionId): (g: GenomeV2, rng: Rng, W: number, H:
           const along = (rng.float() * 2 - 1) * 0.3 * scarp.size;
           at = [Math.min(0.85, Math.max(0.15, scarp.at[0] + (-ux * off - uy * along) / W)), Math.min(0.85, Math.max(0.15, scarp.at[1] + (-uy * off + ux * along) / H))];
         }
-        g.parts.push({ kind: "basin", at, size, height: -(3 + 2 * rng.float()) * tall(g), turn: rng.float(), extra: 1 + 2 * rng.float(), soft: 0 });
+        g.parts.push({ kind: "basin", at, size, height: -(3 + 2 * rng.float()) * tall(g), turn: rng.float(), extra: 1 + 2 * rng.float(), soft: 0, shape: "round" });
         g.lakeSprings = 1;
         g.hydro.lakeBudget = Math.min(0.45, g.hydro.lakeBudget + 0.04);
       };

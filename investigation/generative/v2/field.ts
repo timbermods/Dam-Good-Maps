@@ -69,11 +69,57 @@ function addPart(U: Float64Array, p: Part, seed: number, W: number, H: number, k
       return;
     }
     case "basin": {
+      // Kyler (2026-09-25): lakes mostly take the land's shape, not a bowl's. A large basin is a
+      // valley-shaped hollow: long (1.6–3.4 times as long as wide), bent, with a ragged shore of bays
+      // and one to three fingers reaching out as side valleys would. An island sea is broad, with
+      // inlets. Only ponds (under 14 tiles across) and the round lakes an intention asks for stay
+      // bowls; calderas and cone craters keep their own round shapes.
+      const shape = p.shape ?? (p.size < 14 ? "round" : "valley");
+      if (shape === "round") {
+        each((x, y, i) => {
+          const d = dist(x, y, cx, cy) / (p.size * (1 + 0.5 * fbm(s, x, y, Math.max(8, p.size * 0.7), 3)));
+          U[i] += p.height * bump(d) + p.extra * (0.3 + 0.7 * (fbm(s + 3, x, y, 8, 2) + 1)) * bump(Math.abs(d - 1.05) / 0.45);
+          if (p.soft > 0) U[i] += (-p.height + p.soft) * bump(dist(x, y, cx, cy) / (p.size * 0.3 * (1 + 0.4 * fbm(s + 5, x, y, 6, 2))));
+        });
+        return;
+      }
+      const sea = shape === "sea";
+      const r = stream(s, "basin-shape");
+      const [ux, uy] = unit(p.turn);
+      const aspect = sea ? 1 + 0.4 * r.float() : 1.6 + 1.8 * r.float();
+      const major = p.size * Math.sqrt(aspect);
+      const minor = p.size / Math.sqrt(aspect);
+      const bend = sea ? 0 : (r.float() * 2 - 1) * 0.6;
+      const cell = Math.max(5, p.size * 0.32);
+      const arms: { ax: number; ay: number; bx: number; by: number; w: number }[] = [];
+      const nArms = sea ? 3 + Math.floor(3 * r.float()) : 1 + Math.floor(3 * r.float());
+      for (let k = 0; k < nArms; k++) {
+        const off = (r.float() * 2 - 1) * 0.6 * major;
+        const ax = cx + ux * off;
+        const ay = cy + uy * off;
+        const [vx, vy] = unit(r.float());
+        const len = sea ? (0.35 + 0.35 * r.float()) * p.size : minor * (1.2 + 1.2 * r.float());
+        arms.push({ ax, ay, bx: ax + vx * len, by: ay + vy * len, w: (sea ? 0.14 : 0.3) * (0.8 + 0.4 * r.float()) * (sea ? p.size : minor) });
+      }
       each((x, y, i) => {
-        const d = dist(x, y, cx, cy) / (p.size * (1 + 0.5 * fbm(s, x, y, Math.max(8, p.size * 0.7), 3)));
-        U[i] += p.height * bump(d) + p.extra * (0.3 + 0.7 * (fbm(s + 3, x, y, 8, 2) + 1)) * bump(Math.abs(d - 1.05) / 0.45);
-        // an island: ground rising from the basin's middle above its floor (version 2)
-        if (p.soft > 0) U[i] += (-p.height + p.soft) * bump(dist(x, y, cx, cy) / (p.size * 0.3 * (1 + 0.4 * fbm(s + 5, x, y, 6, 2))));
+        const dx = x - cx;
+        const dy = y - cy;
+        const a = dx * ux + dy * uy;
+        const b = -dx * uy + dy * ux - (bend * a * a) / major;
+        const n = 1 + 0.45 * fbm(s, x, y, cell, 3);
+        let d = Math.sqrt((a / major) * (a / major) + (b / minor) * (b / minor)) / n;
+        for (const arm of arms) {
+          const vx = arm.bx - arm.ax;
+          const vy = arm.by - arm.ay;
+          const l2 = vx * vx + vy * vy;
+          const t = l2 > 0 ? clamp(((x - arm.ax) * vx + (y - arm.ay) * vy) / l2, 0, 1) : 0;
+          const e = dist(x, y, arm.ax + t * vx, arm.ay + t * vy) / (arm.w * (1 - 0.55 * t) * n);
+          if (e < d) d = e;
+        }
+        // a sea keeps a broad floor with steep shores (thin sheets of water settle slowly); a valley
+        // lake deepens toward its middle
+        U[i] += p.height * (sea ? smoothstep((1.05 - d) / 0.18) : bump(d)) + (sea ? 0 : p.extra * (0.3 + 0.7 * (fbm(s + 3, x, y, 8, 2) + 1)) * bump(Math.abs(d - 1.05) / 0.45));
+        if (p.soft > 0 && !sea) U[i] += (-p.height + p.soft) * bump(dist(x, y, cx, cy) / (minor * 0.45 * (1 + 0.4 * fbm(s + 5, x, y, 6, 2))));
       });
       return;
     }

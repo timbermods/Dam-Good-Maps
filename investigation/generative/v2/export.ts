@@ -2,7 +2,7 @@
 // variety (the variety distance and the opening, half each, farthest-first), one per theme at the
 // default Verticality first (the first is Kyler's own intention, a start under a cliff with water
 // below, and the next show his other three: a snaking river, a crater gathering rivers, a waterfall
-// into a round lake), three at high Verticality (85; heights kept within 16, behind the probe lock),
+// into a round lake), three at high Verticality (85; heights kept within 16),
 // and one map with no intention (some maps have none). Each is regenerated from its seed (the bytes must
 // equal the batch's), run through the exact cycle model (the worst of three weather seeds), named
 // with the names study's rules, and written with a one-page brief:

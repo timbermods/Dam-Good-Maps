@@ -34,7 +34,7 @@ export interface GenomeV2 extends Genome {
    *  may jump it). */
   vtSetting: number;
   vt: number;
-  /** Heights above 16 unlocked (only after the probe batch; the prototype's measure runs only). */
+  /** Heights above 16 (D172: confirmed in the game; the prototype measures them before the build). */
   unlocked: boolean;
   /** The highest level the land reaches, and the lowest ground before rivers cut. */
   top: number;
@@ -311,7 +311,7 @@ export interface DrawOptions {
   variety?: number;
   /** The Verticality setting (the theme's default when absent). */
   vt?: number;
-  /** Heights above 16 allowed (behind the probe lock: never for shipped maps yet). */
+  /** Heights above 16 allowed (D172; the product's build still caps at 16 until M9a). */
   unlocked?: boolean;
   /** Intentions: drawn when absent; [] for none; a list forces those (steering tests). */
   intentions?: IntentionId[] | null;
@@ -432,16 +432,32 @@ export function drawGenomeV2(theme: ThemeId, seed: number, W: number, H: number,
   // a radial slope falls toward the first bowl when there is one
   const bowl = g.parts.find((q) => q.kind === "basin" || q.kind === "caldera");
   if (g.tiltKind === "radial" && bowl) g.focus = [bowl.at[0], bowl.at[1]];
-  if (theme === "islands" && g.tiltKind === "radial") {
-    const R = Math.min(W, H) * (0.24 + 0.24 * rng.float());
-    g.parts.push({ kind: "basin", at: [g.focus[0], g.focus[1]], size: R, height: -(3 + 2.5 * rng.float()), turn: 0, extra: 0, soft: 0 });
-    const isles = 2 + Math.round(6 * rng.float() * Math.max(1, areaK));
+  if (theme === "islands") {
+    // Kyler (2026-09-25): islands in a sea: a broad body of water with the land scattered through
+    // it, on every Islands map (a sea inland, since water that reaches the edge leaves the map)
+    // the sea lies in the map's middle, so the land rises from it toward every edge
+    g.tiltKind = "radial";
+    g.focus = [0.42 + 0.16 * rng.float(), 0.42 + 0.16 * rng.float()];
+    // a map that needed a new genome gets a smaller sea (a broad sea settles slowly on large maps)
+    const R = Math.min(W, H) * (0.36 + 0.08 * rng.float()) * Math.max(0.75, 1 - 0.05 * attempt);
+    const depth = 9 + 2.5 * rng.float();
+    g.parts.push({ kind: "basin", at: [g.focus[0], g.focus[1]], size: R, height: -depth, turn: rng.float(), extra: 0, soft: 0, shape: "sea" });
+    g.hydro.lakeBudget = Math.max(g.hydro.lakeBudget, 0.42 + 0.1 * rng.float());
+    // islands scattered through the sea, standing clear of it
+    const isles = Math.round((12 + 10 * rng.float()) * Math.max(1, areaK));
     for (let k = 0; k < isles; k++) {
       const [ux, uy] = [rng.float() * 2 - 1, rng.float() * 2 - 1];
-      const r = (0.25 + 0.6 * rng.float()) / Math.max(1, Math.sqrt(ux * ux + uy * uy));
-      g.parts.push({ kind: rng.float() < 0.35 ? "cone" : "mesa", at: [g.focus[0] + (ux * r * R) / W, g.focus[1] + (uy * r * R) / H], size: 4 + 7 * rng.float(), height: (3 + 4 * rng.float()) * tall, turn: rng.float(), extra: 0, soft: (1 + rng.float()) / tall });
+      const r = (0.1 + 0.8 * rng.float()) / Math.max(1, Math.sqrt(ux * ux + uy * uy));
+      g.parts.push({ kind: rng.float() < 0.35 ? "cone" : "mesa", at: [g.focus[0] + (ux * r * R) / W, g.focus[1] + (uy * r * R) / H], size: 3 + 6 * rng.float(), height: depth + (1.5 + 4 * rng.float()) * tall, turn: rng.float(), extra: 0, soft: (1 + rng.float()) / tall });
     }
-    g.tilt = Math.max(g.tilt, 2.5);
+    // the land rises from the sea toward every edge: a steep bowl, quiet noise, levels spread by
+    // height rather than equal area, so the sea keeps a broad floor below its shores
+    g.tilt = Math.max(g.tilt, 8.5 + rng.float());
+    g.regional.amp *= 0.4;
+    g.noise.amp *= 0.5;
+    g.hyps.eq = 0.1 + 0.1 * rng.float();
+    // islands are high, soft ground in a low sea: weathering would waste them into it
+    g.weathering = Math.min(g.weathering, 0.1);
   }
   const knolls = Math.round(d(p.knollsPer128) * areaK);
   if (knolls > 0) g.parts.push({ kind: "knolls", at: [0.5, 0.5], size: 0, height: 1.5 + rng.float(), turn: 0, extra: knolls, soft: 0 });

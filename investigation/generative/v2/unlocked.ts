@@ -1,9 +1,9 @@
-// Heights above 16 behind the probe lock (Verticality 85, unlocked), measured on the land the
+// Tall maps (heights above 16, Verticality 85; D172), measured on the land the
 // prototype makes before the build: the field, the levels, the rivers' channels, the hollows filled
 // and the ramps cut (generate.ts up to its first look). The product's build clips terrain at 16
 // (`MAX_TERRAIN` in src/core/features/raster/terrain.ts, `integrityAt`), so without a src change
-// the unlocked maps cannot be built as they are planned: M9a lifts that cap for Verticality 70+ once
-// the probe batch confirms such maps load. This reads the land that would be built.
+// the tall maps cannot be built as they are planned: M9a lifts that cap for Verticality 70+ (the
+// tall-maps probe confirmed such maps load, D172). This reads the land that would be built.
 //
 //   npx tsx investigation/generative/v2/unlocked.ts [--seeds 1-100] [--vt 85]
 

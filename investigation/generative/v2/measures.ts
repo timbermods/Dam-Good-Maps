@@ -1,5 +1,5 @@
 // Design version 2's measures (docs/m9-design.md §10) over every batch set: version 2 at the
-// default (v2-128), at high Verticality (v2-128-vt85; v2-128-vt85u behind the probe lock) and at
+// default (v2-128), at high Verticality (v2-128-vt85; tall maps in unlocked.ts) and at
 // Variety 100 (v2-128-v100), beside version 1 (v1-128) and the current generator (cur-128), all
 // measured by the same batch code. The workshop and official maps give the scales, the cuts and the
 // relief yardstick; only their aggregates are written. Writes

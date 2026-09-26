@@ -1,5 +1,5 @@
 // Levels, design version 2. The field is spread over the land's own span, from a low base to a top
-// of 15–16 (to 22 only behind the probe lock), with its own hypsometry: `eq` blends the field toward
+// of 15–16 (to 22 at Verticality 70+, D172), with its own hypsometry: `eq` blends the field toward
 // equal area per level, which widens the spread version 1 lost to a bell-shaped field (height range
 // medians 7–11 against 13 official and 14 workshop), and `lean` tips the land toward uplands or
 // lowlands. Benches of 2–5 levels (cliffs) cover the terraced share, taller as Verticality rises.

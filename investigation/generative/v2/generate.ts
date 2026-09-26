@@ -68,7 +68,7 @@ export type DroughtPolicy = "off" | "prefer" | "require";
 export interface V2Options {
   variety?: number;
   vt?: number;
-  /** Heights above 16 (behind the probe lock; the measure runs only). */
+  /** Heights above 16 (D172: confirmed in the game; the product's build still caps at 16, so the prototype measures them before the build). */
   unlocked?: boolean;
   intentions?: IntentionId[] | null;
   variation?: number;
@@ -528,7 +528,7 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   if (walls.length) info.stage = "dam wall";
   const droughtFail = policy === "require" && info.startDrought === false;
   if (droughtFail && info.stage === "planned") info.stage = "start.drought_water";
-  // heights above 16: only behind the probe lock. Two things change there: terrain.max_height's
+  // heights above 16 (D172, confirmed by the tall-maps probe). Two things change there: terrain.max_height's
   // limit (22 for Verticality 70+), read here; and the build's cap at 16 (features/raster/terrain.ts),
   // which the prototype cannot lift (no src/ change), so unlocked maps are measured before the build
   // (unlocked.ts)

@@ -39,7 +39,7 @@ Kyler's decided principles and what a player feels block (D115).
 | Version 1 | Version 2 | Why |
 |---|---|---|
 | Height range medians 7–11 levels | 12–14 by theme, 13 over all six (official 13, workshop 14); the highest ground 15 at the median (14–16); tallest fall median 5.1 levels (official 3.9, workshop 5.7) | Too flat (task a) |
-| No Verticality | Verticality (`vt`, 0–100) beside Variety: caprock and weathering (stacks, buttes, mesas), knickpoints and gorges, hanging valleys, cliff benches, natural ramps; above 16 only at 70+, and locked until a probe batch (D132, D145) | D132 |
+| No Verticality | Verticality (`vt`, 0–100) beside Variety: caprock and weathering (stacks, buttes, mesas), knickpoints and gorges, hanging valleys, cliff benches, natural ramps; above 16 only at 70+ (D132, D145), which the tall-maps probe batch has confirmed loads in the game (D172) | D132 |
 | Whole-map clusters up to 68% of a theme (Delta) | The largest cluster holds 6–14.5% of a theme: the regional tilt no longer dominates the layout, and water and relief are drawn wider | Task b |
 | No-approximation: 2–20% of a theme below the floor | 0.5–15% (River Valley 8.5%, Highlands 3.5%, Delta 12.5%) | Task c, D128 |
 | No intentions | Zero, one or two per map from a set of eleven, four of them Kyler's own; steered by the prior and the settler, checked on the finished map, dropped when absent. Kyler's four emerge on 70%, 68%, 24% and 19.5% of their draws; fourteen more are drafted for him to pick | D138 |
@@ -98,7 +98,7 @@ noise, parts, processes, water, hazards, resources and the settler's preferences
 
 | Group | New in version 2 |
 |---|---|
-| Relief | `base` (0.3–1.3) and `top` (up to 16; up to 22 only behind the lock); hypsometry: `eq` blends the field toward equal area per level, `lean` tips the land toward uplands or lowlands |
+| Relief | `base` (0.3–1.3) and `top` (up to 16; up to 22 at Verticality 70+, D172); hypsometry: `eq` blends the field toward equal area per level, `lean` tips the land toward uplands or lowlands |
 | Regional field | a slow noise field, 0.3–0.6 of the map's side across and 3–7 levels high, beside the regional tilt or instead of it: an independent spatial control (playbook #1) |
 | Verticality | `vt` and what it sets: the caprock's share, patch size and stratum; weathering; the main river's extra cut (`hanging`); the knickpoint reach; bench heights; the ramp chance |
 | Water | spring lakes (`lakeSprings`), extra basins, basins with islands; the water's wander (`wander`, `wanderCell`), which the snaking river's nudge raises |
@@ -180,6 +180,42 @@ rivers come from the drainage, so they already start at heads. A check (`v2/rule
 `sourcesInFlow`) finds any spring inside a planned lake or on another river's course, and that
 hydrology is planned again: ⟨R_SRC⟩ The core check on `feature/start-edge-rules` replaces it in M9a.
 
+**Lakes take the land's shape** (Kyler, 2026-09-25: "many round, blob-shaped lakes"). Measured first
+(REPORT-v2 §3.9, `v2/lakes.ts`, the measures fixed before any result was read): version 2's lakes were rounder and less
+elongated than real ones: roundness 0.20 at the median against 0.14 for the survey's real lakes and
+the workshop's, elongation 1.7 against 2.1, and fewer arms. The official maps' lakes are rounder
+still (0.28), but they are few (33) and hand-made. So the
+generator changed, not the measure:
+- a large basin is now a valley-shaped hollow: 1.6–3.4 times as long as wide, bent, with a ragged
+  shore of bays and one to three fingers reaching out as side valleys would;
+- **valley lakes**: a stretch of a river's valley is deepened in its middle, as ice leaves a trough.
+  The lake that fills it follows the land's contours, long along the valley, with fingers up the
+  side valleys whose floors lie below its level. Only ground is taken away (D111);
+- round lakes stay where they belong: ponds, calderas and cone craters, and Kyler's crater and
+  round-lake intentions.
+
+After (1,126 lakes on v2-128): roundness 0.15, elongation 1.9, branching 1.67, fill 0.27, against
+real terrain's 0.14, 2.0, 1.65 and 0.23, and the workshop's 0.14, 2.1, 1.68 and 0.23. Round lakes
+(roundness 0.5+ and elongation under 1.5) fell from 2.9% to 1.3%. The kept-round lakes, in calderas
+and cone craters, stay round (0.26).
+
+**Islands in a sea** (Kyler: "Islands maps that don't clearly read as islands in a sea"). Before,
+no Islands map read as islands in a sea: water covered 13% at the median, its largest body 9%, and
+0.7% of the land lay in islands. Now every Islands map has a broad sea in its middle:
+- the land rises from the sea toward every edge, a steep bowl with quiet noise, so the sea holds
+  inland (water that reaches the edge leaves the map, and edges are never walled);
+- the sea keeps a broad floor below steep shores, with inlets (thin sheets of water would settle
+  slowly on large maps), and a map that needs a new genome gets a smaller sea;
+- 12–22 islands, cones and mesas, stand clear of it, spread through it;
+- weathering is kept low there, so the islands aren't worn down into the sea.
+
+After (200 Islands maps): water covers 32% at the median and the largest body 31%, 22% of the land
+lies in islands, and a map has 3 islands of 30+ tiles (up to 6). 18.5% of the maps meet all four
+parts of the "reads as islands in a sea" test, against 0% before. The current generator reaches
+25.5% only with rims at its edges, which Kyler's rule now forbids. Official Thousand Islands meets
+it, as do 15% of the workshop's maps. The rest hold a broad sea but too few, too small islands;
+more islands and a larger share of the land in them is M9b's next step (§17).
+
 **How this meets the refinement note "containment should look natural"**: nothing is stamped, so
 nothing needs a special shape (no straight dam ridge, no square badwater box or straight ditch, no
 bullseye lake, no raised banks). Steps in straight runs of 8+ and the longest straight run on
@@ -200,7 +236,7 @@ p10, 16 at p90); none goes above 16 at the default.
 |---|---|
 | The default | The theme's: River Valley 20, Canyon 40, Highlands 45, Lake Basin 10, Delta 10, Islands 20 (the terrain design's). Ordinary maps at the relief above, within 16 |
 | Rising | taller parts (up to 1.6 times), more caprock in smaller patches (stacks at high values), stronger weathering, deeper incision, knickpoints on more rivers with longer reaches, taller benches (one level more from 35–55, 2–4 levels from 70, 3–5 from 85), fewer natural ramps (more stairs-only rewards) |
-| 70 and above (high) | all of the above at full strength; heights above 16 (the top rises from 16 at 70 to 22 at 100, layer 22 kept empty) **only behind the probe lock**: until a DGM Probe batch confirms such maps load and keep their terrain, water and objects, the top stays 16. Two things change then, for Verticality 70+ only: the build's terrain cap (`MAX_TERRAIN` and `integrityAt` in `features/raster/terrain.ts`, which clip at 16 today) and `terrain.max_height`'s limit (22, in both validators) |
+| 70 and above (high) | all of the above at full strength; heights above 16 (the top rises from 16 at 70 to 22 at 100, layer 22 kept empty). The tall-maps probe batch confirmed that such maps load and keep their terrain, water and objects (23 checks passed, D172), and both validators' `terrain.max_height` rises to 22 with the start and edge rules (D172 (1)). What M9a still changes, for Verticality 70+ only: the build's terrain cap (`MAX_TERRAIN` and `integrityAt` in `features/raster/terrain.ts`, which clip at 16 today). A tall map's description says the in-game map editor only edits up to level 16 (D172 (4)) |
 
 **The vertical parts** (D132 (3)) and the processes that make each:
 
@@ -224,14 +260,15 @@ stairs-only uplands are rewards (the hidden-valley intention checks one).
 relief range, levels used, land above 16, tallest fall, flat and cliff shares, and vertical reach
 (dry land reached on foot from the start with the map's slopes, against land reached only with
 stairs). At the default, 15% of the dry land is reached on foot (official 9%, workshop 7%): in
-every Timberborn map most land waits for stairs. At Verticality 85 with the lock on (heights within
-16): relief 13 (12–15), cliffs 22% of the land, tallest fall 6.0 levels, 12% of the dry land on
-foot, first attempts 44–69% by theme, and every seed a map but one Canyon seed (99% final). Behind the lock (the land before the
-build, since the product's build still clips at 16): relief 16 (14–18), the highest ground 19
+every Timberborn map most land waits for stairs. At Verticality 85 with heights kept within
+16: relief 13 (12–15), cliffs 22% of the land, tallest fall 6.0 levels, 12% of the dry land on
+foot, first attempts 44–69% by theme, and every seed a map but one Canyon seed (99% final). Tall
+(heights to 22; the land before the build, since the product's build still clips at 16): relief 16 (14–18), the highest ground 19
 (18–20), 8.7% of the land above 16 (3.6–16%), on every map, and cliffs 26% of the land.
 
-**Before M9a offers heights above 16**: a DGM Probe batch (the Probe's T6), asked under the probe
-rule (D117). Not run here.
+**Heights above 16 in the game**: the tall-maps probe batch (D172) confirmed maps up to 22 load and keep
+their terrain, water and objects. M9a lifts the build's cap for Verticality 70+ and measures the
+built maps again; its own probe batch (D116) plays them.
 
 ## 6. Intentions: maps that feel authored
 
@@ -524,6 +561,8 @@ measured by the same batch code (REPORT-v2 §3). New in version 2:
 | Relief and Verticality | §5, against the official and workshop maps |
 | The landscape bench | river networks, relief and water features against real terrain (§15) |
 | Intentions | drawn, emerged, re-steered, dropped |
+| Lake shapes | roundness, fill, elongation and branching of every lake of 150+ tiles, against the survey's real lakes and the official and workshop maps (REPORT-v2 §3.9) |
+| Island seas | on Islands maps: the water share, the largest body, land in islands, the islands' count and size, and whether the map reads as islands in a sea |
 | Speed | first look, first settled water, finished map; settles per map |
 
 **Headline results** (v2-128: 200 seeds per theme, Variety 70, the themes' default Verticality):
@@ -803,7 +842,7 @@ from M13's versioned deploys.
   steering cannot lift the first three, they leave the set, as "the only safe water is uphill" did.
   Kyler's own stay unless he drops them. The waterfall-into-a-lake maps also cluster (23% of 30 on
   the forced set), from its nudge's tall scarp; a tapered scarp is M9b's fix.
-- *Above 16*: unconfirmed in the game until the probe batch, and the build's cap at 16 must be
+- *Above 16*: confirmed in the game by the tall-maps probe (D172), but the build's cap at 16 must be
   lifted for Verticality 70+ (the prototype measured the land before the build).
 - *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#59).
 - *The core start and edge rules* land with their own definitions and numbers. The prototype's
@@ -819,7 +858,7 @@ version. The proposal (also in ROADMAP M9):
 - **M9a, terrain and water from processes**: version 2's genome and themes; the field (uplift with
   the regional field, caprock, erosion, weathering, levels with benches) and the hydrology (hanging
   valleys, knickpoints, spring lakes); natural ramps and the derived-slope rule for them;
-  Verticality (above 16 locked until the probe batch); the settler with reach and the drought-aware
+  Verticality (above 16 from 70, confirmed by the tall-maps probe, D172); the settler with reach and the drought-aware
   start (#56); Kyler's start and edge rules on the generator's side (the settler's walk over the
   derived slopes, the planner's wood target from starting wood, the land running on past the
   edges), with the core rules from `feature/start-edge-rules`; the one-settle order and the
@@ -838,9 +877,11 @@ version. The proposal (also in ROADMAP M9):
 
 Kyler approves version 2 by judgement from the ten briefs
 ([investigation/generative/briefs/v2/](../investigation/generative/briefs/v2/)), the measures
-([REPORT-v2](../investigation/generative/REPORT-v2.md)) and the contact sheet
-([docs/sheets/design-v2.png](sheets/design-v2.png); a local page shows version 1, version 2 and
-high Verticality side by side). The ten maps to play are in
+([REPORT-v2](../investigation/generative/REPORT-v2.md)) and the contact sheets: one readable
+image per theme in [docs/sheets/design-v2/](sheets/design-v2/) (seeds 1–30 at 128² and a row at
+Verticality 85, drawn from above in the clean look at 2 px a tile, labelled), beside the small
+record [docs/sheets/design-v2.png](sheets/design-v2.png) (D144); a local page shows version 1,
+version 2 and high Verticality side by side. The ten maps to play are in
 [investigation/generative/out/v2/](../investigation/generative/out/v2/). This version's pending
 decisions are decisions-pending #56–#65.
 

@@ -199,6 +199,10 @@ interface Head {
   flow: number;
 }
 
+/** Valley lakes a map is drawn with, by theme (the mean; design version 2: lakes take the land's
+ *  shape). */
+const TROUGHS: Record<string, number> = { riverValley: 0.8, canyon: 0.5, highlands: 1, lakeBasin: 1.3, delta: 0.3, islands: 0.3 };
+
 export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?: number; knick?: number; lakeSprings?: number; wander?: number; wanderCell?: number }, seed: number, W: number, H: number, attempt: number): Hydro {
   const N = W * H;
   const rng = stream(seed, "hydro", attempt);
@@ -376,6 +380,65 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?
   for (const hd of heads) {
     hd.flow = hd.kind === "edge" ? (flowTotal * (1 - (nSp ? springShare : 0))) / nIn : (flowTotal * springShare) / nSp;
     hd.flow = Math.round(Math.max(0.5, hd.flow) * 100) / 100;
+  }
+
+  // ---- valley lakes (Kyler, 2026-09-25: lakes take the land's shape): a stretch of a river's valley
+  //      deepened in its middle, as ice or a slide-free trough leaves it. The lake that fills it
+  //      follows the land's contours, long along the valley, with fingers up the side valleys
+  //      whose floors lie below its level. Only ground is taken away; none is raised (D111).
+  {
+    const tr = stream(seed, "trough", attempt);
+    let n = Math.floor((TROUGHS[g.theme] ?? 0.5) + tr.float());
+    const scale = side / 128;
+    const byLength = traced.slice().sort((a, b) => b.cells.length - a.cells.length || a.k - b.k);
+    for (const t of byLength) {
+      if (n <= 0) break;
+      const cells = t.cells;
+      const len = Math.round((20 + 25 * tr.float()) * scale);
+      if (cells.length < len + 16) continue;
+      const a0 = Math.floor((cells.length - len - 8) * (0.15 + 0.6 * tr.float()));
+      const a1 = a0 + len;
+      if (cells.slice(a0, a1 + 1).some((c) => borderDist(c) < 8)) continue;
+      const level = h[cells[a1]];
+      if (level < 2) continue;
+      const reach = (5 + 7 * tr.float()) * scale;
+      const pts = cells.slice(a0, a1 + 1).map((c) => [c % W, Math.floor(c / W)] as [number, number]);
+      let x0 = W;
+      let y0 = H;
+      let x1 = 0;
+      let y1 = 0;
+      for (const [x, y] of pts) {
+        x0 = Math.min(x0, x);
+        y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x);
+        y1 = Math.max(y1, y);
+      }
+      const R = Math.ceil(reach);
+      for (let y = Math.max(1, y0 - R); y <= Math.min(H - 2, y1 + R); y++)
+        for (let x = Math.max(1, x0 - R); x <= Math.min(W - 2, x1 + R); x++) {
+          const i = y * W + x;
+          if (h[i] > level + 1 || (owner[i] >= 0 && owner[i] !== t.k)) continue;
+          // the nearest point of the stretch, and how far along it lies
+          let best = Infinity;
+          let at = 0;
+          for (let k = 0; k < pts.length; k++) {
+            const dx = pts[k][0] - x;
+            const dy = pts[k][1] - y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < best) {
+              best = d2;
+              at = k;
+            }
+          }
+          const d = Math.sqrt(best);
+          if (d > reach) continue;
+          const u = at / (pts.length - 1);
+          const depth = Math.round((1 + 2.5 * 4 * u * (1 - u)) * (1 - d / reach) + 0.4);
+          const target = level - depth;
+          if (depth > 0 && target >= 0 && h[i] > target) h[i] = target;
+        }
+      n--;
+    }
   }
 
   // ---- lakes: the closed hollows of the snapped terrain

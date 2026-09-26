@@ -993,6 +993,10 @@ become recipes inside the system (design §3).
   - **One settle and a progressive preview** (design version 2 §13): the badwater hollow planned
     before the settle, the start chosen on the settled water, the field kept for re-plans; the page
     shows the land and its planned water first, then the settled water, then the checked map.
+  - **Lakes that take the land's shape, and island seas** (design version 2 §4): valley-shaped
+    basins and valley lakes (a trough deepened along a river), round lakes kept for ponds, craters
+    and Kyler's round-lake intentions; every Islands map a broad sea with islands scattered
+    through it; the lake-shape and island-sea measures (REPORT-v2 §3.9).
   - **Kyler's start and edge rules on the generator's side** (design version 2 §7–§8; the core
     rules come from `feature/start-edge-rules`): the settler walks to a pump shore over the slopes
     the build derives, the resources planner aims at starting wood (D164), and the land runs on past
