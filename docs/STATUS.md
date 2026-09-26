@@ -152,7 +152,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    with two tweaks).
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
+   #51–#53 and #58 (scroll: zoom or strength).
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
 
