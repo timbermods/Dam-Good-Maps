@@ -344,7 +344,7 @@ describe("the generator's M7 set pieces keep their rules (ROADMAP M7)", () => {
     // nothing is stamped (M9a): the generator finds a rise the land already holds, on maps that
     // have one (generator 0.7.0)
     let seen = 0;
-    for (const [theme, seed] of [["highlands", 2], ["highlands", 5], ["islands", 1], ["canyon", 4]] as [ThemeId, number][]) {
+    for (const [theme, seed] of [["highlands", 2], ["highlands", 5], ["islands", 1], ["islands", 5]] as [ThemeId, number][]) {
       const r = generate(makeSpec({ seed, size: { x: 128, y: 128 }, theme }));
       const f = r.features.find((g) => g.kind === "setPiece" && g.params.kind === "obstaclePayoff");
       if (!f || f.kind !== "setPiece") continue;
