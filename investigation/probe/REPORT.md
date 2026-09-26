@@ -77,9 +77,12 @@ Each open choice, what was chosen, and why.
     changes).
 18. **Mods' own files put back.** With `--keep-mods` the player's mods run too, and some write to
     `Documents\Timberborn` (Late Game Performance rewrites `unity-markers.txt` at launch; Performance Log
-    starts a session folder per game). The runner copies every file there up to 8 MB before the launch and
-    puts back any that changed; new files move to the run's folder and the folders they leave empty are
-    removed. Steam Cloud's `steam_autocloud.vdf` files are reported, never put back.
+    starts a session folder per game). The runner copies every file there up to 8 MB before the launch,
+    the other mods' folders in `Mods` included, and puts back any that changed; new files move to the
+    run's folder and the folders they leave empty are removed. Steam Cloud's `steam_autocloud.vdf` files
+    are reported, never put back. After DGM Probe is removed, a final listing must show nothing new
+    anywhere in `Documents\Timberborn` (`leftovers.json`); otherwise the run stops with exit code 6
+    (Kyler, 2026-09-25: the runner removes anything it creates in his Timberborn folder).
 19. **Tall maps** (PLAN §20 D172): `tools/probe-tall.ts` writes four maps up to level 22 (the top layer
     empty) to `C:\dgm-probe\tall`, pre-filled with the canonical settle and checked by both validators'
     load checks (all pass but `terrain.max_height`, the limit under test). The `Tall maps` group checks

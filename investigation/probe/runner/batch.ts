@@ -24,7 +24,7 @@ import { runModel, type ModelRun } from './model';
 import { prefsValueName, probeOnly } from './mods';
 import { CACHE, CHECKED_GAME_VERSION, gameVersion, isEntry, modInstallDir, probePaths, REGISTRY_KEY } from './paths';
 import { waitQuiet } from './quiet';
-import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, marker, parseRegFile, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
+import { backupSettings, compareWithBackup, handRestore, hasPendingRestore, isGameRunning, leftovers, marker, parseRegFile, registryValues, restore, type SettingsDiff, takeSnapshot } from './safety';
 import { writeSheet } from './sheet';
 import { writeSummary } from './summary';
 
@@ -163,6 +163,13 @@ async function launch(plan: Plan, prepared: Prepared[], reference: string, build
     // DGM Probe leaves the Mods folder after each run, so the player's own game never loads it
     rmSync(modInstallDir(), { recursive: true, force: true });
     log('DGM Probe removed from the Mods folder');
+    // nothing the run created may stay in Kyler's Timberborn folder
+    const left = leftovers(snap);
+    writeFileSync(join(dir, 'leftovers.json'), JSON.stringify(left, null, 1));
+    if (left.length) {
+      log(`STOP: the run left ${left.length} new files or folders in Documents\\Timberborn: ${left.slice(0, 10).join(', ')}`);
+      process.exitCode = 6;
+    } else log('Documents\\Timberborn: nothing new left behind');
   }
   if (!viewIsGames) return false;
   if (keepMods) return true;
