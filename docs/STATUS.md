@@ -97,6 +97,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
 - D182: **the brush kit is the core of the editor**: every landform tool and its handles removed, no presets; new Terrace and Ramp brushes, pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted).
 - D183: live dimensions: selection size in tiles, straight-stroke length, the target level for Flatten and Terrace, the river's width and depth.
+- D184: **the editor's design principles**: the land is the interface; a top bar (Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove) with a small options row; water from smart Lower and Source, everything else emerging from the land; a left shelf of object icons with live ghosts; view buttons with overlays; a header with Save to Timberborn and one menu; a quiet status dot; the river and lake tools removed.
 
 ## Done and released
 
@@ -129,8 +130,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   once the start and edge rules and the resources step land, since both change generated maps again.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
-- **Live editing** (D158, D179–D182), on branch `feature/live-editing`: push 0 is on the preview
-  address; next the smooth camera, then water, then the brush kit (D182).
+- **Live editing** (D158, D179–D184), on branch `feature/live-editing`: the camera (approved) and
+  water part 1 are on the preview address; next water per D184 (smart Lower, Source, part 2's paced
+  water), then the rest of D184's design in pushes.
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
@@ -146,10 +148,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 3. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
    feedback proposal (D137).
 4. The Map look fixes: approve #38's badwater (its colours then go into the shared water palette, D177,
-   and #41 is shown again); and the mine site and ruins captures (#42, D178).
+   and #41 is shown again); and the mine site's second round (#42, D178; the ruins are approved
+   with two tweaks).
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
+   #51–#53 and #58 (scroll: zoom or strength).
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
 

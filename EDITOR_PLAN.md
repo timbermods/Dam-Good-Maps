@@ -44,6 +44,8 @@ These guide every design decision. When a choice isn't covered elsewhere, decide
 
    When something does go wrong, the issue comes with a one-click fix ("move the start to the nearest valid spot," "open an outlet for this lake").
 3. **Live editing is how you edit** (Kyler, PLAN §20 D179, the editor's core principle). Every edit happens as you drag: the result appears at once, the water catches up visibly, and one undo takes it back. No tool plans, confirms and then places; limits and checks show while dragging, never as dialogs afterwards.
+
+   **The editor's design principles** (Kyler, `PLAN.md` §20 D184): the land is the interface; direct manipulation; few tools, each obvious; smart defaults instead of settings; forgiveness; one grammar everywhere ([ and ] for size, scroll for strength); things just work.
 4. **Nothing is scary.** Unlimited undo, a visible history, autosave, and non-destructive edits. Trying something should never risk losing work.
 5. **Few concepts, plain language.** The interface is organized around four ideas: Land, Water, Resources and Start. No jargon: "flow: gentle / steady / strong," not "SpecifiedStrength 1.5"; "height," not "voxel layer." Exact numbers appear in advanced mode.
 6. **Start from something good.** Users begin from a generated map, a template or an imported map, never a blank grid unless they ask for one.
@@ -167,6 +169,8 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 **Undo and redo** run over the operation list, with periodic snapshots so undo stays fast on 256×256 maps. The history is visible as a list the user can step back through.
 
 ## 4. Editor interface
+
+**Replaced by Kyler's editor design (`PLAN.md` §20, D184):** a top bar of brushes (Raise, Lower, Flatten, Smooth, Naturalize), Source and Remove; a left shelf of object icons with live ghosts; view buttons with the overlays; a header with Undo, Redo, **Save to Timberborn** and one menu; a quiet status dot. The layout and tools below are the history of what M4–M8 built.
 
 **Main view: 3D.** The map is edited directly in a 3D view with an easy orbit camera, which is how players already think about Timberborn maps. A top-down map view is one click away for precise layout work, and every tool works in both. Hovering shows what's under the cursor in plain language ("Plateau, height 12, pine forest"). A compass is always visible: north is the top of the top-down view (+Y, the game's grid north), and these directions are the same ones Claude uses. The 3D renderer is the same one the generator's preview uses (`PLAN.md` §3, `render3d`).
 
