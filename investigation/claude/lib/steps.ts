@@ -12,7 +12,7 @@
 
 import type { EditOp } from "../../../src/core/doc/ops";
 import type { MapSession } from "../../../src/core/doc/session";
-import { deleteEdit, landformTop, moveEdit, objectsOnNewGround, planContextOf, planLake, planLandform, planPiece, planRiver, replacePatch, type PlannedEdit } from "../../../src/core/doc/tools";
+import { cornerFor, deleteEdit, landformTop, moveEdit, objectsOnNewGround, planContextOf, planLake, planLandform, planPiece, planRiver, replacePatch, startCentre, type PlannedEdit } from "../../../src/core/doc/tools";
 import { applyBrush, BRUSH_MAX_LEVEL, BRUSH_TOOLS, MAX_DABS, type BrushParams, type BrushTool } from "../../../src/core/features/raster/brush";
 import { polygonMask } from "../../../src/core/features/geometry";
 import { fmix32 } from "../../../src/core/math/hash";
@@ -73,7 +73,9 @@ export type Step =
    *  but the start when absent); it never changes the ground, and the start stays. */
   | { op: "remove"; where: Where; kinds?: RemoveKind[] }
   | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] | Where }
-  | { op: "moveStart"; to: [number, number] | Where; bringFood?: boolean }
+  /** The start moved (to a tile or the best spot in a place), and its door turned to face a way (the
+   *  shelf's R, D184); with only `facing`, it turns where it stands. */
+  | { op: "moveStart"; to?: [number, number] | Where; facing?: "north" | "east" | "south" | "west"; bringFood?: boolean }
   | { op: "deleteFeature"; target: string }
   /** Refused (D196: water is never an object); kept for the refusal's advice. */
   | { op: "setRiverBadwater"; target: string; badwater: boolean }
@@ -278,6 +280,8 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       if (Array.isArray(s.to)) return s.to.length === 2 && num(s.to[0], 0, W - 1) && num(s.to[1], 0, H - 1) ? [] : ["to is a tile [x, y] on the map, or a place"];
       return checkPlace(s.to, "to", W, H);
     case "moveStart":
+      if (s.facing !== undefined && !["north", "east", "south", "west"].includes(String(s.facing))) return ["facing is north, east, south or west (where the start's door looks)"];
+      if (s.to === undefined) return s.facing === undefined ? ["moveStart needs to (a tile or a place) or facing"] : [];
       if (Array.isArray(s.to)) return s.to.length === 2 && num(s.to[0], 0, W - 1) && num(s.to[1], 0, H - 1) ? [] : ["to is a tile [x, y] on the map, or a place"];
       return checkPlace(s.to, "to", W, H);
     case "deleteFeature":
@@ -1132,7 +1136,13 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
   const feat = s.features.find((f): f is StartFeature => f.kind === "start");
   let to: [number, number];
   let resolved: Record<string, unknown> = {};
-  if (Array.isArray(step.to) && step.to.length === 2 && typeof step.to[0] === "number") to = [Math.round(step.to[0]), Math.round(Number(step.to[1]))];
+  const orientation = step.facing ? ({ south: "Cw0", west: "Cw90", north: "Cw180", east: "Cw270" } as const)[step.facing] : undefined;
+  const e0 = s.built.entities.find((g) => g.template === "StartingLocation");
+  const here: [number, number] | null = feat ? [feat.params.position[0], feat.params.position[1]] : e0 ? startCentre(e0.x, e0.y, e0.orientation) : null;
+  if (step.to === undefined) {
+    if (!here) return fail(step, ["this map has no start to turn"]);
+    to = here;
+  } else if (Array.isArray(step.to) && step.to.length === 2 && typeof step.to[0] === "number") to = [Math.round(step.to[0]), Math.round(Number(step.to[1]))];
   else {
     hintIds(conv);
     const r = findSites(s, { kind: "start", where: step.to as Where, limit: 1 }, refs);
@@ -1142,15 +1152,18 @@ function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, 
   }
   const ops: EditOp[] = [];
   const report: string[] = [];
-  if (feat) ops.push({ op: "updateFeature", params: { id: feat.id, patch: { params: { position: to, benchLevel: Math.max(1, v.heights[to[1] * v.W + to[0]]) } } } });
+  const moves = step.to !== undefined;
+  if (feat) ops.push({ op: "updateFeature", params: { id: feat.id, patch: { params: { ...(moves ? { position: to, benchLevel: Math.max(1, v.heights[to[1] * v.W + to[0]]) } : {}), ...(orientation ? { orientation } : {}) } } } });
   else {
     const e = s.built.entities.find((g) => g.template === "StartingLocation");
     if (!e) return fail(step, ["this map has no start to move"]);
-    ops.push({ op: "moveEntity", params: { id: e.id, x: to[0] - 1, y: to[1] - 1 } });
+    const [cx, cy] = cornerFor(to[0], to[1], orientation ?? e.orientation);
+    ops.push({ op: "moveEntity", params: { id: e.id, x: cx, y: cy, ...(orientation ? { orientation } : {}) } });
   }
-  report.push(`the start moves to (${to[0]}, ${to[1]})`);
+  if (moves) report.push(`the start moves to (${to[0]}, ${to[1]})`);
+  if (step.facing) report.push(`its door faces ${step.facing}`);
   const made: Expanded["made"] = [];
-  if (step.bringFood !== false) {
+  if (moves && step.bringFood !== false) {
     // bring trees and berries along when the new spot lacks them (the start rules, read from the
     // validator at HEAD): a grove and a berry patch on moist soil 7–16 tiles out
     const rules = rulesFor(s.spec, s.meta.designedFor);

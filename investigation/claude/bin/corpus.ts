@@ -1186,6 +1186,17 @@ R("B17", "simple", "clear the trees and bushes out of the north-west corner, but
     checks: [chk("propose", "steps.0.report.0", "matches", "^removes [0-9]+ (tree|bush)")],
   },
 });
+R("B18", "simple", "turn the district center so its door faces east", "rv96", {
+  note: "the shelf's R on the start (D184): it turns where it stands, one step",
+  goals: [G("g1", "the start's door faces east")],
+  report: { mustSay: ["that the start stays where it is and its door now faces east"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [],
+    proposal: { steps: [{ op: "moveStart", facing: "east" }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^its door faces east")],
+  },
+});
 R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
   note: "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
   goals: [G("g1", "a straight channel from the main river to the south edge")],

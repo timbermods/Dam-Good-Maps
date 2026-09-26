@@ -554,6 +554,9 @@ on a placed river.
 - **Camera bookmarks (D205):** Ctrl+Shift+1 to 9 keeps the view (position, turn, tilt, zoom) in
   that slot; Shift+1 to 9 glides back (at once with reduced motion). They are kept in the project
   document and the autosave (the page saves when they change); older projects open without them.
+- **Claude:** `moveStart` takes `facing` (north, east, south or west: where the start's door looks,
+  the shelf's R); with only `facing`, the start turns where it stands. New request B18. Reference
+  solutions: 125 of 138 (the 13 failing fail on dev too).
 - Tests: `tests/e2e/viewAndHeader.spec.ts` (the header and its menu, the dot and its list, the first
   run's hints, the minimap and its click, bookmarks kept through a reload, the start's reach, Raise
   under a cut), `tests/e2e/waterView.spec.ts` (the layers as the game: the first step down, the

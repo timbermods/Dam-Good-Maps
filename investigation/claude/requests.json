@@ -8003,6 +8003,50 @@
    }
   },
   {
+   "id": "B18",
+   "kind": "simple",
+   "text": "turn the district center so its door faces east",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "the shelf's R on the start (D184): it turns where it stands, one step",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the start's door faces east",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "that the start stays where it is and its door now faces east"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [],
+    "proposal": {
+     "steps": [
+      {
+       "op": "moveStart",
+       "facing": "east"
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^its door faces east"
+     }
+    ]
+   }
+  },
+  {
    "id": "B11",
    "kind": "simple",
    "text": "draw a straight canal from the river south to the map edge at x 72",
