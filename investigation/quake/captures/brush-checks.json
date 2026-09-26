@@ -1,0 +1,80 @@
+{
+  "passed": [
+    "tap, sub-tile and formerly failing short strokes all make a quake",
+    "pen smooths sub-tile positions, reaches the release point, flips, and bounds long strokes",
+    "1200 seeded random strokes: 861 quakes, 339 explicit start refusals, zero silent failures",
+    "Slide rivers stay connected and wet downstream, live and canonical, on both sides and scarp styles"
+  ],
+  "random": {
+    "cases": 1200,
+    "accepted": 861,
+    "refused": 339,
+    "ms": 2660.1452
+  },
+  "rivers": [
+    {
+      "side": 1,
+      "scarp": "sheer",
+      "diagonal": false,
+      "channel": 63,
+      "ticks": 512,
+      "settled": true
+    },
+    {
+      "side": 1,
+      "scarp": "sheer",
+      "diagonal": true,
+      "channel": 70,
+      "ticks": 640,
+      "settled": true
+    },
+    {
+      "side": 1,
+      "scarp": "stepped",
+      "diagonal": false,
+      "channel": 99,
+      "ticks": 640,
+      "settled": true
+    },
+    {
+      "side": 1,
+      "scarp": "stepped",
+      "diagonal": true,
+      "channel": 107,
+      "ticks": 896,
+      "settled": true
+    },
+    {
+      "side": -1,
+      "scarp": "sheer",
+      "diagonal": false,
+      "channel": 54,
+      "ticks": 640,
+      "settled": true
+    },
+    {
+      "side": -1,
+      "scarp": "sheer",
+      "diagonal": true,
+      "channel": 62,
+      "ticks": 768,
+      "settled": true
+    },
+    {
+      "side": -1,
+      "scarp": "stepped",
+      "diagonal": false,
+      "channel": 102,
+      "ticks": 640,
+      "settled": true
+    },
+    {
+      "side": -1,
+      "scarp": "stepped",
+      "diagonal": true,
+      "channel": 127,
+      "ticks": 640,
+      "settled": true
+    }
+  ]
+}
