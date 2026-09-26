@@ -9,6 +9,7 @@ import { bedAt, floorAt, polygonMask, segmentDistance2 } from "../geometry";
 import { carveChannel, channelBounds, type ChannelPlan } from "../route";
 import type { Edge, Feature, LakeFeature, LandformFeature, RiverFeature, StartFeature } from "../schema";
 import { boundsOf, clipRect, type BuildTarget, type Rect } from "../target";
+import { carveBounds, isCarve, type CarveParams } from "../../forces/carve/op";
 import { applyBrush, brushBounds, brushReadsNeighbours, type BrushParams } from "./brush";
 
 export const MAX_TERRAIN = 16; // PLAN §20, D4
@@ -294,15 +295,17 @@ export function rasterizeBench(f: StartFeature, t: BuildTarget): void {
 
 /** A sculpt edit (cells with a mode) or a brush stroke (dabs with a brush, raster/brush.ts). */
 export interface SculptEdit {
-  params: { mode: string; cells: Runs; amount?: number; level?: number; step?: number } | BrushParams;
+  params: { mode: string; cells: Runs; amount?: number; level?: number; step?: number } | BrushParams | CarveParams;
 }
 
 function isBrush(p: SculptEdit["params"]): p is BrushParams {
   return "dabs" in p;
 }
 
-export function sculptBounds(s: SculptEdit): Rect | null {
+/** A sculpt's tiles' bounds; a carve's need the map's width (its tiles are indices). */
+export function sculptBounds(s: SculptEdit, W = 0): Rect | null {
   if (isBrush(s.params)) return brushBounds(s.params, Infinity, Infinity);
+  if (isCarve(s.params)) return carveBounds(s.params, W);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -318,6 +321,7 @@ export function sculptBounds(s: SculptEdit): Rect | null {
 
 /** Brushes that read neighbouring cells: a rebuild that touches their cells rebuilds all of them. */
 export function sculptReadsNeighbours(s: SculptEdit): boolean {
+  if (isCarve(s.params)) return false;
   return isBrush(s.params) ? brushReadsNeighbours(s.params) : s.params.mode === "smooth";
 }
 
@@ -326,6 +330,18 @@ export function sculptReadsNeighbours(s: SculptEdit): boolean {
  *  `keep(i)` names tiles every tool leaves alone (an imported map's caves). */
 export function applySculpt(s: SculptEdit, t: BuildTarget, keep?: (i: number) => boolean): void {
   const { W, heights } = t;
+  if (isCarve(s.params)) {
+    // a force's result, literally (D194): its tiles take their levels, and the integrity pass leaves
+    // them as they are
+    const p = s.params;
+    for (let k = 0; k < p.tiles.length; k++) {
+      const i = p.tiles[k];
+      if (!t.inRegion(i) || keep?.(i)) continue;
+      heights[i] = p.heights[k];
+      t.protectedMask[i] = 1;
+    }
+    return;
+  }
   if (isBrush(s.params)) {
     const b = brushBounds(s.params, W, t.H);
     if (!b || !t.touchesRegion(b)) return;

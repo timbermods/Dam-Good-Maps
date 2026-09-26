@@ -389,8 +389,14 @@ function dirtyTerrain(prev: BuildCache, input: BuildInput, target: BuildTarget):
   const sculpts = input.sculpts ?? [];
   let k = 0;
   while (k < sculpts.length && k < prev.sculpts.length && prev.sculpts[k] === paramsKey(sculpts[k].params)) k++;
-  for (let j = k; j < sculpts.length; j++) rb.add(clipRect(sculptBounds(sculpts[j])!, W, H));
-  for (let j = k; j < prev.sculptEdits.length; j++) rb.add(clipRect(sculptBounds(prev.sculptEdits[j])!, W, H));
+  for (let j = k; j < sculpts.length; j++) {
+    const r = sculptBounds(sculpts[j], W);
+    if (r) rb.add(clipRect(r, W, H));
+  }
+  for (let j = k; j < prev.sculptEdits.length; j++) {
+    const r = sculptBounds(prev.sculptEdits[j], W);
+    if (r) rb.add(clipRect(r, W, H));
+  }
   if (prev.locked !== (input.locked ?? null)) return fullRegion(W, H);
   // rasterizers that read beyond the tiles they write rebuild whole when the region touches them
   for (let grew = true; grew && !rb.all; ) {
@@ -402,7 +408,8 @@ function dirtyTerrain(prev: BuildCache, input: BuildInput, target: BuildTarget):
     }
     for (const s of sculpts) {
       if (!sculptReadsNeighbours(s)) continue;
-      const b = clipRect(sculptBounds(s)!, W, H);
+      const sb = sculptBounds(s, W);
+      const b = sb && clipRect(sb, W, H);
       if (b && rb.intersects(b)) grew = rb.add(b) || grew;
     }
   }
