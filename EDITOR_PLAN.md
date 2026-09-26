@@ -75,8 +75,10 @@ editor is desktop-first (D185).
 
 Make a valley, drop a source, and there's a river.
 
-- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill;
-  the brush ring glows blue when it does.
+- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill.
+  The brush ring itself turns a clear water-blue and slightly thicker, with a faint fill as a second
+  cue; ordinary Lower keeps the white ring. Readable over water, badwater, every ground and in
+  colour-blind views (D198).
 - **Source:** click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
   note past the official range); drag to move; clean or bad; select it and press Delete (or use
   Remove) and its water recedes live. A source is always findable, even underwater: a subtle
