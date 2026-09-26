@@ -550,22 +550,32 @@ export function planLandform(req: LandformRequest, ctx: PlanContext, id: string,
 
 /** The level a drawn landform's steps reach inside its outline: its height, unless the outline is
  *  too small for the steps to climb (or sink) that far. A single tile above all its neighbours is
- *  levelled by the build (a spike), so the top must hold two tiles or more. */
-export function landformTop(p: LandformFeature["params"], mask: Uint8Array, W: number, H: number): number {
+ *  levelled by the build (a spike), so the top must hold two tiles or more. With `shown` (the
+ *  heights a build gives with it), what shows of its steps: where another feature keeps its own
+ *  ground (a river's bed) the steps stop there; ground already higher than a step is not the
+ *  landform's. */
+export function landformTop(p: LandformFeature["params"], mask: Uint8Array, W: number, H: number, shown?: Uint8Array): number {
   const step = edgeStep(p);
   const height = p.height ?? 0;
-  if (!step || p.base === undefined) return height;
+  const lowers = p.base !== undefined ? height < p.base : p.kind === "canyon" || p.kind === "valley";
+  // a step at level v shows as far as the ground there lets it
+  const seen = (i: number, v: number) => (shown ? (lowers ? Math.max(v, shown[i]) : Math.min(v, shown[i])) : v);
+  if (!step || p.base === undefined) {
+    if (!shown) return height;
+    let top = lowers ? 16 : 0;
+    for (let i = 0; i < mask.length; i++) if (mask[i]) top = lowers ? Math.min(top, seen(i, height)) : Math.max(top, seen(i, height));
+    return top;
+  }
   const outside = new Uint8Array(W * H);
   for (let i = 0; i < mask.length; i++) outside[i] = mask[i] ? 0 : 1;
   const inward = distanceFrom(outside, W, H);
-  const lowers = height < p.base;
   const level = (i: number) => (mask[i] ? landformLevel(Math.min(16, height), Math.min(16, p.base!), step, inward[i]) : p.base!);
   let top = lowers ? 16 : 0;
   for (let i = 0; i < mask.length; i++) {
     if (!mask[i]) continue;
     const x = i % W;
     const y = (i - x) / W;
-    const v = level(i);
+    const v = seen(i, level(i));
     // what the build keeps of it: not above (below) every neighbour
     let near = lowers ? 16 : 0;
     for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {

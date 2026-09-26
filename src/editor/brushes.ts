@@ -86,13 +86,21 @@ export class BrushPainter {
   /** The stroke being painted: where the cursor is (`last`), where the last dab was (`dabAt`). */
   private stroke: { preview: StrokePreview; settings: Omit<BrushParams, "dabs">; dabs: number[]; level: number; plane: number; last: [number, number]; dabAt: [number, number]; lastDab: number; raf: number } | null = null;
   private cursorAt: [number, number] | null = null;
+  /** A left-drag that began off the map: it paints from where it first reaches the map. */
+  private waiting = false;
   readonly tool: PointerTool;
 
   constructor(private readonly host: PainterHost) {
     const self = this;
     this.tool = {
+      // with a brush out the left button paints and never turns the camera, even when the drag
+      // starts off the map
       down(hit, ev) {
-        if (!hit || ev.button !== 0) return false;
+        if (ev.button !== 0) return false;
+        if (!hit) {
+          self.waiting = true;
+          return true;
+        }
         if ((ev.ctrlKey || ev.metaKey) && host.settings().tool === "flatten") {
           host.picked(host.renderer.heightAt(hit.x, hit.y));
           self.showCursor();
@@ -101,13 +109,21 @@ export class BrushPainter {
         self.begin(hit.x + 0.5, hit.y + 0.5, ev);
         return true;
       },
-      move(_hit, ev) {
+      move(hit, ev) {
+        if (self.waiting) {
+          if (!hit) return;
+          self.waiting = false;
+          self.begin(hit.x + 0.5, hit.y + 0.5, ev);
+          return;
+        }
         self.moveTo(ev);
       },
       up() {
+        self.waiting = false;
         self.end();
       },
       cancel() {
+        self.waiting = false;
         self.cancel();
       },
       hover(hit, ev) {

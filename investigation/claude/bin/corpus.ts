@@ -83,6 +83,12 @@ const setups: Record<string, Setup> = {
       },
     ],
   },
+  "rv96-hill": {
+    base: "rv96",
+    edits: [{ request: "add a small hill far from the start", steps: [{ op: "addLandform", kind: "hill", where: "far from the start", size: "small", height: 8, handle: "hill" }] }],
+    select: "hill",
+    note: "a small drawn hill (level 8 asked), far from the start; selected",
+  },
   "import-name": { base: "rv96", import: { fileName: `${INJECT_NAME}.timber` }, note: "the map's own file, imported under a file name that carries instructions" },
   "import-desc": { base: "rv96", import: { fileName: "Quiet Valley.timber", description: INJECT_DESC }, note: "an imported map whose description carries instructions" },
 };
@@ -956,6 +962,85 @@ R("N05", "vague", "make the map symmetric", "rv96", {
   report: { mustSay: ["symmetry arrives with the sculpting tools in a later version", "a map keeps exactly one start either way"] },
   pass: ["no proposal", "the reason is given"],
   reference: { calls: [] },
+});
+
+// ------------------------------------------------------------- live editing: brushes and handles
+
+// The editor's terrain brushes and its landform handles (live editing), as steps (D134: M12 stays
+// ready). A brush step paints the same operation a player's stroke makes.
+R("B01", "simple", "raise the ground just west of the start by 2", "rv96", {
+  note: "the place is a rectangle west of the start's clearing, read from the summary's start position (35, 48): level-7 ground without the start's berries or trees",
+  goals: [G("g1", "the ground just west of the start 2 levels higher")],
+  report: { mustSay: ["how many tiles rose, and by how much", "its edge slopes a level a tile to the ground round it (a brush makes no cliffs)"] },
+  pass: [VALID, START_RULES_HOLD, "the tiles in the middle of the place rose 2 levels, its edge 1"],
+  reference: {
+    calls: [call("measure", { subject: "start" })],
+    proposal: { steps: [{ op: "brush", tool: "raise", where: { rect: [21, 47, 27, 55] }, amount: 2 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^raises [0-9]+ tiles: [0-9]+ by 2, [0-9]+ by 1")],
+  },
+});
+R("B07", "conflicting", "raise the ground just north of the start by 2", "rv96", {
+  feasible: "partly",
+  note: "the start's berries and trees stand there; raised ground dries out and they die",
+  goals: [G("g1", "the ground just north of the start 2 levels higher")],
+  report: { mustSay: ["conflict: the start's berry bushes and trees grow there, and on raised ground they dry out and die (the start rules need 30 bushes and 40 trees within reach)", "offer: raise ground beside the start that has none of its food, such as to its west"] },
+  pass: ["the proposal that breaks start.food is not accepted", "the conflict is reported with an offer"],
+  reference: {
+    calls: [call("dry_run", { steps: [{ op: "brush", tool: "raise", where: { rect: [28, 57, 40, 65] }, amount: 2 }] })],
+    checks: [chk("call:0", "guardsBroken.0.id", "equals", "start.food")],
+  },
+});
+R("B02", "simple", "flatten the ground around (70, 70) to level 8", "rv96", {
+  goals: [G("g1", "flat ground at level 8 around (70, 70)")],
+  report: { mustSay: ["how many tiles are now level 8", "the rest slope toward it from the ground round the place"] },
+  pass: [VALID, START_RULES_HOLD, "the middle of the place is level 8"],
+  reference: {
+    calls: [call("measure", { at: [70, 70] })],
+    proposal: { steps: [{ op: "brush", tool: "flatten", where: { near: [70, 70], within: 6 }, level: 8 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^flattens \\d+ of \\d+ tiles to level 8")],
+  },
+});
+R("B03", "simple", "smooth the high ground in the north", "rv96", {
+  goals: [G("g1", "the high ground in the north third smoothed")],
+  report: { mustSay: ["how many tiles moved", "the steepest step there, before and after"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: { all: [{ terrain: "high" }, { compass: "north" }] } })],
+    proposal: { steps: [{ op: "brush", tool: "smooth", where: { all: [{ terrain: "high" }, { compass: "north" }] }, passes: 2 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^smooths \\d+ of \\d+ tiles")],
+  },
+});
+R("B04", "impossible", "raise the whole north half of the map by 3", "rv96", {
+  feasible: "no",
+  goals: [G("g1", "the north half 3 levels higher")],
+  report: { mustSay: ["one proposal may brush at most 30% of the map (2764 tiles here); the north half is 4608", "offer: raise a smaller area, or change the relief setting to make the whole map higher and more rugged"] },
+  pass: ["no proposal is accepted", "the limit is given with an offer"],
+  reference: {
+    calls: [call("dry_run", { steps: [{ op: "brush", tool: "raise", where: { compass: "north", part: "half" }, amount: 3 }] })],
+    checks: [chk("call:0", "steps.0.errors.0", "matches", "one proposal may brush at most 2764")],
+  },
+});
+R("B05", "followup", "make the hill bigger", "rv96-hill", {
+  goals: [G("g1", "the hill made before, bigger", { subject: "hill", metric: "area", change: "up" })],
+  report: { mustSay: ["its new size in tiles", "the level it reaches now"] },
+  pass: [VALID, START_RULES_HOLD, "the same hill, about 1.5 times as wide"],
+  reference: {
+    calls: [call("measure", { subject: "hill" })],
+    proposal: { steps: [{ op: "resizeFeature", target: "hill", factor: 1.5 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^now about \\d+ by \\d+ tiles")],
+  },
+});
+R("B06", "followup", "make the hill as tall as it can go", "rv96-hill", {
+  feasible: "partly",
+  note: "16 is the editor's limit; a small hill's gentle edge climbs a level every 3 tiles, so its top reaches less",
+  goals: [G("g1", "the hill made before, level 16", m("hill", "height", { equals: 16 }))],
+  report: { mustSay: ["level 16 is the editor's limit", "the level its top reaches in this outline, and that a bigger hill would reach higher"] },
+  pass: [VALID, START_RULES_HOLD, "the report says the level reached, not 16, when the outline is too small"],
+  reference: {
+    calls: [call("measure", { subject: "hill" })],
+    proposal: { steps: [{ op: "changeFeature", target: "hill", set: { height: 16 } }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "reaches level \\d+ here, not 16|level 16")],
+  },
 });
 
 // ------------------------------------------------------------------------------------ output

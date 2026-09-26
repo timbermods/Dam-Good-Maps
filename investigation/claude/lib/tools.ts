@@ -100,7 +100,7 @@ export const TOOL_DEFS: ToolDef[] = [
     input_schema: {
       type: "object",
       properties: {
-        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, start, words" },
+        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, brush, start, words" },
         facing: { type: "string", enum: ["north", "east", "south", "west"] },
       },
       required: ["kind"],
@@ -457,10 +457,20 @@ export class ClaudeTools {
     if (kind === "landform" || ["hill", "plateau", "ridge", "canyon", "valley", "island"].includes(kind)) return { height: { min: 0, max: 16 }, edgeStyles: ["gentle", "terraced", "cliff"], sizeWords: sizes("landform"), riseWords: sizes("landformHeight") };
     if (kind === "forest" || kind === "berryPatch" || kind === "ruinField") return { sizeWords: sizes(kind === "berryPatch" ? "forest" : kind), note: kind === "ruinField" ? "ruins stand on dry ground, at least the ruins rule away from the start" : "trees and berries live only on moist soil beside water" };
     if (kind === "river") return { flow: { min: 0.1, max: 64, presets: { gentle: 1, steady: 2, strong: 4 } }, width: { min: 1, max: 9 }, bedDepth: { min: 1, max: 4, moistureBand: "16 / 10 / 4 / 0 tiles" }, flowBudget: budget, sizeWords: sizes("river") };
+    if (kind === "brush")
+      return {
+        tools: ["raise", "lower", "flatten", "smooth", "naturalize"],
+        amount: { min: 1, max: 8, unit: "levels (raise, lower)" },
+        level: { min: 0, max: 16, note: "flatten's level; default the place's middle level" },
+        passes: { min: 1, max: 8, note: "smooth and naturalize" },
+        maxTiles: Math.floor(0.3 * W * H),
+        edge: "a brush makes no cliffs: its edge slopes a level a tile to the ground round it, so a place rises its full amount only where it is 2·amount − 1 tiles across or more",
+        note: "levels stay within 0–16; an imported map's caves and overhangs are left as they are",
+      };
     if (kind === "badwaterBasin") return { strength: { min: 1, max: 3 }, keepsFromStart: rulesFor(s.spec, designedFor).badwaterWithin, sizeWords: sizes("badwaterBasin"), note: "a 7×7 basin with one outlet; its channel runs to a river or the map edge" };
     const b = BUILDERS[kind as SetPieceKind];
     if (b) return { ranges: b.limits(planContextOf(s)) };
-    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river, start or words");
+    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river, brush, start or words");
   }
 }
 

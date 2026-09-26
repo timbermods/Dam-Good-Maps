@@ -434,6 +434,32 @@ button[aria-pressed="true"] {
   cursor: grab;
 }
 
+/* handles set on a point (a corner), not above it; smaller ones; one with a word */
+.handles.centred {
+  transform: translate(-50%, -50%);
+}
+
+.handles .handle.small {
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+}
+
+.handles .handle.wide {
+  width: auto;
+  padding: 0 10px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+}
+
+.handle.resize {
+  cursor: nwse-resize;
+}
+
+.handle.wide {
+  cursor: ns-resize;
+}
+
 .handle.move.disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -527,6 +553,15 @@ button[aria-pressed="true"] {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+/* a note of what a tool did lets clicks through to what lies under it (all but its close button) */
+.editor-message.info {
+  pointer-events: none;
+}
+
+.editor-message.info button {
+  pointer-events: auto;
 }
 
 .editor-message.error {
@@ -858,4 +893,11 @@ button[aria-pressed="true"] {
 
 .brush-bar-wrap > .map-note button {
   pointer-events: auto;
+}
+
+/* what a shape being dragged says, beside the pointer */
+.shape-note {
+  position: absolute;
+  max-width: 320px;
+  pointer-events: none;
 }

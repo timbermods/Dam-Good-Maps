@@ -15,6 +15,8 @@ import type { AppliedOp, EditOp, OpOrigin } from "../core/doc/ops";
 import {
   deleteEdit,
   kindName,
+  landformTop,
+  objectsOnNewGround,
   moveEdit,
   moveStartNear,
   planContextOf,
@@ -45,6 +47,8 @@ import { entityTiles } from "../core/features/edits";
 import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
+import { polygonMask } from "../core/features/geometry";
+import { patchFeature } from "../core/doc/ops";
 import type { Difficulty, MapSpec } from "../core/spec/mapspec";
 import { applyMergePatch } from "../core/spec/mergepatch";
 import { validateMap, type Validation } from "../core/validate/checks";
@@ -1118,6 +1122,116 @@ export function planTool(req: ToolRequest, id: string): ToolPlan {
   if (!existing) return toolPlan(withObjectsOnNewGround(s, r, id));
   const patch = { params: replacePatch(existing.params, r.feature.params) as Record<string, unknown> };
   return toolPlan(withObjectsOnNewGround(s, { ...r, ops: [{ op: "updateFeature", params: { id, patch } }, ...r.ops.slice(1)], label: `Change ${r.label.replace(/^Add /, "")}` }, id));
+}
+
+// ------------------------------------------------------------------------------ live shape tools
+
+/** A shape tool's result while it is dragged (live editing), or a feature changed by a handle:
+ *  the terrain it builds, round what changes, with what it says ("reaches level 10 here, not 16").
+ *  The same planners and build steps as placing it, so what shows is what is placed. */
+export interface ShapePreview {
+  ok: boolean;
+  errors: string[];
+  report: string[];
+  label: string;
+  /** The tiles whose heights can change, and their heights (row by row), or null. */
+  rect: { x0: number; y0: number; x1: number; y1: number } | null;
+  heights: Uint8Array | null;
+  /** A resource area's preview: where plants live, where they would stand dead, what stays bare. */
+  area?: AreaPreview;
+  /** The tiles the feature covers (its outline shown on the map). */
+  tiles: number[];
+}
+
+export type ShapeRequest =
+  /** A new feature from a tool (a landform, a lake, a resource area). */
+  | { kind: "new"; req: ToolRequest; id: string }
+  /** A feature on the map changed by a handle: moved, resized or raised. */
+  | { kind: "change"; id: string; patch: { params: Record<string, unknown> } };
+
+const noShape = (errors: string[]): ShapePreview => ({ ok: false, errors, report: [], label: "", rect: null, heights: null, tiles: [] });
+
+/** The terrain and words of a shape request (see ShapePreview). */
+export function previewShape(p: ShapeRequest): ShapePreview {
+  const s = need();
+  const { x: W } = s.size;
+  let features: Feature[];
+  let report: string[] = [];
+  let label = "";
+  let tiles: number[] = [];
+  let area: AreaPreview | undefined;
+  if (p.kind === "new") {
+    // (planned as it will be placed, without clearing the objects under it: that waits for the
+    // release, and never changes the terrain)
+    const ctx = planContextOf(s);
+    const req = p.req;
+    let r: PlannedEdit | PlannedOps;
+    if (req.tool === "landform") r = planLandform(req, ctx, p.id, "user");
+    else if (req.tool === "lake") r = planLake(req, ctx, p.id, "user");
+    else if (req.tool === "river") r = planRiver(req, ctx, p.id, "user");
+    else if (req.tool === "area") {
+      const { tool: _t, ...a } = req;
+      const plan = planArea(s, a, p.id);
+      if (!plan.ok) return noShape(plan.errors);
+      return { ok: true, errors: [], report: plan.report, label: plan.label, rect: null, heights: null, tiles: plan.tiles, ...(plan.preview ? { area: plan.preview } : {}) };
+    } else return noShape(["this tool has no live preview"]);
+    if (!r.ok) return noShape(r.errors);
+    features = s.features.map((f) => f as Feature);
+    for (const op of r.ops) {
+      if (op.op === "addFeature") features.push(op.params.feature);
+      else if (op.op === "updateFeature") features = features.map((f) => (f.id === op.params.id ? patchFeature(f, op.params.patch) : f));
+    }
+    report = r.report;
+    label = r.label;
+    tiles = r.tiles;
+  } else {
+    const f = s.features.find((g) => g.id === p.id);
+    if (!f) return noShape(["that feature is gone"]);
+    const after = patchFeature(f as Feature, p.patch);
+    const errors = s.check({ op: "updateFeature", params: { id: p.id, patch: p.patch } });
+    if (errors.length) return noShape(errors);
+    features = s.features.map((g) => (g.id === p.id ? after : (g as Feature)));
+    if (after.kind === "landform" && after.params.outline && after.params.height !== undefined) {
+      const mask = polygonMask(after.params.outline, W, s.size.y);
+      const top = landformTop(after.params, mask, W, s.size.y);
+      report = [top !== after.params.height ? `reaches level ${top} here, not ${after.params.height}` : `level ${after.params.height}`];
+      for (let i = 0; i < mask.length; i++) if (mask[i]) tiles.push(i);
+    }
+    label = `Change ${kindName(f as Feature)}`;
+  }
+  const t = s.previewFeatures(features);
+  // the level a landform really reaches on this map (other features may keep their own ground:
+  // a river, a basin), so what it says is what shows
+  const shaped = features.find((f) => f.id === (p.kind === "new" ? p.id : p.id));
+  if (shaped?.kind === "landform" && shaped.params.height !== undefined && tiles.length) {
+    const mask = new Uint8Array(t.heights.length);
+    for (const i of tiles) mask[i] = 1;
+    const top = landformTop(shaped.params, mask, W, s.size.y, t.heights);
+    const want = shaped.params.height;
+    const said = report[0] ?? "";
+    if (top !== want && !said.startsWith(`reaches level ${top} here`)) {
+      // (the steps' own limit keeps its reason: draw it wider)
+      const why = said.startsWith("reaches level") && said.includes(": ") ? said.slice(said.indexOf(": ")) : "";
+      report = [`reaches level ${top} here, not ${want}${why}`, ...report.slice(said.startsWith("reaches level") || said.startsWith("level ") ? 1 : 0)];
+    }
+  }
+  if (!t.rect) return { ok: true, errors: [], report, label, rect: null, heights: null, tiles, ...(area ? { area } : {}) };
+  const r = t.rect;
+  const w = r.x1 - r.x0 + 1;
+  const out = new Uint8Array(w * (r.y1 - r.y0 + 1));
+  for (let y = r.y0; y <= r.y1; y++) out.set(t.heights.subarray(y * W + r.x0, y * W + r.x1 + 1), (y - r.y0) * w);
+  return { ok: true, errors: [], report, label, rect: r, heights: out, tiles };
+}
+
+/** Change a feature by a handle (moved, resized, raised) as one undo step; the objects on the
+ *  ground it reshapes move with it or are cleared, as for any edit. */
+export function changeFeature(id: string, patch: { params: Record<string, unknown> }, label: string): SessionUpdate {
+  const t0 = performance.now();
+  const s = need();
+  const ops: EditOp[] = [{ op: "updateFeature", params: { id, patch } }];
+  const extra = objectsOnNewGround(s, ops, new Set([id]));
+  const r = s.applyAll([...ops, ...extra.ops], "user", label);
+  return changed(s, r.ok, r.errors, t0);
 }
 
 /** Plan and apply a tool's edit as one undo step. */

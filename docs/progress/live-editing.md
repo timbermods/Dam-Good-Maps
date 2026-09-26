@@ -62,8 +62,8 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 | # | Spot | Proposed fix | Status |
 |---|---|---|---|
 | 1 | Nothing seems to happen after **Place** (the water) | Answer at once, water flows in after | Fixed (1, 2) |
-| 2 | A hill smaller and flatter than asked, dug into the slope | Stand on the ground; say the level reached | Fixed (3); live shape tools next: rounded outlines, the result growing as you drag |
-| 3 | Draw, then confirm, then **Place**: a form, not a tool | Brushes paint directly; shape tools place on release | Brushes done; shape tools next |
+| 2 | A hill smaller and flatter than asked, dug into the slope | Stand on the ground; say the level reached | Fixed (3, and the live shape tools) |
+| 3 | Draw, then confirm, then **Place**: a form, not a tool | Brushes paint directly; shape tools place on release | Fixed for brushes and shapes; set pieces next |
 | 4 | Regenerating with a moved start: a minute, then "try another seed" | Stop retrying what only the edits break; name the edits' problems | Fixed (4) |
 | 5 | The legend over half the map | A slim panel beside it | Fixed (5) |
 | 6 | "You are editing X" over another map's preview | Say which map is which | Fixed (6) |
@@ -95,6 +95,9 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 - **Controls**: left-drag paints; right- or middle-drag and the wheel move the camera; Shift
   inverts raise and lower; Ctrl+click picks flatten's level; [ and ] size; Alt+wheel strength;
   1–5 pick a brush; Ctrl+Z / Ctrl+Y; Esc cancels a stroke in progress, then puts the brush away.
+  With a brush out the left button never turns the camera: a drag that starts off the map paints
+  from where it reaches the map, and a drag of events sent all at once by a script paints too.
+  Pressing a brush's number again keeps it out.
 - **The brush bar**: five icon buttons with their shortcuts in the tooltip and label, size,
   strength, flatten's level, and **Hold water while painting** (for very large maps). A one-line
   first-use hint, dismissable. The brush under the cursor is a soft disc as strong as its falloff,
@@ -113,6 +116,62 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 | after release: the worker has the stroke | 162 ms | 260 ms (tasks of 125 and 54 ms as its answer lands) |
 | undo: the ground back on screen | 8 ms | 63 ms |
 | strokes whose painted map differed from the worker's | 0 | 0 |
+
+## Live editing: the shape tools
+
+- **Hills, plateaus, ridges, canyons, valleys, islands, lakes, forests, berry patches and ruin
+  fields** show their real result while they are dragged: the worker plans the shape with the
+  tools' own planners and builds its terrain with the build's own steps (`previewShape`), round
+  what changes only, and the page redraws those tiles. Letting go places it as one step; there is
+  no **Place**. Rounded shapes (hills, islands, ridges, canyons, valleys, lakes) are ellipses in
+  the dragged rectangle, so their steps run as natural contours; plateaus and resource areas keep
+  the rectangle.
+- **Limits show while dragging**, beside the pointer: "Hill: reaches level 10 here, not 16". A
+  shape the tool refuses says why in red ("it would cover the start's area") and places nothing.
+- **Esc** while dragging puts the ground back as it was; nothing is placed.
+- **A placed landform's handles**: move (the ground follows as it is dragged), a corner handle on
+  each corner (resize), and a height handle beside move and delete ("↕ 10"; drag up or down, or the
+  arrow keys). Each shows its result live, with the level it reaches ("Hill: reaches level 10
+  here, not 12"), is placed on release as one step ("Resize hill", "Change hill height to 12"), and
+  Esc puts it back.
+- **Rivers and outlines drawn by clicks** are placed on the last click; what the tool did shows in
+  the editor's message ("River: a sealed mouth on the north edge feeds it"), which lets clicks
+  through and gives way to the next preview.
+- **Trees, bushes and ruins stand on the ground as it is painted or dragged**, then take the
+  places the worker's map gives them.
+- Set pieces (waterfalls, dam sites, …) and objects keep their preview and **Place** for now.
+
+## Claude's tools (M12 stays ready, D134)
+
+In `investigation/claude/`, the shape of its tools:
+
+- **`brush`** `{tool: raise|lower|flatten|smooth|naturalize, where, amount 1–8, level 0–16,
+  passes 1–8}`: the editor's own brushes over a place ("raise this area by 2", "flatten here to
+  level 8", "smooth this ridge"). It makes the same `brush` operation a player's stroke makes, so
+  it shows in the history, undoes and replays like one. Each stroke presses once on each tile of
+  the place with the smallest brush; raise, lower and flatten stroke once per level over the place
+  worn in a tile each time, which is exactly one wide stroke's result: the edge slopes a level a
+  tile, no cliffs. Its report is measured on the build's own terrain: "raises 63 tiles: 35 by 2,
+  28 by 1 (its edge slopes …)"; "flattens 74 of 105 tiles to level 8; the other 31 slope toward
+  it …"; "the place is too narrow to rise 3 anywhere: its middle moves 2"; "N tiles stop at level
+  16, the editor's limit". The proposal's checks see what the brush does to the water and what
+  grows on it, like any step: raising the ground where the start's berries grow dries them out,
+  and the app refuses it (start.food). Refusals: more than 30% of the map; ground already at 16 (raise), 0
+  (lower), already the level (flatten) or already smooth; a place entirely over an import's caves.
+- **`resizeFeature`** `{target, factor 0.5–2}`: the corner handles. A drawn landform keeps its
+  base, as a move does, and says the level it reaches at the new size; a drawn lake is planned
+  again. Refusals: generated lakes and river landforms, smaller than 2 by 2, covering the start.
+- **`changeFeature`** on a landform's height now says the level it reaches, as the height handle
+  does ("reaches level 11 here, not 16").
+- The **`limits`** tool answers `brush`; the harness prompt describes both steps.
+- Seven new requests in the corpus (B01–B07): raise the ground west of the start by 2, flatten
+  around a tile to level 8, smooth the high ground in the north, the whole north half by 3
+  (refused: the 30% limit), make the hill bigger, make the hill as tall as it can go (says the
+  level it reaches), raise the ground north of the start by 2 (refused: the start's berries and
+  trees there would die; the offer is the ground to its west).
+- Reference solutions (`bin/reference.ts`): 108 of 127 pass. All 7 new ones pass; 101 of the 120
+  older ones pass, the same 101 as on dev at 761a1d2 (the other 19 are setups tuned on the M7 maps,
+  M12-INTEGRATION §11).
 
 ## Tests
 
@@ -135,6 +194,10 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
   mid-stroke leaving no trace, Ctrl+click, [ ], Alt+wheel, and the strokes after a reload.
 - `tests/e2e/legend.spec.ts`: the legend beside the map, only what the map has, the highlight by
   mouse and keyboard, the strip; which map is which on the generator's page.
+- `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release
+  places it and the worker's map is the one shown; Esc mid-drag leaves no trace; its height handle
+  by keyboard and a corner handle by mouse, each one step; a hill over the start is refused while
+  dragged and places nothing.
 
 ### Tests changed to the new flow (D148)
 
@@ -145,6 +208,15 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
   legend sits beside the map).
 - `tests/e2e/look-readable.spec.ts` named every meaning of the legend; it now names the meanings the
   map has, and checks that water mixed with badwater is listed exactly when the map has some.
+- `tests/e2e/tools.spec.ts` placed a drawn river with **Place**; the last click places it now, and
+  the test reads the river's report in the editor's message.
+- `tests/e2e/editor.spec.ts` placed its forest and plateau with **Place**; letting go of the drag
+  places them now.
+- `tests/e2e/objects.spec.ts` read the forest's live and dead tiles from the preview before
+  **Place**; it reads them from the shape while it is dragged, then lets go.
+- `tests/contract/randomOps.ts`: the random operations include brush strokes (half of the draws
+  that were sculpts), because `properties.test.ts` checks that every kind of log operation is
+  exercised.
 
 ## Try it
 
@@ -156,6 +228,5 @@ and redo, **Generate, keeping my edits**, and export. Times are from that drive.
 
 ## Next
 
-The live shape tools (the result growing as you drag, placed on release, then handles to move,
-resize and change height, limits shown live), the water option's polish, objects following the
-ground while painting, the Claude tool entries (D134), the remaining proposed fixes above.
+The water option's polish, objects following the ground while painting, set pieces shown live
+under the pointer, the remaining proposed fixes above.

@@ -27,10 +27,12 @@ import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
+import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ShapePreview, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import { BrushBar } from "./BrushBar";
+import { ellipseOutline, fitOutline, moveOutline, outlineBox, ShapeDrag, type ShapeHost } from "./liveShapes";
+import type { AreaPreview } from "../core/doc/placing";
 import { BRUSHES, BrushPainter, DEFAULT_BRUSH, nextSize, paste, type BrushSettings, type BrushTool, type Stroke } from "./brushes";
 import type { TerrainState } from "../core/features/raster/strokePreview";
 import type { BrushParams } from "../core/features/raster/brush";
@@ -109,6 +111,8 @@ declare global {
       pendingTerrain(): number;
       /** The last stroke painted (its operation's params), or null. */
       lastStroke(): BrushParams | null;
+      /** The shape being dragged: the worker's last answer for it (what it builds and says), or null. */
+      shapePreview(): ShapePreview | null;
     };
   }
 }
@@ -164,6 +168,9 @@ export default function Editor(props: EditorProps) {
   // the footprint under the pointer (object tools) and the objects on a clicked tile (advanced)
   const [fit, setFit] = useState<{ tiles: number[]; problem: string | null } | null>(null);
   const [picked, setPicked] = useState<{ x: number; y: number; list: EntityInfo[] } | null>(null);
+  /** What the shape being dragged says, where the pointer is, and what it covers (live shapes). */
+  const [shapeNote, setShapeNote] = useState<{ text: string; ok: boolean; x: number; y: number } | null>(null);
+  const [shapeTiles, setShapeTiles] = useState<{ tiles: number[]; area?: AreaPreview } | null>(null);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const index = useMemo(() => new FeatureIndex(info.W, info.H), [info.W, info.H, view]);
   const indexed = useMemo(() => {
@@ -496,6 +503,11 @@ export default function Editor(props: EditorProps) {
       const pts = hoverTile ? [...draft, hoverTile] : draft;
       layers.push({ tiles: lineTiles(pts, info.W, info.H, !!tool && gestureOf(tool) === "outline"), color: DRAWING });
     }
+    if (shapeTiles?.area) {
+      layers.push({ tiles: shapeTiles.area.bare, color: BARE });
+      layers.push({ tiles: shapeTiles.area.dead, color: DEAD });
+      layers.push({ tiles: shapeTiles.area.alive, color: GOOD });
+    } else if (shapeTiles) layers.push({ tiles: shapeTiles.tiles, color: PREVIEW, outline: true });
     if (plan?.ok && plan.area) {
       layers.push({ tiles: plan.area.bare, color: BARE });
       layers.push({ tiles: plan.area.dead, color: DEAD });
@@ -507,13 +519,15 @@ export default function Editor(props: EditorProps) {
     for (const c of instant) for (const [x, y] of c.where?.tiles ?? []) layers.push({ tiles: [y * info.W + x], color: PROBLEM });
     paintOverlay(data, info.W, info.H, layers);
     r.commitOverlay();
-  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready, waterLayers, layer]);
+  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready, waterLayers, layer, shapeTiles]);
 
   // ------------------------------------------------------------------------------ the tools
 
   function planRequest(req: ToolRequest) {
     setPlanning(true);
     setPlan(null);
+    // what the last tool did gives way to the next one's preview
+    setMessage((m) => (m?.kind === "info" ? null : m));
     const id = newId();
     void enqueue(() => api.planTool(req, id))
       .then((p) => setPlan(p))
@@ -526,7 +540,70 @@ export default function Editor(props: EditorProps) {
     setDraft([]);
     const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { points, W: info.W, H: info.H });
     if (!req) return setMessage({ kind: "error", text: gestureOf(tool) === "path" ? "Click at least two points for a river." : "Click at least three corners." });
+    // a shape the player finished is placed at once (live editing: no Place step)
+    if (LIVE_TOOLS.has(tool) || tool === "river") return placeShape(req, newId(), null);
     planRequest(req);
+  }
+
+  // ------------------------------------------------------------------------------ live shapes
+
+  const shapeDrag = useRef<ShapeDrag | null>(null);
+  const pointerAt = useRef({ x: 0, y: 0 });
+  const shapeHost = (): ShapeHost => ({
+    api,
+    renderer: renderer.current!,
+    W: infoRef.current.W,
+    H: infoRef.current.H,
+    heights: () => mirror.current.heights,
+    show: (p) => {
+      if (!p) {
+        setShapeNote(null);
+        setShapeTiles(null);
+        setLiveHeight(null);
+        return;
+      }
+      const words = p.ok ? [p.label.replace(/^(Add|Change) /, ""), ...p.report.slice(0, 1)].filter(Boolean).join(": ") : plain(p.errors[0] ?? "This does not fit here.");
+      setShapeNote({ text: words.replace(/^./, (c) => c.toUpperCase()), ok: p.ok, ...pointerAt.current });
+      setShapeTiles(p.ok ? { tiles: p.tiles, ...(p.area ? { area: p.area } : {}) } : null);
+    },
+  });
+
+  /** Where the pointer is over the map, for the shape's note. */
+  function notePointer(ev: PointerEvent) {
+    const box = renderer.current?.canvas.getBoundingClientRect();
+    if (box) pointerAt.current = { x: ev.clientX - box.left, y: ev.clientY - box.top };
+  }
+
+  /** Place a shape tool's edit (a release, or the last corner): the result shown while dragging
+   *  stays until the worker's map replaces it; a refusal puts the ground back and says why. (The
+   *  worker plans the released shape itself: the last preview may be of an earlier one.) */
+  function placeShape(req: ToolRequest, id: string, drag: ShapeDrag | null) {
+    drag?.finish();
+    void run(
+      () => api.applyTool(req, id),
+      (u) => {
+        if (!u.ok) {
+          drag?.cancel();
+          return;
+        }
+        const f = u.info.features.find((g) => g.id === id);
+        if (f) {
+          setSelected(f.id);
+          setTab(tabOf(f));
+        }
+        // a shape drawn by clicks (a river, an outline) said nothing while it was drawn: what the
+        // tool did shows now ("River: a sealed mouth on the north edge feeds it")
+        const plan = (u as SessionUpdate & { plan?: ToolPlan }).plan;
+        if (!drag && plan?.ok && plan.report.length) setMessage({ kind: "info", text: plain(`${plan.label.replace(/^Add /, "").replace(/^./, (c) => c.toUpperCase())}: ${plan.report.join(" ")}`) });
+      },
+    );
+  }
+
+  /** The request a live tool makes of a dragged rectangle: rounded shapes for hills, islands,
+   *  ridges, canyons, valleys and lakes; plateaus and resource areas keep their rectangle. */
+  function shapeRequest(t: ToolKind, r: Rect): ToolRequest | null {
+    const outline = t === "plateau" || t === "forest" || t === "berryPatch" || t === "ruinField" ? rectToOutline(r) : ellipseOutline(r);
+    return toolRequest(t, optionsFor(t, optionsRef.current), { points: outline, W: info.W, H: info.H });
   }
 
   function planAt(x: number, y: number) {
@@ -658,29 +735,56 @@ export default function Editor(props: EditorProps) {
     let dragged = false;
     let lastUp = 0;
     let lastTile = -1;
+    const live = LIVE_TOOLS.has(tool);
+    let liveId = "";
     const t: PointerTool = {
-      down(hit) {
+      down(hit, ev) {
         if (!hit) return false;
         // a preview waits for Place or Cancel
         if (planRef.current) return true;
         start = [hit.x, hit.y];
         dragged = false;
+        liveId = newId();
+        notePointer(ev);
         if (g === "rect") setDrawing(rectOf(start, start, W, H));
         return true;
       },
-      move(hit) {
+      move(hit, ev) {
+        notePointer(ev);
         if (!start || !hit) return;
         if (g === "rect") setDrawing(rectOf(start, [hit.x, hit.y], W, H));
         else if (g === "outline" && !draftRef.current.length && Math.abs(hit.x - start[0]) + Math.abs(hit.y - start[1]) >= 2) {
           dragged = true;
-          setDrawing(rectOf(start, [hit.x, hit.y], W, H));
+          const r = rectOf(start, [hit.x, hit.y], W, H);
+          if (!live) return setDrawing(r);
+          // the shape's real result, growing as it is dragged
+          const req = shapeRequest(tool, r);
+          if (!req) return;
+          shapeDrag.current ??= new ShapeDrag(shapeHost());
+          shapeDrag.current.update({ kind: "new", req, id: liveId });
         }
+      },
+      cancel() {
+        start = null;
+        shapeDrag.current?.cancel();
+        shapeDrag.current = null;
+        setDrawing(null);
       },
       up(hit) {
         const a = start;
         start = null;
         if (!a) return;
         const b: [number, number] = hit ? [hit.x, hit.y] : a;
+        if (live && dragged) {
+          const drag = shapeDrag.current;
+          shapeDrag.current = null;
+          const req = shapeRequest(tool, rectOf(a, b, W, H));
+          if (!req || !drag) {
+            drag?.cancel();
+            return;
+          }
+          return placeShape(req, liveId, drag);
+        }
         if (g === "rect") {
           setDrawing(null);
           const f = featureFromRect(tool, rectOf(a, b, W, H), optionsRef.current, W, mirror.current.heights);
@@ -840,6 +944,154 @@ export default function Editor(props: EditorProps) {
   const moving = feature ?? null;
   const isStart = (feature && feature.kind === "start") || !!importStart;
 
+  // ------------------------------------------------------------------ a landform's handles (live)
+
+  /** The height the height handle shows while it is changed (null: the landform's own). */
+  const [liveHeight, setLiveHeight] = useState<number | null>(null);
+  /** A selected landform drawn by its outline: it moves, resizes and changes height live. */
+  const shaped = feature && feature.kind === "landform" && feature.params.outline && feature.params.height !== undefined && !blocked ? feature : null;
+  const shapeHandles = useMemo(() => {
+    const r = renderer.current;
+    if (!r || !shaped || !shaped.params.outline) return null;
+    const b = outlineBox(shaped.params.outline);
+    const W = info.W;
+    const H = info.H;
+    const at = (x: number, y: number) => {
+      const tx = Math.max(0, Math.min(W - 1, Math.round(x)));
+      const ty = Math.max(0, Math.min(H - 1, Math.round(y)));
+      return r.project(x + 0.5, r.heightAt(tx, ty) + 0.3, -(y + 0.5));
+    };
+    // south-west, south-east, north-east, north-west
+    const corners = [at(b.x0, b.y0), at(b.x1, b.y0), at(b.x1, b.y1), at(b.x0, b.y1)];
+    return { box: b, corners };
+  }, [shaped, viewTick, info.W, info.H]);
+
+  /** A handle's live change: shown as it is dragged, placed on release, Esc puts it back. */
+  function handleDrag(ev: PointerEvent, next: (e: PointerEvent) => Record<string, unknown> | null, label: (params: Record<string, unknown>) => string) {
+    const f = shaped;
+    if (!f) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const el = ev.currentTarget as HTMLElement;
+    el.setPointerCapture(ev.pointerId);
+    notePointer(ev);
+    const drag = new ShapeDrag(shapeHost());
+    shapeDrag.current = drag;
+    let params: Record<string, unknown> | null = null;
+    const move = (e: PointerEvent) => {
+      notePointer(e);
+      const p = next(e);
+      if (!p || JSON.stringify(p) === JSON.stringify(params)) return;
+      params = p;
+      drag.update({ kind: "change", id: f.id, patch: { params: p } });
+    };
+    const up = (e: PointerEvent) => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      if (shapeDrag.current !== drag) return; // Esc put it back
+      shapeDrag.current = null;
+      if (e.type === "pointercancel" || !params) return drag.cancel();
+      commitChange(f.id, params, label(params), drag);
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  }
+
+  /** Place a handle's change as one undo step; a refusal puts the ground back and says why. */
+  function commitChange(id: string, params: Record<string, unknown>, label: string, drag: ShapeDrag) {
+    drag.finish();
+    void run(
+      () => api.changeFeature(id, { params }, label),
+      (u) => {
+        if (!u.ok) drag.cancel();
+      },
+    );
+  }
+
+  /** A corner handle: that corner follows the pointer, the opposite one stays. */
+  function onResizeDown(ev: PointerEvent, corner: number) {
+    const r = renderer.current;
+    const f = shaped;
+    if (!r || !f || !f.params.outline || !anchor) return;
+    const outline = f.params.outline;
+    const b = outlineBox(outline);
+    const level = r.heightAt(anchor[0], anchor[1]);
+    const W = info.W;
+    const H = info.H;
+    const name = featureName(f).toLowerCase();
+    handleDrag(
+      ev,
+      (e) => {
+        const at = r.pickAtLevel(e.clientX, e.clientY, level);
+        if (!at) return null;
+        const x = Math.max(-0.5, Math.min(W - 0.5, Math.round(at.point[0] * 2) / 2 - 0.5));
+        const y = Math.max(-0.5, Math.min(H - 0.5, Math.round(-at.point[2] * 2) / 2 - 0.5));
+        const east = corner === 1 || corner === 2;
+        const north = corner === 2 || corner === 3;
+        const box = {
+          x0: east ? b.x0 : Math.min(x, b.x1 - 2),
+          x1: east ? Math.max(x, b.x0 + 2) : b.x1,
+          y0: north ? b.y0 : Math.min(y, b.y1 - 2),
+          y1: north ? Math.max(y, b.y0 + 2) : b.y1,
+        };
+        return { outline: fitOutline(outline, box) };
+      },
+      () => `Resize ${name}`,
+    );
+  }
+
+  /** The height handle: up and down, a level every 14 pixels. */
+  function onHeightDown(ev: PointerEvent) {
+    const f = shaped;
+    if (!f || f.params.height === undefined) return;
+    const h0 = f.params.height;
+    const y0 = ev.clientY;
+    const name = featureName(f).toLowerCase();
+    handleDrag(
+      ev,
+      (e) => {
+        const h = Math.max(0, Math.min(16, h0 + Math.round((y0 - e.clientY) / 14)));
+        setLiveHeight(h);
+        return { height: h };
+      },
+      (p) => `Change ${name} height to ${String(p.height)}`,
+    );
+  }
+
+  /** The height handle by keyboard: the arrows change it a level, placed a moment after the last. */
+  const heightKey = useRef<{ h: number; timer: number; drag: ShapeDrag } | null>(null);
+  function onHeightKey(ev: KeyboardEvent) {
+    const f = shaped;
+    if (!f || f.params.height === undefined) return;
+    const d = ev.key === "ArrowUp" || ev.key === "ArrowRight" ? 1 : ev.key === "ArrowDown" || ev.key === "ArrowLeft" ? -1 : 0;
+    const k = heightKey.current;
+    if (ev.key === "Escape" && k) {
+      clearTimeout(k.timer);
+      k.drag.cancel();
+      heightKey.current = null;
+      return;
+    }
+    if (!d) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    const cur = k ?? { h: f.params.height, timer: 0, drag: new ShapeDrag(shapeHost()) };
+    clearTimeout(cur.timer);
+    cur.h = Math.max(0, Math.min(16, cur.h + d));
+    setLiveHeight(cur.h);
+    // (what it says shows beside the handle)
+    if (handlePos) pointerAt.current = { x: handlePos.x, y: handlePos.y };
+    cur.drag.update({ kind: "change", id: f.id, patch: { params: { height: cur.h } } });
+    const name = featureName(f).toLowerCase();
+    cur.timer = window.setTimeout(() => {
+      heightKey.current = null;
+      commitChange(f.id, { height: cur.h }, `Change ${name} height to ${cur.h}`, cur.drag);
+    }, 700);
+    heightKey.current = cur;
+  }
+
   /** The start's footprint check at a move of (dx, dy) tiles. */
   function startPreview(dx: number, dy: number): { x: number; y: number; check: StartCheck } | null {
     const s = startHere;
@@ -859,15 +1111,23 @@ export default function Editor(props: EditorProps) {
     return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs) };
   }
 
-  function commitMove(dx: number, dy: number) {
+  /** Place a move. A landform's live result (`shown`) stays on screen until the worker's map
+   *  replaces it; a refusal, or a move back to where it was, puts the ground back. */
+  function commitMove(dx: number, dy: number, shown?: ShapeDrag) {
     setDrag(null);
     setStartDrag(null);
-    if (!dx && !dy) return;
+    if (!dx && !dy) return shown?.cancel();
     if (importStart) {
       void run(() => api.moveStartTo(importStart.x + dx, importStart.y + dy));
       return;
     }
-    if (moving) void run(() => api.moveFeature(moving.id, dx, dy));
+    if (moving)
+      void run(
+        () => api.moveFeature(moving.id, dx, dy),
+        (u) => {
+          if (!u.ok) shown?.cancel();
+        },
+      );
   }
 
   function clamp(dx: number, dy: number): [number, number] {
@@ -886,10 +1146,18 @@ export default function Editor(props: EditorProps) {
     const level = r.heightAt(anchor[0], anchor[1]);
     const start = r.pickAtLevel(ev.clientX, ev.clientY, level) ?? { x: anchor[0], y: anchor[1] };
     let cur: [number, number] = [0, 0];
+    // a landform shows its real result where it would go (live editing)
+    const live = shaped && shaped.params.outline ? { id: shaped.id, outline: shaped.params.outline, drag: new ShapeDrag(shapeHost()) } : null;
+    if (live) shapeDrag.current = live.drag;
     const move = (e: PointerEvent) => {
+      // (Esc put the landform back: the handle stays put until the button comes up)
+      if (live && shapeDrag.current !== live.drag) return;
       const at = r.pickAtLevel(e.clientX, e.clientY, level);
       if (!at) return;
-      cur = clamp(at.x - start.x, at.y - start.y);
+      notePointer(e);
+      const next = clamp(at.x - start.x, at.y - start.y);
+      if (live && (next[0] !== cur[0] || next[1] !== cur[1])) live.drag.update({ kind: "change", id: live.id, patch: { params: { outline: moveOutline(live.outline, next[0], next[1]) } } });
+      cur = next;
       setDrag({ id: handleId, dx: cur[0], dy: cur[1] });
       if (isStart) setStartDrag(startPreview(cur[0], cur[1]));
     };
@@ -898,12 +1166,20 @@ export default function Editor(props: EditorProps) {
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
       if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+      if (live && shapeDrag.current !== live.drag) {
+        // Esc put it back
+        setDrag(null);
+        return;
+      }
+      shapeDrag.current = null;
       if (e.type === "pointercancel") {
+        live?.drag.cancel();
         setDrag(null);
         setStartDrag(null);
         return;
       }
-      commitMove(cur[0], cur[1]);
+      live?.drag.finish();
+      commitMove(cur[0], cur[1], live?.drag);
     };
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
@@ -954,10 +1230,11 @@ export default function Editor(props: EditorProps) {
       const target = ev.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
       const mod = ev.ctrlKey || ev.metaKey;
-      // the brushes: 1–5 pick one, [ and ] size it, Esc cancels a stroke, then puts it away
+      // the brushes: 1–5 pick one (again: it stays out), [ and ] size it, Esc cancels a stroke,
+      // then puts it away
       if (!mod && !ev.altKey && /^[1-5]$/.test(ev.key)) {
         const b = BRUSHES[Number(ev.key) - 1].tool;
-        pickBrush(brushToolRef.current === b ? null : b);
+        if (brushToolRef.current !== b) pickBrush(b);
         return;
       }
       if (!mod && (ev.key === "[" || ev.key === "]") && brushToolRef.current) {
@@ -980,6 +1257,17 @@ export default function Editor(props: EditorProps) {
         ev.preventDefault();
         void redo();
       } else if (ev.key === "Escape") {
+        if (shapeDrag.current) {
+          // a shape or a handle being dragged: the ground as it was, and nothing placed on release
+          const sd = shapeDrag.current;
+          if (toolRef.current) renderer.current?.tool?.cancel?.();
+          if (shapeDrag.current === sd) {
+            sd.cancel();
+            shapeDrag.current = null;
+          }
+          setDrag(null);
+          return;
+        }
         if (planRef.current || draftRef.current.length) return cancelTool();
         setTool(null);
         setDrawing(null);
@@ -1014,6 +1302,7 @@ export default function Editor(props: EditorProps) {
       worker: api,
       strokeMismatches: () => strokeMismatches.current,
       lastStroke: () => localUndo.current.at(-1)?.params ?? null,
+      shapePreview: () => shapeDrag.current?.preview ?? null,
       pendingTerrain: () => pendingTerrain.current,
     };
     return () => {
@@ -1164,6 +1453,11 @@ export default function Editor(props: EditorProps) {
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
             <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} />
+            {shapeNote ? (
+              <div class={`map-note shape-note${shapeNote.ok ? "" : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
+                {shapeNote.text}
+              </div>
+            ) : null}
             {hint ? (
               <div class="tool-hint" role="status">
                 {hint}
@@ -1193,6 +1487,18 @@ export default function Editor(props: EditorProps) {
                 >
                   <span aria-hidden="true">✥</span>
                 </button>
+                {shaped && !drag ? (
+                  <button
+                    type="button"
+                    class="handle wide"
+                    aria-label={`Height of ${featureName(shaped)}: ${liveHeight ?? shaped.params.height}. Drag up or down, or use the arrow keys`}
+                    title="Drag up or down to change its height, or use the arrow keys"
+                    onPointerDown={onHeightDown}
+                    onKeyDown={onHeightKey}
+                  >
+                    <span aria-hidden="true">↕ {liveHeight ?? shaped.params.height}</span>
+                  </button>
+                ) : null}
                 {feature ? (
                   <button type="button" class="handle delete" aria-label={`Delete ${featureName(feature)}`} title="Delete" onClick={() => deleteFeature(feature)}>
                     <span aria-hidden="true">×</span>
@@ -1200,6 +1506,17 @@ export default function Editor(props: EditorProps) {
                 ) : null}
               </div>
             ) : null}
+            {shaped && shapeHandles && !drag
+              ? shapeHandles.corners.map((c, k) =>
+                  c.visible ? (
+                    <div class="handles centred" key={`corner-${k}`} style={{ left: `${c.x}px`, top: `${c.y}px` }}>
+                      <button type="button" class="handle small resize" aria-label={`Resize ${featureName(shaped)}: drag this corner`} title="Drag to resize" onPointerDown={(e) => onResizeDown(e, k)}>
+                        <span aria-hidden="true">⤡</span>
+                      </button>
+                    </div>
+                  ) : null,
+                )
+              : null}
             {startDrag ? <StartIndicators check={startDrag.check} rules={needs.rules} /> : null}
             {busy > 0 ? (
               <div class="working" role="status">
@@ -1270,6 +1587,9 @@ export default function Editor(props: EditorProps) {
 }
 
 const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
+
+/** The tools whose shapes show their real result while dragged and are placed on release. */
+const LIVE_TOOLS = new Set<ToolKind>(["hill", "plateau", "ridge", "canyon", "valley", "island", "lake", "forest", "berryPatch", "ruinField"]);
 
 const BRUSH_KEY = "dgm.brush";
 

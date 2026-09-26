@@ -30,6 +30,7 @@ import {
   WebGLRenderer,
   type DataTexture,
   type Group,
+  type InstancedMesh,
   type ShaderMaterial,
   type WebGLRenderTarget,
   LinearSRGBColorSpace,
@@ -152,6 +153,10 @@ export class MapRenderer {
   private terrain = new Map<string, Mesh>();
   private water = new Map<string, Mesh>();
   private objects: Group | null = null;
+  /** The ground the objects stand on as built (the map's last heights from the worker); plants
+   *  and ruins follow the ground painted or dragged over theirs (live editing). */
+  private objectGround: Uint8Array | null = null;
+  private objectsMoved = false;
   private overlay: DataTexture | null = null;
   private marks: DataTexture | null = null;
   private tileTex: DataTexture | null = null;
@@ -310,6 +315,7 @@ export class MapRenderer {
     const soil = v.soil ?? null;
     const tiles = tileData(W, H, heights, sky, soil, surface);
     this.map = { W, H, heights, source, water: v.water, surface, entities: v.entities, soil, sky, tiles };
+    this.objectGround = heights.slice();
     let lo = 255;
     let hi = 0;
     for (let i = 0; i < heights.length; i++) {
@@ -495,6 +501,7 @@ export class MapRenderer {
       disposeGroup(this.objects);
     }
     const { group, instances } = buildEntities(e, this.objectMat, this.map?.soil ?? null, this.map?.W ?? 0, this.software);
+    this.objectsMoved = false;
     group.renderOrder = 1;
     this.objects = group;
     this.scene.add(group);
@@ -510,6 +517,9 @@ export class MapRenderer {
     const rect = changedRect(m.W, m.H, m.heights, heights);
     m.heights = heights;
     m.source = { ...m.source, heights };
+    // the map's own heights: its objects stand where it has them (new ones follow in updateEntities)
+    this.objectGround = heights.slice();
+    this.settleObjects();
     if (!rect) return 0;
     const chunks = dirtyChunks(m.W, m.H, rect);
     for (const [cx, cy] of chunks) this.meshTerrain(cx, cy);
@@ -597,8 +607,58 @@ export class MapRenderer {
       this.lightTex.needsUpdate = true;
     } else this.shadowsStale = true;
     this.shadowChanged = true;
+    this.followGround(heights, rect);
     this.requestRender();
     return chunks.length;
+  }
+
+  /** Plants and ruins on the tiles of `rect` stand on the ground shown there: each moves by as
+   *  much as its ground moved from the map's (a brush painting, a shape dragged). The worker's next
+   *  map puts every object where the map has it (updateTerrain, updateEntities). */
+  private followGround(heights: Uint8Array, rect: { x0: number; y0: number; x1: number; y1: number }): void {
+    const m = this.map;
+    const g = this.objectGround;
+    if (!m || !g || !this.objects) return;
+    const e = m.entities;
+    for (const c of this.objects.children) {
+      const mesh = c as InstancedMesh;
+      const follows = mesh.userData.follows as Int32Array | undefined;
+      const ty0 = mesh.userData.ty0 as Float32Array | undefined;
+      if (!follows || !ty0) continue;
+      const a = mesh.instanceMatrix.array as Float32Array;
+      let moved = false;
+      for (let i = 0; i < follows.length; i++) {
+        const k = follows[i];
+        if (k < 0) continue;
+        const x = e.x[k];
+        const y = e.y[k];
+        if (x < rect.x0 || x > rect.x1 || y < rect.y0 || y > rect.y1) continue;
+        const t = y * m.W + x;
+        const ty = Math.fround(ty0[i] + heights[t] - g[t]);
+        if (a[i * 16 + 13] !== ty) {
+          a[i * 16 + 13] = ty;
+          moved = true;
+        }
+      }
+      if (moved) {
+        mesh.instanceMatrix.needsUpdate = true;
+        this.objectsMoved = true;
+      }
+    }
+  }
+
+  /** Every object back where the map has it. */
+  private settleObjects(): void {
+    if (!this.objectsMoved || !this.objects) return;
+    this.objectsMoved = false;
+    for (const c of this.objects.children) {
+      const mesh = c as InstancedMesh;
+      const ty0 = mesh.userData.ty0 as Float32Array | undefined;
+      if (!ty0) continue;
+      const a = mesh.instanceMatrix.array as Float32Array;
+      for (let i = 0; i < ty0.length; i++) a[i * 16 + 13] = ty0[i];
+      mesh.instanceMatrix.needsUpdate = true;
+    }
   }
 
   /** After a brush has painted: the shadows, if they waited, and the legend. */
@@ -863,6 +923,14 @@ export class MapRenderer {
     const c = this.canvas;
     c.tabIndex = 0;
     this.on(c, "contextmenu", (e) => e.preventDefault());
+    // (a pointer made up by a script has no capture to take: the drag works without it)
+    const capture = (id: number) => {
+      try {
+        c.setPointerCapture(id);
+      } catch {
+        /* no such pointer */
+      }
+    };
     this.on(c, "pointerdown", (e) => {
       const ev = e as PointerEvent;
       c.focus({ preventScroll: true });
@@ -870,13 +938,13 @@ export class MapRenderer {
         const hit = this.pick(ev.clientX, ev.clientY);
         if (this.tool.down(hit, ev)) {
           this.drag = { kind: "tool", x: ev.clientX, y: ev.clientY, id: ev.pointerId, moved: 0, button: 0 };
-          c.setPointerCapture(ev.pointerId);
+          capture(ev.pointerId);
           return;
         }
       }
       const kind = ev.button === 2 || ev.button === 1 || ev.shiftKey || this.view.mode === "top" ? "pan" : "orbit";
       this.drag = { kind: ev.button === 1 && this.view.mode === "orbit" ? "orbit" : kind, x: ev.clientX, y: ev.clientY, id: ev.pointerId, moved: 0, button: ev.button };
-      c.setPointerCapture(ev.pointerId);
+      capture(ev.pointerId);
     });
     this.on(c, "pointermove", (e) => {
       const ev = e as PointerEvent;

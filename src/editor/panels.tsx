@@ -561,7 +561,12 @@ export function Inspector(p: InspectorProps) {
           Turn
         </button>
       ) : null}
-      <p class="note">{p.blocked ?? "Drag the handle on the map to move it, or focus the handle and use the arrow keys."}</p>
+      <p class="note">
+        {p.blocked ??
+          (f.kind === "landform" && f.params.outline && f.params.height !== undefined
+            ? "Drag its handles on the map to move it, resize it or change its height. The arrow keys work on a focused handle."
+            : "Drag the handle on the map to move it, or focus the handle and use the arrow keys.")}
+      </p>
       <button type="button" class="ghost danger" onClick={p.onDelete}>
         Delete
       </button>

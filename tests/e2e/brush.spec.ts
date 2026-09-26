@@ -128,3 +128,66 @@ test("the brushes paint under the cursor, undo at once, and keep their strokes",
   expect(await heights(page)).toEqual(kept);
   expect(errors).toEqual([]);
 });
+
+test("with a brush out, a fast left-drag paints and never turns the camera", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.goto("./#s=4242&z=96&d=n&t=riverValley");
+  await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 120_000 });
+  await page.getByRole("button", { name: "Refine this map" }).click();
+  await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 60_000 });
+  // the 3D view, turned and tilted
+  await page.evaluate(() => window.dgm3d!.renderer.setView({ yaw: 0.7, pitch: 0.8 }));
+  const view = () => page.evaluate(() => JSON.stringify(window.dgm3d!.renderer.getView()));
+  const turned = await view();
+  const count = async () => (await info(page)).history.length;
+
+  // choosing a brush leaves the camera where it is; its key again keeps it out
+  const raise = page.getByRole("toolbar", { name: "Terrain brushes" }).getByRole("button", { name: "Raise brush (1)" });
+  await raise.click();
+  await page.keyboard.press("1");
+  await expect(raise).toHaveAttribute("aria-pressed", "true");
+  expect(await view()).toBe(turned);
+
+  // a fast drag across the map: down, two moves, up, with no waits between
+  const box = (await page.locator(".view3d canvas").boundingBox())!;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  let n = await count();
+  await page.mouse.move(cx - 120, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx, cy);
+  await page.mouse.move(cx + 120, cy);
+  await page.mouse.up();
+  await settled(page);
+  expect(await count()).toBe(n + 1);
+  expect(await view()).toBe(turned);
+
+  // the same drag made of events a script sends in one go (no pointer capture to take)
+  n = await count();
+  await page.evaluate(
+    ([x, y]) => {
+      const c = document.querySelector(".view3d canvas")!;
+      const ev = (type: string, px: number, buttons: number) => new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 7, pointerType: "mouse", isPrimary: true, clientX: px, clientY: y, button: 0, buttons });
+      c.dispatchEvent(ev("pointerdown", x - 120, 1));
+      c.dispatchEvent(ev("pointermove", x, 1));
+      c.dispatchEvent(ev("pointermove", x + 120, 1));
+      c.dispatchEvent(ev("pointerup", x + 120, 0));
+    },
+    [cx, cy + 60],
+  );
+  await settled(page);
+  expect(await count()).toBe(n + 1);
+
+  // a drag that starts off the map (the sky above it) paints once it reaches the map, and never
+  // turns the camera
+  n = await count();
+  await page.mouse.move(cx, box.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(cx, cy, { steps: 8 });
+  await page.mouse.up();
+  await settled(page);
+  expect(await view()).toBe(turned);
+  expect(errors).toEqual([]);
+});

@@ -266,6 +266,26 @@
     }
    ]
   },
+  "rv96-hill": {
+   "base": "rv96",
+   "edits": [
+    {
+     "request": "add a small hill far from the start",
+     "steps": [
+      {
+       "op": "addLandform",
+       "kind": "hill",
+       "where": "far from the start",
+       "size": "small",
+       "height": 8,
+       "handle": "hill"
+      }
+     ]
+    }
+   ],
+   "select": "hill",
+   "note": "a small drawn hill (level 8 asked), far from the start; selected"
+  },
   "import-name": {
    "base": "rv96",
    "import": {
@@ -6916,6 +6936,434 @@
    ],
    "reference": {
     "calls": []
+   }
+  },
+  {
+   "id": "B01",
+   "kind": "simple",
+   "text": "raise the ground just west of the start by 2",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "the place is a rectangle west of the start's clearing, read from the summary's start position (35, 48): level-7 ground without the start's berries or trees",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the ground just west of the start 2 levels higher",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how many tiles rose, and by how much",
+     "its edge slopes a level a tile to the ground round it (a brush makes no cliffs)"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)",
+    "the tiles in the middle of the place rose 2 levels, its edge 1"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "subject": "start"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "brush",
+       "tool": "raise",
+       "where": {
+        "rect": [
+         21,
+         47,
+         27,
+         55
+        ]
+       },
+       "amount": 2
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^raises [0-9]+ tiles: [0-9]+ by 2, [0-9]+ by 1"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B07",
+   "kind": "conflicting",
+   "text": "raise the ground just north of the start by 2",
+   "setup": "rv96",
+   "feasible": "partly",
+   "expressible": true,
+   "note": "the start's berries and trees stand there; raised ground dries out and they die",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the ground just north of the start 2 levels higher",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "conflict: the start's berry bushes and trees grow there, and on raised ground they dry out and die (the start rules need 30 bushes and 40 trees within reach)",
+     "offer: raise ground beside the start that has none of its food, such as to its west"
+    ]
+   },
+   "pass": [
+    "the proposal that breaks start.food is not accepted",
+    "the conflict is reported with an offer"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "brush",
+         "tool": "raise",
+         "where": {
+          "rect": [
+           28,
+           57,
+           40,
+           65
+          ]
+         },
+         "amount": 2
+        }
+       ]
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "guardsBroken.0.id",
+      "op": "equals",
+      "value": "start.food"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B02",
+   "kind": "simple",
+   "text": "flatten the ground around (70, 70) to level 8",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "flat ground at level 8 around (70, 70)",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how many tiles are now level 8",
+     "the rest slope toward it from the ground round the place"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)",
+    "the middle of the place is level 8"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "at": [
+        70,
+        70
+       ]
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "brush",
+       "tool": "flatten",
+       "where": {
+        "near": [
+         70,
+         70
+        ],
+        "within": 6
+       },
+       "level": 8
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^flattens \\d+ of \\d+ tiles to level 8"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B03",
+   "kind": "simple",
+   "text": "smooth the high ground in the north",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the high ground in the north third smoothed",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how many tiles moved",
+     "the steepest step there, before and after"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": {
+        "all": [
+         {
+          "terrain": "high"
+         },
+         {
+          "compass": "north"
+         }
+        ]
+       }
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "brush",
+       "tool": "smooth",
+       "where": {
+        "all": [
+         {
+          "terrain": "high"
+         },
+         {
+          "compass": "north"
+         }
+        ]
+       },
+       "passes": 2
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^smooths \\d+ of \\d+ tiles"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B04",
+   "kind": "impossible",
+   "text": "raise the whole north half of the map by 3",
+   "setup": "rv96",
+   "feasible": "no",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the north half 3 levels higher",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "one proposal may brush at most 30% of the map (2764 tiles here); the north half is 4608",
+     "offer: raise a smaller area, or change the relief setting to make the whole map higher and more rugged"
+    ]
+   },
+   "pass": [
+    "no proposal is accepted",
+    "the limit is given with an offer"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "brush",
+         "tool": "raise",
+         "where": {
+          "compass": "north",
+          "part": "half"
+         },
+         "amount": 3
+        }
+       ]
+      }
+     }
+    ],
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "steps.0.errors.0",
+      "op": "matches",
+      "value": "one proposal may brush at most 2764"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B05",
+   "kind": "followup",
+   "text": "make the hill bigger",
+   "setup": "rv96-hill",
+   "feasible": "yes",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the hill made before, bigger",
+     "expect": [
+      {
+       "subject": "hill",
+       "metric": "area",
+       "change": "up"
+      }
+     ]
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "its new size in tiles",
+     "the level it reaches now"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)",
+    "the same hill, about 1.5 times as wide"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "subject": "hill"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "resizeFeature",
+       "target": "hill",
+       "factor": 1.5
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^now about \\d+ by \\d+ tiles"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B06",
+   "kind": "followup",
+   "text": "make the hill as tall as it can go",
+   "setup": "rv96-hill",
+   "feasible": "partly",
+   "expressible": true,
+   "note": "16 is the editor's limit; a small hill's gentle edge climbs a level every 3 tiles, so its top reaches less",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the hill made before, level 16",
+     "expect": [
+      {
+       "subject": "hill",
+       "metric": "height",
+       "equals": 16
+      }
+     ]
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "level 16 is the editor's limit",
+     "the level its top reaches in this outline, and that a bigger hill would reach higher"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)",
+    "the report says the level reached, not 16, when the outline is too small"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "subject": "hill"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "changeFeature",
+       "target": "hill",
+       "set": {
+        "height": 16
+       }
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "reaches level \\d+ here, not 16|level 16"
+     }
+    ]
    }
   }
  ],

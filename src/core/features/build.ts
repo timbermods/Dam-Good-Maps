@@ -256,6 +256,20 @@ export function buildTerrain(input: BuildInput): { heights: Uint8Array; channel:
   return { heights: terrain.heights, channel: terrain.channel, protect: terrain.protect };
 }
 
+/** The terrain `input` would build, worked out from `prev` round what differs (live editing: a
+ *  shape tool shows its real result while it is dragged). Steps 1–7 only, the same code as a
+ *  build: the heights are the ones a rebuild gives. `rect` bounds the tiles that can differ from
+ *  `prev` (null: none). The document's caches are left as they are. */
+export function previewTerrain(prev: BuildResult, input: BuildInput): { heights: Uint8Array; rect: Rect | null } {
+  if (prev.W !== input.W || prev.H !== input.H) throw new Error("a preview keeps the map's size");
+  // fields made for the shape being dragged stay out of the document's cache
+  const fields: FieldCache = new Map(prev.cache.fields);
+  const { terrain, region } = terrainStage(input, prev.cache, fields);
+  if (!region) return { heights: prev.heights, rect: null };
+  const { W, H } = input;
+  return { heights: terrain.heights, rect: { x0: Math.max(0, region.x0 - 1), y0: Math.max(0, region.y0 - 1), x1: Math.min(W - 1, region.x1 + 1), y1: Math.min(H - 1, region.y1 + 1) } };
+}
+
 /** An incremental build from `prev`, equal to a full build of `input` (PLAN §19.7); with
  *  `water: "preview"`, equal to it except for the water and what grows on it (see BuildOptions). */
 export function rebuild(prev: BuildResult, input: BuildInput, opts: BuildOptions = {}): BuildResult {

@@ -83,6 +83,12 @@ const api = {
   // the tools: plan (a preview), then apply; move and delete with planning again
   planTool: (req: ed.ToolRequest, id: string) => ed.planTool(req, id),
   applyTool: (req: ed.ToolRequest, id: string) => sendUpdate(ed.applyTool(req, id)),
+  /** A shape tool's result while it is dragged, or a handle's change (live editing). */
+  previewShape(p: ed.ShapeRequest) {
+    const r = ed.previewShape(p);
+    return r.heights ? transfer(r, [r.heights.buffer as Transferable]) : r;
+  },
+  changeFeature: (id: string, patch: { params: Record<string, unknown> }, label: string) => sendUpdate(ed.changeFeature(id, patch, label)),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),
   moveStartTo: (x: number, y: number) => sendUpdate(ed.moveStartTo(x, y)),

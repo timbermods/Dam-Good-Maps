@@ -12,7 +12,10 @@
 
 import type { EditOp } from "../../../src/core/doc/ops";
 import type { MapSession } from "../../../src/core/doc/session";
-import { deleteEdit, moveEdit, planContextOf, planLake, planLandform, planPiece, planRiver, replacePatch, type PlannedEdit } from "../../../src/core/doc/tools";
+import { deleteEdit, landformTop, moveEdit, objectsOnNewGround, planContextOf, planLake, planLandform, planPiece, planRiver, replacePatch, type PlannedEdit } from "../../../src/core/doc/tools";
+import { applyBrush, BRUSH_MAX_LEVEL, BRUSH_TOOLS, MAX_DABS, type BrushParams, type BrushTool } from "../../../src/core/features/raster/brush";
+import { polygonMask } from "../../../src/core/features/geometry";
+import { fmix32 } from "../../../src/core/math/hash";
 import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../../../src/core/gen/calibrated";
 import type { Feature, LandformFeature, Point, SetPieceFeature, SetPieceKind, StartFeature } from "../../../src/core/features/schema";
 import { BUILT_KINDS, type PlanRecord } from "../../../src/core/features/setpieces";
@@ -51,9 +54,13 @@ export type Step =
   | { op: "deleteFeature"; target: string }
   | { op: "setRiverBadwater"; target: string; badwater: boolean }
   | { op: "sculpt"; mode: "raise" | "lower" | "flatten" | "smooth"; where: Where; amount?: number; level?: number }
+  /** The editor's terrain brushes (live editing), painted over a place. */
+  | { op: "brush"; tool: BrushTool; where: Where; amount?: number; level?: number; passes?: number }
+  /** A drawn landform or lake made bigger or smaller about its middle (the editor's corner handles). */
+  | { op: "resizeFeature"; target: string; factor: number }
   | { op: "undoLast" };
 
-export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addRiver", "addLake", "addLandform", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "undoLast"] as const;
+export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "resizeFeature", "addRiver", "addLake", "addLandform", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
 
 export interface Expanded {
   ok: boolean;
@@ -208,6 +215,17 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       if (s.amount !== undefined && !num(s.amount, 1, 8)) errs.push("amount is 1–8 levels");
       if (s.level !== undefined && !num(s.level, 0, 16)) errs.push("level is 0–16");
       return [...errs, ...checkPlace(s.where, "where", W, H)];
+    case "brush":
+      if (!BRUSH_TOOLS.includes(s.tool as BrushTool)) return [`tool is ${BRUSH_TOOLS.join(", ")}`];
+      if (s.where === undefined) errs.push("brush needs a where: the place it paints");
+      if (s.amount !== undefined && !(Number.isInteger(s.amount) && num(s.amount, 1, 8))) errs.push("amount is 1–8 whole levels (raise and lower)");
+      if (s.level !== undefined && !(Number.isInteger(s.level) && num(s.level, 0, BRUSH_MAX_LEVEL))) errs.push(`level is a whole level, 0–${BRUSH_MAX_LEVEL} (flatten)`);
+      if (s.passes !== undefined && !(Number.isInteger(s.passes) && num(s.passes, 1, 8))) errs.push("passes is 1–8 (smooth and naturalize)");
+      return [...errs, ...checkPlace(s.where, "where", W, H)];
+    case "resizeFeature":
+      if (!str(s.target, 80)) return ["target names the feature"];
+      if (!num(s.factor, 0.5, 2)) return ["factor is 0.5–2: 1.25 a bit bigger, 1.5 bigger, 2 twice as wide; 0.75 smaller"];
+      return [];
     case "undoLast":
       return [];
   }
@@ -332,7 +350,11 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
         if (set.height !== undefined) patch.height = set.height;
         if (set.edgeStyle !== undefined) patch.edgeStyle = set.edgeStyle;
         if (!Object.keys(patch).length) return fail(step, ["a landform changes its height or edgeStyle"]);
-        return done([{ op: "updateFeature", params: { id: f.id, patch: { params: patch } } }], [`now ${set.height !== undefined ? `level ${set.height}` : ""}${set.edgeStyle ? ` with ${set.edgeStyle} edges` : ""}`.trim()]);
+        // the level its steps reach in its outline, as the editor's height handle says it
+        const params = { ...f.params, ...patch } as LandformFeature["params"];
+        const top = set.height !== undefined ? landformTop(params, polygonMask(f.params.outline, W, H), W, H) : undefined;
+        const reach = set.height !== undefined ? (top !== set.height ? `reaches level ${top} here, not ${set.height}` : `level ${set.height}`) : "";
+        return done([{ op: "updateFeature", params: { id: f.id, patch: { params: patch } } }], [`now ${reach}${set.edgeStyle ? ` with ${set.edgeStyle} edges` : ""}`.trim()]);
       }
       if ((f.kind === "forest" || f.kind === "berryPatch") && set.density !== undefined) return done([{ op: "updateFeature", params: { id: f.id, patch: { params: { density: set.density } } } }], [`density ${set.density}`]);
       return fail(step, [`a ${f.kind} has none of these to change: ${Object.keys(set).join(", ")}`]);
@@ -455,6 +477,10 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       if (f.kind !== "river") return fail(step, [`${step.target} is not a river`]);
       return { ok: true, step, ops: [{ op: "updateFeature", params: { id: f.id, patch: { params: { badwater: step.badwater } } } }], made: [], report: step.badwater ? ["the river now carries badwater: it stops moistening the soil, and trees along it die"] : ["the river runs clean"], resolved: { target: f.id }, errors: [], tiles: 0 };
     }
+    case "brush":
+      return expandBrush(s, conv, step);
+    case "resizeFeature":
+      return expandResize(s, conv, step);
     case "sculpt": {
       const where = resolve(v, step.where, refs);
       if (!where.ok) return fail(step, where.errors);
@@ -467,6 +493,201 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     case "undoLast":
       return { ok: true, step, ops: [], made: [], report: [], resolved: conv.accepted.length ? { undoes: conv.accepted[conv.accepted.length - 1].text } : {}, errors: conv.accepted.length ? [] : ["nothing to undo in this conversation"], tiles: 0 };
   }
+}
+
+// ------------------------------------------------------------------------------------ brushes
+
+/** The editor's brushes over a place (live editing): the same operation a player's stroke makes
+ *  (`brush`, core/doc/ops.ts), so a proposal's brushing shows in the history, undoes and replays
+ *  like a stroke. The stroke presses once on the middle of each tile of the place, with the
+ *  smallest brush (a dab presses its own tile only), so it paints exactly the place. Each stroke
+ *  moves each tile it covers one level (the brush's first pass): raise, lower and flatten stroke
+ *  once per level over the place worn in a tile each time, which gives exactly what one wide
+ *  stroke gives, its edge sloping a level a tile to the ground round it (a brush makes no
+ *  cliffs); smooth and naturalize stroke once per pass. A pass over a big place is split into
+ *  strokes of at most MAX_DABS dabs (every tile of a pass moves one level either way). */
+function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op: "brush" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const where = resolve(viewOf(s), step.where, refContext(conv));
+  const resolved: Record<string, unknown> = { place: where.place, assumptions: where.assumptions };
+  if (!where.ok) return fail(step, where.errors, undefined, resolved);
+  const cap = Math.floor(MAX_AREA_SHARE * W * H);
+  if (where.tiles > cap) return fail(step, [`that area is ${where.tiles} tiles; one proposal may brush at most ${cap} (30% of the map)`], undefined, resolved);
+  const state = s.terrainState();
+  const pre = state.pre;
+  // an imported map's caves and overhangs: the brushes leave them as they are
+  const roofed = new Uint8Array(W * H);
+  for (const i of state.columns) roofed[i] = 1;
+  const mask = where.mask.slice();
+  let underRoof = 0;
+  for (let i = 0; i < mask.length; i++)
+    if (mask[i] && roofed[i]) {
+      mask[i] = 0;
+      underRoof++;
+    }
+  const tiles: number[] = [];
+  for (let i = 0; i < mask.length; i++) if (mask[i]) tiles.push(i);
+  if (!tiles.length) return fail(step, ["every tile there lies over a cave or an overhang of the imported map: the brushes leave those as they are"], undefined, resolved);
+  const tool = step.tool;
+  const pointwise = tool === "raise" || tool === "lower" || tool === "flatten";
+  const amount = step.amount ?? 1;
+  const level = tool === "flatten" ? (step.level ?? medianLevel(pre, tiles)) : undefined;
+  if (tool === "flatten") resolved.level = level;
+  const inward = pointwise ? inwardDistance(mask, W, H) : null;
+  const moves = (i: number, k: number): boolean => {
+    if (!inward) return true;
+    if (inward[i] <= k) return false;
+    if (tool === "raise") return k < amount && pre[i] + k < BRUSH_MAX_LEVEL;
+    if (tool === "lower") return k < amount && pre[i] - k > 0;
+    return Math.abs(pre[i] - level!) > k;
+  };
+  const passes = pointwise ? (tool === "flatten" ? BRUSH_MAX_LEVEL : amount) : (step.passes ?? 2);
+  const seed = tool === "naturalize" ? fmix32(Math.imul(tiles[0] + 1, 0x9e3779b1) ^ tiles.length) : undefined;
+  const strokes: BrushParams[] = [];
+  for (let k = 0; k < passes; k++) {
+    const dabs: number[] = [];
+    for (const i of tiles) if (moves(i, k)) dabs.push(4 * (i % W) + 2, 4 * Math.floor(i / W) + 2);
+    if (!dabs.length) break;
+    for (let a = 0; a < dabs.length; a += 2 * MAX_DABS)
+      strokes.push({ tool, size: 0.5, strength: 5, ...(level !== undefined ? { level } : {}), ...(seed !== undefined ? { seed } : {}), layer: "top", dabs: dabs.slice(a, a + 2 * MAX_DABS) });
+  }
+  // what it does, measured by running the strokes on the build's own terrain
+  const after = pre.slice();
+  for (const p of strokes) applyBrush(p, after, W, H, (i) => !roofed[i]);
+  const by = new Map<number, number>();
+  let moved = 0;
+  let reached = 0;
+  let atTop = 0;
+  for (const i of tiles) {
+    const d = Math.abs(after[i] - pre[i]);
+    if (d) {
+      moved++;
+      by.set(d, (by.get(d) ?? 0) + 1);
+    }
+    if (level !== undefined && after[i] === level) reached++;
+    if (tool === "raise" && after[i] === BRUSH_MAX_LEVEL && pre[i] + amount > BRUSH_MAX_LEVEL) atTop++;
+  }
+  const report: string[] = [];
+  const roof = underRoof ? `; ${underRoof} tiles over caves or overhangs stay as they are` : "";
+  if (tool === "raise" || tool === "lower") {
+    if (!moved) return fail(step, [tool === "raise" ? `the ground there is already level ${BRUSH_MAX_LEVEL}, the editor's limit` : "the ground there is already level 0, the lowest"], undefined, resolved);
+    const counts = [...by.entries()].sort((a, b) => b[0] - a[0]).map(([d, n]) => `${n} by ${d}`);
+    const verb = tool === "raise" ? "raises" : "lowers";
+    report.push(`${verb} ${moved} tiles: ${counts.join(", ")}${by.size > 1 ? " (its edge slopes a level a tile to the ground round it: a brush makes no cliffs)" : ""}${roof}`);
+    let deepest = 0;
+    for (const i of tiles) deepest = Math.max(deepest, inward![i]);
+    if (deepest < amount) report.push(`the place is too narrow to ${tool === "raise" ? "rise" : "sink"} ${amount} anywhere: its middle moves ${deepest}; a place about ${2 * amount - 1} tiles across moves ${amount}`);
+    if (atTop) report.push(`${atTop} tiles stop at level ${BRUSH_MAX_LEVEL}, the editor's limit`);
+  } else if (tool === "flatten") {
+    if (!moved) return fail(step, [`it is already level ${level} there`], undefined, resolved);
+    const rest = tiles.length - reached;
+    report.push(`flattens ${reached} of ${tiles.length} tiles to level ${level}${step.level === undefined ? " (the place's middle level)" : ""}${rest ? `; the other ${rest} slope toward it from the ground round the place, a level a tile (a brush makes no cliffs)` : ""}${roof}`);
+  } else {
+    if (!moved) return fail(step, [tool === "smooth" ? "that ground is already smooth: no tile stands apart from its neighbours" : "that ground has no cliffs or straight edges for naturalize to wear"], undefined, resolved);
+    const before = steepest(pre, tiles, W, H);
+    const now = steepest(after, tiles, W, H);
+    report.push(`${tool === "smooth" ? "smooths" : "weathers"} ${moved} of ${tiles.length} tiles in ${strokes.length} passes: the steepest step there ${now < before ? `goes from ${before} to ${now} levels` : `stays ${now} levels`}${roof}`);
+  }
+  const ops = strokes.map((params) => ({ op: "brush", params }) as EditOp);
+  return { ok: true, step, ops, made: [], report, resolved: { ...resolved, tiles: tiles.length, strokes: strokes.length }, errors: [], tiles: tiles.length };
+}
+
+/** Each tile's distance in from the place's edge (4 neighbours; 1 on the edge), the map's edge
+ *  counting as outside: the brush's own edge rule. */
+function inwardDistance(mask: Uint8Array, W: number, H: number): Uint16Array {
+  const d = new Uint16Array(W * H);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (!mask[i]) continue;
+      d[i] = 1 + Math.min(x > 0 ? d[i - 1] : 0, y > 0 ? d[i - W] : 0);
+    }
+  for (let y = H - 1; y >= 0; y--)
+    for (let x = W - 1; x >= 0; x--) {
+      const i = y * W + x;
+      if (!mask[i]) continue;
+      d[i] = Math.min(d[i], 1 + (x < W - 1 ? d[i + 1] : 0), 1 + (y < H - 1 ? d[i + W] : 0));
+    }
+  return d;
+}
+
+/** The middle level of a place (flatten's level when none is given). */
+function medianLevel(heights: Uint8Array, tiles: readonly number[]): number {
+  const n = new Array<number>(256).fill(0);
+  for (const i of tiles) n[heights[i]]++;
+  let seen = 0;
+  for (let h = 0; h < 256; h++) {
+    seen += n[h];
+    if (2 * seen >= tiles.length) return Math.min(BRUSH_MAX_LEVEL, h);
+  }
+  return 0;
+}
+
+/** The biggest step in levels between neighbouring tiles of a place. */
+function steepest(heights: Uint8Array, tiles: readonly number[], W: number, H: number): number {
+  let m = 0;
+  for (const i of tiles) {
+    const x = i % W;
+    if (x < W - 1) m = Math.max(m, Math.abs(heights[i] - heights[i + 1]));
+    if (i + W < W * H) m = Math.max(m, Math.abs(heights[i] - heights[i + W]));
+  }
+  return m;
+}
+
+/** A drawn landform or lake resized about its middle (the editor's corner handles). A landform
+ *  keeps its base, as a move does; a lake is planned again at its new size. */
+function expandResize(s: MapSession, conv: Conversation, step: Extract<Step, { op: "resizeFeature" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const f = targetFeature(s, conv, step.target);
+  if (typeof f === "string") return fail(step, [f]);
+  const resolved = { target: f.id, factor: step.factor };
+  if (f.kind === "lake" && (f.params.planned || f.params.river || !f.params.outlet.path)) return fail(step, ["this lake is part of the generated layout (a reservoir site or its river's basin): change the settings, or dam it"], undefined, resolved);
+  if (f.kind === "landform" && !f.params.outline) return fail(step, ["this landform follows the river; change the relief or terracing settings instead"], undefined, resolved);
+  const outline0 = f.kind === "landform" ? f.params.outline : f.kind === "lake" ? f.params.outline : undefined;
+  if (!outline0) return fail(step, [`only a drawn landform or lake can be resized; a ${f.kind === "setPiece" ? f.params.kind : f.kind} cannot`], undefined, resolved);
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const [x, y] of outline0) {
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x);
+    y1 = Math.max(y1, y);
+  }
+  const cx = (x0 + x1) / 2;
+  const cy = (y0 + y1) / 2;
+  let clipped = false;
+  const clip = (v: number, max: number) => {
+    const c = Math.max(-0.5, Math.min(max - 0.5, v));
+    if (c !== v) clipped = true;
+    return Math.round(c * 100) / 100;
+  };
+  const outline = outline0.map(([x, y]) => [clip(cx + (x - cx) * step.factor, W), clip(cy + (y - cy) * step.factor, H)] as Point);
+  const mask = polygonMask(outline, W, H);
+  let n = 0;
+  for (let i = 0; i < mask.length; i++) n += mask[i];
+  const size = `now about ${Math.round((x1 - x0) * step.factor)} by ${Math.round((y1 - y0) * step.factor)} tiles${clipped ? ", clipped at the map's edge" : ""}`;
+  if (f.kind === "lake") {
+    const spring = "spring" in f.params.inflow ? f.params.inflow.spring : 0;
+    const r = planLake({ outline, level: f.params.outlet.sill, floorDepth: f.params.floorDepth, spring }, planContextOf(s, f.id), f.id, f.origin);
+    if (!r.ok) return fail(step, r.errors, undefined, resolved);
+    const ops: EditOp[] = [{ op: "updateFeature", params: { id: f.id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)];
+    const extra = objectsOnNewGround(s, ops, new Set([f.id]));
+    return { ok: true, step, ops: [...ops, ...extra.ops], made: [], report: [size, ...r.report, ...extra.report], resolved, errors: [], tiles: n };
+  }
+  if (f.kind !== "landform") return fail(step, ["only a drawn landform or lake can be resized"], undefined, resolved);
+  if (n < 4) return fail(step, ["that would make it smaller than 2 by 2 tiles"], undefined, resolved);
+  const start = planContextOf(s).start;
+  if (start)
+    for (let i = 0; i < mask.length; i++)
+      if (mask[i] && Math.abs((i % W) - start.x) <= start.radius && Math.abs(Math.floor(i / W) - start.y) <= start.radius)
+        return fail(step, ["at that size it would cover the start's area: resize it less, or move it away from the start first"], undefined, resolved);
+  const ops: EditOp[] = [{ op: "updateFeature", params: { id: f.id, patch: { params: { outline } } } }];
+  const extra = objectsOnNewGround(s, ops, new Set([f.id]));
+  const height = f.params.height ?? 0;
+  const top = landformTop({ ...f.params, outline }, mask, W, H);
+  return { ok: true, step, ops: [...ops, ...extra.ops], made: [], report: [size, top !== height ? `reaches level ${top} here, not ${height}` : `level ${height}`, ...extra.report], resolved, errors: [], tiles: n };
 }
 
 function expandMoveStart(s: MapSession, conv: Conversation, step: Extract<Step, { op: "moveStart" }>): Expanded {

@@ -91,6 +91,7 @@ const PRIORITY: Record<string, number> = {
   addLake: 5,
   addLandform: 5,
   changeFeature: 3,
+  resizeFeature: 3,
   "addSetPiece:damSite": 6,
   "addSetPiece:gorge": 6,
   changeSetPiece: 6,
@@ -98,6 +99,7 @@ const PRIORITY: Record<string, number> = {
   "addSetPiece:terracedCliffs": 7,
   "addSetPiece:badwaterBasin": 8,
   sculpt: 9,
+  brush: 9,
   removeResources: 10,
   addResource: 10,
 };
@@ -220,7 +222,7 @@ export function runProposal(s: MapSession, conv: Conversation, p: Proposal, mode
   // features a step changed or moved are measured too, under their handle when they have one
   const handleOf = (id: string) => Object.entries(work.handles).find(([, v]) => v === id)?.[0];
   for (const r of results) {
-    const id = r.ok && (r.op === "changeSetPiece" || r.op === "changeFeature" || r.op === "moveFeature") ? r.resolved.target : undefined;
+    const id = r.ok && (r.op === "changeSetPiece" || r.op === "changeFeature" || r.op === "resizeFeature" || r.op === "moveFeature") ? r.resolved.target : undefined;
     if (typeof id !== "string" || measured.some((m) => (m as { id?: string }).id === id)) continue;
     const f = s.features.find((g) => g.id === id);
     if (f) measured.push({ handle: handleOf(id) ?? "", changed: true, ...measureFeature(s, f) } as (typeof measured)[number]);
@@ -413,7 +415,7 @@ function interference(s: MapSession, conv: Conversation, p: Proposal, before: Me
   // what the builders reduced or cleared
   for (const r of results) {
     for (const line of r.report) {
-      if (/reduced to|raised to|widened|moved \d+ tile|asked for \d/.test(line)) out.push({ kind: "reduced", text: line, steps: [r.index] });
+      if (/reduced to|raised to|widened|moved \d+ tile|asked for \d|reaches level \d+ here, not|too narrow to|stop at level/.test(line)) out.push({ kind: "reduced", text: line, steps: [r.index] });
       else if (/^clears /.test(line)) out.push({ kind: "cleared", text: line, steps: [r.index] });
       else if (/plants (a berry patch|a grove)/.test(line)) out.push({ kind: "start-moved", text: line, steps: [r.index] });
     }

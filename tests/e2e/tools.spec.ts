@@ -1,5 +1,6 @@
 // ROADMAP M5 through the page: the land and water tools plan on the map, show a preview with their
-// report, and place as one step; a river drawn from the map edge carries water; a standalone
+// report, and place as one step (a drawn river is placed on its last click, live editing, and
+// says what it did); a river drawn from the map edge carries water; a standalone
 // waterfall and a dam site are placed with one click; moving the start shows its footprint and what
 // is nearby; an edit that breaks the start shows the problem at once, with a one-click fix.
 
@@ -45,10 +46,9 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await clickTile(page, far, W - 1);
   await clickTile(page, far, Math.round((W - 1 + join[1]) / 2));
   await clickTile(page, Math.round(join[0]), Math.round(join[1]), true);
-  let card = await preview(page);
-  await expect(card).toContainText(/a sealed mouth on the north edge feeds it/i);
-  await card.getByRole("button", { name: "Place" }).click();
+  // (live editing: the last click places it, and what the tool did shows in the editor's message)
   await idle(page);
+  await expect(page.locator(".editor-message.info")).toContainText(/a sealed mouth on the north edge feeds it/i);
   i = await info(page);
   expect(i.history.map((h) => h.label)).toEqual(["Add river"]);
   const drawn = i.features.find((f) => f.kind === "river" && f.origin === "user") as Extract<Feature, { kind: "river" }>;
@@ -74,7 +74,7 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await page.locator(".tools").getByRole("button", { name: "Dam site", exact: true }).click();
   const mid = path[Math.floor(path.length * 0.75)];
   await clickTile(page, Math.round(mid[0]), Math.round(mid[1]));
-  card = await preview(page);
+  let card = await preview(page);
   await expect(card).toContainText(/holds about|would not hold water/);
   await card.getByRole("button", { name: "Place" }).click();
   await idle(page);

@@ -98,11 +98,14 @@ export function writeReport(r: ProposalResult, p: Proposal, after: Measured): st
     }
     if (st.op === "deleteFeature") lines.push(`Removed the ${String(st.resolved.kind ?? "feature")}.`);
     if (st.op === "undoLast") lines.push(`Undid the last change (${st.report.join("; ")}).`);
-    if (st.op === "changeSetPiece" || st.op === "changeFeature" || st.op === "moveFeature") {
+    if (st.op === "changeSetPiece" || st.op === "changeFeature" || st.op === "resizeFeature" || st.op === "moveFeature") {
       const meas = r.measured.find((x) => (x as { id?: string }).id === st.resolved.target) as Record<string, unknown> | undefined;
       const what = NAMES[String(meas?.kind ?? "")]?.replace(/^an? /, "the ") ?? "the feature";
-      lines.push(`${st.op === "moveFeature" ? "Moved" : "Changed"} ${what}${meas ? `: now ${facts(meas)}` : ""}.`);
+      const verb = st.op === "moveFeature" ? "Moved" : st.op === "resizeFeature" ? "Resized" : "Changed";
+      lines.push(`${verb} ${what}${meas ? `: now ${facts(meas)}` : ""}${st.op === "resizeFeature" || st.op === "changeFeature" ? (st.report.length ? ` (${st.report.join("; ")})` : "") : ""}.`);
     }
+    // a brush says what it moved, by how much, and where its edge slopes
+    if (st.op === "brush") lines.push(`${st.report.join("; ").replace(/^./, (c) => c.toUpperCase())}.`);
   }
   // side effects (what a step cleared or planted) are reported, but they are not trade-offs
   for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(t.kind === "cleared" || (t.kind === "start-moved" && !/regenerated/.test(t.text)) ? TEMPLATES.also(t.text) : TEMPLATES.tradeoff(t.text));
