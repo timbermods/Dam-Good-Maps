@@ -129,7 +129,9 @@ Several round-1 details above are replaced here: the titles, the description, **
   nightly run (vitest's heavy project). It also runs in the release check: a CI job,
   `release-places`, on pull requests whose base is `main` (`npm run test:places`). Every push keeps
   a sample of every size (`placeSample`: the first two at 96² and 128², the first at 256²) with the
-  same assertions, in `places.test.ts`; the browser tests serve the same sample's files.
+  same assertions, in `places.test.ts`; the browser tests serve the same sample's files. CI's unit
+  and contract step is back to about 3.5 minutes (from about 5.5); `npm run test:places` takes
+  about 90 s here.
 - **Titles.** No "Near", no "(… sample)", and the awkward ones tidied; the index keeps the survey's
   name verbatim (`surveyName`) and the part it sampled (`sample`). The ids, the data and picture
   files and the `.timber` names follow the new titles. The description's sentence adds "the" where
@@ -138,9 +140,12 @@ Several round-1 details above are replaced here: the titles, the description, **
 - **Card pictures.** `npm run places:thumbs` (`tools/places-thumbs.ts`) opens each place in the
   editor, in the installed Chrome on this machine's GPU, and draws the Map look 3D view's clean
   look as an angled overview: the camera stands on the low side of the land, looking toward the
-  high side, over the whole map. 960 px, scaled to 480 px (twice the card), WebP. The gallery
-  loads them lazily. The index records which `.timber` each shows (`imageFrom`); a test fails when
-  a map changed and its picture did not. Kyler decides from the before and after.
+  high side, as near as it can while the map fills the picture. 960 px, scaled to 480 px (twice
+  the card), WebP: about 27 KB each, 2.3 MB in all, against 7.7 KB for the old 240 px JPEGs. The
+  gallery loads them lazily, as their cards come into view. The index records which
+  `.timber` each shows (`imageFrom`); a test fails when a map changed and its picture did not.
+  About 4 s a place, 5 minutes for all 85. Kyler decides from the before and after (local page
+  `C:\dgm-workshop\places\thumbs.html`).
 - **The live check** also downloads the smallest real place from the live gallery and compares it
   with the deployed index's sha256 (and the checked-out commit's), and loads the credits page.
 
@@ -202,5 +207,5 @@ Tests updated to Kyler's decisions (D148), none weakened:
 - `tests/live/live.spec.ts`: new, the real place and the credits page (above).
 
 Checks: `npm run typecheck`, `npm run test:quick`, `npm run test:e2e` and `npm run test:places`
-pass locally; the deploy build (`npm run build`, `npm run places:build` and the noindex step) was
-run locally. Timberborn was never launched.
+pass locally. The deploy build (`npm run build`, `npm run places:build` and the noindex step) was
+run locally, and the live check passes against it, served locally. Timberborn was never launched.
