@@ -164,7 +164,76 @@ entities.push(...r.entities);             // trees, bushes, ruin columns, mine s
 
 ## Results
 
-(filled in below)
+**Batches** (`tools/batch.ts`, 100 seeds per theme and size at Normal, 30 at Easy and Hard at 128²),
+final pass / first attempt. Blocking: final ≥ 98% in every theme and size: **passes, 100%
+everywhere**. First attempts are information (M8 in the same table: 94–100% at Normal).
+
+| Theme | 96² | 128² | 192² | 256² | Easy 128² | Hard 128² |
+|---|---|---|---|---|---|---|
+| River Valley | 100% / 99% | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 97% | 100% / 100% |
+| Canyon | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 97% |
+| Highlands | 100% / 96% | 100% / 98% | 100% / 95% | 100% / 94% | 100% / 87% | 100% / 93% |
+| Lake Basin | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| Delta | 100% / 100% | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| Islands | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 98% | 100% / 100% | 100% / 100% |
+
+Retries were `start.dry`, `start.water`, `water.settles` and `start.wood` (a few each, Highlands
+most), as before. Every accepted map had its full mine sites (1 / 2 / 3 / 3 by size); every project
+file reopened to the same bytes. In the official typical range for the size and settings
+(information): trees on 97–100% of maps, scrap on 95–100%, bushes on 92–100% (the lowest at 192²,
+where the range is narrowest, ±4%).
+
+**Before and after** (the comparison page's maps; the official range at the map's size and
+settings; ↑↓ outside it):
+
+| Map | | Trees (alive) | Bushes | Scrap (columns) | Mine sites |
+|---|---|---|---|---|---|
+| River Valley 128², seed 1 | before | 1,721 (743) | 180 ↑ | 16,020 (338) | 2 |
+| | after | 1,778 (617) | 151 | 13,080 (271) | 2 |
+| | official | 1,604–2,036 | 147–161 | 8,686–16,252 | 1–4 |
+| Canyon 128², seed 2 | before | 1,390 (597) | 152 | 13,080 (292) | 2 |
+| | after | 1,557 (489) | 154 | 13,575 (267) | 2 |
+| | official | 1,284–1,628 | 147–161 | 10,423–19,502 | 1–4 |
+| Highlands 96², seed 3 | before | 1,091 (503) | 148 | 9,765 (214) | 1 |
+| | after | 1,260 (458) | 150 | 7,320 (145) | 1 |
+| | official | 1,008–1,278 | 144–157 | 5,251–9,825 | 1–4 |
+| Islands 128², seed 4 | before | 1,739 (770) | 159 | 11,085 (234) | 2 |
+| | after | 1,636 (551) | 156 | 13,950 (320) | 2 |
+| | official | 1,604–2,036 | 147–161 | 8,686–16,252 | 1–4 |
+| Lake Basin 256², seed 1 | before | 3,276 ↓ (1,340) | 260 ↓ | 14,325 (327) | 3 |
+| | after | 3,734 (1,175) | 289 | 18,165 (390) | 3 |
+| | official | 3,381–4,290 | 282–309 | 11,582–21,669 | 1–4 |
+| Delta 256², seed 2 | before | 3,932 ↓ (1,696) | 259 ↓ | 16,290 (358) | 3 |
+| | after | 4,921 (1,608) | 295 | 12,000 (241) | 3 |
+| | official | 4,058–5,148 | 282–309 | 9,265–17,335 | 1–4 |
+| Yosemite Valley 96² (a scratch build) | before | 1,213 (486) | 147 | 7,050 (235) | 0 |
+| | after | 1,247 (426) | 153 | 5,415 (94) | 1 |
+| | official | 1,120–1,420 | 144–157 | 5,251–9,825 | 1–4 |
+
+Yosemite Valley's amounts were already about the official ones for a 96² map, per tile (its trees
+are the size's median). What differed is the layout, which the numbers above hide: a tree or bush on
+every other tile everywhere, and 235 ruin columns, every one 2 storeys of model A, in square blocks.
+Against the official small maps by count (50² and 100×50: 497 and 721 trees, 47 and 70 columns)
+it has far more, as they are a quarter and half its area.
+
+- **Contact sheet** (D144): [docs/sheets/resources.png](../sheets/resources.png), seeds 1–30 of
+  every theme at 128², 573 KB.
+- **Comparison page** (local, for Kyler): `C:\dgm-workshop\resources\compare.html`: before and
+  after for six generated maps and Yosemite Valley, each the whole map top-down, the start's
+  surroundings, and its two largest ruin fields in 3D, coloured by model.
+- **Oracle** (`npm run oracle`, seeds 1–50 at 96², 128² and 256², and the 19 official maps):
+  150 maps generated, load checks and round trips pass; **0 disagreements** on 2,200 checks of 50
+  generated maps and on the official maps.
+- **Browser tests** (`npm run test:e2e`, the installed Chrome): 63 passed, the local-only map
+  imports included.
+- **Keep M12 ready** (D134): the Claude reference suite passes **104 of 120** (dev at 3da4b1a: 101;
+  `REFERENCE.md` said 120, from an older run). Newly passing: C01, F07, F08, M01, Q01, W09. The
+  waterfall follow-ups' setup (`rv128-fall`) now pins the fall where the site search put it on
+  0.6.0 (it ranks sites by what they clear, so it moved with the resources); S05 passes again.
+  Newly failing: J11 and P12 (a geothermal field and a relic now stand in the south third where
+  the huge lake and the canyon went) and S06 (on `rv128b` every spot nearer the lake now breaks a
+  start rule or a map object's band). The orchestrator re-tunes the setups after both generator
+  steps land (STATUS, D134).
 
 ## Tests
 
@@ -187,3 +256,5 @@ entities.push(...r.entities);             // trees, bushes, ruin columns, mine s
   - `tests/contract/spec.test.ts`: random specs draw 1–4 mine sites.
   - `tests/contract/places.test.ts`, `placesCommon.ts`: every place passes every check but the
     missing mine site, which both validators flag, until Real places 2 rebuilds them.
+- `tests/contract/objects.test.ts`: the every-object map moves from seed 13 to seed 15, a seed on
+  which every theme still places every kind of object (a seed choice, not a decision).
