@@ -109,42 +109,42 @@
    "themes": {
     "canyon": {
      "maps": 15,
-     "groups": 9,
-     "largestGroupShare": 0.267,
-     "nearestPeerMedian": 0.076,
+     "groups": 7,
+     "largestGroupShare": 0.333,
+     "nearestPeerMedian": 0.047,
      "longRetention": [
       0,
-      0.48
+      0.485
      ],
      "startDays": [
       0,
       19
      ],
-     "firstNormalKept": 0.4
+     "firstNormalKept": 0.333
     },
     "delta": {
      "maps": 15,
-     "groups": 11,
-     "largestGroupShare": 0.133,
-     "nearestPeerMedian": 0.099,
+     "groups": 8,
+     "largestGroupShare": 0.267,
+     "nearestPeerMedian": 0.076,
      "longRetention": [
       0,
-      0.445
+      0.537
      ],
      "startDays": [
       0,
-      10
+      14
      ],
-     "firstNormalKept": 0.333
+     "firstNormalKept": 0.267
     },
     "highlands": {
      "maps": 15,
-     "groups": 9,
+     "groups": 10,
      "largestGroupShare": 0.267,
-     "nearestPeerMedian": 0.078,
+     "nearestPeerMedian": 0.064,
      "longRetention": [
       0,
-      0.595
+      0.653
      ],
      "startDays": [
       0,
@@ -154,58 +154,58 @@
     },
     "islands": {
      "maps": 15,
-     "groups": 10,
+     "groups": 11,
+     "largestGroupShare": 0.2,
+     "nearestPeerMedian": 0.094,
+     "longRetention": [
+      0,
+      0.668
+     ],
+     "startDays": [
+      0,
+      15
+     ],
+     "firstNormalKept": 0.333
+    },
+    "lakeBasin": {
+     "maps": 15,
+     "groups": 8,
      "largestGroupShare": 0.267,
      "nearestPeerMedian": 0.069,
      "longRetention": [
       0,
-      0.611
+      0.583
      ],
      "startDays": [
       0,
-      18
+      7
      ],
-     "firstNormalKept": 0.667
-    },
-    "lakeBasin": {
-     "maps": 15,
-     "groups": 12,
-     "largestGroupShare": 0.133,
-     "nearestPeerMedian": 0.104,
-     "longRetention": [
-      0,
-      0.521
-     ],
-     "startDays": [
-      0,
-      13
-     ],
-     "firstNormalKept": 0.4
+     "firstNormalKept": 0.267
     },
     "riverValley": {
      "maps": 15,
-     "groups": 9,
+     "groups": 12,
      "largestGroupShare": 0.2,
-     "nearestPeerMedian": 0.072,
+     "nearestPeerMedian": 0.087,
      "longRetention": [
       0,
-      0.664
+      0.67
      ],
      "startDays": [
       0,
       19
      ],
-     "firstNormalKept": 0.467
+     "firstNormalKept": 0.333
     }
    },
    "cheapAgainstExact": {
     "maps": 90,
     "longRetentionCorrelation": 0.999,
-    "shortRetentionCorrelation": 0.997,
-    "startDaysCorrelation": 0.992,
-    "exposureCorrelation": 0.425,
+    "shortRetentionCorrelation": 0.999,
+    "startDaysCorrelation": 0.956,
+    "exposureCorrelation": 0.068,
     "retentionBinAgreement": 1,
-    "startBinAgreement": 0.633,
+    "startBinAgreement": 0.7,
     "firstDroughtAgreement": 1
    }
   },

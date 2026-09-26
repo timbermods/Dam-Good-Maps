@@ -1,4 +1,8 @@
-// The settler, design version 2: version 1's (../proto/start.ts) with three additions.
+// The settler, design version 2: version 1's (../proto/start.ts) with four additions.
+// - Kyler's start water rule (amends D85; rules.ts): the water need not be on the start's own level.
+//   A place qualifies when a walk over the map's own terrain and slopes reaches a pump shore within
+//   the rule; the settler screens with an optimistic walk (steps of one level allowed anywhere) and
+//   then walks the best places over the slopes the build would derive.
 // - Drought-aware start water (task e, decisions-pending #56): with `drought`, a place counts as
 //   drought-safe when clean water within the water rule stays pumpable through the first Normal
 //   drought (the analytic drought over its days); "prefer" weights such places up, "require"
@@ -21,6 +25,7 @@ import type { Rng } from "../../../src/core/math/rng";
 import { placeSlopes, SLOPE_RULES } from "../../../src/core/features/slopes";
 import { walkDistance } from "../../../src/core/analysis/walk";
 import type { Hydro } from "./hydro";
+import { pumpShores, shoreWalkAny } from "./rules";
 
 export interface StartPick {
   x: number;
@@ -57,6 +62,12 @@ export interface SettlerOptions {
 
 /** Moist dry tiles within 20 tiles' walk of a start at (x, y), over the slopes the build derives. */
 export function moistWithinWalk(h: Uint8Array, W: number, H: number, D: ArrayLike<number>, M: ArrayLike<number>, x: number, y: number): number {
+  return startWalks(h, W, H, D, null, M, x, y, 0).moist;
+}
+
+/** From a start at (x, y), over the slopes the build derives for it: moist dry tiles within 20
+ *  tiles' walk, and (with `C`) the walk to the nearest pump shore (Kyler's start water rule). */
+export function startWalks(h: Uint8Array, W: number, H: number, D: ArrayLike<number>, C: ArrayLike<number> | null, M: ArrayLike<number>, x: number, y: number, rule: number): { moist: number; water: number } {
   const occ = new Uint8Array(W * H);
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) occ[(y + dy) * W + x + dx] = 1;
   const slopes = placeSlopes(h, W, H, { x, y }, occ, { ...SLOPE_RULES, bigRegion: 0 });
@@ -68,10 +79,15 @@ export function moistWithinWalk(h: Uint8Array, W: number, H: number, D: ArrayLik
     if (hx < 0 || hy < 0 || hx >= W || hy >= H) continue;
     links.push([s.y * W + s.x, hy * W + hx]);
   }
-  const d = walkDistance(h, W, H, null, links, { x, y }, 20);
+  const d = walkDistance(h, W, H, null, links, { x, y }, Math.max(20, rule));
   let n = 0;
   for (let i = 0; i < W * H; i++) if (d[i] <= 20 && M[i] > 0 && !(D[i] > 0.001)) n++;
-  return n;
+  let water = Infinity;
+  if (C) {
+    const shore = pumpShores(h, D, C, W, H);
+    for (let i = 0; i < W * H; i++) if (shore[i] && d[i] < water) water = d[i];
+  }
+  return { moist: n, water };
 }
 
 const S2 = Math.SQRT2;
@@ -138,7 +154,9 @@ export function pickStart(
   const N = W * H;
   const D = water.depth;
   const walk = shoreWalkFrom(h, W, H, D, water.contamination, waterRule);
-  const walkKept = opts.kept && opts.drought && opts.drought !== "off" ? shoreWalkFrom(h, W, H, opts.kept, water.contamination, waterRule) : null;
+  // Kyler's rule: shores on other levels count when a walk over the map's own slopes reaches them
+  const walkAny = shoreWalkAny(h, W, H, D, water.contamination, waterRule);
+  const walkKept = opts.kept && opts.drought && opts.drought !== "off" ? shoreWalkAny(h, W, H, opts.kept, water.contamination, waterRule) : null;
   const wetNear = new Uint8Array(N);
   for (let i = 0; i < N; i++) if (D[i] > 0.02 || hydro.water[i] === 1 || hydro.water[i] === 2) wetNear[i] = 1;
   const dWet = distanceFrom(wetNear, W, H);
@@ -194,7 +212,7 @@ export function pickStart(
   const sorted = Array.from(h).sort((a, b) => a - b);
   const medianLevel = sorted[N >> 1];
   const margin = Math.max(8, Math.round(Math.min(W, H) * 0.08));
-  const cands: { i: number; score: number; kind: string; o: Orientation; walk: number; levelled: boolean; droughtOk?: boolean; intent: number }[] = [];
+  const cands: { i: number; score: number; kind: string; o: Orientation; walk: number; levelled: boolean; droughtOk?: boolean; intent: number; sameLevel: boolean }[] = [];
   // first pass: level ground as it is; second pass (when the first finds nothing): a 5×5 within a
   // level of the center is levelled, as a player would level a spot for the district center
   for (let pass = 0; pass < 2 && !cands.length; pass++)
@@ -216,10 +234,18 @@ export function pickStart(
           }
         }
       if (!ok || dWet[i] < 3.5) continue;
-      // the walk from the 3×3 to a shore on its own level
+      // the walk from the 3×3 to a shore on its own level, or (Kyler's rule) to one on another level
+      // over steps of one level; the second is checked over the derived slopes below
       let w = Infinity;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) w = Math.min(w, walk[(y + dy) * W + x + dx]);
-      if (!(w <= waterRule - 5)) continue;
+      let wa = Infinity;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          w = Math.min(w, walk[(y + dy) * W + x + dx]);
+          wa = Math.min(wa, walkAny[(y + dy) * W + x + dx]);
+        }
+      const sameLevel = w <= waterRule - 5;
+      if (!sameLevel && !(wa <= waterRule - 5)) continue;
+      if (!sameLevel) w = wa;
       // the ground reached without stairs
       if (opts.foot && opts.minFoot && opts.foot.size[opts.foot.lab[i]] < opts.minFoot) continue;
       // drought-aware: pumpable water within the rule after the first drought
@@ -264,7 +290,7 @@ export function pickStart(
       const intent = opts.prefer ? opts.prefer(x, y, L, w) : 0;
       const dry = droughtOk === undefined ? 1 : droughtOk ? 1.25 : 0.8;
       const score = pref * (0.5 + 0.5 * room) * (0.6 + 0.4 * Math.min(1, moistNear / 500)) * dry + 0.8 * intent + 0.25 * rng.float();
-      cands.push({ i, score, kind, o, walk: w, levelled: uneven, droughtOk, intent });
+      cands.push({ i, score, kind, o, walk: w, levelled: uneven, droughtOk, intent, sameLevel });
     }
   }
   if (!cands.length) return bankStart(h, W, H, water, hydro, rng, margin, avoid);
@@ -277,10 +303,15 @@ export function pickStart(
     const x = c.i % W;
     const y = (c.i - x) / W;
     if (top.some((t) => Math.abs((t.i % W) - x) + Math.abs(Math.floor(t.i / W) - y) < 20)) continue;
-    if (opts.moistWalk) {
+    if (opts.moistWalk || !c.sameLevel) {
       if (tested >= 40) break;
       tested++;
-      if (moistWithinWalk(h, W, H, D, water.moisture, x, y) < opts.moistWalk.min) continue;
+      const sw = startWalks(h, W, H, D, c.sameLevel ? null : water.contamination, water.moisture, x, y, waterRule);
+      if (opts.moistWalk && sw.moist < opts.moistWalk.min) continue;
+      if (!c.sameLevel) {
+        if (!(sw.water <= waterRule - 2)) continue;
+        c.walk = sw.water;
+      }
     }
     top.push(c);
   }

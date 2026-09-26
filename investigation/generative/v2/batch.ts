@@ -21,6 +21,7 @@ import { generateProto } from "../proto/generate";
 import { cheapCycle } from "./cycle";
 import { generateV2, type DroughtPolicy, type ProtoResultV2 } from "./generate";
 import type { IntentionId } from "./intentions";
+import { startingWood } from "./rules";
 import { vertical } from "./vertical";
 
 /** The mechanics study's axes (investigation/mechanics/measure.ts, merged on dev). */
@@ -33,6 +34,10 @@ export const AXIS_BINS: [string, number[]][] = [
   ["logs20", [80, 160, 320]],
   ["frontierComponents", [1.5, 3.5]],
   ["deepPumpExtraShore", [0.5, 10, 50]],
+  // D164: the woods' character, oak's share of the starting wood's logs (an oak yields 8, so the
+  // default mix, a fifth oak by trees, is 57% oak by logs): below 0.35 pine and birch, quick to
+  // regrow; 0.75 and above oak, plenty of wood and slow to regrow; mixed between
+  ["oakShare20", [0.35, 0.75]],
 ];
 export async function loadAxes(): Promise<((r: GenerateResult) => Record<string, unknown>) | null> {
   const p = resolve("investigation", "mechanics", "measure.ts");
@@ -111,7 +116,9 @@ async function child(k: number, n: number): Promise<void> {
       const ms = Math.round(performance.now() - t0);
       const stageOk = gen !== "proto" || any.info?.stage !== "dam wall";
       const passed = gen === "current" ? any.report.passed && any.bytes.length > 0 : any.bytes.length > 0 && (any.storage?.ok ?? true) && stageOk;
-      const failed = any.report.checks.filter((c: any) => blocks("generate", c)).map((c: any) => c.id);
+      // version 2 applies Kyler's start water and starting wood rules in place of the validators'
+      // start.water and start.wood (rules.ts)
+      const failed = any.report.checks.filter((c: any) => blocks("generate", c) && !(gen === "proto2" && (c.id === "start.water" || c.id === "start.wood"))).map((c: any) => c.id);
       if (gen !== "proto2") {
         const base0 = { key, gen, set, theme, seed, size, passed, attempts: any.attempts, failures: any.failures, failed, ms, recipe: any.recipe ?? null, storage: any.storage ? { ok: any.storage.ok, value: any.storage.value ?? null, message: any.storage.message } : null, info: any.info ? { start: any.info.start, badwater: any.info.badwater, hydro: any.info.hydro, stage: any.info.stage, ms: any.info.ms } : null };
         if (!passed) {
@@ -142,7 +149,7 @@ async function child(k: number, n: number): Promise<void> {
         genome: { vt: g.vt, vtSetting: g.vtSetting, unlocked: g.unlocked, top: Math.round(g.top * 100) / 100, base: Math.round(g.base * 100) / 100, step: g.terrace.step, terraceShare: Math.round(g.terrace.share * 100) / 100, cap: Math.round(g.cap.share * 100) / 100, weathering: Math.round(g.weathering * 100) / 100, hanging: Math.round(g.hanging * 100) / 100, tiltKind: g.tiltKind, flowDir: g.flowDir, parts: g.parts.map((p) => p.kind), intentions: g.intentions, variety: g.variety },
         intentions: r.intentions,
         storage: { ok: r.storage.ok, value: r.storage.value ?? null, message: r.storage.message },
-        info: { start: r.info.start, badwater: r.info.badwater, hydro: r.info.hydro, stage: r.info.stage, ms: r.info.ms, ramps: r.info.ramps, settles: r.info.settles, startDrought: r.info.startDrought, genomes: r.info.genomes },
+        info: { start: r.info.start, badwater: r.info.badwater, hydro: r.info.hydro, stage: r.info.stage, ms: r.info.ms, ramps: r.info.ramps, settles: r.info.settles, startDrought: r.info.startDrought, startWater: r.info.startWater ?? null, startWood: r.info.startWood ?? null, edgeWalls: r.info.edgeWalls ?? null, genomes: r.info.genomes },
         timings: r.timings,
       };
       if (!passed) {
@@ -164,15 +171,16 @@ function measured(r: GenerateResult, axesFn: ((r: GenerateResult) => Record<stri
   const objs = b.entities.map((e) => ({ template: e.template, x: e.x, y: e.y, orientation: e.orientation }));
   const vert = vertical(b.heights, b.W, b.H, b.water, objs, b.start ?? null);
   const cyc = cheapCycle(b, r.spec.settings.start.rules.waterWithin);
+  const wood = b.start ? startingWood(b.heights, b.W, b.H, b.entities, b.start) : null;
   let axes: ReturnType<typeof axesOf> | null = null;
   if (axesFn) {
     try {
-      axes = axesOf(axesFn(r));
+      axes = axesOf({ ...axesFn(r), oakShare20: wood && wood.logs ? wood.oakShare : null });
     } catch {
       axes = null;
     }
   }
-  return { ...m, vertical: vert, cheapCycle: cyc, axes };
+  return { ...m, vertical: vert, cheapCycle: cyc, axes, wood };
 }
 
 function writeFiles(dir: string, key: string, r: GenerateResult): void {

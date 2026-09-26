@@ -43,6 +43,9 @@ Kyler's decided principles and what a player feels block (D115).
 | Whole-map clusters up to 68% of a theme (Delta) | The largest cluster holds 6–14.5% of a theme: the regional tilt no longer dominates the layout, and water and relief are drawn wider | Task b |
 | No-approximation: 2–20% of a theme below the floor | 0.5–15% (River Valley 8.5%, Highlands 3.5%, Delta 12.5%) | Task c, D128 |
 | No intentions | Zero, one or two per map from a set of eleven, four of them Kyler's own; steered by the prior and the settler, checked on the finished map, dropped when absent. Kyler's four emerge on 70%, 68%, 24% and 19.5% of their draws; fourteen more are drafted for him to pick | D138 |
+| The start's water on its own level (D85) | Kyler's start water rule: a walk over the map's own terrain and slopes to a shore a pump reaches, within 12 / 20 / 28 tiles; 25% of starts now drink from another level | Kyler, 2026-09-25 |
+| Starting trees counted | Starting wood (D164): logs by species within 20 tiles' walk (Oak 8, Pine 2, Birch 1); the woods (oak-rich, mixed, birch-rich) are a composition lever and a strategy axis | D164 |
+| Thin bands left along the edges | No edge walls: the land runs on past the edge, and a blocking check finds none on any map | Kyler, extends D111 |
 | The start ignores droughts | The settler prefers water that lasts through the first Normal drought; requiring it is decisions-pending #56 | Task e |
 | Two to four settles an attempt | One settle for 80% of maps, two for 20%; a first look at 0.2 s at 128² | Task f |
 | Heights only | Terrain kept as runs per column; format 3 stores runs; caves slot in with no format change | Task h, D118, I-1 |
@@ -58,13 +61,14 @@ only (D137), D85's start requirements, `water.storage_possible`, and exact arith
 ## 1. The design in six lines
 
 1. A **genome** of continuous parameters is drawn from a theme's prior: land, water, hazards,
-   resources, Verticality and intentions. A theme weights; it never lays out.
+   resources and the woods, Verticality and intentions. A theme weights; it never lays out.
 2. **Processes** make the land: uplift of parts over warped noise and a slow regional field;
    caprock, stream-power erosion and weathering; snapping to levels with benches.
-3. **Water finds its own way**: rivers from the drainage, lakes where hollows hold water, spring
-   lakes where no river passes, falls where beds drop, knickpoints and hanging valleys.
-4. **Everything else is found**: the start, dam sites, badwater hollows, ramps and landmarks. No dam
-   wall, nothing stamped.
+3. **Water finds its own way**: rivers from the drainage with their sources at their heads, lakes
+   where hollows hold water, spring lakes where no river passes, falls where beds drop, knickpoints
+   and hanging valleys. Rivers leave and lakes may drain; nothing walls the edges.
+4. **Everything else is found**: the start (by Kyler's start water and wood rules), dam sites,
+   badwater hollows, ramps and landmarks. No dam wall, no edge wall, nothing stamped.
 5. **Intentions** steer the prior and the settler toward an outcome; a check keeps or drops them.
 6. **The product's own pipeline** builds, validates and writes every map; the terrain lives as runs
    per column, so caves arrive later with no format change.
@@ -73,7 +77,7 @@ only (D137), D85's start requirements, `water.storage_possible`, and exact arith
 
 - **Maps are created, not copied** (PLAN, Product principles; D108): two maps must play
   differently, not only look different.
-- **No built dam walls** (D111).
+- **No built dam walls** (D111), and no edge walls (Kyler, extending it).
 - **Maps feel authored** (D138), through outcomes, never recipes.
 - **Claude steers the generator and never hand-builds the map** (D139).
 
@@ -97,7 +101,8 @@ noise, parts, processes, water, hazards, resources and the settler's preferences
 | Relief | `base` (0.3–1.3) and `top` (up to 16; up to 22 only behind the lock); hypsometry: `eq` blends the field toward equal area per level, `lean` tips the land toward uplands or lowlands |
 | Regional field | a slow noise field, 0.3–0.6 of the map's side across and 3–7 levels high, beside the regional tilt or instead of it: an independent spatial control (playbook #1) |
 | Verticality | `vt` and what it sets: the caprock's share, patch size and stratum; weathering; the main river's extra cut (`hanging`); the knickpoint reach; bench heights; the ramp chance |
-| Water | spring lakes (`lakeSprings`), extra basins, basins with islands |
+| Water | spring lakes (`lakeSprings`), extra basins, basins with islands; the water's wander (`wander`, `wanderCell`), which the snaking river's nudge raises |
+| Woods (D164) | the grove species weights the resources planner draws (`woods`): oak-rich, mixed or birch-rich by theme and Variety. Oak woods stand thinner and birch woods thicker, so the starting wood holds either way: a few big trees slow to regrow (30 days), or many small ones quick to regrow (7 days) |
 | Intentions | zero to two, from the set of §6 |
 | Variation | a sibling index (D143) |
 
@@ -150,8 +155,10 @@ lakes, volcano island.
    - **knickpoints**: where a bed falls 3+ levels within a reach (5–21 tiles, longer as
      Verticality rises), the drops gather into one fall at its head and the river below cuts down
      to its foot, as a retreating waterfall leaves a gorge;
-   - **spring lakes**: a closed hollow of 100+ tiles that no river crosses may hold a spring at its
-     lowest point (45–100% of the time by theme), so it fills to its rim and spills as a stream.
+   - **spring lakes**: a closed hollow of 100+ tiles that no river crosses may get a spring at its
+     head, just above its highest edge (45–100% of the time by theme). The stream runs down into the
+     hollow, fills it to its rim and spills on.
+
 7. **Natural ramps** (`v2/levels.ts`): where a cliff band cuts an upland (or lowland) of 200+ tiles
    off from the land round it, a gully steps down along the gentlest line the land offers, one level
    every two tiles or more, three tiles wide, with the genome's chance (lower as Verticality rises).
@@ -164,6 +171,14 @@ lakes, volcano island.
    product's own planners on the built ground.
 9. **Found, never stamped**: dam sites (the validators' dam sampling), falls, lakes, the start, the
    badwater hollow, stacks and landmarks.
+
+**Sources start rivers** (D171). Every water source sits where water begins: on the map edge where a
+river enters (several sources side by side on the mouth), or as a spring at a valley head, below a
+ridge or at a hollow's head. None sits inside a river or a lake, or downstream; a tributary has its
+own spring at its own head, and more flow means more sources at the head or stronger ones. The
+rivers come from the drainage, so they already start at heads. A check (`v2/rules.ts`,
+`sourcesInFlow`) finds any spring inside a planned lake or on another river's course, and that
+hydrology is planned again: ⟨R_SRC⟩ The core check on `feature/start-edge-rules` replaces it in M9a.
 
 **How this meets the refinement note "containment should look natural"**: nothing is stamped, so
 nothing needs a special shape (no straight dam ridge, no square badwater box or straight ditch, no
@@ -230,17 +245,17 @@ never drawn together (`v2/intentions.ts`). Four are Kyler's own, in his words:
 
 | Intention: what a player finds | Steering: a nudge, never a build | The check on the finished map | Emerged (v2-128) |
 |---|---|---|---|
-| **The start sits under a cliff, with water below** (Kyler's own) | benches and escarpments more likely; the settler prefers places under a cliff | a cliff (a step of 2+ levels) rising from the start's ground within 7 tiles; 8+ tiles standing 2+ levels above the start; the start's pumpable water within 12 tiles' walk, below it | 70% |
+| **The start sits under a cliff, with water below** (Kyler's own) | benches and escarpments more likely; the settler prefers places under a cliff | a cliff (a step of 2+ levels) rising from the start's ground within 7 tiles; 8+ tiles standing 2+ levels above the start; the start's pumpable water within 12 tiles' walk, below it | 60% |
 | **A snaking river winds down a hill** (Kyler's own) | the water's way wanders more from the steepest line (noise in the routing field, not in the land); drops stay spread along the course | a river whose course turns 3+ times, back and forth (bends of 30°+ on a course simplified to 1.5 tiles), while its bed descends 3+ levels, with a level dropped at 2+ bends; the stretch holds water | 68% |
-| **A large crater gathers rivers into its lake** (Kyler's own) | a large caldera (an uneven rim round a hollow 30–50 tiles across at 128²), more heads upstream, room for its lake | a lake of 250+ tiles in a closed rim (2+ levels over the lake on 12 of 16 rays, falling again outside the crest on 8); 2+ rivers flowing in; one way out through the rim | 24% |
-| **A waterfall plunges off a cliff into a large, round lake** (Kyler's own) | knickpoints, caprock and hanging valleys stronger; a scarp and a hollow (often near the scarp's foot); room for lakes | a fall of 3+ levels into a lake whose open water (without its thin arms) is 200+ tiles and broadly round (its axes within 0.55 of each other, filling 40% of its widest circle) | 19.5% |
-| A signature landmark stands out | a cone, mesa, caldera or scarp more likely; more caprock | a form of 300 tiles or fewer standing 8+ levels over the ground round it, or a fall of 6+ levels | 91% |
-| A lake high on the heights spills over a fall | a tall mesa and a spring more likely; more weathering | a lake of 60+ tiles, 5+ levels over the map's middle, with a fall at its edge | 57% |
-| A hidden valley up the cliffs holds riches | fewer ramps; a plateau more likely; more ruins | an upland 2+ levels above the start, cut off by cliffs, reached only by stairs, 400+ tiles with 10+ ruins, relics or trees, within 60 tiles | 51% |
+| **A large crater gathers rivers into its lake** (Kyler's own) | a large caldera (an uneven rim round a hollow 30–50 tiles across at 128²), more heads upstream, room for its lake | a lake of 250+ tiles in a closed rim (2+ levels over the lake on 12 of 16 rays, falling again outside the crest on 8); 2+ rivers flowing in; one way out through the rim | 19% |
+| **A waterfall plunges off a cliff into a large, round lake** (Kyler's own) | knickpoints, caprock and hanging valleys stronger; a scarp and a hollow (often near the scarp's foot); room for lakes | a fall of 3+ levels into a lake whose open water (without its thin arms) is 200+ tiles and broadly round (its axes within 0.55 of each other, filling 40% of its widest circle) | 18% |
+| A signature landmark stands out | a cone, mesa, caldera or scarp more likely; more caprock | a form of 300 tiles or fewer standing 8+ levels over the ground round it, or a fall of 6+ levels | 93% |
+| A lake high on the heights spills over a fall | a tall mesa and a spring more likely; more weathering | a lake of 60+ tiles, 5+ levels over the map's middle, with a fall at its edge | 55% |
+| A hidden valley up the cliffs holds riches | fewer ramps; a plateau more likely; more ruins | an upland 2+ levels above the start, cut off by cliffs, reached only by stairs, 400+ tiles with 10+ ruins, relics or trees, within 60 tiles | 42% |
 | A waterfall shields the start | deeper incision, more benches, a badwater hollow; the settler prefers places near falls | a fall of 1.5+ levels within 20 tiles; the nearest threat twice as far on foot as in a straight line | 29% |
-| The start looks out from high ground | a plateau or scarp more likely; the settler prefers high ground | the start in the top quarter of the map's heights, 4+ levels over the lowest ground within 15 tiles | 24% |
-| Two rivers meet by the start | more springs and inflows; the settler prefers confluences | a confluence within 18 tiles of the start | 24% |
-| The best farmland lies past the gorge | deeper incision, wider floors; the settler prefers a start with bigger farmland across a gorge | a farmland patch of 400+ tiles, 1.5 times the start's own, across water whose banks stand 2+ levels over it | 21% |
+| The start looks out from high ground | a plateau or scarp more likely; the settler prefers high ground | the start in the top quarter of the map's heights, 4+ levels over the lowest ground within 15 tiles | 36% |
+| Two rivers meet by the start | more springs and inflows; the settler prefers confluences | a confluence within 18 tiles of the start | 28% |
+| The best farmland lies past the gorge | deeper incision, wider floors; the settler prefers a start with bigger farmland across a gorge | a farmland patch of 400+ tiles, 1.5 times the start's own, across water whose banks stand 2+ levels over it | 32% |
 | ~~The only safe water is uphill~~ | – | an uphill lake keeping half its water through a 9-day drought while the start's keeps under 35% | left the set |
 
 **Kyler's three principles**:
@@ -345,10 +360,23 @@ principles (decisions-pending #63). Sources: the workshop catalogue (`investigat
 
 ## 7. The start and the guards
 
+**Kyler's start rules** (2026-09-25, amending D85). The core rules are being built on
+`feature/start-edge-rules`; until they land, the prototype applies them itself (`v2/rules.ts`), in
+place of the validators' `start.water` and `start.wood`:
+- **Water**: clean water counts when a walk from the start over the map's own terrain and its own
+  slopes (never player-built stairs) reaches a shore tile within 12 / 20 / 28 tiles by difficulty,
+  and a pump on that shore reaches the water (0.3+ deep, its surface 0–2 levels below the shore).
+  The water no longer has to be on the start's own level.
+- **Starting wood** (D164): logs, not trees. Every Pine, Birch and Oak within 20 tiles' walk,
+  living or dead, counts at its species' yield (Oak 8, Pine 2 plus resin, Birch 1). The prototype
+  converts 60 / 40 / 20 trees to 170 / 110 / 55 logs at the default species mix's 2.8 logs a tree;
+  the core rule sets the final numbers (decisions-pending #65).
+- The berry bushes rule and D85's other requirements stay.
+
 **The settler** (`v2/start.ts`) reads the land with its water, as a player would:
-- hard limits, never traded (D85): a shore of clean pumpable water on the start's own level within
-  the water rule's walk (5 tiles to spare), the 3×3 and its ring dry, the door onto level ground
-  facing the water;
+- hard limits, never traded: a pump shore within the water rule's walk (on the start's own level
+  with 5 tiles to spare; on another level, a walk over the slopes the build would derive with 2
+  tiles to spare), the 3×3 and its ring dry, the door onto level ground facing the water;
 - among the places that qualify, the genome's preferences (a lake shore, a river bank, a
   confluence, below a fall, a high bench, a spring's stream), the intentions' preferences and the
   seed choose among the best few, kept 20 tiles apart;
@@ -362,19 +390,52 @@ principles (decisions-pending #63). Sources: the workshop catalogue (`investigat
 - **Reach**: the start's ground must join 12% of the map by one-level steps, and moist land within
   20 tiles' walk over the slopes the build would derive must reach 160 tiles. This fixed most of
   version 1's "too little wood" failures.
-- **Drought-aware start water** (task e): among places that pass D85, the settler weights up (×1.25)
-  places whose clean water within the water rule stays pumpable through the first Normal drought
-  (the analytic drought over 3 days: 2 in the game's schedule, after a day of ramp-down), and down
-  (×0.8) the rest. Measured (REPORT-v2 §5): the start keeps its water through the first Normal
-  drought on 42% of maps (38.5% with the preference off; version 1 29%). Requiring it gets 100%,
-  but first attempts fall from 68.5% to 47% and finals to 98.8% (Canyon 94%). Requiring it is
-  decisions-pending #56.
+- **The new rules' effect** (REPORT-v2 §2.1). On v2-128:
+  - 25% of starts drink from a shore on another level, and 22% of the maps would fail D85's water
+    rule;
+  - 4.8% would fail the old tree count;
+  - the starting wood is 252 logs at the median (140–512), plus 110 logs growing;
+  - first attempts are 62.3% under all of Kyler's new rules, against 68.5% before them. Starting
+    wood turns down more attempts than the tree count did; finals stay 100% ⟨R_FINALS⟩.
+- **Drought-aware start water** (task e), re-checked under the new rule: among places that pass,
+  the settler weights up (×1.25) places whose clean water within the rule's walk stays pumpable
+  through the first Normal drought (the analytic drought over 3 days: 2 in the game's schedule,
+  after a day of ramp-down), and down (×0.8) the rest. A shore on another level now counts too.
+  Measured (REPORT-v2 §5): ⟨R_DROUGHT⟩ Requiring it is decisions-pending #56.
 
-**Every guard stays**: both validators in the `generate` profile; D85's start requirements;
-`water.storage_possible` (the workshop study's rule: running clean water at the start, and storage
-possible within 40 tiles by a dam, natural pools or levees) in place of `water.reservoir`; the
-dam-wall check in the loop; determinism (exact arithmetic, D15; iteration in index order; heaps that
-break ties by index); batches ≥ 98% final.
+**Every guard stays**, as Kyler amended them:
+- both validators in the `generate` profile, but for `start.water` and `start.wood`, which his
+  rules replace;
+- D85's other start requirements;
+- `water.storage_possible` in place of `water.reservoir` (the workshop study's rule: running clean
+  water at the start's pump shore, and storage possible within 40 tiles by a dam, natural pools or
+  levees). It asks only that the land lets the player store a drought's water; whether it stays a
+  guard now that nothing else about water is guaranteed is decisions-pending #64;
+- the dam-wall and edge-wall checks in the loop (§8);
+- determinism (exact arithmetic, D15; iteration in index order; heaps that break ties by index);
+- batches ≥ 98% final.
+
+**Kyler's resource rules** (for every map; a shared baseline is being built on `feature/resources`):
+- **Mine sites**: at least one on every map; the Mine sites setting becomes 1–4. The prototype
+  checks it in the loop: ⟨R_MINE⟩
+- **Trees, clusters and ruins**: M9a takes them from the shared baseline. Tree counts scale with
+  map size within the official maps' 25th–75th percentiles, about two-thirds dead, living trees on
+  moist ground and dead ones on dry. Trees stand in groves with clearings, and bushes grow in
+  patches. Ruins lie in irregular fields with a spread of heights and a few tall towers, and their
+  scrap stays within the official range for the map's size. The prototype still uses today's
+  resources planner. The woods (D164) then choose each map's species within the spread of mixes
+  the official maps show; M9a checks that oak-rich and birch-rich woods stay inside it.
+
+**Maps need not hold their water** (Kyler): rivers leave and lakes may drain; draining is the
+player's challenge. No prototype check or measure requires water to stay on the map:
+- lakes fill hollows and spill at their sills;
+- nothing raises the edges (§8);
+- the drought-aware start is a preference;
+- the cycle measures describe how long water lasts, and never require it.
+
+The validators' own water checks (`water.settles`, `water.clean_exists`, `water.clean_reach`,
+`water.outflow`, `water.no_flood`) are unchanged here, since there is no `src/` change; the core
+rules decide them.
 
 ## 8. No dam walls, and the natural narrows
 
@@ -384,9 +445,24 @@ opportunities exist only where the land makes them (a valley narrowing between s
 lake's outlet), and the validators' dam sampling finds them. The dam-wall check (`lib/ridge.ts`:
 a straight band 2–6 levels high across a valley, with vertical faces, a flat crest, even thickness
 and dry floor on both sides, and a gap for the river) runs in the generate loop and on every batch
-map. **Version 2's batches: 0 flagged maps of 4,672**, across every set, size and Verticality
-(2,399 of them also rechecked from their files). In the loop the check turned down 32 attempts whose
-land made a wall-like band; each was planned again.
+map. **Version 2's batches: 0 flagged maps of ⟨R_N⟩**, across every set, size and Verticality
+(⟨R_SIDE⟩ of them also rechecked from their files). In the loop the check turned down ⟨R_DAMREJ⟩
+attempts whose land made a wall-like band; each was planned again.
+
+**No edge walls** (Kyler, 2026-09-25; extends D111). No map raises a wall along its edges to hold
+water; rivers enter and leave naturally. Version 1 and version 2's earlier runs left some. Erosion
+never lowers the border tiles, which are outlets with nowhere to drain, and a channel's floor could
+stop a tile short of the edge. So a thin band stood along the edge with water behind it:
+- on 9.4% of version 2's earlier maps;
+- on 4.3% of version 1's;
+- on 2% of the current generator's, where Islands' and Lake Basin's rings reach past the map.
+
+Now the land runs on past the edge. The two outer rows follow the land just inside (the next tile
+in, plus its rise toward the edge, never a fall), before the water is planned and again after the
+channels are cut. The edge-wall check (`v2/rules.ts`) looks for 6+ tiles along an edge where the
+outer two rows stand 2+ levels over everything 2–5 tiles in, with water lying behind below the
+band's top. It runs in the loop and blocks: **0 maps of ⟨R_N⟩** flag it (⟨R_EDGEREJ⟩ attempts
+turned down).
 
 **What replaces the ridge-based rules** (version 1, unchanged): natural dam sites and
 `water.storage_possible` replace D25, D30 and D49's dam site; Hard's 3-deep rule moves into
@@ -406,8 +482,8 @@ for spurs on both banks"; "the spurs would read as a wall") and draws once more 
 The generator never calls it.
 
 Tried at 96 places on the batch's maps (REPORT-v2 §8): it fits at 75; the dam-wall check flags
-none; the spurs vary in level (standard deviation 0.6) and in thickness (coefficient of variation
-0.46). A dam holding a Normal drought's water gets shorter at 10 of the 72 places where the ground
+none; the spurs vary in level (standard deviation 0.7) and in thickness (coefficient of variation
+0.48). A dam holding a Normal drought's water gets shorter at 7 of the 73 places where the ground
 was raised: at most places the valley upstream holds too little for any short dam, before or after.
 
 ## 9. What M9 keeps
@@ -421,7 +497,7 @@ was raised: at most places the valley upstream holds too little for any short da
 - **Variations of this map** (D143; M9c): a sibling draws its genome from the same stream with each
   continuous value nudged by up to 12% of its range, keeps the theme, settings and intentions, and
   grows its land from noise of its own. Tried on 30 families of five maps (REPORT-v2 §8): no pair of
-  300 is a clone (the closest 0.35 apart, the median 0.58), and every sibling keeps the map's
+  300 is a clone (the closest 0.35 apart, the median 0.56), and every sibling keeps the map's
   intentions. Siblings sit as far apart as the theme's maps do (nearest-seed medians 0.48–0.52): a
   variation is a new map with the same settings and intentions, not a near copy. How close a
   sibling should stay is for M9c to tune (smaller nudges, or sharing the regional field's noise).
@@ -480,10 +556,10 @@ days of a drought the start keeps pumpable water; the wet tiles a long drought d
 of the water that runs (a badtide turns every source bad, VERIFIED.md, so running water is where
 badwater goes first). Its group uses the exact signature's bins. **Checked against the exact model**
 on 90 maps (seeds 1–15 of every theme; REPORT-v2 §6): it matches the water kept through the first
-Normal drought and the later Hard one (r = 0.997 and 0.999; the retention bin agrees on every map),
-how long the start keeps water (r = 0.99; the bin agrees on 63%, days near a bin's edge falling
+Normal drought and the later Hard one (r = 0.999 for both; the retention bin agrees on every map),
+how long the start keeps water (r = 0.96; the bin agrees on 70%, days near a bin's edge falling
 either side), and whether the start keeps water through the first Normal drought (every map). Its
-badwater proxy tracks the exact exposure only loosely (r = 0.43): where badwater reaches needs the model's mixing,
+badwater proxy does not track the exact exposure (r = 0.07): where badwater reaches needs the model's mixing,
 so exposure stays the exact model's. The exact model stays the check: on a sample in every
 milestone's full check, and on every brief map (the worst of three weather seeds).
 
@@ -497,7 +573,10 @@ milestone's full check, and on every brief map (the worst of three weather seeds
 
 **The strategy axes** (`investigation/mechanics`; measurement version 3,
 the power axis by the game's wheel rule). The eight axes and their fixed bins run on every batch map
-and every brief. Play variety on them: REPORT-v2 §6.
+and every brief. A ninth, the woods (D164), joins them: oak's share of the starting wood's logs,
+below 0.35 pine and birch (quick to regrow), 0.75 and above oak (plenty of wood, slow to regrow),
+mixed between. The brief's card says it in words ("mostly oak: plenty of wood, slow to regrow").
+Play variety on them: REPORT-v2 §3.3 and §6.
 
 **Difficulty as positions on the axes** (a proposal; decisions-pending #62). Difficulty today is
 D85's start rules and the drought need. The axes let the generator prefer, among a seed's
@@ -508,13 +587,13 @@ preference, never a rejection):
 |---|---|---|---|
 | Storage work (`storageRatio`, × a Normal drought's need kept within 40 tiles) | ≥ 0.5 | ≥ 0.1 | < 1: storage is the player's work |
 | Threat exposure (`badwaterDistance`, tiles) | ≥ 30, or none | ≥ 15, or none | < 60: a threat within reach |
-| Resource timing (`logs20`, logs within 20 tiles' walk) | ≥ 160 | ≥ 80 | ≥ 40 |
+| Resource timing (`logs20`, logs within 20 tiles' walk; starting wood asks for 170 / 110 / 55) | ≥ 250 | ≥ 150 | ≥ 55 |
 | Land and height (`flatDry40`, flat dry tiles within 40 tiles' walk) | ≥ 250 | ≥ 150 | any |
 | Power, fertile land, expansion and faction | variety axes, not difficulty | | |
 
-On v2-128, 12.6% of maps meet all of Easy's positions, 45.5% Normal's and 30% Hard's (version 1:
-11.3%, 49.4%, 51.3%; the current generator 0.1%, 32.9%, 65.4%). With three candidates, Easy finds a
-suited one about a third of the time, so M9b would also steer Easy's prior (more lakes and storage
+On v2-128, 9.7% of maps meet all of Easy's positions, 38.5% Normal's and 35.2% Hard's (version 1:
+7.3%, 39.3%, 50.6%; the current generator 0%, 26.1%, 62.8%). With three candidates, Easy finds a
+suited one about a quarter of the time, so M9b would also steer Easy's prior (more lakes and storage
 near the start). Each brief says which positions its map suits.
 
 ## 12. The document model: cave-ready terrain
@@ -636,8 +715,8 @@ same field first.
 - **Landscapes** (#16): the bench runs on seeds 1–30 per theme of version 2, version 1 and the
   current generator (REPORT-v2 §9). Version 2 is the closest of the three to real terrain on relief
   (group distance 0.52; version 1 0.60, the current generator 0.66) and on the height and slope
-  histograms (total variation 0.23 and 0.06; version 1 0.42 and 0.09; current 0.54 and 0.14), and
-  keeps version 1's naturalness (0.85; current 2.98). It is further on water (1.67; version 1 1.14):
+  histograms (total variation 0.22 and 0.06; version 1 0.42 and 0.09; current 0.54 and 0.14), and
+  keeps version 1's naturalness (0.85; current 2.98). It is further on water (1.60; version 1 1.14):
   more falls (7 a map against the real 1), taller (2.1 levels at the median against 1.0), and more
   and more efficient dam sites, which is what Timberborn maps and Kyler ask for. The bench stays
   descriptive: real terrain at 60 m a tile is gentler (steps of 2+ levels on 1.2% of edges).
@@ -727,6 +806,9 @@ from M13's versioned deploys.
 - *Above 16*: unconfirmed in the game until the probe batch, and the build's cap at 16 must be
   lifted for Verticality 70+ (the prototype measured the land before the build).
 - *Natural ramps* need the derived-slope rule changed in `features/slopes.ts` (#59).
+- *The core start and edge rules* land with their own definitions and numbers. The prototype's
+  are approximations: starting wood's 170 / 110 / 55 logs, the planner's wood target, and the
+  edge-wall check's band (#65). M9a re-measures with the core rules.
 - *In-game behaviour*: M9a's probe batch (D116).
 
 ## 18. Staging (proposal)
@@ -738,12 +820,15 @@ version. The proposal (also in ROADMAP M9):
   the regional field, caprock, erosion, weathering, levels with benches) and the hydrology (hanging
   valleys, knickpoints, spring lakes); natural ramps and the derived-slope rule for them;
   Verticality (above 16 locked until the probe batch); the settler with reach and the drought-aware
-  start (#56); the one-settle order and the progressive preview; the runs model and format 3 (§12);
+  start (#56); Kyler's start and edge rules on the generator's side (the settler's walk over the
+  derived slopes, the planner's wood target from starting wood, the land running on past the
+  edges), with the core rules from `feature/start-edge-rules`; the one-settle order and the
+  progressive preview; the runs model and format 3 (§12);
   the natural-narrows builder as the Dam site tool; tool entries `generate`, `landmarks`, `reach`
   and `place_narrows`.
 - **M9b, composition and variety**: intentions (the set, steering, checks, re-steer, drop records,
-  the within-intention measures), Variety and Surprise me (with Verticality's jumps), recipes, the
-  cycle signature and the axes in the openings, difficulty as positions (#62), the permanent
+  the within-intention measures), Variety and Surprise me (with Verticality's jumps), recipes, the woods
+  (D164), the cycle signature and the axes in the openings, difficulty as positions (#62), the permanent
   measures; tool entries `steer` and `check_intention`.
 - **M9c, score, names and candidates**: K = 3 with progressive preview; the score as a tiebreaker;
   names from the names study with read-back roles; "how it plays" cards; Variations (D143); the
@@ -757,7 +842,7 @@ Kyler approves version 2 by judgement from the ten briefs
 ([docs/sheets/design-v2.png](sheets/design-v2.png); a local page shows version 1, version 2 and
 high Verticality side by side). The ten maps to play are in
 [investigation/generative/out/v2/](../investigation/generative/out/v2/). This version's pending
-decisions are decisions-pending #56–#63.
+decisions are decisions-pending #56–#65.
 
 ## 20. Appendix: every one-height assumption in `src/`
 

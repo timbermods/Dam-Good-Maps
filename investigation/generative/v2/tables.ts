@@ -178,6 +178,20 @@ if (FORCED.some(([s]) => sets[s]?.intentions)) {
   p();
 }
 
+// Kyler's start and edge rules
+sec("rules");
+p("### Kyler's start and edge rules (rules.ts): the start's water, starting wood and the woods, edge walls");
+p();
+p(head(["Set", "Start water on another level", "D85 would fail", "Old tree count would fail", "Walk to the pump shore: median (p10–p90)", "Starting wood, logs: median (p10–p90)", "Woods: quick / mixed / slow", "Maps with an edge wall", "No mine site"]));
+for (const s of ["v2-128", "v2-128-vt85", "v2-128-v100", "v2-96", "v2-192", "v2-256", "v2-128-dreq", "v2-128-doff", "v1-128", "cur-128"]) {
+  const x = sets[s]?.all?.rules;
+  if (!x) continue;
+  const b = (v: any) => (v ? `${v.median} (${v.p10}–${v.p90})` : "–");
+  const w = x.woods ? `${pc(x.woods.quick)} / ${pc(x.woods.mixed)} / ${pc(x.woods.slow)}` : "–";
+  p(row([s, x.otherLevel === null ? "–" : pc(x.otherLevel), x.d85Fails === null ? "–" : pc(x.d85Fails), x.treesFails === null ? "–" : pc(x.treesFails), b(x.waterWalk), b(x.woodLogs), w, `${x.edgeWalls} of ${x.maps}`, `${x.noMine ?? "–"}`]));
+}
+p();
+
 // start drought
 sec("drought");
 p("### Drought-aware start water (the start keeps pumpable water through the first Normal drought, analytic)");

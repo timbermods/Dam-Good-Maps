@@ -6,7 +6,7 @@
 // 2. both validators: each map written with its project file, validated in the `generate` profile
 //    by the Python oracle (prototype/validate.py) and by the TypeScript validator re-reading the
 //    files, every verdict compared;
-// 3. no built dam walls (lib/ridge.ts) on the written map;
+// 3. no built dam walls (lib/ridge.ts) and no edge walls (rules.ts) on the written map;
 // 4. the runs model (terrain.ts): the terrain as runs gives the same voxels as today's writer, and
 //    format 3's field and base round-trip exactly.
 //
@@ -23,8 +23,9 @@ import { readTimber } from "../../../src/core/format/timber";
 import { voxelsFromHeights } from "../../../src/core/format/world";
 import { AVAILABLE_THEMES, type ThemeId } from "../../../src/core/spec/mapspec";
 import { validateMap } from "../../../src/core/validate/checks";
-import type { CheckResult } from "../../../src/core/validate/report";
+import { blocks, type CheckResult } from "../../../src/core/validate/report";
 import { damWalls } from "../lib/ridge";
+import { edgeWalls, sourcesInFlow, startingWood, startWaterWalk, STARTING_WOOD } from "./rules";
 import { arg, lowPriority, parseSeeds } from "../lib/paths";
 import { generateV2 } from "./generate";
 import { ColumnTerrain } from "./terrain";
@@ -59,7 +60,7 @@ mkdirSync(out, { recursive: true });
 // ---- 0. the source audit
 const banned = /Math\.(sin|cos|tan|exp|log|log2|log10|pow|atan|atan2|hypot|cbrt|random)\b|Date\.now|new Date\(|[\w)\]]\s*\*\*\s*[\w(]/;
 const auditHits: string[] = [];
-const generating = ["genome.ts", "field.ts", "levels.ts", "hydro.ts", "start.ts", "hazards.ts", "intentions.ts", "generate.ts", "terrain.ts", "narrows.ts", "cycle.ts"];
+const generating = ["genome.ts", "field.ts", "levels.ts", "hydro.ts", "start.ts", "hazards.ts", "intentions.ts", "generate.ts", "terrain.ts", "narrows.ts", "cycle.ts", "rules.ts"];
 for (const f of readdirSync(join("investigation", "generative", "v2")).filter((n) => generating.includes(n))) {
   const text = readFileSync(join("investigation", "generative", "v2", f), "utf8").split("\n");
   text.forEach((line, k) => {
@@ -73,6 +74,11 @@ console.log(`source audit: ${auditHits.length ? auditHits.join("; ") : "only + â
 let same = 0;
 let total = 0;
 let walls = 0;
+let edgeWallMaps = 0;
+let mineless = 0;
+let sourceMaps = 0;
+let ruleOk = 0;
+let d85Only = 0;
 let runsOk = 0;
 const paths: string[] = [];
 const hashes: { theme: string; seed: number; size: number; vt: string | null; sha: string; ms: number; format3Bytes: number }[] = [];
@@ -90,6 +96,15 @@ for (const size of sizes)
     // walls on the written map
     const w = damWalls(a.built.heights, a.built.W, a.built.H, a.built.water).length;
     if (w) walls++;
+    const ew = edgeWalls(a.built.heights, a.built.water, a.built.W, a.built.H).length;
+    if (ew) edgeWallMaps++;
+    // Kyler's resource rule (a mine site on every map) and D171 (sources start rivers)
+    if (!a.built.entities.some((e) => e.template === "UndergroundRuins")) mineless++;
+    if (sourcesInFlow(a.hydro.rivers, a.hydro.lakes, a.built.W)) sourceMaps++;
+    // Kyler's start water rule on the written map (the validators still carry D85's)
+    const sw = a.built.start ? startWaterWalk(a.built.heights, a.built.water, a.built.contamination, a.built.W, a.built.H, a.built.entities, a.built.start) : null;
+    const wd = a.built.start ? startingWood(a.built.heights, a.built.W, a.built.H, a.built.entities, a.built.start) : null;
+    if (sw && sw.distance <= a.spec.settings.start.rules.waterWithin && wd && wd.logs >= STARTING_WOOD.normal) ruleOk++;
     // runs: voxels and round trip
     let r = false;
     if (a.format3) {
@@ -105,14 +120,14 @@ for (const size of sizes)
     if (r) runsOk++;
     const f3 = a.format3 ? JSON.stringify(a.format3).length : 0;
     hashes.push({ theme, seed, size, vt: v ?? null, sha: ha, ms, format3Bytes: f3 });
-    console.log(`${theme} ${seed} ${size}${v ? ` vt${v}` : ""}: ${ok ? "same bytes" : "DIFFERENT"} ${ha.slice(0, 12)} (${ms} ms, ${a.attempts} attempt${a.attempts > 1 ? "s" : ""}), walls ${w}, runs ${r ? "ok" : "MISMATCH"}`);
+    console.log(`${theme} ${seed} ${size}${v ? ` vt${v}` : ""}: ${ok ? "same bytes" : "DIFFERENT"} ${ha.slice(0, 12)} (${ms} ms, ${a.attempts} attempt${a.attempts > 1 ? "s" : ""}), walls ${w}, edge walls ${ew}, start water ${sw && Number.isFinite(sw.distance) ? `${Math.round(sw.distance * 10) / 10} tiles' walk${sw.sameLevel ? "" : " (another level)"}` : "none"}, wood ${wd ? `${wd.logs} logs` : "none"}, runs ${r ? "ok" : "MISMATCH"}`);
     if (!a.bytes.length) continue;
     const p = join(out, `${theme}-${seed}-${size}${v ? `-vt${v}` : ""}.timber`);
     writeFileSync(p, a.bytes);
     writeFileSync(p.replace(/\.timber$/, ".damgoodmaps.json"), encodeProject(toDocument(a.spec, a.features, a.built, a.file)));
     paths.push(p);
   }
-console.log(`determinism: ${same}/${total} maps give the same bytes twice in one process and in a fresh one; dam walls on ${walls}; runs model ok on ${runsOk}/${total}`);
+console.log(`determinism: ${same}/${total} maps give the same bytes twice in one process and in a fresh one; dam walls on ${walls}; edge walls on ${edgeWallMaps}; no mine site on ${mineless}; a source inside a flow on ${sourceMaps}; Kyler's start water and starting wood rules hold on ${ruleOk}/${total}; runs model ok on ${runsOk}/${total}`);
 
 // ---- 2. parity with the Python oracle
 type Verdict = "pass" | "fail" | "na" | "approx";
@@ -139,14 +154,16 @@ let tsPass = 0;
 for (const p of paths) {
   const doc = JSON.parse(new TextDecoder().decode(gunzipSync(new Uint8Array(readFileSync(p.replace(/\.timber$/, ".damgoodmaps.json"))))));
   const v = validateMap(readTimber(new Uint8Array(readFileSync(p))), { profile: "generate", spec: doc.spec, features: doc.features });
-  if (v.report.passed) tsPass++;
+  // the generate profile with Kyler's start water rule in place of D85's start.water (rules.ts)
+  if (v.report.checks.every((c) => !blocks("generate", c) || c.id === "start.water" || c.id === "start.wood")) tsPass++;
+  if (v.report.checks.find((c) => c.id === "start.water")?.ok === false) d85Only++;
   const pc = py.get(p);
   if (!pc) {
     console.log(`no Python report for ${p}`);
     disagree++;
     continue;
   }
-  if (pc.every((c) => c.ok || c.na || c.approx || c.advisory)) pyPass++;
+  if (pc.every((c) => c.ok || c.na || c.approx || c.advisory || c.id === "start.water" || c.id === "start.wood")) pyPass++;
   const a = new Map(v.report.checks.map((c) => [c.id, c]));
   const b = new Map(pc.map((c) => [c.id, c]));
   for (const id of new Set([...a.keys(), ...b.keys()])) {
@@ -160,6 +177,6 @@ for (const p of paths) {
   }
 }
 for (const l of `${r.stderr ?? ""}`.split(/\r?\n/).filter((l) => /Error|Traceback/.test(l))) console.log(`PYTHON ${l}`);
-console.log(`parity: ${paths.length} maps, ${compared} checks compared, ${disagree} disagreements; generate profile passed: TypeScript ${tsPass}/${paths.length}, Python ${pyPass}/${paths.length}`);
-writeFileSync(join(out, "check.json"), JSON.stringify({ audit: auditHits, determinism: { same, total, hashes }, walls, runsOk, parity: { maps: paths.length, compared, disagree, tsPass, pyPass } }, null, 1));
-process.exit(same === total && disagree === 0 && auditHits.length === 0 && walls === 0 && runsOk === total ? 0 : 1);
+console.log(`parity: ${paths.length} maps, ${compared} checks compared, ${disagree} disagreements; generate profile passed (with Kyler's start water and starting wood rules for start.water and start.wood): TypeScript ${tsPass}/${paths.length}, Python ${pyPass}/${paths.length}; D85's start.water fails on ${d85Only}`);
+writeFileSync(join(out, "check.json"), JSON.stringify({ audit: auditHits, determinism: { same, total, hashes }, walls, edgeWallMaps, mineless, sourceMaps, ruleOk, runsOk, parity: { maps: paths.length, compared, disagree, tsPass, pyPass, d85Only } }, null, 1));
+process.exit(same === total && disagree === 0 && auditHits.length === 0 && walls === 0 && edgeWallMaps === 0 && mineless === 0 && sourceMaps === 0 && ruleOk === total && runsOk === total ? 0 : 1);

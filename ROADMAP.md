@@ -881,6 +881,10 @@ become recipes inside the system (design §3).
   - **One settle and a progressive preview** (design version 2 §13): the badwater hollow planned
     before the settle, the start chosen on the settled water, the field kept for re-plans; the page
     shows the land and its planned water first, then the settled water, then the checked map.
+  - **Kyler's start and edge rules on the generator's side** (design version 2 §7–§8; the core
+    rules come from `feature/start-edge-rules`): the settler walks to a pump shore over the slopes
+    the build derives, the resources planner aims at starting wood (D164), and the land runs on past
+    the map's edges so no edge wall forms.
   - **The Dam site tool rebuilt as a natural narrows** (D111; design version 2 §8): two uneven
     hillside spurs, refused with a reason where they would read as a wall; the generator never
     calls it.

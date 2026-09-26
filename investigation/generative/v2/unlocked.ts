@@ -15,7 +15,7 @@ import { cleanPitsAndSpikes, fillDryHollows, mergeSmallRegions } from "../proto/
 import { fieldV2 } from "./field";
 import { drawGenomeV2 } from "./genome";
 import { planHydro } from "./hydro";
-import { naturalRamps, snapLevelsV2 } from "./levels";
+import { naturalRamps, relaxEdges, snapLevelsV2 } from "./levels";
 import { vertical } from "./vertical";
 
 const seeds = parseSeeds(arg("seeds", "1-100"));
@@ -33,7 +33,9 @@ for (const theme of AVAILABLE_THEMES as readonly ThemeId[])
     const g = drawGenomeV2(theme, seed, W, W, 0, { vt, unlocked: true });
     const F = fieldV2(g, seed, W, W);
     const h = snapLevelsV2(F.E, g, seed, W, W);
+    relaxEdges(h, W, W);
     const hy = planHydro(F.E, h, g, seed, W, W, 0);
+    relaxEdges(h, W, W);
     const keep = new Uint8Array(W * W);
     for (let i = 0; i < W * W; i++) keep[i] = hy.water[i] === 1 || hy.water[i] === 2 ? 1 : 0;
     mergeSmallRegions(h, W, W, 4, keep);

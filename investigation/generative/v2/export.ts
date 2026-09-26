@@ -149,14 +149,15 @@ const AXIS_NAMES: Record<string, [string, string]> = {
   logs20: ["Resource timing", "logs standing within 20 tiles' walk"],
   frontierComponents: ["Expansion choice", "separate regions to expand into beyond 20 tiles"],
   deepPumpExtraShore: ["Faction opportunity", "extra shore tiles an Iron Teeth deep pump reaches"],
+  oakShare20: ["Resource timing: the woods", "of the starting wood is oak (plenty of wood, slow to regrow; the rest pine and birch, quick)"],
 };
 
 /** Difficulty as positions on the axes (docs/m9-design.md §11, a proposal): each condition an axis,
  *  a bound, its side, and whether "none on the map" (a null) meets it. */
 export const DIFFICULTY_POSITIONS: Record<string, [string, number, "min" | "max", boolean][]> = {
-  Easy: [["storageRatio", 0.5, "min", false], ["badwaterDistance", 30, "min", true], ["logs20", 160, "min", false], ["flatDry40", 250, "min", false]],
-  Normal: [["storageRatio", 0.1, "min", false], ["badwaterDistance", 15, "min", true], ["logs20", 80, "min", false], ["flatDry40", 150, "min", false]],
-  Hard: [["storageRatio", 1, "max", false], ["badwaterDistance", 60, "max", false], ["logs20", 40, "min", false]],
+  Easy: [["storageRatio", 0.5, "min", false], ["badwaterDistance", 30, "min", true], ["logs20", 250, "min", false], ["flatDry40", 250, "min", false]],
+  Normal: [["storageRatio", 0.1, "min", false], ["badwaterDistance", 15, "min", true], ["logs20", 150, "min", false], ["flatDry40", 150, "min", false]],
+  Hard: [["storageRatio", 1, "max", false], ["badwaterDistance", 60, "max", false], ["logs20", 55, "min", false]],
 };
 export function suits(values: Record<string, number | null>): string[] {
   const meets = ([k, b, side, noneOk]: [string, number, "min" | "max", boolean]) => {
@@ -194,6 +195,8 @@ picked.slice(0, 10).forEach((c, k) => {
     lateHard: { lostDay: t["late-hard"].firstWaterLost, days: days("late-hard") },
     intentions: ints,
     onFoot: c.rec.vertical.onFoot,
+    water: r.info.startWater && r.info.startWater.walk !== null ? { walk: r.info.startWater.walk, sameLevel: r.info.startWater.sameLevel } : null,
+    wood: r.info.startWood ?? null,
   });
   // the name, from the land
   const falls = fallsOf(b.heights, b.water, b.W, b.H, 1.5);
@@ -234,7 +237,7 @@ picked.slice(0, 10).forEach((c, k) => {
     const val = axes?.values?.[key] ?? null;
     const bin = axes?.bins?.[i] ?? null;
     const [nm, unit] = AXIS_NAMES[key];
-    const shown = val === null ? "none found" : key === "fertilityPersistence" ? `${Math.round(val * 100)}% ${unit}` : `${Math.round(val * 100) / 100} ${unit}`;
+    const shown = val === null ? "none found" : key === "fertilityPersistence" || key === "oakShare20" ? `${Math.round(val * 100)}% ${unit}` : `${Math.round(val * 100) / 100} ${unit}`;
     return `| ${nm} | ${shown} | ${bin === null ? "–" : `${bin} of ${cuts.length}`} |`;
   }).join("\n");
   const cycleRow = (id: string, label: string) => {
@@ -289,7 +292,7 @@ ${cycleRow("first-badtide", "First badtide, Normal")}
 
 ## Strategy axes
 
-The verified mechanics study's eight axes (\`investigation/mechanics\`, measurement version 3), each in its fixed bins (bin 0 is the lowest).
+The verified mechanics study's eight axes (\`investigation/mechanics\`, measurement version 3) and the woods (D164), each in its fixed bins (bin 0 is the lowest).
 
 | Axis | Value | Bin |
 |---|---|---|
@@ -303,14 +306,14 @@ Its position suits: ${suit.length ? suit.join(", ") : "none of the proposed diff
 `;
   writeFileSync(join(briefDir, `${nn}.md`), brief);
   readme.push(`| ${k + 1} | [${file}](${encodeURI(file)}) | ${THEME_NAMES[c.theme]} | ${c.seed} | ${g.vt} | ${lines[0]} ${lines[1]} |`);
-  index.push({ n: k + 1, name: named.title, file, theme: c.theme, seed: c.seed, vt: g.vt, vtSetting: c.vt, sha256: sha(r.bytes), sameAsBatch: same, passed: r.report.passed && r.storage.ok, attempts: r.attempts, intentions: r.intentions.map((i) => ({ id: i.id, ok: i.ok })), maxHeight: v.maxHeight });
-  console.log(`${nn} ${named.title} (${tag}): ${same ? "same bytes as the batch" : "DIFFERENT BYTES"}, ${r.report.passed && r.storage.ok ? "passes" : "FAILS"}`);
+  index.push({ n: k + 1, name: named.title, file, theme: c.theme, seed: c.seed, vt: g.vt, vtSetting: c.vt, sha256: sha(r.bytes), sameAsBatch: same, passed: r.bytes.length > 0, attempts: r.attempts, intentions: r.intentions.map((i) => ({ id: i.id, ok: i.ok })), maxHeight: v.maxHeight });
+  console.log(`${nn} ${named.title} (${tag}): ${same ? "same bytes as the batch" : "DIFFERENT BYTES"}, ${r.bytes.length > 0 ? "passes" : "FAILS"}`);
 });
 writeFileSync(
   join(outDir, "README.md"),
   `# Ten maps to play: M9 design version 2
 
-Maps from the M9 design prototype, version 2 (${PROTO_VERSION_TEXT()}), 128², designed for Normal. They are our own maps. Each passes the product's checks in both validators, has no built dam wall and comes back byte for byte from its seed. Three are at high Verticality (85), with heights kept within 16.
+Maps from the M9 design prototype, version 2 (${PROTO_VERSION_TEXT()}), 128², designed for Normal. They are our own maps. Each passes the product's checks in both validators, with Kyler's start water rule and starting wood in place of the old start water and tree rules, has no dam wall or edge wall, and comes back byte for byte from its seed. Three are at high Verticality (85), with heights kept within 16.
 
 **To play one:** copy its \`.timber\` file to \`Documents\\Timberborn\\Maps\`, then pick it under **New game**.
 

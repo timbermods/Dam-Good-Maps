@@ -36,6 +36,8 @@ const SAYS: Record<IntentionId, string> = {
   "cliff-falls-lake": "A waterfall plunges off a cliff into a big, round lake.",
 };
 
+import { woodKind, type StartingWood } from "./rules";
+
 export interface CardInput {
   opening: Opening;
   /** The exact model: the day the start loses pumpable water in the first Normal drought and in
@@ -45,12 +47,18 @@ export interface CardInput {
   intentions: IntentionId[];
   /** Dry land reached on foot from the start, as a share. */
   onFoot: number;
+  /** Kyler's start water rule: the walk to the pump shore, and whether it is on the start's level. */
+  water?: { walk: number; sameLevel: boolean } | null;
+  /** Starting wood (D164). */
+  wood?: StartingWood | null;
 }
 
 export function card2(x: CardInput): string[] {
   const f = x.opening.facts;
   const out: string[] = [];
-  out.push(`You start by ${KIND[f.waterKind]}, ${f.waterWalk <= 1 ? "right beside you" : `${f.waterWalk} tiles away on your level`}.`);
+  const w = x.water && !x.water.sameLevel ? x.water : null;
+  if (w) out.push(`You start above ${KIND[f.waterKind]}: a pump shore ${Math.max(1, Math.round(w.walk))} tiles' walk away, down a slope.`);
+  else out.push(`You start by ${KIND[f.waterKind]}, ${f.waterWalk <= 1 ? "right beside you" : `${f.waterWalk} tiles away on your level`}.`);
   const fn = x.firstNormal;
   const lh = x.lateHard;
   if (fn.lostDay === null) out.push(lh.lostDay === null ? `It lasts through the first drought and a ${lh.days}-day Hard one.` : `It lasts through the first drought; in a ${lh.days}-day Hard drought it is gone by day ${Math.max(1, lh.lostDay)}.`);
@@ -60,6 +68,7 @@ export function card2(x: CardInput): string[] {
   else out.push("No short dam holds a drought's water near the start: build levees or dig a reservoir.");
   if (f.threat?.kind === "badwater") out.push(`Badwater lies ${f.threat.dist} tiles ${f.threat.dir}${f.threat.upstream ? ", and some reaches your water" : ""}.`);
   else if (f.threat?.kind === "thorns") out.push(`Thorns bar the way ${f.threat.dir}, ${f.threat.dist} tiles out.`);
+  if (x.wood && x.wood.logs) out.push(`${x.wood.logs} logs of wood within 20 tiles' walk, ${woodKind(x.wood)}${x.wood.growing >= 10 ? `; plus about ${Math.round(x.wood.growing / 10) * 10} logs growing` : ""}.`);
   for (const id of x.intentions) out.push(SAYS[id]);
   const land = f.land === "wide" ? "wide, level land" : f.land === "some" ? "some level land" : "narrow ledges";
   const where = sides(f.openTo);

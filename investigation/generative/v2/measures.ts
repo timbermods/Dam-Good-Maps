@@ -210,6 +210,27 @@ function lightMeasures(maps: MapRec[]) {
   };
 }
 
+/** Kyler's start and edge rules (rules.ts) on a set's maps: where the start's water is, how many
+ *  maps pass only under the new rules, starting wood (D164) and the woods, and edge walls. */
+function rulesStats(maps: MapRec[]) {
+  const sw = maps.filter((m) => m.rec.info?.startWater);
+  const wd = maps.filter((m) => m.rec.wood);
+  const woodBin = (v: number) => (v < 0.35 ? "quick" : v < 0.75 ? "mixed" : "slow");
+  const bins: Record<string, number> = { quick: 0, mixed: 0, slow: 0 };
+  for (const m of wd) if (m.rec.wood.logs) bins[woodBin(m.rec.wood.oakShare)]++;
+  return {
+    maps: maps.length,
+    otherLevel: sw.length ? r3(sw.filter((m) => !m.rec.info.startWater.sameLevel).length / sw.length) : null,
+    d85Fails: sw.length ? r3(sw.filter((m) => !m.rec.info.startWater.d85).length / sw.length) : null,
+    waterWalk: sw.length ? band(sw.map((m) => m.rec.info.startWater.walk ?? NaN)) : null,
+    treesFails: maps.filter((m) => m.rec.info?.startWood).length ? r3(maps.filter((m) => m.rec.info?.startWood && !m.rec.info.startWood.trees85).length / maps.filter((m) => m.rec.info?.startWood).length) : null,
+    woodLogs: wd.length ? band(wd.map((m) => m.rec.wood.logs)) : null,
+    woods: wd.length ? Object.fromEntries(Object.entries(bins).map(([k, n]) => [k, r3(n / wd.length)])) : null,
+    edgeWalls: maps.filter((m) => (m.rec.info?.edgeWalls ?? m.rec.edgeWalls ?? 0) > 0).length,
+    noMine: maps.filter((m) => m.rec.objects && !m.rec.objects.UndergroundRuins).length,
+  };
+}
+
 /** Intentions: how often each was drawn, emerged, was re-steered or dropped, and the no-clone and
  *  no-archetype measures among the maps where it emerged (all themes together, D138's third
  *  principle). */
@@ -275,7 +296,7 @@ for (const s of sets) {
   const light = LIGHT.has(s);
   for (const t of [...new Set(maps.map((m) => m.theme))].sort()) byTheme[t] = { attempts: attempts[t], failedAttempts: failedBy[t], ...measureMaps(maps.filter((x) => x.theme === t), true, light) };
   const all: any = light ? lightMeasures(maps) : measureMaps(maps, false);
-  out.sets[s] = { maps: maps.length, light, all: { vertical: all.vertical, shape: all.shape, M5: all.M5 ?? null, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d ?? null, vtJumps: all.vtJumps ?? null }, byTheme, intentions: maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
+  out.sets[s] = { maps: maps.length, light, all: { vertical: all.vertical, shape: all.shape, M5: all.M5 ?? null, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d ?? null, vtJumps: all.vtJumps ?? null, rules: rulesStats(maps) }, byTheme, intentions: maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
   console.log(`measured ${s}: ${maps.length} maps`);
 }
 writeFileSync(join(HERE, "measures-v2.json"), JSON.stringify(out, null, 1) + "\n");

@@ -46,8 +46,9 @@ import { drawGenomeV2, EDITOR_TOP, type GenomeV2 } from "./genome";
 import { planBadwater } from "./hazards";
 import { planHydro, type Hydro } from "./hydro";
 import { checkIntention, INTENTIONS, startPreference, type FinalCtx, type IntentionId, type SettlerView } from "./intentions";
-import { footComponents, naturalRamps, snapLevelsV2, type Ramps } from "./levels";
+import { footComponents, naturalRamps, relaxEdges, snapLevelsV2, type Ramps } from "./levels";
 import { pickStart, shoreWalkFrom, type StartPick } from "./start";
+import { edgeWalls, sourcesInFlow, startingWood, startWalk, startWaterWalk, STARTING_WOOD, type StartingWood } from "./rules";
 import { fallsOf, reachWalk } from "./vertical";
 import { ColumnTerrain, type Format3Terrain } from "./terrain";
 
@@ -96,6 +97,14 @@ export interface ProtoInfoV2 {
   settles: number;
   /** The first Normal drought leaves pumpable clean water within the start's water rule. */
   startDrought: boolean | null;
+  /** Kyler's start water rule on the finished map: the walk to a pump shore (null: none within the
+   *  walk limit), whether that shore is on the start's own level, and whether D85's rule (the
+   *  validators' start.water) would also pass. */
+  startWater?: { walk: number | null; sameLevel: boolean; d85: boolean };
+  /** Edge walls found on the finished map (none on a passing map). */
+  edgeWalls?: number;
+  /** Starting wood (D164) on the finished map, and whether D85's tree count would also pass. */
+  startWood?: StartingWood & { trees85: boolean };
   genomes: number;
 }
 
@@ -118,10 +127,20 @@ function specFor(theme: ThemeId, seed: number, size: number, difficulty: Difficu
   spec.generatorVersion = PROTO2_VERSION;
   spec.accepted = { attempt, candidate: 0 };
   const s = spec.settings;
-  s.resources.forestDensity = g.resources.forest;
+  // oak woods stand thinner (few trees, 8 logs each), birch woods thicker (many trees, 1 log each)
+  s.resources.forestDensity = Math.round(Math.min(200, Math.max(50, g.resources.forest * (g.woods.kind === "oak" ? 0.8 : g.woods.kind === "birch" ? 1.45 : 1))));
   s.resources.berryBushes = g.resources.bushes;
   s.resources.ruins = g.resources.ruins;
   s.resources.groveSize = g.resources.grove;
+  // the woods (D164): the grove species the resources planner draws
+  s.resources.speciesMix = { pine: g.woods.pine, birch: g.woods.birch, oak: g.woods.oak, succulent: g.woods.succulent };
+  // starting wood (D164) counts the logs of grown trees; until the core rule lands, the resources
+  // planner's near-start tree target (the old tree count's setting) is set from it: the logs asked
+  // for, over the logs a grown tree of these woods yields (a third of the planted trees are young),
+  // with a margin, since each grove is one species
+  const live = g.woods.pine + g.woods.birch + g.woods.oak;
+  const perTree = live > 0 ? (2 * g.woods.pine + g.woods.birch + 8 * g.woods.oak) / live : 2;
+  s.start.rules.treesWithin20 = Math.min(400, Math.max(20, Math.ceil((1.15 * STARTING_WOOD[difficulty]) / (perTree * 0.65))));
   s.hazards.thornBelts = g.hazards.thorns ? "some" : "off";
   s.hazards.badwater = g.hazards.badwater === "none" ? "off" : g.hazards.ratio < 0.5 ? "low" : g.hazards.ratio < 0.85 ? "normal" : "high";
   if (g.recipe) spec.premise = g.recipe;
@@ -225,10 +244,12 @@ export function generateV2(theme: ThemeId, seed: number, size: number, difficult
     failures.push({
       attempt,
       failed: a.result.report.checks
-        .filter((c) => blocks("generate", c))
+        .filter((c) => blocks("generate", c) && c.id !== "start.water" && c.id !== "start.wood")
         .map((c) => c.id)
+        .concat(a.result.info.startWater && !(a.result.info.startWater.walk !== null && a.result.info.startWater.walk <= a.result.spec.settings.start.rules.waterWithin) ? ["start.water_walk"] : [])
+        .concat(a.result.info.startWood && a.result.info.startWood.logs < STARTING_WOOD[difficulty] ? ["start.starting_wood"] : [])
         .concat(a.result.storage.ok ? [] : ["water.storage_possible"])
-        .concat(a.result.info.stage !== "built" ? [a.result.info.stage === "dam wall" ? "terrain.dam_wall" : a.result.info.stage] : []),
+        .concat(a.result.info.stage !== "built" ? [a.result.info.stage === "dam wall" ? "terrain.dam_wall" : a.result.info.stage === "edge wall" ? "terrain.edge_wall" : a.result.info.stage] : []),
     });
   }
   return last!.result;
@@ -249,8 +270,12 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   const spec = specFor(theme, seed, size, difficulty, g, attempt);
   const rule = spec.settings.start.rules.waterWithin;
   const h = land.h0.slice();
+  // no edge walls: the land runs on past the edge, before the water is planned and after the
+  // channels are cut (Kyler's rule; rules.ts checks it on the finished map)
+  relaxEdges(h, W, H);
   lap("terrain");
   const hy = planHydro(land.F.E, h, g, seed, W, H, attempt);
+  relaxEdges(h, W, H);
   const keep = new Uint8Array(N);
   for (let i = 0; i < N; i++) keep[i] = hy.water[i] === 1 || hy.water[i] === 2 ? 1 : 0;
   mergeSmallRegions(h, W, H, 4, keep);
@@ -304,6 +329,8 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
     };
   };
   if (!hy.rivers.length) return fail("no rivers", null, false);
+  // D171: every source starts a river (rules.ts); a hydrology that puts one inside a flow is planned again
+  if (sourcesInFlow(hy.rivers, hy.lakes, W)) return fail("source in a flow", null, true);
   const policy: DroughtPolicy = opts.drought ?? "prefer";
   const foot = footComponents(h, W, H, keep);
   const minFoot = Math.round(Math.max(1200, 0.12 * N));
@@ -430,11 +457,25 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   file.metadata = mapMetadata(W, H, `${theme} prototype (design version 2), seed ${seed}. Made with the Dam Good Maps M9 design prototype ${PROTO2_VERSION}.`);
   let v: Validation = validateMap(file, { profile: "generate", spec, features, water: { model: built.waterModel, settled: built.settle } });
   lap("validate");
-  let storage = storagePossible(h, W, H, built, v, spec);
+  // Kyler's rules (rules.ts) stand in for two of the validators' start checks, which still carry
+  // D85's: start.water (the water on the start's own level) and start.wood (a tree count). Every
+  // other blocking check is the validators'.
+  const judge = (b: BuildResult, vv: Validation) => {
+    const walk0 = b.start ? startWalk(b.heights, W, H, b.entities, b.start) : null;
+    const sw = b.start && walk0 ? startWaterWalk(b.heights, b.water, b.contamination, W, H, b.entities, b.start, walk0) : { distance: Infinity, tile: -1, water: -1, sameLevel: false };
+    const wood: StartingWood = b.start && walk0 ? startingWood(b.heights, W, H, b.entities, b.start, walk0) : { logs: 0, growing: 0, bySpecies: { Oak: 0, Pine: 0, Birch: 0 }, trees: 0, oakShare: 0 };
+    const waterOk = sw.distance <= rule;
+    const woodOk = wood.logs >= STARTING_WOOD[difficulty];
+    const report = vv.report.checks.every((c) => !blocks("generate", c) || c.id === "start.water" || c.id === "start.wood" || (g.unlocked && c.id === "terrain.max_height")) && waterOk && woodOk;
+    const st = storagePossible(h, W, H, b, vv, spec, { ok: waterOk, tile: sw.water >= 0 ? [sw.water % W, Math.floor(sw.water / W)] : null });
+    return { sw, wood, waterOk, woodOk, report, storage: st };
+  };
+  let judged = judge(built, v);
+  let storage = judged.storage;
   lap("storage");
   // ---- intentions: check each on the finished map; a start intention is re-steered once
   const results: IntentionResult[] = [];
-  if (v.report.passed && storage.ok && g.intentions.length) {
+  if (judged.report && storage.ok && g.intentions.length) {
     let ctx = finalCtx(built, hy);
     let res = g.intentions.map((id) => ({ id, ...checkIntention(id, ctx) }));
     const startSide = new Set<IntentionId>(["under-cliff", "long-view", "meeting-waters", "falls-shield", "safe-water-uphill"]);
@@ -454,8 +495,9 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
             const file3 = toTimberFile(spec, bb);
             file3.metadata = file.metadata;
             const v3 = validateMap(file3, { profile: "generate", spec, features: f3, water: { model: bb.waterModel, settled: bb.settle } });
-            const s3 = storagePossible(h, W, H, bb, v3, spec);
-            if (v3.report.passed && s3.ok) {
+            const j3 = judge(bb, v3);
+            const s3 = j3.storage;
+            if (j3.report && s3.ok) {
               const prevOk = new Set(res.filter((r) => r.ok).map((r) => r.id));
               pick = p3;
               info.start = p3;
@@ -464,6 +506,7 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
               built = bb;
               file = file3;
               v = v3;
+              judged = j3;
               storage = s3;
               ctx = finalCtx(built, hy);
               res = g.intentions.map((id) => ({ id, ...checkIntention(id, ctx) }));
@@ -477,14 +520,11 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
     lap("intentions");
   }
   // ---- the drought-aware start on the real water
-  if (v.report.passed && built.start) {
+  if (judged.report && built.start) {
     const kept = droughtStorage(built.waterModel, built.water, FIRST_DROUGHT_DAYS);
-    const wk = shoreWalkFrom(built.heights, W, H, kept, built.contamination, rule);
-    let best = Infinity;
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) best = Math.min(best, wk[(built.start.y + dy) * W + built.start.x + dx]);
-    info.startDrought = best <= rule;
+    info.startDrought = startWaterWalk(built.heights, kept, built.contamination, W, H, built.entities, built.start).distance <= rule;
   }
-  const walls = v.report.passed && storage.ok ? damWalls(built.heights, W, H, built.water) : [];
+  const walls = judged.report && storage.ok ? damWalls(built.heights, W, H, built.water) : [];
   if (walls.length) info.stage = "dam wall";
   const droughtFail = policy === "require" && info.startDrought === false;
   if (droughtFail && info.stage === "planned") info.stage = "start.drought_water";
@@ -492,13 +532,22 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   // limit (22 for Verticality 70+), read here; and the build's cap at 16 (features/raster/terrain.ts),
   // which the prototype cannot lift (no src/ change), so unlocked maps are measured before the build
   // (unlocked.ts)
-  const reportPassed = v.report.passed || (g.unlocked && v.report.checks.every((c) => !blocks("generate", c) || c.id === "terrain.max_height"));
-  const passed = reportPassed && storage.ok && !walls.length && !droughtFail && (g.unlocked || maxOf(built.heights) <= EDITOR_TOP);
+  const sw = judged.sw;
+  info.startWater = { walk: Number.isFinite(sw.distance) ? Math.round(sw.distance * 10) / 10 : null, sameLevel: sw.sameLevel, d85: !!v.report.checks.find((c) => c.id === "start.water")?.ok };
+  info.startWood = { ...judged.wood, trees85: !!v.report.checks.find((c) => c.id === "start.wood")?.ok };
+  // Kyler's resource rules: at least one mine site on every map
+  const mines = built.entities.filter((e) => e.template === "UndergroundRuins").length;
+  if (!mines && info.stage === "planned") info.stage = "no mine site";
+  const edges = edgeWalls(built.heights, built.water, W, H);
+  info.edgeWalls = edges.length;
+  if (edges.length && info.stage === "planned") info.stage = "edge wall";
+  const reportPassed = judged.report;
+  const passed = reportPassed && storage.ok && !walls.length && !edges.length && mines > 0 && !droughtFail && (g.unlocked || maxOf(built.heights) <= EDITOR_TOP);
   if (info.stage === "planned") info.stage = "built";
   info.settles = settles;
   const bytes = passed ? writeTimber(file) : new Uint8Array();
   lap("write");
-  const replannable = !passed && !walls.length && same && (info.stage === "built" || info.stage === "start.drought_water");
+  const replannable = !passed && !walls.length && same && (info.stage === "built" || info.stage === "start.drought_water" || info.stage === "no mine site");
   return {
     passed,
     replannable,
@@ -712,11 +761,10 @@ function whyNot(b: BuildResult, pick: StartPick, rule: number): string {
   return `walk ${w} (planned ${Math.round(pick.shoreWalk)}), ${wet} wet tiles in the ring`;
 }
 
-/** The start still walks to clean pumpable water on its own level within the rule. */
+/** The start still walks to a pump shore within the rule (Kyler's rule, rules.ts), with a margin
+ *  for the slopes and objects the finished build adds. */
 function startWaterOk(b: BuildResult, pick: StartPick, rule: number): boolean {
-  const d = shoreWalkFrom(b.heights, b.W, b.H, b.water, b.contamination, rule);
-  let w = Infinity;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) w = Math.min(w, d[(pick.y + dy) * b.W + pick.x + dx]);
+  const w = startWaterWalk(b.heights, b.water, b.contamination, b.W, b.H, b.entities, pick).distance;
   // and the start's ring stays dry
   let wet = false;
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (b.water[(pick.y + dy) * b.W + pick.x + dx] > 0.001) wet = true;

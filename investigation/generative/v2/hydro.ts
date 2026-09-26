@@ -5,7 +5,7 @@
 // drops gather into one fall at the head of the reach, and the river below cuts down to the foot of
 // the reach, as a waterfall retreats and leaves a gorge (`knick` sets the reach, longer as
 // Verticality rises). And spring lakes: a closed hollow of 100+ tiles that no river crosses may
-// hold a spring at its lowest point (`lakeSprings`, by theme), so the hollow fills to its rim and
+// hold a spring at its head (`lakeSprings`, by theme; D171: never inside the lake), so the hollow fills to its rim and
 // spills out as a stream: lakes where the land holds water, not only where a river happens to
 // pass (task b: water over the workshop's range). Version 1's notes follow.
 //
@@ -301,11 +301,13 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?
       if (trace({ cell: i, kind: "spring", flow: 0 })) n++;
     }
   }
-  // spring lakes: the lowest point of a big closed hollow no river crosses
+  // spring lakes: a big closed hollow no river crosses gets a spring at its head, just above its
+  // highest edge, so the water begins above the lake it makes and runs down into it (D171: a
+  // source starts a river, never inside a lake or a river)
   if ((g.lakeSprings ?? 0) > 0) {
     const fl = drainage(h, W, H, { eight: false });
     const seen = new Uint8Array(N);
-    const hollows: { low: number; size: number }[] = [];
+    const hollows: { low: number; size: number; head: number }[] = [];
     for (let s0 = 0; s0 < N; s0++) {
       if (seen[s0] || !(fl.filled[s0] - h[s0] >= 1)) continue;
       const q = [s0];
@@ -326,15 +328,45 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?
           q.push(j);
         }
       }
-      if (q.length >= 100 && !q.some((i) => owner[i] >= 0)) hollows.push({ low, size: q.length });
+      if (q.length < 100 || q.some((i) => owner[i] >= 0)) continue;
+      // the head: the hollow's highest edge tile, then up to three tiles further uphill
+      let head = -1;
+      for (const i of q) {
+        const x = i % W;
+        const y = (i - x) / W;
+        let edge = false;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          if (!(fl.filled[yy * W + xx] - h[yy * W + xx] >= 1)) edge = true;
+        }
+        if (edge && (head < 0 || h[i] > h[head])) head = i;
+      }
+      for (let step = 0; step < 3 && head >= 0; step++) {
+        const x = head % W;
+        const y = (head - x) / W;
+        let up = -1;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const xx = x + dx;
+          const yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+          const j = yy * W + xx;
+          if (owner[j] >= 0 || h[j] <= h[head]) continue;
+          if (up < 0 || h[j] > h[up]) up = j;
+        }
+        if (up < 0) break;
+        head = up;
+      }
+      if (head >= 0) hollows.push({ low, size: q.length, head });
     }
     hollows.sort((a, b) => b.size - a.size || a.low - b.low);
     for (const hl of hollows.slice(0, 4)) {
       if (rng.float() >= (g.lakeSprings ?? 0)) continue;
-      const x = hl.low % W;
-      const y = (hl.low - x) / W;
+      const x = hl.head % W;
+      const y = (hl.head - x) / W;
       if (x < 6 || y < 6 || x > W - 7 || y > H - 7) continue;
-      trace({ cell: hl.low, kind: "spring", flow: 0 });
+      trace({ cell: hl.head, kind: "spring", flow: 0 });
     }
   }
   // the map's flow goes to the heads that made it: inflows carry most, springs a share each

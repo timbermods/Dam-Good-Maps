@@ -281,4 +281,33 @@ function cutRamp(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: U
   }
 }
 
+/** The land runs on past the map's edge (Kyler, no edge walls): erosion never lowers the border
+ *  tiles (they are outlets with nowhere to drain), and a channel's floor may stop a tile short of
+ *  the edge, so a thin raised band can be left along it. Each of the two outer rows is lowered to
+ *  the inward profile carried on (the next tile in, plus its rise toward the edge, never a fall), so
+ *  land that rises toward the edge keeps rising and a band standing over the land inside it goes.
+ *  Never raises a tile. Returns the number of tiles lowered. */
+export function relaxEdges(h: Uint8Array, W: number, H: number): number {
+  let n = 0;
+  const edges: [number, (k: number, t: number) => number][] = [
+    [H, (k, t) => k * W + t],
+    [H, (k, t) => k * W + (W - 1 - t)],
+    [W, (k, t) => t * W + k],
+    [W, (k, t) => (H - 1 - t) * W + k],
+  ];
+  for (const [len, at] of edges)
+    for (let k = 0; k < len; k++)
+      for (let t = 1; t >= 0; t--) {
+        const a = h[at(k, t + 1)];
+        const b = h[at(k, t + 2)];
+        const cap = a + Math.max(0, a - b);
+        const i = at(k, t);
+        if (h[i] > cap) {
+          h[i] = cap;
+          n++;
+        }
+      }
+  return n;
+}
+
 export { N4 };

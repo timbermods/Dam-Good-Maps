@@ -65,6 +65,33 @@ export interface GenomeV2 extends Genome {
   intentions: IntentionId[];
   /** A variation index (D143): 0 for the map itself. */
   variation: number;
+  /** The woods (D164: starting wood counts logs by species): the grove species weights the
+   *  resources planner draws from, and the character they give the map. Oak-rich woods hold
+   *  plenty of wood and regrow slowly (30 days); birch-rich ones little a tree and regrow fast
+   *  (7 days); mixed is the product's default mix. */
+  woods: { kind: "oak" | "mixed" | "birch"; pine: number; birch: number; oak: number; succulent: number };
+}
+
+/** How often each theme's woods lean oak-rich or birch-rich at Variety 70 (the rest are mixed). */
+const WOODS: Record<ThemeId, [number, number]> = {
+  riverValley: [0.3, 0.25],
+  canyon: [0.35, 0.2],
+  highlands: [0.4, 0.2],
+  lakeBasin: [0.25, 0.35],
+  delta: [0.2, 0.4],
+  islands: [0.3, 0.3],
+};
+
+/** The woods, from their own stream (so the other draws stay as they were). */
+export function drawWoods(theme: ThemeId, seed: number, attempt: number, vy: number): GenomeV2["woods"] {
+  const rng = stream(seed, "woods", attempt);
+  const [po, pb] = WOODS[theme];
+  const k = Math.min(1.25, vy / 70);
+  const r = rng.float();
+  const j = (lo: number, hi: number) => Math.round(lo + (hi - lo) * rng.float());
+  if (r < po * k) return { kind: "oak", oak: j(55, 75), pine: j(15, 30), birch: j(3, 12), succulent: j(0, 6) };
+  if (r < (po + pb) * k) return { kind: "birch", birch: j(45, 65), pine: j(25, 40), oak: j(0, 8), succulent: j(0, 6) };
+  return { kind: "mixed", pine: j(38, 56), birch: j(20, 34), oak: j(14, 26), succulent: j(3, 9) };
 }
 
 interface Range {
@@ -388,6 +415,7 @@ export function drawGenomeV2(theme: ThemeId, seed: number, W: number, H: number,
     benchPhase: rng.float(),
     intentions: [],
     variation,
+    woods: { kind: "mixed", pine: 47, birch: 27, oak: 20, succulent: 6 },
   };
   g.terrace.step = (() => {
     const s = stepsFor(p.terrace.step, vt);
@@ -426,6 +454,7 @@ export function drawGenomeV2(theme: ThemeId, seed: number, W: number, H: number,
       applyRecipe(g, name, rng, W, H, tall);
     }
   }
+  g.woods = drawWoods(theme, seed, attempt, vy);
   // intentions: outcomes the processes are steered toward, never built (D138)
   g.intentions = o.intentions === undefined || o.intentions === null ? drawIntentions(theme, vt, rng) : o.intentions.slice();
   for (const id of g.intentions) nudgeFor(id)(g, rng, W, H);
