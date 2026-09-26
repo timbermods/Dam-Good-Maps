@@ -66,7 +66,12 @@ export type Step =
   | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] | Where }
   | { op: "moveStart"; to: [number, number] | Where; bringFood?: boolean }
   | { op: "deleteFeature"; target: string }
+  /** Refused (D196: water is never an object); kept for the refusal's advice. */
   | { op: "setRiverBadwater"; target: string; badwater: boolean }
+  /** Sources' strength (D196: a river's flow is its sources' strength): the sources of a river (its
+   *  mouth on the map's edge), at a tile, or in a place; each set to `strength`, or `flow` shared
+   *  among them. */
+  | { op: "changeSource"; river?: string; at?: [number, number]; where?: Where; strength?: number; flow?: number }
   | { op: "sculpt"; mode: "raise" | "lower" | "flatten" | "smooth"; where: Where; amount?: number; level?: number }
   /** The editor's terrain brushes (live editing; the brush kit is the editor's core, D182),
    *  painted over a place: all of it, or with `size` a round patch of it near its middle; edges
@@ -77,7 +82,7 @@ export type Step =
   | { op: "brush"; tool: BrushTool; where?: Where; path?: Point[]; amount?: number; level?: number; passes?: number; size?: SizeWord | number; edges?: "slope" | "cliff" }
   | { op: "undoLast" };
 
-export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
+export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "changeSource", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "sculpt", "brush", "undoLast"] as const;
 
 /** Steps only a corpus map's setup may use: its drawn creeks and lakes, as saved documents from
  *  before D184 hold them. Claude is never offered them. */
@@ -97,6 +102,9 @@ export function withSetupSteps<T>(fn: () => T): T {
 /** Hills and valleys come from the brushes (PLAN §20 D182): what a step that asks for a shape
  *  object is told. */
 const NO_LANDFORMS = "hills, plateaus, ridges, canyons and valleys come from the brushes: use the brush step (raise, lower, flatten, smooth, naturalize), with where, size, amount or level, and edges slope or cliff";
+/** Water is never an object (D196): what a step that treats a river or a lake as one is told. */
+const NO_WATER_OBJECTS = "water is never an object: a river's flow is its sources' strength (changeSource), clean or bad belongs to each source (to make water bad, add a badwater source where it should start, with addSource kind badwater), and water changes only through its sources and its land (brush)";
+
 /** Rivers and lakes come from the land and the water (D184). */
 const NO_RIVERS = "rivers and lakes come from the land and the water: carve a river with a brush step, tool lower, along a path that starts in or beside water or beside a source (its bed keeps flowing downhill and the water follows it); for a lake, dig a hollow with a lower brush and fill it with addSource and fillHollow";
 
@@ -168,6 +176,7 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
   const s = step as Record<string, unknown>;
   if (s.op === "addLandform" || s.op === "resizeFeature") return [NO_LANDFORMS];
   if (SETUP_OPS.includes(String(s.op)) && !setupSteps) return [NO_RIVERS];
+  if (s.op === "setRiverBadwater") return [NO_WATER_OBJECTS];
   if (!STEP_OPS.includes(s.op as (typeof STEP_OPS)[number]) && !SETUP_OPS.includes(String(s.op))) return [`unknown op ${String(s.op).slice(0, 40)}: use one of ${STEP_OPS.join(", ")}`];
   if (JSON.stringify(s).length > 4000) return [`the ${s.op} step is too large`];
   if (s.handle !== undefined && !(str(s.handle, 40) && /^[a-z0-9][a-z0-9-]*$/i.test(String(s.handle)))) return ["handle is a short name of letters, digits and dashes"];
@@ -246,8 +255,14 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       return checkPlace(s.to, "to", W, H);
     case "deleteFeature":
       return str(s.target, 80) ? [] : ["target names the feature"];
-    case "setRiverBadwater":
-      return str(s.target, 80) && typeof s.badwater === "boolean" ? [] : ["setRiverBadwater needs a target river and badwater true or false"];
+    case "changeSource":
+      if (s.river === undefined && s.at === undefined && s.where === undefined) return ["changeSource needs a river (its sources), at [x, y] or a where"];
+      if (s.river !== undefined && !str(s.river, 80)) return ["river names a river"];
+      if (s.at !== undefined && !(Array.isArray(s.at) && s.at.length === 2 && num(s.at[0], 0, W - 1) && num(s.at[1], 0, H - 1))) return ["at is a tile [x, y] on the map"];
+      if (s.strength === undefined && s.flow === undefined) return ["changeSource needs a strength (each source's) or a flow (shared among them)"];
+      if (s.strength !== undefined && !num(s.strength, 0.25, 72)) errs.push("strength is 0.25–8 blocks/s for a water source (its one tile holds 8 at most), 0.25–72 for a badwater source");
+      if (s.flow !== undefined && !num(s.flow, 0.1, 64)) errs.push("flow is 0.1–64 blocks/s in all");
+      return [...errs, ...checkPlace(s.where, "where", W, H)];
     case "sculpt":
       if (!["raise", "lower", "flatten", "smooth"].includes(String(s.mode))) return ["mode is raise, lower, flatten or smooth"];
       if (s.amount !== undefined && !num(s.amount, 1, 8)) errs.push("amount is 1–8 levels");
@@ -388,19 +403,8 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       if (typeof f === "string") return fail(step, [f]);
       const set = step.set;
       const done = (ops: EditOp[], report: string[]): Expanded => ({ ok: true, step, ops, made: [], report, resolved: { target: f.id, set }, errors: [], tiles: 0 });
-      if (f.kind === "lake") {
-        if (f.params.planned || f.params.river || !f.params.outlet.path) return fail(step, ["this lake is part of the generated layout (a reservoir site or its river's basin): change the settings, or dam it"]);
-        const spring = "spring" in f.params.inflow ? f.params.inflow.spring : 0;
-        const r = planLake({ outline: f.params.outline, level: set.level ?? f.params.outlet.sill, floorDepth: set.floorDepth ?? f.params.floorDepth, spring: set.spring ?? spring }, planContextOf(s, f.id), f.id, f.origin);
-        if (!r.ok) return fail(step, r.errors);
-        return done([{ op: "updateFeature", params: { id: f.id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }], r.report);
-      }
-      if (f.kind === "river") {
-        if (!f.params.banks) return fail(step, ["the generated river follows the map's settings: change River flow with changeSettings instead"]);
-        const r = planRiver({ points: f.params.path, flow: set.flow ?? f.params.flow, width: set.width ?? f.params.width, bedDepth: f.params.bedDepth }, planContextOf(s, f.id), f.id, f.origin);
-        if (!r.ok) return fail(step, r.errors);
-        return done([{ op: "updateFeature", params: { id: f.id, patch: { params: replacePatch(f.params, r.feature.params) as Record<string, unknown> } } }, ...r.ops.slice(1)], r.report);
-      }
+      // water is never an object (D196): a lake is deepened with the brush, a river through its sources
+      if (f.kind === "river" || f.kind === "lake") return fail(step, [NO_WATER_OBJECTS]);
       if (f.kind === "landform") return fail(step, [NO_LANDFORMS]);
       if ((f.kind === "forest" || f.kind === "berryPatch") && set.density !== undefined) return done([{ op: "updateFeature", params: { id: f.id, patch: { params: { density: set.density } } } }], [`density ${set.density}`]);
       return fail(step, [`a ${f.kind} has none of these to change: ${Object.keys(set).join(", ")}`]);
@@ -470,6 +474,7 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     case "moveFeature": {
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
+      if (f.kind === "river" || f.kind === "lake") return fail(step, [NO_WATER_OBJECTS]);
       if (f.kind === "start") return expandStep(s, conv, { op: "moveStart", to: step.to ?? [anchorOf(v, f)[0] + step.by![0], anchorOf(v, f)[1] + step.by![1]] });
       // a set piece moved to a place: the app picks a site there with the piece's own builder
       // values (a spring keeps its strength, a fall its width and drop), checked like any site,
@@ -499,20 +504,16 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     case "deleteFeature": {
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
+      if (f.kind === "river" || f.kind === "lake") return fail(step, [NO_WATER_OBJECTS]);
       if (f.kind === "start") return fail(step, ["the start cannot be deleted: every map needs exactly one; move it instead"]);
       const r = deleteEdit(s, f.id);
       if (!r.ok) return fail(step, r.errors);
       return { ok: true, step, ops: r.ops, made: [], report: [], resolved: { target: f.id, kind: f.kind === "setPiece" ? f.params.kind : f.kind }, errors: [], tiles: 0 };
     }
-    case "setRiverBadwater": {
-      // the river feature stores the flag, but no build step reads it yet: the river would stay
-      // clean, and the step would claim a change that never happens
-      if (step.badwater) return fail(step, ["a river's badwater switch is not built yet (the map's water ignores it): add a badwater spring (badwaterBasin) whose outlet joins the river instead"], { note: "a badwater spring beside the river, draining into it", step: { op: "addSetPiece", kind: "badwaterBasin", where: { along: step.target, within: 20 }, keepReservoirsClean: true } });
-      const f = targetFeature(s, conv, step.target);
-      if (typeof f === "string") return fail(step, [f]);
-      if (f.kind !== "river") return fail(step, [`${step.target} is not a river`]);
-      return { ok: true, step, ops: [{ op: "updateFeature", params: { id: f.id, patch: { params: { badwater: step.badwater } } } }], made: [], report: step.badwater ? ["the river now carries badwater: it stops moistening the soil, and trees along it die"] : ["the river runs clean"], resolved: { target: f.id }, errors: [], tiles: 0 };
-    }
+    case "setRiverBadwater":
+      return fail(step, [NO_WATER_OBJECTS]);
+    case "changeSource":
+      return expandChangeSource(s, conv, step);
     case "brush":
       return expandBrush(s, conv, step);
     case "sculpt": {
@@ -530,6 +531,44 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
 }
 
 // ---------------------------------------------------------------------------------- sources
+
+/** Sources' strength (D196): a river's flow is its sources' strength, so a river is changed through
+ *  its sources (its mouth on the map's edge); a tile's source, or the sources in a place, the same.
+ *  Each is set to `strength`, or `flow` is shared among them. */
+function expandChangeSource(s: MapSession, conv: Conversation, step: Extract<Step, { op: "changeSource" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const b = s.built;
+  const isSource = (t: string) => t === "WaterSource" || t === "BadwaterSource";
+  let list = b.entities.filter((e) => isSource(e.template));
+  const resolved: Record<string, unknown> = {};
+  if (step.river !== undefined) {
+    const f = targetFeature(s, conv, step.river);
+    if (typeof f === "string") return fail(step, [f]);
+    if (f.kind !== "river") return fail(step, [`${step.river} is not a river`]);
+    list = list.filter((e) => e.owner === f.id);
+    resolved.river = f.id;
+    if (!list.length) return fail(step, [`${step.river} has no source of its own: it is fed by the water it joins; change the sources upstream`]);
+  } else if (step.at) {
+    const [x, y] = [Math.round(step.at[0]), Math.round(step.at[1])];
+    list = list.filter((e) => entityTiles(e).some(([tx, ty]) => Math.abs(tx - x) <= 1 && Math.abs(ty - y) <= 1));
+    resolved.at = [x, y];
+    if (!list.length) return fail(step, [`no source at (${x}, ${y})`]);
+  } else {
+    const where = resolve(viewOf(s), step.where!, refContext(conv));
+    Object.assign(resolved, { place: where.place, assumptions: where.assumptions });
+    if (!where.ok) return fail(step, where.errors, undefined, resolved);
+    list = list.filter((e) => entityTiles(e).some(([tx, ty]) => tx >= 0 && ty >= 0 && tx < W && ty < H && where.mask[ty * W + tx]));
+    if (!list.length) return fail(step, ["no source there"], undefined, resolved);
+  }
+  const each = step.strength ?? step.flow! / list.length;
+  const bad = list.some((e) => e.template === "BadwaterSource");
+  if (!bad && each > OFFICIAL_FLOW) return fail(step, [`each of the ${list.length} source${list.length > 1 ? "s" : ""} would need ${Math.round(each * 100) / 100} blocks/s; a water source's one tile holds 8 at most: add more sources (addSource) for more water`], undefined, resolved);
+  const ops: EditOp[] = list.map((e) => ({ op: "setEntityProps", params: { id: e.id, components: { WaterSource: { SpecifiedStrength: each, CurrentStrength: each } } } }) as EditOp);
+  const v = Math.round(each * 100) / 100;
+  const total = Math.round(each * list.length * 100) / 100;
+  const report = [`${list.length > 1 ? `${list.length} sources at ${v} blocks/s each, ${total} in all` : `the source at ${v} blocks/s`}${each > OFFICIAL_FLOW ? ": stronger than any official map" : ""}`];
+  return { ok: true, step, ops, made: [], report, resolved: { ...resolved, sources: list.length, each: v, total }, errors: [], tiles: 0 };
+}
 
 /** A water or badwater source (the editor's source tools): on the tile given, or at a place: its
  *  middle-most dry tile, or with fillHollow the lowest point of the hollow there (a spring that

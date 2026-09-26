@@ -96,6 +96,10 @@ export const WATER = {
   badDeep: [0.13, 0.06, 0.05] as Rgb,
   badVein: [0.98, 0.5, 0.16] as Rgb,
   badFoam: [0.66, 0.5, 0.36] as Rgb,
+  /** The brush ring's water-blue when smart Lower carves a bed the water follows (D198), and the
+   *  thin dark outline every ring has, so it holds on bright shallows and pale ground. */
+  ring: [0.35, 0.82, 1.0] as Rgb,
+  ringEdge: [0.0, 0.01, 0.03] as Rgb,
 } as const;
 
 /** Contamination as a layer (Kyler, 2026-09-25: as in the game): red-orange veins over the ground's

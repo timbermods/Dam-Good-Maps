@@ -245,6 +245,8 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
   - **Approximate under roofs** (imported caves, tunnels, overhang bridges, badtide drains). There the editor keeps the water the file stores, shows a "preview approximate" overlay, and does not re-simulate unless the user edits nearby. As built (M8, D100): the tiles under roofs keep the file's water in the view and the export, every other tile is simulated, and **Show → Water under roofs** marks them; the roofed columns are never edited (D40), so they are not simulated again.
   - **Steady state in temperate weather.** Delayed sources and badtide drains are off, seeps stop at 0.8 deep, and aquifers run only under a powered drill. Drought is shown analytically: what the basins still hold after N days.
   - **Speed:** after an edit the preview re-settles from its previous state. The target is ≤ 2 s for a local edit on 256². A full re-settle runs in the background with progress. As built (M8, D99): 1.3–1.4 s in Chrome on the slowest themes, at most 1.75 s in Node; the background check is debounced by 0.7 s and dropped when a newer edit arrives.
+  - **While a stroke is painted** (D197): the page sends the stroke's ground to the worker every frame it changes, and the worker runs the water on it at once (the simulation steps only wet tiles and their neighbours, about 0.7–1.6 ms a tick on 256², so the water nearest the edit is what moves first) and sends each frame as soon as the water has answered. On release, the stroke's operation carries that water on into the journey; Esc drops it. On 256² River Valley, the water in a new channel moves 25–36 ms after its ground changes (it moved 80–95 ms after the release before, and not at all while painting).
+  - **The journey's speed** (D197): slower, normal (the default, three times the slowest: a small edit settles nearby in a second or two), faster, or instant (the latest water there is).
   - **Export:** the exported file always gets the canonical settle (`PLAN.md` §19.7), with a progress bar, so an export never depends on the preview's history.
 
 ## Stamps and symmetry (M10, M11)
@@ -425,7 +427,14 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - chunked meshing (32×32 chunks) with remeshing of dirty chunks only;
   - a voxel mesher only for columns with more than one solid run (1% of official map columns, up to 58% on one workshop map);
   - instanced trees, bushes and ruins;
-  - picking against the heightfield and the features for direct manipulation.
+  - picking against the heightfield and the features for direct manipulation;
+  - the game's layers (D196): one uniform cuts the world above a level; the terrain's vertices are
+    clamped to it (walls above it fold away, the cut tops lie on it, hatched), water and objects above
+    it are not drawn, and picking lands on the cut;
+  - clear water (D196): one uniform makes clean water nearly transparent, and badwater half so, in its
+    own colour with diagonal stripes;
+  - each source's upwelling (D196): a texture of the sources' middle tiles, read by the water shader
+    for its rings and bubbles, and brighter for the sources the water under the pointer comes from.
 - Keep worker messages small: send dirty regions and compact arrays, not whole documents.
 - Hosting: a static site on GitHub Pages under the timbermods organization, built from the Dam Good Maps repository. The same code also builds the Claude artifact edition (Claude integration).
 

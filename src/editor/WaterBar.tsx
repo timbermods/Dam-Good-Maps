@@ -3,7 +3,7 @@
 // badtide to watch.
 // Built from the shared bar and button styles (D176).
 
-import type { WaterPlayer } from "./waterPlayer";
+import { WATER_SPEEDS, type WaterPlayer, type WaterSpeed } from "./waterPlayer";
 import type { Hazard } from "../core/sim/weather";
 
 export interface WaterBarProps {
@@ -17,7 +17,7 @@ export interface WaterBarProps {
   onWeather(h: Hazard): void;
 }
 
-const SPEEDS = [1, 2, 4];
+const SPEED_NAMES: Record<WaterSpeed, string> = { slower: "Slower", normal: "Normal", faster: "Faster", instant: "Instant" };
 
 export function WaterBar({ player: p, follow, onFollow, weather, onWeather }: WaterBarProps) {
   const progress = p.progress;
@@ -30,9 +30,16 @@ export function WaterBar({ player: p, follow, onFollow, weather, onWeather }: Wa
       <button type="button" class="icon-button" aria-pressed={p.paused} title={p.paused ? "Play the water" : "Pause the water"} onClick={() => p.pause(!p.paused)}>
         <span class="icon-word">{p.paused ? "Play" : "Pause"}</span>
       </button>
-      <button type="button" class="icon-button" title="The water's speed" aria-label={`Speed ${p.speed}×`} onClick={() => p.setSpeed(SPEEDS[(SPEEDS.indexOf(p.speed) + 1) % SPEEDS.length])}>
-        <span class="icon-word">{p.speed}×</span>
-      </button>
+      <label class="bar-group" title="How fast the water flows after a change (Instant: straight to where it settles)">
+        Speed
+        <select aria-label="Water speed" value={p.speedName} onChange={(e) => p.setSpeed((e.target as HTMLSelectElement).value as WaterSpeed)}>
+          {WATER_SPEEDS.map((v) => (
+            <option key={v} value={v}>
+              {SPEED_NAMES[v]}
+            </option>
+          ))}
+        </select>
+      </label>
       <button type="button" class="icon-button" title="Skip to where the water settles" disabled={progress === null} onClick={() => p.skip()}>
         <span class="icon-word">Skip</span>
       </button>

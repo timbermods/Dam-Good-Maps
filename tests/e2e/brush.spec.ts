@@ -1,7 +1,7 @@
 // Live editing: the terrain brushes in the page. The ground changes under the cursor while the
 // button is down; the stroke becomes one step of the history ("Raise, 38 tiles") whose map, built
 // by the worker, is the one painted, byte for byte; undo and redo show at once; Esc cancels a
-// stroke with no trace; Shift inverts; Ctrl+click picks flatten's level; [ ] size and Alt+wheel
+// stroke with no trace; Shift inverts; Ctrl+click picks flatten's level; [ ] size and Shift+wheel
 // strength; the stroke is still there after a reload (the autosave).
 
 import { expect, test, type Page } from "@playwright/test";
@@ -99,7 +99,7 @@ test("the brushes paint under the cursor, undo at once, and keep their strokes",
   await expect(bar.getByRole("combobox")).toHaveValue(String(level));
   expect((await info(page)).history.length).toBe(steps);
 
-  // [ and ] size the brush; Alt+wheel sets its strength
+  // [ and ] size the brush; Shift+wheel sets its strength (D196, as the game)
   const size = bar.getByRole("slider").first();
   const s0 = Number(await size.inputValue());
   await page.keyboard.press("]");
@@ -109,10 +109,11 @@ test("the brushes paint under the cursor, undo at once, and keep their strokes",
   const strength = bar.getByRole("slider").nth(1);
   const k0 = Number(await strength.inputValue());
   await page.mouse.move(p.x, p.y);
-  await page.keyboard.down("Alt");
+  await page.keyboard.down("Shift");
   await page.mouse.wheel(0, -100);
-  await page.keyboard.up("Alt");
+  await page.keyboard.up("Shift");
   expect(Number(await strength.inputValue())).toBe(Math.min(10, k0 + 1));
+  await expect(page.locator(".shape-note")).toHaveText(`strength ${Math.min(10, k0 + 1)}`);
 
   // Esc puts the brush away
   await page.keyboard.press("Escape");

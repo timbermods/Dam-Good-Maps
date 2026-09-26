@@ -36,6 +36,8 @@ export interface View3DProps {
   children?: ComponentChildren;
   /** Extra class on the frame (the editor fills its area). */
   class?: string;
+  /** More view buttons beside the camera's (the editor's **Clear water**). */
+  viewButtons?: ComponentChildren;
 }
 
 const GROUND_KEY = "dgm.groundColours";
@@ -263,6 +265,7 @@ export function View3D(props: View3DProps) {
         <button type="button" onClick={() => renderer.current?.resetView()}>
           Reset view
         </button>
+        {props.viewButtons}
       </div>
       <div class="compass" aria-label="Compass: north is the top of the top-down view" role="img">
         <div ref={compass} class="needle">

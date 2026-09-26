@@ -308,6 +308,59 @@ on a placed river.
   W10, which fail on dev and pass with their new solutions. The other 12 (S04, W05–W07, J03, M04,
   M06, I07, X01, X08, X09, Q01) fail on dev too: setups and targets tuned on older maps.
 
+## D196–D198: water is never an object, seeing underwater, the game's controls, water on a stroke
+
+- **Water is never an object.** Clicking water picks nothing, the lists show no river or lake, and
+  there is no river panel or selection. The generator's rivers, lakes and landforms stay its plan
+  (a click never picks them). A river's flow is its sources': a click on any source, the map's edge
+  inflows included, selects it, with its strength and **Water: Clean or Badwater** (one step,
+  "Make a source badwater"); **Delete** removes it ("Remove a water source") and its water recedes.
+- **Sources are always findable.** Each source wells up through the water: rings spreading from it
+  and a few bubbles, on the water over it, even deep down. With **Source** picked, or **Markers**
+  on, every source shows a marker with its strength (sources side by side, a river's mouth, are one
+  marker: "4 sources, 3 water/s"); near the pointer, the nearby ones do. Over water, the sources it
+  comes from glow and their markers stand out (upstream through the water, never a tributary that
+  joins below).
+- **Seeing underwater.** Any tool picked makes the water see-through, so the bed, the ledges and the
+  sources show; with none picked it looks as usual, and **T** or **Clear water** (a view button)
+  toggle it. Badwater stays plain in it: its own colour, half see-through, with diagonal stripes.
+- **The readout over water:** "Water 0.4 deep, bed level 6", and "30% badwater" when it is mixed.
+  The generator's rivers and landforms are no longer named in the editor's readout.
+- **The game's controls.** Alt+scroll cuts the world into layers from the top down ("Layer 7: the
+  world above it is cut away"; the cut tops hatched, water and objects above it hidden); Alt+click
+  picks a tile's layer, again shows it all. Strength moved to Shift+scroll, for the brushes and a
+  hovered source, with the strength beside the pointer while it changes (and the size, with [ ]).
+- **Water on a stroke (D197).** While a stroke is painted, the page sends its ground to the worker
+  every frame it changes; the worker runs the water on it at once and sends a frame as soon as the
+  water has answered. On 256² River Valley (Chrome, this machine), the water in a new channel moves
+  **25–36 ms after its ground changes**, about two frames at 60 Hz; before, it moved 80–95 ms after
+  the release, and not at all while painting. On release the stroke's operation carries that water
+  into the journey; Esc drops it. The simulation steps only wet tiles and their neighbours
+  (0.7–1.6 ms a tick on 256²), so the water nearest the edit moves first. The brush bar's **Hold water while painting** is gone with it.
+- **The water's speed (D197):** Slower, **Normal** (the default, three times the slowest), Faster,
+  Instant (the latest water there is), in the time controls. It replaces 1×/2×/4×.
+- **The smart Lower ring (D198)** is a clear water-blue, half as thick again, and every ring has a
+  thin dark outline; the faint blue fill stays. `tests/unit/brush-ring.test.ts` checks it in
+  greyscale and in protanopia, deuteranopia and tritanopia (Machado et al.): on every water and
+  ground colour the ring or its outline has a contrast of 3 or more, the ring on its outline 4.5.
+  The blue is in the shared palette (`WATER.ring`, `WATER.ringEdge`, `palette.ts`), for the water
+  palette (#41) to take over.
+- **Claude (D196):** `setRiverBadwater`, and changing, moving or deleting a river or a lake, are
+  refused with the advice; a new step, `changeSource {river | at | where, strength | flow}`, sets a
+  river's sources (its mouth) or any sources. F05 (make this lake deeper) lowers the lake's bed with
+  the brush; X05 and Z04 check the new refusals; B12 (the main river at 4 blocks/s) is new.
+  Reference solutions: 120 of 132 (the 12 failing ones fail on dev too).
+- Tests (D148): `editor.spec` deleted the river from the Water list (refused: the valley builds on
+  it); a river is never listed or picked now, so it checks that a click on the river picks nothing
+  and Delete then removes nothing. `brush.spec` and `waterTools.spec` set strength with Shift+wheel, not Alt;
+  `tools.spec` reads "Water 0.4 deep" (case-insensitive now); the unit test of the index's picks
+  expects no river or landform picked (`allAt` still lists them). New: `waterView.spec` (every
+  point above, and water in a stroke's channel before the button comes up), unit tests of the
+  readout, the source markers and the feeding search.
+- Shortcuts that could clash: Shift inverts Raise and Lower while painting (D158), so a Shift-click
+  straight line would clash with it (the straight lines stay a toggle); the Select tool's Alt to
+  subtract (D184) meets Alt+click's layer pick, so Select will subtract with Alt+drag only.
+
 ## The camera keys (D180)
 
 Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.

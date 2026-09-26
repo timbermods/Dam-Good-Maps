@@ -42,6 +42,8 @@ export interface EntityView {
   owner: Uint16Array;
   /** A ruin's variant (0–4: A–E; NO_VARIANT: none given). */
   variant: Uint8Array;
+  /** A water or badwater source's strength (blocks a second); 0 for anything else. */
+  strength: Float32Array;
 }
 
 /** Water columns (sparse): one entry per wet column. Under caves a tile may hold several; the
@@ -170,6 +172,8 @@ export interface EntityInput {
   young?: boolean;
   /** A ruin's `RuinModels.VariantId` ("A" to "E"). */
   variant?: string;
+  /** A source's strength. */
+  strength?: number;
 }
 
 export function entityView(list: readonly EntityInput[]): EntityView {
@@ -190,6 +194,7 @@ export function entityView(list: readonly EntityInput[]): EntityView {
     flags: new Uint8Array(n),
     owner: new Uint16Array(n),
     variant: new Uint8Array(n),
+    strength: new Float32Array(n),
   };
   list.forEach((e, k) => {
     let t = tIndex.get(e.template);
@@ -213,6 +218,7 @@ export function entityView(list: readonly EntityInput[]): EntityView {
     v.orientation[k] = oi < 0 ? 0 : oi;
     v.flags[k] = (e.dead ? DEAD : 0) | (e.flipped ? FLIPPED : 0) | (e.young ? YOUNG : 0);
     v.variant[k] = variantIndex(e.variant);
+    v.strength[k] = e.strength ?? 0;
   });
   return v;
 }
@@ -231,6 +237,6 @@ export function viewBuffers(v: Partial<MapView> & { terrain?: { pre: Uint8Array;
   }
   if (v.water) for (const a of [v.water.tile, v.water.floor, v.water.depth, v.water.contamination]) add(a);
   if (v.soil) for (const a of [v.soil.moisture, v.soil.contamination]) add(a);
-  if (v.entities) for (const a of [v.entities.template, v.entities.x, v.entities.y, v.entities.z, v.entities.orientation, v.entities.flags, v.entities.owner, v.entities.variant]) add(a);
+  if (v.entities) for (const a of [v.entities.template, v.entities.x, v.entities.y, v.entities.z, v.entities.orientation, v.entities.flags, v.entities.owner, v.entities.variant, v.entities.strength]) add(a);
   return out;
 }

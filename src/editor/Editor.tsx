@@ -11,7 +11,7 @@
 // game keeps them and red (with the reason) where it would delete them; advanced mode opens the
 // objects on a clicked tile with their numbers.
 
-import { proxy, type Remote } from "comlink";
+import { proxy, transfer, type Remote } from "comlink";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { EditOp } from "../core/doc/ops";
 import { cornerFor } from "../core/doc/tools";
@@ -27,7 +27,7 @@ import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
-import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, newId, rectOf, riverAt, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
+import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, feedingGroups, moveBlocked, newId, rectOf, riverAt, sourceGroups, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import { BrushBar } from "./BrushBar";
 import { WaterBar } from "./WaterBar";
@@ -163,6 +163,15 @@ export default function Editor(props: EditorProps) {
   const [waterTick, setWaterTick] = useState(0);
   /** The water is flowing into an edit's new shape (how far it has come, 0–1), or null. */
   const [flowing, setFlowing] = useState<number | null>(null);
+  /** **Markers** is on (every source shows its marker then, D196). */
+  const [markersOn, setMarkersOn] = useState(false);
+  /** The source groups near the pointer, and those the pointer's water comes from (D196). */
+  const [nearSources, setNearSources] = useState<number[]>([]);
+  const [feeding, setFeeding] = useState<number[]>([]);
+  /** Clear water (D196): T or the view button; any tool picked clears the water too. */
+  const [clearWater, setClearWater] = useState(false);
+  /** The layer the world is cut at (Alt+scroll, Alt+click), or null. */
+  const [sliceLevel, setSliceLevel] = useState<number | null>(null);
   /** A water source being dragged to a new place: its footprint there (D184). */
   const [sourceDrag, setSourceDrag] = useState<number[] | null>(null);
   /** The water's journey, played at a pace the eye can follow; its controls; a drought to watch. */
@@ -424,7 +433,6 @@ export default function Editor(props: EditorProps) {
   const localUndo = useRef<Stroke[]>([]);
   const localRedo = useRef<Stroke[]>([]);
   const painter = useRef<BrushPainter | null>(null);
-  const holdTimer = useRef(0);
 
   /** Put a stroke's terrain before or after it back on the map, at once. */
   function showStroke(s: Stroke, which: "before" | "after") {
@@ -571,8 +579,12 @@ export default function Editor(props: EditorProps) {
     void api.listen(
       proxy((e: EditorEvent) => {
         if (e.version !== infoRef.current.version) return;
-        if (e.kind === "water") {
-          // a draft's water shows as it comes; an edit's plays at a pace the eye can follow
+        if (e.kind === "water" && e.draft) {
+          // the water on a stroke being painted: shown as it comes (D197)
+          if (player.current?.hasJourney) player.current.clear();
+          showWater(e.water);
+        } else if (e.kind === "water") {
+          // an edit's water plays at a pace the eye can follow
           player.current?.push({ water: e.water, done: e.done });
         } else if (e.kind === "settled") {
           player.current?.push({ water: e.view.water ?? mirror.current.waterView, done: 1, final: () => applyView(e.view) });
@@ -619,7 +631,7 @@ export default function Editor(props: EditorProps) {
       }
     return null;
   };
-  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: entitiesAt(), index: indexed, soil: mirror.current.soil });
+  const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: entitiesAt(), index: indexed, soil: mirror.current.soil, editor: true });
 
   // where the start is: its feature, or an imported map's own StartingLocation
   const startHere = useMemo((): StartHere | null => {
@@ -776,18 +788,19 @@ export default function Editor(props: EditorProps) {
     };
   }
 
-  /** Alt+scroll over a source (D184): its strength a step up or down, the water answering at once,
-   *  the new strength beside the pointer; one adjustment is one undo step. */
+  /** Shift+scroll over a source (D184, D196): its strength a step up or down, the water answering
+   *  at once, the new strength beside the pointer; one adjustment is one undo step. */
   const sourceWheel = useRef<{ key: string; record: Promise<EntityInfo | null>; value: number | null; sent: number | null; busy: boolean } | null>(null);
   const wheelNoteTimer = useRef(0);
   function wheelSource(ev: WheelEvent, hit: TileHit | null): boolean {
-    if (!ev.altKey || !hit) return false;
+    if (!ev.shiftKey || !hit) return false;
     const src = sourceAt(hit.x, hit.y);
     if (!src) return false;
     const key = `${src.x},${src.y}`;
     let w = sourceWheel.current;
     if (!w || w.key !== key) w = sourceWheel.current = { key, record: sourceInfo(hit.x, hit.y), value: null, sent: null, busy: false };
-    const up = ev.deltaY < 0 || (ev.deltaY === 0 && ev.deltaX < 0);
+    // (browsers turn a Shift+wheel sideways)
+    const up = (ev.deltaY || ev.deltaX) < 0;
     const box = renderer.current?.canvas.getBoundingClientRect();
     const at = box ? { x: ev.clientX - box.left, y: ev.clientY - box.top } : pointerAt.current;
     const state = w;
@@ -826,6 +839,92 @@ export default function Editor(props: EditorProps) {
       send();
     });
     return true;
+  }
+
+  // ------------------------------------------------------------------------ the sources' markers
+
+  /** The map's sources as markers (a river's mouth is one), from the page's view of the objects. */
+  const groups = useMemo(() => sourceGroups(mirror.current.entities, info.W, mirror.current.heights), [info.version, ready]);
+  const groupsRef = useRef(groups);
+  groupsRef.current = groups;
+  /** Near the pointer: the groups within two tiles; over water: the groups it comes from. */
+  const hoverKey = useRef("");
+  function hoverSources(hit: TileHit | null) {
+    const key = hit ? `${hit.x},${hit.y}` : "";
+    if (key === hoverKey.current) return;
+    hoverKey.current = key;
+    const gs = groupsRef.current;
+    const r = renderer.current;
+    if (!hit) {
+      setNearSources([]);
+      setFeeding([]);
+      r?.setSourceGlow([]);
+      return;
+    }
+    const near: number[] = [];
+    gs.forEach((g, k) => {
+      if (g.tiles.some((t) => Math.abs((t % info.W) - hit.x) <= 2 && Math.abs(Math.floor(t / info.W) - hit.y) <= 2)) near.push(k);
+    });
+    setNearSources(near);
+    const feed = mirror.current.water ? (feedingGroups(mirror.current.water, gs, info.W, info.H, hit.x, hit.y) ?? []) : [];
+    setFeeding(feed);
+    r?.setSourceGlow(feed.flatMap((k) => gs[k].tiles));
+  }
+  const toolRefForMarkers = useRef(tool);
+  toolRefForMarkers.current = tool;
+  /** Which markers show: every one with Source picked or **Markers** on; else those near the
+   *  pointer and those its water comes from. */
+  const shownGroups = tool === "source" || markersOn ? groups.map((_, k) => k) : [...new Set([...nearSources, ...feeding])];
+  const markerRef = useRef(false);
+  markerRef.current = shownGroups.length > 0;
+
+  function sourceMarkers() {
+    const r = renderer.current;
+    if (!r || !shownGroups.length) return null;
+    void viewTick;
+    return (
+      <div class="source-markers" aria-hidden="true">
+        {shownGroups.map((k) => {
+          const g = groups[k];
+          if (!g) return null;
+          const p = r.project(g.x + 0.5, g.z + 0.6, -(g.y + 0.5));
+          if (!p.visible) return null;
+          const n = g.members.length;
+          const words = `${n > 1 ? `${n} sources, ` : ""}${g.strength} ${g.bad ? "badwater" : "water"}/s`;
+          return (
+            <span key={k} class={`map-note source-marker${g.bad ? " bad" : ""}${feeding.includes(k) ? " feeding" : ""}`} style={{ left: `${p.x}px`, top: `${p.y}px` }}>
+              {words}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  /** The sources in the objects picked on a tile (a click on a source). */
+  function pickedSources(): EntityInfo[] {
+    return pickedRef.current?.list.filter((e) => e.template === "WaterSource" || e.template === "BadwaterSource") ?? [];
+  }
+
+  /** Remove sources: their water recedes live; one undo step. */
+  function removeSources(list: EntityInfo[]) {
+    const bad = list.every((e) => e.template === "BadwaterSource");
+    void run(
+      () => api.apply({ op: "deleteEntities", params: { entities: list.map((e) => e.id) } }, "user", list.length > 1 ? `Remove ${list.length} sources` : bad ? "Remove a badwater source" : "Remove a water source"),
+      (u) => u.ok && setPicked(null),
+    );
+  }
+
+  /** A word beside the pointer for a moment (a strength, a size). */
+  const flashTimer = useRef(0);
+  function flashNote(text: string, ev?: MouseEvent) {
+    if (ev) {
+      const box = renderer.current?.canvas.getBoundingClientRect();
+      if (box) pointerAt.current = { x: ev.clientX - box.left, y: ev.clientY - box.top };
+    }
+    setShapeNote({ text, ok: true, warn: false, ...pointerAt.current });
+    clearTimeout(flashTimer.current);
+    flashTimer.current = window.setTimeout(() => setShapeNote(null), 1200);
   }
 
   // the footprint under the pointer: one check in flight, then the latest tile
@@ -874,6 +973,23 @@ export default function Editor(props: EditorProps) {
   function changeEntity(e: EntityInfo, c: EntityChange) {
     if (!picked) return;
     let at: [number, number] = [picked.x, picked.y];
+    if (c.kind) {
+      // clean or bad is the source's own (D196): a new source of the other kind in its place
+      const bad = c.kind === "bad";
+      const cx = e.template === "BadwaterSource" ? e.x + 1 : e.x;
+      const cy = e.template === "BadwaterSource" ? e.y + 1 : e.y;
+      const s0 = Number((e.components.WaterSource as { SpecifiedStrength?: number } | undefined)?.SpecifiedStrength ?? 1);
+      const req = toolRequest("source", { ...optionsRef.current, sourceBad: bad, sourceStrength: Math.min(8, s0), badwaterStrength: s0 }, { at: [cx, cy], W: info.W, H: info.H });
+      if (!req || req.tool !== "entity") return;
+      const place: EditOp = { op: "placeEntity", params: { id: newId(), template: req.template, x: req.x, y: req.y, orientation: req.orientation, ...(req.components ? { components: req.components } : {}) } };
+      void run(
+        () => api.applyAll([{ op: "deleteEntities", params: { entities: [e.id] } }, place], bad ? "Make a source badwater" : "Make a source clean"),
+        (u) => {
+          if (u.ok) pickTile(cx, cy);
+        },
+      );
+      return;
+    }
     let op: EditOp;
     if (c.remove) op = { op: "deleteEntities", params: { entities: [e.id] } };
     else if (c.move) {
@@ -1023,20 +1139,25 @@ export default function Editor(props: EditorProps) {
         sendTerrain(() => api.apply({ op: "brush", params: stroke.params }, "user", stroke.label));
       },
       picked: (level) => setBrush({ ...brushRef.current, level }),
-      strength: (value) => setBrush({ ...brushRef.current, strength: value }),
-      painting: (on) => {
-        clearTimeout(holdTimer.current);
-        if (!brushRef.current.holdWater) return;
-        if (on) void api.holdWater(true);
-        else holdTimer.current = window.setTimeout(() => void api.holdWater(false), 900);
+      strength: (value, ev) => {
+        setBrush({ ...brushRef.current, strength: value });
+        if (ev) flashNote(`strength ${value}`, ev);
       },
+      // the water flows on the stroke while it is painted (D197): nothing to hold
+      painting: () => undefined,
       note: (text, ev) => {
         if (!text) return setShapeNote(null);
         if (ev) notePointer(ev);
         setShapeNote({ text, ok: true, warn: false, ...pointerAt.current });
       },
       wet: (x, y) => (mirror.current.water?.depth[y * infoRef.current.W + x] ?? 0) > 0.05,
+      // the water flows on the stroke while it is painted (D197)
+      draft: (rect, heights) => void api.draftStroke(rect, transfer(heights, [heights.buffer as ArrayBuffer])),
+      cancelDraft: () => void api.cancelDraft(),
     });
+    r.onSlice = (level) => setSliceLevel(level);
+    r.onMarkers = (on) => setMarkersOn(on);
+    setMarkersOn(r.markers);
     r.grab = (hit) => grabSource(hit);
     r.onWheel = (ev, hit) => wheelSource(ev, hit);
     r.onClick = (hit) => {
@@ -1061,8 +1182,9 @@ export default function Editor(props: EditorProps) {
     let pending = false;
     r.onView = (v: ViewState) => {
       onView?.(v);
-      // the handles follow the view; with none on the map, the page need not redraw
-      if (pending || !handleRef.current) return;
+      // the handles and the sources' markers follow the view; with none on the map, the page need
+      // not redraw
+      if (pending || (!handleRef.current && !markerRef.current)) return;
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
@@ -1086,6 +1208,8 @@ export default function Editor(props: EditorProps) {
   }, [brushTool, ready]);
   // a new size, strength or level shows on the brush under the cursor at once
   useEffect(() => painter.current?.showCursor(), [brush]);
+  // any tool picked makes the water see-through, so the bed and the sources show (D196)
+  useEffect(() => renderer.current?.setClearWater(clearWater || !!brushTool || !!tool), [clearWater, brushTool, tool, ready]);
 
   const indexedRef = useRef(indexed);
   indexedRef.current = indexed;
@@ -1267,7 +1391,9 @@ export default function Editor(props: EditorProps) {
       }
       if (!mod && (ev.key === "[" || ev.key === "]") && brushToolRef.current) {
         ev.preventDefault();
-        setBrush({ ...brushRef.current, size: nextSize(brushRef.current.size, ev.key === "]" ? 1 : -1) });
+        const size = nextSize(brushRef.current.size, ev.key === "]" ? 1 : -1);
+        setBrush({ ...brushRef.current, size });
+        flashNote(`size ${size}`);
         return;
       }
       if (ev.key === "Escape" && painter.current?.painting) {
@@ -1299,9 +1425,16 @@ export default function Editor(props: EditorProps) {
       } else if (ev.key === "Backspace" && draftRef.current.length) {
         ev.preventDefault();
         setDraft(draftRef.current.slice(0, -1));
+      } else if ((ev.key === "Delete" || ev.key === "Backspace") && pickedSources().length && !target?.classList.contains("handle")) {
+        // a selected source: its water recedes live (D196)
+        ev.preventDefault();
+        removeSources(pickedSources());
       } else if ((ev.key === "Delete" || ev.key === "Backspace") && selectedRef.current && !target?.classList.contains("handle")) {
         const f = infoRef.current.features.find((g) => g.id === selectedRef.current);
         if (f) deleteFeature(f);
+      } else if (!mod && !ev.altKey && ev.key.toLowerCase() === "t") {
+        // T: clear water, as the game (D196)
+        setClearWater((on) => !on);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -1461,9 +1594,15 @@ export default function Editor(props: EditorProps) {
             onReady={onReady}
             legendExtra={legendExtra}
             markersWanted={damSites !== null || tool === "damSite" || tool === "slope"}
+            viewButtons={
+              <button type="button" aria-pressed={clearWater} onClick={() => setClearWater(!clearWater)} title="See through the water to the bed and the sources (T). Any tool picked does it too.">
+                Clear water
+              </button>
+            }
 
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
+              hoverSources(hit);
               // a source can be picked up and moved
               const canvas = renderer.current?.canvas;
               if (canvas) canvas.style.cursor = hit && !brushToolRef.current && !advancedRef.current && sourceAt(hit.x, hit.y) ? "grab" : "";
@@ -1478,6 +1617,12 @@ export default function Editor(props: EditorProps) {
           >
             <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} loading={!ready} />
             {player.current ? <WaterBar player={player.current} follow={follow} onFollow={setFollow} weather={weather} onWeather={toggleWeather} /> : null}
+            {sourceMarkers()}
+            {sliceLevel !== null ? (
+              <p class="map-note slice-note" role="status">
+                Layer {sliceLevel}: the world above it is cut away. Alt+scroll up shows it all.
+              </p>
+            ) : null}
             {shapeNote ? (
               <div class={`map-note shape-note${shapeNote.ok ? (shapeNote.warn ? " warn" : "") : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}
@@ -1601,7 +1746,6 @@ function loadBrush(): BrushSettings {
       ...DEFAULT_BRUSH,
       size: typeof s.size === "number" ? Math.min(24, Math.max(1, s.size)) : DEFAULT_BRUSH.size,
       strength: typeof s.strength === "number" ? Math.min(10, Math.max(1, Math.round(s.strength))) : DEFAULT_BRUSH.strength,
-      holdWater: s.holdWater === true,
     };
   } catch {
     return DEFAULT_BRUSH;
@@ -1610,7 +1754,7 @@ function loadBrush(): BrushSettings {
 
 function saveBrush(s: BrushSettings): void {
   try {
-    localStorage.setItem(BRUSH_KEY, JSON.stringify({ size: s.size, strength: s.strength, holdWater: s.holdWater }));
+    localStorage.setItem(BRUSH_KEY, JSON.stringify({ size: s.size, strength: s.strength }));
   } catch {
     // the brush lasts for this visit only
   }

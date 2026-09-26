@@ -73,7 +73,7 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
       },
       { timeout: 30_000 },
     )
-    .toMatch(/water \d/);
+    .toMatch(/water \d/i);
 
   // a dam site: one click on the generated river, then Place
   await page.locator(".tools").getByRole("button", { name: "Dam site", exact: true }).click();

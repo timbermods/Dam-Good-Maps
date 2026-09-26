@@ -7,7 +7,7 @@ import { validateOp, emptyState } from "../../src/core/doc/ops";
 import type { Feature } from "../../src/core/features/schema";
 import { generate } from "../../src/core/gen/generate";
 import { makeSpec } from "../../src/core/spec/mapspec";
-import { anchorOf, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, moveBlocked, movePatch, rectOf, rectOutline, rectRuns, tabOf } from "../../src/editor/features";
+import { anchorOf, clampMove, describeTile, entitiesByTile, featureName, FeatureIndex, feedingGroups, moveBlocked, movePatch, rectOf, rectOutline, rectRuns, sourceGroups, tabOf } from "../../src/editor/features";
 import { paintOverlay, SELECTED } from "../../src/editor/tools";
 import { entityView, surfaceWater, waterFromDepth } from "../../src/render3d/model";
 
@@ -48,10 +48,12 @@ describe("the tile index", () => {
     expect(index.tilesOf(river).length).toBeGreaterThan(60);
   });
 
-  it("selects the most specific feature first", () => {
-    expect(index.candidatesAt(3, 3).map((f) => f.id)).toEqual(["u-forest", "u-plateau"]);
+  it("selects the most specific feature first, never water or the generator's ground (D196)", () => {
+    expect(index.allAt(3, 3).map((f) => f.id)).toEqual(["u-forest", "u-plateau"]);
+    expect(index.candidatesAt(3, 3).map((f) => f.id)).toEqual(["u-forest"]);
     expect(index.candidatesAt(20, 20).map((f) => f.id)).toEqual(["u-start"]);
-    expect(index.candidatesAt(10, 30).map((f) => f.id)).toEqual(["u-river"]);
+    expect(index.allAt(10, 30).map((f) => f.id)).toEqual(["u-river"]);
+    expect(index.candidatesAt(10, 30)).toEqual([]);
     expect(index.candidatesAt(50, 5)).toEqual([]);
   });
 
@@ -80,6 +82,50 @@ describe("hover text", () => {
     expect(describeTile(ctx, 10, 30)).toBe("River, height 4, water 0.6 deep");
     expect(describeTile(ctx, 30, 10)).toBe("Height 4, dead birch");
     expect(describeTile(ctx, 31, 10)).toBe("Height 4, ruin column, 3 high");
+    // the editor: water, never a river or a landform (D196), with its bed and its badwater
+    const ed = { ...ctx, editor: true };
+    expect(describeTile(ed, 10, 30)).toBe("Water 0.6 deep, bed level 4");
+    expect(describeTile(ed, 3, 3)).toBe("Height 9, pine forest");
+    const mixed = new Float64Array(W * H);
+    mixed[30 * W + 10] = 0.3;
+    const bad = { ...ed, water: surfaceWater(W, H, waterFromDepth(heights, depth, mixed)) };
+    expect(describeTile(bad, 10, 30)).toBe("Water 0.6 deep, bed level 4, 30% badwater");
+    // and a click picks no water (D196)
+    expect(index.candidatesAt(10, 30).map((f) => f.kind)).not.toContain("river");
+    expect(index.allAt(10, 30).map((f) => f.kind)).toContain("river");
+  });
+});
+
+describe("the sources (D196)", () => {
+  it("sources side by side are one marker, and the water under the pointer finds the sources upstream of it", () => {
+    const heights = new Uint8Array(W * H).fill(8);
+    // a river along y = 20, stepping down eastward, fed by two sources at its head (x 0–1) and a
+    // tributary from the south joining at x 40, fed by its own source at (40, 5)
+    const depth = new Float64Array(W * H);
+    for (let x = 0; x < W; x++) {
+      heights[20 * W + x] = 6 - Math.floor(x / 16);
+      depth[20 * W + x] = 0.5;
+    }
+    for (let y = 5; y < 20; y++) {
+      heights[y * W + 40] = 7;
+      depth[y * W + 40] = 0.3;
+    }
+    const ents = entityView([
+      { template: "WaterSource", x: 0, y: 20, z: 6, orientation: "Cw0", owner: "r", strength: 1 },
+      { template: "WaterSource", x: 1, y: 20, z: 6, orientation: "Cw0", owner: "r", strength: 1.5 },
+      { template: "WaterSource", x: 40, y: 5, z: 7, orientation: "Cw0", owner: "t", strength: 2 },
+    ]);
+    const groups = sourceGroups(ents, W, heights);
+    expect(groups.map((g) => [g.members.length, g.strength])).toEqual([[2, 2.5], [1, 2]]);
+    const water = surfaceWater(W, H, waterFromDepth(heights, depth, new Float64Array(W * H)));
+    // above the join: only the river's head feeds it
+    expect(feedingGroups(water, groups, W, H, 20, 20)).toEqual([0]);
+    // below the join: both
+    expect(feedingGroups(water, groups, W, H, 55, 20)).toEqual([0, 1]);
+    // on the tributary: its own source
+    expect(feedingGroups(water, groups, W, H, 40, 10)).toEqual([1]);
+    // dry ground: none
+    expect(feedingGroups(water, groups, W, H, 30, 40)).toBeNull();
   });
 });
 

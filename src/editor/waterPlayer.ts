@@ -6,8 +6,10 @@
 // (and the export's water after it), so what the player watches ends exactly where the map is. The
 // brushes never wait for it: frames only ever change the water shown.
 //
-// Pause, speed (1×, 2×, 4×), skip to the result and replay (the last journey again, from the water
-// right after the edit). A weather run (a drought, then the water coming back) plays the same way.
+// Pause, speed (slower, normal, faster, instant; D197: normal is brisk, a small edit settles nearby
+// in a second or two while a new river still flows visibly), skip to the result and replay (the
+// last journey again, from the water right after the edit). A weather run (a drought, then the
+// water coming back) plays the same way.
 
 import type { WaterView } from "../render3d/model";
 
@@ -28,8 +30,13 @@ export interface PlayerHost {
   changed(): void;
 }
 
-/** Frames a second at normal speed. */
+/** Frames a second at the slowest speed. */
 const FPS = 20;
+
+/** The water's speeds (D197): how many times the slowest; instant shows the latest water there is. */
+export type WaterSpeed = "slower" | "normal" | "faster" | "instant";
+export const WATER_SPEEDS: readonly WaterSpeed[] = ["slower", "normal", "faster", "instant"];
+const RATE: Record<WaterSpeed, number> = { slower: 1, normal: 3, faster: 8, instant: 1000 };
 /** Frames that ease the last of the journey into the settled water. */
 const EASE = 16;
 
@@ -76,7 +83,10 @@ export class WaterPlayer {
   private clockAt = 0;
   private clockT = 0;
   paused = false;
-  speed = 1;
+  speedName: WaterSpeed = "normal";
+  private get speed(): number {
+    return RATE[this.speedName];
+  }
   /** A weather run is playing (its frames replace the journey's until it ends). */
   weather = false;
 
@@ -142,10 +152,11 @@ export class WaterPlayer {
     this.host.changed();
   }
 
-  setSpeed(speed: number): void {
-    this.speed = speed;
+  setSpeed(speed: WaterSpeed): void {
+    this.speedName = speed;
     this.restartClock();
     this.host.changed();
+    this.kick();
   }
 
   /** Straight to the latest water there is (the result, once it has come). */
@@ -201,7 +212,7 @@ export class WaterPlayer {
       const last = this.frames.length - 1;
       const byClock = this.clockAt + Math.floor(((performance.now() - this.clockT) * FPS * this.speed) / 1000);
       const behind = last - this.at;
-      const step = Math.max(1, Math.floor(behind / (FPS * 6)), byClock - this.at);
+      const step = this.speedName === "instant" ? behind : Math.max(1, Math.floor(behind / (FPS * 6)), byClock - this.at);
       const next = Math.min(last, this.at + step);
       // (a frame skipped with the settled water's callback still runs it)
       for (let k = this.at + 1; k < next; k++) if (this.frames[k].final) this.frames[k].final!();
@@ -209,7 +220,7 @@ export class WaterPlayer {
       this.show(this.frames[this.at]);
       this.host.changed();
       this.kick();
-    }, 1000 / (FPS * this.speed));
+    }, this.speedName === "instant" ? 0 : 1000 / (FPS * this.speed));
   }
 
   private restartClock(): void {

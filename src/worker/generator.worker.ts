@@ -61,7 +61,11 @@ const api = {
     ed.listen(fn ? (e) => void fn(transfer(e, eventBuffers(e))) : null);
   },
   /** Hold the background water while the player paints (the option for very large maps). */
-  holdWater: (on: boolean) => ed.holdWater(on),
+  /** A stroke being painted: its ground so far (the rect's heights, row by row); its water flows at
+   *  once (D197). */
+  draftStroke: (rect: { x0: number; y0: number; x1: number; y1: number }, heights: Uint8Array) => ed.draftStroke(rect, heights),
+  /** The stroke was taken back: its water goes. */
+  cancelDraft: () => ed.cancelDraft(),
   /** Resolves when the water has settled after the latest edit (tests and benchmarks). */
   whenWaterSettles: () => ed.whenWaterSettles(),
   /** The checks worker (a port to it): the checks run there, on a replica of the open map. */

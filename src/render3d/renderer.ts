@@ -91,6 +91,11 @@ export interface FrameStats {
 }
 
 /** A tool that takes left-button drags over the map (the editor's handles and drawing tools). */
+/** A wheel's turn: with Shift, browsers turn it sideways (deltaX). */
+export function wheelDelta(ev: WheelEvent): number {
+  return ev.deltaY || ev.deltaX;
+}
+
 export interface PointerTool {
   /** Return true to take this drag. */
   down(hit: TileHit | null, ev: PointerEvent): boolean;
@@ -98,7 +103,7 @@ export interface PointerTool {
   up(hit: TileHit | null, ev: PointerEvent): void;
   /** The pointer moved over the map with no button down (a brush follows it). */
   hover?(hit: TileHit | null, ev: PointerEvent): void;
-  /** The wheel turned over the map: return true to take it (Alt+wheel sets a brush's strength). */
+  /** The wheel turned over the map: return true to take it (Shift+wheel sets a brush's strength). */
   wheel?(ev: WheelEvent): boolean;
   /** The drag was lost (the pointer went away without a release). */
   cancel?(): void;
@@ -167,6 +172,10 @@ export class MapRenderer {
   private edges: DataTexture | null = null;
   /** Where the outline round mine sites runs (**Markers**): `mineOutline` of the objects. */
   private sites: DataTexture | null = null;
+  /** Where the sources are, for their upwelling (D196). */
+  private sourceTiles: DataTexture | null = null;
+  /** The sources whose water the pointer is over (tile indices of their middles). */
+  private sourceGlow: readonly number[] = [];
   private tileTex: DataTexture | null = null;
   private lightTex: DataTexture | null = null;
   private uniforms: SceneUniforms;
@@ -212,7 +221,7 @@ export class MapRenderer {
   /** Before the tool and the camera: something under the pointer that a left-drag moves (a water
    *  source, D184), as a pointer tool for that drag, or null. */
   grab: ((hit: TileHit | null, ev: PointerEvent) => PointerTool | null) | null = null;
-  /** Before the tool and the camera: a wheel over something it changes (Alt+scroll over a
+  /** Before the tool and the camera: a wheel over something it changes (Shift+scroll over a
    *  source sets its strength); true when used. */
   onWheel: ((ev: WheelEvent, hit: TileHit | null) => boolean) | null = null;
   /** The drag a grab started (its own pointer tool). */
@@ -303,10 +312,98 @@ export class MapRenderer {
     this.uniforms.markers.value = on ? 1 : 0;
     this.showMarkerObjects();
     this.requestRender();
+    this.onMarkers?.(on);
   }
+
+  /** Told when **Markers** turns on or off (the editor shows every source then, D196). */
+  onMarkers: ((on: boolean) => void) | null = null;
 
   get markers(): boolean {
     return this.markersOn;
+  }
+
+  /** Clear water (D196): the water see-through, so the bed, ledges and sources show; badwater
+   *  still plainly marked. */
+  setClearWater(on: boolean): void {
+    if ((this.uniforms.clearWater.value > 0.5) === on) return;
+    this.uniforms.clearWater.value = on ? 1 : 0;
+    this.requestRender();
+  }
+
+  get clearWater(): boolean {
+    return this.uniforms.clearWater.value > 0.5;
+  }
+
+  /** The game's layers (D196): cut the world away above `level` (null shows it all). */
+  setSlice(level: number | null): void {
+    const v = level === null ? 99 : Math.max(0, Math.min(40, Math.round(level)));
+    if (this.uniforms.slice.value === v) return;
+    this.uniforms.slice.value = v;
+    this.sliced = null;
+    this.requestRender();
+    this.onSlice?.(level === null ? null : v);
+  }
+
+  /** One layer up (1) or down (-1); up past the map's top shows the whole world again. */
+  stepSlice(dir: 1 | -1): void {
+    const m = this.map;
+    if (!m) return;
+    let top = 0;
+    for (let i = 0; i < m.heights.length; i++) if (m.heights[i] > top) top = m.heights[i];
+    const now = this.slice ?? top;
+    const next = now + dir;
+    this.setSlice(next >= top ? null : Math.max(0, next));
+  }
+
+  /** The layer the world is cut at, or null. */
+  get slice(): number | null {
+    const v = this.uniforms.slice.value;
+    return v >= 99 ? null : v;
+  }
+
+  /** Told when the layer changes (the page says which layer is showing). */
+  onSlice: ((level: number | null) => void) | null = null;
+  /** The heights as the slice shows them (picking lands on the cut). */
+  private sliced: Uint8Array | null = null;
+
+  /** The sources whose water the pointer is over glow (D196): their middle tiles, or none. */
+  setSourceGlow(tiles: readonly number[]): void {
+    if (tiles.length === this.sourceGlow.length && tiles.every((t, k) => t === this.sourceGlow[k])) return;
+    this.sourceGlow = tiles.slice();
+    this.markSources();
+  }
+
+  /** The sources' texture: where each clean or bad source's middle is, and which glow. */
+  private markSources(): void {
+    const m = this.map;
+    const t = this.sourceTiles;
+    if (!m || !t) return;
+    const d = t.image.data as Uint8Array;
+    d.fill(0);
+    const e = m.entities;
+    for (let k = 0; k < e.count; k++) {
+      const name = e.templates[e.template[k]];
+      if (name !== "WaterSource" && name !== "BadwaterSource") continue;
+      // a badwater source's middle: one tile in from its corner, turned with it
+      let x = e.x[k];
+      let y = e.y[k];
+      if (name === "BadwaterSource") {
+        const o = e.orientation[k];
+        x += o === 0 || o === 1 ? 1 : -1;
+        y += o === 0 || o === 3 ? 1 : -1;
+      }
+      if (x < 0 || y < 0 || x >= m.W || y >= m.H) continue;
+      d[(y * m.W + x) * 4 + (name === "WaterSource" ? 0 : 1)] = 255;
+    }
+    for (const i of this.sourceGlow) if (i >= 0 && i < m.W * m.H) d[i * 4 + 2] = 255;
+    t.needsUpdate = true;
+    this.requestRender();
+  }
+
+  /** Level lines (the brush kit's toggle): a thin line where the ground steps down. */
+  setLevelLines(on: boolean): void {
+    this.uniforms.levelLines.value = on ? 1 : 0;
+    this.requestRender();
   }
 
   private showMarkerObjects(): void {
@@ -351,6 +448,7 @@ export class MapRenderer {
     this.edges = overlayTexture(W, H);
     contaminationEdges(W, H, tiles, this.edges.image.data as Uint8Array);
     this.sites = overlayTexture(W, H);
+    this.sourceTiles = overlayTexture(W, H);
     this.tileTex = tileTexture(W, H, tiles);
     this.casters = objectCasters(W, H, v.entities);
     this.tops = { hi: new Float32Array(0), lo: new Float32Array(0) };
@@ -360,6 +458,7 @@ export class MapRenderer {
     u.marks.value = this.marks;
     u.contamEdges.value = this.edges;
     u.siteEdges.value = this.sites;
+    u.sourceTex.value = this.sourceTiles;
     u.hatching.value = 0;
     u.tileTex.value = this.tileTex;
     u.lightTex.value = this.lightTex;
@@ -439,6 +538,8 @@ export class MapRenderer {
     this.marks?.dispose();
     this.edges?.dispose();
     this.sites?.dispose();
+    this.sourceTiles?.dispose();
+    this.sourceTiles = null;
     this.tileTex?.dispose();
     this.lightTex?.dispose();
     this.overlay = this.marks = this.edges = this.sites = this.tileTex = this.lightTex = null;
@@ -558,6 +659,7 @@ export class MapRenderer {
       mineOutline(e, m.W, m.H, this.sites.image.data as Uint8Array);
       this.sites.needsUpdate = true;
     }
+    this.markSources();
     return instances;
   }
 
@@ -937,7 +1039,12 @@ export class MapRenderer {
   pick(clientX: number, clientY: number): TileHit | null {
     const m = this.map;
     if (!m) return null;
-    return pickHeightfield(this.rayAt(clientX, clientY), m.W, m.H, m.heights);
+    const cut = this.slice;
+    if (cut === null) return pickHeightfield(this.rayAt(clientX, clientY), m.W, m.H, m.heights);
+    // under a slice, the ray lands on the cut
+    if (!this.sliced || this.sliced.length !== m.heights.length) this.sliced = new Uint8Array(m.heights.length);
+    for (let i = 0; i < m.heights.length; i++) this.sliced[i] = Math.min(m.heights[i], cut);
+    return pickHeightfield(this.rayAt(clientX, clientY), m.W, m.H, this.sliced);
   }
 
   /** The tile under a point on the screen, on a level plane (steady while dragging). */
@@ -994,6 +1101,15 @@ export class MapRenderer {
     this.on(c, "pointerdown", (e) => {
       const ev = e as PointerEvent;
       c.focus({ preventScroll: true });
+      // Alt+click: the clicked tile's layer (again: the whole world)
+      if (ev.button === 0 && ev.altKey && this.map) {
+        const hit = this.pick(ev.clientX, ev.clientY);
+        if (hit) {
+          const level = this.map.heights[hit.y * this.map.W + hit.x];
+          this.setSlice(this.slice === level ? null : level);
+        }
+        return;
+      }
       const grab = ev.button === 0 && this.grab ? this.grab(this.pick(ev.clientX, ev.clientY), ev) : null;
       if (grab) {
         this.grabbed = grab;
@@ -1062,7 +1178,12 @@ export class MapRenderer {
         ev.preventDefault();
         if (this.onWheel?.(ev, this.pick(ev.clientX, ev.clientY))) return;
         if (this.tool?.wheel?.(ev)) return;
-        this.zoom(Math.exp(ev.deltaY * 0.0012));
+        // Alt+scroll: the game's layers, the world cut away from the top down
+        if (ev.altKey) {
+          this.stepSlice(wheelDelta(ev) < 0 ? 1 : -1);
+          return;
+        }
+        this.zoom(Math.exp(wheelDelta(ev) * 0.0012));
       },
       { passive: false },
     );

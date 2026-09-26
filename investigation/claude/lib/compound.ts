@@ -92,6 +92,7 @@ const PRIORITY: Record<string, number> = {
   // a spring that fills a hollow: after the brushes and sculpts that may have dug it
   "addSource:hollow": 9.5,
   setRiverBadwater: 4,
+  changeSource: 4,
   addLake: 5,
   changeFeature: 3,
   "addSetPiece:damSite": 6,

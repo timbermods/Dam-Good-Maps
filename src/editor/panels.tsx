@@ -17,7 +17,7 @@ import type { GeneratorApi } from "../worker/generator.worker";
 import type { CheckItem, CheckProgress, DamSiteView, EntityInfo, ExportCheck, SessionInfo, ToolPlan, ToolRequest, WaterLayers } from "../worker/session";
 import type { FixOp } from "../core/validate/report";
 import { woodDetail } from "../core/analysis/wood";
-import { featureName, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
+import { featureName, selectable, tabOf, type FeatureIndex, type StartCheck, type Tab } from "./features";
 import { plain } from "./words";
 import { ADVANCED_TOOLS, LAND_TOOLS, PLACE_TEMPLATES, RESOURCE_TOOLS, TOOL_HINTS, TOOL_NAMES, WATER_TOOLS, type Edge, type FlowWord, type Species, type ToolKind, type ToolOptions } from "./tools";
 
@@ -60,7 +60,8 @@ export function TabPanel(p: TabPanelProps) {
   const tools = [...TOOLS_OF[p.tab], ...(p.advanced && p.tab === "resources" ? ADVANCED_TOOLS : [])];
   const listRef = useRef<HTMLDivElement>(null);
   // the player's own features first, then what the generator made
-  const inTab = p.info.features.filter((f) => tabOf(f) === p.tab);
+  // (water and the generator's ground are never objects to pick, D196)
+  const inTab = p.info.features.filter((f) => tabOf(f) === p.tab && selectable(f));
   const features = [...inTab.filter((f) => f.origin !== "generated"), ...inTab.filter((f) => f.origin === "generated")];
   const shown = features.slice(0, LIST_MAX);
   const onKey = (ev: KeyboardEvent) => {
@@ -688,6 +689,8 @@ export interface EntityChange {
   /** A move by one tile, or a turn (moveEntity). */
   move?: { dx: number; dy: number; turn: boolean };
   remove?: boolean;
+  /** A source's water: clean or bad (a source of the other kind in its place). */
+  kind?: "clean" | "bad";
 }
 
 /** The objects on a clicked tile (advanced mode): each with its numbers, a turn, a nudge and delete.
@@ -727,6 +730,9 @@ export function EntityInspector({ list, onChange, onClose }: { list: EntityInfo[
       <p class="muted">
         ({e.x}, {e.y}), level {e.z} · {e.from}
       </p>
+      {ws && (e.template === "WaterSource" || e.template === "BadwaterSource") ? (
+        <Pick label="Water" value={e.template === "BadwaterSource" ? "bad" : "clean"} choices={SOURCE_KINDS} onChange={(v) => onChange(e, { kind: v })} />
+      ) : null}
       {ws ? (
         <>
           <StrengthSlider value={strength} steps={e.template === "BadwaterSource" ? BADWATER_STRENGTHS : SOURCE_STRENGTHS} onChange={(v) => onChange(e, { props: { WaterSource: { SpecifiedStrength: v, CurrentStrength: delayed ? 0 : v } } })} />

@@ -147,7 +147,7 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   expect(errors).toEqual([]);
 });
 
-test("a feature is selected by clicking it, and its delete handle refuses what others build on", async ({ page }) => {
+test("a feature is selected by clicking it; water never is (D196)", async ({ page }) => {
   await page.goto("./#s=77&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Refine this map" }).click();
@@ -159,14 +159,21 @@ test("a feature is selected by clicking it, and its delete handle refuses what o
   await page.mouse.click(p.x, p.y);
   await expect(page.getByRole("complementary", { name: "Start, selected" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Delete Start" })).toBeVisible();
-  // the river: the valley builds on it, so deleting it is refused with the reason
+  // water is never an object (D196): the river is not listed, a click on it picks nothing, and
+  // Delete then removes nothing
+  await page.keyboard.press("Escape");
   await page.getByRole("tab", { name: "Water" }).click();
-  await page.locator(".feature-list").getByRole("button", { name: "River", exact: true }).first().click();
-  await page.getByRole("button", { name: "Delete River" }).click();
-  await expect(page.getByRole("alert")).toContainText(/build on this river/);
+  await expect(page.locator(".feature-list").getByRole("button", { name: "River", exact: true })).toHaveCount(0);
+  const river = (await info(page)).features.find((f) => f.kind === "river")!.params as { path: [number, number][] };
+  const w = river.path[Math.floor(river.path.length / 2)];
+  const wp = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), [Math.round(w[0]), Math.round(w[1])] as [number, number]);
+  await page.mouse.click(wp.x, wp.y);
+  await expect(page.getByRole("complementary", { name: /River/ })).toHaveCount(0);
+  await page.keyboard.press("Delete");
+  await page.evaluate(() => window.dgmEditor!.idle());
   expect((await info(page)).edits).toBe(0);
   // hover reads the tile in plain words
   const q = await page.evaluate(() => window.dgmEditor!.tileToClient(40, 40));
   await page.mouse.move(q.x, q.y);
-  await expect(page.locator(".readout")).toContainText(/height \d+/);
+  await expect(page.locator(".readout")).toContainText(/height \d+/i);
 });

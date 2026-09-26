@@ -4,6 +4,7 @@
 // quads at the largest size, in buffers made once).
 
 import { BufferAttribute, BufferGeometry, DoubleSide, Mesh, MeshBasicMaterial, type Scene } from "three";
+import { WATER } from "./palette";
 
 export interface BrushCursorState {
   /** Middle of the brush, in tiles (x east, y north). */
@@ -15,7 +16,7 @@ export interface BrushCursorState {
   tool: "raise" | "lower" | "flatten" | "smooth" | "naturalize";
   /** Flatten's level (its plane), or null. */
   level: number | null;
-  /** Smart Lower: a stroke here carves a bed the water follows (the ring turns softly blue). */
+  /** Smart Lower: a stroke here carves a bed the water follows (the ring turns water-blue, D198). */
   water?: boolean;
 }
 
@@ -27,11 +28,11 @@ const TINT: Record<BrushCursorState["tool"], [number, number, number]> = {
   naturalize: [0.85, 0.62, 0.38],
 };
 
-/** Smart Lower, where the water will follow the brush: a soft water blue. */
-const WATER_TINT: [number, number, number] = [0.3, 0.72, 1.0];
+/** Smart Lower, where the water will follow the brush: the faint fill, in the ring's water-blue. */
+const WATER_TINT: [number, number, number] = [...WATER.ring];
 
-/** Most quads the disc can take: a 24-tile radius, and the ring. */
-const MAX_QUADS = 49 * 49 + 256;
+/** Most quads the disc can take: a 24-tile radius, and the ring (a dash and its outline). */
+const MAX_QUADS = 49 * 49 + 512;
 
 export class BrushCursor {
   readonly mesh: Mesh;
@@ -97,19 +98,26 @@ export class BrushCursor {
         const h = heights[y * W + x] + 0.03;
         quad(x, y, x + 1, y + 1, h, 0.12 + 0.3 * f);
       }
-    // the ring at its edge: short dashes laid on the ground
+    // the ring at its edge: short dashes laid on the ground, each with a thin dark outline so it
+    // holds on bright shallows and pale ground; white, or with smart Lower a clear water-blue and a
+    // little thicker (D198)
     const n = Math.max(24, Math.min(256, Math.round(r * 12)));
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2;
-      const px = s.x + Math.cos(a) * r;
-      const py = s.y + Math.sin(a) * r;
-      const tx = Math.floor(px);
-      const ty = Math.floor(py);
-      if (tx < 0 || ty < 0 || tx >= W || ty >= H) continue;
-      const h = heights[ty * W + tx] + 0.05;
-      const w = 0.09 + r * 0.004;
-      quad(px - w, py - w, px + w, py + w, h, 0.95, [1, 1, 1]);
-    }
+    const ring: [number, number, number] = s.water ? [...WATER.ring] : [1, 1, 1];
+    const edge: [number, number, number] = [...WATER.ringEdge];
+    const w = (0.09 + r * 0.004) * (s.water ? 1.45 : 1);
+    const o = w + 0.035;
+    for (let pass = 0; pass < 2; pass++)
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2;
+        const px = s.x + Math.cos(a) * r;
+        const py = s.y + Math.sin(a) * r;
+        const tx = Math.floor(px);
+        const ty = Math.floor(py);
+        if (tx < 0 || ty < 0 || tx >= W || ty >= H) continue;
+        const h = heights[ty * W + tx] + 0.05;
+        if (pass === 0) quad(px - o, py - o, px + o, py + o, h - 0.005, 0.85, edge);
+        else quad(px - w, py - w, px + w, py + w, h, 0.97, ring);
+      }
     this.geo.setDrawRange(0, q * 6);
     (this.geo.getAttribute("position") as BufferAttribute).needsUpdate = true;
     (this.geo.getAttribute("color") as BufferAttribute).needsUpdate = true;

@@ -1815,28 +1815,23 @@
    "setup": "rv96-lake",
    "feasible": "yes",
    "expressible": true,
+   "note": "D196: water is never an object: the lake's bed is lowered with the brush, and its water stays at its rim's level",
    "goals": [
     {
      "id": "g1",
      "text": "the selected lake one level deeper",
-     "expect": [
-      {
-       "subject": "lake",
-       "metric": "floorDepth",
-       "equals": 3
-      }
-     ]
+     "expect": []
     }
    ],
    "report": {
     "mustSay": [
-     "the lake's floor is now 3 levels below its water (was 2)",
-     "its level is unchanged"
+     "the lake's bed is a level lower over how many tiles",
+     "its water level is unchanged: the rim holds it"
     ]
    },
    "pass": [
     "the result validates: no guard that passed before the request fails after it",
-    "the selected lake, deeper by one"
+    "the selected lake's bed, lower by one"
    ],
    "reference": {
     "calls": [
@@ -1850,14 +1845,24 @@
     "proposal": {
      "steps": [
       {
-       "op": "changeFeature",
-       "target": "this",
-       "set": {
-        "floorDepth": 3
-       }
+       "op": "brush",
+       "tool": "lower",
+       "where": {
+        "near": "this",
+        "within": 0
+       },
+       "amount": 1
       }
      ]
-    }
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^lowers [0-9]+ tiles"
+     }
+    ]
    }
   },
   {
@@ -5792,7 +5797,7 @@
    "feasible": "partly",
    "expressible": false,
    "needs": [
-    "the river badwater switch in the build: RiverParams.badwater is stored and ignored (EDITOR_PLAN §4 'Badwater is a toggle on a river or source')"
+    "water is never an object (D196): clean or bad belongs to each source; a river is made bad by a badwater source upstream, which breaks the start's clean water here"
    ],
    "goals": [
     {
@@ -5829,14 +5834,15 @@
     "checks": [
      {
       "on": "call:0",
-      "path": "steps.0.errors",
+      "path": "errors",
       "op": "includes",
-      "value": "not built yet"
+      "value": "clean or bad belongs to each source"
      },
      {
       "on": "call:0",
-      "path": "steps.0.alternative",
-      "op": "exists"
+      "path": "errors",
+      "op": "includes",
+      "value": "add a badwater source"
      }
     ]
    }
@@ -6614,11 +6620,9 @@
       "args": {
        "steps": [
         {
-         "op": "changeFeature",
-         "target": "the main river",
-         "set": {
-          "flow": 99999
-         }
+         "op": "changeSource",
+         "river": "the main river",
+         "flow": 99999
         }
        ]
       }
@@ -7625,6 +7629,65 @@
       "path": "steps.0.report.0",
       "op": "matches",
       "value": "^a badwater source of 3 blocks/s at"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B12",
+   "kind": "simple",
+   "text": "make the main river flow at 4 blocks per second",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "D196: water is never an object: a river's flow is its sources' strength (its mouth on the map's edge), shared among them",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "the main river's sources give 4 blocks/s in all",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how many sources feed it at its mouth, and each one's strength",
+     "that the rest of the map's water follows"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "limits",
+      "args": {
+       "kind": "river"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "changeSource",
+       "river": "the main river",
+       "flow": 4
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.total",
+      "op": "equals",
+      "value": 4
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "sources at [0-9.]+ blocks/s each"
      }
     ]
    }

@@ -99,7 +99,7 @@ export function BrushBar(p: BrushBarProps) {
               <input type="range" min={SIZE_MIN} max={SIZE_MAX} step={0.5} value={s.size} aria-valuetext={`${s.size} tiles`} onInput={(e) => set({ size: Number((e.target as HTMLInputElement).value) })} />
               <output>{s.size}</output>
             </label>
-            <label class="slider-field" title="Strength (Alt+wheel)">
+            <label class="slider-field" title="Strength (Shift+wheel)">
               Strength
               <input type="range" min={1} max={10} step={1} value={s.strength} onInput={(e) => set({ strength: Number((e.target as HTMLInputElement).value) })} />
               <output>{s.strength}</output>
@@ -120,10 +120,6 @@ export function BrushBar(p: BrushBarProps) {
                 </select>
               </label>
             ) : null}
-            <label class="check" title="Hold the water still while you paint, for very large maps">
-              <input type="checkbox" checked={s.holdWater} onChange={() => set({ holdWater: !s.holdWater })} />
-              Hold water while painting
-            </label>
           </div>
         ) : null}
       </div>

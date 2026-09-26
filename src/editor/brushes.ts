@@ -7,7 +7,7 @@
 //
 // Controls: left-drag paints; right- or middle-drag and the wheel move the camera; Shift inverts
 // (raise ↔ lower); Ctrl+click picks flatten's level from the ground; [ and ] change the size;
-// Alt+wheel the strength; 1–5 pick a brush; Esc cancels a stroke in progress.
+// Shift+wheel the strength; 1–5 pick a brush; Esc cancels a stroke in progress.
 
 import type { MapRenderer, PointerTool } from "../render3d";
 import type { BrushParams, BrushTool } from "../core/features/raster/brush";
@@ -23,11 +23,9 @@ export interface BrushSettings {
   strength: number;
   /** Flatten's level: picked with Ctrl+click, else the ground where a stroke starts. */
   level: number | null;
-  /** Hold the water while painting (very large maps). */
-  holdWater: boolean;
 }
 
-export const DEFAULT_BRUSH: BrushSettings = { tool: "raise", size: 5, strength: 5, level: null, holdWater: false };
+export const DEFAULT_BRUSH: BrushSettings = { tool: "raise", size: 5, strength: 5, level: null };
 
 export const BRUSHES: { tool: BrushTool; name: string; key: string; hint: string }[] = [
   { tool: "raise", name: "Raise", key: "1", hint: "Raise the ground. Hold still to raise it more." },
@@ -72,14 +70,19 @@ export interface PainterHost {
   commit(stroke: Stroke, pre: Uint8Array): void;
   /** Ctrl+click on flatten: the level picked. */
   picked(level: number): void;
-  /** Alt+wheel: a new strength. */
-  strength(value: number): void;
+  /** Shift+wheel: a new strength (the page shows it beside the pointer while it changes). */
+  strength(value: number, ev?: WheelEvent): void;
   /** A stroke started or ended (the water waits while painting, when asked). */
   painting(on: boolean): void;
   /** Words beside the pointer (flatten's level: "level 7"), or null. */
   note?(text: string | null, ev: PointerEvent | null): void;
   /** Whether water stands on the tile. */
   wet?(x: number, y: number): boolean;
+  /** The stroke's ground so far, a rectangle of the shown heights at a time: the water flows on it
+   *  while painting (D197). */
+  draft?(rect: { x0: number; y0: number; x1: number; y1: number }, heights: Uint8Array): void;
+  /** The stroke was taken back: its water goes. */
+  cancelDraft?(): void;
 }
 
 /** Quarter tiles, for a dab's centre on a map `size` tiles across. */
@@ -88,7 +91,7 @@ const q = (v: number, size: number) => Math.max(0, Math.min(4 * size - 1, Math.r
 /** Paints strokes with the brushes: the renderer's pointer tool while a brush is out. */
 export class BrushPainter {
   /** The stroke being painted: where the cursor is (`last`), where the last dab was (`dabAt`). */
-  private stroke: { preview: StrokePreview; settings: Omit<BrushParams, "dabs">; dabs: number[]; level: number; plane: number; last: [number, number]; dabAt: [number, number]; lastDab: number; raf: number } | null = null;
+  private stroke: { preview: StrokePreview; settings: Omit<BrushParams, "dabs">; dabs: number[]; level: number; plane: number; last: [number, number]; dabAt: [number, number]; lastDab: number; raf: number; drafted: { x0: number; y0: number; x1: number; y1: number } | null; draftAt: number } | null = null;
   private cursorAt: [number, number] | null = null;
   /** A left-drag that began off the map: it paints from where it first reaches the map. */
   private waiting = false;
@@ -150,10 +153,11 @@ export class BrushPainter {
         self.cursorAt = p ? [p.point[0], -p.point[2]] : [hit.x + 0.5, hit.y + 0.5];
         self.showCursor();
       },
+      // Shift+scroll: the strength (D196, as the game; browsers turn a Shift+wheel sideways)
       wheel(ev) {
-        if (!ev.altKey) return false;
+        if (!ev.shiftKey) return false;
         const s = host.settings();
-        host.strength(Math.max(1, Math.min(10, s.strength + (ev.deltaY < 0 ? 1 : -1))));
+        host.strength(Math.max(1, Math.min(10, s.strength + ((ev.deltaY || ev.deltaX) < 0 ? 1 : -1))), ev);
         return true;
       },
     };
@@ -217,7 +221,7 @@ export class BrushPainter {
     const plane = tool === "flatten" ? level : h.renderer.heightAt(Math.floor(x), Math.floor(y));
     const p = h.renderer.pickAtLevel(ev.clientX, ev.clientY, plane);
     const at: [number, number] = p ? [p.point[0], -p.point[2]] : [x, y];
-    this.stroke = { preview, settings, dabs: [], level, plane, last: at, dabAt: at, lastDab: performance.now(), raf: 0 };
+    this.stroke = { preview, settings, dabs: [], level, plane, last: at, dabAt: at, lastDab: performance.now(), raf: 0, drafted: null, draftAt: 0 };
     h.painting(true);
     this.dab([at]);
     this.loop();
@@ -259,8 +263,27 @@ export class BrushPainter {
     st.lastDab = performance.now();
     st.dabAt = points[points.length - 1];
     const r = st.preview.add(add);
-    if (r) h.renderer.updateTerrainRect(h.heights(), r);
+    if (r) {
+      h.renderer.updateTerrainRect(h.heights(), r);
+      const d = st.drafted;
+      st.drafted = d ? { x0: Math.min(d.x0, r.x0), y0: Math.min(d.y0, r.y0), x1: Math.max(d.x1, r.x1), y1: Math.max(d.y1, r.y1) } : { ...r };
+      this.sendDraft(false);
+    }
     this.showCursor();
+  }
+
+  /** The ground the stroke changed since the last time, to the water (D197): at once for the first
+   *  change, then at most once a frame. */
+  private sendDraft(force: boolean): void {
+    const st = this.stroke;
+    const h = this.host;
+    if (!st || !st.drafted || !h.draft) return;
+    const now = performance.now();
+    if (!force && st.draftAt && now - st.draftAt < 1000 / 60) return;
+    st.draftAt = now;
+    const r = st.drafted;
+    st.drafted = null;
+    h.draft(r, cut(h.heights(), r, h.W));
   }
 
   /** Holding still keeps pressing, thirty times a second. */
@@ -270,6 +293,7 @@ export class BrushPainter {
     st.raf = requestAnimationFrame(() => {
       if (this.stroke !== st) return;
       if (performance.now() - st.lastDab >= 1000 / 30) this.dab([st.last]);
+      this.sendDraft(false);
       this.loop();
     });
   }
@@ -308,6 +332,7 @@ export class BrushPainter {
     const r = st.preview.restore();
     if (r) this.host.renderer.updateTerrainRect(this.host.heights(), r);
     this.host.renderer.refreshShadows();
+    this.host.cancelDraft?.();
     this.host.painting(false);
     this.showCursor();
   }

@@ -467,7 +467,7 @@ export class ClaudeTools {
         how: "carve it with a brush step, tool lower, along a path that starts in or beside water, or beside a source (addSource first, for a new river): its bed keeps flowing downhill and the water follows it",
         path: { points: { min: 2, max: 24 }, width: { min: 1, max: 9, words: "tiny 1, small 2, medium 3, large 5, huge 7 tiles" } },
         source: { min: 0.25, max: 8, unit: "blocks/s", note: "a water source's one tile holds 8 at most; past that, add more sources" },
-        existing: { flow: { min: 0.1, max: 64 }, width: { min: 1, max: 9 }, note: "a river the map already has: changeFeature sets its flow and width; the generated river follows the map's River flow setting" },
+        existing: { flow: { min: 0.1, max: 64 }, note: "a river the map already has is its sources and its land (water is never an object): changeSource {river} sets its sources' strength; the brush reshapes its bed; the map's River flow setting sets the generated river's" },
         flowBudget: budget,
       };
     if (kind === "brush")

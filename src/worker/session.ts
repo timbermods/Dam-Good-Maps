@@ -215,12 +215,20 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
 
 // ------------------------------------------------------------------------------------ the view
 
+/** A source's strength, for the page's markers (D196). */
+function strengthOf(comps: Record<string, unknown>): { strength?: number } {
+  const w = comps.WaterSource as { SpecifiedStrength?: unknown } | undefined;
+  if (!w) return {};
+  const v = plainJson(w.SpecifiedStrength);
+  return typeof v === "number" ? { strength: v } : {};
+}
+
 function entityInputs(list: readonly EntitySpec[]) {
   const out = [];
   for (const e of list) {
     if (e.raw && !placementOf(e.raw)) continue;
     const comps = e.raw ? (e.raw.Components as Record<string, unknown>) : { ...(e.before ?? {}), ...e.components };
-    out.push({ template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, owner: e.owner, flipped: e.flipped, ...lifeOf(comps), ...variantOf(comps) });
+    out.push({ template: e.template, x: e.x, y: e.y, z: e.z, orientation: e.orientation, owner: e.owner, flipped: e.flipped, ...lifeOf(comps), ...variantOf(comps), ...strengthOf(comps) });
   }
   return out;
 }
@@ -485,7 +493,7 @@ export type EditorEvent =
   /** The water as it flows after an edit (D133's live water): the whole view, a frame every few
    *  ticks of the game (close together at first, where the water moves most), for the page to play
    *  at a pace the eye can follow. `done` is how far the settle has come (0–1). */
-  | { kind: "water"; version: number; water: WaterView; done: number; ticks: number }
+  | { kind: "water"; version: number; water: WaterView; done: number; ticks: number; draft?: boolean }
   /** A weather run (a drought, then the water coming back): its frames, the day, and the end (the
    *  map's own water, exactly). */
   | { kind: "weather"; version: number; water: WaterView; phase: "drought" | "badtide" | "return" | "end"; day: number; days: number; soil?: SoilView }
@@ -519,14 +527,90 @@ export function setAutoWater(on: boolean): void {
 /** The water settling in the background, and a token that a newer edit changes. */
 let waterJob: { token: number; job: PreviewJob; version: number; session: MapSession } | null = null;
 let waterToken = 0;
-/** The page holds the water while the player paints, when it asks to (a very large map). */
-let waterHeld = false;
 /** Ticks per slice, and how often the page gets the water as it flows. */
 const WATER_SLICE_MS = 10;
 const WATER_FRAME_MS = 150;
 
-export function holdWater(on: boolean): void {
-  waterHeld = on;
+
+// ---------------------------------------------------------------------- water on a stroke (D197)
+
+/** A stroke being painted: the ground it has made so far, and the water flowing on it. The page
+ *  sends the stroke's ground as it paints (`draftStroke`); the water around it starts moving at
+ *  once, a tick or two after the ground changes, and the page shows each frame as it comes. On
+ *  release the stroke's operation carries this water on (`kickWater`); Esc drops it. */
+let draft: { session: MapSession; job: PreviewJob; model: WaterModel; ground: Uint8Array; sent?: Float64Array; fresh: boolean } | null = null;
+let draftToken = 0;
+/** How often a stroke's water goes to the page. */
+const DRAFT_FRAME_MS = 16;
+
+export function draftStroke(rect: { x0: number; y0: number; x1: number; y1: number }, heights: Uint8Array): void {
+  const s = session;
+  if (!s) return;
+  const W = s.size.x;
+  if (!draft || draft.session !== s) {
+    const from = (waterJob && waterJob.session === s ? waterJob.job.state() : null) ?? s.lastSettled();
+    if (!from) return;
+    const src = s.built.waterModel;
+    const model: WaterModel = { ...src, floor: src.floor.slice() };
+    // the edit's own settle waits: the stroke's water takes over from it
+    stopWater();
+    draft = { session: s, job: new PreviewJob(from, model), model, ground: s.built.heights.slice(), fresh: true };
+    const token = ++draftToken;
+    setTimeout(() => void runDraft(token), 0);
+  }
+  // the stroke's ground: the water's floor moves with it (objects on it stay as they are)
+  const d = draft;
+  // new ground: the next frame goes out as soon as the water has answered it
+  d.fresh = true;
+  const bw = rect.x1 - rect.x0 + 1;
+  for (let y = rect.y0; y <= rect.y1; y++)
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = y * W + x;
+      const h = heights[(y - rect.y0) * bw + (x - rect.x0)];
+      if (h === d.ground[i]) continue;
+      d.model.floor[i] += h - d.ground[i];
+      d.ground[i] = h;
+    }
+}
+
+/** The stroke was taken back (Esc): its water goes, and the map's water settles on as before. */
+export function cancelDraft(): void {
+  if (!draft) return;
+  const s = draft.session;
+  draft = null;
+  draftToken++;
+  if (s !== session) return;
+  listener?.({ kind: "water", version, water: waterOf(s), done: 1, ticks: 0, draft: true });
+  kickWater();
+}
+
+async function runDraft(token: number): Promise<void> {
+  let last = 0;
+  for (;;) {
+    const d = draft;
+    if (!d || token !== draftToken || d.session !== session) return;
+    const t0 = performance.now();
+    // a couple of ticks at a time, the frame out as soon as the ground has moved the water
+    let fresh = d.fresh;
+    d.fresh = false;
+    while (performance.now() - t0 < WATER_SLICE_MS) {
+      d.job.sim.run(2);
+      if (fresh || performance.now() - last >= DRAFT_FRAME_MS) break;
+    }
+    if (listener && (fresh || performance.now() - last >= DRAFT_FRAME_MS)) {
+      fresh = false;
+      last = performance.now();
+      // only when the water has moved (a stroke far from water sends nothing)
+      const D = d.job.sim.D;
+      let moved = !d.sent || d.sent.length !== D.length;
+      for (let i = 0; !moved && i < D.length; i++) if (Math.abs(D[i] - d.sent![i]) > 0.01) moved = true;
+      if (moved) {
+        d.sent = D.slice();
+        listener({ kind: "water", version, water: waterOf(d.session, { depth: D, contamination: d.job.sim.C }, d.ground), done: 0, ticks: d.job.ticks, draft: true });
+      }
+    }
+    await breathe();
+  }
 }
 
 function stopWater(): void {
@@ -542,7 +626,11 @@ function kickWater(): void {
     stopWater();
     return;
   }
-  const inflight = waterJob && waterJob.session === s ? waterJob.job.state() : null;
+  // the water flowing on a stroke being painted carries on (D197); else the water in flight
+  const painted = draft && draft.session === s ? draft.job.state() : null;
+  draft = null;
+  draftToken++;
+  const inflight = painted ?? (waterJob && waterJob.session === s ? waterJob.job.state() : null);
   const from: WarmState | null = inflight ?? s.lastSettled();
   if (!from) return;
   const token = ++waterToken;
@@ -563,10 +651,6 @@ async function runWater(token: number): Promise<void> {
   for (;;) {
     const j = waterJob;
     if (!j || j.token !== token || session !== j.session) return;
-    if (waterHeld) {
-      await new Promise((r) => setTimeout(r, 50));
-      continue;
-    }
     const t0 = performance.now();
     let r: CanonicalWater | null = null;
     while (!r && performance.now() - t0 < WATER_SLICE_MS) {
