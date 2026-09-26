@@ -895,7 +895,9 @@ they conflict):
   always zooms, Alt+scroll slices the visible layers, as in the game, D196); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Craterize | Remove.
+   Craterize (D202) simulates a giant impact (Strike or Aim, Power, Size, walls, centre, debris, Try
+   another); built from `investigation/craterize` once Kyler says it's ready. A small row
    beneath shows only the picked tool's options. The size ring is drawn on the land; strength shows
    only while Shift+scrolling. Toggles, off by default: square shape, precise mode, straight lines,
    level lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
