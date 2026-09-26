@@ -1,5 +1,7 @@
 {
   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "preservationBaseline": "9aeac6b",
+  "cleanPaletteUnchanged": true,
   "targets": {
     "mlShallow": [
       42,
@@ -35,6 +37,16 @@
       80,
       123,
       129
+    ],
+    "mlBad": [
+      75,
+      60,
+      55
+    ],
+    "mlMix": [
+      46,
+      68,
+      76
     ]
   },
   "inputs": {
@@ -72,6 +84,16 @@
       82.5,
       127.5,
       137
+    ],
+    "mlBad": [
+      73,
+      58,
+      54
+    ],
+    "mlMix": [
+      44,
+      65.99999999999999,
+      76
     ]
   },
   "measurements": [
@@ -120,11 +142,11 @@
       ],
       "bodyHex": "#1D323E",
       "streak": [
-        46,
+        45,
         84,
         95
       ],
-      "streakHex": "#2E545F"
+      "streakHex": "#2D545F"
     },
     {
       "label": "low 30 degrees",
@@ -154,23 +176,54 @@
       ],
       "bodyHex": "#34505A",
       "streak": [
-        80,
-        123,
-        129
+        81,
+        124,
+        131
       ],
-      "streakHex": "#507B81"
+      "streakHex": "#517C83"
+    },
+    {
+      "label": "badwater shallow poisoned bed",
+      "depth": 0.25,
+      "contamination": 1,
+      "pitch": 1.22,
+      "body": [
+        75,
+        60,
+        55
+      ],
+      "bodyHex": "#4B3C37",
+      "streak": [
+        82,
+        67,
+        61
+      ],
+      "streakHex": "#52433D"
+    },
+    {
+      "label": "mostly clean mixing zone",
+      "depth": 1.25,
+      "contamination": 0.25,
+      "pitch": 1.22,
+      "body": [
+        46,
+        68,
+        76
+      ],
+      "bodyHex": "#2E444C",
+      "streak": [
+        57,
+        83,
+        92
+      ],
+      "streakHex": "#39535C"
     }
   ],
-  "badwaterUnchanged": {
-    "channels": 1283415,
-    "changed": 0,
-    "maxDelta": 0
-  },
   "waterfallUnchanged": {
     "channels": 18720,
     "changed": 0,
     "maxDelta": 0
   },
   "errors": [],
-  "maxTargetError": 0
+  "maxTargetError": 2
 }
