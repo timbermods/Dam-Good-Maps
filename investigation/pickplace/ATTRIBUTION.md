@@ -3,7 +3,7 @@
 Terrain Tiles accessed 2026-09-26 UTC (2026-09-25 Pacific) from https://registry.opendata.aws/terrain-tiles/.
 Data: `s3://elevation-tiles-prod/terrarium`. Provider notices below apply to every derived fixture and preview. The source is a regional mosaic; exact provider identity is not available in each PNG.
 
-Changes: bilinear resampling, cropped patches, monotonic vertical mapping and integer quantisation; inferred game water sources, natural slopes, simulated water and planted game resources. No edge sealing, walls or rims. These are modified data, not endorsed by the providers.
+Changes: bilinear resampling, cropped patches, monotonic vertical mapping and integer quantisation; designed game water sources, natural slopes, simulated water and planted game resources. No edge sealing, walls or rims. These are modified data, not endorsed by the providers.
 
 No Google imagery or elevation is used. A pasted coordinate is only a location. No basemap or land mask is used by this prototype. Notices apply to the previews as well as map exports. Local code is adapted from the MIT-licensed Dam Good Maps landscape pipeline.
 

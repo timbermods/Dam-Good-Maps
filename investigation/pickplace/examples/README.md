@@ -1,10 +1,5 @@
-# Sample exports
+# Historical baseline examples
 
-These passed the labelled local prototype checks. They were not tested in game. Every file contains its full terrain-provider notices and provenance.
+These files belong to the original `c9874e2` investigation, before the designed-water and head-only source decisions. They are retained as comparison evidence.
 
-- [Grand Canyon Colorado](01-128.timber) — canyon, 128².
-- [Mount Taranaki](16-256.timber) — cone, 256².
-- [Milford Sound](24-128.timber) — fjord, 128².
-- [Kansas prairie](41-256.timber) — plain, 256².
-- [Crater Lake](13-96.timber) — caldera, 96².
-- [Yosemite Valley](25-256.timber) — glacial, 256².
+Use [examples-water](../examples-water/) for current passing maps. See [REPORT.md](../REPORT.md) for the current results and limitations.

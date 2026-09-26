@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { decode,pixel,checkInput } from './terrain';
 import { mapping,metrics,prediction } from './settings';
-import { naturalSlopes,pumpShore } from './rules';
+import { naturalSlopes,pumpShore,currentRules } from './rules';
+import { designWater, headsSeparate, auditOrigins } from './designed-water';
 import { walkDistance } from '../../src/core/analysis/walk';
 import { sourcesFromHalo } from './hydrology';
 import { convert } from './convert';
@@ -36,3 +37,43 @@ const map=new Uint8Array(96*96).fill(4);for(let y=0;y<96;y++)for(let x=43;x<53;x
 const result=convert(map,96,16,{sources:[{i:10*96+48,area:1000}],outlets:[]},'regression');
 assert.deepEqual(result.heights,map);assert.equal(result.edgeChanges,0);
 console.log('PASS: decoding, dateline projection, input limits, noise cap, quality controls, D153 slope/blocker/pump path, slope validity, 256 hydrology, unchanged terrain.');
+// Designed water has no native river or positive-elevation prerequisite.
+for(const elevation of [-100,0,100]) {
+  const raw=new Float32Array(96*96).fill(elevation),h=new Uint8Array(96*96).fill(2);
+  const plans=designWater(raw,h,96);
+  assert.equal(plans.length,2);assert.ok(plans.every(p=>p.sources.length>0));
+  assert.deepEqual(plans,designWater(raw,h,96));
+  assert.ok(plans.every(p=>p.sources.every(s=>s.strength>0&&s.i>=0&&s.i<h.length)));
+  assert.ok(plans.every(p=>p.sources.every(s=>s.i%96===0||s.i%96===95||s.i<96||s.i>=95*96)));
+}
+// A walking path cannot use a flooded crossing to reach the clean bank beyond.
+const wetH=new Uint8Array(16*16).fill(4),wetD=new Float64Array(256),wetC=new Float64Array(256);
+for(let y=0;y<16;y++){wetD[y*16+6]=3;wetC[y*16+6]=1;wetH[y*16+10]=2;wetD[y*16+10]=.5;}
+const verdict=currentRules({world:{sizeX:16,entities:[]}},{report:{checks:[]}},wetH,{depth:wetD,contamination:wetC},[],{x:3,y:7},[{i:10}]);
+assert.equal(verdict.waterDistance,null);assert.equal(verdict.passed,false);
+const ridges=Float32Array.from({length:96*96},(_,i)=>100+Math.abs(i%96-48)*10+Math.floor(i/96)*2);
+const before=ridges.slice(),height=mapping(ridges).heights;
+for(const intention of ['balanced','waterfall','basin'] as const) {
+  const plan=designWater(ridges,height,96,intention);
+  assert.ok(plan.every(p=>p.sources.length>0));assert.deepEqual(ridges,before);
+}
+console.log('PASS: designed springs without native water, deterministic source plans, bounded positive strengths, dry walking path, intentions preserve terrain.');
+// A downstream booster is forbidden even when it would make a start easier.
+const stream=new Uint8Array(12*12).fill(5);
+for(let y=0;y<12;y++)stream[y*12+6]=1+Math.floor(y/4);
+assert.equal(headsSeparate(stream,12,[{i:9*12+6,strength:3},{i:3*12+6,strength:3}]),false);
+assert.equal(auditOrigins(stream,12,[{i:9*12+6,strength:3,headId:'head'}]).passed,true);
+// Sources belong outside lake interiors; interior channel candidates must be heads.
+const lake=new Uint8Array(96*96).fill(6);
+for(let y=30;y<66;y++)for(let x=30;x<66;x++)lake[y*96+x]=1;
+for(const p of designWater(Float32Array.from(lake,v=>v*10),lake,96))for(const s of p.sources) {
+  assert.equal(lake[s.i],6);
+  if(s.kind==='tributary head spring')assert.equal(s.upstreamChannels,0);
+  else assert.ok(s.i%96===0||s.i%96===95||s.i<96||s.i>=95*96);
+}
+console.log('PASS: no downstream boosters, only structural heads or edge entries, no lake-interior sources, independent-origin audit.');
+const forks=new Uint8Array(12*12).fill(5);
+for(let y=0;y<12;y++)for(const x of [3,8])forks[y*12+x]=1+Math.floor(y/4);
+const tributaries=[{i:9*12+3,strength:2,headId:'left'},{i:9*12+8,strength:2,headId:'right'}];
+assert.ok(headsSeparate(forks,12,tributaries));assert.ok(auditOrigins(forks,12,tributaries).passed);
+console.log('PASS: independent tributaries keep distinct dry source heads.');

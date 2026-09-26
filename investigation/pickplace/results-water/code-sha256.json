@@ -1,0 +1,429 @@
+{
+  "base": "84b1866b4e1d444346949a7dd57dc0f3f9f69ac5",
+  "files": [
+    {
+      "file": "../landscapes/lib/terrain.ts",
+      "sha256": "281fa96034c5d54b76b8352314876f36ab8c53fc724acf81e5735e2ef3263f5f"
+    },
+    {
+      "file": "../../src/core/analysis/damsites.ts",
+      "sha256": "c474d1c611c231d4a2d3bd291f2494f4b3b209f1c3df6c5f9e1acdadb6558f9e"
+    },
+    {
+      "file": "../../src/core/analysis/mechanics.ts",
+      "sha256": "223bdca4bea25720d48d1b6ea0d2c008bf381eb9cbee6dbf31cfabbef6b4717d"
+    },
+    {
+      "file": "../../src/core/analysis/metrics.ts",
+      "sha256": "545257f07a28a9646562a7eaa7b34be11587120739033e43e248b7afaaab735e"
+    },
+    {
+      "file": "../../src/core/analysis/regions.ts",
+      "sha256": "11a32a060f1d04b272f482b6dabb7c216e800765778d6bfeee870946839cff8e"
+    },
+    {
+      "file": "../../src/core/analysis/walk.ts",
+      "sha256": "8d30c9f19bfe1580fe2f21496a876a82b5a07c0fb4f5a08650dbce1387a64e82"
+    },
+    {
+      "file": "../../src/core/data/footprints.json",
+      "sha256": "1041a770dc33aed409f05fea2002e105581aaa5ff07be82f6e4bd9f2fd0b8e39"
+    },
+    {
+      "file": "../../src/core/doc/base.ts",
+      "sha256": "122b1627e2cee75f41830ab85ca8976ed5ffeb08279540b0786194197c1e23bb"
+    },
+    {
+      "file": "../../src/core/doc/document.ts",
+      "sha256": "d0c5debdedf00b95fae807160112a35b8da1965e03adcb257fe524f3b5548280"
+    },
+    {
+      "file": "../../src/core/doc/ops.schema.json",
+      "sha256": "1e199bc23a49b8aad293d5184e5ae46d2d26cd35c4a887950db7a2027b49109e"
+    },
+    {
+      "file": "../../src/core/doc/ops.ts",
+      "sha256": "14e89d791f2d66e05356007fb4ec4bbc95417188623a2653283d2b30c761017b"
+    },
+    {
+      "file": "../../src/core/doc/placing.ts",
+      "sha256": "ccc4eaf5848706bbc280076270025e65c4c524fd454f8b2281e70d056c9d1c1d"
+    },
+    {
+      "file": "../../src/core/doc/session.ts",
+      "sha256": "a2256f161ac334bb1e359a69185989ccdd2c5657a2b09983ba445a564529dc51"
+    },
+    {
+      "file": "../../src/core/doc/tools.ts",
+      "sha256": "00a7610423a32243b44babb7220f0a7682dbb91b22bef8e06498c2dbdba4c054"
+    },
+    {
+      "file": "../../src/core/features/build.ts",
+      "sha256": "384ec09557b79939fa0df1f2b6cf1e548d13ad4a320501ec8628b04171d25fb6"
+    },
+    {
+      "file": "../../src/core/features/edits.ts",
+      "sha256": "f445f3f74c16c1a87cd1af1ca56e21c1d7b03b1e8273742f047981e8969324cf"
+    },
+    {
+      "file": "../../src/core/features/features.schema.json",
+      "sha256": "aecf447e0b13e24d44bfe878b71c4f741a2e3ec781bedc5914fc2a52dfe44910"
+    },
+    {
+      "file": "../../src/core/features/geometry.ts",
+      "sha256": "b05b00861844fc9e3adbbb65967ef7446e0c216572600d24aef82dd3269340e9"
+    },
+    {
+      "file": "../../src/core/features/ids.ts",
+      "sha256": "768ac9de71bbb7089d79a04947ffaaac9296e93d23d23f4fc049d6e74129ccfc"
+    },
+    {
+      "file": "../../src/core/features/objects.ts",
+      "sha256": "c02ae85d8288dcd239e6bc25834e5e4629d123afd4cd322802feee1bcd63f0d9"
+    },
+    {
+      "file": "../../src/core/features/raster/resources.ts",
+      "sha256": "9c731c28a6ce8b55b35ad9dbe15e36632d5cb97d70e75308623595db6f2a59fd"
+    },
+    {
+      "file": "../../src/core/features/raster/terrain.ts",
+      "sha256": "d5f0b895371835d8fcb01d73a35a0af6b06d9bafa3cb3743b0b20343686f4887"
+    },
+    {
+      "file": "../../src/core/features/route.ts",
+      "sha256": "79134dcbf14ad4d27fd217cefa5d0c9d53d803a0ef2793968b23e2b6dc0c3fa7"
+    },
+    {
+      "file": "../../src/core/features/schema.ts",
+      "sha256": "37fd3e866d197eb178b8d1c20f6312577afbb793d9709d88c17937e9d2b7fa6d"
+    },
+    {
+      "file": "../../src/core/features/setpieces/badwaterBasin.ts",
+      "sha256": "ce729bc65f3f1f9cbb2d4e23533f934c19e242baa9f5ad7aa302668761bddf46"
+    },
+    {
+      "file": "../../src/core/features/setpieces/common.ts",
+      "sha256": "36a3bbd721abffbfcf63428368be8fc35eff47e0531beb8f3ed62da4e348b955"
+    },
+    {
+      "file": "../../src/core/features/setpieces/damSite.ts",
+      "sha256": "b4d054f36ff934e5762aa9efd06f62fb9485118bb051d37b5a18d81a594c1260"
+    },
+    {
+      "file": "../../src/core/features/setpieces/gorge.ts",
+      "sha256": "f338f4782ef8e4156383dab633846cd75be357bda300f4c2b99eb3c3e18b0d18"
+    },
+    {
+      "file": "../../src/core/features/setpieces/index.ts",
+      "sha256": "2082057c68d107049b8bbbebe87e70c7b46c96ceec97b0f3c1302b6062bbc6f4"
+    },
+    {
+      "file": "../../src/core/features/setpieces/obstaclePayoff.ts",
+      "sha256": "a34c3d7c0d309a1bb5f898aff0640fb54ea64e8bbcc2b432d77d2274fe69a580"
+    },
+    {
+      "file": "../../src/core/features/setpieces/plugSpillway.ts",
+      "sha256": "85626ee982f25f2b2cc3427f021bd755de02c1733400041221156e35be90f0fc"
+    },
+    {
+      "file": "../../src/core/features/setpieces/secondDistrict.ts",
+      "sha256": "6238f2c067ffe00704c7a3205a49f6395d3ef550b8290ae361ba840ac6045a3a"
+    },
+    {
+      "file": "../../src/core/features/setpieces/terracedCliffs.ts",
+      "sha256": "cf4834f031adc72a4ccfb025f6e57d176d583d47c95702f2c3886acb6c024cf0"
+    },
+    {
+      "file": "../../src/core/features/setpieces/waterfall.ts",
+      "sha256": "6dbe3b8007f7ca281d683592cd56ce7463cc611fb5b55c168ee7c8be11d8c100"
+    },
+    {
+      "file": "../../src/core/features/slopes.ts",
+      "sha256": "cd92e9b7fd9738bdfc5fc4c380c9caf7172e5a04bdc9f442c0125c0eb5e6d82b"
+    },
+    {
+      "file": "../../src/core/features/target.ts",
+      "sha256": "54a4a2550e58a5d1e4e06c9c3bd3979fe5b97238232232934b46c9fbf8a213ab"
+    },
+    {
+      "file": "../../src/core/format/base64.ts",
+      "sha256": "a1693f5ad08d79e7541ade25673b493834578c2db6131d840baa6ec7aa6eb861"
+    },
+    {
+      "file": "../../src/core/format/entities.ts",
+      "sha256": "c6fbf75a7b6adeb0ce42c6c5ac7998d838bb529e0004703531c51eb4d085041a"
+    },
+    {
+      "file": "../../src/core/format/footprints.ts",
+      "sha256": "aecda8f5011956bccf5f30cdcb701ce996a4b9b9c82fcc9cedd45bc0dc444913"
+    },
+    {
+      "file": "../../src/core/format/json.ts",
+      "sha256": "262ba54b6d5e1e1c392a3a5fa41e7b111df4a03cec7745f975a59916e64067c7"
+    },
+    {
+      "file": "../../src/core/format/normalize.ts",
+      "sha256": "2ea1e024b00460dd94ae1526eead1b5206ebeda8986eb626090011ed26285d88"
+    },
+    {
+      "file": "../../src/core/format/timber.ts",
+      "sha256": "b1804ca3806ae006b1e649ed974a4cffcaae8a3c94a82169a72d54f99d2971c7"
+    },
+    {
+      "file": "../../src/core/format/vendor/jpeg-encoder.d.ts",
+      "sha256": "b91c85d289c0bfe44c2b89c45310bddcba6d826df7e4fb4ac3777673c6e2d485"
+    },
+    {
+      "file": "../../src/core/format/vendor/jpeg-encoder.js",
+      "sha256": "4ef253e6b82291c77e657b248eb8d86a3dc4d4f8ec75e879526c2d505108c801"
+    },
+    {
+      "file": "../../src/core/format/world.ts",
+      "sha256": "bfbd2583cc078e097b39a4621dc1ee28b693eb7082712317aae81247212d79c4"
+    },
+    {
+      "file": "../../src/core/gen/blobs.ts",
+      "sha256": "726759e4583a58195b1ae23d7d54a5d32ba782bd2a36e9b0f580905e11c9dad1"
+    },
+    {
+      "file": "../../src/core/gen/calibrated.ts",
+      "sha256": "3035f7b2e2f0f0b51e891f1747a5b8b3be007632b10ceec3d023fd9df6ca00a7"
+    },
+    {
+      "file": "../../src/core/gen/extras.ts",
+      "sha256": "6c8221c45eeece3dc145e121e85f46c5e2650962efeaa322f210ea7330501f1b"
+    },
+    {
+      "file": "../../src/core/gen/generate.ts",
+      "sha256": "324e6aef0130980bddf6336084fe9fcd7ff01feb06b94f1d46d8cced187a8952"
+    },
+    {
+      "file": "../../src/core/gen/lakeBasin.ts",
+      "sha256": "a430a3cb161b6ce9ac9bc0b9dc561120cd14fd5b77c4b447365ea8ccf4a01171"
+    },
+    {
+      "file": "../../src/core/gen/layout.ts",
+      "sha256": "4a156545075d68eccf74b5e56b0d35a5d469612a2121878ca4ae9ace94960748"
+    },
+    {
+      "file": "../../src/core/gen/pack.ts",
+      "sha256": "5f28bad87deba406cbe28486d10f471d9eafeca6c8882409b059583d8ed38fe8"
+    },
+    {
+      "file": "../../src/core/gen/resources.ts",
+      "sha256": "37f239e6bda4b4aed179fdcc426cf0e7478fff141bc01751e358442585c41b4e"
+    },
+    {
+      "file": "../../src/core/gen/riverValley.ts",
+      "sha256": "02f133224ec0c23d299f83db84c037d8c26793c6b68cc6fa33398a956b582d9d"
+    },
+    {
+      "file": "../../src/core/gen/valley.ts",
+      "sha256": "678a2d7a97d5407030cc2b6ed68f658da5f288cc5db510da083a063874eb126d"
+    },
+    {
+      "file": "../../src/core/gen/water.ts",
+      "sha256": "22d1a2912b79f33ceeafc561bec376de2c8c3dc878d7a6d44a8ce4fbe6360cae"
+    },
+    {
+      "file": "../../src/core/math/detmath.ts",
+      "sha256": "5c8ac657b0769a0d897e9fa447827ef70d08697ddca405a9b32a0eda83c8beef"
+    },
+    {
+      "file": "../../src/core/math/grid.ts",
+      "sha256": "6119da419ca2008d4a7d8dbc983422a4cb7c2147fbb5b8f72a554bcc6f1be62d"
+    },
+    {
+      "file": "../../src/core/math/hash.ts",
+      "sha256": "da01f3e39803ff515b491b3ec80ebf05c20acb44f560145a29af3a4617445ab3"
+    },
+    {
+      "file": "../../src/core/math/noise.ts",
+      "sha256": "7d37b76f2ceee6b20742532da78abfb7cdb287b9b1ceeb536c0af0b756654c84"
+    },
+    {
+      "file": "../../src/core/math/rng.ts",
+      "sha256": "5236a244b99a2a5d1aa69e934c8ce222f4a40f50aabca94e05a63eb4690657b2"
+    },
+    {
+      "file": "../../src/core/places/attribution.ts",
+      "sha256": "b167c6be51f59270748c7f1e83daffd8c345270794b6ae5e2936e203dfa3be6b"
+    },
+    {
+      "file": "../../src/core/places/place.ts",
+      "sha256": "67b440b1c7a62139ffada0009896998b5d2996d6527896c192334e7dd6c814fc"
+    },
+    {
+      "file": "../../src/core/render/shade.ts",
+      "sha256": "886af5f7737ebf85987d3710056ba8e1719d046b7023dc18c9e7b7208d3a2ad1"
+    },
+    {
+      "file": "../../src/core/sim/contamination.ts",
+      "sha256": "8c24c69a2d1d016c129bbddff9924706a68d056c9df3807858172716c1dd3299"
+    },
+    {
+      "file": "../../src/core/sim/drought.ts",
+      "sha256": "d0a315086a36d4d106d0ec63601588535c7ddba85f878feb7386db7b54fedf82"
+    },
+    {
+      "file": "../../src/core/sim/model.ts",
+      "sha256": "d865b27fd02f261c12d082dd22af2d10ad484fa1cbdaac930323f481fb33dd53"
+    },
+    {
+      "file": "../../src/core/sim/moisture.ts",
+      "sha256": "51dde823d7ef851569e90ffe76cd729a55eab717899deeb513037abc13df6a4e"
+    },
+    {
+      "file": "../../src/core/sim/prefill.ts",
+      "sha256": "16b544c32b256ca26b4139a820b60a2d3e8bcc4f9ff76aea3246c5e524902438"
+    },
+    {
+      "file": "../../src/core/sim/preview.ts",
+      "sha256": "ea078e29fae708fdee2fe156f0fa9c08b16fc77102d67bdb18ca4d2bf87c5122"
+    },
+    {
+      "file": "../../src/core/sim/water.ts",
+      "sha256": "df867fb4454e3eb23f290f882aa84327b2da13a020ac543aea114a6df2354ff3"
+    },
+    {
+      "file": "../../src/core/spec/codec.ts",
+      "sha256": "ec9cb6f8e17dc49a7a3dfbfc18e601afcbb4dec5d52f7fb7ba4c957b2e1d2ee6"
+    },
+    {
+      "file": "../../src/core/spec/mapspec.schema.json",
+      "sha256": "d060970cd9750d6b6d5f0ef663ae45215b025e00982a66394d1cb5a9d5f02334"
+    },
+    {
+      "file": "../../src/core/spec/mapspec.ts",
+      "sha256": "e5439bd0a40f3be78ee9472ac57d28611430f0444f0f4920869f8ebfabe2f278"
+    },
+    {
+      "file": "../../src/core/spec/mergepatch.ts",
+      "sha256": "6f0b9d86a3bd3ec9904ab38a6ccd18f73431dd8cea9f793e576ec956e4c089c9"
+    },
+    {
+      "file": "../../src/core/spec/schema.ts",
+      "sha256": "32986632c89c0ed5e8f5de72c64009b7c2ece8deddb981b1d645dc6359f7ef9f"
+    },
+    {
+      "file": "../../src/core/validate/checks.ts",
+      "sha256": "aba634893a6922e62379a4efdff2e98fb291d59f22e6318031382631a30805ee"
+    },
+    {
+      "file": "../../src/core/validate/playability.ts",
+      "sha256": "bd04bf6126808c865508a303ff508eef3814f25017df4fefcb5d764ebc2f16e1"
+    },
+    {
+      "file": "../../src/core/validate/report.ts",
+      "sha256": "fe859b331e6c381806a709ee71a6fb83ff7474530a7f64c5e429eb1f57c1e3e7"
+    },
+    {
+      "file": "ATTRIBUTION.md",
+      "sha256": "be2abf26780debba02c4d83c27a1ae24a73cf4789c597e1e6155d1e7a8c52642"
+    },
+    {
+      "file": "adapt.mjs",
+      "sha256": "7e49a73cb127dd3a418d5f0314721272fd8a7d47b44d701f9b4df78620d90f10"
+    },
+    {
+      "file": "app.ts",
+      "sha256": "e242dbf2a5a17afbc292ce2fbf32fd3fad492a9c75434680318ab147d6355226"
+    },
+    {
+      "file": "browser.mjs",
+      "sha256": "f2763f326eb88885af0b81b11f9716a55b3188d3820c3590abb0c18dd434d9e1"
+    },
+    {
+      "file": "build.mjs",
+      "sha256": "92fa024f1d4d0b314ae126597fd1edc1730a0f988ab768cd3dcca54c76dc34ef"
+    },
+    {
+      "file": "compact-json.mjs",
+      "sha256": "90d5cade8cfed0318a02afb10fd53d0d34c1878865f3e507703ad3f6cc263fec"
+    },
+    {
+      "file": "convert.ts",
+      "sha256": "3246eaff70d4da78d7ee24466c41676f94fc8fd23a03b40233311b82866baadd"
+    },
+    {
+      "file": "cors.mjs",
+      "sha256": "7fefe39e61102ec443b8cdea2ab2ccbb8abb40f4bd2a0947224170f4518c6429"
+    },
+    {
+      "file": "dateline-check.mjs",
+      "sha256": "e060d5eb03baddfdf5f2e3f25f75b366eba26f9f0c5e53981e2c7f30e58c471c"
+    },
+    {
+      "file": "designed-water.ts",
+      "sha256": "9f9e029c3f5e93b3ac4da0af9b4a8af7149dfd0249115b633533e09487aca489"
+    },
+    {
+      "file": "hydrology.ts",
+      "sha256": "e579053937292c933a5c14b3c5bfa8d4867558c9ac3916eac89019c902f8d0f9"
+    },
+    {
+      "file": "make-places.mjs",
+      "sha256": "14a3b8c44d81326b273c00d3baf73c0b7756b64d6f3ec7acc90acb6bbb4eac58"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "051335e75a12a8cf7dab8a38cbb9283e41a343c588a629df1d8fbc3f7cceb2e8"
+    },
+    {
+      "file": "places.json",
+      "sha256": "d2000b7409f5328012c6eeba7610d7f80594d1a2a7929d04c9e303408a86fd12"
+    },
+    {
+      "file": "provenance.mjs",
+      "sha256": "146b99cc58d7813e226aecc34563fc295406aba2ffd216aacb67b94ab42b40ee"
+    },
+    {
+      "file": "rules.ts",
+      "sha256": "010802242c8c40fb279f3c44d7fc63071297b728c640e6945757416f8a51b801"
+    },
+    {
+      "file": "server.mjs",
+      "sha256": "ef2baa78b935728d6114a54b239b341b9255fbab1c8c730e3623a51207cd9034"
+    },
+    {
+      "file": "settings.ts",
+      "sha256": "ee7db3a0ec6577f75dd9aee6b8ce7e4221573dfd514652d7d562706fb1c64966"
+    },
+    {
+      "file": "summarize-water.mjs",
+      "sha256": "f5fabd071ba56b136de169a0aa79c3546be2225163eeaf58d4e706ab8d08922b"
+    },
+    {
+      "file": "summarize.mjs",
+      "sha256": "a9d93460a5a0816f0dc28fa2009002bfe16075b3c326fdaacdecb1361e88f3ee"
+    },
+    {
+      "file": "survey-water.mjs",
+      "sha256": "99f91c67cf18fd2250ce784a1268d40aca3e06782ce8fc0a8a0e175349e12713"
+    },
+    {
+      "file": "survey.mjs",
+      "sha256": "6448c495591dc1dfa0abeb48c415a678330b837cf82b2d548e3ceceeac2c748a"
+    },
+    {
+      "file": "terrain.ts",
+      "sha256": "8e8a852771495e043f9249eac43d96cab76aefeb5cb7598d073d3b597a6a0252"
+    },
+    {
+      "file": "test-rules.ts",
+      "sha256": "d58ef37caecad4784fa90776a027113f5c415c5e0cfe56ac6a238e5024fe10a7"
+    },
+    {
+      "file": "test.mjs",
+      "sha256": "224e32740bb02234ef7f97938a186a46e616f72732ae585c604c86946adb1fc4"
+    },
+    {
+      "file": "worker.ts",
+      "sha256": "8c97406d31d0fbc220a249e1db61cf62d9fa6d3e382e6d923abee509ecb31406"
+    },
+    {
+      "file": "write-report.mjs",
+      "sha256": "3749c465ba46a4ee6d8045a72adc2b0de7aa43e08536bbc7226b8f8979283c88"
+    }
+  ]
+}

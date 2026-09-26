@@ -42,8 +42,8 @@ export function prediction(m:ReturnType<typeof metrics>,mpt:number) {
   const warnings:string[]=[],suggestions:string[]=[];
   if(m.relief<10) {warnings.push('Very little relief; small height errors may dominate.');suggestions.push('Try a larger area to include valley sides.');}
   if(m.seaProxy>.4) {warnings.push('Much of the area may be sea or low ground; elevation alone cannot identify water.');suggestions.push('Move inland or try a finer scale.');}
-  if(m.channelCells<3||m.relief<3) {warnings.push('No convincing drainage corridor in this preview. A real river is unverified.');suggestions.push('Try a larger area or move towards a visible valley.');}
+  if(m.channelCells<3||m.relief<3) {warnings.push('Few natural drainage corridors; we will design springs for the terrain.');suggestions.push('A larger area may include more interesting banks and valleys.');}
   if(m.steepShare>.12||m.relief>1800) {warnings.push('Extreme relief may leave little room for a start.');suggestions.push('Try a finer scale on the valley floor.');}
-  const score=Math.max(0,Math.min(100,80-35*(m.relief<10?1:0)-45*m.seaProxy-40*m.steepShare-20*(m.channelCells<3?1:0)+Math.min(12,m.channelCells/8)));
+  const score=Math.max(0,Math.min(100,80-35*(m.relief<10?1:0)-45*m.seaProxy-40*m.steepShare+Math.min(12,m.channelCells/8)));
   return {score,verdict:score>=65?'promising':score>=40?'uncertain':'difficult',warnings,suggestions,metresPerTile:mpt,riverVerified:false};
 }

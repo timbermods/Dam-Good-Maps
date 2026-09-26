@@ -34,7 +34,7 @@ export function pumpShore(dist:Float64Array,h:Uint8Array,D:Float64Array,C:Float6
 /** Retain the untouched legacy report, explicitly apply the later real-place decisions. */
 export function currentRules(file:any,v:any,h:Uint8Array,water:any,links:[number,number][],start:any,sources:any[]) {
   const W=file.world.sizeX;
-  const blocked=new Uint8Array(h.length);
+  const blocked=Uint8Array.from(water.depth as Float64Array,d=>d>.05?1:0);
   for(const o of mapObjects(file.world)) if(WALK_BLOCKERS.has(o.template)) for(const [x,y] of footprintTiles(o.template,o)) if(x>=0&&y>=0&&x<W&&y<W) blocked[y*W+x]=1;
   const dist=start?walkDistance(h,W,W,blocked,links,start):new Float64Array(h.length).fill(Infinity);
   const shore=pumpShore(dist,h,water.depth,water.contamination,W);
@@ -42,6 +42,6 @@ export function currentRules(file:any,v:any,h:Uint8Array,water:any,links:[number
   // D152 does not guarantee retained water or a particular wet-area fraction. Settling stays required.
   const failures=v.report.checks.filter((c:any)=>blocks('generate',c)&&!replacements.has(c.id)).map((c:any)=>({id:c.id,message:c.message}));
   if(shore.distance>20) failures.push({id:'start.water.D153',message:'No clean pumpable shore within 20 tiles walking over natural slopes.'});
-  if(!sources.length) failures.push({id:'water.source.D152',message:'At least one inferred game water source is required.'});
+  if(!sources.length) failures.push({id:'water.source.D152',message:'At least one designed game water source is required.'});
   return {passed:failures.length===0,failures,waterDistance:Number.isFinite(shore.distance)?shore.distance:null,shore:shore.shore,retainedLegacyFailures:v.report.checks.filter((c:any)=>blocks('generate',c)).map((c:any)=>c.id),policy:'LOCAL D151–D153 adapter; Normal start; base load/design/resource checks; water amount, connected-body size and outflow advisory; canonical settle required; D164 log thresholds pending shared implementation'};
 }

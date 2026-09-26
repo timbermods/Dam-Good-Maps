@@ -131,7 +131,8 @@ function bestStart(
     .slice(0, 48);
   let best: any = null;
   for (const c of candidates) {
-    const dist = walkDistance(h, W, W, null, links, c, 24),
+    const blocked = Uint8Array.from(D, d => d > .05 ? 1 : 0);
+    const dist = walkDistance(h, W, W, blocked, links, c, 24),
       mask = new Uint8Array(N);
     let moist = 0,
       reach = 0;
@@ -196,7 +197,7 @@ export function convert(
   const sources: any[] = [];
   for (const s of hydro.sources) {
     if (occupied.has(s.i)) continue;
-    const strength = Math.min(8, (flow * Math.sqrt(s.area)) / (sum || 1));
+    const strength = s.strength ?? Math.min(8, (flow * Math.sqrt(s.area)) / (sum || 1));
     add(waterSource({ ...base(s.i), strength }));
     sources.push({ ...s, x: s.i % W, y: Math.floor(s.i / W), strength });
   }
