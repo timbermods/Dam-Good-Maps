@@ -605,7 +605,8 @@ prototype and measured (task f; REPORT-v2 §7):
 4. **Progressive preview**: the land and its planned water come first (the first look), then the
    settled water, then the checked map. At 128², on the batch machine under full load: first look
    median 0.25 s, first settled water 1.6 s, finished map 2.2 s. One map at a time (the bench):
-   ⟨BENCHLINE⟩
+   1.4 s at 128² and 5.1 s at 256² in Node, about the same in Chrome, with the first look at
+   0.15 s and 0.6 s (version 1: 1.1 s and 5.8 s; the current generator: 0.7 s and 2.8 s).
 5. **A time budget** (new, for M9a): maps that need five or more attempts form a slow tail (5% of
    maps over 10 s at 128² under load, the slowest 52 s; at 256² the slowest 47 s). After about
    3 s the generator should draw a new genome rather than plan again, and run candidates in
