@@ -22,8 +22,9 @@ export interface Experiment {
   apply(spec: MapSpec, value: string): void;
   metric(m: MapMetrics, spec: MapSpec): number;
   /** "up": the metric's mean at the high value exceeds the low value's by at least `delta`;
-   *  "down": falls by at least `delta`; "exact": every map's metric equals `expected(value)`. */
-  expect: "up" | "down" | "exact";
+   *  "down": falls by at least `delta`; "exact": every map's metric equals `expected(value)`;
+   *  "atMost": no map's metric exceeds `expected(value)`. */
+  expect: "up" | "down" | "exact" | "atMost";
   delta?: number;
   expected?: (value: string, spec: MapSpec) => number;
   /** Decimal places in the report. */
@@ -45,14 +46,27 @@ export const EXPERIMENTS: Experiment[] = [
     digits: 1,
   },
   {
+    // (a cap since M9a: the processes grow the land up to it, not to it exactly)
     setting: "Highest terrain",
     target: "terrain never above it (the highest tile)",
     theme: "riverValley",
     values: ["11", "16"],
     apply: (s, v) => (s.settings.terrain.highestTerrain = num(v)),
     metric: (m) => m.maxHeight,
-    expect: "exact",
+    expect: "atMost",
     expected: (v) => num(v),
+  },
+  {
+    // M9a (D132): the land grows taller and sheerer as it rises
+    setting: "Verticality",
+    target: "share of tiles beside a drop of 2+ levels (cliffs)",
+    theme: "any",
+    values: ["10", "65"],
+    apply: (s, v) => (s.settings.terrain.verticality = num(v)),
+    metric: (m) => m.cliffShare,
+    expect: "up",
+    delta: 0.03,
+    digits: 3,
   },
   {
     setting: "Terracing",
@@ -425,7 +439,15 @@ export function runExperiment(e: Experiment, seeds: readonly number[], size: num
   const means: [number, number] = [mean(values[0]), mean(values[1])];
   let ok: boolean;
   let why: string;
-  if (e.expect === "exact") {
+  if (e.expect === "atMost") {
+    const bad: string[] = [];
+    for (let k = 0; k < 2; k++) {
+      const cap = e.expected!(e.values[k], specFor(e, e.values[k], seeds[0], size));
+      for (const v of values[k]) if (v > cap) bad.push(`${e.values[k]}: ${v} (at most ${cap})`);
+    }
+    ok = bad.length === 0;
+    why = ok ? "no map above its cap" : bad.slice(0, 4).join("; ");
+  } else if (e.expect === "exact") {
     const bad: string[] = [];
     for (let k = 0; k < 2; k++) {
       const want = e.expected!(e.values[k], specFor(e, e.values[k], seeds[0], size));
