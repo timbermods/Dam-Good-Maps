@@ -266,3 +266,31 @@ ruins, near-black badwater, and dead trees, slope arrows and the start drawn lar
 Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged since M8: no map file changes).
 
 - Two older look tests now compare the water's body colours (Kyler's rule, D148): `look-readable.test.ts` checks that clean water's body is lighter than badwater's at every depth (gap above 0.05; the smallest today is 0.062, in deep water), and `look.test.ts` that it is at one level deep (above 0.06, as before; 0.116 today). They had read the ripple crests through the alias `WATER.deep`, which is removed.
+
+### Contamination as a layer (2026-09-25, branch `look/contamination`)
+
+- Kyler: contaminated ground works as in the game, a layer on top of the ground, not a
+  replacement. The ground keeps its own look (grass stays grass, dry earth stays cracked earth);
+  red-orange veins run over it, denser and brighter as contamination rises (on dry earth its own
+  cracks glow orange, dark red veins run through grass), with no solid rust fill; wet and dry
+  contaminated ground differ; from afar the veins tint the ground. Notes and captures:
+  `docs/map-look/CLEAN.md` ("Contamination round") and `docs/map-look/clean/contamination/`.
+- **Tests updated to Kyler's decision (D148):**
+  - `tests/unit/look-readable.test.ts`: "keep their order: dead trees, moist, dry, contaminated
+    ground, badwater" checked that contaminated ground is a rust colour darker than dry ground; it
+    is now "keep their order: dead trees, moist, dry ground, badwater", and the new test "is a
+    layer: the ground's own look stays under it, its veins grow denser and brighter with
+    contamination, wet and dry contaminated ground differ, and it reads in greyscale" checks the
+    new rule: the colour under contamination is the soil's own and the stain close up is at most a
+    fifth; the veins' reach, finer network, glow and far tint grow with contamination; dry veins
+    are at least 0.2 lighter than wet ones; in greyscale dry veins are at least 0.2 lighter than
+    clean earth's cracks and lighter than their ground, wet veins at least 0.25 darker than their
+    grass; from afar contaminated ground is darker than clean ground (earth by 0.03, grass by 0.06,
+    earth by 0.09 at the most contamination) and stays lighter than badwater by 0.09, as before.
+  - `tests/unit/look.test.ts`: "maps soil to moist, dry, contaminated or under water, in the
+    shader's order" checked that contaminated ground's colour is the rust; it now checks that the
+    colour under contamination is the soil's own ("..., keeping the ground's own colour under
+    contamination"). "keeps the meanings apart in brightness too (greyscale)" checked dry earth 0.15
+    lighter than the rust fill; it now checks the veins: light lines on earth (0.2 lighter than its
+    cracks), dark lines through grass (0.3 darker) ("...: grass, earth and its cracks,
+    contamination's veins, water").

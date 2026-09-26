@@ -9,8 +9,9 @@
 // files, and reading them costs far less than computing them per pixel.
 //
 // - Terrain tops are coloured by soil (palette.ts): moist ground yellow-green grass whose edge
-//   bleeds onto the earth in patches; dry ground cracked earth, warm grey-brown; contaminated
-//   ground rusty red-brown with glowing cracks; a dark bed under water; or by height, with the
+//   bleeds onto the earth in patches; dry ground cracked earth, grey-brown; contamination a layer
+//   over either, red-orange veins that grow denser and brighter with it (dry earth's own cracks
+//   glow orange, dark red veins run through grass); a dark bed under water; or by height, with the
 //   toggle. Soil blends between tiles of one height, never over a cliff, and every tile's middle
 //   shows its own soil. Contact shadows darken the ground at the foot of higher neighbours.
 // - Walls are grey-green stone in faint cobbles: every other level a shade darker, and a pale
@@ -51,7 +52,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from "three";
-import { GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, WATER_SURFACE as WS, type Rgb } from "./palette";
+import { CONTAMINATION as CT, GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER, WATER_SURFACE as WS, type Rgb } from "./palette";
 import { SHADOW_OFFSET, SHADOW_RES, SHADOW_SCALE } from "./light";
 
 const az = LIGHT.sunAzimuth;
@@ -397,14 +398,15 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         float t = clamp((z - heightRange.x) / max(1.0, heightRange.y - heightRange.x), 0.0, 1.0);
         return mix(${glColor(HEIGHT_RAMP.low)}, ${glColor(HEIGHT_RAMP.high)}, t);
       }
-      /** The ground's colour from its soil (moist, moisture level, contaminated, under water),
-       *  and in glow the light of contaminated ground's cracks. Noise shapes the edges between soils
-       *  (grass bleeds onto the earth in patches) and their grain. */
-      vec3 groundColor(vec4 s, vec2 g, float detail, out float glow) {
+      /** The ground's colour from its soil (moist, moisture level, contaminated, under water) and
+       *  its contamination level (0–1), and in glow the light of the contamination's veins. Noise
+       *  shapes the edges between soils (grass bleeds onto the earth in patches) and their grain. */
+      vec3 groundColor(vec4 s, vec2 g, float detail, float clev, out float glow) {
         #if LITE
+          // (no patterns: contamination tints the ground a little, rust on earth, dark red on grass)
           glow = 0.0;
           vec3 lc = s.x > 0.5 ? mix(${glColor(GROUND.moistLow)}, ${glColor(GROUND.moistHigh)}, clamp((s.y - 1.0) / 9.0, 0.0, 1.0)) : ${glColor(GROUND.dry)};
-          if (s.z > 0.5) lc = ${glColor(GROUND.contaminated)};
+          if (s.z > 0.5) lc = mix(lc, s.x > 0.5 ? ${glColor(GROUND.contaminatedWet)} : ${glColor(GROUND.contaminated)}, 0.25 + 0.3 * clev);
           return s.w > 0.5 ? ${glColor(GROUND.underwater)} : lc;
         #endif
         float n1 = vnoise(g * 1.3);
@@ -439,10 +441,30 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         grass = mix(grass, grass * vec3(1.1, 1.04, 0.78), smoothstep(0.05, 0.35, tuft) * 0.6);
         float tex = 1.0 + 0.16 * tuft + (0.14 * blade + 0.2 * n3) * detail;
         c = mix(c, grass * (0.84 + 0.18 * b1 + 0.08 * (n1 - 0.5)) * tex * (1.0 - 0.12 * blot), moist);
-        // contaminated: rusty cracked earth; its cracks glow (added after the light)
-        c = mix(c, ${glColor(GROUND.contaminated)} * (0.94 + 0.08 * (rust.y - 0.5) + detail * 0.08 * n3), bad);
-        glow = bad * rust.x * (1.0 - wet) * (0.35 + 0.65 * open);
-        c = mix(c, ${glColor(GROUND.contaminated)} * 0.7, glow);
+        // contamination: a layer over the ground, as in the game (palette.ts's contaminationVeins
+        // says the same, for the tests). The ground keeps its own look; red-orange veins run over
+        // it, more of them and brighter the more contaminated: on dry earth its own cracks glow
+        // orange in rust rims, through grass run dark red veins; a finer network joins the more
+        // contaminated; the soil round them is stained a little; from afar, where the veins are too
+        // fine to see, they tint the ground instead (rust on earth, dark red on grass)
+        float lvl = clamp(clev, 0.0, 1.0);
+        float reach = mix(${f(CT.reach[0])}, ${f(CT.reach[1])}, lvl);
+        float gate = smoothstep(0.9 - reach, 1.1 - reach, vnoise(g * 0.9 + 61.0));
+        vec2 fineNet = cracks(g * 3.1 + 7.7);
+        float fine = smoothstep(${f(CT.fineFrom)}, 1.0, lvl);
+        float onDry = bad * (1.0 - moist) * (1.0 - wet);
+        float onGrass = bad * moist * (1.0 - wet);
+        float veinD = max(dry.x * gate, fineNet.x * fine * 0.8) * onDry;
+        float veinW = max(rust.x * gate, fineNet.x * fine * 0.7) * onGrass;
+        float stain = mix(${f(CT.stain[0])}, ${f(CT.stain[1])}, lvl);
+        // (the veins are a few hundredths of a tile wide: they fade once a pixel spans that much)
+        float cover = mix(${f(CT.cover[0])}, ${f(CT.cover[1])}, lvl) * smoothstep(0.02, 0.1, fwidth(g.x));
+        c = mix(c, mix(${glColor(GROUND.contaminated)}, ${glColor(GROUND.contaminatedGrass)}, moist), stain * bad * (1.0 - wet));
+        c = mix(c, mix(${glColor(GROUND.contaminated)}, ${glColor(GROUND.contaminatedWet)}, moist), cover * bad * (1.0 - wet));
+        c = mix(c, ${glColor(GROUND.contaminated)} * ${f(CT.rim)}, veinD);
+        c = mix(c, ${glColor(GROUND.contaminatedWet)}, veinW);
+        // (the glow is added after the light: the veins' cores, narrower than their rims)
+        glow = smoothstep(0.4, 0.95, veinD) * mix(${f(CT.glowDry[0])}, ${f(CT.glowDry[1])}, lvl) + smoothstep(0.35, 0.9, veinW) * mix(${f(CT.glowWet[0])}, ${f(CT.glowWet[1])}, lvl);
         return mix(c, ${glColor(GROUND.underwater)} * (0.9 + 0.15 * n2), wet);
       }
       void main() {
@@ -491,7 +513,8 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
           vec4 flags3 = vec4(step(0.5, s3.x), s3.x, step(0.5, s3.y), s3.z);
           vec4 soil = flags0 * w00 + flags1 * w10 + flags2 * w01 + flags3 * w11;
           float sky = s0.w * w00 + s1.w * w10 + s2.w * w01 + s3.w * w11;
-          vec3 ground = groundColor(soil, g, detail, glow);
+          float clev = (s0.y * w00 + s1.y * w10 + s2.y * w01 + s3.y * w11) / 15.0;
+          vec3 ground = groundColor(soil, g, detail, clev, glow);
           if (groundMode > 0.5) {
             c = heightColor(h0) * (0.96 + 0.08 * (vnoise(g * 9.0) - 0.5) * detail);
             glow = 0.0;
@@ -508,7 +531,7 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
             // a floor under an overhang (a cave's or a ledge's): the top's soil, never its water,
             // in the overhang's shade
             float none;
-            c = groundMode > 0.5 ? heightColor(vWorld.y) : groundColor(vec4(soil.xyz, 0.0), g, detail, none);
+            c = groundMode > 0.5 ? heightColor(vWorld.y) : groundColor(vec4(soil.xyz, 0.0), g, detail, clev, none);
             glow = 0.0;
             light = lightOf(n, 0.6, 0.85, 0.0);
           }
@@ -548,7 +571,7 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
         }
         c *= light;
         // the glowing cracks of contaminated ground shine in shadow too
-        c += ${glColor(GROUND.contaminatedGlow)} * glow * 0.42;
+        c += ${glColor(GROUND.contaminatedGlow)} * glow * ${f(CT.glowAdd)};
         vec4 o = texture2D(overlay, (tile + 0.5) / mapSize);
         if (o.a < 0.998) c = mix(c, o.rgb * (0.8 + 0.2 * min(light.g, 1.0)), o.a);
         else c = mix(c, o.rgb, (n.y > 0.5 ? float(LITE) : 0.5) * markers);
