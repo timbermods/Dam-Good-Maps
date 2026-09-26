@@ -758,6 +758,15 @@ few of them in the game (D117).
 
 **Release:** tagged `real-places-done` and released like a milestone (CLAUDE.md, Deploying).
 
+**Status:** done, 2026-09-25 (PR #23; `real-places-done`). A gallery of 85 real places (the survey's 88
+minus its three random-land controls), reached by **Real places** at the top of the generator: our own
+top-down render of each map with its settled water, its name, landform, size, scale and a "how it
+plays" line; **Download** builds the `.timber` in a worker, with progress; **Refine** opens it in the
+editor. The page and every map's in-game description say it is inspired by the land near its
+namesake at Timberborn's scale, not a replica, with the full attribution. Every map passes both
+validators and is byte-identical in Node and Chromium; the page works on desktop and phone. See
+[docs/progress/real-places.md](docs/progress/real-places.md).
+
 ---
 
 ## M9. Interestingness, names, candidates, premises and variety

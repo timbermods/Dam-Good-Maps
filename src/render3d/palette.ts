@@ -74,8 +74,6 @@ export const WATER = {
   shallow: [0.36, 0.6, 0.64] as Rgb,
   /** The ripples' lit crests, where they catch the sky: the lightest the water gets. */
   crest: [0.26, 0.5, 0.62] as Rgb,
-  /** The crests' old name, which two older tests still read. */
-  deep: [0.26, 0.5, 0.62] as Rgb,
   /** The body of water a level or so deep. */
   teal: [0.09, 0.23, 0.25] as Rgb,
   /** The body of deep water. */

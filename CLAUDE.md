@@ -18,6 +18,9 @@ Dam Good Maps: a map generator for Timberborn. The README says what the reposito
 - At every milestone or step that changes generated maps, commit one small contact-sheet image to
   `docs/sheets/<step>.png`: seeds 1–30 of every built theme at 128², top-down, each labelled with its seed and
   theme; our own generated maps only; under 1 MB (PLAN §20, D144). Design version 2's prototypes get one too.
+- When a test still passes but no longer checks what its name says, because a decision of Kyler's changed the
+  thing it tested, update it to check the current decision, rename it if needed, and note it in the progress
+  log. No need to ask first. Never weaken a test to make it pass.
 
 ## Writing README and website text
 

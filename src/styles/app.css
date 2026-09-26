@@ -61,6 +61,20 @@ body {
   font-size: 1.6rem;
 }
 
+/* the page's title, and a link to the other page (the generator and Real places) */
+.top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.top-nav a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .tag {
   margin: 2px 0 16px;
   color: var(--muted);
