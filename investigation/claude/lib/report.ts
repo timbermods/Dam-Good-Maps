@@ -27,7 +27,7 @@ const RULE_WORDS: Record<string, (v: string, l: string) => string> = {
   "start.reach": (v, l) => `${v} walkable tiles (at least ${l})`,
   "start.reach_water": () => "water reachable without slopes",
   "start.food": (v, l) => `${v} berry bushes nearby (at least ${l})`,
-  "start.wood": (v, l) => `${v} trees nearby (at least ${l})`,
+  "start.wood": (v, l) => `${v} logs of wood nearby (at least ${l})`,
   "start.ruins_clear": (v, l) => `${v} ruins in the start area (${l} allowed)`,
   "start.dry": () => "a dry start",
 };

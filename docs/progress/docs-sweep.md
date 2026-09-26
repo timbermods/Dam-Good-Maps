@@ -41,6 +41,7 @@ is not touched.
 - Live editing: desktop-first (D185), and pen pressure "on a drawing tablet".
 - Live editing: the Drought and Badtide buttons each show one event; the Weather view is the full cycle (D186).
 - Live editing: the "Removed:" list between allow markers.
+- Live editing: the header's Save to Timberborn is merged (#40), no longer "until it lands".
 - Live editing: its Claude tool entries are brush-style operations (D187).
 - M9: the place resolver and judgement words point at EDITOR_PLAN's Claude integration.
 - M9: the resolver's test river is laid with the river planner, not "drawn" (D184).
@@ -95,13 +96,14 @@ is not touched.
 **docs/STATUS.md**
 - The decisions list, "in the version in force": D158, D179, D180, D182, D183 and D184 no longer name the removed tools.
 - Running: the docs sweep, pointing here.
-- "Where to look next": every decision is D1–D189.
+- "Where to look next": every decision is D1–D192.
 
 **docs/progress/README.md**
 - Links this entry.
 
 **README.md**
 - The editor section: the old tool list (landform, River, Lake, Forest tools, Advanced, Show, the pill, Place) replaced by what is true now and a status line: the editor is being rebuilt around brushes.
+- The generator list gains **Save to Timberborn**, merged from #40 while this sweep ran (D162, D191; checked against `src/platform/index.ts` and `App.tsx`).
 - The table links the docs index.
 
 **docs/README.md**
@@ -116,12 +118,12 @@ is not touched.
 ## M12: what the generator and the Claude groundwork need
 
 Checked before any planner code goes with the landform tools. Evidence is file:line on `dev`
-(57681da).
+(3c351ee).
 
 **Keep (the generator or `investigation/claude` needs it)**
 - `planRiver` and its helpers: the generator (`src/core/gen/valley.ts:40`, the highland stream at
-  `:1063`), and the groundwork (`lib/steps.ts:15`, `lib/synthetic.ts:7`).
-- `planLake`: the generator, through `planRiver` (`src/core/doc/tools.ts:294`); the groundwork
+  `:1041`), and the groundwork (`lib/steps.ts:15`, `lib/synthetic.ts:7`).
+- `planLake`: the generator, through `planRiver` (`src/core/doc/tools.ts:293`); the groundwork
   (`steps.ts`, `sites.ts:7`). `src/core/gen/water.ts:12` also imports it, in `placePonds`, which
   nothing calls.
 - `replacePatch`, `planContextOf`: `planRiver`, `placing.ts:25`, and the groundwork.
@@ -154,8 +156,8 @@ Checked before any planner code goes with the landform tools. Evidence is file:l
 - `planRiverBadwater` (the old river inspector's "Make it badwater"; the groundwork's
   `setRiverBadwater` uses `updateFeature` instead) and `lakeAt` (the Plugged spillway tool): only
   `src/worker/session.ts:775–777` and `tests/contract/objects.test.ts:251`.
-- `planLandform`, `LandformRequest`: not the generator; only the groundwork (`steps.ts:380`,
-  `sites.ts:897`) and tests (`tests/contract/randomOps.ts`, `reshape.test.ts`). It can go once the
+- `planLandform`, `LandformRequest`: not the generator; only the groundwork (`steps.ts:407`,
+  `sites.ts:912`) and tests (`tests/contract/randomOps.ts`, `reshape.test.ts`). It can go once the
   groundwork's `addLandform` steers instead (below).
 - In `src/worker/session.ts`: the `river`, `lake`, `landform` and `area` tool requests (`:727–733`),
   the planner branch of `planTool` (`:781–790`) and the request type imports (`:29–32`).

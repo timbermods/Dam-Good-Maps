@@ -107,7 +107,7 @@ describe("URL codec (PLAN §14.5)", () => {
       };
       st.start = {
         area: pick(["small", "normal", "large"] as const),
-        rules: { waterWithin: int(4, 40), treesWithin20: int(0, 400), bushesWithin20: int(0, 200), badwaterWithin: int(12, 60), ruinsWithin: int(0, 60) },
+        rules: { waterWithin: int(4, 40), woodWithin20: int(0, 800), bushesWithin20: int(0, 200), badwaterWithin: int(12, 60), ruinsWithin: int(0, 60) },
       };
       if (rng() < 0.3) spec.archetype = pick(THEMES);
       if (rng() < 0.2) spec.premise = "gorge-dammed basin";
@@ -126,6 +126,19 @@ describe("URL codec (PLAN §14.5)", () => {
     expect(d.spec).toEqual(makeSpec({ seed: 5, theme: "canyon", size: { x: 96, y: 96 }, designedFor: "hard" }));
     expect(d.problems.length).toBe(5);
     expect(decodeSpecFragment("#t=canyon")).toBeNull();
+  });
+
+  it("reads a link's starting trees from before D164 as wood, 2 logs a tree; the wood key wins", () => {
+    const old = decodeSpecFragment("#v=0.6.0&s=5&t=canyon&z=96&d=n&st=25")!;
+    expect(old.problems).toEqual([]);
+    expect(old.spec.settings.start.rules.woodWithin20).toBe(50);
+    expect(encodeSpecFragment(old.spec)).toContain("&sl=50");
+    expect(encodeSpecFragment(old.spec)).not.toContain("st=");
+    expect(decodeSpecFragment("#s=5&t=canyon&st=25&sl=90")!.spec.settings.start.rules.woodWithin20).toBe(90);
+    // a value that is not a count keeps the preset, and says so
+    const bad = decodeSpecFragment("#s=5&t=canyon&st=x")!;
+    expect(bad.spec.settings.start.rules.woodWithin20).toBe(80);
+    expect(bad.problems.length).toBe(1);
   });
 
   it("hashes text seeds", () => {

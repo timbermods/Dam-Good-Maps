@@ -13,11 +13,14 @@ The generator:
   map. Each setting shows what the official maps use.
 - **Generate** makes the map. Its water is settled by the game's own rules, and it is checked for a
   colony's survival.
-- Every map's start has water on its own level, trees and bushes within a short walk. The map card
-  lists the **Start requirements**. **Advanced: start rules** sets them.
+- Every map's start has clean water within a short walk, using only the map's own slopes. Wood and
+  berry bushes grow nearby. The map card lists the **Start requirements**. **Advanced: start
+  rules** sets them.
 - The preview shows water, moisture and reach layers.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
 - **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
+- **Save to Timberborn** saves the map straight into your maps folder, in Chrome and Edge. Pick
+  `Documents\Timberborn\Maps` the first time. Other browsers download the file instead.
 
 The editor:
 - **Refine this map** opens the map in the editor, in 3D. **Open a map** opens any `.timber`, from
