@@ -865,7 +865,19 @@ Google Earth), pick size and scale, and get a playable map built from open eleva
 attribution, through the landscape survey's conversion pipeline (as M11's heightmap import, D159):
 vertical mapping, rivers from the drainage, water sources, a start by Kyler's rules, the current
 water rules (no walls or rims; draining allowed). Never Google's own data. If a place converts
-poorly, say so plainly and suggest a larger area or a different scale. It is the first step of the
+poorly, say so plainly and suggest a larger area or a different scale.
+
+**Designed water** (Kyler, 2026-09-25; D166): the land comes from the real world, the water is
+designed. A place never fails for lack of native water: the engine places sources where they make
+sense for that land (valley heads, springs below ridges, rivers carried by the drainage down a
+canyon, over a cliff or into a crater), and may use intentions to choose. It always meets Kyler's
+start requirements, placing the start where the designed water gives a good opening. If a spot
+still can't work, it quietly tries other sizes, scales and nearby offsets and shows the best result
+or clear nearby suggestions; the player never sees a failed attempt. The player can then move, add
+or remove sources in the editor and see the result in the Weather view. "Real water" from open
+data (OpenStreetMap rivers and lakes, global surface-water maps) is an optional mode for later.
+`investigation/pickplace` (#34) is adopted with this change: its failures from missing or misplaced
+water become cases for designed water, not rejections. It is the first step of the
 north-star journey (D161). Released as `pick-a-place-done`.
 
 **Blocking:** breakage (the map passes the validators and exports; attribution present; no edge

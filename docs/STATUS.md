@@ -81,6 +81,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D163: later, proposed: a companion mod that lists and starts new Dam Good Maps maps from the game's menu.
 - D164: starting wood: the start counts logs by species (oak 8, pine 2 plus resin, birch 1), not trees; "Minimum starting wood"; species as a generator lever.
 - D165: Kyler's four intentions (start under a cliff with water below; a snaking river down a hill; a crater where rivers converge; a cliff waterfall into a large round lake), plus 10–15 candidates for him to pick.
+- D166: Pick a place: real land, designed water; it never fails for lack of water, meets the start rules, and quietly tries other sizes, scales and offsets; #34 adopted with this change.
 
 ## Done and released
 
