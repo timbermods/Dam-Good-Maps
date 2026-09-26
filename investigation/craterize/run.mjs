@@ -7,5 +7,5 @@ mkdirSync('.cache', { recursive: true });
 const entry = process.argv[2];
 if (!/^[a-z-]+\.ts$/.test(entry ?? '')) throw new Error('Supply a local TypeScript entry.');
 const out = resolve('.cache', entry.replace('.ts', '.mjs'));
-await build({ absWorkingDir: process.cwd(), entryPoints: [resolve(entry)], outfile: out, bundle: true, platform: 'node', format: 'esm', nodePaths: [resolve('node_modules')], external: ['pngjs', '@napi-rs/canvas', 'esbuild'] });
+await build({ absWorkingDir: process.cwd(), entryPoints: [resolve(entry)], outfile: out, bundle: true, platform: 'node', format: 'esm', nodePaths: [resolve('node_modules')], external: ['pngjs', '@napi-rs/canvas', 'esbuild', '@playwright/test', 'vite'] });
 await import(pathToFileURL(out).href);

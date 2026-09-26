@@ -97,7 +97,9 @@ check('Heavy debris dams an existing river; upstream water rises from unchanged 
  const result=settleImpact(q.map);
  assert.ok(sillAfter>sillBefore);assert.ok(q.map.water.depth[upstream]>oldDepth+.4);
  assert.deepEqual(q.map.entities.filter(e=>e.template==='WaterSource'),originalSources);
- riverEvidence={sillBefore,sillAfter,upstreamBefore:oldDepth,upstreamAfter:q.map.water.depth[upstream],...result};
+ const flooded=q.map.water.depth.reduce((sum,d,i)=>sum+(i>70*128&&d>.1&&river.water.depth[i]<.01?1:0),0);
+ assert.ok(flooded>100);
+ riverEvidence={sillBefore,sillAfter,upstreamBefore:oldDepth,upstreamAfter:q.map.water.depth[upstream],newlyFloodedUpstream:flooded,...result};
 });
 check('Existing isolated water is conserved apart from simulation drainage/evaporation',()=>{
  const wet=snapshot(base);wet.water.depth[64*128+64]=10;
@@ -110,4 +112,3 @@ for(let k=0;k<8;k++){const t=performance.now();impact(big,{...settings,power:95,
 mkdirSync('captures',{recursive:true});
 writeFileSync('captures/checks.json',JSON.stringify({passed,river:riverEvidence,model256Ms:times},null,2)+'\n');
 console.log(JSON.stringify({river:riverEvidence,model256Ms:times}));
-

@@ -55,7 +55,7 @@ export function validateSettings(s:Settings,m:CraterMap,i:Intent) {
   if(!Number.isInteger(i.origin)||i.origin<0||i.origin>=m.W*m.H)throw Error('Strike on the map');
   if(s.mode==='aim'&&(!Number.isInteger(i.end)||i.end!<0||i.end!>=m.W*m.H))throw Error('Drag across the map to aim');
 }
-export interface Ray { angle:number; length:number; pits:{x:number;y:number;r:number}[] }
+export interface Ray { angle:number; dx:number; dy:number; length:number; pits:{x:number;y:number;r:number}[] }
 export interface Anatomy {
   x:number;y:number;radius:number;a:number;b:number;angle:number;glance:number;diameter:number;
   depth:number;rim:number;datum:number;floor:number;centre:Settings['centre'];rays:Ray[];
@@ -84,7 +84,7 @@ export function anatomy(m:CraterMap,s:Settings,intent:Intent):Anatomy {
     for(let d=radius*1.8;d<length;d+=Math.max(5,radius*.38)){
       const along=d+(hash(s.seed,k*39+Math.round(d))-.5)*2;
       pits.push({x:x+Math.cos(t)*along,y:y+Math.sin(t)*along,r:1+hash(s.seed,k+Math.round(d))*1.2});
-    }rays.push({angle:t,length,pits});
+    }rays.push({angle:t,dx:Math.cos(t),dy:Math.sin(t),length,pits});
   }
   return {x,y,radius,a,b,angle,glance,diameter,depth,rim,datum,floor,centre:s.centre==='auto'?autoCentre(diameter):s.centre,rays};
 }
@@ -96,9 +96,10 @@ export function field(a:Anatomy,s:Settings,x:number,y:number):Field {
   const r=Math.hypot(u,v)/edge,down=(1+Math.cos(theta))*.5;
   let ray=false,secondary=0;
   if(s.rays&&r>1.15)for(const rayInfo of a.rays){
-    const along=dx*Math.cos(rayInfo.angle)+dy*Math.sin(rayInfo.angle),cross=Math.abs(-dx*Math.sin(rayInfo.angle)+dy*Math.cos(rayInfo.angle));
+    const along=dx*rayInfo.dx+dy*rayInfo.dy,cross=Math.abs(-dx*rayInfo.dy+dy*rayInfo.dx);
     if(along>a.radius*1.15&&along<rayInfo.length&&cross<.65)ray=true;
-    for(const pit of rayInfo.pits)if(Math.hypot(x-pit.x,y-pit.y)<pit.r)secondary=Math.max(secondary,2);
+    if(cross<2.3&&along>a.radius*1.6&&along<rayInfo.length+2.3)
+      for(const pit of rayInfo.pits)if((x-pit.x)**2+(y-pit.y)**2<pit.r**2)secondary=Math.max(secondary,2);
   }
   return {r,theta,down,ray,secondary};
 }
@@ -170,6 +171,8 @@ export class ImpactPlan {
       if(entityTiles(this.map,e).some(i=>this.map.heights[i]!==this.before.heights[i]))return false;
       return true;
     });
+    const keptIds=new Set(this.map.entities.map(e=>e.id));
+    this.map.fallen=this.map.fallen.filter(f=>keptIds.has(f.id));
   }
 }
 export function impact(m:CraterMap,s:Settings,intent:Intent):ImpactPlan {

@@ -35,7 +35,9 @@ export function fixture(kind='plain',W=128):CraterMap{
   const H=W,heights=new Uint8Array(W*H),depth=new Float64Array(W*H),riverX=Math.floor(W*.66);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     let h=11;
-    if(kind==='river'){const d=Math.abs(x-riverX);h=d<=2?5:d<=5?9:11;if(y===H-1&&d<=2)h=6;
+    if(kind==='river'){const d=Math.abs(x-riverX);h=d<=2?5:d<=5?9:11;
+      if(y>H*.55&&y<H*.89&&d>2&&d<=13)h=6;
+      if(y===H-1&&d<=2)h=6;
       if(d<=2)depth[y*W+x]=1.05;}
     heights[y*W+x]=h;
   }
@@ -43,9 +45,8 @@ export function fixture(kind='plain',W=128):CraterMap{
   const entities=[startingLocation({...at(7,8,'start'),orientation:'Cw0'})];
   if(kind==='river')for(let dx=-2;dx<=2;dx++)entities.push(waterSource({...at(riverX+dx,H-1,'existing-source-'+dx),strength:.6}));
   for(let y=5;y<H-5;y+=3)for(let x=5;x<W-5;x+=3){
-    if(x<13&&y<15||kind==='river'&&Math.abs(x-riverX)<6)continue;
+    if(x<13&&y<15||kind==='river'&&heights[y*W+x]<9)continue;
     if((x*7+y*11)%17<11)entities.push(tree({...at(x,y,'tree-'+x+'-'+y),species:(x+y)%2?'Pine':'Birch'}));
   }
   return {name:'Study · '+kind,W,H,heights,entities:plainEntities(entities),water:{depth,contamination:new Float64Array(W*H)},maxHeight:22,rockLayers:geology(heights),fallen:[]};
 }
-
