@@ -10,7 +10,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import type { Action, Cycle, Pose } from './job';
 import { NEW_GAME_DAY } from './job';
-import { generated, mesa, raised, withoutStart } from './derived';
+import { firstGenerated, generated, generatedFrom, mesa, raised, withoutStart } from './derived';
 import { readMapBytes, wetAreas, type MapInfo } from './mapfile';
 import { REPO, tallDir } from './paths';
 
@@ -450,6 +450,64 @@ export function catalog(extraMaps: string[] = []): GameDef[] {
       { id: 'cal-2', title: 'Evaporation: Lake Basin (45, 36) before the drought, at its start and on its fourth day', how: 'measure' },
       { id: 'cal-timeline', title: "The map's water, moisture and plants day by day against the model", how: 'measure' },
       LOAD,
+    ],
+  });
+
+  // M9a's in-game gate (ROADMAP M9a, Release; PLAN §20 D116): generator 0.7.0's maps, their terrain
+  // and water grown from processes, played in the game. Every game but the tall one: 3 temperate days,
+  // a 3-day drought, 3 temperate days, a 3-day badtide, then calm (12.5 days), compared with the cycle
+  // model day by day. The tolerances, stated before the batch runs: load (no loading issue, no error
+  // or exception, the start placed); objects (every object at its tile); water (after a day 95% of
+  // wet tiles within 0.1 deep of the file, the volume within 10%); terrain (every tile's height as in
+  // the file); cal-timeline (the map's water volume and wet tiles within 5% of the model each day);
+  // drought-start-water (the start's water within 10% of its volume of the model through the
+  // drought); m9a-badwater (before the badtide, the start's water under 5% contamination, and badwater
+  // only within 3 tiles of the file's); m9a-weir (the water beside the weir within 0.1 deep of the
+  // file's after a day, and at least 0.6 deep upstream); m9a-nobad (no badwater source, and the badtide
+  // still turns the water bad); the tall map's high-* checks; m9a-shots (nothing visibly broken, by
+  // eye from the contact sheet).
+  const M9A_CYCLES: Cycle[] = [{ temperateDays: 3, hazard: 'drought', hazardDays: 3 }, { temperateDays: 3, hazard: 'badtide', hazardDays: 3 }, calm];
+  const M9A_SHOTS: CheckDef = { id: 'm9a-shots', title: 'The screenshots show nothing visibly broken', how: 'partial', why: 'judged by eye from the contact sheet' };
+  const M9A_WEATHER: CheckDef[] = [
+    { id: 'cal-timeline', title: "The map's water, moisture and plants day by day against the model, through a drought and a badtide", how: 'measure' },
+    { id: 'drought-start-water', title: "The start's water through a Normal drought, against the model", how: 'measure' },
+  ];
+  const M9A_BADWATER: CheckDef = { id: 'm9a-badwater', title: "Badwater stays in its hollow and its way down; the start's water stays clean until the badtide", how: 'measure' };
+  const m9aGame = (id: string, title: string, bytes: () => Uint8Array, extra: CheckDef[] = [], mode: GameDef['mode'] = 'Normal', tiles: (m: MapInfo) => [number, number][] = (m) => startWater(m).slice(0, 6)): GameDef => ({
+    id, title: `M9a · ${title}`, group: 'M9a', bytes: memo(bytes), faction: 'Folktails', mode,
+    cycles: M9A_CYCLES, days: 12.5, tiles, sampleHours: 1, daily: true, model: true,
+    checks: [...GENERIC, ...M9A_WEATHER, ...extra, M9A_SHOTS],
+  });
+  for (const [theme, name] of [['any', 'Any'], ['riverValley', 'River Valley'], ['canyon', 'Canyon'], ['highlands', 'Highlands'], ['lakeBasin', 'Lake Basin'], ['delta', 'Delta'], ['islands', 'Islands']] as const)
+    games.push(m9aGame(`m9a-${theme}-128`, `${name} 128² (seed 1)`, () => generatedFrom(`s=1&t=${theme}&z=128&d=n`), [M9A_BADWATER]));
+  games.push(m9aGame('m9a-any-96', 'Any 96² (seed 2)', () => generatedFrom('s=2&t=any&z=96&d=n'), [M9A_BADWATER]));
+  games.push(m9aGame('m9a-any-192', 'Any 192² (seed 3)', () => generatedFrom('s=3&t=any&z=192&d=n'), [M9A_BADWATER]));
+  games.push(m9aGame('m9a-any-256', 'Any 256² (seed 4)', () => generatedFrom('s=4&t=any&z=256&d=n'), [M9A_BADWATER]));
+  games.push(m9aGame('m9a-any-hard', 'Any 128², designed for Hard, played on Hard (seed 5)', () => generatedFrom('s=5&t=any&z=128&d=h'), [M9A_BADWATER], 'Hard'));
+  games.push(
+    m9aGame('m9a-no-badwater', 'Any 128², No badwater (seed 6)', () => generatedFrom('s=6&t=any&z=128&d=n&bw=0'), [
+      { id: 'm9a-nobad', title: 'No badwater source on the map, and the badtide still turns its water bad', how: 'measure' },
+    ]),
+  );
+  games.push(
+    m9aGame('m9a-weir', 'Lake Basin 96², a pre-built weir (the first seed with one)', () => firstGenerated((seed) => `s=${seed}&t=lakeBasin&z=96&d=n`, (r) => r.features.some((f) => f.kind === 'mapObject' && f.params.kind === 'weir')), [
+      M9A_BADWATER,
+      { id: 'm9a-weir', title: 'The weir holds its river: the water beside it as in the file after a day, 0.6 deep or more upstream', how: 'measure' },
+    ], 'Normal', (m) => [...weirTiles(m), ...startWater(m).slice(0, 4)]),
+  );
+  games.push(
+    m9aGame('m9a-rise', 'Highlands 128², ruins on a rise (the first seed with one)', () => firstGenerated((seed) => `s=${seed}&t=highlands&z=128&d=n`, (r) => r.features.some((f) => f.kind === 'setPiece' && f.params.kind === 'obstaclePayoff')), [M9A_BADWATER]),
+  );
+  // a tall map (Verticality 85: land above 16, D172), a calm day and a half like the tall maps
+  games.push({
+    id: 'm9a-tall', title: 'M9a · Any 128², Verticality 85: land above 16 (seed 7)', group: 'M9a', bytes: memo(() => generatedFrom('s=7&t=any&z=128&d=n&vt=85')), faction: 'Folktails', mode: 'Normal',
+    cycles: [calm], days: 1.5, tiles: (m) => startWater(m).slice(0, 6), sampleHours: 1, snapshotsAt: [0.5, 1],
+    checks: [
+      { id: 'high-load', title: 'Loads: no loading issue, no error or exception', how: 'measure' },
+      { id: 'high-terrain', title: "The land above 16 is kept after the game's terrain physics (every tile's height as in the file)", how: 'measure' },
+      { id: 'high-water', title: 'The stored water holds on the tall land (after a day, within 0.1 deep of the file)', how: 'measure' },
+      { id: 'high-objects', title: 'Every object is kept, those above level 16 included', how: 'measure' },
+      M9A_SHOTS,
     ],
   });
 

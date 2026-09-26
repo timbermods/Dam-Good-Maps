@@ -880,6 +880,9 @@ A small step right after Resources like the official maps, and before the Real p
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks), and every map having its
 badwater source. Generated maps change (a generator version bump and a contact sheet, D144).
 
+**Status:** built on `feature/badwater-source` (docs/progress/badwater-source.md), a PR into `dev`;
+generator 0.6.3.
+
 ---
 
 ## Live editing
@@ -1135,8 +1138,8 @@ become recipes inside the system (design §3).
   - Delivers: the genome and the themes as priors; the field (uplift, erosion, levels) and the
     hydrology (rivers from the drainage, lakes, falls, pools, splits, deltas) in `src/core`;
     features read back out of the field (rivers, natural lakes, badwater hollows, the start,
-    objects, resources); the settler; `water.storage_possible` in place of `water.reservoir` and the
-    dam-wall check, in both validators; the document model (a stored field, project format 3); the
+    objects, resources); the settler; `water.storage_possible` in place of `water.reservoir`
+    (information the generator prefers, not a guard, #67) and the dam-wall check, in both validators; the document model (a stored field, project format 3); the
     generator version 0.7.0; K = 1.
   - **Format 3's terrain holds runs** (I-1, D119; time-sensitive): the document's `field` and
     `base` store heights plus runs: the surface per tile, and the solid runs of every tile that is
@@ -1160,10 +1163,9 @@ become recipes inside the system (design §3).
     cliff-bench terraces) emerge more as it rises; never stamped. Traversable at any value: the
     start and its first resources on reachable land, natural ramps where the land needs them;
     stairs-only heights allowed as rewards. Terrain above 16, up to 22 with layer 22 empty, only
-    at high Verticality (70+). It is built in M9a but stays locked until a DGM Probe batch
-    confirms such maps load and keep their terrain, water and objects (asked under D117; Kyler
-    confirmed this stage, D145). 3D-b extends Verticality to 3D forms. The vertical-reach measure
-    joins the batch tools.
+    at high Verticality (70+): unlocked, since the tall-maps probe batch confirmed such maps load and
+    keep their terrain, water and objects (run 20260925-tall, D172), and both validators allow up
+    to 22. 3D-b extends Verticality to 3D forms. The vertical-reach measure joins the batch tools.
   - **Keep M12 ready** (D134): generating from the processes, and "make it more vertical"
     (Verticality), as tool entries with their limits and refusal reasons; the read-back features
     as a query ("what's on this map?"); suite requests for them; every reference solution re-run.
@@ -1558,8 +1560,8 @@ while water settles). Budgets and measures are information.
    - underground rivers;
    - collapses.
 3. Traversal: derived slopes on the floor graph, and rewards planned on stairs-only heights.
-4. Relief to 22 at Verticality 70 and above comes with M9a, locked until a probe batch confirms it
-   (D132, D145). If it is still locked, the Probe's T6 here unlocks it once it passes.
+4. Relief to 22 at Verticality 70 and above comes with M9a, unlocked: the tall-maps probe batch
+   passed (run 20260925-tall, D172).
 5. NaturalOverhang bridges and badtide drains in cliff notches (from Later).
 6. The 3D measures in the batch and the M9 measure suite.
 7. **Keep M12 ready** (D134): "make it more vertical" with 3D forms, and "add caves" through
@@ -1943,7 +1945,8 @@ both ends. Change only the shapes.
    fail validation?"); suite requests; every reference solution re-run.
 
 **Rules**
-- Every check keeps passing (`water.storage_possible` included, D111).
+- Every blocking check keeps passing (`water.storage_possible` is information the generator
+  prefers, #67).
 - Batches stay at 98% or better.
 - The Python oracle changes with the TypeScript, with 0 disagreements.
 - This changes every map, so bump the generator version and note that old share links change

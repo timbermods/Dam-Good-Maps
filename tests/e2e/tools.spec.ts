@@ -33,29 +33,62 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await page.getByRole("button", { name: "Top-down" }).click();
   let i = await info(page);
   const W = i.W;
-  const main = i.features.find((f) => f.kind === "river")!;
+  const main = i.features.find((f) => f.kind === "river" && f.role === "river/main") ?? i.features.find((f) => f.kind === "river")!;
   const path = (main.params as { path: [number, number][] }).path;
   const start = (i.features.find((f) => f.kind === "start")!.params as { position: [number, number] }).position;
 
-  // a river from the north edge into the generated river, away from the start
+  // a river from a map edge into the generated main river: straight in from the nearest edge whose
+  // entry is clear of every other river (generator 0.7.0's rivers run anywhere), away from the start
   await page.getByRole("tab", { name: "Water" }).click();
   await page.locator(".tools").getByRole("button", { name: "River", exact: true }).click();
-  const far = start[0] < W / 2 ? 74 : 22;
-  const join = path.reduce((best, p) => (Math.abs(p[0] - far) < Math.abs(best[0] - far) ? p : best));
-  await clickTile(page, far, W - 1);
-  await clickTile(page, far, Math.round((W - 1 + join[1]) / 2));
-  await clickTile(page, Math.round(join[0]), Math.round(join[1]), true);
-  let card = await preview(page);
-  await expect(card).toContainText(/a sealed mouth on the north edge feeds it/i);
-  await card.getByRole("button", { name: "Place" }).click();
+  const paths = i.features.filter((f) => f.kind === "river").map((f) => ({ id: f.id, path: (f.params as { path: [number, number][] }).path }));
+  const nearRiver = (x: number, y: number, except: string | null) => paths.some((r) => r.id !== except && r.path.some(([px, py]) => Math.hypot(px - x, py - y) < 10));
+  type Edge = "north" | "south" | "east" | "west";
+  const plans: { edge: Edge; from: [number, number]; join: [number, number]; n: number }[] = [];
+  for (const join of path.filter(([x, y]) => x >= 10 && x <= W - 11 && y >= 10 && y <= W - 11 && Math.hypot(x - start[0], y - start[1]) > 20)) {
+    const [jx, jy] = [Math.round(join[0]), Math.round(join[1])];
+    for (const [edge, from] of [["north", [jx, W - 1]], ["south", [jx, 0]], ["west", [0, jy]], ["east", [W - 1, jy]]] as [Edge, [number, number]][]) {
+      // the line from the edge to the join keeps 10 tiles from every river but the last few tiles
+      const n = Math.ceil(Math.hypot(from[0] - jx, from[1] - jy));
+      let clear = n >= 12;
+      for (let k = 0; k <= n && clear; k++) {
+        const x = from[0] + ((jx - from[0]) * k) / n;
+        const y = from[1] + ((jy - from[1]) * k) / n;
+        // (the main river itself only matters until the line's last 12 tiles)
+        if (nearRiver(x, y, k > n - 12 ? main.id : null) || Math.hypot(x - start[0], y - start[1]) < 12) clear = false;
+      }
+      if (clear) plans.push({ edge, from, join: [jx, jy], n });
+    }
+  }
+  plans.sort((a, b) => a.n - b.n);
+  expect(plans.length, "a clear line from an edge to the main river").toBeGreaterThan(0);
+  // the shortest line whose last click lands in the river's channel (a click on a narrow bend can
+  // land on its bank)
+  let card: Awaited<ReturnType<typeof preview>> | null = null;
+  let chosen: (typeof plans)[number] | null = null;
+  for (const p of plans.slice(0, 8)) {
+    await clickTile(page, p.from[0], p.from[1]);
+    await clickTile(page, Math.round((p.from[0] + p.join[0]) / 2), Math.round((p.from[1] + p.join[1]) / 2));
+    await clickTile(page, p.join[0], p.join[1], true);
+    card = await preview(page);
+    if (new RegExp(`a sealed mouth on the ${p.edge} edge feeds it`, "i").test((await card.textContent()) ?? "")) {
+      chosen = p;
+      break;
+    }
+    await card.getByRole("button", { name: "OK" }).click();
+  }
+  expect(chosen, "a river the tool accepts").not.toBeNull();
+  const { edge, from, join } = chosen!;
+  await card!.getByRole("button", { name: "Place" }).click();
   await idle(page);
   i = await info(page);
   expect(i.history.map((h) => h.label)).toEqual(["Add river"]);
   const drawn = i.features.find((f) => f.kind === "river" && f.origin === "user") as Extract<Feature, { kind: "river" }>;
-  expect(drawn.params.entry).toEqual({ edge: "north" });
+  expect(drawn.params.entry).toEqual({ edge });
   expect(drawn.params.exit).toEqual({ river: main.id });
+  const inside: [number, number] = [Math.round(from[0] + (join[0] - from[0]) * 0.5), Math.round(from[1] + (join[1] - from[1]) * 0.5)];
   // its channel carries water: hover a tile of it
-  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), [far, W - 6]);
+  const q = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), inside);
   await page.mouse.move(q.x, q.y);
   await expect(page.locator(".readout")).toContainText(/water \d/);
 
@@ -75,13 +108,10 @@ test("the land and water tools: plan, preview, place", async ({ page }) => {
   await page.getByLabel("Width (tiles)").dispatchEvent("change");
   await page.getByLabel("Falls toward").selectOption("south");
   let placed = false;
-  for (const [x, y] of [
-    [24, 22],
-    [30, 18],
-    [70, 20],
-    [60, 16],
-    [16, 30],
-  ]) {
+  // (the first spots are where it fitted on generator 0.6's map; then a coarse scan of the south half)
+  const spots: [number, number][] = [[24, 22], [30, 18], [70, 20], [60, 16], [16, 30]];
+  for (let y = 14; y <= 40; y += 8) for (let x = 14; x <= W - 14; x += 10) spots.push([x, y]);
+  for (const [x, y] of spots) {
     await clickTile(page, x, y);
     card = await preview(page);
     if (await card.getByRole("button", { name: "Place" }).count()) {

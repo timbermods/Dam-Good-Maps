@@ -604,6 +604,73 @@ const EVALS: Record<string, Eval> = {
   'drought-start-water'(c) {
     return startWaterDrought(c);
   },
+  // ---- M9a (the generator 0.7.0's maps)
+  'm9a-badwater'(c) {
+    const info = c.L.info;
+    const W = info.W;
+    const bt = c.L.prepared.map.moments.find((m) => /^badtide\d+-start$/.test(m.id));
+    const s = need(bt ? c.L.snapshotAt(bt.day - 0.01, 0.1) : c.L.snapshot('end'), bt ? 'before the badtide' : 'end');
+    const near = new Uint8Array(W * info.H);
+    let fileBad = 0;
+    for (let t = 0; t < W * info.H; t++) {
+      if (!(info.depth[t] > 0.05 && info.contamination[t] > 0.1)) continue;
+      fileBad++;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+        const x = (t % W) + dx, y = ((t / W) | 0) + dy;
+        if (x >= 0 && y >= 0 && x < W && y < info.H) near[y * W + x] = 1;
+      }
+    }
+    let bad = 0, outside = 0;
+    const ex: string[] = [];
+    for (let t = 0; t < W * info.H; t++)
+      if (s.depth[t] > 0.05 && s.contamination[t] > 0.1) {
+        bad++;
+        if (!near[t]) {
+          outside++;
+          if (ex.length < 4) ex.push(`(${t % W}, ${(t / W) | 0}) ${pct(s.contamination[t])}`);
+        }
+      }
+    const sw = startWater(info).slice(0, 6);
+    const maxStart = Math.max(0, ...sw.map(([x, y]) => s.contamination[y * W + x]));
+    const ok = maxStart < 0.05 && outside <= Math.max(2, 0.02 * bad);
+    return { verdict: ok ? 'passed' : 'failed', detail: `after ${f2(s.day - D0)} days${bt ? ', just before the badtide' : ''}: the start's water (${sw.length} tiles) at most ${pct(maxStart)} contaminated; badwater tiles (over 10%): ${bad} (${fileBad} in the file), ${outside} more than 3 tiles from the file's${ex.length ? ` (${ex.join(', ')})` : ''}` };
+  },
+  'm9a-weir'(c) {
+    const info = c.L.info;
+    const dams = info.entities.filter((e) => e.template === 'NaturalDam');
+    if (!dams.length) throw new NotMeasurable('no weir on this map');
+    const s = need(c.L.snapshotAt(D0 + 1, 0.1), 'day-1');
+    const tiles = weirTiles(info).filter(([x, y]) => !dams.some((d) => d.x === x && d.y === y));
+    let worst = 0, deepest = 0;
+    for (const [x, y] of tiles) {
+      const t = y * info.W + x;
+      worst = Math.max(worst, Math.abs(s.depth[t] - info.depth[t]));
+      deepest = Math.max(deepest, s.depth[t]);
+    }
+    const ok = tiles.length > 0 && worst <= 0.1 && deepest >= 0.6;
+    return { verdict: ok ? 'passed' : 'failed', detail: `${dams.length} NaturalDam tiles; beside them, after ${f2(s.day - D0)} days: the largest difference from the file ${worst.toFixed(3)} deep, the deepest ${deepest.toFixed(2)}` };
+  },
+  'm9a-nobad'(c) {
+    const info = c.L.info;
+    const sources = info.entities.filter((e) => e.template === 'BadwaterSource').length;
+    const d1 = c.L.prepared.map.moments.find((m) => /^badtide\d+-day1$/.test(m.id));
+    const s = d1 ? c.L.snapshotAt(d1.day, 0.1) : null;
+    let bad = 0, wet = 0;
+    if (s) for (let t = 0; t < s.depth.length; t++) if (s.depth[t] > 0.05) {
+      wet++;
+      if (s.contamination[t] > 0.5) bad++;
+    }
+    const ok = sources === 0 && !!s && bad > 0;
+    return { verdict: ok ? 'passed' : 'failed', detail: `${sources} badwater sources in the file; ${s ? `a day into the badtide ${bad} of ${wet} wet tiles over 50% contaminated` : 'no snapshot a day into the badtide'}` };
+  },
+  'm9a-shots'(c) {
+    const shots = c.L.result!.shots ?? [];
+    return {
+      verdict: 'recorded',
+      detail: `${shots.length} screenshots (${[...new Set(shots.map((s) => s.pose))].join(', ')}), in the run's shots folder and contact sheet. Judged by eye: the terrain whole (no holes, spikes or walls along the edges), rivers in their channels and never ruler-straight, no water hanging in the air or cut off, no floating or missing objects, the start as built`,
+    };
+  },
+
   E4(c) {
     const r = c.L.result!;
     const probs = logProblems(r);

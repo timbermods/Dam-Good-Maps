@@ -9,7 +9,7 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-NAMES = {"riverValley": "River Valley", "canyon": "Canyon", "highlands": "Highlands", "lakeBasin": "Lake Basin",
+NAMES = {"any": "Any", "riverValley": "River Valley", "canyon": "Canyon", "highlands": "Highlands", "lakeBasin": "Lake Basin",
          "delta": "Delta", "islands": "Islands"}
 
 

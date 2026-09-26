@@ -134,7 +134,7 @@ describe("the three start requirements (PLAN §5.6, D85, D164)", () => {
     expect(c["start.wood"].message).toMatch(/^150 logs within 20 tiles' walk of the start, oak and pine \(at least 80\)$/);
     expect(c["start.food"].ok).toBe(true);
     expect(c["start.food"].value).toBe(35);
-    for (const id of ["start.badwater", "start.reach", "start.ruins_clear", "water.reservoir"]) expect(c[id].advisory, id).toBe(true);
+    for (const id of ["start.badwater", "start.reach", "start.ruins_clear", "water.storage_possible"]) expect(c[id].advisory, id).toBe(true);
     expect(c["start.reach_water"]).toBeUndefined();
   });
 

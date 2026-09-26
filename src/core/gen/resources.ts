@@ -29,6 +29,8 @@ export interface Ground {
   moisture: Float64Array;
   soilContamination: Float64Array;
   occupied: Uint8Array;
+  /** River channels: no resources in a riverbed. */
+  channel?: Uint8Array;
   start?: { x: number; y: number };
   /** The objects built so far: their slopes say where the colony can walk. */
   entities?: readonly EntitySpec[];
@@ -114,7 +116,8 @@ export function planResources(spec: MapSpec, g: Ground, candidate: number, attem
   const wet = new Uint8Array(N);
   for (let i = 0; i < N; i++) {
     wet[i] = g.water[i] > 0 ? 1 : 0;
-    free[i] = !g.occupied[i] && !wet[i] ? 1 : 0;
+    // (nothing grows in a riverbed, dry or not: the build keeps resources off the channels)
+    free[i] = !g.occupied[i] && !wet[i] && !g.channel?.[i] ? 1 : 0;
     // living plants need moist, dry-footed, clean soil
     moist[i] = g.moisture[i] > 0 && !wet[i] && !(g.soilContamination[i] > 0) ? 1 : 0;
   }

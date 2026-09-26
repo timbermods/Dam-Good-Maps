@@ -248,6 +248,7 @@ MapDocument {
   generatorVersion  // the generator that built `base`
   spec              // MapSpec (PLAN.md §19.1), or null for imported maps
   base              // built from spec, or parsed from an imported file; stored in the project file, never mutated
+  field             // a generated map's field (format 3, M9a): heights, solid runs, the features it holds, its ramps
   features          // parametric feature objects (PLAN.md §19.2)
   edits             // ordered list of edit operations
   locks             // regions protected from regeneration
@@ -262,7 +263,7 @@ the player shapes the land with the brushes and places things from the shelf. Se
 stay shared with the generator (`PLAN.md` §19.3). Saved projects that hold landform features from
 before D182 open with their land exactly as it was, as plain terrain.
 
-**Building the final map:** the one build pipeline in `PLAN.md` §19.8. It runs landforms, then set pieces, rivers and lakes, pads, sculpt edits, derived slopes, water, resources, the start and entity edits, in that order. Every step is deterministic, so the same document always produces a byte-identical `.timber` file. Changing a feature's parameter rebuilds only the area it affects. That incremental rebuild must equal a full rebuild (`PLAN.md` §19.7).
+**Building the final map:** the one build pipeline in `PLAN.md` §19.8. It runs landforms, then set pieces, rivers and lakes, pads, sculpt edits, derived slopes, water, resources, the start and entity edits, in that order. A generated map starts from its stored field (M9a): the rivers, natural lakes, badwater hollows and rises read back out of it are the field's own, so the build marks their channels and leaves their ground; one the player has changed is built as it now says. Every step is deterministic, so the same document always produces a byte-identical `.timber` file. Changing a feature's parameter rebuilds only the area it affects. That incremental rebuild must equal a full rebuild (`PLAN.md` §19.7).
 
 **Edit operations** are small, serializable commands with undo data, in one envelope `{op, params}`
 (`core/doc/ops.ts`, `ops.schema.json`; the validation report's fixes use the same envelope, D35):

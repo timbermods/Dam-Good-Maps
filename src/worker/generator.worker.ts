@@ -7,7 +7,7 @@ import type { EditOp, OpOrigin } from "../core/doc/ops";
 import { decodePlaceFile, placeTimber } from "../core/places/place";
 import type { MapSpec } from "../core/spec/mapspec";
 import { viewBuffers } from "../render3d/model";
-import { emptyWaterFile, runGenerate, type GenerateResponse } from "./api";
+import { emptyWaterFile, runGenerate, type GenerateResponse, type GenProgress } from "./api";
 import * as ed from "./session";
 
 function responseBuffers(r: GenerateResponse): Transferable[] {
@@ -23,8 +23,9 @@ function sendOpen(o: ed.SessionOpen): ed.SessionOpen {
 }
 
 const api = {
-  async generate(spec: MapSpec): Promise<GenerateResponse> {
-    const r = await runGenerate(spec);
+  /** `onProgress` (a Comlink proxy) hears each attempt's stage and its first look as they happen. */
+  async generate(spec: MapSpec, onProgress?: (p: GenProgress) => void): Promise<GenerateResponse> {
+    const r = await runGenerate(spec, onProgress ? (p) => void onProgress(p) : undefined);
     return transfer(r, responseBuffers(r));
   },
   /** The last generated map without pre-filled water, or null. */
