@@ -43,38 +43,31 @@ export interface Autosave {
 }
 
 const DB = "dam-good-maps";
-const DB_VERSION = 2;
 const STORE = "autosave";
 const KEY = "current";
-const FOLDER_STORE = "folders";
-const FOLDER_KEY = "timberborn-maps";
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     let req: IDBOpenDBRequest;
     try {
-      req = indexedDB.open(DB, DB_VERSION);
+      req = indexedDB.open(DB, 1);
     } catch (e) {
       reject(e);
       return;
     }
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-      if (!db.objectStoreNames.contains(FOLDER_STORE)) db.createObjectStore(FOLDER_STORE);
-    };
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
     req.onblocked = () => reject(new Error("storage is blocked"));
   });
 }
 
-async function withStore<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function withStore<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await openDb();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const tx = db.transaction(store, mode);
-      const req = fn(tx.objectStore(store));
+      const tx = db.transaction(STORE, mode);
+      const req = fn(tx.objectStore(STORE));
       tx.oncomplete = () => resolve(req.result);
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error ?? new Error("storage aborted"));
@@ -88,7 +81,7 @@ export const storage = {
   /** Save the autosave; false when browser storage is unavailable or full. */
   async save(a: Autosave): Promise<boolean> {
     try {
-      await withStore(STORE, "readwrite", (s) => s.put(a, KEY));
+      await withStore("readwrite", (s) => s.put(a, KEY));
       return true;
     } catch {
       return false;
@@ -96,7 +89,7 @@ export const storage = {
   },
   async load(): Promise<Autosave | null> {
     try {
-      const a = (await withStore<Autosave | undefined>(STORE, "readonly", (s) => s.get(KEY) as IDBRequest<Autosave | undefined>)) ?? null;
+      const a = (await withStore<Autosave | undefined>("readonly", (s) => s.get(KEY) as IDBRequest<Autosave | undefined>)) ?? null;
       return a && a.bytes instanceof Uint8Array ? a : null;
     } catch {
       return null;
@@ -104,7 +97,7 @@ export const storage = {
   },
   async clear(): Promise<void> {
     try {
-      await withStore(STORE, "readwrite", (s) => s.delete(KEY));
+      await withStore("readwrite", (s) => s.delete(KEY));
     } catch {
       // nothing to clear
     }
@@ -112,6 +105,45 @@ export const storage = {
 };
 
 // ---------------------------------------------------------------------- save to Timberborn (D162)
+
+// Its own database, never the autosave one: the live site, /preview/ and future versioned builds
+// share an origin and so share IndexedDB. Bumping a shared database's version so an older tab
+// (still open, or an older cached build) opens it at a lower version throws a VersionError there
+// and breaks its autosave. A separate database can gain stores freely without touching that one.
+const FOLDER_DB = "dgm-folders";
+const FOLDER_STORE = "folders";
+const FOLDER_KEY = "timberborn-maps";
+
+function openFolderDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    let req: IDBOpenDBRequest;
+    try {
+      req = indexedDB.open(FOLDER_DB, 1);
+    } catch (e) {
+      reject(e);
+      return;
+    }
+    req.onupgradeneeded = () => req.result.createObjectStore(FOLDER_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error("storage is blocked"));
+  });
+}
+
+async function withFolderStore<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  const db = await openFolderDb();
+  try {
+    return await new Promise<T>((resolve, reject) => {
+      const tx = db.transaction(FOLDER_STORE, mode);
+      const req = fn(tx.objectStore(FOLDER_STORE));
+      tx.oncomplete = () => resolve(req.result);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error ?? new Error("storage aborted"));
+    });
+  } finally {
+    db.close();
+  }
+}
 
 declare global {
   interface Window {
@@ -137,7 +169,7 @@ export function canSaveToTimberborn(): boolean {
 /** The remembered Maps folder, if permission still stands (asking again counts as "still stands"). */
 async function recallFolder(): Promise<FileSystemDirectoryHandle | null> {
   try {
-    const handle = await withStore<FileSystemDirectoryHandle | undefined>(FOLDER_STORE, "readonly", (s) => s.get(FOLDER_KEY) as IDBRequest<FileSystemDirectoryHandle | undefined>);
+    const handle = await withFolderStore<FileSystemDirectoryHandle | undefined>("readonly", (s) => s.get(FOLDER_KEY) as IDBRequest<FileSystemDirectoryHandle | undefined>);
     if (!handle) return null;
     const mode = { mode: "readwrite" as const };
     if ((await handle.queryPermission?.(mode)) === "granted") return handle;
@@ -150,7 +182,7 @@ async function recallFolder(): Promise<FileSystemDirectoryHandle | null> {
 
 async function rememberFolder(handle: FileSystemDirectoryHandle): Promise<void> {
   try {
-    await withStore(FOLDER_STORE, "readwrite", (s) => s.put(handle, FOLDER_KEY));
+    await withFolderStore("readwrite", (s) => s.put(handle, FOLDER_KEY));
   } catch {
     // the folder still works this once; it just won't be remembered next time
   }
@@ -182,7 +214,8 @@ export interface SaveToTimberbornDeps {
   download(bytes: Uint8Array, name: string): void;
 }
 
-const liveDeps: SaveToTimberbornDeps = { supported: canSaveToTimberborn, recall: recallFolder, remember: rememberFolder, pick: pickFolder, write: writeIntoFolder, download: saveFile };
+/** Exported so a test can reach the real IndexedDB-backed folder store without a real browser's `window`. */
+export const liveDeps: SaveToTimberbornDeps = { supported: canSaveToTimberborn, recall: recallFolder, remember: rememberFolder, pick: pickFolder, write: writeIntoFolder, download: saveFile };
 
 /**
  * Save straight into the player's Timberborn Maps folder (D162): the first call asks the player

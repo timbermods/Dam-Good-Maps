@@ -1,9 +1,12 @@
 // Save to Timberborn (PLAN §20 D162, ROADMAP "Save to Timberborn"): the FSA write is exercised
 // with fakes here (Node has no File System Access API); the real browser path - the picker, the
 // remembered IndexedDB handle, and the fallback shown to a player - is tests/e2e/save-to-timberborn.spec.ts.
+// fake-indexeddb/auto installs a real (in-memory) `indexedDB` global, for the one test below that
+// needs the folder handle's own database to behave like the real thing.
 
+import "fake-indexeddb/auto";
 import { describe, expect, it } from "vitest";
-import { saveToTimberborn, type SaveToTimberbornDeps } from "../../src/platform";
+import { liveDeps, storage, saveToTimberborn, type Autosave, type SaveToTimberbornDeps } from "../../src/platform";
 
 function fakeFolder(name: string, writes: { name: string; bytes: Uint8Array }[]): FileSystemDirectoryHandle {
   return {
@@ -172,5 +175,21 @@ describe("saveToTimberborn: the fallback", () => {
 
     expect(r).toEqual({ via: "download" });
     expect(downloads).toEqual([{ bytes, name: "a.timber" }]);
+  });
+});
+
+describe("the folder handle has its own database, apart from the autosave", () => {
+  it("still opens the autosave database at version 1 after the folder has been saved", async () => {
+    // the live path, not a fake: it opens and writes to the folder's own IndexedDB database
+    await liveDeps.remember({ name: "Maps" } as unknown as FileSystemDirectoryHandle);
+
+    // the autosave database - a different name, still at version 1 - opens and works as before;
+    // if the folder handle had been added as a second store on that same database (bumping its
+    // version), an older tab or cached build still asking for version 1 would fail here instead
+    const autosave: Autosave = { bytes: new Uint8Array([1, 2, 3]), name: "a.timber", savedAt: new Date().toISOString(), kind: "generated", screen: "settings" };
+    expect(await storage.save(autosave)).toBe(true);
+    const loaded = await storage.load();
+    expect(loaded?.name).toBe("a.timber");
+    expect(loaded?.bytes).toEqual(autosave.bytes);
   });
 });
