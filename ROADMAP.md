@@ -838,8 +838,10 @@ a little noise, and two maps must play differently, not only look different.
      emerges leaves the set); and each intention has many structural realizations (the
      no-archetype and no-clone measures run within each intention, on the normal batch or
      contact-sheet maps). Player or Claude controls wait until it proves itself.
-   - **Kyler's own one-sentence intentions** (to come) become intentions under those principles
-     (D139).
+   - **Kyler's own one-sentence intentions** become intentions under those principles (D139). Four
+     so far: a start under a cliff with water below, a snaking river down a hill, a large crater
+     where rivers converge, and a waterfall off a cliff into a large round lake. Fourteen more are
+     drafted for him to pick (design version 2 §6, decisions-pending #61).
    - The techniques playbook as proposals (D131), and the corrected no-approximation measure
      (D128).
    - A contact-sheet image of its prototypes, `docs/sheets/design-v2.png` (D144).

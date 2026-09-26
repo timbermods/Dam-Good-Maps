@@ -34,7 +34,7 @@ const head = (cells: string[]) => [row(cells), row(cells.map(() => "---"))].join
 sec("passrates");
 p("### Pass rates (first attempt / final, maps)");
 p();
-const sizeSets = ["v2-96", "v2-128", "v2-192", "v2-256", "v2-128-vt85", "v2-128-vt85u", "v2-128-v100", "v2-128-dreq", "v2-128-doff", "v1-128", "cur-128"].filter((s) => sets[s]);
+const sizeSets = ["v2-96", "v2-128", "v2-192", "v2-256", "v2-128-vt85", "v2-128-v100", "v2-128-dreq", "v2-128-doff", "v1-128", "cur-128"].filter((s) => sets[s]);
 p(head(["Set", ...THEMES.map((t) => THEME_NAMES[t])]));
 for (const s of sizeSets) p(row([s, ...THEMES.map((t) => { const a = T(s, t)?.attempts; return a ? `${pc(a.first / a.n)} / ${pc(a.final / a.n)} (${a.n})` : "–"; })]));
 p();
@@ -104,9 +104,10 @@ p("### Relief and verticality (medians; p10–p90 in brackets)");
 p();
 const VK = ["range", "levels", "maxHeight", "above16", "tallestFall", "flatShare", "cliffShare", "onFoot", "stairsOnly", "oneStep"];
 const fmtB = (b: any, k: string) => (b ? (k === "above16" || k.endsWith("Share") || k === "onFoot" || k === "stairsOnly" || k === "oneStep" ? `${pc(b.median)} (${pc(b.p10)}–${pc(b.p90)})` : `${n2(b.median)} (${n2(b.p10)}–${n2(b.p90)})`) : "–");
-p(head(["Measure", "Official", "Workshop", "v2 default", "v2 Verticality 85 (≤ 16)", "v2 Verticality 85, unlocked", "v2 Variety 100", "v1", "current"]));
+const U = read("unlocked-v2.json");
+p(head(["Measure", "Official", "Workshop", "v2 default", "v2 Verticality 85 (≤ 16)", "v2 Verticality 85 unlocked (the land before the build)", "v2 Variety 100", "v1", "current"]));
 for (const k of VK)
-  p(row([k, fmtB(M.workshop.vertical.official[k], k), fmtB(M.workshop.vertical.workshop[k], k), ...["v2-128", "v2-128-vt85", "v2-128-vt85u", "v2-128-v100", "v1-128", "cur-128"].map((s) => fmtB(sets[s]?.all?.vertical?.[k], k))]));
+  p(row([k, fmtB(M.workshop.vertical.official[k], k), fmtB(M.workshop.vertical.workshop[k], k), fmtB(sets["v2-128"]?.all?.vertical?.[k], k), fmtB(sets["v2-128-vt85"]?.all?.vertical?.[k], k), fmtB(U?.all?.[k], k), ...["v2-128-v100", "v1-128", "cur-128"].map((s) => fmtB(sets[s]?.all?.vertical?.[k], k))]));
 p();
 sec("reliefThemes");
 p("### Relief by theme (v2 default: range, levels, tallest fall, flat, cliff; median)");
@@ -155,10 +156,24 @@ const I = sets["v2-128"]?.intentions;
 if (I) {
   p(`### Intentions (v2-128; maps with none / one / two: ${I.perMap.join(" / ")})`);
   p();
-  p(head(["Intention", "Drawn", "Emerged", "Re-steered", "Dropped", "Drop rate", "Within: M1 min / median", "Within: M2a largest (clusters)"]));
+  p(head(["Intention", "Drawn", "Emerged", "Re-steered", "Dropped", "Drop rate", "Within: M1 min / median", "Within: M2a largest (clusters)", "On the sheet"]));
   for (const id of INTENTIONS) {
     const x = I.byIntention[id];
-    p(row([INTENTION_TEXT[id].replace(/\.$/, ""), x.drawn, x.emerged, x.reSteered, x.dropped, pc(x.dropRate), x.M1 ? `${x.M1.nearestMin} / ${x.M1.nearestMedian}` : "–", x.M2a ? `${pc(x.M2a.largestShare)} (${x.M2a.clusters})` : "–"]));
+    if (!x || !x.drawn) continue;
+    p(row([INTENTION_TEXT[id].replace(/\.$/, ""), x.drawn, x.emerged, x.reSteered, x.dropped, pc(x.dropRate), x.M1 ? `${x.M1.nearestMin} / ${x.M1.nearestMedian}` : "–", x.M2a ? `${pc(x.M2a.largestShare)} (${x.M2a.clusters})` : "–", (x.examples ?? []).join(", ") || "–"]));
+  }
+  p();
+}
+// Kyler's three new intentions, drawn on every map of a set (a steering test, seeds 1-30 per theme)
+const FORCED: [string, string][] = [["v2-128-i-snaking", "snaking-river"], ["v2-128-i-crater", "crater-rivers"], ["v2-128-i-cliff", "cliff-falls-lake"]];
+if (FORCED.some(([s]) => sets[s]?.intentions)) {
+  p("### Kyler's three new intentions on every map (seeds 1–30 of every theme, each drawn alone)");
+  p();
+  p(head(["Intention", "Maps", "Emerged", "Re-steered", "Dropped", "Drop rate", "By theme (emerged)", "Within: M1 min / median", "Within: M2a largest (clusters)"]));
+  for (const [s, id] of FORCED) {
+    const x = sets[s]?.intentions?.byIntention?.[id];
+    if (!x) continue;
+    p(row([INTENTION_TEXT[id as keyof typeof INTENTION_TEXT].replace(/\.$/, ""), x.drawn, x.emerged, x.reSteered, x.dropped, pc(x.dropRate), Object.entries(x.themes ?? {}).map(([t, n]) => `${THEME_NAMES[t as keyof typeof THEME_NAMES]} ${n}`).join(", "), x.M1 ? `${x.M1.nearestMin} / ${x.M1.nearestMedian}` : "–", x.M2a ? `${pc(x.M2a.largestShare)} (${x.M2a.clusters})` : "–"]));
   }
   p();
 }
@@ -182,7 +197,7 @@ p();
 
 // speed
 sec("speed");
-p("### Speed in the batches (128², all six themes, loaded machine; ms)");
+p("### Speed in the batches (all six themes, loaded machine; the set's name gives its size; ms)");
 p();
 p(head(["Set", "Whole map: median (p90)", "First look", "First settled water", "Settles per map: median (p90)"]));
 for (const s of ["v2-128", "v2-96", "v2-192", "v2-256", "v1-128", "cur-128"]) {
@@ -193,7 +208,7 @@ for (const s of ["v2-128", "v2-96", "v2-192", "v2-256", "v1-128", "cur-128"]) {
 p();
 sec("bench");
 if (BENCH) {
-  p(`### Speed bench (${BENCH.machine}, Node ${BENCH.node}; seeds ${BENCH.seeds.join(", ")} of every theme; ms)`);
+  p(`### Speed bench (${String(BENCH.machine).replace(/\s+/g, " ").trim()}, Node ${BENCH.node}; seeds ${BENCH.seeds.join(", ")} of every theme, one map at a time; ms)`);
   p();
   p(head(["Where", "Size", "Generator", "Median", "Max", "Node CPU median", "First attempt", "First look median (max)", "First water median"]));
   for (const r of BENCH.summary) p(row([r.where, r.size, r.gen, r.medianMs, r.maxMs, r.medianCpu ?? "–", `${r.firstAttemptShare}%`, r.medianFirstLook !== null ? `${r.medianFirstLook} (${r.maxFirstLook})` : "–", r.medianFirstWater ?? "–"]));
@@ -203,7 +218,7 @@ if (BENCH) {
 // simplay
 sec("sim");
 if (SIM) {
-  p("### The exact cycle model (seeds 1–30 per theme, weather seed 1729)");
+  p("### The exact cycle model (seeds 1–15 per theme at 128², weather seed 1729)");
   p();
   p(head(["Theme", "Groups, largest (v2 / v1 / current)", "Nearest-peer median (v2 / v1 / current)", "Water kept through the Hard drought, range (v2)", "Start keeps water through the first Normal drought (v2)"]));
   for (const t of THEMES) {

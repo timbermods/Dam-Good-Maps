@@ -228,6 +228,13 @@ function intentionStats(maps: MapRec[]) {
       dropped: drawn.length - got.length,
       dropRate: r3((drawn.length - got.length) / Math.max(1, drawn.length)),
       themes: Object.fromEntries([...new Set(got.map((m) => m.theme))].sort().map((t) => [t, got.filter((m) => m.theme === t).length])),
+      // examples on the contact sheet (seeds 1-30), one per theme first
+      examples: [...got]
+        .filter((m) => m.rec.seed <= 30)
+        .sort((a, b) => a.rec.seed - b.rec.seed || (a.theme < b.theme ? -1 : 1))
+        .filter((m, i, all) => all.findIndex((o) => o.theme === m.theme) === i)
+        .slice(0, 3)
+        .map((m) => m.key),
       M1: V.length > 1 ? { nearestMin: r3(Math.min(...nn)), nearestMedian: r3(med(nn)) } : null,
       M2a: V.length > 1 ? clusterStats(V.length, (i, j) => distance(V[i], V[j], V_SCALE), vCut) : null,
     };
@@ -268,7 +275,7 @@ for (const s of sets) {
   const light = LIGHT.has(s);
   for (const t of [...new Set(maps.map((m) => m.theme))].sort()) byTheme[t] = { attempts: attempts[t], failedAttempts: failedBy[t], ...measureMaps(maps.filter((x) => x.theme === t), true, light) };
   const all: any = light ? lightMeasures(maps) : measureMaps(maps, false);
-  out.sets[s] = { maps: maps.length, light, all: { vertical: all.vertical, shape: all.shape, M5: all.M5 ?? null, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d ?? null, vtJumps: all.vtJumps ?? null }, byTheme, intentions: !light && maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
+  out.sets[s] = { maps: maps.length, light, all: { vertical: all.vertical, shape: all.shape, M5: all.M5 ?? null, M6: all.M6, speed: all.speed, startDrought: all.startDrought, M3c: all.M3c, M3d: all.M3d ?? null, vtJumps: all.vtJumps ?? null }, byTheme, intentions: maps.some((m) => m.rec.intentions) ? intentionStats(maps) : null };
   console.log(`measured ${s}: ${maps.length} maps`);
 }
 writeFileSync(join(HERE, "measures-v2.json"), JSON.stringify(out, null, 1) + "\n");

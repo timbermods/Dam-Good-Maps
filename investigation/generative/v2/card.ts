@@ -31,6 +31,9 @@ const SAYS: Record<IntentionId, string> = {
   "high-lake": "A lake high on the heights spills over a fall.",
   "meeting-waters": "Two rivers meet by the start.",
   "long-view": "You start on high ground, looking out over the land below.",
+  "snaking-river": "A river snakes down a hill, dropping a level at its bends.",
+  "crater-rivers": "Rivers meet in a crater lake that spills out through one gap in its rim.",
+  "cliff-falls-lake": "A waterfall plunges off a cliff into a big, round lake.",
 };
 
 export interface CardInput {

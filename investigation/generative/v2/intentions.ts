@@ -5,11 +5,17 @@
 // dropped and recorded, never forced (the second principle). The no-clone and no-archetype measures
 // run within each intention (the third principle, measures-v2.ts).
 //
-// Kyler's own first intention, in his words: "I love when the start sits under a cliff with water
-// below" (`under-cliff`).
+// Kyler's own intentions, in his words: "I love when the start sits under a cliff with water
+// below" (`under-cliff`); "I want a snaking river going down a hill" (`snaking-river`); "I want a
+// large crater where multiple rivers converge" (`crater-rivers`); "I want a cliffside with a
+// waterfall that goes into a large circular lake" (`cliff-falls-lake`).
+//
+// "The only safe water is uphill" (`safe-water-uphill`) left the set: in version 2's first run it
+// emerged on 4 of 86 draws. Its check stays for the record; it is no longer drawn.
 
 import type { Rng } from "../../../src/core/math/rng";
 import type { ThemeId } from "../../../src/core/spec/mapspec";
+import { unit } from "../proto/num";
 import type { GenomeV2 } from "./genome";
 
 export const INTENTIONS = [
@@ -22,8 +28,15 @@ export const INTENTIONS = [
   "high-lake",
   "meeting-waters",
   "long-view",
+  "snaking-river",
+  "crater-rivers",
+  "cliff-falls-lake",
 ] as const;
 export type IntentionId = (typeof INTENTIONS)[number];
+/** The intentions a map may draw (the set). */
+export const ACTIVE: readonly IntentionId[] = INTENTIONS.filter((id) => id !== "safe-water-uphill");
+/** Kyler's own, in his words (the briefs say so). */
+export const KYLERS = new Set<IntentionId>(["under-cliff", "snaking-river", "crater-rivers", "cliff-falls-lake"]);
 
 /** The outcome in a player's words (the briefs name it). */
 export const INTENTION_TEXT: Record<IntentionId, string> = {
@@ -36,6 +49,9 @@ export const INTENTION_TEXT: Record<IntentionId, string> = {
   "high-lake": "A lake high on the heights spills over a fall.",
   "meeting-waters": "Two rivers meet by the start.",
   "long-view": "The start looks out from high ground over the land below.",
+  "snaking-river": "A snaking river winds down a hill, dropping a level at its bends (Kyler's own).",
+  "crater-rivers": "A large crater gathers two or more rivers into its lake, which leaves through a gap in the rim (Kyler's own).",
+  "cliff-falls-lake": "A waterfall plunges off a cliff into a large, roughly round lake (Kyler's own).",
 };
 
 /** How often each intention is drawn, by theme; Verticality weights the vertical ones up. */
@@ -49,8 +65,11 @@ const WEIGHT: Record<IntentionId, Record<ThemeId, number>> = {
   "high-lake": { riverValley: 0.5, canyon: 0.8, highlands: 1.2, lakeBasin: 0.8, delta: 0.3, islands: 0.5 },
   "meeting-waters": { riverValley: 1, canyon: 0.6, highlands: 0.8, lakeBasin: 0.8, delta: 1.2, islands: 0.4 },
   "long-view": { riverValley: 0.8, canyon: 1, highlands: 1.2, lakeBasin: 0.6, delta: 0.4, islands: 0.8 },
+  "snaking-river": { riverValley: 1.2, canyon: 0.8, highlands: 1.2, lakeBasin: 0.8, delta: 0.6, islands: 0.5 },
+  "crater-rivers": { riverValley: 0.8, canyon: 0.6, highlands: 0.9, lakeBasin: 1.3, delta: 0.6, islands: 0.6 },
+  "cliff-falls-lake": { riverValley: 0.8, canyon: 1.2, highlands: 1.2, lakeBasin: 1, delta: 0.4, islands: 0.7 },
 };
-const VERTICAL = new Set<IntentionId>(["under-cliff", "falls-shield", "hidden-valley", "high-lake", "long-view"]);
+const VERTICAL = new Set<IntentionId>(["under-cliff", "falls-shield", "hidden-valley", "high-lake", "long-view", "snaking-river", "cliff-falls-lake"]);
 /** Pairs that pull the start two ways. */
 const CLASH: [IntentionId, IntentionId][] = [
   ["safe-water-uphill", "long-view"],
@@ -63,12 +82,12 @@ export function drawIntentions(theme: ThemeId, vt: number, rng: Rng): IntentionI
   const n = r < 0.25 ? 0 : r < 0.75 ? 1 : 2;
   const out: IntentionId[] = [];
   for (let k = 0; k < n; k++) {
-    const w = INTENTIONS.map((id) => {
+    const w = ACTIVE.map((id) => {
       if (out.includes(id) || out.some((o) => CLASH.some(([a, b]) => (a === o && b === id) || (b === o && a === id)))) return 0;
       return WEIGHT[id][theme] * (VERTICAL.has(id) ? 1 + vt / 100 : 1);
     });
     if (w.every((x) => x === 0)) break;
-    out.push(INTENTIONS[rng.weighted(w)]);
+    out.push(ACTIVE[rng.weighted(w)]);
   }
   return out;
 }
@@ -133,6 +152,47 @@ export function nudgeFor(id: IntentionId): (g: GenomeV2, rng: Rng, W: number, H:
     case "long-view":
       return (g, rng) => {
         if (rng.float() < 0.5) part(g, rng, rng.float() < 0.5 ? "plateau" : "escarpment");
+      };
+    case "snaking-river":
+      // the water's way wanders more where the slope is gentle, and the drops stay spread along
+      // the course (no gathering into one fall)
+      return (g, rng) => {
+        g.wander = 2 + 1.6 * rng.float();
+        g.wanderCell = 9 + 7 * rng.float();
+        g.knick = 0;
+        g.hydro.springs += rng.float() < 0.5 ? 1 : 0;
+      };
+    case "crater-rivers":
+      // a large caldera somewhere inland, more heads upstream of it, and room for its lake
+      return (g, rng, W, H) => {
+        const side = Math.min(W, H);
+        const size = side * (0.12 + 0.08 * rng.float());
+        g.parts.push({ kind: "caldera", at: [0.3 + 0.4 * rng.float(), 0.3 + 0.4 * rng.float()], size, height: (1.5 + 2.5 * rng.float()) * tall(g), turn: rng.float(), extra: rng.float() < 0.35 ? 2 + 3 * rng.float() : 0, soft: 0.8 + 0.8 * rng.float() });
+        g.hydro.springs += 1 + (rng.float() < 0.5 ? 1 : 0);
+        if (g.hydro.inflows === 0) g.hydro.inflows = 1;
+        g.hydro.lakeBudget = Math.max(g.hydro.lakeBudget, (3.3 * size * size) / (W * H));
+      };
+    case "cliff-falls-lake":
+      // cliffs and gathered drops (knickpoints), more hard rock, a scarp and a hollow, room for lakes
+      return (g, rng, W, H) => {
+        g.knick = Math.max(g.knick, 8 + 8 * rng.float());
+        g.cap.share = Math.min(0.75, g.cap.share + 0.15);
+        g.hanging = Math.max(g.hanging, 1.5 + 1.5 * rng.float());
+        part(g, rng, "escarpment", 1.3);
+        // a hollow somewhere, or (more often) near the scarp's foot, where a river coming off it
+        // may fall into the lake the hollow holds
+        const scarp = g.parts[g.parts.length - 1];
+        const size = 11 + 8 * rng.float();
+        let at: [number, number] = [0.2 + 0.6 * rng.float(), 0.2 + 0.6 * rng.float()];
+        if (rng.float() < 0.6) {
+          const [ux, uy] = unit(scarp.turn);
+          const off = size + 3 + 6 * rng.float();
+          const along = (rng.float() * 2 - 1) * 0.3 * scarp.size;
+          at = [Math.min(0.85, Math.max(0.15, scarp.at[0] + (-ux * off - uy * along) / W)), Math.min(0.85, Math.max(0.15, scarp.at[1] + (-uy * off + ux * along) / H))];
+        }
+        g.parts.push({ kind: "basin", at, size, height: -(3 + 2 * rng.float()) * tall(g), turn: rng.float(), extra: 1 + 2 * rng.float(), soft: 0 });
+        g.lakeSprings = 1;
+        g.hydro.lakeBudget = Math.min(0.45, g.hydro.lakeBudget + 0.04);
       };
   }
 }
@@ -244,6 +304,8 @@ export interface FinalCtx {
   falls: { i: number; drop: number }[];
   /** Planned confluences (river ends that join another river). */
   joins: number[];
+  /** The rivers' courses (the planned paths the build carved), head to mouth, in tile units. */
+  rivers: [number, number][][];
 }
 
 const D4: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -282,6 +344,155 @@ export interface CheckResult {
   ok: boolean;
   note: string;
 }
+
+/** A course resampled every tile of arc, inside the map. */
+function resample(path: [number, number][], W: number, H: number): [number, number][] {
+  const out: [number, number][] = [];
+  let carry = 0;
+  for (let k = 0; k + 1 < path.length; k++) {
+    const [ax, ay] = path[k];
+    const vx = path[k + 1][0] - ax;
+    const vy = path[k + 1][1] - ay;
+    const len = Math.sqrt(vx * vx + vy * vy);
+    let t = carry;
+    while (t < len) {
+      const x = ax + (vx * t) / len;
+      const y = ay + (vy * t) / len;
+      if (x >= 0 && y >= 0 && x <= W - 1 && y <= H - 1) out.push([x, y]);
+      t += 1;
+    }
+    carry = t - len;
+  }
+  return out;
+}
+
+/** Douglas-Peucker: the indices of the points that keep the course within `eps` tiles. */
+function simplify(pts: [number, number][], eps: number): number[] {
+  const keep = new Uint8Array(pts.length);
+  keep[0] = 1;
+  keep[pts.length - 1] = 1;
+  const stack: [number, number][] = [[0, pts.length - 1]];
+  while (stack.length) {
+    const [a, b] = stack.pop()!;
+    const [ax, ay] = pts[a];
+    const vx = pts[b][0] - ax;
+    const vy = pts[b][1] - ay;
+    const len = Math.sqrt(vx * vx + vy * vy);
+    let far = -1;
+    let fd = eps;
+    for (let m = a + 1; m < b; m++) {
+      const wx = pts[m][0] - ax;
+      const wy = pts[m][1] - ay;
+      const d = len > 0 ? Math.abs(vx * wy - vy * wx) / len : Math.sqrt(wx * wx + wy * wy);
+      if (d > fd) {
+        fd = d;
+        far = m;
+      }
+    }
+    if (far >= 0) {
+      keep[far] = 1;
+      stack.push([a, far], [far, b]);
+    }
+  }
+  const out: number[] = [];
+  for (let m = 0; m < pts.length; m++) if (keep[m]) out.push(m);
+  return out;
+}
+
+interface LevelLake {
+  tiles: number[];
+  inLake: Uint8Array;
+  surf: number;
+  cx: number;
+  cy: number;
+}
+
+/** Lakes: level water (the surface within a quarter level of the body's deepest tile), 4-connected,
+ *  of `min` tiles or more. */
+function levelLakes(c: FinalCtx, min: number): LevelLake[] {
+  const { W, H, h, D } = c;
+  const b = bodies(c);
+  const out: LevelLake[] = [];
+  for (const t of b.tiles) {
+    if (t.length < min) continue;
+    let deep = t[0];
+    for (const i of t) if (D[i] > D[deep] || (D[i] === D[deep] && i < deep)) deep = i;
+    const surf = h[deep] + D[deep];
+    const inLake = new Uint8Array(W * H);
+    const q = [deep];
+    inLake[deep] = 1;
+    for (let k = 0; k < q.length; k++) {
+      const i = q[k];
+      const x = i % W;
+      const y = (i - x) / W;
+      for (const [dx, dy] of D4) {
+        const xx = x + dx;
+        const yy = y + dy;
+        if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+        const j = yy * W + xx;
+        if (inLake[j] || !(D[j] >= 0.1) || Math.abs(h[j] + D[j] - surf) > 0.25) continue;
+        inLake[j] = 1;
+        q.push(j);
+      }
+    }
+    if (q.length < min) continue;
+    let cx = 0;
+    let cy = 0;
+    for (const i of q) {
+      cx += i % W;
+      cy += Math.floor(i / W);
+    }
+    out.push({ tiles: q, inLake, surf, cx: cx / q.length, cy: cy / q.length });
+  }
+  return out;
+}
+
+/** A lake's open water without its thin arms (a morphological opening by two tiles): the tiles
+ *  within two tiles of a tile whose 5x5 square is all lake, in the largest such part. */
+function openWater(L: LevelLake, W: number, H: number): number[] {
+  const core = new Uint8Array(W * H);
+  for (const i of L.tiles) {
+    const x = i % W;
+    const y = (i - x) / W;
+    let all = x >= 2 && y >= 2 && x < W - 2 && y < H - 2;
+    for (let dy = -2; dy <= 2 && all; dy++) for (let dx = -2; dx <= 2 && all; dx++) if (!L.inLake[(y + dy) * W + x + dx]) all = false;
+    if (all) core[i] = 1;
+  }
+  // the largest core part
+  const lab = new Int32Array(W * H).fill(-1);
+  let best: number[] = [];
+  for (const s0 of L.tiles) {
+    if (!core[s0] || lab[s0] >= 0) continue;
+    const q = [s0];
+    lab[s0] = s0;
+    for (let k = 0; k < q.length; k++) {
+      const i = q[k];
+      const x = i % W;
+      const y = (i - x) / W;
+      for (const [dx, dy] of D4) {
+        const j = (y + dy) * W + x + dx;
+        if (x + dx < 0 || y + dy < 0 || x + dx >= W || y + dy >= H || lab[j] >= 0 || !core[j]) continue;
+        lab[j] = s0;
+        q.push(j);
+      }
+    }
+    if (q.length > best.length) best = q;
+  }
+  const out = new Uint8Array(W * H);
+  for (const i of best) {
+    const x = i % W;
+    const y = (i - x) / W;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) out[(y + dy) * W + x + dx] = 1;
+  }
+  return L.tiles.filter((i) => out[i]);
+}
+
+/** Sixteen directions round a point (unit vectors, no trigonometry). */
+const RAYS: [number, number][] = (() => {
+  const a = [1, 0.924, 0.707, 0.383, 0, -0.383, -0.707, -0.924, -1, -0.924, -0.707, -0.383, 0, 0.383, 0.707, 0.924];
+  const b = [0, 0.383, 0.707, 0.924, 1, 0.924, 0.707, 0.383, 0, -0.383, -0.707, -0.924, -1, -0.924, -0.707, -0.383];
+  return a.map((v, k) => [v, b[k]] as [number, number]);
+})();
 
 export function checkIntention(id: IntentionId, c: FinalCtx): CheckResult {
   const { W, H, h, D, C, start } = c;
@@ -618,6 +829,205 @@ export function checkIntention(id: IntentionId, c: FinalCtx): CheckResult {
     case "meeting-waters": {
       const j = c.joins.filter((i) => eu(i) <= 18 && D[i] >= 0.1);
       return { ok: j.length > 0, note: j.length ? `a confluence ${Math.round(Math.min(...j.map(eu)))} tiles from the start` : "no confluence within 18 tiles" };
+    }
+    case "snaking-river": {
+      // a river whose course turns three times or more, back and forth, while its bed descends 3+
+      // levels, with a level dropped at two bends or more; the stretch holds water
+      let best = "no river winds down a slope";
+      let ok = false;
+      let bestTurns = 0;
+      for (const path of c.rivers) {
+        const pts = resample(path, W, H);
+        if (pts.length < 20) continue;
+        const n = pts.length;
+        const lev: number[] = [];
+        const wet: number[] = [];
+        let run = Infinity;
+        for (const [x, y] of pts) {
+          const i = Math.round(y) * W + Math.round(x);
+          run = Math.min(run, h[i]);
+          lev.push(run);
+          wet.push(D[i] >= 0.1 ? 1 : 0);
+        }
+        const keep = simplify(pts, 1.5);
+        const bends: { k: number; sign: number }[] = [];
+        for (let m = 1; m + 1 < keep.length; m++) {
+          const [ax, ay] = pts[keep[m - 1]];
+          const [bx, by] = pts[keep[m]];
+          const [qx, qy] = pts[keep[m + 1]];
+          const ux = bx - ax;
+          const uy = by - ay;
+          const vx = qx - bx;
+          const vy = qy - by;
+          const lu = Math.sqrt(ux * ux + uy * uy);
+          const lv = Math.sqrt(vx * vx + vy * vy);
+          if (lu < 3 || lv < 3) continue;
+          // turning 30 degrees or more: the cosine at most 0.866
+          if ((ux * vx + uy * vy) / (lu * lv) <= 0.866) bends.push({ k: keep[m], sign: ux * vy - uy * vx > 0 ? 1 : -1 });
+        }
+        for (let i0 = 0; i0 + 2 < bends.length && !ok; i0++)
+          for (let i1 = i0 + 2; i1 < bends.length && !ok; i1++) {
+            const from = Math.max(0, bends[i0].k - 4);
+            const to = Math.min(n - 1, bends[i1].k + 4);
+            const drop = lev[from] - lev[to];
+            let alt = false;
+            for (let m = i0 + 1; m <= i1; m++) if (bends[m].sign !== bends[m - 1].sign) alt = true;
+            let steps = 0;
+            for (let m = i0; m <= i1; m++) {
+              const k = bends[m].k;
+              if (lev[Math.max(0, k - 4)] - lev[Math.min(n - 1, k + 4)] >= 1) steps++;
+            }
+            let w = 0;
+            for (let k = from; k <= to; k++) w += wet[k];
+            const turns = i1 - i0 + 1;
+            if (alt && drop >= 3 && steps >= 2 && w >= 0.7 * (to - from + 1)) {
+              ok = true;
+              best = `a river turns ${turns} times, back and forth, over ${to - from} tiles while its bed drops ${drop} levels (a level dropped at ${steps} bends)`;
+            } else if (turns > bestTurns && alt) {
+              bestTurns = turns;
+              best = `the most winding stretch turns ${turns} times but drops ${drop} levels (${steps} at bends)`;
+            }
+          }
+        if (ok) break;
+      }
+      return { ok, note: best };
+    }
+    case "crater-rivers": {
+      // a large lake in a closed rim (the ground 2+ levels over the lake on 12 of 16 rays, and
+      // falling again outside the crest on 8 or more), two or more rivers flowing in, one way out
+      const lakes = levelLakes(c, (250 * N) / 16384);
+      let note = "no large lake";
+      let ok = false;
+      for (const L of lakes) {
+        const R = Math.sqrt(L.tiles.length / 3.14159);
+        let high = 0;
+        let ring = 0;
+        for (const [ux, uy] of RAYS) {
+          let shore = -1;
+          let top = -1;
+          let after = 99;
+          for (let t = 1; t < 2 * R + 30; t++) {
+            const x = Math.round(L.cx + ux * t);
+            const y = Math.round(L.cy + uy * t);
+            if (x < 0 || y < 0 || x >= W || y >= H) break;
+            const i = y * W + x;
+            if (L.inLake[i]) {
+              shore = -1;
+              top = -1;
+              after = 99;
+              continue;
+            }
+            if (shore < 0) shore = t;
+            if (t - shore <= 14) {
+              // the crest: the highest ground within 14 tiles of the shore
+              if (h[i] > top) {
+                top = h[i];
+                after = 99;
+              } else after = Math.min(after, h[i]);
+            } else if (t - shore <= 26) after = Math.min(after, h[i]);
+            else break;
+          }
+          if (top >= L.surf + 2) {
+            high++;
+            if (after <= top - 1) ring++;
+          }
+        }
+        // rivers in and out: a course entering from 5+ tiles outside, and the ways out
+        let inflows = 0;
+        const exits: [number, number][] = [];
+        for (const path of c.rivers) {
+          const pts = resample(path, W, H);
+          const inside = pts.map(([x, y]) => L.inLake[Math.round(y) * W + Math.round(x)]);
+          let entered = false;
+          let out = 0;
+          for (let m = 0; m < pts.length; m++) {
+            if (!inside[m]) {
+              out++;
+              continue;
+            }
+            if (m > 0 && !inside[m - 1] && out >= 5) entered = true;
+            out = 0;
+          }
+          if (entered) inflows++;
+          for (let m = 1; m < pts.length; m++) {
+            if (!(inside[m - 1] && !inside[m])) continue;
+            let o = 0;
+            while (m + o < pts.length && !inside[m + o]) o++;
+            if (o >= 5 && !exits.some(([ex, ey]) => Math.abs(ex - pts[m][0]) + Math.abs(ey - pts[m][1]) <= 6)) exits.push(pts[m]);
+          }
+        }
+        const closed = high >= 12 && ring >= 8;
+        const here = closed && inflows >= 2 && exits.length === 1;
+        if (here || !ok) note = `a ${L.tiles.length}-tile lake: rim on ${high} of 16 rays (falling again outside on ${ring}), ${inflows} river${inflows === 1 ? "" : "s"} in, ${exits.length} way${exits.length === 1 ? "" : "s"} out`;
+        if (here) {
+          ok = true;
+          break;
+        }
+      }
+      return { ok, note };
+    }
+    case "cliff-falls-lake": {
+      // a fall of 3+ levels plunging into a lake whose open water (the lake without its thin arms)
+      // covers 200+ tiles and is broadly round: its second moments' axes within 0.55 of each other,
+      // and filling 40% of its widest circle
+      const lakes = levelLakes(c, (200 * N) / 16384);
+      let note = "no large lake";
+      let ok = false;
+      let bestFall = -1;
+      for (const L of lakes) {
+        const open = openWater(L, W, H);
+        if (open.length < (200 * N) / 16384) continue;
+        let cx = 0;
+        let cy = 0;
+        for (const i of open) {
+          cx += i % W;
+          cy += Math.floor(i / W);
+        }
+        cx /= open.length;
+        cy /= open.length;
+        let sxx = 0;
+        let syy = 0;
+        let sxy = 0;
+        let rmax = 0;
+        for (const i of open) {
+          const dx = (i % W) - cx;
+          const dy = Math.floor(i / W) - cy;
+          sxx += dx * dx;
+          syy += dy * dy;
+          sxy += dx * dy;
+          rmax = Math.max(rmax, Math.sqrt(dx * dx + dy * dy));
+        }
+        const a = sxx / open.length;
+        const d = syy / open.length;
+        const b = sxy / open.length;
+        const tr = (a + d) / 2;
+        const disc = Math.sqrt(((a - d) * (a - d)) / 4 + b * b);
+        const axes = tr + disc > 0 ? Math.sqrt(Math.max(0, tr - disc) / (tr + disc)) : 0;
+        const fill = open.length / (3.14159 * (rmax + 0.5) * (rmax + 0.5));
+        let fall = 0;
+        for (const f of c.falls) {
+          if (L.inLake[f.i]) continue;
+          const x = f.i % W;
+          const y = (f.i - x) / W;
+          for (const [dx, dy] of D4) {
+            const xx = x + dx;
+            const yy = y + dy;
+            if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+            if (L.inLake[yy * W + xx]) fall = Math.max(fall, h[f.i] + D[f.i] - L.surf);
+          }
+        }
+        const round = axes >= 0.55 && fill >= 0.4;
+        const here = round && fall >= 3;
+        if (here || fall > bestFall) {
+          bestFall = fall;
+          note = `a lake of ${open.length} tiles of open water (axes ${Math.round(axes * 100) / 100}, fill ${Math.round(fill * 100) / 100}) with a fall of ${Math.round(fall * 10) / 10} levels into it`;
+        }
+        if (here) {
+          ok = true;
+          break;
+        }
+      }
+      return { ok, note };
     }
     case "long-view": {
       const sorted = Array.from(h).sort((p, q) => p - q);

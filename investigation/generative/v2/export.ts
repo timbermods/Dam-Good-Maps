@@ -1,8 +1,9 @@
 // The ten brief maps of design version 2 (task "show Kyler the maps"): picked from the batches for
 // variety (the variety distance and the opening, half each, farthest-first), one per theme at the
 // default Verticality first (the first is Kyler's own intention, a start under a cliff with water
-// below), three at high Verticality (85; heights kept within 16, behind the probe lock), and one
-// map with no intention (some maps have none). Each is regenerated from its seed (the bytes must
+// below, and the next show his other three: a snaking river, a crater gathering rivers, a waterfall
+// into a round lake), three at high Verticality (85; heights kept within 16, behind the probe lock),
+// and one map with no intention (some maps have none). Each is regenerated from its seed (the bytes must
 // equal the batch's), run through the exact cycle model (the worst of three weather seeds), named
 // with the names study's rules, and written with a one-page brief:
 //   investigation/generative/out/v2/<name>.timber, README.md, index.json
@@ -99,6 +100,14 @@ const farthest = (pool: Cand[], bonus: (c: Cand) => number = () => 0) => {
     }
   }
   if (first) picked.push(first);
+}
+// 1b. Kyler's three other intentions, one map each, in a theme not picked yet when one has it
+for (const id of ["snaking-river", "crater-rivers", "cliff-falls-lake"] as IntentionId[]) {
+  if (picked.some((p) => emerged(p).includes(id))) continue;
+  const pool = base.filter((x) => emerged(x).includes(id));
+  const fresh = pool.filter((x) => !picked.some((p) => p.theme === x.theme));
+  const c = farthest(fresh.length ? fresh : pool);
+  if (c) picked.push(c);
 }
 // 2. one map per theme at the default, the farthest, with a bonus for an intention not shown yet
 const shown = () => new Set(picked.flatMap(emerged));
@@ -250,7 +259,7 @@ File: [out/v2/${file}](../../out/v2/${encodeURI(file)}).
 
 ![Top-down, north up](../../renders/v2/${nn}-top.jpg)
 
-*Rendered with dev's 3D view; the clean look re-renders these once Kyler approves it.*
+*Rendered with the app's 3D view, in the clean look.*
 
 ## Intention
 
@@ -280,7 +289,7 @@ ${cycleRow("first-badtide", "First badtide, Normal")}
 
 ## Strategy axes
 
-The verified mechanics study's eight axes (branch \`investigation/mechanics-verified\`, measurement version 3), each in its fixed bins (bin 0 is the lowest).
+The verified mechanics study's eight axes (\`investigation/mechanics\`, measurement version 3), each in its fixed bins (bin 0 is the lowest).
 
 | Axis | Value | Bin |
 |---|---|---|

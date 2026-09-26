@@ -1,6 +1,5 @@
-// Names from the land (design version 2, task d): the vocabulary and rules of branch
-// `investigation/names` (lexicon.json, patterns.json, forbidden.json), read only and extracted with
-// `git show` into .scratch/ext/names/ (never copied into this branch), applied to a prototype map.
+// Names from the land (design version 2, task d): the vocabulary and rules of the names study
+// (investigation/names: lexicon.json, patterns.json, forbidden.json), applied to a prototype map.
 //
 // The rules read features, MapMetrics, dam sites and roles. The prototype has no planned landform
 // features and no premises, so it emits read-back ones for naming only, each when the built map
@@ -22,7 +21,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const DIR = join(process.cwd(), ".scratch", "ext", "names");
+const DIR = join(process.cwd(), "investigation", "names");
 
 export interface NameInput {
   metrics: Record<string, any>;

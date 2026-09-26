@@ -199,7 +199,7 @@ interface Head {
   flow: number;
 }
 
-export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?: number; knick?: number; lakeSprings?: number }, seed: number, W: number, H: number, attempt: number): Hydro {
+export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?: number; knick?: number; lakeSprings?: number; wander?: number; wanderCell?: number }, seed: number, W: number, H: number, attempt: number): Hydro {
   const N = W * H;
   const rng = stream(seed, "hydro", attempt);
   const down = downstreamEdges(g.flowDir);
@@ -212,7 +212,9 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome & { hanging?
   // the upstream edges do not drain (water comes in there)
   const rs = hash32(seed, "route", attempt);
   const Er = new Float64Array(N);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) Er[y * W + x] = E[y * W + x] + 0.9 * fbm(rs, x, y, 14, 2);
+  const wander = g.wander ?? 0.9;
+  const wanderCell = g.wanderCell ?? 14;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) Er[y * W + x] = E[y * W + x] + wander * fbm(rs, x, y, wanderCell, 2);
   const dr = drainage(Er, W, H, { outlet: (i) => !onUp(i), epsilon: 1e-6 });
   const downLen = new Float64Array(N);
   for (let q = 0; q < dr.order.length; q++) {

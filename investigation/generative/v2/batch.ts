@@ -20,10 +20,10 @@ import { arg, lowPriority, MAPS, parseSeeds } from "../lib/paths";
 import { generateProto } from "../proto/generate";
 import { cheapCycle } from "./cycle";
 import { generateV2, type DroughtPolicy, type ProtoResultV2 } from "./generate";
+import type { IntentionId } from "./intentions";
 import { vertical } from "./vertical";
 
-/** The mechanics study's axes (branch investigation/mechanics-verified, read only), extracted with
- *  `git show` into .scratch/ext/mechanics/measure.ts (simplay-v2.ts says how); absent: no axes. */
+/** The mechanics study's axes (investigation/mechanics/measure.ts, merged on dev). */
 export const AXIS_BINS: [string, number[]][] = [
   ["storageRatio", [0.25, 1, 3]],
   ["peakAxialFlow64", [0.5, 1, 2]],
@@ -35,7 +35,7 @@ export const AXIS_BINS: [string, number[]][] = [
   ["deepPumpExtraShore", [0.5, 10, 50]],
 ];
 export async function loadAxes(): Promise<((r: GenerateResult) => Record<string, unknown>) | null> {
-  const p = resolve(".scratch", "ext", "mechanics", "measure.ts");
+  const p = resolve("investigation", "mechanics", "measure.ts");
   if (!existsSync(p)) return null;
   const m = await import(pathToFileURL(p).href);
   return m.measureOpening;
@@ -90,6 +90,9 @@ async function child(k: number, n: number): Promise<void> {
   const variety = Number(arg("variety", "70"));
   const drought = arg("drought", "prefer") as DroughtPolicy;
   const files = !process.argv.includes("--no-files");
+  // forced intentions (steering tests): --intentions a,b; "none" for none
+  const intArg = arg("intentions", "");
+  const intentions = intArg ? (intArg === "none" ? [] : (intArg.split(",") as IntentionId[])) : undefined;
   const dir = join(MAPS, set);
   mkdirSync(dir, { recursive: true });
   let idx = 0;
@@ -101,7 +104,7 @@ async function child(k: number, n: number): Promise<void> {
       const t0 = performance.now();
       const any: any =
         gen === "proto2"
-          ? generateV2(theme, seed, size, "normal", { vt, unlocked, variety, drought })
+          ? generateV2(theme, seed, size, "normal", { vt, unlocked, variety, drought, intentions })
           : gen === "proto"
             ? generateProto(theme, seed, size, "normal", { variety })
             : generateCurrent(makeSpec({ seed, theme, size: { x: size, y: size } }));

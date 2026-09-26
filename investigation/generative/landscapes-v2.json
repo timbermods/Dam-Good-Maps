@@ -17,7 +17,7 @@
       "median": 8.545,
       "p90": 10.986
      },
-     "outsideReal80": 0.15
+     "outsideReal80": 0.139
     },
     "drainageDensity": {
      "group": "network",
@@ -28,10 +28,10 @@
      },
      "generated": {
       "p10": 0.046,
-      "median": 0.054,
+      "median": 0.053,
       "p90": 0.062
      },
-     "outsideReal80": 0.044
+     "outsideReal80": 0.05
     },
     "sinuosity": {
      "group": "network",
@@ -41,11 +41,11 @@
       "p90": 1.333
      },
      "generated": {
-      "p10": 1.172,
-      "median": 1.261,
-      "p90": 1.347
+      "p10": 1.176,
+      "median": 1.259,
+      "p90": 1.364
      },
-     "outsideReal80": 0.15
+     "outsideReal80": 0.183
     },
     "junctionAngle": {
      "group": "network",
@@ -57,9 +57,9 @@
      "generated": {
       "p10": 66.801,
       "median": 90,
-      "p90": 120.964
+      "p90": 115.346
      },
-     "outsideReal80": 0.411
+     "outsideReal80": 0.467
     },
     "segmentLength": {
      "group": "network",
@@ -69,11 +69,11 @@
       "p90": 30.243
      },
      "generated": {
-      "p10": 17,
+      "p10": 16.899,
       "median": 20.485,
-      "p90": 26.87
+      "p90": 27.899
      },
-     "outsideReal80": 0.178
+     "outsideReal80": 0.194
     },
     "splitTileShare": {
      "group": "water",
@@ -83,11 +83,11 @@
       "p90": 0.65
      },
      "generated": {
-      "p10": 0.475,
-      "median": 0.574,
-      "p90": 0.657
+      "p10": 0.46,
+      "median": 0.57,
+      "p90": 0.652
      },
-     "outsideReal80": 0.15
+     "outsideReal80": 0.122
     },
     "rejoinTileShare": {
      "group": "water",
@@ -97,11 +97,11 @@
       "p90": 0.636
      },
      "generated": {
-      "p10": 0.464,
-      "median": 0.564,
-      "p90": 0.655
+      "p10": 0.455,
+      "median": 0.561,
+      "p90": 0.644
      },
-     "outsideReal80": 0.183
+     "outsideReal80": 0.133
     },
     "enclosedIslands": {
      "group": "water",
@@ -115,7 +115,7 @@
       "median": 1,
       "p90": 3
      },
-     "outsideReal80": 0.011
+     "outsideReal80": 0.017
     },
     "stepLength": {
      "group": "relief",
@@ -143,7 +143,7 @@
       "median": 5,
       "p90": 7
      },
-     "outsideReal80": 0.078
+     "outsideReal80": 0.072
     },
     "valleyWidth2": {
      "group": "relief",
@@ -153,11 +153,11 @@
       "p90": 12
      },
      "generated": {
-      "p10": 5,
+      "p10": 6,
       "median": 8,
       "p90": 12
      },
-     "outsideReal80": 0.083
+     "outsideReal80": 0.056
     },
     "narrowingRatio": {
      "group": "relief",
@@ -169,9 +169,9 @@
      "generated": {
       "p10": 0.05,
       "median": 0.118,
-      "p90": 0.278
+      "p90": 0.267
      },
-     "outsideReal80": 0.444
+     "outsideReal80": 0.456
     },
     "straightShare8": {
      "group": "naturalness",
@@ -181,11 +181,11 @@
       "p90": 0.056
      },
      "generated": {
-      "p10": 0.016,
-      "median": 0.032,
+      "p10": 0.015,
+      "median": 0.03,
       "p90": 0.054
      },
-     "outsideReal80": 0.094
+     "outsideReal80": 0.083
     },
     "longestRun": {
      "group": "naturalness",
@@ -199,7 +199,7 @@
       "median": 14,
       "p90": 19
      },
-     "outsideReal80": 0.25
+     "outsideReal80": 0.2
     },
     "ridgeThicknessCV": {
      "group": "naturalness",
@@ -209,11 +209,11 @@
       "p90": 0.458
      },
      "generated": {
-      "p10": 0.327,
-      "median": 0.353,
-      "p90": 0.395
+      "p10": 0.331,
+      "median": 0.357,
+      "p90": 0.397
      },
-     "outsideReal80": 0.011
+     "outsideReal80": 0.017
     },
     "ridgeHeightStd": {
      "group": "naturalness",
@@ -224,10 +224,10 @@
      },
      "generated": {
       "p10": 0,
-      "median": 0.26,
-      "p90": 0.496
+      "median": 0.253,
+      "p90": 0.498
      },
-     "outsideReal80": 0.067
+     "outsideReal80": 0.083
     },
     "basinRimThicknessCV": {
      "group": "naturalness",
@@ -237,11 +237,11 @@
       "p90": 0.475
      },
      "generated": {
-      "p10": 0.214,
-      "median": 0.363,
-      "p90": 0.484
+      "p10": 0.21,
+      "median": 0.374,
+      "p90": 0.493
      },
-     "outsideReal80": 0.27
+     "outsideReal80": 0.307
     },
     "lakeShare": {
      "group": "water",
@@ -251,11 +251,11 @@
       "p90": 0.203
      },
      "generated": {
-      "p10": 0.017,
-      "median": 0.089,
-      "p90": 0.179
+      "p10": 0.008,
+      "median": 0.096,
+      "p90": 0.183
      },
-     "outsideReal80": 0.056
+     "outsideReal80": 0.044
     },
     "lakes": {
      "group": "water",
@@ -269,7 +269,7 @@
       "median": 2,
       "p90": 4
      },
-     "outsideReal80": 0.411
+     "outsideReal80": 0.433
     },
     "fallCount": {
      "group": "water",
@@ -281,9 +281,9 @@
      "generated": {
       "p10": 3,
       "median": 7,
-      "p90": 11
+      "p90": 13
      },
-     "outsideReal80": 0.794
+     "outsideReal80": 0.767
     },
     "fallDrop": {
      "group": "water",
@@ -293,11 +293,11 @@
       "p90": 1.732
      },
      "generated": {
-      "p10": 1.116,
-      "median": 2.064,
-      "p90": 4
+      "p10": 1.15,
+      "median": 2.07,
+      "p90": 4.627
      },
-     "outsideReal80": 0.756
+     "outsideReal80": 0.788
     },
     "fallSpacing": {
      "group": "water",
@@ -307,11 +307,11 @@
       "p90": 73.082
      },
      "generated": {
-      "p10": 4.031,
-      "median": 9.618,
-      "p90": 20.881
+      "p10": 3.64,
+      "median": 10.101,
+      "p90": 25.773
      },
-     "outsideReal80": 0.017
+     "outsideReal80": 0.028
     },
     "damSites": {
      "group": "water",
@@ -322,10 +322,10 @@
      },
      "generated": {
       "p10": 4.27,
-      "median": 10.99,
-      "p90": 19.53
+      "median": 12.21,
+      "p90": 20.14
      },
-     "outsideReal80": 0.339
+     "outsideReal80": 0.4
     },
     "reservoirVolume": {
      "group": "water",
@@ -335,11 +335,11 @@
       "p90": 4478
      },
      "generated": {
-      "p10": 756,
-      "median": 2484,
-      "p90": 6395
+      "p10": 866,
+      "median": 2558,
+      "p90": 6401
      },
-     "outsideReal80": 0.233
+     "outsideReal80": 0.239
     },
     "reservoirEfficiency": {
      "group": "water",
@@ -349,11 +349,11 @@
       "p90": 762.7
      },
      "generated": {
-      "p10": 141,
-      "median": 722.7,
-      "p90": 3909
+      "p10": 118.3,
+      "median": 737.5,
+      "p90": 3621
      },
-     "outsideReal80": 0.483
+     "outsideReal80": 0.5
     },
     "damLength": {
      "group": "water",
@@ -367,18 +367,18 @@
       "median": 5,
       "p90": 9
      },
-     "outsideReal80": 0.039
+     "outsideReal80": 0.034
     }
    },
    "groups": {
-    "network": 0.669,
-    "water": 1.599,
-    "relief": 0.518,
+    "network": 0.668,
+    "water": 1.668,
+    "relief": 0.522,
     "naturalness": 0.848
    },
    "histograms": {
-    "heightHistogram": 0.243,
-    "slopeHistogram": 0.057
+    "heightHistogram": 0.233,
+    "slopeHistogram": 0.058
    }
   },
   "proto": {

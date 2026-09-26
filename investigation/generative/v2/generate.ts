@@ -488,8 +488,10 @@ function attemptOnce(theme: ThemeId, seed: number, size: number, difficulty: Dif
   if (walls.length) info.stage = "dam wall";
   const droughtFail = policy === "require" && info.startDrought === false;
   if (droughtFail && info.stage === "planned") info.stage = "start.drought_water";
-  // heights above 16: only behind the probe lock (the measure runs), where the one check that
-  // changes is terrain.max_height's limit (22 for Verticality 70+)
+  // heights above 16: only behind the probe lock. Two things change there: terrain.max_height's
+  // limit (22 for Verticality 70+), read here; and the build's cap at 16 (features/raster/terrain.ts),
+  // which the prototype cannot lift (no src/ change), so unlocked maps are measured before the build
+  // (unlocked.ts)
   const reportPassed = v.report.passed || (g.unlocked && v.report.checks.every((c) => !blocks("generate", c) || c.id === "terrain.max_height"));
   const passed = reportPassed && storage.ok && !walls.length && !droughtFail && (g.unlocked || maxOf(built.heights) <= EDITOR_TOP);
   if (info.stage === "planned") info.stage = "built";
@@ -697,6 +699,7 @@ export function finalCtx(b: BuildResult, hy: Pick<Hydro, "rivers">): FinalCtx {
     objects: objs,
     falls: fallsOf(b.heights, b.water, W, H, 1.5),
     joins,
+    rivers: hy.rivers.map((r) => r.params.path.map((p) => [p[0], p[1]] as [number, number])),
   };
 }
 

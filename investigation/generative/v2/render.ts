@@ -4,8 +4,7 @@
 // it headed, so WebGL runs on the GPU (tools/capture-look.ts does the same). Each map is opened
 // through the editor's file input, from its .timber file as a player would.
 //
-// The clean look (branch look/clean) is not merged yet: these use dev's look, and the orchestrator
-// re-renders them once Kyler approves the clean look.
+// They use the released clean look (Map look, map-look-done), the app's default.
 //
 //   npx tsx investigation/generative/v2/render.ts [--only 01,02]
 

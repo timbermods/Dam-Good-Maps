@@ -53,6 +53,10 @@ export interface GenomeV2 extends Genome {
   knick: number;
   /** The chance that a big hollow no river crosses holds a spring (a spring lake). */
   lakeSprings: number;
+  /** How far the water's way wanders from the steepest descent (noise in levels; 0.9 when absent),
+   *  and the size of its wanders in tiles (14 when absent). */
+  wander?: number;
+  wanderCell?: number;
   /** Chance that an upland cut off by cliffs gets a natural ramp (talus or gully) down to the land
    *  below; the rest need stairs (rewards). */
   ramps: number;
@@ -130,8 +134,8 @@ const P: Record<ThemeId, PriorV2> = {
     partCount: { lo: 2, hi: 6 }, knollsPer128: { lo: 0, hi: 6 },
     erosion: { iterations: { lo: 14, hi: 30 }, k: { lo: 0.025, hi: 0.06 }, diffusion: { lo: 0, hi: 0.04 } },
     terrace: { step: [2, 2, 3, 3, 4], share: { lo: 0.35, hi: 0.9 } },
-    inflows: [0, 1, 1, 1, 2, 2], springs: { lo: 0, hi: 3 }, flowMul: { lo: 0.9, hi: 2 }, lakeBudget: { lo: 0.02, hi: 0.14 }, lakes: { lo: 0, hi: 2 }, lakeSprings: 0.3,
-    split: 0.3, delta: 0.03, incise: { lo: 2, hi: 5 }, floor: { lo: 2, hi: 8 }, cap: { lo: 0.1, hi: 0.5 },
+    inflows: [0, 1, 1, 1, 2, 2], springs: { lo: 0, hi: 3 }, flowMul: { lo: 0.9, hi: 2 }, lakeBudget: { lo: 0.02, hi: 0.2 }, lakes: { lo: 0, hi: 3 }, lakeSprings: 0.45,
+    split: 0.45, delta: 0.03, incise: { lo: 2, hi: 5 }, floor: { lo: 2, hi: 8 }, cap: { lo: 0.1, hi: 0.5 },
     badwater: [0.25, 0.5, 0.25], thorns: 0.2, recipes: { "mesa-field": 0.1, "great-scarp": 0.08 },
   },
   highlands: {
