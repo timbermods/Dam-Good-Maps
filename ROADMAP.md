@@ -863,7 +863,7 @@ they conflict):
   place, see the result; [ and ] for size, scroll for strength, in every tool); things just work
   (painting never waits on water and keeps full frame rate on 256²); landforms come from the
   brushes, never from buttons (D182).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove. A small row beneath
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Carve | Remove. A small row beneath
    shows only the picked tool's options. The size ring is drawn on the land; strength shows only
    while scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
    lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
@@ -883,8 +883,10 @@ they conflict):
      they meet, and branches form wherever the land is cut from water.
    - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
      follow, drought and badtide (the game's badtide rules, from `investigation/cycles`); moisture
-     spreading as the land greens; optional sounds of our own; "Let the water carve", forming
-     valleys (D181). Local first, then the rest of the map in the background; the final water is
+     spreading as the land greens; optional sounds of our own.
+   - **Carve** (D194): a force of nature with its own button next to Source: Unleash and Aim
+     modes, Defy gravity, a Power slider from creek to catastrophe; it forms gorges and valleys
+     (D181). Built from `investigation/carve` (PR #47) once Kyler says it's ready. Local first, then the rest of the map in the background; the final water is
      always the game's settled result.
 3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
    start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
