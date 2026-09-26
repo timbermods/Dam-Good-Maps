@@ -51,7 +51,9 @@ export class Fault {
     // Resample by arc length. Coherent seed noise has a wavelength, never per-tile static.
     const raw:Segment[]=[];let length=0;
     for(let k=1;k<intent.path.length;k++){const a=intent.path[k-1],b=intent.path[k],l=Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);if(l<.01)continue;raw.push({a,b,dx:(b.x-a.x)/l,dy:(b.y-a.y)/l,length:l,along:length});length+=l;}
-    if(length<3)throw Error('Draw a longer fault');
+    // A tap or sub-tile stroke is a small tear too. The old three-tile guard
+    // threw inside pointermove and silently stranded ordinary short drags.
+    if(length<.001){const a=intent.path[0],b={x:a.x+(a.x>.25?-.25:.25),y:a.y};raw.push({a,b,dx:b.x>a.x?1:-1,dy:0,length:.25,along:0});length=.25;}
     const wavelength=7+hash(settings.seed,9)*14,rough=.35+hash(settings.seed,11)*1.3;
     for(let d=0;d<length+4;d+=4){const t=Math.min(d,length),r=raw.find(s=>t<=s.along+s.length)??raw[raw.length-1],f=t-r.along;
       const n=t/wavelength,k=Math.floor(n),a=hash(settings.seed,k+100)*2-1,b=hash(settings.seed,k+101)*2-1;
@@ -85,14 +87,22 @@ export class Fault {
   }
 }
 /** Shared by the cursor and worker: the quiet refusal includes room for seeded bends. */
+export function strokeReason(points:Point[],keep:Uint8Array,W:number):string|null{
+  for(let i=0;i<keep.length;i++)if(keep[i]){
+    const x=i%W,y=Math.floor(i/W);
+    for(let k=0;k<Math.max(1,points.length-1);k++){
+      const a=points[k],b=points[k+1]??a;if(!a)continue;
+      const dx=b.x-a.x,dy=b.y-a.y,t=clamp(((x-a.x)*dx+(y-a.y)*dy)/(dx*dx+dy*dy||1),0,1);
+      if((x-a.x-t*dx)**2+(y-a.y-t*dy)**2<3.5**2)return 'Start here';
+    }
+  }return null;
+}
 export function faultReason(m:QuakeMap,intent:Intent):string|null{
-  if(intent.path.length<2)return null;
-  const f=new Fault({...DEFAULTS,seed:0},intent),keep=protectedGround(m);
-  for(let i=0;i<keep.length;i++)if(keep[i]){const p=f.at(i%m.W,Math.floor(i/m.W));if(Math.abs(p.d)<3.5&&p.end<3.5)return 'Start here';}return null;
+  return strokeReason(intent.path,protectedGround(m),m.W);
 }
 export class QuakePlan {
   readonly map:QuakeMap;readonly fault:Fault;readonly arrival:Float32Array;readonly dx:Int16Array;readonly dy:Int16Array;
-  readonly stats={changed:0,raised:0,dropped:0,moved:0,toppled:0};private row=0;private done=false;
+  readonly stats={changed:0,raised:0,dropped:0,moved:0,toppled:0,channel:0};private row=0;private done=false;
   constructor(readonly before:QuakeMap,readonly settings:Settings,readonly intent:Intent){
     validateSettings(settings,before,intent);this.fault=new Fault(settings,intent);const reason=faultReason(before,intent);if(reason)throw Error(reason);
     this.map=snapshot(before);this.arrival=new Float32Array(before.W*before.H);this.dx=new Int16Array(this.arrival.length);this.dy=new Int16Array(this.arrival.length);
@@ -108,8 +118,49 @@ export class QuakePlan {
       const src=clamp(Math.round(sy),0,H-1)*W+clamp(Math.round(sx),0,W-1);
       this.map.heights[i]=clamp(this.before.heights[src]+f.dz,0,Math.min(22,this.map.maxHeight));
     }
-    this.row=end;if(end<H)return false;this.moveObjects();
+    this.row=end;if(end<H)return false;
+    if(this.settings.mode==='slide')this.connectRivers();
+    this.ensureTear();this.moveObjects();
     this.map.heights.forEach((h,i)=>{const d=h-this.before.heights[i];if(d)this.stats.changed++;this.stats.raised+=Math.max(0,d);this.stats.dropped+=Math.max(0,-d);});this.done=true;return true;
+  }
+  private connectRivers(){
+    const {W,H}=this.map,band=this.settings.scarp==='stepped'?10:2.5;
+    // Find wet crossings in the ORIGINAL river. Join its two transported mouths
+    // with a dog-leg along the fault; merely advecting water leaves a bank dam.
+    // Sweep the whole wet cross-section, preserving its bed and source strength.
+    for(let i=0;i<W*H;i++)if(this.before.water.depth[i]>.04){
+      const x=i%W,y=Math.floor(i/W),f=this.fault.at(x,y);
+      if(Math.abs(f.d)>1.25||f.end>1)continue;
+      const nx=-f.dy,ny=f.dx,d=f.d*this.intent.side,c={x:x-nx*d,y:y-ny*d};
+      const a={x:c.x+nx*band,y:c.y+ny*band},b={x:c.x-nx*band,y:c.y-ny*band};
+      const da=this.fault.movement(a.x,a.y),db=this.fault.movement(b.x,b.y);
+      const path=[{x:a.x+da.dx,y:a.y+da.dy},{x:c.x+da.dx,y:c.y+da.dy},
+        {x:c.x+db.dx,y:c.y+db.dy},{x:b.x+db.dx,y:b.y+db.dy}];
+      const bed=this.before.heights[i];
+      for(let k=1;k<path.length;k++){
+        const a=path[k-1],b=path[k],n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)*2));
+        for(let t=0;t<=n;t++){
+          const px=a.x+(b.x-a.x)*t/n,py=a.y+(b.y-a.y)*t/n;
+          for(let yy=Math.floor(py-1);yy<=Math.ceil(py+1);yy++)for(let xx=Math.floor(px-1);xx<=Math.ceil(px+1);xx++){
+            if(xx<0||yy<0||xx>=W||yy>=H||(xx-px)**2+(yy-py)**2>1.4)continue;
+            const j=yy*W+xx;if(this.map.heights[j]>bed){this.map.heights[j]=bed;this.stats.channel++;}
+            // The connector opens with its crossing, not a later dry front.
+            this.arrival[j]=Math.min(this.arrival[j],this.arrival[i]);
+          }
+        }
+      }
+    }
+  }
+  private ensureTear(){
+    if(this.map.heights.some((h,i)=>h!==this.before.heights[i]))return;
+    // Sliding a featureless plain (or lifting already capped ground) must still
+    // leave a visible tear. This small whole-level scarp never changes a start.
+    const keep=protectedGround(this.before),cap=Math.min(22,this.map.maxHeight);
+    for(const p of this.fault.points)for(let yy=-2;yy<=2;yy++)for(let xx=-2;xx<=2;xx++){
+      const x=clamp(Math.round(p.x)+xx,0,this.map.W-1),y=clamp(Math.round(p.y)+yy,0,this.map.H-1),i=y*this.map.W+x;
+      if(keep[i])continue;const f=this.fault.at(x,y),h=this.before.heights[i];
+      this.map.heights[i]=h===0?1:h===cap?h-1:clamp(h+(f.d>=0?1:-1),0,cap);
+    }
   }
   private moveObjects(){
     const {W,H}=this.map,occupied=new Uint8Array(W*H),all=[...this.map.entities].sort((a,b)=>Number(b.template==='StartingLocation')-Number(a.template==='StartingLocation'));
