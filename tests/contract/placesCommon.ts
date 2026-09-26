@@ -24,35 +24,21 @@ export function placeData(entry: PlaceIndexEntry): PlaceData {
 /** Checks that fail and count: not advisory, applicable, not approximate. */
 export const failing = (checks: readonly CheckResult[]) => checks.filter((c) => !c.ok && !c.advisory && c.applicable !== false && !c.approximate).map((c) => `${c.id}: ${c.message}`);
 
-/** No edge walls (Kyler, 2026-09-25, D151): every place as converted for real-places-done stands in
- *  a full-height wall round the whole map, which `terrain.edge_wall` flags, a principle that blocks
- *  the export profile the places are built in. placeTimber refuses only what would not load, so the
- *  gallery keeps serving them until Real places 2 converts them without it and turns this to
- *  false. */
-export const PLACES_HAVE_EDGE_WALLS = true;
+/** No edge walls (Kyler, 2026-09-25, D151): every place as converted for real-places-done stood in
+ *  a full-height wall round the whole map, which `terrain.edge_wall` flags. Real places 2 converts
+ *  them without it (tools/places-convert.ts): none has one, so every place passes the check. The
+ *  flag stays so a conversion that brings a wall back fails here by name. */
+export const PLACES_HAVE_EDGE_WALLS = false;
 
-/** Water sources start rivers (D171): the places whose conversion puts a source inside a flow
- *  another source already feeds (`water.source_in_flow`, a design check: it warns in the export
- *  profile). Real places 2 places sources only at heads and empties this list. */
-export const PLACES_SOURCES_IN_FLOW = new Set([
-  "aialik-bay", "altiplano", "atacama-fan", "aysen-fjord", "badlands-national-park", "bandiagara",
-  "blue-mountains", "blyde-river-canyon", "bungle-bungle", "capitol-reef", "chocolate-hills",
-  "cliffs-of-moher", "colca-canyon", "copper-canyon", "death-valley", "drakensberg-amphitheatre",
-  "ennedi-plateau", "ethiopian-highlands", "geirangerfjord", "glencoe", "godavari-delta",
-  "goosenecks-of-the-san-juan", "gullfoss", "ilulissat-icefjord", "kunlun-alluvial-fan",
-  "lake-saimaa", "lake-toba", "lena-delta", "mahabaleshwar-western-ghats", "majuli-brahmaputra",
-  "mamore-river", "mississippi-oxbows", "monument-valley", "mount-mayon", "na-pali-coast",
-  "ngorongoro", "niagara-falls", "painted-desert", "phong-nha", "plitvice-lakes",
-  "rhine-and-moselle", "roaring-river-fan", "sete-cidades", "skeidara-outwash", "tara-gorge",
-  "tiger-leaping-gorge", "todgha-gorge", "toklat-river", "torres-del-paine", "tsingy-de-bemaraha",
-  "twelve-apostles", "victoria-falls", "waimakariri-river", "yosemite-valley",
-]);
+/** Water sources start rivers (D171): the places whose conversion put a source inside a flow
+ *  another source already feeds (`water.source_in_flow`). Real places 2 places sources only where
+ *  water begins and takes out any the check flags, so the list is empty. */
+export const PLACES_SOURCES_IN_FLOW: ReadonlySet<string> = new Set<string>();
 
-/** A mine site on every map (Kyler, 2026-09-25): the places as converted for real-places-done have
- *  none, which `resources.mine_site` flags (a playability check: it warns in the export profile the
- *  places are built in, so the gallery keeps working). Real places 2 places them with the resource
- *  baseline (src/core/resources/plan.ts) and turns this to false. */
-export const PLACES_LACK_MINE_SITES = true;
+/** A mine site on every map (Kyler, 2026-09-25): the places as converted for real-places-done had
+ *  none. Real places 2 plans their resources and mine sites with the shared baseline
+ *  (src/core/resources/plan.ts, when each map is built), so every place has one. */
+export const PLACES_LACK_MINE_SITES = false;
 
 /** The failing checks of a place, its known faults apart (the conversion's edge wall and sources in
  *  flow, and the missing mine site), and which of them fail. */

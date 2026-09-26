@@ -46,8 +46,8 @@ cannot (the region boxes in `attribution.ts` err wide).
 
 | Provider | Carried text | Maps now |
 |---|---|---|
-| Kartverket | Norway terrain data (c) Kartverket | Geirangerfjord, Lofoten |
-| LINZ | New Zealand terrain data Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government (All rights reserved), licensed under CC BY 3.0 NZ, https://creativecommons.org/licenses/by/3.0/nz/ | Waimakariri River, Milford Sound, Hooker Valley, Mount Taranaki |
+| Kartverket | Norway terrain data (c) Kartverket | Geirangerfjord, Geirangerfjord East, Lofoten |
+| LINZ | New Zealand terrain data Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government (All rights reserved), licensed under CC BY 3.0 NZ, https://creativecommons.org/licenses/by/3.0/nz/ | Waimakariri River, Waimakariri River Southwest, Milford Sound, Hooker Valley, Hooker Valley East, Mount Taranaki, Mount Taranaki North, Kawarau and Shotover |
 
 The descriptions are plain ASCII: whether the game shows other characters is checked in a future
 probe batch, asked for first (D117). Until then Kartverket's line has "(c)" where its terms ask for

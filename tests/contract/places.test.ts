@@ -1,8 +1,10 @@
-// Real places (ROADMAP "Real places", PLAN §20 D136): the gallery's data, its titles, the credits and
-// the in-game description, a sample of every size built, validated and compared byte for byte with
-// the index (every place: places-build-*.test.ts, nightly and in the release check), both
-// validators on the sample, the editor's import of a place, and the rule that real places never
-// feed the generator and are never built in the browser.
+// Real places (ROADMAP "Real places", PLAN §20 D136, D151, D152, D155, D171, D174): the gallery's
+// data and its choice (tools/places/selection.json), the land without edge walls, its titles, the
+// credits and the in-game description, a sample of every size built, validated and compared byte
+// for byte with the index (every place: places-build-*.test.ts, nightly and in the release check),
+// its resources from the shared baseline, both validators on the sample, the editor's import of a
+// place, and the rule that real places never feed the generator and are never built in the
+// browser.
 
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -12,10 +14,18 @@ import { describe, expect, it } from "vitest";
 import { MapSession } from "../../src/core/doc/session";
 import { readTimber } from "../../src/core/format/timber";
 import { CREDITS_URL, fileNotices, PROVIDERS } from "../../src/core/places/attribution";
-import { placeDescription, placeSample, placeTimber } from "../../src/core/places/place";
+import { decodeHeights, placeDescription, placeSample, placeTimber } from "../../src/core/places/place";
 import { validateMap } from "../../src/core/validate/checks";
 import type { CheckResult } from "../../src/core/validate/report";
 import { checkPlaces, INDEX, PLACES_DIR, PLACES_HAVE_EDGE_WALLS, PLACES_LACK_MINE_SITES, PLACES_SOURCES_IN_FLOW, placeData, sha256 } from "./placesCommon";
+import { EDGE_SHARE, edgeWalls } from "../../src/core/analysis/edges";
+import { title as titleOf } from "../../tools/places/titles";
+
+/** The choice tools/places-convert.ts made. */
+const SELECTION = JSON.parse(readFileSync("tools/places/selection.json", "utf8")) as {
+  places: { id: string; name: string; row: string; status: "kept" | "replaced" | "added"; was?: string }[];
+  dropped: { name: string; row: string; reason: string }[];
+};
 
 /** A WebP's width and height (its VP8, VP8L or VP8X header), or null. */
 function webpSize(b: Uint8Array): [number, number] | null {
@@ -37,7 +47,9 @@ describe("the gallery's data", () => {
   it("holds the survey's real places: no random-land controls, one entry and three files each", () => {
     expect(INDEX.format).toBe(1);
     expect(INDEX.count).toBe(INDEX.places.length);
-    expect(INDEX.count).toBe(85);
+    // the second round's gallery (Kyler, 2026-09-25, D174): about 150 places
+    expect(INDEX.count).toBe(SELECTION.places.length);
+    expect(INDEX.count).toBeGreaterThanOrEqual(130);
     expect(INDEX.places.filter((p) => p.family === "random" || /random/i.test(p.name))).toEqual([]);
     expect(new Set(INDEX.places.map((p) => p.id)).size).toBe(INDEX.count);
     expect(new Set(INDEX.places.map((p) => p.name)).size).toBe(INDEX.count);
@@ -81,7 +93,10 @@ describe("the gallery's data", () => {
     const data = INDEX.places.reduce((s, p) => s + size(p.data), 0);
     const cards = INDEX.places.reduce((s, p) => s + size(p.image), 0);
     console.log(`real places: index ${size("index.json")} B, data ${data} B (largest ${Math.max(...INDEX.places.map((p) => size(p.data)))} B), cards ${cards} B`);
-    expect(size("index.json")).toBeLessThan(64_000);
+    // the index grows with the gallery (85 places were under 64 KB, 753 B a place; Kyler's 150,
+    // D174): the same budget a place, and what the page downloads, gzipped, stays small
+    expect(size("index.json") / INDEX.count).toBeLessThan(64_000 / 85);
+    expect(gzipSync(new Uint8Array(readFileSync(join(PLACES_DIR, "index.json"))), { level: 6 }).length).toBeLessThan(32_000);
     expect(Math.max(...INDEX.places.map((p) => size(p.data)))).toBeLessThan(64_000);
     // the pictures load lazily, as the cards come into view
     // (the cards' pictures are the shared components in src/ui/Pictures.tsx)
@@ -89,6 +104,43 @@ describe("the gallery's data", () => {
     const imgs = readFileSync("src/ui/Pictures.tsx", "utf8").match(/<img [^>]*>/g) ?? [];
     expect(imgs.length).toBe(1);
     for (const img of imgs) expect(img).toContain('loading="lazy"');
+  });
+});
+
+describe("the choice (tools/places/selection.json, tools/places-convert.ts)", () => {
+  it("keeps the first round's places or says why not, and adds the rest across the families", () => {
+    // the gallery's order is the selection's
+    expect(INDEX.places.map((p) => p.id)).toEqual(SELECTION.places.map((p) => p.id));
+    expect(INDEX.places.map((p) => placeData(p).survey)).toEqual(SELECTION.places.map((p) => p.row));
+    // the first round's 85: each kept (from its own survey row), made from another row of its
+    // region (its title kept), or dropped with the reason
+    const first = SELECTION.places.filter((p) => p.status !== "added");
+    expect(first.length + SELECTION.dropped.length).toBe(85);
+    for (const d of SELECTION.dropped) expect(d.reason.length, d.name).toBeGreaterThan(10);
+    for (const p of SELECTION.places.filter((q) => q.status === "replaced")) expect(p.was, p.id).toMatch(/^n\d{3}-/);
+    // spread across the families: none far behind the rest
+    const perFamily = INDEX.families.map((f) => INDEX.places.filter((p) => p.family === f.id).length);
+    expect(INDEX.families.length).toBe(20);
+    expect(Math.min(...perFamily)).toBeGreaterThanOrEqual(Math.max(...perFamily) - 3);
+    // never a random-land control, never the Las Medulas region (a Roman mine)
+    for (const p of SELECTION.places) expect(p.row, p.id).toMatch(/^n\d{3}-(96|128|256)-(30|60|120)-(normalised|compressed|linear)-16$/);
+  });
+
+  it("the land as it is: no edge walls or rims (D151, D152)", () => {
+    for (const entry of INDEX.places) {
+      const p = placeData(entry);
+      const walls = edgeWalls(decodeHeights(p.heights), p.W, p.H);
+      // the check's rule: no edge 60% walled; the first round's walls had 89-99%
+      expect(Math.max(...walls.map((w) => w.share)), entry.id).toBeLessThan(EDGE_SHARE);
+      // the place's own objects are its sources and its start: resources come when it is built
+      expect(Object.keys(p).sort(), entry.id).toEqual(expect.arrayContaining(["format", "heights", "sources", "start", "survey"]));
+      expect(p.sources.length, entry.id).toBeGreaterThan(0);
+      for (const [x, y, strength] of p.sources) {
+        expect(x >= 0 && y >= 0 && x < p.W && y < p.H, entry.id).toBe(true);
+        expect(strength, entry.id).toBeGreaterThan(0);
+        expect(strength, entry.id).toBeLessThanOrEqual(8);
+      }
+    }
   });
 });
 
@@ -104,21 +156,26 @@ describe("titles (Kyler, 2026-09-25)", () => {
       expect(m, p.surveyName).not.toBeNull();
       expect(p.sample, p.id).toBe(m![2]);
       expect(Number(m![3]), p.id).toBe(p.metres);
-      // the sentence's place: the title, with "the" or a few words where it needs them
+      // the sentence's place: the title, with "the" or a few words where it needs them; a second map
+      // of a place names its part ("Colca Canyon North"), and its sentence the place
+      const base = p.name.replace(/ (Centre|East|North|Southwest)(?=,|$)/, "");
       const place = placeData(p).place;
-      expect([p.name, `the ${p.name}`].includes(place) || place.startsWith(`${p.name.split(",")[0]}, `), `${p.id}: ${place}`).toBe(true);
+      expect([base, `the ${base}`].includes(place) || place.startsWith(`${base.split(",")[0]}, `), `${p.id}: ${place}`).toBe(true);
     }
     expect(new Set(INDEX.places.map((p) => p.name.toLowerCase())).size).toBe(INDEX.count);
     // the renames that tidy an awkward title
     const title = (survey: string) => INDEX.places.find((p) => p.surveyName.startsWith(`Near ${survey} (`) || p.surveyName.startsWith(`Near ${survey},`))?.name;
     expect(title("Grand Canyon Colorado")).toBe("Grand Canyon");
-    expect(title("Brahmaputra near Majuli")).toBe("Majuli, Brahmaputra");
     expect(title("Death Valley Badwater fan")).toBe("Death Valley");
     // Kyler's choices (2026-09-25)
     expect(title("Lower Mississippi oxbows")).toBe("Mississippi Oxbows");
     expect(title("Taklimakan Kunlun fan")).toBe("Kunlun Alluvial Fan");
     expect(title("Dinaric karst Plitvice")).toBe("Plitvice Lakes");
     expect(title("Yosemite Valley")).toBe("Yosemite Valley");
+    // the words, as tools/places-convert.ts makes them: a place's second map names its part
+    expect(titleOf("Near Brahmaputra near Majuli (east sample), 30 m per tile")).toEqual({ name: "Majuli, Brahmaputra", place: "Majuli, on the Brahmaputra", sample: "east" });
+    expect(titleOf("Near Colca Canyon, 30 m per tile", true)).toEqual({ name: "Colca Canyon Centre", place: "the Colca Canyon" });
+    expect(titleOf("Near Western Ghats Mahabaleshwar (east sample), 30 m per tile", true).name).toBe("Mahabaleshwar East, Western Ghats");
     expect(INDEX.places.filter((p) => p.sample).length).toBeGreaterThan(40);
   });
 });
@@ -146,8 +203,8 @@ describe("credits and the in-game description (docs/real-places-credits.md)", ()
     const text = (start: string) => PROVIDERS.find((p) => p.notice.startsWith(start))!.inFile!.text;
     expect(PROVIDERS.filter((p) => p.inFile).length).toBe(2);
     expect(carried).toEqual({
-      [text("Norway")]: ["Geirangerfjord", "Lofoten"],
-      [text("New Zealand")]: ["Waimakariri River", "Milford Sound", "Hooker Valley", "Mount Taranaki"],
+      [text("Norway")]: ["Geirangerfjord", "Lofoten", "Geirangerfjord East"],
+      [text("New Zealand")]: ["Waimakariri River", "Milford Sound", "Hooker Valley", "Mount Taranaki", "Kawarau and Shotover", "Hooker Valley East", "Mount Taranaki North", "Waimakariri River Southwest"],
     });
     expect(text("Norway")).toContain("Kartverket");
     expect(text("New Zealand")).toContain("https://creativecommons.org/licenses/by/3.0/nz/");
@@ -190,6 +247,18 @@ describe("a sample of places", () => {
       const file = readTimber(r.bytes);
       expect(file.metadata?.MapDescription).toBe(placeDescription(placeData(e)));
       expect(sha256(r.bytes)).toBe(e.sha256);
+    }
+  });
+
+  it("carries the resources the shared baseline plans on its ground, a mine site among them", () => {
+    for (const e of SAMPLE) {
+      const r = built(e.id);
+      const templates = readTimber(r.bytes).world.entities.map((x) => String(x.Template));
+      expect(templates.filter((t) => t === "UndergroundRuins").length, e.id).toBeGreaterThanOrEqual(1);
+      expect(templates.filter((t) => t === "BlueberryBush").length, e.id).toBeGreaterThan(0);
+      expect(templates.filter((t) => /^(Pine|Birch|Oak)$/.test(t)).length, e.id).toBeGreaterThan(0);
+      expect(templates.filter((t) => t === "StartingLocation").length, e.id).toBe(1);
+      expect(templates.filter((t) => t === "WaterSource").length, e.id).toBe(placeData(e).sources.length);
     }
   });
 

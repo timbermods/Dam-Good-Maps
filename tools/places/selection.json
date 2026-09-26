@@ -1,0 +1,1901 @@
+{
+ "note": "Real places, second round (tools/places-convert.ts): the places in the gallery's order, the survey row each is made from, and the first round's places that no row gives any more. Written by the tool; `npm run places:convert -- --reselect` chooses again.",
+ "places": [
+  {
+   "id": "thousand-islands",
+   "name": "Thousand Islands",
+   "row": "n384-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "badlands-national-park",
+   "name": "Badlands National Park",
+   "row": "n181-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "toklat-river",
+   "name": "Toklat River",
+   "row": "n071-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "crater-lake",
+   "name": "Crater Lake",
+   "row": "n123-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "colca-canyon",
+   "name": "Colca Canyon",
+   "row": "n007-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "twelve-apostles",
+   "name": "Twelve Apostles",
+   "row": "n364-128-60-compressed-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-mayon",
+   "name": "Mount Mayon",
+   "row": "n159-128-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "rhine-and-moselle",
+   "name": "Rhine and Moselle",
+   "row": "n328-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "lena-delta",
+   "name": "Lena Delta",
+   "row": "n055-128-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "drakensberg-amphitheatre",
+   "name": "Drakensberg Amphitheatre",
+   "row": "n262-128-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "kaieteur-falls",
+   "name": "Kaieteur Falls",
+   "row": "n356-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "death-valley",
+   "name": "Death Valley",
+   "row": "n101-128-120-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 3,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "geirangerfjord",
+   "name": "Geirangerfjord",
+   "row": "n223-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "torres-del-paine",
+   "name": "Torres del Paine",
+   "row": "n253-128-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "tiger-leaping-gorge",
+   "name": "Tiger Leaping Gorge",
+   "row": "n031-128-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "phong-nha",
+   "name": "Phong Nha",
+   "row": "n205-128-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach"
+   ]
+  },
+  {
+   "id": "lake-district",
+   "name": "Lake District",
+   "row": "n300-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "uvac-river",
+   "name": "Uvac River",
+   "row": "n091-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-roraima",
+   "name": "Mount Roraima",
+   "row": "n175-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "ethiopian-highlands",
+   "name": "Ethiopian Highlands",
+   "row": "n293-128-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "lofoten",
+   "name": "Lofoten",
+   "row": "n388-128-60-compressed-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "drumheller",
+   "name": "Drumheller",
+   "row": "n189-96-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "tagliamento-river",
+   "name": "Tagliamento River",
+   "row": "n066-96-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "aso-caldera",
+   "name": "Aso Caldera",
+   "row": "n139-96-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "blyde-river-canyon",
+   "name": "Blyde River Canyon",
+   "row": "n014-96-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "cliffs-of-moher",
+   "name": "Cliffs of Moher",
+   "row": "n360-128-60-linear-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 4,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "paricutin",
+   "name": "Paricutin",
+   "row": "n150-96-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "alaknanda-and-bhagirathi",
+   "name": "Alaknanda and Bhagirathi",
+   "row": "n335-128-30-normalised-16",
+   "status": "replaced",
+   "was": "n332-128-60-compressed-16",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "danube-delta",
+   "name": "Danube Delta",
+   "row": "n046-96-30-normalised-16",
+   "status": "replaced",
+   "was": "n044-96-120-normalised-16",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "mahabaleshwar-western-ghats",
+   "name": "Mahabaleshwar, Western Ghats",
+   "row": "n279-96-120-compressed-16",
+   "status": "replaced",
+   "was": "n279-96-120-normalised-16",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "niagara-falls",
+   "name": "Niagara Falls",
+   "row": "n348-128-60-compressed-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": []
+  },
+  {
+   "id": "roaring-river-fan",
+   "name": "Roaring River Fan",
+   "row": "n119-96-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "aysen-fjord",
+   "name": "Aysen Fjord",
+   "row": "n232-96-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "glencoe",
+   "name": "Glencoe",
+   "row": "n250-96-60-normalised-16",
+   "status": "replaced",
+   "was": "n248-96-30-normalised-16",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "verdon-gorge",
+   "name": "Verdon Gorge",
+   "row": "n022-96-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "chocolate-hills",
+   "name": "Chocolate Hills",
+   "row": "n209-96-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "lake-saimaa",
+   "name": "Lake Saimaa",
+   "row": "n306-96-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "kinabatangan-river",
+   "name": "Kinabatangan River",
+   "row": "n095-96-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "ennedi-plateau",
+   "name": "Ennedi Plateau",
+   "row": "n178-96-60-linear-16",
+   "status": "replaced",
+   "was": "n178-96-60-normalised-16",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "deccan-plateau",
+   "name": "Deccan Plateau",
+   "row": "n290-96-120-compressed-16",
+   "status": "replaced",
+   "was": "n290-96-120-normalised-16",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "bardenas-reales",
+   "name": "Bardenas Reales",
+   "row": "n186-256-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "waimakariri-river",
+   "name": "Waimakariri River",
+   "row": "n060-256-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "lake-toba",
+   "name": "Lake Toba",
+   "row": "n135-256-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "grand-canyon",
+   "name": "Grand Canyon",
+   "row": "n003-256-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "na-pali-coast",
+   "name": "Na Pali Coast",
+   "row": "n368-128-60-compressed-16",
+   "status": "kept",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-etna",
+   "name": "Mount Etna",
+   "row": "n155-256-120-normalised-16",
+   "status": "replaced",
+   "was": "n154-256-30-normalised-16",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "godavari-delta",
+   "name": "Godavari Delta",
+   "row": "n059-256-30-normalised-16",
+   "status": "replaced",
+   "was": "n056-128-30-normalised-16",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "water.clean_exists",
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "niagara-escarpment",
+   "name": "Niagara Escarpment",
+   "row": "n272-256-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "gullfoss",
+   "name": "Gullfoss",
+   "row": "n352-128-60-normalised-16",
+   "status": "replaced",
+   "was": "n352-128-60-compressed-16",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "kunlun-alluvial-fan",
+   "name": "Kunlun Alluvial Fan",
+   "row": "n105-256-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "milford-sound",
+   "name": "Milford Sound",
+   "row": "n224-256-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach"
+   ]
+  },
+  {
+   "id": "lauterbrunnen",
+   "name": "Lauterbrunnen",
+   "row": "n246-256-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "katherine-gorge",
+   "name": "Katherine Gorge",
+   "row": "n033-256-120-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "plitvice-lakes",
+   "name": "Plitvice Lakes",
+   "row": "n214-256-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mississippi-oxbows",
+   "name": "Mississippi Oxbows",
+   "row": "n098-256-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "bungle-bungle",
+   "name": "Bungle Bungle",
+   "row": "n171-256-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "tibetan-plateau",
+   "name": "Tibetan Plateau",
+   "row": "n287-256-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 0,
+    "noOutflow": 1
+   },
+   "advisories": []
+  },
+  {
+   "id": "painted-desert",
+   "name": "Painted Desert",
+   "row": "n193-128-60-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "skeidara-outwash",
+   "name": "Skeidara Outwash",
+   "row": "n076-128-120-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "ngorongoro",
+   "name": "Ngorongoro",
+   "row": "n127-256-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "fish-river-canyon",
+   "name": "Fish River Canyon",
+   "row": "n009-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-fuji",
+   "name": "Mount Fuji",
+   "row": "n141-128-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "blue-mountains",
+   "name": "Blue Mountains",
+   "row": "n268-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "victoria-falls",
+   "name": "Victoria Falls",
+   "row": "n340-128-60-linear-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "atacama-fan",
+   "name": "Atacama Fan",
+   "row": "n111-128-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "aialik-bay",
+   "name": "Aialik Bay",
+   "row": "n228-128-60-normalised-16",
+   "status": "replaced",
+   "was": "n231-128-120-normalised-16",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "hooker-valley",
+   "name": "Hooker Valley",
+   "row": "n259-128-120-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "todgha-gorge",
+   "name": "Todgha Gorge",
+   "row": "n038-128-30-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "li-river",
+   "name": "Li River",
+   "row": "n201-128-60-linear-16",
+   "status": "replaced",
+   "was": "n201-128-60-normalised-16",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 0,
+    "noOutflow": 1
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "goosenecks-of-the-san-juan",
+   "name": "Goosenecks of the San Juan",
+   "row": "n081-128-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "monument-valley",
+   "name": "Monument Valley",
+   "row": "n163-128-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "colorado-plateau",
+   "name": "Colorado Plateau",
+   "row": "n280-128-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "sete-cidades",
+   "name": "Sete Cidades",
+   "row": "n128-96-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 3,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "copper-canyon",
+   "name": "Copper Canyon",
+   "row": "n018-96-120-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "mount-taranaki",
+   "name": "Mount Taranaki",
+   "row": "n144-256-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "bandiagara",
+   "name": "Bandiagara",
+   "row": "n264-96-30-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "iguazu-falls",
+   "name": "Iguazu Falls",
+   "row": "n344-128-60-linear-16",
+   "status": "kept",
+   "flow": 4,
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "ilulissat-icefjord",
+   "name": "Ilulissat Icefjord",
+   "row": "n239-96-120-normalised-16",
+   "status": "kept",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 3,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "yosemite-valley",
+   "name": "Yosemite Valley",
+   "row": "n241-96-60-normalised-16",
+   "status": "kept",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "tara-gorge",
+   "name": "Tara Gorge",
+   "row": "n026-96-60-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": []
+  },
+  {
+   "id": "tsingy-de-bemaraha",
+   "name": "Tsingy de Bemaraha",
+   "row": "n216-96-30-linear-16",
+   "status": "replaced",
+   "was": "n216-96-30-normalised-16",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mamore-river",
+   "name": "Mamore River",
+   "row": "n084-96-30-normalised-16",
+   "status": "replaced",
+   "was": "n086-96-30-normalised-16",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "capitol-reef",
+   "name": "Capitol Reef",
+   "row": "n164-96-30-normalised-16",
+   "status": "kept",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "altiplano",
+   "name": "Altiplano",
+   "row": "n299-96-60-normalised-16",
+   "status": "replaced",
+   "was": "n297-96-30-normalised-16",
+   "flow": 8,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "raja-ampat",
+   "name": "Raja Ampat",
+   "row": "n393-128-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "kawarau-and-shotover",
+   "name": "Kawarau and Shotover",
+   "row": "n336-128-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "temagami",
+   "name": "Temagami",
+   "row": "n311-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "etretat-cliffs",
+   "name": "Etretat Cliffs",
+   "row": "n373-128-120-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "bardenas-reales-southwest",
+   "name": "Bardenas Reales Southwest",
+   "row": "n187-128-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "crater-lake-east",
+   "name": "Crater Lake East",
+   "row": "n121-128-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "blyde-river-canyon-centre",
+   "name": "Blyde River Canyon Centre",
+   "row": "n012-128-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "mount-mayon-north",
+   "name": "Mount Mayon North",
+   "row": "n158-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "blue-mountains-southwest",
+   "name": "Blue Mountains Southwest",
+   "row": "n271-128-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "victoria-falls-southwest",
+   "name": "Victoria Falls Southwest",
+   "row": "n343-128-60-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "aysen-fjord-southwest",
+   "name": "Aysen Fjord Southwest",
+   "row": "n235-128-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "glencoe-centre",
+   "name": "Glencoe Centre",
+   "row": "n248-128-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "todgha-gorge-southwest",
+   "name": "Todgha Gorge Southwest",
+   "row": "n039-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "phong-nha-southwest",
+   "name": "Phong Nha Southwest",
+   "row": "n207-128-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "kinabatangan-river-east",
+   "name": "Kinabatangan River East",
+   "row": "n093-128-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.clean_exists",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "monument-valley-east",
+   "name": "Monument Valley East",
+   "row": "n161-128-120-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "colorado-plateau-east",
+   "name": "Colorado Plateau East",
+   "row": "n281-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mississippi-delta",
+   "name": "Mississippi Delta",
+   "row": "n043-128-120-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "water.clean_exists",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "kosi-fan",
+   "name": "Kosi Fan",
+   "row": "n114-96-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.clean_exists",
+    "water.clean_reach",
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "toklat-river-north",
+   "name": "Toklat River North",
+   "row": "n070-128-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "kornati",
+   "name": "Kornati",
+   "row": "n396-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "green-and-colorado",
+   "name": "Green and Colorado",
+   "row": "n323-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "masurian-lakes",
+   "name": "Masurian Lakes",
+   "row": "n312-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "badlands-national-park-southwest",
+   "name": "Badlands National Park Southwest",
+   "row": "n183-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "tagliamento-river-centre",
+   "name": "Tagliamento River Centre",
+   "row": "n064-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.clean_exists",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "roaring-river-fan-east",
+   "name": "Roaring River Fan East",
+   "row": "n117-256-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.clean_exists",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "aso-caldera-east",
+   "name": "Aso Caldera East",
+   "row": "n137-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "colca-canyon-centre",
+   "name": "Colca Canyon Centre",
+   "row": "n004-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "paricutin-southwest",
+   "name": "Paricutin Southwest",
+   "row": "n151-256-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mahabaleshwar-east-western-ghats",
+   "name": "Mahabaleshwar East, Western Ghats",
+   "row": "n277-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "niagara-falls-north",
+   "name": "Niagara Falls North",
+   "row": "n350-256-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "geirangerfjord-east",
+   "name": "Geirangerfjord East",
+   "row": "n221-256-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "hooker-valley-east",
+   "name": "Hooker Valley East",
+   "row": "n257-256-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "tiger-leaping-gorge-north",
+   "name": "Tiger Leaping Gorge North",
+   "row": "n030-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "goosenecks-of-the-san-juan-southwest",
+   "name": "Goosenecks of the San Juan Southwest",
+   "row": "n083-256-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-roraima-east",
+   "name": "Mount Roraima East",
+   "row": "n173-256-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "ethiopian-highlands-southwest",
+   "name": "Ethiopian Highlands Southwest",
+   "row": "n295-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "cape-of-good-hope",
+   "name": "Cape of Good Hope",
+   "row": "n376-256-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "li-river-centre",
+   "name": "Li River Centre",
+   "row": "n200-256-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "lena-delta-east",
+   "name": "Lena Delta East",
+   "row": "n053-256-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "stockholm-archipelago",
+   "name": "Stockholm Archipelago",
+   "row": "n383-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "nahuel-huapi",
+   "name": "Nahuel Huapi",
+   "row": "n318-96-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "water.clean_exists",
+    "water.clean_reach",
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "cliffs-of-moher-east",
+   "name": "Cliffs of Moher East",
+   "row": "n361-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "danube-delta-southwest",
+   "name": "Danube Delta Southwest",
+   "row": "n047-96-60-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "drumheller-centre",
+   "name": "Drumheller Centre",
+   "row": "n188-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "atacama-fan-north",
+   "name": "Atacama Fan North",
+   "row": "n110-96-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "lake-toba-centre",
+   "name": "Lake Toba Centre",
+   "row": "n132-96-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 1
+   },
+   "advisories": [
+    "water.clean_exists",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "fish-river-canyon-north",
+   "name": "Fish River Canyon North",
+   "row": "n010-96-120-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "mount-taranaki-north",
+   "name": "Mount Taranaki North",
+   "row": "n146-96-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "drakensberg-amphitheatre-southwest",
+   "name": "Drakensberg Amphitheatre Southwest",
+   "row": "n263-96-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "gullfoss-southwest",
+   "name": "Gullfoss Southwest",
+   "row": "n355-96-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "ilulissat-icefjord-centre",
+   "name": "Ilulissat Icefjord Centre",
+   "row": "n236-96-120-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "sourcesDropped": {
+    "inFlow": 4,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "torres-del-paine-centre",
+   "name": "Torres del Paine Centre",
+   "row": "n252-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "tara-gorge-centre",
+   "name": "Tara Gorge Centre",
+   "row": "n024-96-60-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 2,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "plitvice-lakes-southwest",
+   "name": "Plitvice Lakes Southwest",
+   "row": "n215-96-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "uvac-river-centre",
+   "name": "Uvac River Centre",
+   "row": "n088-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "bungle-bungle-centre",
+   "name": "Bungle Bungle Centre",
+   "row": "n168-96-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "waimakariri-river-southwest",
+   "name": "Waimakariri River Southwest",
+   "row": "n063-96-120-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach"
+   ]
+  },
+  {
+   "id": "rio-negro-and-solimoes",
+   "name": "Rio Negro and Solimoes",
+   "row": "n327-96-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "water.clean_exists",
+    "water.clean_reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "deccan-plateau-southwest",
+   "name": "Deccan Plateau Southwest",
+   "row": "n291-96-60-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "sourcesDropped": {
+    "inFlow": 1,
+    "noOutflow": 0
+   },
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "thousand-islands-southwest",
+   "name": "Thousand Islands Southwest",
+   "row": "n387-128-30-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "rhine-and-moselle-north",
+   "name": "Rhine and Moselle North",
+   "row": "n330-128-30-normalised-16",
+   "status": "added",
+   "flow": 8,
+   "advisories": [
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "lake-saimaa-east",
+   "name": "Lake Saimaa East",
+   "row": "n305-128-60-normalised-16",
+   "status": "added",
+   "flow": 2,
+   "advisories": [
+    "start.reach",
+    "plants.drought",
+    "water.reservoir"
+   ]
+  },
+  {
+   "id": "twelve-apostles-east",
+   "name": "Twelve Apostles East",
+   "row": "n365-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "painted-desert-north",
+   "name": "Painted Desert North",
+   "row": "n194-128-30-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "start.reach",
+    "plants.drought"
+   ]
+  },
+  {
+   "id": "ngorongoro-north",
+   "name": "Ngorongoro North",
+   "row": "n126-128-60-normalised-16",
+   "status": "added",
+   "flow": 4,
+   "advisories": [
+    "plants.drought",
+    "water.reservoir"
+   ]
+  }
+ ],
+ "dropped": [
+  {
+   "name": "Majuli, Brahmaputra",
+   "row": "n073-128-30-compressed-16",
+   "reason": "the best of 6 starts fails resources.mine_site",
+   "tried": [
+    "n073-128-30-compressed-16",
+    "n073-128-30-normalised-16",
+    "n075-128-30-normalised-16",
+    "n072-128-30-normalised-16",
+    "n072-128-60-normalised-16",
+    "n074-128-30-normalised-16",
+    "n074-128-60-normalised-16",
+    "n075-96-30-normalised-16",
+    "n072-96-30-normalised-16",
+    "n072-256-30-normalised-16",
+    "n074-96-60-normalised-16",
+    "n074-256-30-normalised-16",
+    "n073-256-30-normalised-16",
+    "n073-96-30-normalised-16",
+    "n074-96-30-normalised-16",
+    "n075-256-30-normalised-16"
+   ]
+  }
+ ]
+}

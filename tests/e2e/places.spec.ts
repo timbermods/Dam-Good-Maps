@@ -56,7 +56,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   // each card: our render, the name, landform, size, scale and how it plays
   const first = cards.first();
   const p0 = INDEX.places[0];
-  await expect(first.getByRole("heading", { name: p0.name })).toBeVisible();
+  await expect(first.getByRole("heading", { name: p0.name, exact: true })).toBeVisible();
   await expect(first).toContainText(`${p0.familyName} · ${p0.size}×${p0.size} · ${p0.metres} m per tile`);
   await expect(first).toContainText(p0.plays);
   await expect(first.locator(`img[alt="${p0.name} seen at an angle"]`)).toHaveJSProperty("naturalWidth", 480);
@@ -73,7 +73,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await page.getByLabel("Landform").selectOption("canyon");
   await expect(cards).toHaveCount(canyons.length);
   await expect(page.getByText(`${canyons.length} of ${INDEX.count} maps`)).toBeVisible();
-  for (const p of canyons) await expect(page.getByRole("heading", { name: p.name })).toBeVisible();
+  for (const p of canyons) await expect(page.getByRole("heading", { name: p.name, exact: true })).toBeVisible();
   await page.getByRole("button", { name: "256×256" }).click();
   const big = canyons.filter((p) => p.size === 256);
   await expect(cards).toHaveCount(big.length);
@@ -89,7 +89,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
 
   // Download: a link to the place's static .timber, saved under its title, byte for byte Node's
   // and the index's
-  const link = page.getByRole("link", { name: `Download ${SMALL.name}` });
+  const link = page.getByRole("link", { name: `Download ${SMALL.name}`, exact: true });
   await expect(link).toHaveAttribute("href", `/dam-good-maps/real-places/maps/${SMALL.id}.timber`);
   await expect(link).toHaveAttribute("download", `${SMALL.name}.timber`);
   const download = page.waitForEvent("download");
@@ -111,7 +111,7 @@ test("a card's pictures: the overview, with a minimap from above that fills it o
   const p0 = INDEX.places[0];
   const card = page.getByRole("list", { name: "Maps" }).getByRole("listitem").first();
   const main = card.locator(`img[alt="${p0.name} seen at an angle"]`);
-  const mini = card.getByRole("button", { name: `Show ${p0.name} from above` });
+  const mini = card.getByRole("button", { name: `Show ${p0.name} from above`, exact: true });
   await expect(main).toHaveJSProperty("naturalWidth", 480);
   await expect(mini.locator("img")).toHaveJSProperty("naturalWidth", topSide(p0));
   const full = (await main.boundingBox())!;
@@ -208,7 +208,7 @@ test("Refine opens the place in the editor, and it exports unchanged as the same
   const errors = watchErrors(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("./real-places/");
-  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor` }).click();
+  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor`, exact: true }).click();
   await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 120_000 });
   const info = await page.evaluate(() => window.dgmEditor!.info());
   expect(info.kind).toBe("import");
@@ -240,7 +240,7 @@ test("the generator links to the gallery, and a place never replaces a saved map
   await expect(page.getByRole("heading", { level: 1, name: "Real places" })).toBeVisible();
 
   // Refine asks first; Cancel keeps the saved map
-  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor` }).click();
+  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor`, exact: true }).click();
   const ask = page.getByRole("alertdialog");
   await expect(ask).toContainText("Opening this real place replaces River Valley, which is saved in this browser.");
   await expect(ask.getByRole("button", { name: "Save project file" })).toBeVisible();
@@ -250,7 +250,7 @@ test("the generator links to the gallery, and a place never replaces a saved map
 
   // asked again and accepted: the place opens
   await page.goto("./real-places/");
-  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor` }).click();
+  await page.getByRole("link", { name: `Refine ${SMALL.name} in the editor`, exact: true }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Open the real place" }).click();
   await page.waitForFunction(() => window.dgmEditor?.info().kind === "import", null, { timeout: 120_000 });
   expect(await page.evaluate(() => window.dgmEditor!.info().name)).toBe(SMALL.name);
@@ -280,8 +280,8 @@ test.describe("on a phone", () => {
     const fjords = INDEX.places.filter((p) => p.size === 128 && p.family === "fjord");
     await expect(cards).toHaveCount(fjords.length);
     const card = cards.first();
-    await expect(card.getByRole("link", { name: `Download ${fjords[0].name}` })).toBeVisible();
-    await expect(card.getByRole("link", { name: `Refine ${fjords[0].name} in the editor` })).toBeVisible();
+    await expect(card.getByRole("link", { name: `Download ${fjords[0].name}`, exact: true })).toBeVisible();
+    await expect(card.getByRole("link", { name: `Refine ${fjords[0].name} in the editor`, exact: true })).toBeVisible();
     await page.screenshot({ path: ".scratch/places/phone-filtered.png" });
 
     // a download from the phone layout
@@ -289,7 +289,7 @@ test.describe("on a phone", () => {
     await page.getByLabel("Landform").selectOption("");
     await page.getByRole("button", { name: "96×96" }).tap();
     const download = page.waitForEvent("download");
-    await page.getByRole("link", { name: `Download ${SMALL.name}` }).tap();
+    await page.getByRole("link", { name: `Download ${SMALL.name}`, exact: true }).tap();
     expect(sha256(new Uint8Array(readFileSync(await (await download).path())))).toBe(SMALL.sha256);
     await page.screenshot({ path: ".scratch/places/phone-top.png", fullPage: false });
     expect(errors).toEqual([]);

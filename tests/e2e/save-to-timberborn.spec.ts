@@ -95,7 +95,7 @@ test.describe("Real places", () => {
     const place = placeSample(INDEX)[0];
     await page.getByRole("button", { name: `${place.size}×${place.size}` }).click();
     const first = page.getByRole("list", { name: "Maps" }).getByRole("listitem").first();
-    await expect(first.getByRole("heading", { name: place.name })).toBeVisible();
+    await expect(first.getByRole("heading", { name: place.name, exact: true })).toBeVisible();
     const timberborn = first.getByRole("button", { name: /^Save .* to Timberborn$/ });
     await expect(timberborn).toBeVisible();
 

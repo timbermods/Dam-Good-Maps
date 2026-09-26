@@ -2,35 +2,48 @@
 // survey, offered as content to download or refine. They are never generator input (the product
 // principle, D108): nothing under gen/ or features/ reads them.
 //
-// A place's data (tools/real-places.ts writes it from the survey's library) holds its heights, water
-// sources, start and planted objects. `buildPlace` turns it into a .timber with the steps and code
-// the generator's own maps go through: the objects as entities with ids hashed from the place, the
-// canonical water settle, soil moisture and contamination on it (build.ts step 10), the world with
-// its settled singletons, metadata and thumbnail (gen/pack.ts), the validator (export profile), and
+// A place's data (tools/places-convert.ts writes it from the survey's elevation patches) holds its
+// terrain, its water sources and its start: the land as it is, no edge walls or rims (D151, D152),
+// and sources only where water begins (D171). `buildPlace` turns it into a .timber with the steps
+// and code the generator's own maps go through: the sources and start as entities with ids hashed
+// from the place, the canonical water settle, soil moisture and contamination on it (build.ts step
+// 10), the resources and mine sites the shared baseline plans on that ground (resources/plan.ts,
+// D167-D170: the late, cheap stage, so a change there needs no new conversion), the world with its
+// settled singletons, metadata and thumbnail (gen/pack.ts), the validator (export profile), and
 // writeTimber. It is a pure function of the data, so the file is the same bytes in Node and in every
 // browser.
 
 import { gunzipSync, strFromU8 } from "fflate";
-import { bush, entityJson, ruin, startingLocation, tree, waterSource, type EntitySpec, type TreeSpecies } from "../format/entities";
+import { entityJson, startingLocation, waterSource, type EntitySpec } from "../format/entities";
 import { mapMetadata, writeTimber, type TimberFile } from "../format/timber";
 import { GAME_VERSION, LAYERS, settledSimulationSingletons, voxelsFromHeights } from "../format/world";
 import { entityId } from "../features/ids";
 import { TIMESTAMP } from "../gen/pack";
+import { hash32 } from "../math/hash";
+import { planMapResources, type MapResources } from "../resources/plan";
+import { startCentreOf } from "../resources/measure";
 import { thumbnailJpeg } from "../render/shade";
 import { soilContamination } from "../sim/contamination";
 import { moistureBarrier, waterModel, type MapObject } from "../sim/model";
 import { moisture } from "../sim/moisture";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
+import { DIFFICULTY_RULES, defaultSettings } from "../spec/mapspec";
 import { validateMap, type Validation } from "../validate/checks";
 import { CREDITS_URL, fileNotices } from "./attribution";
 import type { PlaceView } from "./view";
 
-export const PLACE_FORMAT = 1;
+export const PLACE_FORMAT = 2;
 
 /** One real place as the site stores it (public/real-places/data/<id>.json.gz). */
 export interface PlaceData {
-  format: 1;
+  format: 2;
+  /** The landscape survey's patch and mapping it is made from (`<location>-<size>-<metres>-<mode>-16`,
+   *  investigation/landscapes/), its own name for it, verbatim, and the part of the named place it
+   *  sampled ("southwest"), when its name says. The survey row also seeds the place's resources. */
+  survey: string;
+  surveyName: string;
+  sample?: string;
   /** A slug of the name: "grand-canyon". */
   id: string;
   /** "Grand Canyon": the map's title and its file name. */
@@ -52,17 +65,13 @@ export interface PlaceData {
   H: number;
   /** Surface height of every tile, one base-36 digit each, row-major from the south edge. */
   heights: string;
-  /** Water sources: [x, y, strength]. */
+  /** Water sources, [x, y, strength]: only where water begins (D171), a row across a river's
+   *  mouth on the map edge or a spring at a valley's head. */
   sources: [number, number, number][];
+  /** Badwater sources, [x, y, strength] (D200), when the place has them. */
+  badwater?: [number, number, number][];
   /** The start's corner tile (the StartingLocation's coordinates). */
   start: [number, number];
-  /** Tiles of each kind of object, ascending, each as the gap from the previous tile index. */
-  bushes: number[];
-  pines: number[];
-  birches: number[];
-  oaks: number[];
-  deadPines: number[];
-  ruins: number[];
 }
 
 /** One place on the gallery page (public/real-places/index.json). */
@@ -125,22 +134,6 @@ export function decodeHeights(s: string): Uint8Array {
   return out;
 }
 
-/** Ascending tile indices as gaps, and back. */
-export function encodeTiles(tiles: readonly number[]): number[] {
-  const sorted = [...tiles].sort((a, b) => a - b);
-  return sorted.map((t, k) => (k ? t - sorted[k - 1] : t));
-}
-
-export function decodeTiles(gaps: readonly number[]): number[] {
-  const out: number[] = [];
-  let t = 0;
-  for (let k = 0; k < gaps.length; k++) {
-    t = k ? t + gaps[k] : gaps[k];
-    out.push(t);
-  }
-  return out;
-}
-
 /** The .timber's file name: the game shows it as the map's name. */
 export function placeFileName(p: Pick<PlaceData, "name">): string {
   return `${p.name}.timber`;
@@ -166,24 +159,16 @@ export function placeSample(index: Pick<PlaceIndex, "places" | "sizes">): PlaceI
   return index.sizes.flatMap((s) => index.places.filter((p) => p.size === s).slice(0, s < 256 ? 2 : 1));
 }
 
-/** The place's objects as entities, in a fixed order: sources, the start, bushes, living trees,
- *  ruins, dead trees. Ids are hashed from the place, the template and the tile. */
+/** The place's own objects as entities, in a fixed order: water sources, badwater sources, the
+ *  start. Ids are hashed from the place, the template and the tile. */
 export function placeEntities(p: PlaceData, heights: Uint8Array): EntitySpec[] {
   const W = p.W;
   const owner = `real-place:${p.id}`;
   const at = (i: number, template: string) => ({ id: entityId(owner, template, i), owner, x: i % W, y: Math.floor(i / W), z: heights[i] });
   const out: EntitySpec[] = [];
   for (const [x, y, strength] of p.sources) out.push(waterSource({ ...at(y * W + x, "WaterSource"), strength }));
+  for (const [x, y, strength] of p.badwater ?? []) out.push(waterSource({ ...at(y * W + x, "BadwaterSource"), strength, bad: true }));
   out.push(startingLocation({ ...at(p.start[1] * W + p.start[0], "StartingLocation"), orientation: "Cw0" }));
-  for (const i of decodeTiles(p.bushes)) out.push(bush({ ...at(i, "BlueberryBush"), ripe: true }));
-  const trees: [TreeSpecies, number[]][] = [
-    ["Pine", p.pines],
-    ["Birch", p.birches],
-    ["Oak", p.oaks],
-  ];
-  for (const [species, gaps] of trees) for (const i of decodeTiles(gaps)) out.push(tree({ ...at(i, species), species }));
-  for (const i of decodeTiles(p.ruins)) out.push(ruin({ ...at(i, "RuinColumnH2"), height: 2, variant: "A", orientation: "Cw0" }));
-  for (const i of decodeTiles(p.deadPines)) out.push(tree({ ...at(i, "DeadPine"), species: "Pine", dead: true }));
   return out;
 }
 
@@ -196,21 +181,49 @@ export interface BuiltPlace {
   heights: Uint8Array;
   model: WaterModel;
   settle: CanonicalWater;
+  resources: MapResources;
 }
 
-/** Build the place's map: its terrain and objects, the canonical settle, soil, and the file. */
-export function buildPlace(p: PlaceData): BuiltPlace {
+/** The place's terrain, its own objects and their water model: what the settle runs on. */
+export function placeGround(p: PlaceData): { heights: Uint8Array; entities: EntitySpec[]; objects: MapObject[]; model: WaterModel } {
   if (p.format !== PLACE_FORMAT) throw new Error(`real place format ${String(p.format)} is not ${PLACE_FORMAT}`);
   const { W, H } = p;
   const heights = decodeHeights(p.heights);
   if (heights.length !== W * H) throw new Error(`${p.id}: ${heights.length} heights for ${W}×${H}`);
   const entities = placeEntities(p, heights);
   const objects = entities.map(mapObject);
-  const model = waterModel(W, H, heights, objects);
-  const settle = canonicalSettle(model);
+  return { heights, entities, objects, model: waterModel(W, H, heights, objects) };
+}
+
+/** Build the place's map: its terrain and own objects, the canonical settle (or `settled`, the
+ *  settle of the same ground and objects, when the caller has it), soil, the resources on that
+ *  ground, and the file. Resources and mine sites never move water, so the settle before them is
+ *  the settle after. */
+export function buildPlace(p: PlaceData, settled?: CanonicalWater): BuiltPlace {
+  const { W, H } = p;
+  const { heights, entities, objects, model } = placeGround(p);
+  const settle = settled ?? canonicalSettle(model);
   const barrier = moistureBarrier(W, H, objects);
   const moist = moisture(heights, settle.depth, settle.contamination, W, H, barrier);
   const soil = soilContamination(heights, settle.depth, settle.contamination, W, H, barrier);
+  // the resource baseline, as the generator would give a map of this size designed for Normal
+  // (resources/plan.ts): starting wood and berries near the start with the generator's margins
+  const rules = DIFFICULTY_RULES.normal;
+  const resources = planMapResources({
+    W,
+    H,
+    heights,
+    water: settle.depth,
+    moisture: moist,
+    soilContamination: soil,
+    entities,
+    start: startCentreOf(objects.find((o) => o.template === "StartingLocation")!),
+    settings: defaultSettings("riverValley", "normal", { x: W, y: H }).resources,
+    seed: hash32("real-place", p.survey),
+    nearStart: { wood: Math.ceil(1.35 * rules.woodWithin20), bushes: Math.max(rules.berriesTarget, Math.ceil(1.15 * rules.bushesWithin20)) },
+    ruinsClear: rules.ruinsWithin + 7,
+    owner: `real-place:${p.id}`,
+  });
   const file: TimberFile = {
     metadata: mapMetadata(W, H, placeDescription(p)),
     thumbnail: thumbnailJpeg(heights, W, H, settle.depth),
@@ -223,11 +236,11 @@ export function buildPlace(p: PlaceData): BuiltPlace {
       layers: LAYERS,
       voxels: voxelsFromHeights(heights, W, H),
       singletons: settledSimulationSingletons(W, H, { floor: heights, depth: settle.depth, contamination: settle.contamination, moisture: moist, soilContamination: soil, sat: settle.sat }),
-      entities: entities.map(entityJson),
+      entities: [...entities, ...resources.entities].map(entityJson),
     },
     extraFiles: [],
   };
-  return { file, heights, model, settle };
+  return { file, heights, model, settle, resources };
 }
 
 /** Validate a built place as the editor validates a file it exports (the export profile), on its

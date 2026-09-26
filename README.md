@@ -62,7 +62,7 @@ The editor:
 Your map is saved in the browser as you work.
 
 Real places:
-- **Real places**, at the top of the generator, lists 85 maps made from real land. Each is inspired
+- **Real places**, at the top of the generator, lists 150 maps made from real land. Each is inspired
   by the land near its namesake, at Timberborn's scale. It is not a replica.
 - Filter by **Landform** and size. **Download** gives the map's `.timber`. **Save to Timberborn**
   puts the map in the game, as above. **Refine** opens it in the editor.
@@ -124,8 +124,10 @@ npm run gen -- --seeds 1-10 --sizes 96,128,256 --out out/batch
 - `npm run test:e2e` builds the site and runs the browser tests: Chrome and Node produce the same
   bytes, the editor's tools and its generate-refine-regenerate journey, the 3D view, the Real places
   gallery on a desktop and a phone, and every local investigation map through import, 3D and export.
-- `npm run places` rebuilds the Real places data from the landscape survey's library, checking every
-  map. `npm run places -- --check` says whether the committed data matches a fresh run.
+- `npm run places:convert` converts the Real places again from the landscape survey's elevation
+  patches (download them first: `npm run sample` in `investigation/landscapes/`). `npm run places`
+  builds and checks every place from its data and writes the gallery's index; `-- --check` says
+  whether the committed index matches a fresh run.
 - `npm run places:build`, after `npm run build`, builds every real place's `.timber` into `dist/`,
   as the deploy does. `npm run dev` builds each on request instead.
 - `npm run places:thumbs` renders the gallery's pictures in Chrome, on this machine's GPU. Run it

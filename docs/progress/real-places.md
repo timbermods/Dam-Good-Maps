@@ -240,3 +240,98 @@ Tests updated to Kyler's decisions (D148), none weakened:
 Checks: `npm run typecheck`, `npm run test:quick`, `npm run test:e2e` and `npm run test:places`
 pass locally. The deploy build (`npm run build`, `npm run places:build` and the noindex step) was
 run locally, and the live check passes against it, served locally. Timberborn was never launched.
+
+## The rebuild: no walls, today's rules, 150 places (Kyler, 2026-09-26)
+
+Every place converted again from the landscape survey's elevation patches, after the start and edge
+rules (#44) and the resources (#43, generator 0.6.2) reached `dev`: no perimeter walls or rims
+(D151, D152), sources only where water begins (D171), the start requirements as they are now
+(D153, D164), and resources and mine sites from the shared baseline (D167–D170). The gallery grows
+to 150 (D174). No tall versions this round (D172).
+
+- **The conversion** (`npm run places:convert`, `tools/places-convert.ts` and `tools/places/`),
+  per survey row (a patch and a mapping to 16 levels):
+  1. The terrain: the survey's patch, cropped and quantised as the survey did, and nothing more.
+     No wall, no rim; water drains off the map wherever the land takes it.
+  2. The sources, where water begins: a row across each river's mouth where it comes into the map
+     (read from the survey's routing of the halo round the map), about 0.5 of strength a tile as the
+     generator's mouth rows have, and a spring at each channel head inside; at most 8 groups. The
+     flow is the survey's, twice the official maps' strength for the size, shared by the square
+     root of the area each drains. The water settles; any source another's water reaches
+     (`water.source_in_flow`) or whose water never leaves the map (`water.outflow`) goes, and its
+     flow goes to the rest; again until none does. 51 places lost a group this way (78 inside a
+     flow, 3 pooling).
+  3. The start: flat dry 3×3s with a dry ring and their door on their level, the best in each 8×8
+     block by moist land near, scored by the walk to water a pump reaches and the moist land within
+     20 tiles' walk; the best six are built in full and checked with every check of the generate
+     profile, and the first that passes is the start.
+  4. Real land's valley floors are wide and flat at 16 levels, so twice the official flow often
+     spreads thinner than a pump needs (0.3 deep). When no start passes, the conversion runs again
+     with 4 and then 8 times the official strength (more flow from the sources' strength, as D171
+     allows, never from sources downstream). 76 places use 2×, 49 use 4× and 25 use 8×.
+  5. A map whose water stands on more than 60% of it, however thin, fails: flat fans and braided
+     plains at 16 levels can carry a film of water over most of the map, which passes the flood
+     check (it counts water over 0.05 deep) but reads as flooded. Three such maps of the first
+     choice were replaced.
+- **The resources are the late stage**: a place's data holds only its terrain, sources and start
+  (format 2); `buildPlace` plans its trees, bushes, ruins and mine sites with `planMapResources`
+  on the settled ground each time the map is built, seeded by the survey row. A change to the
+  baseline needs no new conversion: `npm run places` rebuilds every map (41 s on 8 threads, 77 s
+  on 4).
+- **The choice**, as the first round's (`investigation/landscapes/curate.ts`), in
+  `tools/places/selection.json`:
+  - The first round's 85: 70 kept from their own row; 14 from another row of their region, their
+    title kept (Alaknanda and Bhagirathi, Danube Delta, Mahabaleshwar, Glencoe, Ennedi Plateau,
+    Deccan Plateau, Mount Etna, Godavari Delta (now 256²), Gullfoss, Aialik Bay, Li River, Tsingy de
+    Bemaraha, Mamore River, Altiplano); 1 dropped: **Majuli, Brahmaputra**. On all 16 of its region's
+    rows tried, no start passes: the braided floodplain is flat and wet, and at the flow its water
+    needs there is no flat dry ground for a mine site (`resources.mine_site`), or the water does
+    not settle.
+  - 66 added, in rounds across the families (fewest places first), preferring a region no place
+    came from yet, then a size (128², 256², 96², 128² by round), then the survey's score. A region
+    gives at most two maps, and its second must be other land (at most a quarter of the smaller map
+    inside the other's footprint). 13 come from regions the first round left out: Raja Ampat,
+    Kawarau and Shotover, Temagami, Etretat Cliffs, Mississippi Delta, Kosi Fan, Kornati, Green and
+    Colorado, Masurian Lakes, Cape of Good Hope, Stockholm Archipelago, Nahuel Huapi, Rio Negro and
+    Solimoes. The other 53 are a place's second map, titled by the part they show ("Colca Canyon
+    Centre", "Toklat River North"); the index keeps the survey's name.
+  - By family: 6 to 9 each (archipelago, confluence, delta and lakes 6; braided, coast and fan 7;
+    caldera 9; the rest 8). By size: 47 at 96², 66 at 128², 37 at 256².
+- **Every place passes** the export profile and every check of the generate profile: no edge
+  walls, no source inside a flow, a mine site, the start's water, food and wood. Advisories, as
+  information: plants.drought 137, water.reservoir 88, start.reach 76, water.clean_exists 9,
+  water.clean_reach 3, resources.trees 3, resources.scrap 1. The places tests' known-fault flags
+  are empty (`PLACES_HAVE_EDGE_WALLS` false, `PLACES_SOURCES_IN_FLOW` empty,
+  `PLACES_LACK_MINE_SITES` false).
+- **Badwater on every map (D200)**: not yet. The badwater step is being built beside this one; when
+  it lands, the places take it in `buildPlace` (after the clean settle, before the resources), and
+  `npm run places:convert` (with its `VERSION` raised, it converts the selection's rows again, about
+  5 minutes), `npm run places` and `npm run places:thumbs` bring the gallery up to it.
+- **What stays out of git** (D195): the survey's patches (`investigation/landscapes/.cache/`, 1.1
+  GB; `npm ci --ignore-scripts --cache ./npm-cache` and `npm run sample` there download them again
+  and check every tile's sha256) and every conversion (`investigation/landscapes/local/real-places-2/`,
+  528 files). Committed: the places' data (150 files, 559 KB), the index, the card pictures and the
+  selection.
+- **Time**: the first choice ran 472 conversions in 31 minutes on 8 threads; a later one, with the
+  kept conversions, about 2.5 minutes. The deploy's `npm run places:build`: 150 maps, 27.7 MB, 45 s
+  on this machine.
+- **Pictures**: every card drawn again on the GPU (`npm run places:thumbs -- --all`), the overview
+  and the map from above turned to match. The contact sheet of the whole gallery:
+  `docs/sheets/real-places.png`; locally `C:\dgm-workshop\places\sheet.html` (both pictures of
+  every place) and `C:\dgm-workshop\places\walls.html` (ten places with their wall and without).
+  Kyler says which should go.
+
+Tests updated to the rebuild (D148), none weakened:
+- `placesCommon.ts`: the known-fault flags are empty; the byte check now asks every place to pass
+  every check.
+- `tests/unit/places-view.test.ts`, `places.spec.ts`: unchanged; they read the new index.
+- `places.test.ts`: the gallery holds the selection's places (at least 130; was 85); new: the choice
+  (the gallery's order is the selection's, the first round's 85 kept, replaced or dropped with a
+  reason, families within 3 of each other, only named survey rows); the land without edge walls
+  (every edge under the check's 60%) and data that holds only sources and a start; the sample's
+  resources from the baseline (a mine site, bushes, trees). The pinned list of maps carrying a
+  file notice follows the new places; the rename checks of a place no longer in the gallery
+  (Majuli) read the titles module.
+- `save-to-timberborn.spec.ts` (from `dev`): Save to Timberborn on a card fetches the static file,
+  so it uses a card the browser tests' server builds, and checks its bytes.
+
