@@ -65,26 +65,6 @@
    ]
   },
   {
-   "id": "ruins-close",
-   "what": "a ruin field on dry ground close up, from the game's default angle",
-   "view": {
-    "mode": "orbit",
-    "yaw": -0.5235987755982988,
-    "pitch": 1.2217304763960306,
-    "distance": 26,
-    "target": [
-     75.5,
-     11,
-     -41.5
-    ]
-   },
-   "markers": false,
-   "size": [
-    980,
-    733
-   ]
-  },
-  {
    "id": "ruins-low",
    "what": "the same ruin field from a low angle (20° down)",
    "view": {
@@ -165,26 +145,6 @@
    ]
   },
   {
-   "id": "ruins-moist",
-   "what": "the five variants A–E on moist ground, close up (35° down, looking north)",
-   "view": {
-    "mode": "orbit",
-    "yaw": 0,
-    "pitch": 0.6,
-    "distance": 17,
-    "target": [
-     9.5,
-     6.5,
-     -15.5
-    ]
-   },
-   "markers": false,
-   "size": [
-    895,
-    574
-   ]
-  },
-  {
    "id": "ruins-dry",
    "what": "the five variants A–E on dry ground, close up (35° down, looking north)",
    "view": {
@@ -196,26 +156,6 @@
      27.5,
      6.5,
      -15.5
-    ]
-   },
-   "markers": false,
-   "size": [
-    895,
-    574
-   ]
-  },
-  {
-   "id": "ruins-showcase-low",
-   "what": "the whole test ground from a low angle (20° down), looking north",
-   "view": {
-    "mode": "orbit",
-    "yaw": 0,
-    "pitch": 0.35,
-    "distance": 30,
-    "target": [
-     19,
-     6,
-     -13
     ]
    },
    "markers": false,
@@ -265,6 +205,46 @@
    ]
   },
   {
+   "id": "ruins-close",
+   "what": "a ruin field on dry ground close up, from the game's default angle",
+   "view": {
+    "mode": "orbit",
+    "yaw": -0.5235987755982988,
+    "pitch": 1.2217304763960306,
+    "distance": 26,
+    "target": [
+     75.5,
+     11,
+     -41.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    980,
+    733
+   ]
+  },
+  {
+   "id": "ruins-moist",
+   "what": "the five variants A–E on moist ground, close up (35° down, looking north)",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.6,
+    "distance": 17,
+    "target": [
+     9.5,
+     6.5,
+     -15.5
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
    "id": "ruins-far",
    "what": "the same test ground from as far as a view of a whole 256² map, enlarged in whole pixels as drawn: ruins from afar on moist ground (left) and dry ground (right)",
    "view": {
@@ -276,6 +256,26 @@
      19,
      4,
      -11
+    ]
+   },
+   "markers": false,
+   "size": [
+    895,
+    574
+   ]
+  },
+  {
+   "id": "ruins-showcase-low",
+   "what": "the whole test ground from a low angle (20° down), looking north",
+   "view": {
+    "mode": "orbit",
+    "yaw": 0,
+    "pitch": 0.35,
+    "distance": 30,
+    "target": [
+     19,
+     6,
+     -13
     ]
    },
    "markers": false,

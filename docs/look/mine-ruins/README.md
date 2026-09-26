@@ -1,6 +1,7 @@
 # Mine sites and ruins: before and after (D178)
 
-Kyler's Map look round for mine sites and ruins, models of our own, after his second-round notes.
+Kyler's Map look round for mine sites and ruins, models of our own, after his second-round notes
+and his note on the ivy.
 Each view shows `dev` before the change (left or top) and the branch `look/mine-site` after it
 (right or bottom), from the same camera. Its sheet shows the after view in greyscale,
 protanopia, deuteranopia and tritanopia. Our own renders only: River Valley, seed 4242, 256², and
@@ -19,10 +20,10 @@ in [poses.json](poses.json).
 
 ## Ruins
 
-- [ruins-far.jpg](ruins-far.jpg) ([sheet](ruins-far-sheet.jpg)): ruins as far away as a whole 256² map, on moist and dry ground. Look at the rust of the scaffolding, and the ivy on the moist ones.
-- [ruins-moist.jpg](ruins-moist.jpg) ([sheet](ruins-moist-sheet.jpg)): the five variants A to E on moist ground. Look at the ivy, dark and brighter green, and each variant's bracing and panels.
+- [ruins-far.jpg](ruins-far.jpg) ([sheet](ruins-far-sheet.jpg)): ruins as far away as a whole 256² map, on moist and dry ground. Look at the rust of the scaffolding: the ivy barely shows from afar.
+- [ruins-moist.jpg](ruins-moist.jpg) ([sheet](ruins-moist-sheet.jpg)): the five variants A to E on moist ground. Look at the ivy: flat leaves clinging beside the posts, most at the foot, thinning upward, the panels showing through.
 - [ruins-dry.jpg](ruins-dry.jpg) ([sheet](ruins-dry-sheet.jpg)): the five variants on dry ground, bare.
 - [ruins-showcase.jpg](ruins-showcase.jpg) ([sheet](ruins-showcase-sheet.jpg)): both halves, each with a field of neighbouring columns. Do any two neighbours look alike?
-- [ruins-showcase-low.jpg](ruins-showcase-low.jpg) ([sheet](ruins-showcase-low-sheet.jpg)): the same from a low angle.
-- [ruins-close.jpg](ruins-close.jpg) ([sheet](ruins-close-sheet.jpg)): the map's biggest ruin field from the default angle.
+- [ruins-showcase-low.jpg](ruins-showcase-low.jpg) ([sheet](ruins-showcase-low-sheet.jpg)): the same from a low angle. Look at the ivy on the moist field, left.
+- [ruins-close.jpg](ruins-close.jpg) ([sheet](ruins-close-sheet.jpg)): the map's biggest ruin field from the default angle (on dry ground, so no ivy).
 - [ruins-low.jpg](ruins-low.jpg) ([sheet](ruins-low-sheet.jpg)): the same field from a low angle.

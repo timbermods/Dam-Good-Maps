@@ -365,3 +365,16 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   - Tests follow the round: the cutout is the whole footprint, the outline runs just outside it,
     the far blocks are mostly rust, ivy is on every storey (the ivy test is renamed "…on every
     storey, dark and brighter, close up and from afar"), and the bytes are unchanged.
+- **Kyler's note on the ivy (2026-09-25).** The mine site and the ruins from afar approved; the
+  second round's ivy was too heavy and chunky (dark green cubes filling every storey and hiding
+  the panels). Now it drapes as the game's does, on moist columns only:
+  - on about half the storeys, from the foot up, chosen from the tile: the foot storey the most,
+    the ones above a little (`ruinIvy`);
+  - flat leaf clusters clinging to the faces beside the posts and along the foot, fewer higher up,
+    a few thin strands hanging from the beams with a leaf at the tip; no clumps;
+  - mostly #405634, a few leaves the brighter #5C803D;
+  - the middle of every face stays clear, so the panels show through (tested);
+  - from afar, a small patch low on a column's foot only: the rust still dominates.
+  - At most 250 triangles close up, 20 from afar.
+  - The ivy test is now "drape ivy over about half the storeys of a column on moist ground, the
+    most at its foot, as flat leaves that leave the panels showing".
