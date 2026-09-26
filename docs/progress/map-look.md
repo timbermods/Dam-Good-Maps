@@ -304,3 +304,38 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
   contamination (it was the rust).
 
 Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the live check now runs inside the deploy workflow; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged: no map file changes).
+
+### Badwater blends into clean water (2026-09-25, branch `look/badwater-blend`)
+
+- Kyler (D177): mixed water showed dark red blotches that read like stains; in the game badwater
+  blends smoothly into clean water. Each water tile is now coloured by its badwater share, blended
+  over the connected water up to 3 tiles away (`waterMesh.ts` `blendedBadwater`: a binomial kernel
+  along rows, then columns, never across dry ground or a fall) and shared at the tops' corners, so
+  a front is a gradient over about six tiles. The colour slides from clean water's to badwater's by
+  `badwaterShare` (`palette.ts`, the share to the power 0.75, also as GLSL for any other water
+  shader), with no streaks. Clean water draws the same pixels as before.
+- Badwater is the game's murky red-brown: pure badwater a quarter level deep, the usual depth on our
+  maps, lands on #4B3C38 on screen (the game's #4B3C37, measured by Kyler). Deeper it darkens, so it
+  stays at least 6 L* below clean water of the same depth (the clean-look rule; its test is
+  unchanged). Up close it is duller than clean water (no crests, a fifth of the glints), and its
+  glowing bubbles grow denser with the share. The legend's mixed-water swatch shows the gradient.
+- Captures, the colour table and how it was measured: [look/badwater-blend](../look/badwater-blend/README.md)
+  (`tools/capture-badwater.ts`, and `--measure`). Waiting on Kyler: how dark deep badwater gets (A as
+  built, or B, nearer #4B3C37 when deep).
+- Speed (information): the blend costs about 1 ms per water update at 256²; meshing all of a 256²
+  map's water takes 5–6 ms, as before; only the chunks whose blended water changed are remeshed.
+- **Tests updated to Kyler's decision (D148):**
+  - `tests/unit/look-water-slopes.test.ts`: "shows each tile's own badwater share on its top" (D115's
+    rule, which D177 replaces) is now "blends the badwater share between tiles on the tops, so water
+    partly bad turns smoothly (D177)".
+  - `tests/unit/look-readable.test.ts`: badwater is now the game's measured colour, lighter than the
+    red-black before, so its margins in luminance changed; the order is unchanged. In "keep their
+    order: dead trees, moist, dry ground, badwater", dry ground must be 0.15 lighter than badwater
+    (was 0.24; 0.156 today) and clean shallows 0.3 lighter (was 0.4; 0.308 today). In the
+    contamination test, contaminated ground from afar must be 0.05 lighter than badwater (was 0.09;
+    0.059 today, about 7 L*).
+- New tests: `tests/unit/look-badwater.test.ts` (8): the gradient across a straight and a diagonal
+  front and a narrow tongue of badwater (no step above 0.3 between neighbouring corners, at least 4
+  tiles of ramp), clean water unchanged, a pure pool stays pure, no blending across dry ground or a
+  fall, remeshing every chunk the blend reaches, the measured colour, the share's curve, and the
+  shader (no streaks).
