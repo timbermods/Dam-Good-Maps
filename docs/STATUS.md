@@ -153,6 +153,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Running
 
+- **M9a**, the generator from design version 2 (D209: "Any" as the default, no ruler-straight rivers,
+  every rule since version 2), on branch `feature/m9a`; first on the machine (D210).
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
 - **Badwater on every map** (D200), on branch `feature/badwater-source`.
