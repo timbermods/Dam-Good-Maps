@@ -105,6 +105,8 @@ Several round-1 details above are replaced here: the titles, the description, **
   link. Two need their notice in the file itself, and only for maps in their region: Kartverket
   (its name wherever its data is used: Geirangerfjord and Lofoten) and LINZ (CC BY 3.0 NZ asks
   for the licence on every copy: Waimakariri River, Milford Sound, Hooker Valley, Mount Taranaki).
+  Kyler confirmed both judgement calls: Austria's data under CC BY 4.0, and New Zealand's notice
+  kept in the file.
   The new **credits page** (`real-places/credits/`) and the gallery show the same credits in full
   (`src/places/Credits.tsx`): the source, the changes, that the providers do not endorse the maps,
   and every notice with a link to its licence.
@@ -137,15 +139,32 @@ Several round-1 details above are replaced here: the titles, the description, **
   files and the `.timber` names follow the new titles. The description's sentence adds "the" where
   a title needs it ("near the Grand Canyon"). The gallery's "inspired by, not a replica" line
   stays. Per-map "how it plays" lines wait for M9c's names and descriptions.
-- **Card pictures.** `npm run places:thumbs` (`tools/places-thumbs.ts`) opens each place in the
-  editor, in the installed Chrome on this machine's GPU, and draws the Map look 3D view's clean
-  look as an angled overview: the camera stands on the low side of the land, looking toward the
-  high side, as near as it can while the map fills the picture. 960 px, scaled to 480 px (twice
-  the card), WebP: about 27 KB each, 2.3 MB in all, against 7.7 KB for the old 240 px JPEGs. The
-  gallery loads them lazily, as their cards come into view. The index records which
-  `.timber` each shows (`imageFrom`); a test fails when a map changed and its picture did not.
-  About 4 s a place, 5 minutes for all 85. Kyler decides from the before and after (local page
-  `C:\dgm-workshop\places\thumbs.html`).
+- **Card pictures.** Two for each place, both drawn by the Map look 3D view in its clean look, on
+  this machine's GPU in the installed Chrome (`npm run places:thumbs`, `tools/places-thumbs.ts`),
+  as WebP:
+  - the **overview**, 480 px (twice the card): the camera looks along the map's axis nearest to
+    the way the land rises, from the low side, and stands so the land fills the picture: the far
+    edge spans it under a thin band of sky, and the near edge runs off the bottom. Drawn at 960 px
+    and scaled down.
+  - the **map from above**, north up (the view's Top mode, an orthographic camera): moist grass,
+    cracked earth, water by depth and contaminated ground, as in the 3D view. A whole number of
+    pixels a tile (480 px at 96², 512 px at 128² and 256²), so every tile edge is sharp.
+
+  About 84 KB a place, 7.1 MB for all 85; the gallery loads them lazily, as their cards come into
+  view. The index records which `.timber` they show (`imageFrom`); a test fails when a map changed
+  and its pictures did not. About 4.3 s a place, 6 minutes for all 85. Kyler approved the
+  direction; he picks the card layout from two, behind `?cards=`: `minimap` (the default: the
+  overview, with the map from above as a minimap in its corner that fills the picture on hover,
+  keyboard focus or a tap) and `side` (the two side by side; on a phone, above the text). Both are
+  shared components with shared styles (`src/ui/Pictures.tsx`, `app.css`), as is the link that
+  looks like a button, so the design pass restyles them rather than rebuilds them (D176). All the
+  pictures are drawn again after the rebuild without walls.
+- **The survey's elevation patches, downloaded again** (Kyler's yes, 2026-09-25), for the rebuild:
+  the survey's own `sample.ts`, unchanged, into its ignored cache
+  (`investigation/landscapes/.cache/`), with at most 6 requests at once, 50 ms apart. All 4,050
+  patches (681 MB) from 6,102 Terrain Tiles (396 MB) in 5.5 minutes, no failures. Every tile
+  matches the sha256 the survey recorded, and the rebuilt patch manifest is byte for byte the
+  committed one. Nothing of it is committed.
 - **The live check** also downloads the smallest real place from the live gallery and compares it
   with the deployed index's sha256 (and the checked-out commit's), and loads the credits page.
 
@@ -176,9 +195,9 @@ Bandiagara, Iguazu Falls, Yosemite Valley, Tara Gorge, Mamore River, Capitol Ree
 | Near Na Pali coast | Na Pali Coast |
 | Near Godavari delta | Godavari Delta |
 | Near Niagara escarpment Hamilton | Niagara Escarpment |
-| Near Taklimakan Kunlun fan | Taklimakan Fan |
-| Near Dinaric karst Plitvice | Plitvice |
-| Near Lower Mississippi oxbows | Lower Mississippi |
+| Near Taklimakan Kunlun fan | Kunlun Alluvial Fan |
+| Near Dinaric karst Plitvice | Plitvice Lakes |
+| Near Lower Mississippi oxbows | Mississippi Oxbows |
 | Near Skeidara outwash | Skeidara Outwash |
 | Near Blue Mountains Jamison | Blue Mountains |
 | Near Atacama fan | Atacama Fan |

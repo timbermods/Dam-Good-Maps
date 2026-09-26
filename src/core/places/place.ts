@@ -77,12 +77,14 @@ export interface PlaceIndexEntry {
   plays: string;
   size: number;
   metres: number;
-  /** Paths relative to index.json: the place's data, its card picture, and its .timber
-   *  (`maps/<id>.timber`, built at deploy time by tools/places-build.ts). */
+  /** Paths relative to index.json: the place's data, its card pictures (the 3D overview, and the
+   *  map from above), and its .timber (`maps/<id>.timber`, built at deploy time by
+   *  tools/places-build.ts). */
   data: string;
   image: string;
+  topImage: string;
   file: string;
-  /** The sha256 of the .timber the card picture shows (tools/places-thumbs.ts renders it again
+  /** The sha256 of the .timber the card pictures show (tools/places-thumbs.ts renders them again
    *  when the map changes). */
   imageFrom?: string;
   /** The .timber's size in bytes and its sha256: every build of the place gives this file. */

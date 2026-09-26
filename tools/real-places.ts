@@ -11,8 +11,9 @@
 //   title, landform family, scale and a plain line on how it plays (src/core/places/place.ts);
 // - index.json: every place for the gallery page, with the survey's own name, and the size and
 //   sha256 of its .timber.
-// The card pictures (cards/<id>.webp) are rendered in the 3D view by tools/places-thumbs.ts; the
-// index keeps, for each, the sha256 of the .timber it shows (imageFrom), so a changed map shows.
+// The card pictures (cards/<id>.webp, the 3D overview, and cards/<id>-top.webp, the map from above)
+// are rendered in the 3D view by tools/places-thumbs.ts; the index keeps the sha256 of the .timber
+// they show (imageFrom), so a changed map shows.
 // Each .timber is built with src/core/places (build, settle, validate, write) and must pass the
 // export profile and every check of the generate profile; the tool stops on any that does not.
 // Everything it writes is the same bytes on every run. The site's .timber files themselves are
@@ -91,9 +92,9 @@ const TIDY: Record<string, string> = {
   "Na Pali coast": "Na Pali Coast",
   "Godavari delta": "Godavari Delta",
   "Niagara escarpment Hamilton": "Niagara Escarpment",
-  "Taklimakan Kunlun fan": "Taklimakan Fan",
-  "Dinaric karst Plitvice": "Plitvice",
-  "Lower Mississippi oxbows": "Lower Mississippi",
+  "Taklimakan Kunlun fan": "Kunlun Alluvial Fan",
+  "Dinaric karst Plitvice": "Plitvice Lakes",
+  "Lower Mississippi oxbows": "Mississippi Oxbows",
   "Skeidara outwash": "Skeidara Outwash",
   "Blue Mountains Jamison": "Blue Mountains",
   "Atacama fan": "Atacama Fan",
@@ -113,7 +114,8 @@ const THE = new Set([
   "Geirangerfjord", "Lake District", "Uvac River", "Ethiopian Highlands", "Tagliamento River", "Blyde River Canyon", "Cliffs of Moher",
   "Alaknanda and Bhagirathi", "Danube Delta", "Roaring River Fan", "Aysen Fjord", "Verdon Gorge", "Chocolate Hills", "Kinabatangan River",
   "Ennedi Plateau", "Deccan Plateau", "Bardenas Reales", "Waimakariri River", "Grand Canyon", "Na Pali Coast", "Godavari Delta",
-  "Niagara Escarpment", "Taklimakan Fan", "Lower Mississippi", "Bungle Bungle", "Tibetan Plateau", "Painted Desert", "Skeidara Outwash",
+  "Niagara Escarpment", "Kunlun Alluvial Fan", "Plitvice Lakes", "Mississippi Oxbows", "Bungle Bungle", "Tibetan Plateau",
+  "Painted Desert", "Skeidara Outwash",
   "Fish River Canyon", "Blue Mountains", "Atacama Fan", "Hooker Valley", "Todgha Gorge", "Li River", "Goosenecks of the San Juan",
   "Colorado Plateau", "Ilulissat Icefjord", "Tara Gorge", "Tsingy de Bemaraha", "Mamore River", "Altiplano",
 ]);
@@ -303,6 +305,7 @@ for (const item of items) {
     metres: place.metres,
     data: `data/${place.id}.json.gz`,
     image: `cards/${place.id}.webp`,
+    topImage: `cards/${place.id}-top.webp`,
     ...(shown.get(place.id) ? { imageFrom: shown.get(place.id) } : {}),
     file: `maps/${place.id}.timber`,
     bytes: bytes.length,
@@ -349,7 +352,7 @@ if (check) {
 }
 // the card pictures stay (tools/places-thumbs.ts renders them); pictures of places gone are removed
 rmSync(join(OUT, "data"), { recursive: true, force: true });
-if (existsSync(join(OUT, "cards"))) for (const f of readdirSync(join(OUT, "cards"))) if (!entries.some((e) => e.image === `cards/${f}`)) rmSync(join(OUT, "cards", f));
+if (existsSync(join(OUT, "cards"))) for (const f of readdirSync(join(OUT, "cards"))) if (!entries.some((e) => e.image === `cards/${f}` || e.topImage === `cards/${f}`)) rmSync(join(OUT, "cards", f));
 for (const [k, b] of files) {
   const p = join(OUT, k);
   mkdirSync(join(p, ".."), { recursive: true });

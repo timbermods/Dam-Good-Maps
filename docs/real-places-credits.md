@@ -28,6 +28,9 @@ Each provider's licence or terms were read on 2026-09-25, from the official page
 | United Kingdom (Environment Agency) | [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) | Link | "acknowledge the source … by including or linking to any attribution statement". |
 | United States (USGS: 3DEP, GMTED2010, SRTM) | [Public domain](https://www.usgs.gov/information-policies-and-instructions/crediting-usgs) | Link | "we ask that proper credit be given". GMTED2010 asks to describe the changes and not to imply USGS endorsement: the credits page does both. |
 
+Kyler confirmed the two judgement calls (2026-09-25): Austria's data under CC BY 4.0, and New
+Zealand's notice kept in the file.
+
 Not needed: Mapzen (only for Mapzen's hosted service; the data came from AWS), and Natural Earth
 (public domain, and used only for the survey's random-land controls, which are not published).
 

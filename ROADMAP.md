@@ -772,9 +772,11 @@ title, one line and a link to a new credits page; a provider's notice stays in t
 its terms need it, [docs/real-places-credits.md](docs/real-places-credits.md)); every map built once
 at deploy time and served as a static file, so **Download** is instant and **Refine** loads it;
 the byte check of every map nightly and in the release check, a sample of every size on every
-push; titles without "Near" or the sample; card pictures from the 3D view, rendered on a GPU.
-Next, once the new start and edge rules are on `dev`: the places rebuilt without perimeter walls,
-water free to drain off the map, and about 150 places in all.
+push; titles without "Near" or the sample; two card pictures from the 3D view (an overview and
+the map from above), rendered on a GPU, in one of two card layouts Kyler picks from.
+Next, once the new start, edge and resource rules are on `dev`: the places rebuilt without
+perimeter walls, water free to drain off the map, sources only where water begins (D171), resources
+from the shared baseline, and about 150 places in all, from the survey's patches (downloaded again).
 
 ---
 

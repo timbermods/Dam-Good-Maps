@@ -34,7 +34,7 @@ function webpSize(b: Uint8Array): [number, number] | null {
 }
 
 describe("the gallery's data", () => {
-  it("holds the survey's real places: no random-land controls, one entry and two files each", () => {
+  it("holds the survey's real places: no random-land controls, one entry and three files each", () => {
     expect(INDEX.format).toBe(1);
     expect(INDEX.count).toBe(INDEX.places.length);
     expect(INDEX.count).toBe(85);
@@ -48,16 +48,23 @@ describe("the gallery's data", () => {
       expect(p.file, p.id).toBe(`maps/${p.id}.timber`);
       expect(p.plays.length, p.id).toBeLessThan(100);
       expect(existsSync(join(PLACES_DIR, p.data)), p.data).toBe(true);
-      // the card picture (Kyler, 2026-09-25): the 3D view's angled overview, twice the card's 240 px,
-      // WebP, showing the map as it is now (tools/places-thumbs.ts)
+      // the card's two pictures (Kyler, 2026-09-25), WebP, showing the map as it is now
+      // (tools/places-thumbs.ts): the 3D view's angled overview, twice the card's 240 px; and the map
+      // from above, a whole number of pixels a tile (about 512 px), so every tile edge is sharp
       expect(p.image, p.id).toBe(`cards/${p.id}.webp`);
+      expect(p.topImage, p.id).toBe(`cards/${p.id}-top.webp`);
       const card = new Uint8Array(readFileSync(join(PLACES_DIR, p.image)));
       expect(webpSize(card), p.image).toEqual([480, 480]);
       expect(card.length, p.image).toBeLessThan(80_000);
-      expect(p.imageFrom, `${p.id}: its picture shows an older map; run npm run places:thumbs`).toBe(p.sha256);
+      const top = new Uint8Array(readFileSync(join(PLACES_DIR, p.topImage)));
+      const side = Math.round(512 / p.size) * p.size;
+      expect(webpSize(top), p.topImage).toEqual([side, side]);
+      expect(side % p.size).toBe(0);
+      expect(top.length, p.topImage).toBeLessThan(80_000);
+      expect(p.imageFrom, `${p.id}: its pictures show an older map; run npm run places:thumbs`).toBe(p.sha256);
     }
     // nothing else is published
-    const listed = new Set(INDEX.places.flatMap((p) => [p.data, p.image]));
+    const listed = new Set(INDEX.places.flatMap((p) => [p.data, p.image, p.topImage]));
     for (const dir of ["data", "cards"]) for (const f of readdirSync(join(PLACES_DIR, dir))) expect(listed.has(`${dir}/${f}`), `${dir}/${f}`).toBe(true);
   });
 
@@ -77,7 +84,11 @@ describe("the gallery's data", () => {
     expect(size("index.json")).toBeLessThan(64_000);
     expect(Math.max(...INDEX.places.map((p) => size(p.data)))).toBeLessThan(64_000);
     // the pictures load lazily, as the cards come into view
-    expect(readFileSync("src/places/Gallery.tsx", "utf8")).toMatch(/<img [^>]*loading="lazy"/);
+    // (the cards' pictures are the shared components in src/ui/Pictures.tsx)
+    expect(readFileSync("src/places/Gallery.tsx", "utf8")).not.toMatch(/<img /);
+    const imgs = readFileSync("src/ui/Pictures.tsx", "utf8").match(/<img [^>]*>/g) ?? [];
+    expect(imgs.length).toBe(1);
+    for (const img of imgs) expect(img).toContain('loading="lazy"');
   });
 });
 
@@ -103,6 +114,10 @@ describe("titles (Kyler, 2026-09-25)", () => {
     expect(title("Grand Canyon Colorado")).toBe("Grand Canyon");
     expect(title("Brahmaputra near Majuli")).toBe("Majuli, Brahmaputra");
     expect(title("Death Valley Badwater fan")).toBe("Death Valley");
+    // Kyler's choices (2026-09-25)
+    expect(title("Lower Mississippi oxbows")).toBe("Mississippi Oxbows");
+    expect(title("Taklimakan Kunlun fan")).toBe("Kunlun Alluvial Fan");
+    expect(title("Dinaric karst Plitvice")).toBe("Plitvice Lakes");
     expect(title("Yosemite Valley")).toBe("Yosemite Valley");
     expect(INDEX.places.filter((p) => p.sample).length).toBeGreaterThan(40);
   });
