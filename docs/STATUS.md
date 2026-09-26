@@ -95,6 +95,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - #56: a failed Pick a place map is never shown; nearby choices that passed, or what to try.
 - D180: Live editing additions: a smooth native camera (WASD, Q/E, Shift), a Demolish tool, water-aware Ctrl-click sampling, the river tool's rules (heads, branches, gorges, waterfalls), player-set source strength, "let the water carve", natural or exact rivers, water time controls, and local-first water that always ends at the game's settled result.
 - D181: more for water: carving forms valleys (downcutting, slumping terraces, floodplains, deltas; steep or wide walls), moisture and grass spreading live from new water, a "badtide" button, optional water sounds of our own.
+- D182: **the brush kit is the core of the editor**: every landform tool and its handles removed, no presets; new Terrace and Ramp brushes, pen pressure and level lines; future tools brush-first (symmetry mirrors strokes, stamps are painted).
 
 ## Done and released
 
@@ -127,8 +128,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   once the start and edge rules and the resources step land, since both change generated maps again.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
-- **Live editing** (D158, D179), on branch `feature/live-editing`: the terrain brushes are on the
-  preview address; next come the live shape tools, then every tool made live, water first.
+- **Live editing** (D158, D179–D182), on branch `feature/live-editing`: push 0 is on the preview
+  address; next the smooth camera, then water, then the brush kit (D182).
 - **Map look fixes**, each judged by Kyler from captures: badwater blending (D177) on
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
