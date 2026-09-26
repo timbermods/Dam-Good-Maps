@@ -834,115 +834,86 @@ information.
 ## Live editing
 
 Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20
-D158). Built on branch `feature/live-editing`, tried by Kyler on the preview address
-<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every iteration),
-and released as `live-editing-done` when Kyler says it feels right.
+D158, D179–D184). Built on branch `feature/live-editing`, tried by Kyler on the preview address
+<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every push), and
+released as `live-editing-done` when Kyler says it feels right.
 
-- **First, a quick triage** of the current editor: drive it like a first-time player (open a
-  generated map; place and change rivers, lakes, landforms and the start; undo and redo;
-  regenerate keeping edits; export), fix the bugs and stalls in everything Live editing won't
-  replace, and bring Kyler a short ranked list of confusing spots with a proposed fix for each.
-  Kyler's notes: placement never waits on the water; limits show before or while placing, and the
-  result matches what was shown; the placed hill looked like a flat slab, not a stepped hill.
-  Also: the legend becomes a slim panel beside the map that collapses to a small always-visible
-  strip, lists only what's on the current map, and highlights those things when an entry is
-  clicked (its styling waits for the design pass); and it must be obvious which map is shown and
-  which is being edited (the generator page said "You are editing …" over a different map).
-- **Principles** (D179: the editor's core principle, for every tool): responsive above all; direct
-  manipulation (no confirm steps, no Place button, no
-  waiting); everything reversible; show, don't ask; good defaults.
-- **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
-  naturalize, in whole levels with natural slopes at the brush's edge; a brush cursor projected on
-  the terrain; Cities: Skylines-style controls; a compact brush bar with shortcut tooltips.
-- **Water never blocks:** terrain updates instantly, water re-settles and flows live in the
-  background; an option pauses it while painting.
-- **Every tool live** (D179), built in pushes, water first, each put on the preview for Kyler:
-  1. **Water:** freehand rivers that carve in under the cursor, step down with the terrain and fill
-     behind it, spilling over drops as waterfalls; the source at the head (D171), or a join to an
-     existing river; width and depth from the brush controls; handles afterwards. Lakes by painting
-     a shore or clicking a basin, filling as you watch. Water and badwater sources that start
-     spreading at once, badwater's spread visible.
-  2. **Visible flow** after every edit: the water advances over a few seconds at a pace the eye can
-     follow, with a speed setting and "skip to result". It ends exactly at today's settled water,
-     and the brush never waits for it.
-  3. **Brush options** on the brush bar: circle or square (square on the tile grid); a precise mode
-     (hard edges; at size 1 one tile, one level per click); straight strokes (click, then
-     Shift-click).
-  4. **One Select tool:** rectangle, freehand and same level; Shift adds, Alt subtracts; raise or
-     lower by N levels, flatten or set to a level, dig out to a level, clear trees and objects;
-     live, water flowing in, one undo step each.
-  5. **Landforms:** no landform tools; the brush kit shapes the land (D182).
-  6. **Resources:** forest and berry brushes with natural clusters at official-like densities; the
-     Demolish tool removes (D180).
-  7. **Objects:** ruins, mine sites, relics, slopes and the start dragged into place with a live
-     footprint (green, or red with the reason).
-  8. Limits, reasons and checks live while dragging, never dialogs afterwards; each
-     plan-confirm-place flow retired once its live version exists.
-  9. Heavy operations (regenerate an area, "Generate, keeping my edits") show their result
-     growing, never a frozen wait.
-- **Additions** (D180), each on the preview as it lands:
-  1. **Smooth camera:** per-frame movement while keys are held, eased, speed scaled by zoom;
-     Timberborn's controls (WASD, Q and E rotate, scroll zooms, Shift faster, arrows move); never
-     while typing, never clashing with brush shortcuts.
-  2. **Demolish:** click removes one object, drag removes everything under the brush; a red
-     highlight of exactly what goes; filters (trees, bushes, ruins, water sources, other objects,
-     all); Delete removes the selection; one undo step each; water re-flows live; never changes
-     terrain; rule-breaking removals refused live; instant on 256² (a per-tile index, only affected
-     models updated, batched removals).
-  3. **Water-aware sampling:** Ctrl-click on water samples its bed ("riverbed: level 7").
-  4. **River rules:** a new river from dry land gets a source at its head; from water, a branch with
-     no new source; it ends as a tributary, off the map edge, or filling a basin into a lake; the bed
-     never goes uphill, is dug 1 level (adjustable) on flat ground, cuts gorges through higher ground
-     ("cutting 6 levels deep here") and steps down into waterfalls; one undo step per river.
-  5. **Source strength** set while drawing or placing, adjustable on any source afterwards, live; a
-     friendly note beyond the official range, never a block.
-  6. **"Let the water carve":** a source erodes its own way downhill with the M9 erosion processes,
-     in whole levels, until stopped; one undo step.
-  7. **Natural or exact rivers** (Natural by default, remembered).
-  8. **Water time controls:** pause, speed up, replay; an optional camera following the water
-     front; a "drought" button.
-  9. **Local first:** water near the edit first, then the rest of the map.
-  10. The final water always matches the game's settled result.
-- **More for water** (D181):
-  1. **Carving makes valleys:** the channel cuts down where the water is fast, the sides slump
-     into stepped terraces, and deposition leaves floodplains and a small delta where it slows; a
-     walls setting (steep or wide); in the background, near the source first.
-  2. **The land comes alive:** moisture spreads visibly from new water, dry earth turning to grass
-     along the banks over a few seconds, fading back in a drought; it ends at the settled moisture.
-  3. **A "badtide" button** beside "drought": badwater surges, spreads, poisons the ground, recovers.
-  4. **Optional water sounds,** off by default, our own: a rush near falls, a trickle along streams,
-     quieter zoomed out.
-- **The brush kit is the core** (D182), right after the smooth camera and water pushes: every
-  landform tool (hill, plateau, ridge, canyon, valley, island, lake and resource-area objects) and
-  its handles removed, with everything in the editor that only supported them; no presets. The
-  kit: Raise, Lower, Flatten, Smooth and Naturalize (circle or square, precise mode, straight
-  strokes), the Select tool, the water tools, Demolish, the forest and berry brushes, and new:
-  - a **Terrace brush:** a painted slope becomes clean stepped terraces, one level apart, with a
-    step-width setting;
-  - a **Ramp brush:** painting along an edge between levels places the game's natural slopes; the
-    start-reach indicators update live;
-  - **pen pressure** sets strength on a drawing tablet (mice unaffected);
-  - **level lines:** an optional toggle with faint contour lines at each level while sculpting.
-  - **live dimensions** (D183): a selection's size ("12 × 8 tiles"), a straight stroke's length, the
-    target level for Flatten and Terrace ("level 7"), and the river's width and depth ("3 wide, 1 deep").
-  Saved projects keep their land exactly: landforms already in a project open as plain terrain, so
-  no edit is lost (breakage rule, D115).
-- **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
-  an operation that replays exactly and survives regeneration and format 3; quiet background
-  checks.
-- **Polish:** only changed chunks rebuilt; keyboard access and screen-reader labels; a one-line
-  first-use hint.
-- **Keep M12 ready** (D134): Claude tool entries for the brushes and the brush-first tools.
+**The design** (D184, Kyler's editor design principles; it replaces earlier editor decisions where
+they conflict):
+- **Principles:** the land is the interface (feedback from the land itself, not from panels,
+  dialogs or readouts); direct manipulation; few tools, each obvious; smart defaults, with options
+  hidden until wanted; forgiveness (instant undo, Esc always backs out); one grammar (pick, paint or
+  place, see the result; [ and ] for size, scroll for strength, in every tool); things just work
+  (painting never waits on water and keeps full frame rate on 256²); landforms come from the
+  brushes, never from buttons (D182).
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove. A small row beneath
+   shows only the picked tool's options. The size ring is drawn on the land; strength shows only
+   while scrolling. Toggles, off by default: square shape, precise mode, straight lines, level
+   lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
+   the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
+   slot. Pen pressure sets strength on a tablet.
+2. **Water:** a reflection of the land being painted.
+   - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
+     downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
+     ordinary Lower.
+   - **Source:** click to place, and water spreads at once; options: clean or bad, and strength.
+     Hover any source and scroll to change its strength live (a friendly note past the official
+     range, never a block); drag to move it. Anywhere in the editor (D171 is for generated maps).
+   - **Everything else emerges:** lakes fill hollows, waterfalls form at drops, rivers join where
+     they meet, and branches form wherever the land is cut from water.
+   - **How water behaves:** the paced journey over a few seconds, with pause, speed, skip, replay,
+     follow, drought and badtide (the game's badtide rules, from `investigation/cycles`); moisture
+     spreading as the land greens; optional sounds of our own; "Let the water carve", forming
+     valleys (D181). Local first, then the rest of the map in the background; the final water is
+     always the game's settled result.
+3. **Left shelf:** a clean grid of icons, each a small render of the object in the map's look: the
+   start, pine, birch, oak, berry bushes, ruins, the mine site, relics, natural slopes, blockages,
+   geothermal fields and thorns. Picking one shows a live ghost on the terrain, its footprint green
+   where it fits and red where it doesn't, with a quiet reason ("needs flat ground"). Click places,
+   R rotates, Esc puts it back. Trees and bushes: click places one, drag paints many, naturally
+   clustered at official-like densities.
+4. **View buttons:** Orbit, Top-down, Reset view, Height colours, Markers, and the overlays
+   (moisture, contamination, drought). The legend appears only while an overlay is on.
+5. **Header:** Undo and Redo icons with their shortcuts; one primary button, **Save to Timberborn**
+   (until `feature/save-to-timberborn` lands, and in browsers that can't save to a folder,
+   **Download .timber** takes its place); everything else (Open, Save project, Download .timber,
+   History, New map) in one small menu.
+6. **Quiet checks:** a small dot, green or amber; a click lists the problems, each highlighted on
+   the map. Never a pop-up.
+7. **The start:** its water, wood and berry reach appears around it while hovered or dragged, then
+   fades.
+8. **Remove:** click one, drag many; filters; a red highlight on hover; Delete removes a selection;
+   one undo step each; water re-flows live; never changes terrain; a removal that breaks a rule is
+   refused live; instant on 256².
+9. **First run:** three one-line hints (paint the land, place things, add water), then never again.
+
+**Removed:** the landform tools and their handles (D182); the river tool with its start and end
+rules, Natural or exact, width, depth and strength controls; the lake click-fill; the Channel tool;
+separate plant brushes; the cursor readouts (only the level number while flattening stays); the
+text tabs, the Advanced checkbox, the Show dropdown and the help paragraphs.
+
+**Kept:** the smooth camera (D180, approved by Kyler); every edit live, as one undo step, with
+limits shown while dragging, never dialogs afterwards (D179); the Select tool (rectangle, freehand,
+same level; Shift adds, Alt subtracts; raise or lower by N levels, flatten or set to a level, dig
+out, clear trees and objects); Ctrl-click samples a level (on water, its bed); heavy operations
+(regenerate an area, "Generate, keeping my edits") shown growing, never a frozen wait; every stroke
+an operation that replays exactly and survives regeneration and format 3; only changed chunks
+rebuilt; keyboard access and screen-reader labels; saved projects keep their land exactly (any
+landforms already in a project open as plain terrain); Keep M12 ready (D134): Claude tool entries
+for every tool. Until the Frame pass, new interface uses the existing shared styles and components
+(D176).
+
+Built in pushes, water first, each put on the preview for Kyler.
 
 **Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
 rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
 breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost; after
-any edit the water ends exactly at the settled result, so exports are unchanged). Kyler decides when it
-feels right.
+any edit the water ends exactly at the settled result, so exports are unchanged). Kyler decides when
+it feels right.
 
-**Later:** every future editing tool is built live from the start (D179): the 3D terrain steps extend
-the same brushes to caves and tunnels; M10 keeps symmetry and the advanced extras; M11's stamps, locks
-and regenerate area.
+**Later:** every future editing tool is live and brush-first from the start (D179, D182): M10's
+symmetry mirrors strokes live, M11's stamps are painted onto the land, and the 3D terrain steps
+extend the same brushes to caves and tunnels.
 
 ---
 
