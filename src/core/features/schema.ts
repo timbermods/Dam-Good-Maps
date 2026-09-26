@@ -135,7 +135,9 @@ export type SetPieceKind =
   | "badwaterBasin"
   | "plugSpillway"
   | "obstaclePayoff"
-  | "secondDistrict";
+  | "secondDistrict"
+  // M9a: two hillside spurs closing in on a river (#63: an internal operation for M12's Claude)
+  | "naturalNarrows";
 
 export interface SetPieceParams {
   kind: SetPieceKind;

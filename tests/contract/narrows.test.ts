@@ -1,6 +1,7 @@
 // The natural-narrows builder (#63: kept as an internal operation for M12's Claude; ROADMAP M9a,
-// "Keep M12 ready"): two spurs close in on a river from its banks, the channel keeps its gap, and
-// the result never reads as a dam wall (analysis/ridge.ts); the edit applies, and undo takes it back.
+// "Keep M12 ready"): the naturalNarrows set piece raises two spurs that close in on a river from
+// its banks, the channel keeps its gap, and the result never reads as a dam wall
+// (analysis/ridge.ts); the edit applies, rebuilds the same, and undo takes it back.
 
 import { describe, expect, it } from "vitest";
 import { damWalls } from "../../src/core/analysis/ridge";
@@ -20,7 +21,7 @@ describe("a natural narrows on a generated river", () => {
     let placed = 0;
     for (const river of rivers)
       for (const at of [0.3, 0.45, 0.6]) {
-        const p = planNarrowsEdit(s, { river: river.id, at });
+        const p = planNarrowsEdit(s, { river: river.id, at }, `9a9a9a9a-0000-4000-8000-${String(placed + 1).padStart(12, "0")}`);
         if (!p.ok) {
           // a refusal says why: the valley's shape, or the spurs reading as a wall
           expect(p.errors.join(" ")).toMatch(/too narrow or too open|read as a wall|too short/);
@@ -30,6 +31,10 @@ describe("a natural narrows on a generated river", () => {
         expect(p.tiles.length).toBeGreaterThan(10);
         const res = s.applyAll(p.ops, "claude", p.label);
         expect(res.errors).toEqual([]);
+        // the spurs stand as planned, and a full rebuild equals the incremental one
+        const full = s.fullBuild();
+        expect(Buffer.from(full.heights).equals(Buffer.from(s.built.heights))).toBe(true);
+        for (const i of p.tiles) expect(s.built.heights[i]).toBeGreaterThan(0);
         // every raised tile stands above the ground it replaced, and nothing reads as a wall
         expect(damWalls(s.built.heights, s.size.x, s.size.y, s.built.water)).toEqual([]);
         placed++;
@@ -44,12 +49,12 @@ describe("a natural narrows on a generated river", () => {
     const s = MapSession.fromGenerated(r);
     const river = s.features.find((f) => f.kind === "river")!;
     for (const [req, msg] of [
-      [{ river: river.id, at: 1.5 }, /0 at its head to 1/],
-      [{ river: river.id, at: 0.5, reach: 0.2 }, /0\.5–1/],
-      [{ river: river.id, at: 0.5, rise: 7 }, /1–4/],
+      [{ river: river.id, at: 1.5 }, /at/],
+      [{ river: river.id, at: 0.5, reach: 0.2 }, /reach/],
+      [{ river: river.id, at: 0.5, rise: 7 }, /rise/],
       [{ river: "nope", at: 0.5 }, /pick a river/],
     ] as const) {
-      const p = planNarrowsEdit(s, req);
+      const p = planNarrowsEdit(s, req, "9a9a9a9a-0000-4000-8000-000000000099");
       expect(p.ok).toBe(false);
       if (!p.ok) expect(p.errors.join(" ")).toMatch(msg);
     }

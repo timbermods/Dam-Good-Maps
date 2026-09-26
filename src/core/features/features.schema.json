@@ -172,7 +172,7 @@
       "additionalProperties": false,
       "required": ["kind", "request", "plan", "report"],
       "properties": {
-        "kind": { "enum": ["waterfall", "damSite", "gorge", "terracedCliffs", "badwaterBasin", "plugSpillway", "obstaclePayoff", "secondDistrict"] },
+        "kind": { "enum": ["waterfall", "damSite", "gorge", "terracedCliffs", "badwaterBasin", "plugSpillway", "obstaclePayoff", "secondDistrict", "naturalNarrows"] },
         "request": { "type": "object" },
         "plan": { "type": "object" },
         "report": { "type": "array", "items": { "type": "string" } }
