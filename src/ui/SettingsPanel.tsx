@@ -62,6 +62,14 @@ const THEME_BLURB: Record<ThemeId, string> = {
 function ThemeGlyph({ theme }: { theme: ThemeId }) {
   const common = { width: 56, height: 32, viewBox: "0 0 56 32", "aria-hidden": true as const };
   switch (theme) {
+    case "any":
+      return (
+        <svg {...common}>
+          <path d="M0 24c8-4 14-4 20 0s12 4 18-2 12-10 18-8" class="g-land" />
+          <ellipse cx="40" cy="10" rx="7" ry="4" class="g-lake" />
+          <path d="M0 12c6 3 12 3 18 0s10-3 15 1" class="g-water" />
+        </svg>
+      );
     case "canyon":
       return (
         <svg {...common}>
@@ -285,6 +293,7 @@ export function SettingsPanel(p: SettingsPanelProps) {
 
       <Section title="Terrain">
         <Slider id="relief" label="Relief" value={s.terrain.relief} min={0} max={100} band={band("relief", spec)} onChange={(v) => set((c) => (c.terrain.relief = v))} />
+        <Slider id="verticality" label="Verticality" value={s.terrain.verticality} min={0} max={100} band={band("verticality", spec)} onChange={(v) => set((c) => (c.terrain.verticality = v))} />
         <Slider id="highest" label="Highest terrain" value={s.terrain.highestTerrain} min={10} max={16} band={band("highestTerrain", spec)} onChange={(v) => set((c) => (c.terrain.highestTerrain = v))} />
         <Slider id="terracing" label="Terracing" value={s.terrain.terracing} min={0} max={100} band={band("terracing", spec)} onChange={(v) => set((c) => (c.terrain.terracing = v))} />
         <Pick id="buildable" label="Buildable land" value={s.terrain.buildableLand} choices={BUILDABLE} band={band("buildableLand", spec)} onChange={(v) => set((c) => (c.terrain.buildableLand = v))} />

@@ -110,6 +110,10 @@ export function band(key: string, spec: MapSpec): string {
   switch (key) {
     case "relief":
       return `Height range about ${Math.round(7 + 0.08 * s.terrain.relief)} levels. Official maps: 9–15, most 13.`;
+    case "verticality":
+      return s.terrain.verticality >= 70
+        ? "Sheer cliffs, spires and deep gorges. From 70 the land may rise above level 16, where the game's map editor can't edit it."
+        : "How tall and sheer the land grows: higher brings cliffs, spires and deep gorges.";
     case "highestTerrain":
       return "Official maps all top out at 16, the map editor's limit.";
     case "terracing":

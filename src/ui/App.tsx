@@ -80,7 +80,8 @@ function initialSpec(): { spec: MapSpec; fromLink: boolean; note?: string } {
     const note = d.version !== GENERATOR_VERSION ? `This link was made with generator ${d.version}; this is ${GENERATOR_VERSION}, so the map may differ.` : undefined;
     return { spec: d.spec, fromLink: true, note: d.problems.length ? d.problems.join("; ") : note };
   }
-  return { spec: makeSpec({ seed: randomSeed() }), fromLink: false };
+  // Any (Surprise me) is the default (D209)
+  return { spec: makeSpec({ seed: randomSeed(), theme: "any" }), fromLink: false };
 }
 
 /** A lazily loaded module's export (the 3D view and the editor are separate chunks). */
@@ -561,12 +562,16 @@ export function App() {
           <details class="more">
             <summary>What's in this version</summary>
             <p>
-              Three themes: River Valley, Canyon and Lake Basin. The water is simulated with the game's own rules and
-              shipped settled, so rivers run from the first tick. Trees live where that water keeps the soil moist.
+              Any, or a theme to lean toward: River Valley, Canyon, Highlands, Lake Basin, Delta or Islands. Uplift,
+              erosion and flowing water shape the land and its rivers.
+            </p>
+            <p>
+              The water is simulated with the game's own rules and shipped settled, so rivers run from the first tick.
+              Trees live where that water keeps the soil moist.
             </p>
             <p>
               Every map is checked against the game's loading rules and for a colony's survival: clean water in pump
-              reach, food, wood, land to build on, and a dam site that holds a drought's water.
+              reach, food, wood and land to build on.
             </p>
             <p>Refine a map in the editor, or open any map to look at it in 3D and change it.</p>
           </details>

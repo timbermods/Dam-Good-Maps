@@ -11,11 +11,11 @@ export type ArchetypeId = ThemeId;
 export type Difficulty = "easy" | "normal" | "hard";
 export type SizePreset = "small" | "medium" | "large" | "max";
 
-/** The themes the settings panel offers, in its order. "any" joins with the generator that makes it
- *  (M9a's processes). */
-export const THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
-/** Themes the generator can build (all six since M7). */
-export const AVAILABLE_THEMES: readonly ThemeId[] = ["riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
+/** The themes the settings panel offers, in its order: Any first (the app's default, D209), then
+ *  the six leanings. */
+export const THEMES: readonly ThemeId[] = ["any", "riverValley", "canyon", "highlands", "lakeBasin", "delta", "islands"];
+/** Themes the generator can build (all of them since M9a). */
+export const AVAILABLE_THEMES: readonly ThemeId[] = THEMES;
 export const THEME_NAMES: Record<ThemeId, string> = {
   any: "Any",
   riverValley: "River Valley",
