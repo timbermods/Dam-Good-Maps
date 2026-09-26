@@ -3,14 +3,14 @@
 // real depth filling the rest (the terrain leaves the footprint's tops out and the model closes the
 // hole), with scaffold towers on the frame's corners and beams across; with Markers on, an outline
 // round the footprint. Ruins are ruined scaffold towers, a storey per level, in the file's five
-// variants, with ivy over much of them on moist ground; neighbouring columns never look alike, and
-// from afar each storey is a block in the scaffolding's rust. Kyler's colours, measured in the game,
-// hold.
+// variants, with ivy draped over about half their storeys on moist ground; neighbouring columns
+// never look alike, and from afar each storey is a block in the scaffolding's rust. Kyler's
+// colours, measured in the game, hold.
 
 import { describe, expect, it } from "vitest";
 import { ShaderMaterial } from "three";
 import { FOOTPRINTS, footprintTiles, ORIENTATIONS, type Orientation } from "../../src/core/format/footprints";
-import { buildEntities, LOD_ALL, LOD_FAR, LOD_NEAR, MINE_PIT, mineCutout, mineOutline, modelOf, modelTriangles, RUIN_LAYOUTS, ruinStoreys, ruinTriangles, ruinTurn } from "../../src/render3d/entities3d";
+import { buildEntities, IVY_DENSE, IVY_LIGHT, IVY_NONE, LOD_ALL, LOD_FAR, LOD_NEAR, MINE_PIT, mineCutout, mineOutline, modelOf, modelTriangles, RUIN_LAYOUTS, ruinIvy, ruinStoreys, ruinTriangles, ruinTurn } from "../../src/render3d/entities3d";
 import { objectMaterial, RUIN_NEAR_PX, sceneUniforms, terrainMaterial, overlayTexture } from "../../src/render3d/materials";
 import { chunkCount, meshChunk, type TerrainSource } from "../../src/render3d/mesh";
 import { entityView, variantIndex, type EntityInput } from "../../src/render3d/model";
@@ -208,7 +208,7 @@ describe("ruins", () => {
   it("stay within their tile and their storey, in every variant and kind, with and without ivy", () => {
     for (const v of ["A", "B", "C", "D", "E"])
       for (let kind = 0; kind < 4; kind++)
-        for (const ivy of [false, true]) {
+        for (const ivy of [IVY_NONE, IVY_LIGHT, IVY_DENSE]) {
           const m = modelOf(`scaffold.${v}`, kind, ivy);
           for (let k = 0; k < m.pos.length; k += 3) {
             expect(Math.abs(m.pos[k]), `${v}${kind}`).toBeLessThanOrEqual(0.5);
@@ -360,34 +360,78 @@ describe("ruins", () => {
     }
   });
 
-  it("grow ivy only where they stand on moist ground, on every storey, dark and brighter, close up and from afar", () => {
+  it("drape ivy over about half the storeys of a column on moist ground, the most at its foot, as flat leaves that leave the panels showing", () => {
     const W = 8;
     const moisture = new Uint8Array(W * 4);
     moisture[1 * W + 1] = 120;
     const soil = { moisture, contamination: new Uint8Array(W * 4) };
     const m = meshesOf([column(1, 1, 5, "C"), column(4, 1, 3, "C")], soil, W);
-    const ivy = m.filter((c) => c.name.endsWith(".ivy")).reduce((s, c) => s + c.count, 0);
-    expect(ivy).toBe(5);
-    const all = m.filter((c) => c.name.startsWith("scaffold.")).reduce((s, c) => s + c.count, 0);
-    expect(all).toBe(8);
-    // the ivy is Kyler's green and a brighter one, over much of the storey: more of its triangles
-    // than the bare storey's, and a patch of it from afar
+    const count = (re: RegExp) => m.filter((c) => re.test(c.name)).reduce((s, c) => s + c.count, 0);
+    // on moist ground only: the foot dense, a storey or two above it light
+    expect(count(/\.ivy$/)).toBe(1);
+    expect(count(/\.ivy\.light$/)).toBe(ruinIvyReach(1, 1, 5) - 1);
+    expect(count(/^scaffold\./)).toBe(8);
+    // about half the storeys, from the foot up, the same every time
+    for (let x = 0; x < 30; x++)
+      for (const h of [1, 2, 3, 4, 5, 6, 7, 8]) {
+        const levels = Array.from({ length: h }, (_, lv) => ruinIvy(x, 7, h, lv));
+        expect(levels[0]).toBe(IVY_DENSE);
+        const reach = levels.filter((l) => l !== IVY_NONE).length;
+        expect(Math.abs(reach - h / 2), `${x} ${h}`).toBeLessThanOrEqual(1);
+        for (let lv = 1; lv < h; lv++) expect(levels[lv]).toBe(lv < reach ? IVY_LIGHT : IVY_NONE);
+        expect(ruinIvy(x, 7, h, 0)).toBe(levels[0]);
+      }
+    // Kyler's green, a few leaves the brighter green; flat leaves clinging to the faces (no
+    // clumps inside the storey); more on the foot than above; the middle of each face clear, so
+    // its panel shows; a little ivy from afar, the rust still most of it
     expect(cssColor(RUIN.ivy)).toBe("#405634");
-    expect(lum(RUIN.leaf)).toBeGreaterThan(lum(RUIN.ivy) + 0.05);
-    for (const v of ["A", "C", "E"]) {
-      const green = modelOf(`scaffold.${v}`, 0, true);
-      const bare = modelOf(`scaffold.${v}`, 0, false);
-      const count = (c: Rgb) => {
-        let n = 0;
-        for (let k = 0; k < green.col.length; k += 9) if (cssColor([green.col[k], green.col[k + 1], green.col[k + 2]]) === cssColor(c)) n++;
-        return n;
+    expect(cssColor(RUIN.leaf)).toBe("#5c803d");
+    for (const v of ["A", "B", "C", "D", "E"]) {
+      const green = (ivy: number) => {
+        const md = modelOf(`scaffold.${v}`, 0, ivy);
+        let dark = 0;
+        let bright = 0;
+        let area = 0;
+        let farIvy = 0;
+        let farArea = 0;
+        for (let t = 0; t < md.lod.length / 3; t++) {
+          const c = cssColor([md.col[t * 9], md.col[t * 9 + 1], md.col[t * 9 + 2]]);
+          const pts = [0, 1, 2].map((j) => [md.pos[t * 9 + j * 3], md.pos[t * 9 + j * 3 + 1], md.pos[t * 9 + j * 3 + 2]]);
+          const u = pts[1].map((q, i) => q - pts[0][i]);
+          const w = pts[2].map((q, i) => q - pts[0][i]);
+          const a = Math.hypot(u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]) / 2;
+          const isIvy = c === cssColor(RUIN.ivy) || c === cssColor(RUIN.leaf);
+          if (md.lod[t * 3] === LOD_FAR) {
+            farArea += a;
+            if (isIvy) farIvy += a;
+            continue;
+          }
+          if (!isIvy) continue;
+          if (c === cssColor(RUIN.ivy)) dark++;
+          else bright++;
+          area += a;
+          for (const [x, y, z] of pts) {
+            // on the outside of a face
+            expect(Math.max(Math.abs(x), Math.abs(z)), `${v} ${ivy}`).toBeGreaterThan(0.38);
+            // never over the middle of a face, where its panel is
+            const along = Math.abs(x) > Math.abs(z) ? z : x;
+            expect(Math.abs(along) < 0.1 && y > 0.3 && y < 0.8, `${v} ${ivy} ${x} ${y} ${z}`).toBe(false);
+          }
+        }
+        return { dark, bright, area, farIvy, farArea };
       };
-      expect(count(RUIN.ivy), v).toBeGreaterThan(20);
-      expect(count(RUIN.leaf), v).toBeGreaterThan(20);
-      expect(green.pos.length - bare.pos.length).toBeGreaterThan(bare.pos.length * 0.4);
-      let far = 0;
-      for (let k = 0; k < green.col.length; k += 9) if (green.lod[k / 3] === LOD_FAR && [cssColor(RUIN.ivy), cssColor(RUIN.leaf)].includes(cssColor([green.col[k], green.col[k + 1], green.col[k + 2]]))) far++;
-      expect(far, v).toBeGreaterThanOrEqual(4);
+      const dense = green(IVY_DENSE);
+      const light = green(IVY_LIGHT);
+      expect(dense.dark, v).toBeGreaterThan(20);
+      expect(dense.bright, v).toBeGreaterThan(0);
+      expect(dense.bright, v).toBeLessThan(dense.dark * 0.4);
+      expect(light.area, v).toBeGreaterThan(0);
+      expect(light.area, v).toBeLessThan(dense.area * 0.6);
+      // the leaves add up to at most a third of the storey's four sides (overlapping, they cover
+      // less), and never the middle of a face (above)
+      expect(dense.area, v).toBeLessThan((4 * 0.86) / 3);
+      expect(dense.farIvy / dense.farArea, v).toBeLessThan(0.05);
+      expect(light.farIvy, v).toBe(0);
     }
   });
 
@@ -400,6 +444,13 @@ describe("ruins", () => {
     for (const c of [MINE.pit, MINE.frame, MINE.wood]) expect(mine).toContain(cssColor(c));
   });
 });
+
+/** How many storeys of a column carry ivy on moist ground. */
+function ruinIvyReach(x: number, y: number, h: number): number {
+  let n = 0;
+  for (let lv = 0; lv < h; lv++) if (ruinIvy(x, y, h, lv) !== IVY_NONE) n++;
+  return n;
+}
 
 /** Areas of a terrain's faces, by the way they face. */
 function faces(src: TerrainSource): Record<string, number> {

@@ -232,9 +232,10 @@ export const START = {
 
 /** Ruins (Kyler's rounds, D178; his colours, measured in the game): ruined scaffold towers, one
  *  storey per level: thin rusty posts, beams and braces (#8D5631), beige slab panels (#B8A775) and,
- *  on moist ground, ivy (#405634 and a brighter green) over much of them. From afar each storey is
- *  a block in the scaffolding's rust (what makes ruins read from afar), a pale panel set in where
- *  it has one. The rust and the panels are lighter than rusty contaminated ground. */
+ *  on moist ground, ivy (#405634, a few leaves a brighter green) draped over about half the storeys,
+ *  the panels showing through. From afar each storey is a block in the scaffolding's rust (what
+ *  makes ruins read from afar), a pale panel set in where it has one. The rust and the panels are
+ *  lighter than rusty contaminated ground. */
 export const RUIN = {
   rust: [0.553, 0.337, 0.192] as Rgb,
   panel: [0.722, 0.655, 0.459] as Rgb,
