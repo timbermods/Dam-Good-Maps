@@ -1,0 +1,222 @@
+{
+  "date": "2026-09-26T01:43:13.257Z",
+  "browser": "153.0.4234.48",
+  "node": "v24.13.0",
+  "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+  "logicalCpus": 16,
+  "memoryGiB": 61.60379409790039,
+  "base": "84b1866b4e1d444346949a7dd57dc0f3f9f69ac5",
+  "places": 50,
+  "sizes": [
+    96,
+    128,
+    256
+  ],
+  "attempts": 150,
+  "passed": 47,
+  "method": "One chosen scale; no conversion retries; same-origin page creates module Worker; remote DEM fetched directly inside Worker; default browser security; ordinary browser Cache API shared across sizes.",
+  "passes": 47,
+  "rate": 0.31333333333333335,
+  "placesWithAPassingSize": 30,
+  "legacyPasses": 27,
+  "roundTripPasses": 150,
+  "settled": 83,
+  "errors": 0,
+  "minHeartbeats": 11,
+  "timing": [
+    {
+      "size": 96,
+      "attempts": 50,
+      "passes": 10,
+      "medianSeconds": 2.245699999988079,
+      "p90Seconds": 3.7181999999880793,
+      "maxSeconds": 4.684600000023842,
+      "medianConversionSeconds": 1.141,
+      "medianFetchAndPreviewSeconds": 0.964
+    },
+    {
+      "size": 128,
+      "attempts": 50,
+      "passes": 17,
+      "medianSeconds": 2.0983000000119207,
+      "p90Seconds": 4.409600000023842,
+      "maxSeconds": 6.389800000011921,
+      "medianConversionSeconds": 1.611899999976158,
+      "medianFetchAndPreviewSeconds": 0.22569999998807908
+    },
+    {
+      "size": 256,
+      "attempts": 50,
+      "passes": 20,
+      "medianSeconds": 7.810399999976158,
+      "p90Seconds": 16.469400000035762,
+      "maxSeconds": 21.6635,
+      "medianConversionSeconds": 6.625399999976159,
+      "medianFetchAndPreviewSeconds": 0.6307999999523163
+    }
+  ],
+  "prediction": [
+    {
+      "verdict": "promising",
+      "count": 131,
+      "passes": 45
+    },
+    {
+      "verdict": "uncertain",
+      "count": 9,
+      "passes": 2
+    },
+    {
+      "verdict": "difficult",
+      "count": 10,
+      "passes": 0
+    }
+  ],
+  "byFamily": [
+    {
+      "family": "canyon",
+      "attempts": 6,
+      "passes": 5
+    },
+    {
+      "family": "gorge",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "delta",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "braided",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "meander",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "fan",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "caldera",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "cone",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "mesa",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "badlands",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "karst",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "fjord",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "glacial",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "escarpment",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "plateau",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "lakes",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "confluence",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "falls",
+      "attempts": 6,
+      "passes": 3
+    },
+    {
+      "family": "coast",
+      "attempts": 6,
+      "passes": 1
+    },
+    {
+      "family": "archipelago",
+      "attempts": 6,
+      "passes": 2
+    },
+    {
+      "family": "plain",
+      "attempts": 9,
+      "passes": 1
+    },
+    {
+      "family": "desert",
+      "attempts": 3,
+      "passes": 1
+    },
+    {
+      "family": "ocean",
+      "attempts": 3,
+      "passes": 0
+    },
+    {
+      "family": "ice",
+      "attempts": 3,
+      "passes": 0
+    },
+    {
+      "family": "polar",
+      "attempts": 6,
+      "passes": 0
+    },
+    {
+      "family": "dateline",
+      "attempts": 3,
+      "passes": 0
+    },
+    {
+      "family": "city",
+      "attempts": 3,
+      "passes": 2
+    }
+  ],
+  "failures": {
+    "water.settles": 67,
+    "resources.scrap": 5,
+    "start.water.D153": 36,
+    "ruins.access": 1,
+    "start.wood": 9,
+    "start.food": 8,
+    "resources.bushes": 8,
+    "water.source.D152": 8
+  }
+}
