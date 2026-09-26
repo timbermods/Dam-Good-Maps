@@ -97,6 +97,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **The preview workflow** is live (`preview-workflow-done`, PR #39, live check passed):
   <https://timbermods.github.io/dam-good-maps/preview/> shows Live editing (noindex).
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
+- **#34** (Pick a place, designed water) is merged; its proposals are adopted for Pick a place (D166).
 - **#33** (exact-weather speedups) is merged; its proposals are adopted (D173).
 - **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
 - **Contaminated ground as a layer** is live (`look-contamination-done`, PR #36, live check passed).
@@ -125,8 +126,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: #34 (Pick a place, D166), then
-  `investigation/pickplace-water2`, `feature/save-to-timberborn` and #38 (Map look 2) when their PRs are open.
+- Queued for the next boundary, each merged once green: `investigation/pickplace-water2`,
+  `feature/save-to-timberborn` and #38 (Map look 2), when their PRs are open.
 
 ## Waiting on Kyler
 
@@ -138,7 +139,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 4. The before and after captures of the Map look fixes (D177, D178), when they're ready.
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53.
+   #51–#53 and #56 (Pick a place when no map passes).
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4), and deleting
    `Documents\Timberborn\DGMProbe` (208 MB, left by an earlier probe runner) and the empty

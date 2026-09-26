@@ -1651,9 +1651,11 @@ One smooth flow inside Dam Good Maps, from exploring the real world to a finishe
    requires.
 
 It follows every current rule: designed water (sources only where water begins, D166, D171; the
-designed-water prototype from `investigation/pickplace`, PR #34, adopted once it's complete), no
+designed-water prototype from `investigation/pickplace`, PR #34, merged, its INTEGRATION.md adopted as
+proposals; where `investigation/pickplace-water2` differs, its designed water replaces #34's), no
 walls or rims (D151), maps may drain (D152), Kyler's start requirements (D153, D164), and
-official-like trees, ruins, mines and clusters (D167–D170).
+official-like trees, ruins, mines and clusters (D167–D170). When the quiet retries change the
+player's framing, size or scale, the page says so plainly.
 
 **Blocking:** breakage (the map passes the validators and exports; the share link rebuilds it
 exactly; attribution present; no edge walls) and what a player feels (the explore view and the
