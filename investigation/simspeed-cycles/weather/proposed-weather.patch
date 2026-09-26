@@ -1,0 +1,266 @@
+diff --git a/investigation/cycles/game-soil.ts b/investigation/cycles/game-soil.ts
+index 420c844..80e9b6f 100644
+--- a/investigation/cycles/game-soil.ts
++++ b/investigation/cycles/game-soil.ts
+@@ -44,6 +44,10 @@ export class GameSoil {
+     /** Cluster saturation of the water the last pass read (0 on dry tiles). */
+     readonly sat: Uint8Array;
+     private readonly wn: Uint8Array;
++    private readonly countMark: Uint8Array;
++    private readonly saturationMark: Uint8Array;
++    private readonly countDirty: Int32Array;
++    private readonly saturationDirty: Int32Array;
+     private readonly nb: Int32Array;
+     // What the last pass read of each water tile, to find what changed: its own state, what it gives
+     // its neighbours' moisture and soil contamination, and its rounded-up depth.
+@@ -77,6 +81,10 @@ export class GameSoil {
+         this.cand = Float32Array.from(candidates);
+         this.sat = new Uint8Array(N);
+         this.wn = new Uint8Array(N);
++        this.countMark = new Uint8Array(N);
++        this.saturationMark = new Uint8Array(N);
++        this.countDirty = new Int32Array(N);
++        this.saturationDirty = new Int32Array(N);
+         this.pWet = new Uint8Array(N);
+         this.pSurf = new Int32Array(N);
+         this.pDepth = new Int32Array(N);
+@@ -110,18 +118,37 @@ export class GameSoil {
+         this.prevWetList = this.wetList;
+         this.prevWetCount = this.wetCount;
+         this.wetList = t;
+-        let wc = 0;
+-        for (let i = 0; i < N; i++) if (D[i] > 0) this.wetList[wc++] = i;
++        let wc = 0, countN = 0, saturationN = 0;
++        const cm = this.countMark, sm = this.saturationMark, cd = this.countDirty, sd = this.saturationDirty;
++        const addCount = (i: number) => { if (!cm[i]) { cm[i] = 1; cd[countN++] = i; } };
++        const addSaturation = (i: number) => { if (!sm[i]) { sm[i] = 1; sd[saturationN++] = i; } };
++        for (let i = 0; i < N; i++) {
++            const wet = D[i] > 0 ? 1 : 0;
++            if (wet) this.wetList[wc++] = i;
++            if (wet !== this.pWet[i]) {
++                addCount(i);
++                for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0) addCount(j); }
++            }
++        }
+         this.wetCount = wc;
+-        for (let k = 0; k < this.prevWetCount; k++) { const i = this.prevWetList[k]; wn[i] = 0; sat[i] = 0; }
+-        for (let k = 0; k < wc; k++) {
+-            const i = this.wetList[k];
+-            let c = 1;
+-            for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0 && D[j] > 0) c++; }
+-            wn[i] = c;
++        // Only a changed wet bit (own or one of eight neighbours) can alter wn.
++        for (let k = 0; k < countN; k++) {
++            const i = cd[k]; cm[i] = 0;
++            let c = 0;
++            if (D[i] > 0) {
++                c = 1;
++                for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0 && D[j] > 0) c++; }
++            }
++            if (c !== wn[i]) {
++                wn[i] = c;
++                addSaturation(i);
++                for (let d = 0; d < 4; d++) { const j = nb[8 * i + d]; if (j >= 0) addSaturation(j); }
++            }
+         }
+-        for (let k = 0; k < wc; k++) {
+-            const i = this.wetList[k];
++        // All counts are final before any saturation reads them. The per-tile order is unchanged.
++        for (let k = 0; k < saturationN; k++) {
++            const i = sd[k]; sm[i] = 0;
++            if (!(D[i] > 0)) { sat[i] = 0; continue; }
+             let s = wn[i];
+             for (let d = 0; d < 4; d++) { const j = nb[8 * i + d]; if (j >= 0 && wn[j] > s) s = wn[j] - 1; }
+             sat[i] = s > MAX_SAT ? MAX_SAT : s;
+@@ -137,7 +164,8 @@ export class GameSoil {
+         let n = 0, nc = 0;
+         const add = (i: number) => { if (mark[i] !== s) { mark[i] = s; dirty[n++] = i; } };
+         const addC = (i: number) => { if (markC[i] !== s) { markC[i] = s; dirtyC[nc++] = i; } };
+-        if (full || this.first) for (let i = 0; i < N; i++) { add(i); addC(i); }
++        const initializing = full || this.first;
++        if (initializing) for (let i = 0; i < N; i++) { add(i); addC(i); }
+         else {
+             for (const i of this.mChanged) { add(i); for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0) add(j); } }
+             for (const i of this.cChanged) { addC(i); for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0) addC(j); } }
+@@ -152,11 +180,20 @@ export class GameSoil {
+                     for (let d = 0; d < 8; d++) { const j = nb[8 * i + d]; if (j >= 0) add(j); }
+                 if (bad !== this.pBad[i] || (bad >= 0 && surf !== this.pSurf[i]))
+                     for (let d = 0; d < 4; d++) { const j = nb[8 * i + d]; if (j >= 0) addC(j); }
++                // No other check reads this tile's old descriptors. Publish the exact
++                // values already calculated, after all of this tile's comparisons.
++                this.pWet[i] = wet; this.pSurf[i] = surf; this.pDepth[i] = depth;
++                this.pC[i] = c; this.pSat[i] = sat[i]; this.pGive[i] = give; this.pBad[i] = bad;
+             };
+             for (let k = 0; k < wc; k++) check(this.wetList[k]);
+-            for (let k = 0; k < this.prevWetCount; k++) check(this.prevWetList[k]);
++            // A still-wet tile was already checked; repeated add/addC calls were no-ops.
++            for (let k = 0; k < this.prevWetCount; k++) {
++                const i = this.prevWetList[k]; if (!(D[i] > 0)) check(i);
++            }
+         }
+         this.first = false;
++        // The first/full pass does not execute check; initialize its descriptors here.
++        if (initializing) {
+         // Remember the water this pass read.
+         for (let k = 0; k < this.prevWetCount; k++) {
+             const i = this.prevWetList[k];
+@@ -168,6 +205,8 @@ export class GameSoil {
+             this.pGive[i] = waterMoisture(sat[i], c); this.pBad[i] = c >= C_MIN_WATER ? c : -1;
+         }
+ 
++        }
++
+         // MoistureCalculationTask: read last tick's values, then write.
+         const mNew: number[] = [];
+         for (let k = 0; k < n; k++) {
+diff --git a/investigation/cycles/game-water.ts b/investigation/cycles/game-water.ts
+index 0f5a942..3ae9b49 100644
+--- a/investigation/cycles/game-water.ts
++++ b/investigation/cycles/game-water.ts
+@@ -1,3 +1,4 @@
++import { waterKernel } from './water-kernel';
+ // The game's water substep on a heightfield, task by task in the game's order (FIDELITY.md, "Water").
+ // Depth and flow follow the repository's validated port (src/core/sim/water.ts); this copy adds what
+ // that port leaves out: the game's contamination transport and diffusion, evaporation of every
+@@ -64,7 +65,12 @@ export class GameWater {
+     private activeCount = 0;
+     private readonly sourceCells: Int32Array;
+     /** Neighbour of tile c in direction k at 4·c + k, −1 outside the map. */
++    private readonly kernel: any;
+     private readonly nb: Int32Array;
++    // Conservative radius-two support of old contamination, rebuilt each substep.
++    private readonly contaminationMark: Int32Array;
++    private readonly contaminationFrontier: Int32Array;
++    private contaminationStamp = 0;
+ 
+     constructor(model: WaterModel, depth: ArrayLike<number>, contamination: ArrayLike<number>, evaporation: ArrayLike<number>, outflows?: ArrayLike<number>) {
+         const { W, H } = model, N = W * H;
+@@ -87,6 +93,8 @@ export class GameWater {
+         this.prevWet = new Int32Array(N);
+         this.active = new Int32Array(N);
+         this.nb = new Int32Array(4 * N);
++        this.contaminationMark = new Int32Array(N);
++        this.contaminationFrontier = new Int32Array(N);
+         for (let c = 0; c < N; c++) {
+             const x = c % W, y = (c - x) / W;
+             this.nb[4 * c] = y > 0 ? c - W : -1;
+@@ -107,6 +115,18 @@ export class GameWater {
+         }
+         this.sourceCells = Int32Array.from(cells);
+         for (let i = 0; i < N; i++) if (this.D[i] > 0) this.wet[this.wetCount++] = i;
++        if (!waterKernel) { this.kernel = null; return; }
++        this.kernel = new WebAssembly.Instance(waterKernel, { env: { abort: () => { throw new Error('Water kernel aborted'); } } }).exports;
++        const fields = ["F","dam","D","Dold","C","out","evapBuffered","evapCurrent","f","buf","count","flags","wall","mark","wet","prevWet","active","sourceCells","nb","contaminationMark","contaminationFrontier"];
++        let bytes = 0;
++        for (const key of fields) { const value = (this as any)[key]; if (value) bytes += (value.byteLength + 7) & ~7; }
++        let cursor = this.kernel.alloc(bytes);
++        const memory = (this.kernel.memory as WebAssembly.Memory).buffer;
++        for (const key of fields) {
++            const value = (this as any)[key]; if (!value) continue;
++            const view = new value.constructor(memory, cursor, value.length); view.set(value);
++            (this as any)[key] = view; cursor += (value.byteLength + 7) & ~7;
++        }
+     }
+ 
+     /** WaterEvaporationMap.Tick: last tick's soil pass becomes this tick's evaporation. */
+@@ -137,7 +157,55 @@ export class GameWater {
+         this.activeCount = n;
+     }
+ 
++    /** Mixing reaches one edge and diffusion reaches one further edge. Outside that
++     * support all concentrations and relevant mixed neighbours are positive zero.
++     * Dense contamination uses the unchanged full passes. No water work is skipped. */
++    private contaminationSupport(): number {
++        const mark = this.contaminationMark, list = this.contaminationFrontier, C = this.C, nb = this.nb;
++        if (++this.contaminationStamp === 2147483647) { mark.fill(0); this.contaminationStamp = 1; }
++        const s = this.contaminationStamp;
++        let n = 0;
++        for (let a = 0; a < this.activeCount; a++) {
++            const i = this.active[a];
++            // Preserve signed-zero behaviour by treating negative zero as a seed too.
++            if (C[i] !== 0 || Object.is(C[i], -0)) { mark[i] = s; list[n++] = i; }
++            if (n > this.activeCount / 4) return 0;
++        }
++        let begin = 0, end = n;
++        for (let radius = 0; radius < 2; radius++) {
++            for (let a = begin; a < end; a++) {
++                const i = list[a];
++                for (let k = 0; k < 4; k++) {
++                    const j = nb[4 * i + k];
++                    if (j >= 0 && mark[j] !== s) { mark[j] = s; list[n++] = j; }
++                }
++            }
++            begin = end; end = n;
++        }
++        return s;
++    }
++
+     private substep(): void {
++        // Historical fidelity switches keep their untouched JS implementation.
++        if (!this.kernel || this.legacy.bookkeeping || this.legacy.contamination) return this.substepJS();
++        const D = this.D, out = this.out, f = this.f;
++        for (let k = 0; k < this.prevWetCount; k++) {
++            const i = this.prevWet[k], b = 4 * i;
++            f[b] = f[b + 1] = f[b + 2] = f[b + 3] = 0;
++            if (!(D[i] > 0)) out[b] = out[b + 1] = out[b + 2] = out[b + 3] = 0;
++        }
++        this.buildActive();
++        const p = (a: ArrayBufferView | null) => a ? a.byteOffset : 0;
++        this.kernel.hydraulics(p(this.F), p(D), p(this.Dold), p(out), p(f), p(this.dam), p(this.nb),
++            p(this.wall), p(this.wet), this.wetCount, p(this.active), this.activeCount, p(this.evapBuffered));
++        const support = this.contaminationSupport();
++        this.kernel.contamination(p(this.F), p(D), p(this.C), p(out), p(this.dam), p(this.nb),
++            p(this.active), this.activeCount, p(this.buf), p(this.count), p(this.flags), p(this.contaminationMark), support);
++        this.sourcesStep();
++        this.finishSubstep();
++    }
++
++    private substepJS(): void {
+         const { F, D, C, out, f, wall, dam, nb } = this;
+         // ClearBuffersTask; a tile that was wet last substep and is dry now holds no momentum after
+         // this substep's WaterParametersUpdateTask, and nothing reads it before then.
+@@ -222,9 +290,11 @@ export class GameWater {
+         // SimulateContaminationTask: mix by the net stored flow from each neighbour, after the depth
+         // update; mark neighbours that exchange slowly at nearly equal surfaces for diffusion.
+         const buf = this.buf, count = this.count, flags = this.flags;
++        const support = this.contaminationSupport(), supportMark = this.contaminationMark;
+         for (let a = 0; a < this.activeCount; a++) {
+             const c = act[a];
+             count[c] = 0; flags[c] = 0; buf[c] = 0;
++            if (support && supportMark[c] !== support) continue;
+             const Dc = D[c];
+             if (!(Dc > 0)) continue;
+             let received = 0, change = 0;
+@@ -251,6 +321,7 @@ export class GameWater {
+         for (let a = 0; a < this.activeCount; a++) {
+             const c = act[a], Dc = D[c];
+             if (!(Dc > 0)) { C[c] = 0; continue; }
++            if (support && supportMark[c] !== support) continue;
+             let v = buf[c];
+             if (count[c]) {
+                 let sum = 0;
+diff --git a/investigation/cycles/water-kernel.json b/investigation/cycles/water-kernel.json
+new file mode 100644
+index 0000000..d5bcc9f
+--- /dev/null
++++ b/investigation/cycles/water-kernel.json
+@@ -0,0 +1 @@
++{"sha256":"6d0971bb333d6b6aba595512d182f2483b5090d4ed3c8738dcb8c5d68ac422e8","base64":"AGFzbQEAAAABIARgDX9/f39/f39/f39/f38AYAR/f39/AGABfwF/YAAAAg0BA2VudgVhYm9ydAABAwUEAgAAAwUDAQABBgsCfwFBAAt/AUEACwcvBAVhbGxvYwABCmh5ZHJhdWxpY3MAAg1jb250YW1pbmF0aW9uAAMGbWVtb3J5AgAIAQQK6RMEhgEBBH8gAEH8////A0sEQEEgQeAAQSFBHRAAAAsjAUEEaiIDIABBE2pBcHFBBGsiBGoiAD8AIgFBEHRBD2pBcHEiAksEQCABIAAgAmtB//8DakGAgHxxQRB2IgIgASACShtAAEEASARAIAJAAEEASARAAAsLCyMBIQEgACQBIAEgBDYCACADC5EKAgh8B38DQCAJIBpKBEAgACAIIBpBAnRqKAIAIhdBA3RqKwMAIhIgASAXQQN0aisDACIToCEOIBdBAnQhFUEAIRYDQCAWQQRIBEAgBiAXQQJ0IBZqQQJ0aigCACIYQQBOIhkEfCAAIBhBA3RqKwMABUQAAAAAAAAAAAshDyAZBHwgASAYQQN0aisDAAVEAAAAAAAAAAALIRACQEEBIA4gD2UgByAXai0AAEEBIBZ0cRsEQCAEIBUgFmpBA3RqRAAAAAAAAAAAOQMADAELIA4gDyAQoKEhDSADIBUgFmpBA3RqKwMARCuHFtnO9+8/oiEUIAQgFSAWakEDdGogGQR8IAVFIBhBAEhyBHxEAAAAAAAA8L8FIAUgGEEDdCIbaisDACIRRAAAAAAAAPC/IBFEAAAAAAAAAABmBH8gACAXQQN0aisDACAAIBtqKwMAZQVBAAsEfyAAIBhBA3RqKwMAIA6bYwVBAAsbCwVEAAAAAAAA8L8LIhFEAAAAAAAAAABmBHwgFETXo3A9CtfvP6IhECAOIA+hIg8gEWMEfCAQRAAAAAAAAAAARAAAAAAAAPA/RAAAAAAAAAAARAAAAAAAAPA/IBEgD6FEmpmZmZmZuT+jIg0gDUQAAAAAAADwP2QbIA1EAAAAAAAAAABjG0QAAAAAAADgP0QAAAAAAAAAQEQAAAAAAADwPyAOIBIgAiAXQQN0aisDAKChRAAAAAAAAAJAoqEiDSANRAAAAAAAAABAZBsgDUQAAAAAAADgP2MboiINIA1EAAAAAAAA8D9kGyANRAAAAAAAAAAAYxtEexSuR+F6lD+ioQUgECAPIBGhIg9EmpmZmZmZuT9jIA1EAAAAAAAAAABkcQR8IA0gD0SamZmZmZm5P6OiBSANC0SZmZmZmZnlP6KgCwUgFCANRJqZmZmZmbm/oCANIA8gEmEgEEQAAAAAAAAAAGFxIBlBAXJxG0SZmZmZmZnlP6KgCyINRAAAAAAAAAAAIA1EAAAAAAAAAABkGzkDAAsgFkEBaiEWDAELCyAEIBVBA3RqIhYrAwAiDSAEIBVBAWpBA3RqIhcrAwCgIAQgFUECakEDdGoiGCsDAKAgBCAVQQNqQQN0aiIZKwMAoCIORDMzMzMzM9M/oiATZARAIBYgDSATIA5EMzMzMzMz0z+ioyIOojkDACAXIAQgFUEBakEDdGorAwAgDqI5AwAgGCAEIBVBAmpBA3RqKwMAIA6iOQMAIBkgBCAVQQNqQQN0aisDACAOojkDAAsgGkEBaiEaDAELC0EAIQcDQCAHIAtIBEAgCiAHQQJ0aigCACIFQQJ0IQhEAAAAAAAAAAAhDkEAIQADQCAAQQRIBEAgDiAGIAVBAnQgAGpBAnRqKAIAIglBAE4EfCAEIABBAmpBA3EgCUECdGpBA3RqKwMABUQAAAAAAAAAAAsiDyAEIAAgCGpBA3QiCWorAwAiDaGgIQ4gAyAJaiANIA9EmpmZmZmZ6T+ioSIPRAAAAAAAAAAAIA9EAAAAAAAAAABkIA1EAAAAAAAAAABkcRs5AwAgAEEBaiEADAELC0T8qfHSTWJQP0QtQxzr4jYaPyABIAVBA3QiAGoiBSsDACINRHsUrkfhepQ/YxsgACAMaisDAKIhDyAAIAJqIA05AwAgBSANIA4gD6FEMzMzMzMz0z+ioCIORAAAAAAAAAAAIA5EAAAAAAAAAABkGzkDACAHQQFqIQcMAQsLC74IAgV/BXwDQCAHIBFKBEAgBiARQQJ0aigCACIOIAlqQQA6AAAgCiAOakEAOgAAIAggDkEDdGpEAAAAAAAAAAA5AwACQCAMBH8gDCALIA5BAnRqKAIARwVBAAsNACABIA5BA3RqKwMAIhJEAAAAAAAAAABkRQ0ARAAAAAAAAAAAIRNEAAAAAAAAAAAhFUEAIQ8DQCAPQQRIBEACQCAFIA5BAnQgD2pBAnRqKAIAIhBBAE4EfCADIA9BAmpBA3EgEEECdGpBA3RqKwMABUQAAAAAAAAAAAsgAyAOQQJ0IA9qQQN0aisDAKEiFEQAAAAAAAAAAGENACAURDMzMzMzM9M/oiIWRAAAAAAAAAAAZARAIBUgFiACIBBBA3RqKwMAoqAhFSATIBagIRMLIBBBAEggFEQAAAAAAADAP2ZyIBREAAAAAAAAwL9lcg0AIAQEfyASRAAAAAAAAPA/ZSINBEAgBCAOQQN0aisDAEQAAAAAAAAAAGYhDQsgDQR/IA0FIAEgEEEDdCINaisDAEQAAAAAAADwP2UEfyAEIA1qKwMARAAAAAAAAAAAZgVBAAsLBUEACw0AIAEgEEEDdCINaisDACIURAAAAAAAAAAAZEUNACAUIAAgDWorAwCgIhQgEiAAIA5BA3RqKwMAoCIWoSAWIBShIBQgFmQbRJqZmZmZmbk/ZA0AIAogDmoiDSANLQAAQQEgD3RyOgAAIAkgDmoiDSANLQAAQQFqOgAACyAPQQFqIQ8MAQsLIBNEAAAAAAAAAABkBEAgCCAOQQN0Ig1qRAAAAAAAAAAARAAAAAAAAPA/IAIgDWorAwAgEiAToaIgFaAgEqMiEiASRAAAAAAAAPA/ZBsgEkQAAAAAAAAAAGMbOQMABSAIIA5BA3QiDWogAiANaisDADkDAAsLIBFBAWohEQwBCwtBACEEA0AgBCAHSARAAkAgASAGIARBAnRqKAIAIgBBA3RqKwMAIhREAAAAAAAAAABkRQRAIAIgAEEDdGpEAAAAAAAAAAA5AwAMAQsgDAR/IAwgCyAAQQJ0aigCAEcFQQALDQAgCCAAQQN0aisDACESIAAgCWotAAAiAwRARAAAAAAAAAAAIRNEAAAAAAAA8D8gA7ejIRZBACEDA0AgA0EESARAIAAgCmotAABBASADdHEEQCAIIAUgAEECdCADakECdGooAgAiDUEDdGorAwAgCCAAQQN0aisDAKEhFSATIAEgDUEDdCIOaisDACITIBQgE6CjIBVEAAAAAAAAAABkBHwgCCAOaisDACAJIA1qLQAAt6MgFaQFIBaaIAggAEEDdGorAwCiIBWlC6JEzczMzMzM3D+ioCETCyADQQFqIQMMAQsLIBIgE0QzMzMzMzPTP6KgIRILIAIgAEEDdGpEAAAAAAAA8D8gEiASRAAAAAAAAPA/ZBs5AwALIARBAWohBAwBCwsLDABBjAEkAEGMASQBCwttBABBDAsBPABBGAsvAgAAACgAAABBAGwAbABvAGMAYQB0AGkAbwBuACAAdABvAG8AIABsAGEAcgBnAGUAQcwACwE8AEHYAAslAgAAAB4AAAB+AGwAaQBiAC8AcgB0AC8AcwB0AHUAYgAuAHQAcw=="}
+diff --git a/investigation/cycles/water-kernel.ts b/investigation/cycles/water-kernel.ts
+new file mode 100644
+index 0000000..4a3f99b
+--- /dev/null
++++ b/investigation/cycles/water-kernel.ts
+@@ -0,0 +1,12 @@
++// Proposal: load once inside the Weather worker, before constructing a model.
++// The bytes must be produced with the pinned strict scalar compiler configuration.
++import encoded from './water-kernel.json';
++export const waterKernel: WebAssembly.Module | null = (() => {
++    if (typeof WebAssembly === 'undefined') return null;
++    try {
++        const bytes = Uint8Array.from(atob(encoded.base64), c => c.charCodeAt(0));
++        return new WebAssembly.Module(bytes);
++    } catch {
++        return null; // GameWater retains its JS substep when compilation is unavailable.
++    }
++})();

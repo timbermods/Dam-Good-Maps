@@ -1,0 +1,26 @@
+{
+  "assemblyscript": "0.28.20",
+  "binaryenFastMath": false,
+  "options": [
+    "weather/kernel.ts",
+    "--outFile",
+    ".work/weather/kernel-unoptimized.wasm",
+    "--textFile",
+    ".work/weather/kernel-unoptimized.wat",
+    "--runtime",
+    "stub",
+    "--optimizeLevel",
+    "0",
+    "--shrinkLevel",
+    "0",
+    "--noAssert"
+  ],
+  "strictBinaryenOptimizeLevel": 3,
+  "strictBinaryenShrinkLevel": 0,
+  "bytes": 2785,
+  "scalarF64": true,
+  "float32Instructions": false,
+  "simd": false,
+  "relaxedSimd": false,
+  "sha256": "6d0971bb333d6b6aba595512d182f2483b5090d4ed3c8738dcb8c5d68ac422e8"
+}
