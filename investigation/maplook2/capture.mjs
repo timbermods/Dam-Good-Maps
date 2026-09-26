@@ -81,7 +81,8 @@ try {
       report.maps.push(entry);console.log('Loaded',i,entry.label);
       if(i===0){await capture('river-128-badwater','badwater');await capture('river-128-soil','contaminated');await capture('river-128-ruins','ruins');}
       if(i===1){await capture('river-256-meeting','mixed');await capture('river-256-overview','overview');}
-      if(i===6){await capture('lake-128-shore','shore');await capture('lake-128-shore-low','shore',Math.PI/3,0.35);}
+      if(i===6){await capture('lake-128-shore','shore');await capture('lake-128-shore-low','shore',Math.PI/3,0.35);await capture('lake-128-water-above','water-above');await capture('lake-128-water-low','water-low');await capture('lake-128-water-grazing','water-grazing');}
+      if(i===7)await capture('lake-256-water-above','water-above');
       if(i===12)await capture('real-victoria-falls','falls');
       if(i===13)await capture('real-yosemite-cliff','cliff');
       if(i===15)await capture('m9-canyon-falls','falls');

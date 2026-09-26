@@ -1,7 +1,19 @@
-import type { ShaderMaterial } from 'three';
+import { Vector3, type ShaderMaterial } from 'three';
+
+// Display-space palette, calibrated through the renderer (see colour-check.mjs).
+// Targets are the user's measurements; these inputs also allow for the lit bed and finish.
+export const CLEAN_PALETTE = {
+  mlShallow: [34, 71.5, 86], mlBody: [33, 65, 77], mlDeep: [28, 49, 62],
+  mlStreakAbove: [45, 83, 96], mlStreakLow: [56, 86, 98],
+  mlGrazing: [51, 79, 91], mlStreakGrazing: [82.5, 127.5, 137],
+} as const;
 
 /** Our procedural water. Keep the baseline vertex layout, shared finish and map meanings. */
 export function highWater(material: ShaderMaterial): ShaderMaterial {
+  material.uniforms = { ...material.uniforms };
+  for (const [name, rgb] of Object.entries(CLEAN_PALETTE)) {
+    material.uniforms[name] = { value: new Vector3(...rgb).divideScalar(255) };
+  }
   const marker = '      /** The slope of the ripples';
   const i = material.fragmentShader.indexOf(marker);
   if (i < 0) throw new Error('Water shader bridge needs updating');
@@ -13,6 +25,47 @@ vec3 rippleNormal(vec2 p, float t) {
   slope += cos(dot(p, vec2(3.2, 2.1)) + t * 1.4) * vec2(3.2, 2.1) * 0.012;
   float detail = 1.0 - smoothstep(0.1, 0.5, max(fwidth(p.x), fwidth(p.y)));
   return normalize(vec3(slope.x * detail, 1.0, -slope.y * detail));
+}
+uniform vec3 mlShallow, mlBody, mlDeep, mlStreakAbove, mlStreakLow, mlGrazing, mlStreakGrazing;
+float fleckHash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+vec4 measuredCleanWater(vec2 g, float depth, float shore, vec3 N, vec3 V, float lit, float t) {
+  float bodyDepth = smoothstep(0.25, 1.25, depth);
+  float deep = smoothstep(1.25, 4.25, depth);
+  vec3 body = mix(mix(mlShallow, mlBody, bodyDepth), mlDeep, deep);
+  // Above: >=55 degrees; low: 30 degrees; grazing: about 10 degrees above water.
+  float facing = clamp(V.y + (N.x + N.z) * 0.05, 0.0, 1.0);
+  float low = 1.0 - smoothstep(0.50, 0.82, facing);
+  float grazing = 1.0 - smoothstep(0.18, 0.50, facing);
+  body = mix(body, mlGrazing, grazing);
+  vec3 streakColour = mix(mix(mlStreakAbove, mlStreakLow, low), mlStreakGrazing, grazing);
+  // Stretched, warped noise drifts across the surface. No large regular sine bands.
+  vec2 q = vec2(g.x*0.85+g.y*0.24, g.y*5.0-g.x*0.6);
+  q += vec2(vnoise(g*0.55)*0.8, vnoise(g*0.45+9.0)*1.4);
+  q += vec2(t*0.12, -t*0.40);
+  float texture = vnoise(q);
+  float pixel = max(fwidth(g.x), fwidth(g.y));
+  float near = 1.0 - smoothstep(0.18, 0.80, pixel);
+  float streak = smoothstep(0.51, 0.68, texture) * near;
+  vec3 colour = mix(body, streakColour, streak);
+  // Palette is anchored in full sun; preserve the existing sun's shadow attenuation.
+  vec3 referenceLight = skyColor*1.05 + sunColor*0.42*max(sunDir.y, 0.0);
+  vec3 rippleLight = skyColor*1.05 + sunColor*0.42*max(dot(normalize(mix(vec3(0.0,1.0,0.0),N,0.35)),sunDir),0.0)*lit;
+  colour *= rippleLight / max(referenceLight, vec3(0.01));
+  // Tiny, sparse microfacet flecks. Fade before they become subpixel noise from afar.
+  vec2 cell = floor(g*3.0);
+  vec2 point = vec2(fleckHash(cell+13.0), fleckHash(cell+47.0))*0.6+0.2;
+  float radius = max(pixel*3.0*0.6, 0.035);
+  float spot = 1.0 - smoothstep(radius*0.3, radius, length(fract(g*3.0)-point));
+  float twinkle = smoothstep(0.30,0.85,sin(t*1.7+fleckHash(cell)*51.0));
+  float glint = spot * step(0.992, fleckHash(cell+91.0)) * twinkle * lit * (1.0-smoothstep(0.06,0.15,pixel));
+  colour = mix(colour, vec3(0.97,0.985,1.0), glint);
+  // Faint real transmission, strongest over the shallow terrace and close to its bank.
+  float alpha = mix(mix(0.86,0.96,bodyDepth),0.995,deep);
+  alpha = mix(0.76,alpha,smoothstep(0.0,0.20,shore));
+  alpha = max(alpha, grazing*0.98);
+  return vec4(colour,alpha);
 }
 void main() {
   vec3 n = normalize(vNormal);
@@ -92,6 +145,12 @@ void main() {
     foam = edge ? 0.0 : smoothstep(0.12, 0.6, drop) * (0.42+strands*0.60);
     alpha = edge ? mix(0.78, 0.96, bad) : (0.32+0.53*strands)*smoothstep(0.06, 0.25, drop);
     if (alpha < 0.01) discard;
+  }
+  // Retain the accepted badwater and waterfall paths exactly; replace only clean tops.
+  if (n.y > 0.5 && bad < 1.0) {
+    vec4 matched = measuredCleanWater(g, d, shore, N, V, lit, t);
+    c = mix(matched.rgb, c, bad);
+    alpha = mix(matched.a, alpha, bad);
   }
   foam *= 1.0 - bad * 0.55;
   foam = clamp(foam, 0.0, 1.0);
