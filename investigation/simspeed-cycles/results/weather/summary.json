@@ -1,0 +1,289 @@
+{
+  "buildId": "3d4ee86c350c609c17b8149b824d6e9c054abbea8fb8d2aaa29f8416c88e9710",
+  "reference": "948f395137a6725d4b726864a47e6966d7f2f09a",
+  "status": "complete",
+  "nodeCases": 204,
+  "chromiumCases": 204,
+  "expectedCases": 204,
+  "variants": [
+    "baseline",
+    "water-sparse",
+    "soil-cache",
+    "soil-saturation",
+    "water-wasm",
+    "combined"
+  ],
+  "boundaries": true,
+  "sourceAudit": true,
+  "smokePassed": true,
+  "smokeCases": 6,
+  "fullProfiles": 18,
+  "missing": {
+    "node": [],
+    "chromium": [],
+    "profiles": []
+  },
+  "productMissing": {
+    "node": [],
+    "chromium": []
+  },
+  "dayHistogram": {
+    "73": 201,
+    "77": 3
+  },
+  "checkpointsPerVariant": 17964,
+  "simulatedDaysPerVariant": 14904,
+  "bySize": {
+    "96": {
+      "nodeCases": 6,
+      "chromiumCases": 6,
+      "ratios": {
+        "water-sparse": {
+          "nodeCpu": 1.095100647407089,
+          "chromiumWall": 1.103225585833775
+        },
+        "soil-cache": {
+          "nodeCpu": 1.075696616267496,
+          "chromiumWall": 1.0617834387433784
+        },
+        "soil-saturation": {
+          "nodeCpu": 1.0203731406487118,
+          "chromiumWall": 1.0030699732675843
+        },
+        "water-wasm": {
+          "nodeCpu": 1.2657927756822818,
+          "chromiumWall": 1.26847554428005
+        },
+        "combined": {
+          "nodeCpu": 1.481225720041734,
+          "chromiumWall": 1.3589016742105087
+        }
+      },
+      "nodeBaselineCpuMs": 16329,
+      "nodeCombinedCpuMs": 11844.5,
+      "chromiumBaselineWallMs": 19111.499999791384,
+      "chromiumCombinedWallMs": 14268.200000166893
+    },
+    "128": {
+      "nodeCases": 180,
+      "chromiumCases": 180,
+      "ratios": {
+        "water-sparse": {
+          "nodeCpu": 1.1221515698346956,
+          "chromiumWall": 1.1364361292355634
+        },
+        "soil-cache": {
+          "nodeCpu": 1.060127803293832,
+          "chromiumWall": 1.059718128714887
+        },
+        "soil-saturation": {
+          "nodeCpu": 1.0083355372046352,
+          "chromiumWall": 1.0016865648521112
+        },
+        "water-wasm": {
+          "nodeCpu": 1.230647310590364,
+          "chromiumWall": 1.2472083138803507
+        },
+        "combined": {
+          "nodeCpu": 1.4402036193492398,
+          "chromiumWall": 1.520807235017613
+        }
+      },
+      "nodeBaselineCpuMs": 26265.5,
+      "nodeCombinedCpuMs": 18655.5,
+      "chromiumBaselineWallMs": 31530.25000014901,
+      "chromiumCombinedWallMs": 21419.900000184774
+    },
+    "256": {
+      "nodeCases": 18,
+      "chromiumCases": 18,
+      "ratios": {
+        "water-sparse": {
+          "nodeCpu": 1.1370949184589016,
+          "chromiumWall": 1.1529596975637317
+        },
+        "soil-cache": {
+          "nodeCpu": 1.057456394719548,
+          "chromiumWall": 1.0680515481800983
+        },
+        "soil-saturation": {
+          "nodeCpu": 0.9886412585570125,
+          "chromiumWall": 0.9686728328861507
+        },
+        "water-wasm": {
+          "nodeCpu": 1.2103238046784062,
+          "chromiumWall": 1.1847845269198793
+        },
+        "combined": {
+          "nodeCpu": 1.39827657613226,
+          "chromiumWall": 1.3254892053157978
+        }
+      },
+      "nodeBaselineCpuMs": 91988,
+      "nodeCombinedCpuMs": 70985,
+      "chromiumBaselineWallMs": 96643.40000009537,
+      "chromiumCombinedWallMs": 67918.34999990463
+    }
+  },
+  "profilePhases": {
+    "soil.wet-count-saturation": 0.10049782279788874,
+    "soil.evaporation": 0.04713011416592395,
+    "soil.dirty": 0.11590637197745557,
+    "soil.remember": 0.022370341626872774,
+    "soil.moisture": 0.027900222194101532,
+    "soil.candidates": 0.006320382942256564,
+    "soil.publish-levels": 0.0038366846131186435,
+    "water.clear-active": 0.07065912682353091,
+    "water.outflows": 0.1606853168835306,
+    "water.depth": 0.12339985469379508,
+    "water.mix": 0.18251965284956922,
+    "water.diffusion": 0.06343025610849123,
+    "water.sources-finish": 0.014646739073364652
+  },
+  "profileGroups": [
+    {
+      "theme": "canyon",
+      "size": 128,
+      "days": 73,
+      "wallMs": 9842.0049,
+      "waterMs": 5352.177700003696,
+      "soilMs": 3822.2444000015967
+    },
+    {
+      "theme": "canyon",
+      "size": 256,
+      "days": 73,
+      "wallMs": 38087.4166,
+      "waterMs": 21917.374700010754,
+      "soilMs": 14862.339900009334
+    },
+    {
+      "theme": "canyon",
+      "size": 96,
+      "days": 73,
+      "wallMs": 7243.8175999999985,
+      "waterMs": 4054.584499999666,
+      "soilMs": 2728.1291999995847
+    },
+    {
+      "theme": "delta",
+      "size": 128,
+      "days": 73,
+      "wallMs": 24982.798300000024,
+      "waterMs": 15909.969099998882,
+      "soilMs": 8062.481399998127
+    },
+    {
+      "theme": "delta",
+      "size": 256,
+      "days": 73,
+      "wallMs": 95285.58990000002,
+      "waterMs": 58502.23860002821,
+      "soilMs": 33933.093699994264
+    },
+    {
+      "theme": "delta",
+      "size": 96,
+      "days": 73,
+      "wallMs": 13517.838900000002,
+      "waterMs": 8394.562899999582,
+      "soilMs": 4443.832900003879
+    },
+    {
+      "theme": "highlands",
+      "size": 128,
+      "days": 73,
+      "wallMs": 20534.340599999996,
+      "waterMs": 10769.122800000332,
+      "soilMs": 9001.499900000927
+    },
+    {
+      "theme": "highlands",
+      "size": 256,
+      "days": 73,
+      "wallMs": 87383.94460000005,
+      "waterMs": 56341.09199998004,
+      "soilMs": 28582.19910001126
+    },
+    {
+      "theme": "highlands",
+      "size": 96,
+      "days": 73,
+      "wallMs": 21400.3434,
+      "waterMs": 11299.652400000388,
+      "soilMs": 9524.802700000291
+    },
+    {
+      "theme": "islands",
+      "size": 128,
+      "days": 73,
+      "wallMs": 132487.6435,
+      "waterMs": 97357.71219999279,
+      "soilMs": 33737.15560000483
+    },
+    {
+      "theme": "islands",
+      "size": 256,
+      "days": 77,
+      "wallMs": 380993.0434000001,
+      "waterMs": 282185.09500001627,
+      "soilMs": 93296.30599998846
+    },
+    {
+      "theme": "islands",
+      "size": 96,
+      "days": 73,
+      "wallMs": 70965.42039999999,
+      "waterMs": 51891.90390000629,
+      "soilMs": 18124.58350000078
+    },
+    {
+      "theme": "lakeBasin",
+      "size": 128,
+      "days": 73,
+      "wallMs": 89084.08440000002,
+      "waterMs": 63968.357699999906,
+      "soilMs": 24045.919400002575
+    },
+    {
+      "theme": "lakeBasin",
+      "size": 256,
+      "days": 73,
+      "wallMs": 196071.782,
+      "waterMs": 138057.53699998825,
+      "soilMs": 55187.1025999994
+    },
+    {
+      "theme": "lakeBasin",
+      "size": 96,
+      "days": 73,
+      "wallMs": 63879.0566,
+      "waterMs": 45215.638199998764,
+      "soilMs": 17591.41199999985
+    },
+    {
+      "theme": "riverValley",
+      "size": 128,
+      "days": 73,
+      "wallMs": 17548.7108,
+      "waterMs": 10420.652399994753,
+      "soilMs": 6189.741099997336
+    },
+    {
+      "theme": "riverValley",
+      "size": 256,
+      "days": 73,
+      "wallMs": 73873.93400000001,
+      "waterMs": 45386.03569999087,
+      "soilMs": 26154.23739999457
+    },
+    {
+      "theme": "riverValley",
+      "size": 96,
+      "days": 73,
+      "wallMs": 11598.2722,
+      "waterMs": 6693.394699999917,
+      "soilMs": 4161.382099999943
+    }
+  ]
+}

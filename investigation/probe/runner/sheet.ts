@@ -1,6 +1,6 @@
 // A local HTML contact sheet of a run's screenshots: per map, per moment, every pose; where a pose
 // reproduces a Map look capture, our 3D view's capture stands beside the game's shot. The sheet is
-// written to Documents\Timberborn\DGMProbe\sheet\ (outside the repository) and links the images
+// written to C:\dgm-probe\sheet\ (outside the repository) and links the images
 // where they are, so nothing is copied.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace DGMProbe
 {
-    // Runs once per launch, in the mod manager scene. Without Documents\Timberborn\DGMProbe\job.json it
-    // does nothing at all: no object is created, and the configurators bind nothing.
+    // Runs once per launch, in the mod manager scene. Without -dgmprobe, -dgmprobeHome <folder> and a job.json
+    // in that folder it does nothing at all: no object is created, and the configurators bind nothing.
     public class ProbeStarter : IModStarter
     {
         public void StartMod(IModEnvironment modEnvironment)
