@@ -173,7 +173,18 @@ export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, 
         continue;
       }
       tries++;
-      const res = verifier(s, q.replaces ? { ...x.step, replaces: q.replaces } : x.step);
+      let res = verifier(s, q.replaces ? { ...x.step, replaces: q.replaces } : x.step);
+      // a lake a river already fills needs no spring of its own: a source starts water, never
+      // stands in a flow (D171)
+      if (x.kind === "lake" && q.request?.spring === undefined && x.step.spring === undefined && !res.error && res.broken.length === 1 && res.broken[0] === "water.source_in_flow") {
+        const fed = { ...x.step, spring: 0 };
+        const again = verifier(s, fed);
+        if (!again.error && !again.broken.length) {
+          res = again;
+          x.step = fed;
+          x.report = [...(x.report ?? []).filter((l) => !/spring/.test(l)), "the river beside it fills it, so it has no spring of its own (a source starts water, never stands in a flow)"];
+        }
+      }
       if (res.error || res.broken.length) {
         rejected.push(res.error ?? `breaks ${res.broken.join(", ")}`);
         continue;

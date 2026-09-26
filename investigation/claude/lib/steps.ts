@@ -16,6 +16,7 @@ import { deleteEdit, moveEdit, planContextOf, planLake, planLandform, planPiece,
 import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../../../src/core/gen/calibrated";
 import type { Feature, LandformFeature, Point, SetPieceFeature, SetPieceKind, StartFeature } from "../../../src/core/features/schema";
 import { BUILT_KINDS, type PlanRecord } from "../../../src/core/features/setpieces";
+import { local, type Facing } from "../../../src/core/features/setpieces/common";
 import { tilesToRuns } from "../../../src/core/math/grid";
 import { TREE_LOGS } from "../../../src/core/format/entities";
 import { LOGS_PER_TREE } from "../../../src/core/spec/mapspec";
@@ -295,7 +296,8 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
       if (f.kind !== "setPiece") return fail(step, [`${step.target} is a ${f.kind}, not a set piece`]);
-      const req: PlanRecord = { ...f.params.request, ...(f.params.plan.mode === "standalone" ? { lip: f.params.plan.lip as number[] } : {}), ...(step.request ?? {}) };
+      let req: PlanRecord = { ...f.params.request, ...(f.params.plan.mode === "standalone" ? { lip: f.params.plan.lip as number[] } : {}), ...(step.request ?? {}) };
+      let gained = 0;
       if (step.change) {
         const c = comparative(step.change);
         if (!c) return fail(step, [`"${step.change}" is not a change the app knows (wider, narrower, taller, bigger, a bit …)`]);
@@ -305,10 +307,29 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
         let next = key === "flow" ? Math.round(cur * c.factor * 100) / 100 : Math.round(cur * c.factor);
         if (key !== "flow" && next === cur) next = cur + (c.factor > 1 ? 1 : -1);
         req[key] = next;
+        if (key === "width" && f.params.kind === "waterfall") gained = next - cur;
       }
-      const planned = planPiece(s, f.params.kind, req, f.id, f.origin);
+      let planned = planPiece(s, f.params.kind, req, f.id, f.origin);
+      // a standalone fall that grows into a river grows away from it instead: its lip moves along
+      // itself, at most the width it gains
+      const moves: string[] = [];
+      const lip = req.lip as number[] | undefined;
+      if (!planned.ok && gained > 0 && f.params.plan.mode === "standalone" && lip && planned.errors.some((e) => e.startsWith("it would dam a river"))) {
+        const facing = String(req.facing ?? f.params.plan.facing) as Facing;
+        for (let k = 1; k <= gained && !planned.ok; k++)
+          for (const v of [k, -k]) {
+            const [dx, dy] = local(0, 0, facing, 0, v);
+            const moved = { ...req, lip: [lip[0] + dx, lip[1] + dy] };
+            const r = planPiece(s, f.params.kind, moved, f.id, f.origin);
+            if (!r.ok) continue;
+            planned = r;
+            req = moved;
+            moves.push(`moved ${k} tile${k > 1 ? "s" : ""} along its lip, away from the river, to grow`);
+            break;
+          }
+      }
       if (!planned.ok) return fail(step, planned.errors);
-      return { ok: true, step, ops: planned.ops, made: [], report: planned.report, resolved: { target: f.id, request: req }, errors: [], tiles: planned.tiles.length };
+      return { ok: true, step, ops: planned.ops, made: [], report: [...planned.report, ...moves], resolved: { target: f.id, request: req }, errors: [], tiles: planned.tiles.length };
     }
     case "changeFeature": {
       const f = targetFeature(s, conv, step.target);
@@ -356,14 +377,18 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       const id = newId(conv, "lake");
       hintIds({ ...conv, counter: conv.counter - 1 });
       let outline = step.outline;
+      let spring = step.spring;
       let resolved: Record<string, unknown> = {};
       if (!outline) {
-        const r = findSites(s, { kind: "lake", where: step.where, size: step.size, request: { ...(step.level ? { level: step.level } : {}) }, limit: 1 }, refs);
+        const r = findSites(s, { kind: "lake", where: step.where, size: step.size, request: { ...(step.level ? { level: step.level } : {}), ...(step.spring !== undefined ? { spring: step.spring } : {}) }, limit: 1 }, refs);
         resolved = siteSummary(r);
         if (!r.ok) return fail(step, [r.reason ?? "no place for the lake"], alternativeOf(r), resolved);
         outline = r.sites[0].step.outline as Point[];
+        // a site a river fills comes without a spring (D171)
+        if (spring === undefined && typeof r.sites[0].step.spring === "number") spring = r.sites[0].step.spring;
       }
-      const r = planLake({ outline, ...(step.level ? { level: step.level } : {}), ...(step.floorDepth ? { floorDepth: step.floorDepth } : {}), ...(step.spring !== undefined ? { spring: step.spring } : {}) }, planContextOf(s), id, "claude");
+      const r = planLake({ outline, ...(step.level ? { level: step.level } : {}), ...(step.floorDepth ? { floorDepth: step.floorDepth } : {}), ...(spring !== undefined ? { spring } : {}) }, planContextOf(s), id, "claude");
+      if (r.ok && spring === 0 && step.spring === undefined) r.report = r.report.map((l) => (l.startsWith("no spring") ? "the river beside it fills it, so it has no spring of its own (a source starts water, never stands in a flow)" : l));
       return fromPlanned(step, r, conv, "lake", step.handle, id, resolved);
     }
     case "addLandform": {
