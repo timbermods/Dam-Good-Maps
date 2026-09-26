@@ -137,8 +137,9 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   `look/badwater-blend`; mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
-- Queued for the next boundary, each merged once green: `investigation/pickplace-water2`,
-  `feature/save-to-timberborn` and #38 (Map look 2), when their PRs are open.
+- Queued for the next boundary, each merged once green: **Save to Timberborn** (PR #40, finished and
+  reviewed; it becomes the editor's primary button), `investigation/pickplace-water2` and #38 (Map
+  look 2), when their PRs are open.
 
 ## Waiting on Kyler
 
@@ -152,7 +153,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    with two tweaks).
 5. A yes before each probe batch; the next is M9a's.
 6. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#53 and #58 (scroll: zoom or strength).
+   #51–#53.
 7. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4),.
 
