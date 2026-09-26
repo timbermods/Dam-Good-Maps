@@ -801,6 +801,23 @@ and D151 (no edge walls).
 
 ---
 
+## Resources like the official maps
+
+A step after the start and edge rules (Kyler, 2026-09-25; PLAN §20 D167–D170), built on branch
+`feature/resources`: the official maps' measured baselines by size (trees with their living and
+dead share and species mix, groves and berry patches, ruin scrap, heights, field shapes and
+variants, mine sites), leaving out exceptional maps; one shared resource baseline in `src/core`
+used by the generator, Real places and Pick a place; at least one mine site on every map (a
+blocking check; the Mine sites setting 1–4); trees, bushes and ruins in natural clusters within
+the official ranges, varying from map to map. Generated maps change (a generator version bump).
+Real places rebuild on it in their second round.
+
+**Blocking:** breakage (batches ≥ 98% final per theme and size, placement passes the game's rules,
+byte checks) and the mine-site guarantee. Resource amounts in or out of the official range are
+information.
+
+---
+
 ## Live editing
 
 Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20

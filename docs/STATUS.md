@@ -82,6 +82,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D164: starting wood: the start counts logs by species (oak 8, pine 2 plus resin, birch 1), not trees; "Minimum starting wood"; species as a generator lever.
 - D165: Kyler's four intentions (start under a cliff with water below; a snaking river down a hill; a crater where rivers converge; a cliff waterfall into a large round lake), plus 10–15 candidates for him to pick.
 - D166: Pick a place: real land, designed water; it never fails for lack of water, meets the start rules, and quietly tries other sizes, scales and offsets; #34 held until its designed-water follow-up is finished and green, then merged and adopted with this change.
+- D167–D170: resources like the official maps: a mine site on every map (Mine sites 1–4), tree counts and living/dead share by size, groves and berry patches in clusters, ruins that vary; one shared baseline for the generator, Real places and Pick a place.
 
 ## Done and released
 
@@ -104,6 +105,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
   not merged).
 - **The start and edge rules** (D151–D153), on branch `feature/start-edge-rules`.
+- **Resources like the official maps** (D167–D170), on branch `feature/resources`.
 - **Real places, second round** (D155–D157), on branch `feature/real-places-2`; its rebuild without
   walls and the growth to about 150 places wait for the start and edge rules.
 - **Live editing** (D158), on branch `feature/live-editing`: the triage first, then a playable
