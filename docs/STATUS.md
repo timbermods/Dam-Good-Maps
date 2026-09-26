@@ -104,6 +104,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D190: #51–#53 decided (the defaults): world traits are candidate intentions; wet caves allowed in 3D-b; the no-clone distance picks candidates, the score breaks near ties.
 - D191: Save to Timberborn never overwrites; a same-named map is saved as "Name (2)" with a quiet note.
 - D192: Pick a place's signature water (#45) with ESA WorldCover, credited like the elevation data; hard cases offered with nearby alternatives.
+- D193: hold to dig: in precise mode, holding Lower or Raise keeps working a level at a time, with an optional stop level.
 
 ## Done and released
 
@@ -166,7 +167,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 ## Where to look next
 
 - [ROADMAP.md](../ROADMAP.md): the order of work, and each step's Blocking and Information lists.
-- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D192.
+- [PLAN.md §20](../PLAN.md#20-editor-decisions): every decision, D1–D193.
 - [decisions-pending.md](decisions-pending.md): open questions with their defaults.
 - [m9-design.md](m9-design.md): M9 design version 1.
 - [ingame-log.md](ingame-log.md): in-game checks and the planned probe batches.
