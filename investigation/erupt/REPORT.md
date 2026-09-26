@@ -21,8 +21,12 @@ The notes menu saves/replays runs; [this small run](samples/vent-32.json) exerci
   Steep rises 19 levels versus Broad's 7; width at half-height is 13 versus 31 tiles, on the same land/seed.
   Vent lava lobes wind downhill with irregular spacing, 4–10 Heavy lobes across tested personalities,
   variable reach and rounded, widening tongues. Uphill obstacles beyond the cone stop a lobe.
-- Immediate cracks and ash, eight rising terrain stages, live runoff, cooling, dead radial trees,
+- Immediate cracks and ash, eight smoothly interpolated terrain stages, live runoff, cooling, dead radial trees,
   optional follow/shake, and reduced motion. No audio is needed.
+- Real terrain stays lit during uplift. Soft smoke puffs rise, roll outward, drift and thin; fissures open
+  with a glow/smoke curtain along their path. Lava cools from orange through red and dark stone into
+  ordinary terrain over 6.4 seconds after uplift. Ash dust fades too. Cooling continues independently
+  of water settling and never blocks another action; reduced motion skips all visual effects.
 - Objects ride supporting terraces. Sources keep their settings and ride vertically too.
   The start's footprint and buffer stay fixed; vents or fissures through them are refused.
 - Overlapping eruptions build on old flanks. New lava records hard occupied levels per tile.
@@ -35,6 +39,11 @@ The notes menu saves/replays runs; [this small run](samples/vent-32.json) exerci
 These are short sequences from the actual clean 3D demo, using clearly labelled process-study maps.
 They are illustrative setups; generated maps and Real places are also tested.
 
+[Steep against Broad at the same Power](captures/steep-broad.png) ·
+[Heavy flows with Ridges, from above](captures/heavy-lobes.png) ·
+[Plume and cooling contact sheet](captures/eruption-cooling.png).
+The comparison holds Power 62, seed 891, Peak, Light flows and Ridges off constant; only Shape changes.
+
 | Scene | Sequence |
 |---|---|
 | Steep vent, summit crater | ![Steep vent](captures/steep-crater.gif) |
@@ -46,7 +55,7 @@ They are illustrative setups; generated maps and Real places are also tested.
 | Carve bends around lava | ![Carve and lava](captures/carve-lava.gif) |
 
 [Larger caldera view](captures/hero.png). Settings and paths are in [scenarios.ts](scenarios.ts).
-`npm --prefix investigation/erupt run captures` reproduces all seven; browser checks and captures need
+`npm --prefix investigation/erupt run captures` reproduces all seven sequences and the three new comparisons; browser checks and captures need
 Google Chrome. Bulk output, dependencies and build files are ignored.
 
 ## Evidence
@@ -55,16 +64,17 @@ Google Chrome. Bulk output, dependencies and build files are ignored.
 The tests cover 32 option combinations, fixed seeds, different personalities, bounds, edge clips,
 overlap, start refusal, objects, exact JSON replay, real worker cancellation races and canonical water.
 
-On this host in headless Chrome, the generated 256² event first changed terrain in **1.26 s**,
-with **8.3 ms p95 frames**, **39.1 ms worst sampled frame**, and **0.5 ms cached-view undo**.
-Full completion, including water settling, took **8.5 s**. The frame sample covers the last 600 frames;
+On this host in headless Chrome, the generated 256² event first changed terrain in **0.84 s**,
+with **6.2 ms p95 frames**, **54.7 ms worst sampled frame**, and **0.5 ms cached-view undo**.
+Full completion, including water settling, took **14.6 s**. All **2,311 frames** across the event were sampled;
 these are host-specific measurements, not a hardware guarantee.
 
 The river study's upstream depth rises **0.259 → 4.151 levels** with unchanged emitters.
-Carve crosses **18** lava stations with hard rock enabled versus **37** on the identical terrain with
+Carve crosses **13** lava stations with hard rock enabled versus **29** on the identical terrain with
 lava hardness removed. Near Yosemite (96²), Geirangerfjord (128²), and Grand Canyon (256²) all load.
 Detailed results: [model](captures/checks.json), [worker](captures/worker-checks.json),
-[water/rock](captures/water-rock-checks.json), [browser](captures/browser-checks.json).
+[water/rock](captures/water-rock-checks.json), [browser](captures/browser-checks.json),
+[shape and preservation regressions](captures/morphology-checks.json).
 
 ## Choices and limits
 
@@ -87,6 +97,8 @@ Final buildability and full editor validation belong to adoption, described in [
 2. Adapted its worker, cached view history, clean renderer, particle pools and demo shell. Quake informed
    curved paths and riding footprints. Carve at b14e23f supplies the actual geology comparison engine.
 3. Added interaction checks, all seven captures, a portable sample, and the shared four-force proposal.
+4. Revised vent anatomy and lava lobes, preserved Fissure and the caldera basin, and replaced the
+   eruption's shading mismatch and abrupt cutoff with terrain-bound heat and an independent plume/cooling tail.
 
 Production rendering, generation and water modules are imported directly. See [credits](ATTRIBUTION.md).
 The task's directory-only rule takes precedence over general instructions to edit living docs or docs/sheets;

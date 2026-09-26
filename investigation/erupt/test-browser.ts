@@ -18,6 +18,10 @@ try{
  await page.mouse.click(p.x,p.y);assert((await page.evaluate(()=>(window as any).erupt.state)).active);
  await page.waitForTimeout(650);assert.notDeepEqual(await heights(),baseline);await idle();
  const final=await heights();note('Pointer click answers immediately and raises terrain within 650 ms');
+ assert.equal(await page.evaluate(()=>(window as any).erupt.state.effects),true);
+ await page.waitForFunction(()=>{const s=(window as any).erupt.state;return s.cooling>3&&s.effects;});
+ await page.waitForFunction(()=>(window as any).erupt.state.age===null);
+ note('Plume and cooling continue after terrain completion, then fade completely');
  report.undoMs=await page.evaluate(()=>{const t=performance.now();document.getElementById('undo')!.click();return performance.now()-t;});
  assert.deepEqual(await heights(),baseline);await idle();await page.locator('#redo').click();assert.deepEqual(await heights(),final);await idle();
  note('Undo and redo restore cached 3D terrain synchronously');
@@ -33,6 +37,9 @@ try{
  await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();for(const p of points.slice(1))await page.mouse.move(p.x,p.y,{steps:18});await page.mouse.up();await idle();
  const op=await page.evaluate(()=>(window as any).erupt.operation);assert.equal(op.params.settings.mode,'fissure');assert(op.params.intent.path.length>3);note('Real pointer drag records a bent fissure');
  await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>(document.getElementById('shake') as HTMLInputElement).disabled);assert.equal(await page.evaluate(()=>(window as any).erupt.state.motion),false);assert(await page.locator('#follow').isDisabled());note('Reduced motion disables effects, shake and follow');
+ await page.evaluate(()=>(window as any).erupt.load('fixture:plain:128'));await idle();
+ await page.evaluate(s=>{const a=(window as any).erupt;a.setSettings({...s,seed:20});a.erupt({origin:64*128+64});},DEFAULTS);
+ await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>(window as any).erupt.state.effects),false);await idle();assert.equal(await page.evaluate(()=>(window as any).erupt.state.morph),1);note('Reduced-motion eruption skips plume, cooling and interpolation');
  await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('summary').filter({hasText:'The moment'}).click();await page.locator('#motion').check();
  await page.evaluate(()=>(window as any).erupt.load('seed:riverValley:18:256'));await idle();
  await page.evaluate(s=>(window as any).erupt.setSettings({...s,seed:420}),DEFAULTS);

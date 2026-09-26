@@ -48,6 +48,13 @@ token invalidates queued mesh/lighting batches. Keep one pre-event snapshot, the
 The demo demonstrates this with four-row planning slices, eight rise stages and chunk upload budgets.
 The production scheduler should budget elapsed worker time and adapt the number of stage frames to workload.
 
+Keep the visual tail separate from the editing transaction. Erupt's smoke, ash and surface heat continue
+fading after uplift or water completion, without holding the controls; cancel, undo, load and replay clear
+them immediately. Reduced motion jumps to the terrain result. Interpolated meshes must shade against the
+same height reference as their lighting textures, so rising tops are never misclassified as dark cave floors.
+Commit a new morph identity only when the complete chunk batch becomes visible. Warm particle shaders
+during initial loading rather than at the first gesture.
+
 Try another replaces the most recent force from its **original input terrain**. It is a fresh undo step:
 undo returns to the kept personality. Cancelling consumes the attempted seed but restores the kept map.
 Redo and saved replay assign recorded values; they never rerun terrain or water algorithms.
