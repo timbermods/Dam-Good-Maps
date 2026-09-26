@@ -38,6 +38,7 @@ import { stream, type Rng } from "../math/rng";
 import { drainage } from "./drainage";
 import type { Genome } from "./genome";
 import { sinDet, TWO_PI } from "../math/detmath";
+import { distanceFrom } from "../math/grid";
 import { clamp, DIRS8 } from "./num";
 
 export interface Lake {
@@ -67,6 +68,9 @@ export interface HydroOptions {
   /** Meanders and varying widths (M9a's no-straight-rivers rule); false gives the prototype's
    *  courses, for comparisons. */
   meander?: boolean;
+  /** Tiles the rivers keep off (a regeneration's constraints, PLAN §7.0: the player's features,
+   *  locked and keep-out regions): no head, course, channel or valley lake on them. */
+  protect?: Uint8Array | null;
 }
 
 const MIN_WIDTH = 2.4;
@@ -312,6 +316,12 @@ function meanderPath(path: Point[], h: Uint8Array, W: number, H: number, wv: Wan
   return smoothPath(out, 1, 1);
 }
 
+/** Whether a course comes within `reach` tiles of a marked tile. */
+function touches(path: Point[], reach: number, mask: Uint8Array, W: number, H: number): boolean {
+  const st = stamp(path, W, H, Math.ceil(reach));
+  return st.tiles.some((i) => mask[i] && st.d[i] < reach);
+}
+
 /** A channel's half-width along its course: its own, varied by noise along its length (so its
  *  banks are never parallel for long), and exactly its own near both ends (the build finds its
  *  mouth and spring tiles with its plain width). */
@@ -346,7 +356,10 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
   const Er = new Float64Array(N);
   const wander = g.wander;
   const wanderCell = g.wanderCell;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) Er[y * W + x] = E[y * W + x] + wander * fbm(rs, x, y, wanderCell, 2);
+  const protect = opts.protect ?? null;
+  // a course keeps a channel's width and a little more off the protected tiles
+  const nearProtect = protect ? distanceFrom(protect, W, H) : null;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) Er[y * W + x] = E[y * W + x] + wander * fbm(rs, x, y, wanderCell, 2) + (protect?.[y * W + x] ? 1000 : 0);
   const dr = drainage(Er, W, H, { outlet: (i) => !onUp(i), epsilon: 1e-6 });
   const downLen = new Float64Array(N);
   for (let q = 0; q < dr.order.length; q++) {
@@ -383,6 +396,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       c = dr.rcv[c];
     }
     if (cells.length < 12) return false;
+    if (nearProtect && cells.some((i) => nearProtect[i] < 7)) return false;
     for (let q = 10; q < cells.length - 10; q++) if (borderDist(cells[q]) < 4) return false;
     heads.push(hd);
     for (const i of cells) if (owner[i] < 0) owner[i] = k;
@@ -393,7 +407,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
   if (g.hydro.inflows > 0) {
     const cands: [number, number][] = [];
     for (let i = 0; i < N; i++) {
-      if (!onUp(i)) continue;
+      if (!onUp(i) || protect?.[i]) continue;
       const e = edgeOf(i, W, H)!;
       const x = i % W;
       const y = (i - x) / W;
@@ -420,7 +434,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
     for (let y = 12; y < H - 12; y++)
       for (let x = 12; x < W - 12; x++) {
         const i = y * W + x;
-        if (downLen[i] < 0.35 * side || owner[i] >= 0) continue;
+        if (downLen[i] < 0.35 * side || owner[i] >= 0 || protect?.[i]) continue;
         cands.push([E[i] + 0.01 * downLen[i] + 3 * rng.float(), i]);
       }
     cands.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
@@ -512,7 +526,11 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
 
   // ---- the courses: each traced path smoothed, then (M9a) wandering within its valley; a
   //      tributary's course ends on the course of the river it joins
-  const roleOf = (k: number) => (heads[k].kind === "edge" ? `river/inflow/${k}` : `river/spring/${k}`);
+  // the main river (the largest flow, the first head on a tie) is "river/main", as the editor and the
+  // analysis name it; the rest by how they begin
+  let mainK = 0;
+  for (let k = 1; k < heads.length; k++) if (heads[k].flow > heads[mainK].flow) mainK = k;
+  const roleOf = (k: number) => (natural && k === mainK ? "river/main" : heads[k].kind === "edge" ? `river/inflow/${k}` : `river/spring/${k}`);
   const courses: Point[][] = [];
   const wanders: (Wander | null)[] = [];
   for (const tr of traced) {
@@ -549,7 +567,9 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
         }
         path[path.length - 1] = [Math.round(bp[0] * 100) / 100, Math.round(bp[1] * 100) / 100];
       }
-      path = meanderPath(path, h, W, H, wv, hash32(seed, "meander", attempt, tr.k));
+      const wandered = meanderPath(path, h, W, H, wv, hash32(seed, "meander", attempt, tr.k));
+      // a course that would wander onto the player's tiles keeps to its valley's line there
+      if (!protect || !touches(wandered, widthFor(hd.flow) / 2 + g.hydro.floor + 2, protect, W, H)) path = wandered;
     }
     courses.push(path);
     wanders.push(wv);
@@ -611,7 +631,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
       for (let y = Math.max(1, Math.floor(y0) - R); y <= Math.min(H - 2, Math.ceil(y1) + R); y++)
         for (let x = Math.max(1, Math.floor(x0) - R); x <= Math.min(W - 2, Math.ceil(x1) + R); x++) {
           const i = y * W + x;
-          if (h[i] > level + 1 || (owner[i] >= 0 && owner[i] !== t.k)) continue;
+          if (h[i] > level + 1 || (owner[i] >= 0 && owner[i] !== t.k) || protect?.[i]) continue;
           // the nearest point of the stretch, and how far along it lies
           let best = Infinity;
           let at = 0;
@@ -744,7 +764,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
   /** Cut a channel (and its floor) along a profile. */
   const carve = (st: Stamp, prof: Float64Array, L: number, n: number, half: (s: number, L: number) => number, floorHalf: number): void => {
     for (const i of st.tiles) {
-      if (water[i] === 2) continue;
+      if (water[i] === 2 || protect?.[i]) continue;
       const d = st.d[i];
       const x = i % W;
       const y = (i - x) / W;
@@ -761,9 +781,7 @@ export function planHydro(E: Float64Array, h: Uint8Array, g: Genome, seed: numbe
     }
   };
 
-  // the main river: the largest flow (the first head on a tie)
-  let mainK = 0;
-  for (let k = 1; k < heads.length; k++) if (heads[k].flow > heads[mainK].flow) mainK = k;
+  // the main river cuts deeper than its tributaries: their valleys hang above it
   const hanging = Math.round(g.hanging);
   const exits = new Map<string, { path: Point[]; prof: Float64Array; L: number; n: number; width: number; half: (s: number, L: number) => number }>();
   for (const tr of traced) {

@@ -152,7 +152,13 @@ export function naturalRamps(h: Uint8Array, W: number, H: number, water: Uint8Ar
         left++;
         continue;
       }
-      cutRamp(h, W, H, water, keep, path, tiles, steps);
+      // (a path too short for its drop is left to stairs; the prototype tried the same component
+      // again every round, so one short path used up all eight)
+      if (!cutRamp(h, W, H, water, keep, path, tiles, steps)) {
+        for (let i = 0; i < N; i++) if (fc.lab[i] === comp) tiles[i] = tiles[i] || 2;
+        left++;
+        continue;
+      }
       cut++;
       done = true;
       break;
@@ -218,7 +224,7 @@ function rampPath(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: 
 
 /** Regrade a path into steps of one level, each at least two tiles long, three tiles wide; the
  *  path is extended into the land on both sides as far as the drop needs. */
-function cutRamp(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: Uint8Array, path: number[], tiles: Uint8Array, steps: [number, number][]): void {
+function cutRamp(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: Uint8Array, path: number[], tiles: Uint8Array, steps: [number, number][]): boolean {
   const a = h[path[0]];
   const b = h[path[path.length - 1]];
   const drop = Math.abs(a - b);
@@ -249,9 +255,12 @@ function cutRamp(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: U
     extend(false);
   }
   const n = q.length;
-  const lev = q.map((_, k) => Math.round(a + ((b - a) * k) / Math.max(1, n - 1)));
-  // a level must span two tiles at least; where it cannot (too short a path), leave the ramp
-  for (let k = 1; k + 1 < n; k++) if (lev[k] !== lev[k - 1] && lev[k] !== lev[k + 1]) return;
+  // a level must span two tiles at least; where it cannot (too short a path), no ramp. The levels
+  // share the path evenly (the prototype rounded a straight line, which left one-tile levels on
+  // paths long enough for two-tile ones, and gave the ramp up)
+  if (n < 2 * (drop + 1)) return false;
+  const sgn = b > a ? 1 : -1;
+  const lev = q.map((_, k) => a + sgn * Math.floor((k * (drop + 1)) / n));
   for (let k = 0; k < n; k++) {
     const i = q[k];
     const x = i % W;
@@ -276,6 +285,7 @@ function cutRamp(h: Uint8Array, W: number, H: number, water: Uint8Array, keep: U
     const loT = hiT === q[k] ? q[k + 1] : q[k];
     steps.push([loT, hiT]);
   }
+  return true;
 }
 
 /** The land runs on past the map's edge (Kyler, no edge walls): erosion never lowers the border

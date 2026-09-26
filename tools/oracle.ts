@@ -23,7 +23,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync } from "fflate";
-import { encodeProject, projectFileName, toDocument } from "../src/core/doc/document";
+import { encodeProject, projectFileName, generatedDocument } from "../src/core/doc/document";
 import { readTimber, writeTimber } from "../src/core/format/timber";
 import { generate } from "../src/core/gen/generate";
 import { fileName } from "../src/core/gen/pack";
@@ -96,7 +96,7 @@ for (const size of sizes) {
     }
     const p = join(dir, fileName(r.spec));
     writeFileSync(p, r.bytes);
-    writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(toDocument(r.spec, r.features, r.built, r.file)));
+    writeFileSync(join(dir, projectFileName(r.spec)), encodeProject(generatedDocument(r)));
     paths.push(p);
     written.set(`${seed}/${size}`, p);
   }

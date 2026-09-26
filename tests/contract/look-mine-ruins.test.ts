@@ -18,9 +18,10 @@ import { runGenerate } from "../../src/worker/api";
 import * as ed from "../../src/worker/session";
 
 /** The live check's download (tests/live/live.spec.ts): tools/gen.ts's file for this spec, as `dev`
- *  makes it since resources like the official maps (#43, generator 0.6.2, 2026-09-26; `e4f2f72c…`
- *  from the start and edge rules, #44, and `5118b6a6…` from M8 until then). */
-const LIVE_SHA = "b358b4f8e8d3c03b99f513ecba496d8b513266c835721a13e7dc5b988b6f60fd";
+ *  makes it since the terrain and water from processes (M9a, generator 0.7.0; `b358b4f8…` from
+ *  resources like the official maps, #43, generator 0.6.2; `e4f2f72c…` from the start and edge
+ *  rules, #44, and `5118b6a6…` from M8 until then). */
+const LIVE_SHA = "e81e84087aad8af3927cbf8686a4ed8238dc9b6bc68da113274ff153213d931d";
 const spec = () => makeSpec({ seed: 4242, size: { x: 128, y: 128 }, theme: "riverValley", designedFor: "normal" });
 
 describe("mine sites and ruins, models of our own", () => {

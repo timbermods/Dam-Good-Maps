@@ -1,7 +1,7 @@
 // What the generator worker returns to the page: everything the preview, the map card and the
 // downloads need, with the big arrays as typed arrays (transferred, not copied).
 
-import { encodeProject, projectFileName, toDocument } from "../core/doc/document";
+import { encodeProject, projectFileName, generatedDocument } from "../core/doc/document";
 import { isSapling, type WoodBySpecies } from "../core/analysis/wood";
 import type { JsonObject } from "../core/format/json";
 import type { BuildResult } from "../core/features/build";
@@ -185,7 +185,7 @@ export async function runGenerate(spec: MapSpec): Promise<GenerateResponse> {
   const r = generate(spec);
   const ms = Math.round(performance.now() - t0);
   last = r;
-  const project = encodeProject(toDocument(r.spec, r.features, r.built, r.file));
+  const project = encodeProject(generatedDocument(r));
   return responseOf({
     spec: r.spec,
     features: r.features,

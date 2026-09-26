@@ -15,7 +15,7 @@
 
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import { decodeProject, encodeProject, toDocument } from "../src/core/doc/document";
+import { decodeProject, encodeProject, generatedDocument } from "../src/core/doc/document";
 import { MapSession } from "../src/core/doc/session";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
 import { officialRange } from "../src/core/gen/calibrated";
@@ -102,7 +102,7 @@ for (const seed of seeds) {
   if (r.report.passed) {
     const t1 = performance.now();
     try {
-      const s = MapSession.open(decodeProject(encodeProject(toDocument(r.spec, r.features, r.built, r.file))));
+      const s = MapSession.open(decodeProject(encodeProject(generatedDocument(r))));
       if (sha(s.exportTimber().bytes) === sha(r.bytes)) reopened++;
       else reopen = "its project file rebuilds different bytes";
     } catch (e) {

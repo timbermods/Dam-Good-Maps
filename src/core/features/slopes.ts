@@ -16,7 +16,9 @@
 //      edits changed.
 // 4.   Beyond that, every region of 400+ tiles gets one slope toward its lowest neighbour.
 // Slopes that already stand (a set piece's own stairs, an import's own slopes) join their regions
-// without another slope.
+// without another slope. A generated map's natural ramps (M9a, decisions-pending #62) get a slope on
+// every step that still stands, before anything else, wherever they are: a ramp is a staircase the
+// land made, not a boundary the spacing rule may skip.
 
 import { levelRegions } from "../math/grid";
 import type { Orientation } from "../format/footprints";
@@ -41,6 +43,8 @@ export interface SlopeRules {
   links?: readonly [number, number][];
   /** The rivers' channel tiles: the slopes out of the start's own region go toward them. */
   water?: Uint8Array | null;
+  /** Natural ramps' steps as (low tile, high tile) pairs: a slope on each one that still stands. */
+  ramps?: readonly (readonly [number, number])[] | null;
 }
 
 /** Nothing stands within this Chebyshev distance of the start's centre, slopes included (PLAN §7.7);
@@ -116,6 +120,25 @@ export function placeSlopes(h: Uint8Array, W: number, H: number, start: { x: num
   const placed: PlacedSlope[] = [];
   const used: [number, number][] = [];
   const occ = occupied.slice();
+  // the ramps' steps first: a slope on each step whose ground still steps as the ramp cut it (the
+  // high tile one level up, the tile behind the low one level with it), joining its regions
+  for (const [lo, hi] of rules.ramps ?? []) {
+    const x = lo % W;
+    const y = (lo - x) / W;
+    const dx = (hi % W) - x;
+    const dy = Math.floor(hi / W) - y;
+    if (Math.abs(dx) + Math.abs(dy) !== 1 || h[hi] !== h[lo] + 1) continue;
+    const bx = x - dx;
+    const by = y - dy;
+    if (bx < 0 || by < 0 || bx >= W || by >= H || h[by * W + bx] !== h[lo] || occ[lo] || occ[by * W + bx]) continue;
+    placed.push({ x, y, z: h[lo], orientation: orientationForHigh(dx, dy) });
+    occ[lo] = 1;
+    used.push([x, y]);
+    const a = labels[lo];
+    const b = labels[hi];
+    linked[a].push(b);
+    linked[b].push(a);
+  }
   // steps from each tile to the nearest river tile (4-neighbour), for the slopes out of the start's
   // region: integers only, so every browser places the same slopes
   const toWater = rules.water && rules.water.some((v) => v === 1) ? stepsFrom(rules.water, W, H) : null;

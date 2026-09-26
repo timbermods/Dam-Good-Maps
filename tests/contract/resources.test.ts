@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from "fflate";
 import { describe, expect, it } from "vitest";
-import { decodeProject, encodeProject, toDocument } from "../../src/core/doc/document";
+import { decodeProject, encodeProject, generatedDocument } from "../../src/core/doc/document";
 import { readTimber, writeTimber } from "../../src/core/format/timber";
 import { DENSITY, OFFICIAL_LAYOUT, officialRange, RUIN_HEIGHT_SHARES, SPREAD } from "../../src/core/gen/calibrated";
 import { generate } from "../../src/core/gen/generate";
@@ -280,7 +280,7 @@ describe("the resource baseline (Kyler, 2026-09-25)", () => {
 
   it("a project file saved asking for no mine sites opens asking for one", () => {
     const r = generate(makeSpec({ seed: 13, size: { x: 96, y: 96 } }));
-    const doc = JSON.parse(strFromU8(gunzipSync(encodeProject(toDocument(r.spec, r.features, r.built, r.file)))));
+    const doc = JSON.parse(strFromU8(gunzipSync(encodeProject(generatedDocument(r)))));
     doc.spec.settings.resources.mineSites = 0;
     const back = decodeProject(gzipSync(strToU8(JSON.stringify(doc))));
     expect(back.spec!.settings.resources.mineSites).toBe(1);

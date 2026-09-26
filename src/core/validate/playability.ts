@@ -13,6 +13,7 @@ import { damSites, type DamSite } from "../analysis/damsites";
 import { components, walkRegions } from "../analysis/regions";
 import { pumpShoreDistance, reachAt, walkDistance, WALK_LIMIT } from "../analysis/walk";
 import { sourcesInFlow } from "../analysis/sources";
+import { leveeStorage, runningFlow, SECONDS_PER_DAY } from "../analysis/storage";
 import { isSapling, noWood, treeLogs, woodDetail, type WoodBySpecies, type WoodSpecies } from "../analysis/wood";
 import { footprintTiles, slopeHighSide, worldBlocks, FOOTPRINTS } from "../format/footprints";
 import { polygonMask } from "../features/geometry";
@@ -83,7 +84,7 @@ export function rulesFor(spec: MapSpec | null, designedFor: Difficulty = "normal
     droughtDays: DROUGHT[difficulty].days,
     reservoirNeed: reservoirNeeded(difficulty) * RESERVE[s?.water.droughtReserve ?? "normal"],
     reservoirDepth: difficulty === "hard" ? 3 : 0,
-    maxWaterShare: spec && (spec.theme === "lakeBasin" || spec.theme === "islands") ? 0.55 : 0.35,
+    maxWaterShare: spec && (spec.theme === "lakeBasin" || spec.theme === "islands" || spec.theme === "any") ? 0.55 : 0.35,
     multipliers: s
       ? { scrap: s.resources.ruins / 100, trees: s.resources.forestDensity / 100, bushes: s.resources.berryBushes / 100 }
       : { scrap: 1, trees: 1, bushes: 1 },
@@ -129,6 +130,9 @@ export interface PlayabilityAnalysis {
   /** The best dam site within 40 tiles of the start, and the natural water kept there. */
   bestDam: DamSite | null;
   naturalStorage: number;
+  /** Water storage near the start (water.storage_possible): the clean flow feeding the start's water
+   *  and what it needs, and what a dam, natural pools and levees hold, against the need. */
+  storage: { running: number; runningNeed: number; dam: number; natural: number; levee: number; need: number } | null;
 }
 
 const N4: readonly [number, number][] = [[0, -1], [-1, 0], [0, 1], [1, 0]];
@@ -226,6 +230,7 @@ export function checkPlayability(inp: PlayabilityInput, c: Collector): Playabili
     damSites: [],
     bestDam: null,
     naturalStorage: 0,
+    storage: null,
   };
 
   // ---- a mine site on every map (Kyler, 2026-09-25): the late game's lasting source of scrap
@@ -352,12 +357,13 @@ function checkSourcesInFlow(inp: PlayabilityInput, c: Collector): void {
 /** The checks that need the start, in report order. */
 const START_CHECKS = [
   "start.dry", "start.water", "start.badwater", "start.reach", "start.food", "start.wood", "start.ruins_clear",
-  "plants.survive", "plants.drought", "water.reservoir", "resources.scrap", "resources.trees", "resources.bushes", "ruins.fields",
+  "plants.survive", "plants.drought", "water.storage_possible", "resources.scrap", "resources.trees", "resources.bushes", "ruins.fields",
   "ruins.access", "extras.placement",
 ];
 /** Advisory from M8 (D85): generation targets with a warning, never a reason to reject a map. The
- *  resource amounts are information (Kyler, 2026-09-25: resources like the official maps). */
-const ADVISORY_START = new Set(["start.badwater", "start.reach", "start.ruins_clear", "water.reservoir", "plants.drought", "resources.scrap", "resources.trees", "resources.bushes"]);
+ *  resource amounts are information (Kyler, 2026-09-25: resources like the official maps); water
+ *  storage near the start is information the generator prefers (D209, decisions-pending #67). */
+const ADVISORY_START = new Set(["start.badwater", "start.reach", "start.ruins_clear", "water.storage_possible", "plants.drought", "resources.scrap", "resources.trees", "resources.bushes"]);
 
 function checkOutflow(inp: PlayabilityInput, c: Collector): void {
   const { W, H, model, water, features } = inp;
@@ -671,7 +677,10 @@ function checkStart(
     });
   }
 
-  // drought: a reservoir site near the start that holds the colony through the worst drought
+  // drought: water storage near the start (D111: `water.storage_possible` replaces
+  // `water.reservoir`; analysis/storage.ts): running clean water at the start's pump shore, and a
+  // dam, natural pools or levees within 40 tiles that could hold the colony through the worst
+  // drought. Information the generator prefers, never a guard (D209, #67).
   const kept = droughtStorage(model, D, rules.droughtDays);
   let natural = 0;
   for (let i = 0; i < N; i++) if (sd[i] <= RESERVOIR_RADIUS) natural += kept[i];
@@ -687,15 +696,28 @@ function checkStart(
   const held = Math.max(natural, best ? best.volume : 0);
   const need = rules.reservoirNeed;
   const colony = DROUGHT[rules.difficulty].colony;
+  const running = shore.tile >= 0 ? runningFlow(W, H, D, model.emitters, shore.tile) : 0;
+  const runningNeed = need / (2 * SECONDS_PER_DAY);
+  const levee = shore.tile >= 0 && held < need ? leveeStorage(h, W, H, D, C, { x: sx, y: sy, z: h[sy * W + sx] }, need) : 0;
+  const stored = Math.max(held, levee);
+  analysis.storage = { running, runningNeed, dam: best ? best.volume : 0, natural, levee, need };
+  const how = best && best.volume >= need ? "a dam" : natural >= need ? "natural pools" : levee >= need ? "levees" : "";
   c.add({
-    id: "water.reservoir",
+    id: "water.storage_possible",
     class: "playability",
     advisory: true,
-    ok: held >= need,
-    value: Math.round(held),
+    ok: shore.tile >= 0 && running >= runningNeed && stored >= need,
+    value: Math.round(stored),
     limit: Math.round(need),
     ...(best ? { where: { tiles: [[best.x, best.y]] as [number, number][] } } : {}),
-    message: `the best dam site within ${RESERVOIR_RADIUS} tiles${deep > 0 ? `, at least ${deep} deep on average,` : ""} holds ${Math.round(best ? best.volume : 0)} and natural pools keep ${Math.round(natural)}; ${Math.round(need)} carries ${colony} beavers through a ${rules.droughtDays}-day drought`,
+    message:
+      shore.tile < 0
+        ? "no clean water within the start's reach to store"
+        : running < runningNeed
+          ? `the start's water is fed by ${Math.round(running * 100) / 100} water/s of clean flow, too little to refill ${Math.round(need)} in two days`
+          : how
+            ? `storage is possible near the start (${how}): ${Math.round(need)} carries ${colony} beavers through a ${rules.droughtDays}-day drought`
+            : `no dam, natural pool or levee line within ${RESERVOIR_RADIUS} tiles${deep > 0 ? `, at least ${deep} deep on average,` : ""} holds ${Math.round(need)} (the best dam ${Math.round(best ? best.volume : 0)}, natural pools ${Math.round(natural)}, levees ${Math.round(levee)})`,
   });
 
   // resource totals, information (never a reason to reject): a warning below half the official
