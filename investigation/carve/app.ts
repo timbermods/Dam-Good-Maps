@@ -21,13 +21,13 @@ const uniforms=sceneUniforms(1,1,tileTexture(1,1,new Uint8Array(4)),lightTexture
 uniforms.patternTex.value=drawPatterns(gl).texture;uniforms.markers.value=0;
 const groundMat=terrainMaterial(uniforms,0,16),waterMat=waterMaterial(uniforms),objectsMat=objectMaterial(uniforms);
 const chunks=new Map<string,THREE.Group>(),uploads:Chunk[]=[];
-const retained=new Set<THREE.BufferGeometry>();
+const retained=new Set<THREE.BufferGeometry>(),retainedInstances=new Set<THREE.InstancedMesh>();
 const marker=new THREE.Mesh(new THREE.TorusGeometry(.9,.12,5,20),new THREE.MeshBasicMaterial({color:0xffeac2}));
 marker.rotation.x=Math.PI/2;marker.visible=false;scene.add(marker);
 const aimLine=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0xf8efd2,dashSize:1,gapSize:.6}));scene.add(aimLine);
 const surge=new Surge();scene.add(surge.group);
 let W=0,H=0,heights=new Uint8Array(),busy=true,active=false,paused=false,mode:'unleash'|'aim'='unleash',origin:number|null=null;
-let speed=1,nextAt=0,steps=0,epoch=0,top=false,pending:Record<string,unknown>|null=null,head:Head|null=null;
+let speed=1,nextAt=0,steps=0,epoch=0,top=false,settling=false,pending:Record<string,unknown>|null=null,head:Head|null=null;
 let savedRun:unknown=null,lastOperation:CarveOperation|null=null,finishCache=false;
 interface Lighting {tiles:Uint8Array;light:Uint8Array;checks:any}
 let lighting:Lighting|null=null;
@@ -39,8 +39,8 @@ function send(msg:Record<string,unknown>){busy=true;worker.postMessage(msg);}
 function stateControls(){
   for(const id of ['map','reset','unleash','aim','power','walls','dry','layers','replay-file'])($<HTMLButtonElement>(id)).disabled=active||busy;
   input('defy').disabled=active||busy||mode!=='aim';
-  $<HTMLButtonElement>('pause').disabled=!active;
-  $<HTMLButtonElement>('stop').disabled=!active||paused&&pending?.type==='stop';
+  $<HTMLButtonElement>('pause').disabled=!active||settling;
+  $<HTMLButtonElement>('stop').disabled=!active||settling||paused&&pending?.type==='stop';
   if(active){$<HTMLButtonElement>('undo').disabled=false;$<HTMLButtonElement>('redo').disabled=true;}
 }
 function resetView(){
@@ -54,8 +54,8 @@ function geometry(d:Geometry){
   if(d.flags)g.setAttribute('wflags',new THREE.BufferAttribute(d.flags,1));
   if(d.indices)g.setIndex(new THREE.BufferAttribute(d.indices,1));g.computeBoundingSphere();return g;
 }
-function dispose(group:THREE.Group){group.traverse(o=>{if(o instanceof THREE.Mesh&&!retained.has(o.geometry))o.geometry.dispose();});}
-function retain(c:Cache|null){c?.groups.forEach(g=>g.traverse(o=>{if(o instanceof THREE.Mesh)retained.add(o.geometry);}));}
+function dispose(group:THREE.Group){group.traverse(o=>{if(o instanceof THREE.Mesh&&!retained.has(o.geometry))o.geometry.dispose();if(o instanceof THREE.InstancedMesh&&!retainedInstances.has(o))o.dispose();});}
+function retain(c:Cache|null){c?.groups.forEach(g=>g.traverse(o=>{if(o instanceof THREE.Mesh)retained.add(o.geometry);if(o instanceof THREE.InstancedMesh)retainedInstances.add(o);}));}
 function cache():Cache|null{return lighting?{groups:new Map(chunks),heights:heights.slice(),lighting}:null;}
 function setLighting(l:Lighting){
   lighting=l;uniforms.tileTex.value.dispose();uniforms.lightTex.value.dispose();
@@ -75,6 +75,7 @@ function restoreView(c:Cache|null){
   for(const [key,g]of c.groups){chunks.set(key,g);scene.add(g);}heights=c.heights.slice();setLighting(c.lighting);
 }
 function releaseCaches(){
+  const oldInstances=new Set(retainedInstances);retainedInstances.clear();const currentInstances=new Set<THREE.InstancedMesh>();chunks.forEach(g=>g.traverse(o=>{if(o instanceof THREE.InstancedMesh)currentInstances.add(o);}));for(const o of oldInstances)if(!currentInstances.has(o))o.dispose();
   const old=new Set(retained);retained.clear();beforeCache=afterCache=null;
   const current=new Set<THREE.BufferGeometry>();chunks.forEach(g=>g.traverse(o=>{if(o instanceof THREE.Mesh)current.add(o.geometry);}));
   for(const g of old)if(!current.has(g))g.dispose();
@@ -109,16 +110,17 @@ worker.onmessage=(event:MessageEvent)=>{
   if(m.type==='chunk')uploads.push(m.chunk);
   if(m.type==='lighting')setLighting(m);
   if(m.type==='frame'){
-    heights=m.heights;head=m.head;if(!m.metrics&&!active)metrics.textContent='';
+    heights=m.heights;head=m.head;if(!m.metrics&&!active)$('metrics').textContent='';
     surge.set(head,m.trail,heights,W);
     if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · '+m.metrics.cut.toLocaleString()+' blocks cut · '+m.metrics.deposited+' deposited';}
     $<HTMLButtonElement>('undo').disabled=!active&&!m.undo;$<HTMLButtonElement>('redo').disabled=active||!m.redo;
   }
   if(m.type==='status')notice.textContent=m.text;
-  if(m.type==='started'){active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
-  if(m.type==='cancelled'){steps=0;metrics.textContent='';active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
+  if(m.type==='settling'){settling=true;stateControls();}
+  if(m.type==='started'){settling=false;active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
+  if(m.type==='cancelled'){settling=false;steps=0;$('metrics').textContent='';active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
   if(m.type==='finished'){
-    active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
+    settling=false;active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
     notice.textContent=(m.reason==='stopped'?'Stopped.': 'The river reached '+m.reason+'.')+' One undo step saved.';
     if(!m.settled)notice.textContent+=' Water reached the repo’s settle limit.';
     $<HTMLButtonElement>('undo').disabled=false;
@@ -151,7 +153,7 @@ $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'P
 $('speed').onclick=()=>{speed=speed===1?4:speed===4?12:1;$('speed').textContent=speed+'×';};
 $('stop').onclick=()=>{if(!active)return;pending={type:'stop'};paused=true;notice.textContent='Keeping the canyon and settling water…';stateControls();};
 $('undo').onclick=()=>{if(active){cancel();return;}if(busy)return;restoreView(beforeCache);send({type:'undo'});notice.textContent='Run undone.';};
-$('redo').onclick=()=>{restoreView(afterCache);send({type:'redo'});notice.textContent='Stored result restored.';};
+$('redo').onclick=()=>{if(busy)return;restoreView(afterCache);send({type:'redo'});notice.textContent='Stored result restored.';};
 $('save-run').onclick=()=>{
   if(!savedRun)return;const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v);
   const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.href=url;a.download='carve-run.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -205,7 +207,7 @@ function animate(t:number){
   if(active&&head&&input('follow').checked&&motion()&&!paused){
     const target=new THREE.Vector3(head.x,head.z,-head.y),offset=target.sub(controls.target).multiplyScalar(1-Math.exp(-dt*1.4));controls.target.add(offset);camera.position.add(offset);
   }
-  if(motion()&&!paused)effectTime+=dt;uniforms.time.value=motion()?effectTime:0;
+  if(motion()&&!paused&&!settling)effectTime+=dt;uniforms.time.value=motion()?effectTime:0;
   surge.update(effectTime,motion()&&active);controls.update();gl.render(scene,camera);
   if(t-fpsAt>=1000){const sorted=frameMs.sort((a,b)=>a-b);$('fps').textContent=Math.round(frames*1000/(t-fpsAt))+' fps · p95 '+Math.round(sorted[Math.floor(sorted.length*.95)]??0)+' ms';frameMs=[];frames=0;fpsAt=t;}
   if(!busy&&!uploads.length){
@@ -216,6 +218,7 @@ function animate(t:number){
 requestAnimationFrame(animate);
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H,mode,head};}}});
 load();
+
 
 
 

@@ -49,7 +49,7 @@ async function settle(token:number) {
 }
 async function finish(reason:string,token:number) {
   if(!run)return;
-  const current=run;map=current.map;
+  const current=run;map=current.map;send({type:'settling'});
   const water=await settle(token);
   const op=operation(before,map,settings,current.metrics.steps,reason,water);
   op.params.intent={...current.intent};
@@ -106,3 +106,4 @@ self.onmessage=async(event:MessageEvent)=>{
     busy=false;send({type:'ready',ms:performance.now()-t});
   }
 };
+
