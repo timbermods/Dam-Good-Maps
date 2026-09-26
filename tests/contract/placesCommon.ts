@@ -29,10 +29,32 @@ export const failing = (checks: readonly CheckResult[]) => checks.filter((c) => 
  *  false. */
 export const PLACES_HAVE_EDGE_WALLS = true;
 
-/** The failing checks of a place, the edge wall apart, and whether the edge wall fails. */
-export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean } {
+/** Water sources start rivers (D171): the places whose conversion puts a source inside a flow
+ *  another source already feeds (`water.source_in_flow`, a design check: it warns in the export
+ *  profile). Real places 2 places sources only at heads and empties this list. */
+export const PLACES_SOURCES_IN_FLOW = new Set([
+  "near-altiplano", "near-atacama-fan", "near-badlands-national-park", "near-bandiagara",
+  "near-blue-mountains-jamison", "near-blyde-river-canyon", "near-brahmaputra-near-majuli",
+  "near-bungle-bungle", "near-capitol-reef", "near-chilean-aysen-fjord", "near-chocolate-hills",
+  "near-cliffs-of-moher", "near-colca-canyon", "near-copper-canyon", "near-death-valley",
+  "near-dinaric-karst-plitvice", "near-drakensberg-amphitheatre", "near-ennedi-plateau",
+  "near-ethiopian-highlands", "near-finnish-saimaa", "near-geirangerfjord", "near-glencoe",
+  "near-godavari-delta", "near-goosenecks-san-juan", "near-gullfoss", "near-ilulissat-icefjord",
+  "near-kenai-aialik-bay", "near-lake-toba", "near-lena-delta", "near-lower-mississippi-oxbows",
+  "near-mamore-river", "near-monument-valley", "near-mount-mayon", "near-na-pali-coast",
+  "near-ngorongoro", "near-niagara-falls", "near-painted-desert", "near-phong-nha",
+  "near-rhine-and-moselle", "near-roaring-river-fan", "near-sete-cidades", "near-skeidara-outwash",
+  "near-taklimakan-kunlun-fan", "near-tara-gorge", "near-tiger-leaping-gorge", "near-todgha-gorge",
+  "near-toklat-river", "near-torres-del-paine", "near-tsingy-bemaraha", "near-twelve-apostles",
+  "near-victoria-falls", "near-waimakariri-river", "near-western-ghats-mahabaleshwar",
+  "near-yosemite-valley",
+]);
+
+/** The failing checks of a place, the two known conversion faults apart, and which of them fail. */
+export function placeFailures(checks: readonly CheckResult[]): { other: string[]; edgeWall: boolean; sourceInFlow: boolean } {
   const all = failing(checks);
-  return { other: all.filter((f) => !f.startsWith("terrain.edge_wall:")), edgeWall: all.length !== all.filter((f) => !f.startsWith("terrain.edge_wall:")).length };
+  const known = (f: string) => f.startsWith("terrain.edge_wall:") || f.startsWith("water.source_in_flow:");
+  return { other: all.filter((f) => !known(f)), edgeWall: all.some((f) => f.startsWith("terrain.edge_wall:")), sourceInFlow: all.some((f) => f.startsWith("water.source_in_flow:")) };
 }
 
 /** Every place in shard `k` of `n`: its .timber, built as the page builds it (build, settle,
@@ -55,6 +77,7 @@ export function checkShard(k: number, n: number): void {
       const f = placeFailures(v.report.checks);
       expect(f.other).toEqual([]);
       expect(f.edgeWall).toBe(PLACES_HAVE_EDGE_WALLS);
+      expect(f.sourceInFlow).toBe(PLACES_SOURCES_IN_FLOW.has(entry.id));
       expect(v.report.passed).toBe(!PLACES_HAVE_EDGE_WALLS);
       expect(r.validation.report.checks.find((c) => c.id === "terrain.edge_wall")!.severity).toBe(PLACES_HAVE_EDGE_WALLS ? "error" : "info");
       expect(sha256(r.bytes)).toBe(entry.sha256);
