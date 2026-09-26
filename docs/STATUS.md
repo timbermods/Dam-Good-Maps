@@ -76,7 +76,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D159: M11's heightmap import uses the survey's conversion pipeline (drainage rivers, sources, the start rules, the water rules).
 - D160: later, after M11: "Pick a place" from a world map or coordinates, open elevation data only, with attribution.
 - D161: the north-star journey: a striking place → Pick a place → the Weather view → Live editing → play; each step smooth, no gaps.
-- D160 (moved): Pick a place right after Live editing, alongside M9.
+- D160/D175: Pick a place, the full experience (explore a 3D world map, frame a square with a live block preview, one click to build), right after M11 and before the refinement phase.
 - D162: Save to Timberborn, soon: pick the Maps folder once, then save straight into it (Chrome, Edge).
 - D163: later, proposed: a companion mod that lists and starts new Dam Good Maps maps from the game's menu.
 - D164: starting wood: the start counts logs by species (oak 8, pine 2 plus resin, birch 1), not trees; "Minimum starting wood"; species as a generator lever.

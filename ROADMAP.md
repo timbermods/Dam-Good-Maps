@@ -802,7 +802,6 @@ every place rebuilt without perimeter walls, water free to drain; and the galler
 **Blocking:** every map passes the validators and exports, the page works on desktop and phone,
 and D151 (no edge walls).
 
-
 **Tall places** (D172): Real places and Pick a place get a height option, standard (up to 16) or
 tall (up to 22, top layer empty); dramatic places default to tall. Tall versions come in the round
 after a probe batch confirms maps above 16 load and keep their terrain, water and objects; each
@@ -879,34 +878,6 @@ keep the normal download with install help. Released as `save-to-timberborn-done
 
 **Blocking:** breakage (the saved file is the same bytes as the download; nothing else in the folder
 is touched) and what a player feels (one click, clear feedback, a plain fallback).
-
----
-
-## Pick a place
-
-Right after Live editing, alongside M9: it doesn't touch the generator (Kyler, 2026-09-25; PLAN §20
-D160, moved from Later). Choose any spot on a world map (or paste coordinates, for example from
-Google Earth), pick size and scale, and get a playable map built from open elevation data with
-attribution, through the landscape survey's conversion pipeline (as M11's heightmap import, D159):
-vertical mapping, rivers from the drainage, water sources, a start by Kyler's rules, the current
-water rules (no walls or rims; draining allowed). Never Google's own data. If a place converts
-poorly, say so plainly and suggest a larger area or a different scale.
-
-**Designed water** (Kyler, 2026-09-25; D166): the land comes from the real world, the water is
-designed. A place never fails for lack of native water: the engine places sources where they make
-sense for that land (valley heads, springs below ridges, rivers carried by the drainage down a
-canyon, over a cliff or into a crater), and may use intentions to choose. It always meets Kyler's
-start requirements, placing the start where the designed water gives a good opening. If a spot
-still can't work, it quietly tries other sizes, scales and nearby offsets and shows the best result
-or clear nearby suggestions; the player never sees a failed attempt. The player can then move, add
-or remove sources in the editor and see the result in the Weather view. "Real water" from open
-data (OpenStreetMap rivers and lakes, global surface-water maps) is an optional mode for later.
-`investigation/pickplace` (#34) is adopted with this change: its failures from missing or misplaced
-water become cases for designed water, not rejections. It is the first step of the
-north-star journey (D161). Released as `pick-a-place-done`.
-
-**Blocking:** breakage (the map passes the validators and exports; attribution present; no edge
-walls, D151) and what a player feels (progress while it converts; never a frozen page).
 
 ---
 
@@ -1110,7 +1081,6 @@ become recipes inside the system (design §3).
     the opening) as query tool entries, and "show me variations of this map" as an operation;
     suite requests for them; every reference solution re-run.
   - Acceptance: the rest of M9's acceptance below that the stages do not cover.
-
 
 **Delivers:** old PLAN milestone 4.
 - `score.ts` calibrated on the official maps.
@@ -1550,7 +1520,6 @@ into play consequences.
 
 **Release:** tagged `weather-view-done` and released like a milestone (CLAUDE.md, Deploying).
 
-
 **Proposals adopted from PR #33** (D173): the bit-identical speedups to the cycle model, each
 re-proved step by step, and the scheduling: the first drought first when it's on screen, a
 background start after generation, caching under the full input hash, cancellable batches.
@@ -1632,6 +1601,54 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 **In-game check:** no.
 
 **Effort:** high.
+
+---
+
+## Pick a place
+
+Right after M11 and before the refinement phase, as one of the final features (Kyler, 2026-09-25;
+PLAN §20 D160, D166, D175; this replaces the earlier placement right after Live editing). It reuses
+M11's heightmap import pipeline (D159), and the design pass later restyles it with everything else.
+One smooth flow inside Dam Good Maps, from exploring the real world to a finished map in one click:
+
+1. **Explore:** a **Pick a place** page beside Generate and Real places, with a 3D map to fly, tilt
+   and rotate. Terrain comes from the same AWS Terrarium elevation the conversion uses (shaded 3D
+   terrain), with OpenFreeMap vector tiles for context (rivers, lakes, forests, roads, place names;
+   no key, attribution shown). Search by place name with OpenStreetMap's Nominatim, on Enter only,
+   within its usage policy. No satellite imagery for now. Never Google's data; pasting coordinates
+   (for example from Google Earth) stays available. A planned fallback tile source (for example
+   VersaTiles or Maptoolkit) if OpenFreeMap changes.
+2. **Frame:** a square shows exactly what the map will cover. Drag and rotate it; resizing it
+   changes the scale (metres per tile) within sensible limits; its real size shows ("7.7 km
+   across").
+3. **Live preview inside the square:** while framing, the land inside is already shown turned into
+   Timberborn blocks at Timberborn's levels, so the player sees the map, not just the place, before
+   building.
+4. **Confirm with as little as possible:** map size (96, 128 or 256) and height (auto by default:
+   tall when the relief deserves it, once the probe confirms tall maps). Scale, difficulty and
+   water (designed by default) sit in an optional **More** drawer.
+5. **One click, "Build my map":** a short progress strip (terrain, rivers, start, forests, checks),
+   then the map appears in the usual 3D view with its name (from the place, no "Near") and a "how
+   it plays" line, and everything works from there: the Weather view, Refine (Live editing), Save
+   to Timberborn, Download, and a share link that rebuilds exactly this map. The share link stores
+   the place, the framing, the settings and the elevation data's version.
+6. **It never fails in front of the player:** if the framing won't make a good map, it quietly
+   tries nearby framings and scales and shows the best; if nothing nearby works, it highlights
+   better spots on the map.
+7. **Phones** get a simpler version: a flatter view and a lighter preview.
+8. **Credits** as in Real places (D155): a short credit and link in each map's in-game description,
+   the full notices on the credits page, and any region-specific notice the data's provider
+   requires.
+
+It follows every current rule: designed water (sources only where water begins, D166, D171; the
+designed-water prototype from `investigation/pickplace`, PR #34, adopted once it's complete), no
+walls or rims (D151), maps may drain (D152), Kyler's start requirements (D153, D164), and
+official-like trees, ruins, mines and clusters (D167–D170).
+
+**Blocking:** breakage (the map passes the validators and exports; the share link rebuilds it
+exactly; attribution present; no edge walls) and what a player feels (the explore view and the
+live preview stay smooth; progress while it builds; never a frozen page; never a failed attempt
+shown).
 
 ---
 
