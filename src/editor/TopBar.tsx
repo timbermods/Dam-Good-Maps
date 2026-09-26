@@ -5,7 +5,8 @@
 // Flatten has "in steps" and its edges, Smooth "make walkable". After Source come the forces (D194,
 // D202, D203, D206: Carve, Craterize, Quake, Erupt), a group of their own on one shared core, each
 // options row starting with its mode switch; each slot stays empty until Kyler says its prototype
-// is ready. Built from the shared bar and button styles (D176).
+// is ready (Carve is). While a force is at work the other tools wait. Built from the shared bar and
+// button styles (D176).
 
 import type { ComponentChildren } from "preact";
 import { BRUSHES, type BrushSettings, type BrushTool } from "./brushes";
@@ -14,8 +15,8 @@ import type { RemoveKind } from "../core/features/objects";
 const ICON = { width: 20, height: 20, viewBox: "0 0 20 20", "aria-hidden": "true" as const, fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round" as const, "stroke-linejoin": "round" as const };
 
 /** The tools' icons: an arrow up, an arrow down, a level line, a wave, a weathered peak; a drop; a
- *  cross. */
-function Icon({ tool }: { tool: BrushTool | "source" | "remove" }) {
+ *  river cut through a gorge; a cross. */
+function Icon({ tool }: { tool: BrushTool | "source" | "remove" | "carve" }) {
   switch (tool) {
     case "raise":
       return (
@@ -53,6 +54,12 @@ function Icon({ tool }: { tool: BrushTool | "source" | "remove" }) {
           <path d="M10 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" />
         </svg>
       );
+    case "carve":
+      return (
+        <svg {...ICON}>
+          <path d="M2 4l4 12M18 4l-4 12M11 3c-3 3 2 5-1 8s1 4 0 6" />
+        </svg>
+      );
     case "remove":
       return (
         <svg {...ICON}>
@@ -61,6 +68,9 @@ function Icon({ tool }: { tool: BrushTool | "source" | "remove" }) {
       );
   }
 }
+
+/** A tool the top bar picks. */
+export type TopTool = BrushTool | "source" | "remove" | "carve";
 
 /** What Remove takes (its filters), and their words. */
 export const REMOVE_KINDS: readonly [RemoveKind, string][] = [
@@ -81,9 +91,12 @@ export interface Force {
   ready: boolean;
   /** The mode switch that starts its options row (the first mode is the default). */
   modes: readonly [string, string];
+  /** Its key, and what it does, for its button's title. */
+  key?: string;
+  hint?: string;
 }
 export const FORCES: readonly Force[] = [
-  { id: "carve", name: "Carve", ready: false, modes: ["Unleash", "Aim"] },
+  { id: "carve", name: "Carve", ready: true, modes: ["Unleash", "Aim"], key: "7", hint: "unleash a river where you click, or aim it from one spot to another. Stop keeps it, Esc takes it back" },
   { id: "craterize", name: "Craterize", ready: false, modes: ["Strike", "Aim"] },
   { id: "quake", name: "Quake", ready: false, modes: ["Lift", "Slide"] },
   { id: "erupt", name: "Erupt", ready: false, modes: ["Vent", "Fissure"] },
@@ -115,7 +128,11 @@ export interface TopBarProps {
   removeKinds: readonly RemoveKind[];
   onRemoveKinds(kinds: RemoveKind[]): void;
   settings: BrushSettings;
-  onPick(tool: BrushTool | "source" | "remove" | null): void;
+  onPick(tool: TopTool | null): void;
+  /** The force picked (its id), its options row, and whether one is at work (the other tools wait). */
+  force?: string | null;
+  forceRow?: ComponentChildren;
+  forceAtWork?: boolean;
   onSettings(s: BrushSettings): void;
   /** The map is still loading: the tools wait until they can work. */
   loading?: boolean;
@@ -130,7 +147,7 @@ export interface TopBarProps {
 }
 
 /** A toggle in the options row: a checkbox and its word. */
-function Toggle(p: { label: string; title: string; on: boolean; onChange(on: boolean): void }) {
+export function Toggle(p: { label: string; title: string; on: boolean; onChange(on: boolean): void }) {
   return (
     <label class="check" title={p.title}>
       <input type="checkbox" checked={p.on} onChange={() => p.onChange(!p.on)} />
@@ -144,6 +161,9 @@ export function TopBar(p: TopBarProps) {
   const set = (patch: Partial<BrushSettings>) => p.onSettings({ ...s, ...patch });
   const t = p.active;
   const heaps = t === "raise" || t === "lower";
+  // a force at work: the other tools wait until it is kept or taken back
+  const off = p.loading || p.forceAtWork;
+  const why = p.loading ? "The map is still loading" : "A force is at work: Stop keeps it, Esc takes it back";
   return (
     <div class="brush-bar-wrap">
       <div class="map-bar" role="toolbar" aria-label="Tools">
@@ -154,8 +174,8 @@ export function TopBar(p: TopBarProps) {
             class="icon-button"
             aria-pressed={p.active === b.tool}
             aria-label={`${b.name} brush (${b.key})`}
-            title={p.loading ? "The map is still loading" : `${b.name} (${b.key}): ${b.hint}`}
-            disabled={p.loading}
+            title={off ? why : `${b.name} (${b.key}): ${b.hint}`}
+            disabled={off}
             onClick={() => p.onPick(p.active === b.tool ? null : b.tool)}
           >
             <Icon tool={b.tool} />
@@ -168,8 +188,8 @@ export function TopBar(p: TopBarProps) {
           class="icon-button"
           aria-pressed={p.source}
           aria-label="Source (6)"
-          title={p.loading ? "The map is still loading" : "Source (6): click where water starts. Over a source, Shift+scroll sets its strength; drag it to move it."}
-          disabled={p.loading}
+          title={off ? why : "Source (6): click where water starts. Over a source, Shift+scroll sets its strength; drag it to move it."}
+          disabled={off}
           onClick={() => p.onPick(p.source ? null : "source")}
         >
           <Icon tool="source" />
@@ -180,7 +200,17 @@ export function TopBar(p: TopBarProps) {
             <span class="bar-divider" aria-hidden="true" />
             <span class="bar-group" role="group" aria-label="Forces">
               {FORCES.filter((f) => f.ready).map((f) => (
-                <button type="button" key={f.id} class="icon-button" disabled title={`${f.name}: coming`}>
+                <button
+                  type="button"
+                  key={f.id}
+                  class="icon-button"
+                  aria-pressed={p.force === f.id}
+                  aria-label={f.key ? `${f.name} (${f.key})` : f.name}
+                  title={p.loading ? "The map is still loading" : `${f.name}${f.key ? ` (${f.key})` : ""}: ${f.hint ?? ""}`}
+                  disabled={p.loading || (p.forceAtWork && p.force !== f.id)}
+                  onClick={() => !p.forceAtWork && p.onPick(p.force === f.id ? null : (f.id as TopTool))}
+                >
+                  {f.id === "carve" ? <Icon tool="carve" /> : null}
                   <span class="icon-word">{f.name}</span>
                 </button>
               ))}
@@ -193,8 +223,8 @@ export function TopBar(p: TopBarProps) {
           class="icon-button"
           aria-pressed={p.remove}
           aria-label="Remove (X)"
-          title={p.loading ? "The map is still loading" : "Remove (X): click an object, or drag over many. It never changes the ground; the start stays."}
-          disabled={p.loading}
+          title={off ? why : "Remove (X): click an object, or drag over many. It never changes the ground; the start stays."}
+          disabled={off}
           onClick={() => p.onPick(p.remove ? null : "remove")}
         >
           <Icon tool="remove" />
@@ -267,6 +297,7 @@ export function TopBar(p: TopBarProps) {
           </div>
         </div>
       ) : null}
+      {p.force && p.forceRow ? p.forceRow : null}
       {p.remove ? (
         <div class="map-bar options-row" role="group" aria-label="Remove options">
           <div class="bar-group">

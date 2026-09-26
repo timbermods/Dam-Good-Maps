@@ -64,10 +64,14 @@ export const GROUND = {
 } as const;
 
 /** Juice (D205): the dust a lowered stroke puffs up (a light, dry earth), and a source's splash
- *  (the editor's water-blue). */
+ *  (the editor's water-blue). A carve at work (D199): the foam surging round its head, the blocks
+ *  crumbling at its front (the cut earth), and the muddy water along its last stretch. */
 export const JUICE = {
   dust: [0.72, 0.65, 0.54] as Rgb,
   splash: [0.35, 0.82, 1.0] as Rgb,
+  foam: [0.92, 0.96, 0.87] as Rgb,
+  debris: [0.59, 0.51, 0.41] as Rgb,
+  mud: [0.57, 0.5, 0.34] as Rgb,
 } as const;
 
 /** Height colours (the toggle): the low and high ends of the ramp, as before Map look. */

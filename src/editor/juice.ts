@@ -10,9 +10,41 @@ import type { MapRenderer } from "../render3d";
 
 export type JuiceKind = "raise" | "lower" | "shape" | "place" | "source" | "remove";
 
-/** A force's own touch (Carve, Craterize, Quake, Erupt), when the forces are adopted (D203, D206):
- *  they register it here, on the shared core, and call `juice.play(id, …)`. */
+/** A force's own touch (Carve, Craterize, Quake, Erupt; D203, D206): it registers it here, on the
+ *  shared core, and calls `juice.play(id, …)`. */
 export type JuiceTouch = (ctx: { audio: AudioContext | null; out: GainNode | null; renderer: MapRenderer; x: number; y: number; size: number }) => void;
+
+/** Carve's touch (D199): a low rumble of water and falling earth, louder for a wider river, and a
+ *  puff of dust at its head (the surge itself is the renderer's). */
+export const carveTouch: JuiceTouch = ({ audio: a, out, renderer, x, y, size }) => {
+  renderer.puff(x, y, Math.min(4, size * 0.6));
+  if (!a || !out) return;
+  const t = a.currentTime + 0.005;
+  const n = Math.floor(a.sampleRate * 0.5);
+  const buf = a.createBuffer(1, n, a.sampleRate);
+  const d = buf.getChannelData(0);
+  let seed = (x * 73856093) ^ (y * 19349663);
+  for (let i = 0; i < n; i++) {
+    seed = (seed * 1103515245 + 12345) >>> 0;
+    d[i] = (seed / 4294967296) * 2 - 1;
+  }
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const f = a.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.setValueAtTime(320, t);
+  f.frequency.exponentialRampToValueAtTime(120, t + 0.45);
+  const g = a.createGain();
+  const peak = 0.25 + 0.45 * Math.min(1, size / 10);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+  src.connect(f);
+  f.connect(g);
+  g.connect(out);
+  src.start(t);
+  src.stop(t + 0.5);
+};
 
 export interface SoundSettings {
   on: boolean;
@@ -52,6 +84,7 @@ export class Juice {
   private noise: AudioBuffer | null = null;
   private last = new Map<string, number>();
   private touches = new Map<string, JuiceTouch>();
+  private gaps = new Map<string, number>();
   settings: SoundSettings;
 
   constructor(
@@ -67,16 +100,18 @@ export class Juice {
     if (this.out) this.out.gain.value = s.volume * LOUDNESS;
   }
 
-  /** A force's touch, under its id (the forces call `play(id, …)`). */
-  register(id: string, touch: JuiceTouch): void {
+  /** A force's touch, under its id (the forces call `play(id, …)`), no sooner than `gap` ms after
+   *  the last. */
+  register(id: string, touch: JuiceTouch, gap = 120): void {
     this.touches.set(id, touch);
+    this.gaps.set(id, gap);
   }
 
   /** Feedback for an action at tile (x, y), `size` tiles across: its sound and its effect on the
    *  land. `soft`: the same action going on (a stroke still painting), a little quieter. */
   play(kind: JuiceKind | string, x: number, y: number, size = 1, soft = false): void {
     const now = performance.now();
-    const gap = GAP[kind as JuiceKind] ?? 120;
+    const gap = GAP[kind as JuiceKind] ?? this.gaps.get(kind) ?? 120;
     if (now - (this.last.get(kind) ?? -Infinity) < gap) return;
     this.last.set(kind, now);
     const r = this.renderer();

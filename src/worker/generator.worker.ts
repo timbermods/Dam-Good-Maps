@@ -25,6 +25,14 @@ function sendOpen(o: ed.SessionOpen): ed.SessionOpen {
   return transfer(o, viewBuffers({ ...o.view, terrain: o.terrain }) as Transferable[]);
 }
 
+function frameBuffers(f: ed.ForceFrame): Transferable[] {
+  return viewBuffers({ heights: f.heights, water: f.water, entities: f.entities }) as Transferable[];
+}
+
+function sendStarted(r: ed.ForceStarted): ed.ForceStarted {
+  return r.frame ? transfer(r, frameBuffers(r.frame)) : r;
+}
+
 function eventBuffers(e: ed.EditorEvent): Transferable[] {
   if (e.kind === "instant") return [];
   return viewBuffers(e.kind === "water" || e.kind === "weather" ? { water: e.water } : e.view) as Transferable[];
@@ -104,6 +112,19 @@ const api = {
   setViews: (views: SavedView[]) => ed.setViews(views),
   removeAt: (tiles: number[], kinds: ed.RemoveKind[]) => sendUpdate(ed.removeAt(tiles, kinds)),
   instantCheck: () => ed.instantCheck(),
+  // the forces (D194, D203): a carve at work, a frame at a time; Stop keeps it, Esc drops it
+  carveStart: (req: ed.CarveRequest) => sendStarted(ed.carveStart(req)),
+  /** Try another path: the last kept carve again, with the next seed. */
+  carveAgain: () => sendStarted(ed.carveAgain()),
+  carveAdvance(steps: number) {
+    const f = ed.carveAdvance(steps);
+    return f ? transfer(f, frameBuffers(f)) : null;
+  },
+  carveStop: () => sendUpdate(ed.carveStop()),
+  carveCancel() {
+    const v = ed.carveCancel();
+    return transfer(v, viewBuffers(v) as Transferable[]);
+  },
   async settingsResponse(): Promise<GenerateResponse> {
     const r = await ed.settingsResponse();
     return transfer(r, responseBuffers(r));

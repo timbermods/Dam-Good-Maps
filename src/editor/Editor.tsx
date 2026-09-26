@@ -1,5 +1,5 @@
 // The editor (EDITOR_PLAN §3, PLAN §20 D184): the map fills the screen in the shared 3D view; the
-// top bar shapes the land and the water (the brushes, Source, Remove), the left shelf places the
+// top bar shapes the land and the water (the brushes, Source, the forces, Remove), the left shelf places the
 // game's objects (each with its ghost under the pointer), the view buttons show the overlays;
 // undo, redo, history, the map's health and export always visible. The document itself lives in
 // the worker (src/worker/session.ts): every edit is an operation sent there, and only what changed
@@ -24,7 +24,7 @@ import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
+import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, ForceFrame, SessionInfo, SessionOpen, SessionUpdate, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
 import { checkStartAt, startProblemAt, describeTile, entitiesByTile, FeatureIndex, feedingGroups, newId, sourceGroups, type StartCheck, type TileContext } from "./features";
 import { HistoryPanel, LayerLegend, LAYER_NAMES, plain, SourceOptions, StartIndicators, whereOf, type ItemActions, type LayerKind } from "./panels";
 import { ChecksDot, Header } from "./Header";
@@ -32,13 +32,15 @@ import { removeKindOf, type RemoveKind } from "../core/features/objects";
 import { Shelf } from "./Shelf";
 import { DEFAULT_SHELF_OPTIONS, paintTiles, quietWord, SHELF, templateOf, type ShelfItem, type ShelfOptions } from "./shelfItems";
 import { removeTool, shelfTool } from "./placeTools";
-import { Juice, loadSound, type SoundSettings } from "./juice";
+import { carveTouch, Juice, loadSound, type SoundSettings } from "./juice";
+import { CarveDriver, type CarveStatus } from "./carveDriver";
+import { CarveRow, carveSettingsOf, DEFAULT_CARVE, type CarveUi } from "./CarveRow";
 import type { StartCheckApi } from "./startCheck.worker";
 import { startSpots } from "./startHint";
 import { FirstRun, loadFirstRun, saveFirstRun, type FirstStep } from "./FirstRun";
 import { LayerWidget } from "./LayerWidget";
 import { Minimap } from "./Minimap";
-import { REMOVE_KINDS, TopBar } from "./TopBar";
+import { FORCES, REMOVE_KINDS, TopBar, type TopTool } from "./TopBar";
 import { SELECT_MODES, Selection, selectTool, sizeWords, type SelectMode } from "./select";
 import { WaterBar } from "./WaterBar";
 import { WaterPlayer } from "./waterPlayer";
@@ -97,6 +99,8 @@ declare global {
       strokeMismatches(): number;
       /** Strokes, undos and redos on their way to the worker. */
       pendingTerrain(): number;
+      /** The carve at work (D199), or null. */
+      carve(): CarveStatus | null;
       /** The last stroke painted (its operation's params), or null. */
       lastStroke(): BrushParams | null;
       /** "The start fits here" after a Flatten stroke (D204), and how long its search took. */
@@ -125,8 +129,13 @@ export default function Editor(props: EditorProps) {
   const mirror = useRef<Mirror>(mirrorOf(view));
   const renderer = useRef<MapRenderer | null>(null);
   const [ready, setReady] = useState<MapRenderer | null>(null);
-  /** Source, picked in the top bar (the brushes have their own state). */
-  const [tool, setTool] = useState<"source" | null>(null);
+  /** Source or Carve, picked in the top bar (the brushes have their own state). */
+  const [tool, setTool] = useState<"source" | "carve" | null>(null);
+  /** Carve's Aim: its start once picked, and the tile the pointer is on (D199). */
+  const [aimFrom, setAimFrom] = useState<[number, number] | null>(null);
+  const aimRef = useRef(aimFrom);
+  aimRef.current = aimFrom;
+  const [aimTo, setAimTo] = useState<[number, number] | null>(null);
   const [options, setOptions] = useState<ToolOptions>(DEFAULT_OPTIONS);
   /** The object picked on the shelf, its options and its turn (D184). */
   const [shelf, setShelf] = useState<ShelfItem | null>(null);
@@ -276,8 +285,13 @@ export default function Editor(props: EditorProps) {
     return next;
   }
 
-  /** Run worker calls one after another; apply what changed to the view. */
+  /** Run worker calls one after another; apply what changed to the view. (While a carve is at work
+   *  the other edits wait: Stop keeps it, Esc takes it back.) */
   function run(fn: () => Promise<SessionUpdate>, onDone?: (u: SessionUpdate) => void): Promise<void> {
+    if (carver.current?.running) {
+      setMessage({ kind: "info", text: "A carve is at work: Stop keeps it, Esc takes it back." });
+      return Promise.resolve();
+    }
     const next = queue.current.then(async () => {
       setBusy((b) => b + 1);
       try {
@@ -518,6 +532,7 @@ export default function Editor(props: EditorProps) {
   }
 
   const undo = () => {
+    if (carver.current?.running) return carver.current.cancel();
     if (painter.current?.painting) return painter.current.cancel();
     const s = localUndo.current.pop();
     if (!s) return run(() => api.undo());
@@ -526,7 +541,7 @@ export default function Editor(props: EditorProps) {
     sendTerrain(() => api.undo());
   };
   const redo = () => {
-    if (painter.current?.painting) return;
+    if (painter.current?.painting || carver.current?.running) return;
     const s = localRedo.current.pop();
     if (!s) return run(() => api.redo());
     showStroke(s, "after");
@@ -534,12 +549,14 @@ export default function Editor(props: EditorProps) {
     sendTerrain(() => api.redo());
   };
 
-  /** The top bar: a brush, Source, Remove, or nothing; the shelf's object goes back. */
-  function pickTop(t: BrushTool | "source" | "remove" | null) {
-    if (t === "source" || t === "remove") {
+  /** The top bar: a brush, Source, Carve, Remove, or nothing; the shelf's object goes back. */
+  function pickTop(t: TopTool | null) {
+    if (carver.current?.running) return;
+    setAimFrom(null);
+    if (t === "source" || t === "remove" || t === "carve") {
       pickBrush(null);
       pickShelf(null);
-      setTool(t === "source" ? "source" : null);
+      setTool(t === "remove" ? null : t);
       setRemoving(t === "remove");
       setPicked(null);
       return;
@@ -593,6 +610,11 @@ export default function Editor(props: EditorProps) {
         .backgroundCheck(proxy((p: CheckProgress) => live && setProgress(p)))
         .then((r) => {
           if (!r || !mounted.current) return;
+          // (a carve at work shows its own water: the map's comes after it)
+          if (carver.current?.running) {
+            deferred.current.push(r.view);
+            return;
+          }
           // the exact settle's water ends the journey in progress (eased into), or shows at once.
           // The worker put it in place and sends it once, so it shows even when the page moved on
           // while the check ran (the check started as an edit went in): only the report waits
@@ -638,6 +660,11 @@ export default function Editor(props: EditorProps) {
     void api.listen(
       proxy((e: EditorEvent) => {
         if (e.version !== infoRef.current.version) return;
+        // a carve at work shows its own water; the map's settled view comes after it
+        if (carver.current?.running) {
+          if (e.kind === "settled") deferred.current.push(e.view);
+          return;
+        }
         if (e.kind === "water" && e.draft) {
           // the water on a stroke being painted: shown as it comes (D197)
           if (player.current?.hasJourney) player.current.clear();
@@ -726,10 +753,14 @@ export default function Editor(props: EditorProps) {
     if (sourceDrag) layers.push({ tiles: sourceDrag, color: MOVING });
     if (selection.current.count) layers.push({ tiles: selection.current.tiles(), color: SELECTED, outline: true });
     if (selectDraw) layers.push({ tiles: selectDraw, color: DRAWING });
+    if (aimFrom) {
+      layers.push({ tiles: aimTo ? lineTiles(aimFrom, aimTo, info.W) : [], color: DRAWING });
+      layers.push({ tiles: [aimFrom[1] * info.W + aimFrom[0]], color: SELECTED });
+    }
     for (const c of instant) for (const [x, y] of c.where?.tiles ?? []) layers.push({ tiles: [y * info.W + x], color: PROBLEM });
     paintOverlay(data, info.W, info.H, layers);
     r.commitOverlay();
-  }, [fit, picked, startDrag, damSites, instant, ready, waterLayers, layer, sourceDrag, selectionTick, selectDraw, painted, removeRect]);
+  }, [fit, picked, startDrag, damSites, instant, ready, waterLayers, layer, sourceDrag, selectionTick, selectDraw, painted, removeRect, aimFrom, aimTo]);
 
   // ------------------------------------------------------------------------------ the pointer
 
@@ -1343,6 +1374,196 @@ export default function Editor(props: EditorProps) {
     };
   }, [tool, ready]);
 
+  // ------------------------------------------------------------------------------ Carve
+
+  /** Carve's options for the next carve (D199; kept for the visit), Aim's start, and the tile the
+   *  pointer is on while aiming. */
+  const [carveUi, setCarveUi] = useState<CarveUi>(DEFAULT_CARVE);
+  const carveUiRef = useRef(carveUi);
+  carveUiRef.current = carveUi;
+  const [, setCarveTick] = useState(0);
+  /** The map's own views that came while a carve was at work (the settled water, a check's): they
+   *  go on the map just before the carve's own answer. */
+  const deferred = useRef<ViewUpdate[]>([]);
+  /** The carve to start next: where, and the layer showing (D207: only the land showing is carved). */
+  const carveReq = useRef<{ origin: [number, number]; end?: [number, number]; cut: number | null } | null>(null);
+
+  /** A frame of the carve at work: the ground near its head, its water, the objects it took. */
+  function showForceFrame(f: ForceFrame) {
+    const r = renderer.current;
+    const m = mirror.current;
+    if (f.heights && f.rect) {
+      m.heights = f.heights;
+      r?.updateTerrainRect(f.heights, f.rect);
+    }
+    if (f.water) {
+      r?.updateWater(f.water);
+      m.water = r?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, f.water);
+      m.waterView = f.water;
+    }
+    if (f.entities) {
+      m.entities = f.entities;
+      m.entitiesAt = null;
+      m.coverAt = null;
+      r?.updateEntities(f.entities);
+    }
+  }
+
+  function flushDeferred() {
+    const list = deferred.current;
+    deferred.current = [];
+    for (const v of list) applyView(v);
+  }
+
+  // (the driver lives as long as the editor; it calls the latest of these)
+  const carveCalls = useRef<{ keep(): Promise<void>; drop(): Promise<void>; show(f: ForceFrame): void; click(x: number, y: number): void; hover(hit: TileHit | null, ev: PointerEvent): void } | null>(null);
+  carveCalls.current = {
+    keep: () =>
+      enqueue(async () => {
+        setBusy((b) => b + 1);
+        try {
+          const u = await api.carveStop();
+          flushDeferred();
+          localUndo.current = [];
+          localRedo.current = [];
+          applyUpdate(u);
+          renderer.current?.refreshShadows();
+          if (!u.ok && u.errors.length) setMessage({ kind: "info", text: plain(u.errors[0]) });
+          else if (u.ok) setMessage(null);
+        } finally {
+          setBusy((b) => b - 1);
+        }
+      }),
+    drop: () =>
+      enqueue(async () => {
+        const v = await api.carveCancel();
+        if (!mounted.current) return;
+        flushDeferred();
+        applyView(v);
+        renderer.current?.refreshShadows();
+      }),
+    show: showForceFrame,
+    click: carveClick,
+    hover: carveHover,
+  };
+  const carver = useRef<CarveDriver | null>(null);
+  carver.current ??= new CarveDriver({
+    start: (again) =>
+      enqueue(() => {
+        const q = carveReq.current;
+        if (again || !q) return api.carveAgain();
+        return api.carveStart({ settings: carveSettingsOf(carveUiRef.current), origin: q.origin, ...(q.end ? { end: q.end } : {}), cut: q.cut });
+      }),
+    advance: (steps) => enqueue(() => api.carveAdvance(steps)),
+    keep: () => carveCalls.current!.keep(),
+    drop: () => carveCalls.current!.drop(),
+    renderer: () => renderer.current,
+    speed: () => player.current?.speedName ?? "normal",
+    follow: () => carveUiRef.current.follow,
+    show: (f) => carveCalls.current!.show(f),
+    changed: () => setCarveTick((n) => n + 1),
+    error: (text) => setMessage({ kind: "error", text: plain(text) }),
+    feel: (x, y, size) => juice.current?.play("carve", x, y, size),
+  });
+  // (a carve at work when the editor closes goes with it)
+  useEffect(() => () => carver.current?.cancel(), []);
+
+  /** The water's journey and a weather run give way to the carve's own water. */
+  function clearForCarve() {
+    player.current?.clear();
+    if (weatherRef.current) setWeather(null);
+    setPicked(null);
+    setShapeNote(null);
+    setMessage(null);
+  }
+
+  /** Unleash: a click starts it there. Aim: a click picks its start, the next its end. */
+  function carveClick(x: number, y: number) {
+    const c = carver.current;
+    if (!c || c.running) return;
+    if (carveUiRef.current.mode === "aim") {
+      const from = aimRef.current;
+      if (!from) {
+        setAimFrom([x, y]);
+        setAimTo(null);
+        return;
+      }
+      if (from[0] === x && from[1] === y) return;
+      setAimFrom(null);
+      setAimTo(null);
+      startCarve(from, [x, y]);
+      return;
+    }
+    startCarve([x, y]);
+  }
+
+  function startCarve(origin: [number, number], end?: [number, number]) {
+    carveReq.current = { origin, ...(end ? { end } : {}), cut: renderer.current?.slice ?? null };
+    clearForCarve();
+    void carver.current?.start(false);
+  }
+
+  /** Try another path: the last carve again, from the same land, another way. */
+  function carveAgain() {
+    if (!carver.current || carver.current.running) return;
+    clearForCarve();
+    void carver.current.start(true);
+  }
+
+  /** Aim: the line to the pointer, and what it will do there (tools read intent, D204: an end
+   *  uphill says so before the click). */
+  function carveHover(hit: TileHit | null, ev: PointerEvent) {
+    notePointer(ev);
+    const from = aimRef.current;
+    if (!hit || carver.current?.running || carveUiRef.current.mode !== "aim") {
+      if (from) setAimTo(null);
+      setShapeNote(null);
+      return;
+    }
+    if (!from) {
+      setShapeNote({ text: "Click where it starts", ok: true, warn: false, ...pointerAt.current });
+      return;
+    }
+    setAimTo([hit.x, hit.y]);
+    const h = mirror.current.heights;
+    const W = infoRef.current.W;
+    const uphill = h[hit.y * W + hit.x] > h[from[1] * W + from[0]];
+    const n = Math.round(Math.hypot(hit.x - from[0], hit.y - from[1]));
+    const defy = carveUiRef.current.defyGravity;
+    const text = uphill ? (defy ? `${n} tiles, uphill: Defy gravity cuts through` : `${n} tiles, uphill: turn on Defy gravity`) : `${n} tiles: click where it ends`;
+    setShapeNote({ text, ok: true, warn: uphill && !defy, ...pointerAt.current });
+  }
+
+  // Carve takes the map's clicks while it is picked (a click, not a drag)
+  useEffect(() => {
+    const r = renderer.current;
+    if (!r || tool !== "carve") return;
+    let down: TileHit | null = null;
+    const t: PointerTool = {
+      down: (hit, ev) => {
+        if (ev.button !== 0 || !hit || carver.current?.running) return false;
+        down = hit;
+        return true;
+      },
+      move: () => undefined,
+      up: (hit) => {
+        if (hit && down && Math.max(Math.abs(hit.x - down.x), Math.abs(hit.y - down.y)) <= 1) carveCalls.current!.click(hit.x, hit.y);
+        down = null;
+      },
+      hover: (hit, ev) => carveCalls.current!.hover(hit, ev),
+      cancel: () => {
+        down = null;
+      },
+    };
+    r.tool = t;
+    return () => {
+      if (r.tool === t) r.tool = null;
+      setAimFrom(null);
+      setAimTo(null);
+      setShapeNote(null);
+    };
+  }, [tool, ready]);
+
   /** A source clicked (D196): it is picked, with its strength and its water in the row beneath the
    *  top bar. */
   function pickTile(x: number, y: number) {
@@ -1465,6 +1686,7 @@ export default function Editor(props: EditorProps) {
     renderer.current = r;
     setReady(r);
     juice.current ??= new Juice(() => renderer.current, sound);
+    juice.current.register("carve", carveTouch, 380);
     painter.current = new BrushPainter({
       renderer: r,
       W: infoRef.current.W,
@@ -1758,7 +1980,8 @@ export default function Editor(props: EditorProps) {
   // level lines while the toggle is on (the brush kit)
   useEffect(() => renderer.current?.setLevelLines(brush.levelLines), [brush.levelLines, ready]);
   // any tool picked makes the water see-through, so the bed and the sources show (D196)
-  useEffect(() => renderer.current?.setClearWater(clearWater || !!brushTool || !!tool || !!selecting || !!shelf || removing), [clearWater, brushTool, tool, selecting, shelf, removing, ready]);
+  //   (Carve: the river forming is the show, so its water stays as it is)
+  useEffect(() => renderer.current?.setClearWater(clearWater || !!brushTool || tool === "source" || !!selecting || !!shelf || removing), [clearWater, brushTool, tool, selecting, shelf, removing, ready]);
 
   const toolRef = useRef(tool);
   toolRef.current = tool;
@@ -1909,6 +2132,26 @@ export default function Editor(props: EditorProps) {
       const toggle = target?.tagName === "INPUT" && ["checkbox", "radio", "button"].includes((target as HTMLInputElement).type);
       if (target && !toggle && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
       const mod = ev.ctrlKey || ev.metaKey;
+      // a carve at work (D199): Esc or Ctrl+Z takes it back, Space holds it; the other tools wait
+      const c = carver.current;
+      if (c?.running) {
+        if (ev.key === "Escape" || (mod && ev.key.toLowerCase() === "z")) {
+          ev.preventDefault();
+          c.cancel();
+          return;
+        }
+        if (ev.key === " ") {
+          ev.preventDefault();
+          c.pause(!c.status!.paused);
+          return;
+        }
+        if (mod || /^[1-9]$/.test(ev.key) || ["m", "x", "r", "f", "delete", "backspace"].includes(ev.key.toLowerCase())) return;
+      }
+      // Aim's start picked: Esc lets it go
+      if (ev.key === "Escape" && aimRef.current) {
+        setAimFrom(null);
+        return;
+      }
       // camera bookmarks (D205): Ctrl+Shift+1–9 keeps the view in that slot, Shift+1–9 glides back
       // to it (the number keys alone pick the brushes)
       const digit = /^Digit([1-9])$/.exec(ev.code);
@@ -1940,9 +2183,13 @@ export default function Editor(props: EditorProps) {
         if (painter.current && brushToolRef.current !== b) pickBrush(b);
         return;
       }
-      // 6: Source; M: the Select tool
+      // 6: Source; 7: Carve; M: the Select tool
       if (!mod && !ev.altKey && ev.key === "6" && painter.current) {
         pickTop(toolRef.current === "source" ? null : "source");
+        return;
+      }
+      if (!mod && !ev.altKey && ev.key === "7" && painter.current) {
+        pickTop(toolRef.current === "carve" ? null : "carve");
         return;
       }
       if (!mod && !ev.altKey && ev.key.toLowerCase() === "m") {
@@ -2066,6 +2313,7 @@ export default function Editor(props: EditorProps) {
       strokeMismatches: () => strokeMismatches.current,
       lastStroke: () => localUndo.current.at(-1)?.params ?? null,
       pendingTerrain: () => pendingTerrain.current,
+      carve: () => (carver.current?.status ? { ...carver.current.status } : null),
       startHint: () => (startHintRef.current ? { x: startHintRef.current.x, y: startHintRef.current.y, strong: startHintRef.current.strong, ms: hintMs.current } : null),
     };
     return () => {
@@ -2145,7 +2393,7 @@ export default function Editor(props: EditorProps) {
         onBack={() => props.onBack(info)}
       />
       <div class="editor-main">
-        <Shelf picked={shelf?.id ?? null} onPick={pickShelf} icon={(t) => icons[t] ?? null} loading={!ready} />
+        <Shelf picked={shelf?.id ?? null} onPick={pickShelf} icon={(t) => icons[t] ?? null} loading={!ready || !!carver.current?.running} />
         <section class="editor-map" aria-label="Map">
           <View3D
             view={view}
@@ -2204,6 +2452,26 @@ export default function Editor(props: EditorProps) {
             <TopBar
               active={brushTool}
               source={tool === "source"}
+              force={tool === "carve" ? "carve" : null}
+              forceAtWork={!!carver.current?.running}
+              forceRow={
+                tool === "carve" ? (
+                  <CarveRow
+                    force={FORCES.find((f) => f.id === "carve")!}
+                    ui={carveUi}
+                    onUi={(u) => {
+                      setCarveUi(u);
+                      if (u.mode !== carveUi.mode) setAimFrom(null);
+                    }}
+                    status={carver.current?.status ?? null}
+                    canAgain={info.carveAgain}
+                    onAgain={() => void carveAgain()}
+                    onPause={() => carver.current?.pause(!carver.current.status?.paused)}
+                    onStop={() => void carver.current?.stop()}
+                    onRevert={() => carver.current?.cancel()}
+                  />
+                ) : null
+              }
               remove={removing}
               removeKinds={removeKinds}
               onRemoveKinds={setRemoveKinds}
@@ -2407,4 +2675,16 @@ function DropTarget({ onFile }: { onFile(file: File): void }) {
     };
   }, []);
   return null;
+}
+
+/** The tiles on a straight line from a to b (Aim's line). */
+function lineTiles(a: [number, number], b: [number, number], W: number): number[] {
+  const n = Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+  const out: number[] = [];
+  for (let k = 0; k <= n; k++) {
+    const x = Math.round(a[0] + ((b[0] - a[0]) * k) / (n || 1));
+    const y = Math.round(a[1] + ((b[1] - a[1]) * k) / (n || 1));
+    out.push(y * W + x);
+  }
+  return out;
 }

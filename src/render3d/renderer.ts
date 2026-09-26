@@ -40,7 +40,7 @@ import {
   ColorManagement,
 } from "three";
 import { BrushCursor, type BrushCursorState } from "./brushCursor";
-import { Effects } from "./effects";
+import { Effects, Surge, type SurgeHead, type SurgePoint } from "./effects";
 import { buildEntities, disposeGroup, mineCutout, mineOutline } from "./entities3d";
 import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
 import { contaminationEdges, drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
@@ -950,6 +950,24 @@ export class MapRenderer {
     return !this.reducedMotion && !this.software && !!this.map;
   }
 
+  /** Motion is welcome (not reduced): a force's camera may follow it (D199). */
+  get motion(): boolean {
+    return !this.reducedMotion;
+  }
+
+  private surge: Surge | null = null;
+
+  /** A force's head at work (a carve's surge, D199), on the ground shown; null puts it away. Not
+   *  with reduced motion, not in software. */
+  setSurge(head: SurgeHead | null, trail: readonly SurgePoint[] = []): void {
+    const m = this.map;
+    if (!head || !m || !this.juicy) {
+      this.surge?.set(null, [], new Uint8Array(1), 1);
+      return;
+    }
+    (this.surge ??= new Surge(this.scene, () => this.requestRender())).set(head, trail, m.heights, m.W);
+  }
+
   /** A puff of dust where ground was lowered at tile (x, y), `size` tiles across. */
   puff(x: number, y: number, size: number): void {
     const m = this.map;
@@ -1678,6 +1696,7 @@ export class MapRenderer {
     this.clearMap();
     this.cursor?.dispose();
     this.effects?.dispose();
+    this.surge?.dispose();
     this.terrainMat.dispose();
     this.waterMat.dispose();
     this.objectMat.dispose();

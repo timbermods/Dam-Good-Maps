@@ -20,7 +20,8 @@ import { toMapObject } from "../../features/build";
 import { PLACED } from "../../features/edits";
 import { waterSource, type EntitySpec } from "../../format/entities";
 import { waterModel } from "../../sim/model";
-import { WaterSim } from "../../sim/water";
+import type { WarmState } from "../../sim/preview";
+import { WaterSim, type WaterModel } from "../../sim/water";
 import { entityTiles, protectedGround, type ForceHead, type ForceMap, type ForceRun, type Lane } from "../force";
 import { RiverCharacter } from "./character";
 import { angleDelta, Course, HEADING_LIMIT, segmentsCross } from "./course";
@@ -125,6 +126,7 @@ export class CarveRun implements ForceRun {
   readonly metrics: Metrics = { cut: 0, deposited: 0, exported: 0, suspended: 0, bankCuts: 0, bendCuts: 0, steps: 0, stable: false, distance: 0, reason: "", splits: 0, waterfalls: 0, rapids: 0, oxbows: 0 };
   head: ForceHead;
   private sim: WaterSim;
+  private model: WaterModel;
   private active = new Set<number>();
   private channel = new Uint8Array();
   private visited = new Uint16Array();
@@ -183,7 +185,7 @@ export class CarveRun implements ForceRun {
     this.course = new Course(input, settings, intent, this.character);
     if (this.keep[intent.origin] || (settings.mode === "aim" && this.keep[intent.end!])) throw new Error("Choose a point outside the start’s protected ground");
     this.map = { ...input, heights: input.heights.slice(), entities: input.entities.slice(), water: { depth: input.water.depth.slice(), contamination: input.water.contamination.slice() } };
-    this.sim = new WaterSim(modelFor(input), input.water);
+    this.sim = new WaterSim((this.model = modelFor(input)), input.water);
     this.target = input.heights.slice();
     this.sign = new Int8Array(N);
     this.wear = new Float64Array(N);
@@ -219,6 +221,13 @@ export class CarveRun implements ForceRun {
   get added(): readonly string[] {
     return this.settings.dry ? [] : [this.sourceId];
   }
+  /** The game's water on the ground as it stands, without the preview's muddy ribbon: the editor's
+   *  water carries on from it when the carve is kept (not part of the prototype's run). */
+  liveWater(): WarmState {
+    const sim = this.sim;
+    return { model: { ...this.model, floor: Float64Array.from(sim.F) }, water: { settled: false, ticks: sim.ticks, depth: sim.D.slice(), contamination: sim.C.slice(), sat: new Uint8Array(sim.N), out: sim.out.slice(), preview: true } };
+  }
+
   /** The source it keeps, as it stands now (null for a dry canyon). */
   get source(): EntitySpec | null {
     return this.map.entities.find((e) => e.id === this.sourceId) ?? null;

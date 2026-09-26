@@ -66,6 +66,9 @@ import { WaterSim, type WaterModel } from "../core/sim/water";
 import { surfaceOf } from "../core/format/world";
 import { blocks, type CheckClass, type CheckResult, type FixOp } from "../core/validate/report";
 import { changedRect } from "../render3d/mesh";
+import { carveParams, forceMapOf } from "../core/forces/carve/result";
+import { CarveRun, type CarveIntent, type CarveSettings } from "../core/forces/carve/run";
+import type { ForceHead, ForceMap, Lane } from "../core/forces/force";
 import { emptyColumns, entityView, LAYERS, soilView, waterFromDepth, type EntityView, type MapView, type SoilView, type WaterView } from "../render3d/model";
 import { lastGenerated, lifeOf, responseOf, variantOf, type GenerateResponse } from "./api";
 
@@ -96,6 +99,8 @@ export interface SessionInfo {
   featuresKey: string;
   /** The editor's camera bookmarks (D205), saved with the document. */
   views: SavedView[];
+  /** Try another path is there: the last kept carve is the latest step (D199). */
+  carveAgain: boolean;
 }
 
 /** The parts of the map view that changed. */
@@ -194,6 +199,7 @@ function featuresKeyOf(features: readonly Feature[]): string {
 export function sessionInfo(s: MapSession = need()): SessionInfo {
   const { x: W, y: H } = s.size;
   const doc = s.document;
+  const history = s.history();
   return {
     kind: s.spec ? "generated" : "import",
     mode: s.mode,
@@ -204,7 +210,7 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
     W,
     H,
     features: s.features as Feature[],
-    history: s.history(),
+    history,
     canUndo: s.canUndo,
     canRedo: s.canRedo,
     edits: s.editCount,
@@ -215,6 +221,7 @@ export function sessionInfo(s: MapSession = need()): SessionInfo {
     projectName: documentFileName(doc),
     featuresKey: featuresKeyOf(s.features),
     views: s.views,
+    carveAgain: againReady(s, history),
     version,
   };
 }
@@ -640,8 +647,10 @@ function kickWater(): void {
     stopWater();
     return;
   }
-  // the water flowing on a stroke being painted carries on (D197); else the water in flight
-  const painted = draft && draft.session === s ? draft.job.state() : null;
+  // a kept force's water, or the water flowing on a stroke being painted, carries on (D197); else
+  // the water in flight
+  const painted = handoff ?? (draft && draft.session === s ? draft.job.state() : null);
+  handoff = null;
   draft = null;
   draftToken++;
   const inflight = painted ?? (waterJob && waterJob.session === s ? waterJob.job.state() : null);
@@ -873,6 +882,8 @@ export function openProject(bytes: Uint8Array): SessionOpen {
 
 export function closeSession(): void {
   stopWater();
+  force = null;
+  series = null;
   session = null;
   sent = null;
   originalFull = null;
@@ -1627,4 +1638,250 @@ export function damSiteLayer(): { sites: DamSiteView[]; ms: number } {
     }),
     ms: Math.round(performance.now() - t0),
   };
+}
+
+// ------------------------------------------------------------------------ the forces (D194, D203)
+
+/** A carve to start (D194, D199): its settings (the seed is the series', Try another path takes
+ *  the next), where it starts and, aimed, where it ends; the layer showing (D207: the ground above
+ *  it is left as it is). */
+export interface CarveRequest {
+  settings: CarveSettings;
+  origin: [number, number];
+  end?: [number, number];
+  cut: number | null;
+}
+
+/** The last stretch of a force's course (the effects' muddy ribbon, the camera). */
+export interface TrailPoint {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  width: number;
+  lanes: Lane[];
+}
+
+/** A frame of a force at work: how far it has come, its head, and what changed on the map since
+ *  the last frame (the heights and the rectangle they changed in; the water it shows, with the
+ *  preview's muddy ribbon; the objects, when they changed). */
+export interface ForceFrame {
+  steps: number;
+  done: boolean;
+  reason: string;
+  head: ForceHead;
+  trail: TrailPoint[];
+  heights?: Uint8Array;
+  rect?: { x0: number; y0: number; x1: number; y1: number };
+  water?: WaterView;
+  entities?: EntityView;
+}
+
+export interface ForceStarted {
+  ok: boolean;
+  errors: string[];
+  frame: ForceFrame | null;
+  /** The settings it runs with (Try another path: the kept carve's, with the next seed). */
+  settings: CarveSettings | null;
+}
+
+/** The carve at work: its run on its own copy of the map, the map it started from (its result is
+ *  against it), and what the page shows of it. */
+let force: {
+  session: MapSession;
+  run: CarveRun;
+  before: ForceMap;
+  settings: CarveSettings;
+  intent: CarveIntent;
+  origin: [number, number];
+  end?: [number, number];
+  cut: number | null;
+  replaces?: number;
+  shown: Uint8Array;
+  shownEntities: EntityView | null;
+  lastEntities: EntitySpec[];
+} | null = null;
+
+/** The last carve kept, and the other paths tried for it (their operations' seqs): Try another path
+ *  runs it again from its original land, with the next seed, while one of them is the latest step
+ *  of the history. */
+let series: { session: MapSession; seqs: Set<number>; base: ForceMap; settings: CarveSettings; origin: [number, number]; end?: [number, number]; cut: number | null; nextSeed: number } | null = null;
+
+/** Water a kept force hands on: the map's water carries on flowing from it. */
+let handoff: WarmState | null = null;
+
+/** The open map as a force starts from it: its ground, its objects, and the water as it stands (the
+ *  water in flight, when it is still settling). */
+function sessionForceMap(s: MapSession): ForceMap {
+  const sim = waterJob && waterJob.session === s ? waterJob.job.sim : null;
+  return forceMapOf(s.built, sim ? { depth: sim.D, contamination: sim.C } : undefined);
+}
+
+function lastSeq(s: MapSession, history: HistoryItem[] = s.history()): number | undefined {
+  return history.filter((h) => h.applied).at(-1)?.seq;
+}
+
+function againReady(s: MapSession, history?: HistoryItem[]): boolean {
+  if (!series || series.session !== s || force) return false;
+  const last = lastSeq(s, history);
+  return last !== undefined && series.seqs.has(last);
+}
+
+/** Try another path is there: the last kept carve (or another path tried for it) is the latest
+ *  step of the history. */
+export function carveAgainReady(): boolean {
+  return !!session && againReady(session);
+}
+
+function startCarve(s: MapSession, base: ForceMap, settings: CarveSettings, origin: [number, number], end: [number, number] | undefined, cut: number | null, replaces?: number): ForceStarted {
+  const { W, H } = base;
+  const N = W * H;
+  const refuse = (text: string): ForceStarted => ({ ok: false, errors: [text], frame: null, settings: null });
+  const inMap = (p: [number, number]) => p[0] >= 0 && p[1] >= 0 && p[0] < W && p[1] < H;
+  if (!inMap(origin) || (end && !inMap(end))) return refuse("Pick a spot on the map");
+  // the ground no force touches here: above the layer showing, and an imported map's caves
+  const keep = new Uint8Array(N);
+  if (cut !== null) for (let i = 0; i < N; i++) if (base.heights[i] > cut) keep[i] = 1;
+  for (const i of s.columns.keys()) keep[i] = 1;
+  const at = (p: [number, number]) => p[1] * W + p[0];
+  if (keep[at(origin)] || (end && keep[at(end)])) return refuse(cut !== null ? "That ground is above the layer showing: show it to carve there" : "A carve leaves caves and overhangs as they are");
+  const aimed = settings.mode === "aim" && end ? end : undefined;
+  const intent: CarveIntent = { origin: at(origin), ...(aimed ? { end: at(aimed) } : {}) };
+  let run: CarveRun;
+  try {
+    run = new CarveRun(base, settings, intent, { keep, sourceId: crypto.randomUUID() });
+  } catch (e) {
+    const text = e instanceof Error ? e.message : String(e);
+    return refuse(/protected/.test(text) ? "The start's ground stays as it is: start the carve away from it" : text);
+  }
+  // the map's own water waits: the force's water takes over from it (a weather run ends)
+  stopWater();
+  weatherToken++;
+  draft = null;
+  draftToken++;
+  force = {
+    session: s,
+    run,
+    before: base,
+    settings: { ...settings },
+    intent,
+    origin,
+    ...(aimed ? { end: aimed } : {}),
+    cut,
+    ...(replaces !== undefined ? { replaces } : {}),
+    shown: s.built.heights.slice(),
+    shownEntities: sentEntities,
+    lastEntities: s.built.entities,
+  };
+  return { ok: true, errors: [], frame: forceFrame(force), settings: { ...settings } };
+}
+
+/** Start a carve on the map as it stands: a new series, at its seed. */
+export function carveStart(req: CarveRequest): ForceStarted {
+  const s = need();
+  if (force) return { ok: false, errors: ["A carve is already at work: stop it, or press Esc"], frame: null, settings: null };
+  return startCarve(s, sessionForceMap(s), { ...req.settings, seed: req.settings.seed ?? 0 }, req.origin, req.end, req.cut);
+}
+
+/** Try another path: the last kept carve again, from its original land, with the next seed. Kept,
+ *  it replaces that carve (one undo step brings the earlier one back); every try takes a seed. */
+export function carveAgain(): ForceStarted {
+  const s = need();
+  const sr = series;
+  if (!sr || !carveAgainReady()) return { ok: false, errors: ["Carve somewhere first: Try another path runs the last carve again"], frame: null, settings: null };
+  sr.nextSeed = (sr.nextSeed + 1) >>> 0;
+  return startCarve(s, sr.base, { ...sr.settings, seed: sr.nextSeed }, sr.origin, sr.end, sr.cut, lastSeq(s));
+}
+
+function trailOf(run: CarveRun): TrailPoint[] {
+  return run.path.slice(-28).map((p) => ({ x: p.x, y: p.y, dx: p.dx, dy: p.dy, width: p.width, lanes: p.lanes.map((l) => ({ ...l })) }));
+}
+
+function forceFrame(f: NonNullable<typeof force>): ForceFrame {
+  const r = f.run;
+  const { W, H } = r.map;
+  const head = { ...r.head, ...(r.head.lanes ? { lanes: r.head.lanes.map((l) => ({ ...l })) } : {}) };
+  const out: ForceFrame = { steps: r.steps, done: r.done, reason: r.reason, head, trail: trailOf(r) };
+  const rect = changedRect(W, H, f.shown, r.map.heights);
+  if (rect) {
+    f.shown = r.map.heights.slice();
+    out.heights = r.map.heights.slice();
+    out.rect = rect;
+  }
+  out.water = waterFromDepth(r.map.heights, r.map.water.depth, r.map.water.contamination);
+  if (r.map.entities !== f.lastEntities) {
+    f.lastEntities = r.map.entities;
+    const v = entityView(entityInputs(r.map.entities));
+    if (!sameEntityView(v, f.shownEntities)) {
+      out.entities = v;
+      f.shownEntities = copyEntityView(v);
+    }
+  }
+  return out;
+}
+
+/** Run the carve `steps` steps more (ten are a second of it), and what changed. */
+export function carveAdvance(steps: number): ForceFrame | null {
+  const f = force;
+  if (!f || f.session !== session) return null;
+  for (let k = 0; k < steps && !f.run.done; k++) f.run.step();
+  return forceFrame(f);
+}
+
+/** The page's view back to the map as it stands (a carve dropped, or refused). */
+function restoreView(s: MapSession): ViewUpdate {
+  const b = s.built;
+  const view: ViewUpdate = { heights: b.heights.slice(), terrainRect: null, water: waterOf(s), entities: entityView(entityInputs(b.entities)) };
+  sentEntities = copyEntityView(view.entities!);
+  markSent(s);
+  return view;
+}
+
+/** Esc (or undo) while a carve is at work: all of it goes at once, and the map's water carries on. */
+export function carveCancel(): ViewUpdate {
+  const f = force;
+  force = null;
+  const s = session;
+  if (!f || !s || f.session !== s) return {};
+  const view = restoreView(s);
+  kickWater();
+  return view;
+}
+
+/** Stop (or the carve ended by itself): keep what it has carved, as one operation and one undo
+ *  step. The water it shows flows on into the map's settled water. */
+export function carveStop(): SessionUpdate & { kept: boolean } {
+  const t0 = performance.now();
+  const s = need();
+  const f = force;
+  force = null;
+  if (!f || f.session !== s) return { ...changed(s, false, ["There is no carve at work"], t0), kept: false };
+  const r = f.run;
+  const refused = (errors: string[]) => {
+    const view = restoreView(s);
+    kickWater();
+    return { ok: false, errors, info: sessionInfo(s), view, ms: Math.round(performance.now() - t0), kept: false };
+  };
+  const params = carveParams(f.before, r, { settings: f.settings, origin: f.origin, ...(f.end ? { end: f.end } : {}), cut: f.cut, ...(f.replaces !== undefined ? { replaces: f.replaces } : {}) });
+  if (!params) return refused(["Nothing was carved"]);
+  const water = r.liveWater();
+  handoff = water;
+  const res = s.apply({ op: "carve", params }, "user");
+  if (!res.ok) {
+    handoff = null;
+    return refused(res.errors);
+  }
+  const seq = lastSeq(s)!;
+  if (f.replaces !== undefined && series?.seqs.has(f.replaces)) series.seqs.add(seq);
+  else series = { session: s, seqs: new Set([seq]), base: f.before, settings: f.settings, origin: f.origin, ...(f.end ? { end: f.end } : {}), cut: f.cut, nextSeed: f.settings.seed ?? 0 };
+  const u = changed(s, true, [], t0);
+  handoff = null;
+  // the page shows the force's water: the map's water flows on from it, not from the water before
+  if (u.view.water && !s.showsStoredWater) u.view.water = waterFromDepth(s.built.heights, water.water.depth, water.water.contamination);
+  return { ...u, kept: true };
+}
+
+/** A carve is at work. */
+export function carving(): boolean {
+  return !!force && force.session === session;
 }

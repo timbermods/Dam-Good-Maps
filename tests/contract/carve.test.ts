@@ -12,16 +12,18 @@ import { decodeProject } from "../../src/core/doc/document";
 import opsSchema from "../../src/core/doc/ops.schema.json" with { type: "json" };
 import type { EditOp } from "../../src/core/doc/ops";
 import { MapSession } from "../../src/core/doc/session";
-import { DERIVED_SLOPES } from "../../src/core/features/ids";
 import { naturalWidth } from "../../src/core/forces/carve/character";
 import type { CarveParams } from "../../src/core/forces/carve/op";
+import { carveParams, forceMapOf } from "../../src/core/forces/carve/result";
 import { CarveRun, DEFAULTS, hardness, mapSeed, modelFor, sourceStrength, type CarveIntent, type CarveSettings } from "../../src/core/forces/carve/run";
-import { forceResult, protectedGround, STEPS_PER_SECOND, type ForceMap } from "../../src/core/forces/force";
+import { protectedGround, STEPS_PER_SECOND, type ForceMap } from "../../src/core/forces/force";
 import { generate } from "../../src/core/gen/generate";
 import { decodeHeights, decodePlaceFile, placeEntities } from "../../src/core/places/place";
 import { canonicalSettle } from "../../src/core/sim/prefill";
 import { checkSchema } from "../../src/core/spec/schema";
 import { makeSpec } from "../../src/core/spec/mapspec";
+import { runGenerate } from "../../src/worker/api";
+import * as ed from "../../src/worker/session";
 import { study } from "./carveFixtures";
 
 function complete(m: ForceMap, s: Partial<CarveSettings> = {}, intent: CarveIntent = { origin: 54 * m.W + 32 }): CarveRun {
@@ -305,44 +307,16 @@ describe("the force: Aim, Defy gravity and Wander", () => {
 
 // ------------------------------------------------------------------------ the carve in the document
 
-/** A session's map as a force starts from it. */
-function forceMapOf(s: MapSession): ForceMap {
-  const b = s.built;
-  return { W: b.W, H: b.H, heights: b.heights.slice(), entities: b.entities.slice(), water: { depth: Float64Array.from(b.water), contamination: Float64Array.from(b.contamination) }, maxHeight: 16 };
-}
-
 /** A carve run to its end (or `steps` steps) on the session's map, as the operation the editor makes. */
 function carveOp(s: MapSession, settings: Partial<CarveSettings>, origin: [number, number], steps = 1200, extra: Partial<CarveParams> = {}, end?: [number, number]): EditOp & { op: "carve" } {
-  const m = forceMapOf(s);
+  const m = forceMapOf(s.built);
   const W = m.W;
   const set = { ...DEFAULTS, ...settings };
   const sourceId = "0c0ffee0-0000-4000-8000-" + String(origin[0] * 1000 + origin[1] + (settings.seed ?? 0)).padStart(12, "0");
   const r = new CarveRun(m, set, { origin: origin[1] * W + origin[0], ...(end ? { end: end[1] * W + end[0] } : {}) }, { sourceId });
   for (let k = 0; k < steps && !r.done; k++) r.step();
-  const out = forceResult(m, r, (e) => e.owner === DERIVED_SLOPES || e.owner.startsWith("pinned:") || e.template === "StartingLocation");
-  const src = r.source;
-  return {
-    op: "carve",
-    params: {
-      mode: set.mode,
-      origin,
-      ...(end ? { end } : {}),
-      power: set.power,
-      wander: set.wander ?? 35,
-      width: set.width ?? null,
-      seed: set.seed ?? 0,
-      walls: set.walls,
-      defyGravity: set.defyGravity,
-      dry: set.dry,
-      steps: r.steps,
-      reason: r.done ? r.reason : "stopped",
-      tiles: out.tiles,
-      heights: out.heights,
-      removed: out.removed,
-      ...(src ? { source: { id: src.id, x: src.x, y: src.y, strength: sourceStrength(set.power, set.width) } } : {}),
-      ...extra,
-    },
-  };
+  const params = carveParams(m, r, { settings: set, origin, ...(end ? { end } : {}), cut: null })!;
+  return { op: "carve", params: { ...params, ...extra } };
 }
 
 /** A tile well away from the start, on land. */
@@ -486,5 +460,96 @@ describe("a carve in the document (breakage rule)", () => {
     // a carve's quiet removal is its own: an operation in the log can't ask for it
     const any = s.built.entities.find((e) => e.template !== "StartingLocation")!;
     expect(s.apply({ op: "deleteEntities", params: { entities: [any.id], quiet: true } }).errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe("a carve at work in the editor's worker", () => {
+  it("frames as it runs; Esc drops all of it; Stop keeps it as one step, exactly as shown; Try another path replaces it", async () => {
+    const W = 96;
+    await runGenerate(makeSpec({ seed: 21, theme: "highlands", size: { x: W, y: W } }));
+    ed.setEditorWaterMode("defer");
+    ed.refine();
+    const open = ed.sessionView();
+    const ground = open.view.heights.slice();
+    const steps = () => ed.sessionInfo().history.filter((h) => h.applied).length;
+    const n0 = steps();
+    const s = MapSession.open(decodeProject(ed.project().bytes));
+    const origin = farFromStart(s);
+    const settings = { ...DEFAULTS, power: 70 };
+    // a frame at a time: the ground near the head, the water with it
+    const st = ed.carveStart({ settings, origin, cut: null });
+    expect(st.errors).toEqual([]);
+    expect(ed.carving()).toBe(true);
+    let shown: Uint8Array = ground.slice();
+    const show = (f: ed.ForceFrame | null) => {
+      expect(f).not.toBeNull();
+      if (f!.heights) shown = f!.heights;
+    };
+    show(st.frame);
+    for (let k = 0; k < 3; k++) show(ed.carveAdvance(STEPS_PER_SECOND));
+    expect(ed.carveAdvance(0)!.steps).toBe(3 * STEPS_PER_SECOND);
+    expect(Array.from(shown)).not.toEqual(Array.from(ground));
+    // Esc: all of it goes at once, and the history never had it
+    const back = ed.carveCancel();
+    expect(Array.from(back.heights!)).toEqual(Array.from(ground));
+    expect(ed.carving()).toBe(false);
+    expect(steps()).toBe(n0);
+    // Stop: one step, the ground exactly as the page showed it
+    show(ed.carveStart({ settings, origin, cut: null }).frame);
+    for (let k = 0; k < 4; k++) show(ed.carveAdvance(STEPS_PER_SECOND));
+    const kept = ed.carveStop();
+    expect(kept.errors).toEqual([]);
+    expect(kept.kept).toBe(true);
+    expect(steps()).toBe(n0 + 1);
+    expect(kept.info.history.filter((h) => h.applied).at(-1)!.label).toBe("Carve a river");
+    const first = ed.terrainNow().heights;
+    expect(Array.from(first)).toEqual(Array.from(shown));
+    expect(kept.info.carveAgain).toBe(true);
+    // Try another path: the same carve from the same land, the next seed; it replaces the first
+    const again = ed.carveAgain();
+    expect(again.errors).toEqual([]);
+    expect(again.settings!.seed).toBe(1);
+    show(again.frame);
+    for (let k = 0; k < 4; k++) show(ed.carveAdvance(STEPS_PER_SECOND));
+    const other = ed.carveStop();
+    expect(other.kept).toBe(true);
+    expect(other.info.history.filter((h) => h.applied).at(-1)!.label).toBe("Try another path");
+    expect(Array.from(ed.terrainNow().heights)).toEqual(Array.from(shown));
+    expect(Array.from(shown)).not.toEqual(Array.from(first));
+    // undo: the first carve, exactly; again: the land before it
+    ed.undo();
+    expect(Array.from(ed.terrainNow().heights)).toEqual(Array.from(first));
+    expect(ed.sessionInfo().carveAgain).toBe(true);
+    ed.undo();
+    expect(Array.from(ed.terrainNow().heights)).toEqual(Array.from(ground));
+    expect(ed.sessionInfo().carveAgain).toBe(false);
+    expect(ed.carveAgain().ok).toBe(false);
+    ed.settleWater();
+  });
+
+  it("carves only the land showing: under a cut, the ground above it stays as it is (D207)", async () => {
+    const W = 96;
+    await runGenerate(makeSpec({ seed: 21, theme: "highlands", size: { x: W, y: W } }));
+    ed.setEditorWaterMode("defer");
+    ed.refine();
+    const ground = ed.sessionView().view.heights.slice();
+    const s = MapSession.open(decodeProject(ed.project().bytes));
+    const origin = farFromStart(s);
+    const cut = ground[origin[1] * W + origin[0]];
+    // (the ground above the cut can't be a carve's origin)
+    let above = -1;
+    for (let i = 0; i < ground.length && above < 0; i++) if (ground[i] > cut) above = i;
+    if (above >= 0) expect(ed.carveStart({ settings: DEFAULTS, origin: [above % W, Math.floor(above / W)], cut }).ok).toBe(false);
+    expect(ed.carveStart({ settings: { ...DEFAULTS, power: 90, walls: "wide" }, origin, cut }).ok).toBe(true);
+    for (let k = 0; k < 6; k++) ed.carveAdvance(STEPS_PER_SECOND);
+    expect(ed.carveStop().kept).toBe(true);
+    const after = ed.terrainNow().heights;
+    let changed = 0;
+    for (let i = 0; i < ground.length; i++) {
+      if (after[i] !== ground[i]) changed++;
+      if (ground[i] > cut) expect(after[i], `tile ${i}`).toBe(ground[i]);
+    }
+    expect(changed).toBeGreaterThan(20);
+    ed.settleWater();
   });
 });
