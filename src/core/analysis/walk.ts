@@ -2,8 +2,8 @@
 // district center over land the colony can walk. Moves go to the 4 neighbours on the same level
 // (1 tile) and to a diagonal neighbour when both tiles beside the diagonal are on that level too
 // (√2); a slope joins its low tile and its high tile (1). Objects that block walking (Thorns,
-// Blockage, relics, ...) are never entered. Without slope links the walk stays on the start's own
-// level: that is the "water without stairs" requirement.
+// Blockage, relics, ...) are never entered. The map's Slope entities are its natural ramps: the
+// walk takes them, and never a flight of stairs the player would have to build.
 //
 // Port of the workshop study's `walkDistance` (investigation/workshop/lib/measures.ts), bounded at
 // `WALK_LIMIT` tiles. prototype/analysis.py `walk_distance` is the same rule; Dijkstra's result
@@ -99,9 +99,55 @@ export function reachAt(d: Float64Array, W: number, H: number, i: number): numbe
   return best;
 }
 
-/** The walking distance to the nearest shore tile on the start's level (`level`) that touches a
- *  tile of `water` (4-neighbour), without any slope: `flat` is `walkDistance` without links.
- *  Returns the distance and the water tile, or Infinity and −1. */
+/** Water a pump reaches (PLAN §5.6): clean (contamination under 0.05) and at least 0.3 deep. */
+export const PUMP_DEPTH = 0.3;
+export const PUMP_CLEAN = 0.05;
+/** A pump on a shore reaches water whose surface stands 0–2 levels below the shore's ground (the
+ *  Folktails WaterPump's pipe). */
+export const PUMP_REACH = 2;
+
+/** Requirement 1, the water rule (Kyler, 2026-09-25, D153, amending D85): the walk from the start to the
+ *  nearest shore tile a beaver reaches on foot (`walk`: `walkDistance` over the map's own ground and
+ *  its Slope entities, never player stairs) that touches (4-neighbour) clean pumpable water whose
+ *  surface a pump on that shore reaches: 0–2 levels below the shore's own ground. The shore may be
+ *  on any level the walk reaches. Returns the distance and the water tile, or Infinity and −1. */
+export function pumpShoreDistance(
+  walk: Float64Array,
+  h: ArrayLike<number>,
+  W: number,
+  H: number,
+  depth: ArrayLike<number>,
+  contamination: ArrayLike<number>,
+): { distance: number; tile: number } {
+  let best = Infinity;
+  let tile = -1;
+  for (let i = 0; i < W * H; i++) {
+    const d = depth[i];
+    if (!(d >= PUMP_DEPTH) || !(contamination[i] < PUMP_CLEAN)) continue;
+    const surface = h[i] + d;
+    const x = i % W;
+    const y = (i - x) / W;
+    for (let k = 0; k < 4; k++) {
+      let n: number;
+      if (k === 0) n = x > 0 ? i - 1 : -1;
+      else if (k === 1) n = x + 1 < W ? i + 1 : -1;
+      else if (k === 2) n = y > 0 ? i - W : -1;
+      else n = y + 1 < H ? i + W : -1;
+      if (n < 0 || !(walk[n] < best)) continue;
+      const level = h[n];
+      if (surface >= level - PUMP_REACH && surface <= level + 0.01) {
+        best = walk[n];
+        tile = i;
+      }
+    }
+  }
+  return { distance: best, tile };
+}
+
+/** The water rule before Kyler's amendment of 2026-09-25 (D153): the walk on the start's own level
+ *  (`flat`, `walkDistance` without links) to the nearest shore tile on that level (`level`) that
+ *  touches a tile of `water`. No check uses it; the landscapes survey
+ *  (investigation/landscapes/lib/convert.ts) still places real-place starts with it. */
 export function shoreDistance(flat: Float64Array, h: ArrayLike<number>, W: number, H: number, water: Uint8Array, level: number): { distance: number; tile: number } {
   let best = Infinity;
   let tile = -1;

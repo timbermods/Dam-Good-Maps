@@ -385,15 +385,27 @@ def reach_at(d: np.ndarray, y: int, x: int) -> float:
     return float(best)
 
 
-def shore_distance(flat: np.ndarray, h: np.ndarray, water: np.ndarray, level: int) -> float:
-    """Walking distance to the nearest tile on `level` that touches (4-neighbour) a `water` tile."""
+PUMP_DEPTH = 0.3             # water a pump reaches: at least 0.3 deep ...
+PUMP_CLEAN = 0.05            # ... and clean
+PUMP_REACH = 2               # its surface 0-2 levels below the shore's ground (the WaterPump's pipe)
+
+
+def pump_shore_distance(walk: np.ndarray, h: np.ndarray, D: np.ndarray, C: np.ndarray) -> float:
+    """The water rule (Kyler, 2026-09-25, D153, amending D85; src/core/analysis/walk.ts
+    pumpShoreDistance): the walk (over the map's own ground and slopes) to the nearest shore tile
+    that touches (4-neighbour) clean water at least 0.3 deep whose surface a pump on that shore
+    reaches, 0-2 levels below the shore's own ground. The shore may be on any level."""
     Y, X = h.shape
     best = float("inf")
-    for y, x in zip(*np.nonzero(water)):
+    for y, x in zip(*np.nonzero((D >= PUMP_DEPTH) & (C < PUMP_CLEAN))):
+        surface = float(h[y, x]) + float(D[y, x])
         for dy, dx in N4:
             yy, xx = y + dy, x + dx
-            if 0 <= yy < Y and 0 <= xx < X and h[yy, xx] == level and flat[yy, xx] < best:
-                best = float(flat[yy, xx])
+            if not (0 <= yy < Y and 0 <= xx < X) or not walk[yy, xx] < best:
+                continue
+            level = int(h[yy, xx])
+            if level - PUMP_REACH <= surface <= level + 0.01:
+                best = float(walk[yy, xx])
     return best
 
 

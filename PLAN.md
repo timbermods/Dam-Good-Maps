@@ -303,27 +303,38 @@ map's longer side ÷ 128 (a 96² map has no tile 140 out); thorn belts and cores
 
 ### 5.6 Start and difficulty
 
-**Start requirements** (Kyler, 2026-09-24, amended the same day; D85; built at the start of M8).
-They are the only start rules that reject a map (§11.4). Each threshold is a setting under "Start
-rules", with the difficulty's default:
+**Start requirements** (Kyler, 2026-09-24, amended the same day; D85; built at the start of M8;
+amended by Kyler on 2026-09-25: the water rule walks over the map's own slopes, D153, and starting
+wood counts logs, D164). They are the only start rules that reject a map (§11.4). Each threshold is a
+setting under "Start rules", with the difficulty's default:
 
 | Requirement | Easy | Normal | Hard | Rule | Setting |
 |---|---|---|---|---|---|
-| Water without stairs | 12 | 20 | 28 | Clean pumpable water (depth ≥ 0.3, contamination < 0.05) touches a shore tile at the start's own level, within this many tiles' walk of the start without any slope (the same level all the way). Rivers, lakes and ponds count. A pump on that shore reaches the surface (0–2 levels below). | the water-distance rule (`sw`, 4–40) |
-| Starting trees | 60 | 40 | 20 | At least this many living trees within 20 tiles' walk of the start (slopes allowed), across any number of groves. | **Minimum starting trees** (`st`, 0–400) |
+| Water without stairs | 12 | 20 | 28 | Clean pumpable water (depth ≥ 0.3, contamination < 0.05) touches a shore tile the start reaches on foot within this many tiles' walk, over the map's own ground and its natural slopes (the map's Slope entities; never stairs the player builds). Levels may change along the walk, through slopes. Rivers, lakes and ponds count. A pump on that shore reaches the surface (0–2 levels below the shore). | the water-distance rule (`sw`, 4–40) |
+| Starting wood | 120 | 80 | 40 | At least this many logs of grown trees within 20 tiles' walk of the start (slopes allowed), each tree by its species' yield (oak 8, pine 2 and resin, birch 1; the file's own logs where it stores them), alive or dead. A sapling's logs count only once it has grown; the indicators and the map card show them apart, as wood still growing (D164). | **Minimum starting wood (logs)** (`sl`, 0–800) |
 | Starting bushes | 40 | 30 | 20 | At least this many living berry bushes within 20 tiles' walk of the start (slopes allowed), across any number of patches. | **Minimum starting bushes** (`sb`, 0–200) |
 
-"Living" means the plant survives at steady state. The settings keep their ranges and share-link
-keys, so old links still decode, and changing Designed for resets them to the difficulty's
-defaults (D66). The generator never aims below a minimum, and any target that sits lower rises to
-it (Easy's Berries near start becomes 40). The start stands where it reaches water on its own
-level: the bench runs to the bank, or the start stands on the floodplain (§7.2; D26 changes).
-Imported maps use their difficulty's defaults. As built in M8 (D97, D104): the bench runs to the
-bank; the walk to the water is measured to the shore tile; trees are Pine, Birch and Oak, bushes
-BlueberryBush; the panel's names are **Water without stairs (tiles)**, **Minimum starting trees** and
-**Minimum starting bushes**, and the map card lists the three. Sources: the water distances are the workshop
-study's (official median 13, p90 20.4, walking on the start's level); the tree and bush thresholds
-are Kyler's (official p10 / median / p90 within 20 tiles' walk: living trees 4 / 112 / 144, living
+"Living" means the plant survives at steady state. Changing Designed for resets the three to the
+difficulty's defaults (D66). The generator never aims below a minimum, and any target that sits
+lower rises to it (Easy's Berries near start becomes 40); near-start groves aim at 1.35 × Minimum
+starting wood in grown logs, and where the walk holds little moist land they draw their species by
+the wood they give as well as by the mix. The start's bench stands a level above the floodplain
+(D26), and the colony walks down to the river over the map's own slopes: the derived slope out of
+the start's own level stands on the boundary nearest the start and the river together (§7.5). The
+bench no longer runs to the bank (D97's strip, which only the old same-level rule needed); a
+project saved with one keeps it. Imported maps use their difficulty's defaults. The walk to the
+water is measured to the shore tile (D104); trees are Pine, Birch and Oak, bushes BlueberryBush;
+the panel's names are **Water without stairs (tiles)**, **Minimum starting wood (logs)** and
+**Minimum starting bushes**, and the map card lists the three, starting wood with the species that
+give it ("mostly oak") and the logs still growing. Share links keep `sw` and `sb`; starting wood is
+`sl`, and a link or project file from before D164 opens its Minimum starting trees (`st`) as 2 logs
+a tree. Sources: the water distances are the workshop study's (official median 13, p90 20.4,
+walking on the start's level; with slopes, the 11 official starts that can be measured: median 12);
+starting wood's defaults are Kyler's tree counts (60 / 40 / 20) at 2 logs of grown wood a tree: the
+trees the old rule counted gave 3.0 logs each on seeds 1–30 of every theme at 128² with the default
+settings (2.8–3.4 by theme), and 66% of those logs stood on grown trees (a third of the living
+trees are saplings). Official maps: median 110 logs within 20 tiles' walk (14 measured), nearly all
+pine. The bush thresholds are Kyler's (official p10 / median / p90 within 20 tiles' walk: living
 bushes 23 / 57 / 79).
 
 **Difficulty targets.** The difficulty preset sets these; each can be overridden under "Start
@@ -335,7 +346,7 @@ distance, trees within 20 tiles 80 / 50 / 40 (dead ones included), living bushes
 
 | Target | Easy | Normal | Hard | Source |
 |---|---|---|---|---|
-| Berries near start (§5.5) | 40 | 48 | 60 | Official median 47. Never below Minimum starting bushes, so Easy's 20 becomes 40. Near-start groves aim at 1.2× Minimum starting trees (D59). |
+| Berries near start (§5.5) | 40 | 48 | 60 | Official median 47. Never below Minimum starting bushes, so Easy's 20 becomes 40. Near-start groves aim at 1.35× Minimum starting wood, in grown logs (D59, D164). |
 | No badwater within | 30 | 15 | 8 | The workshop study: official maps' nearest badwater median 14.8, p25 10 (W4, decided by Kyler in D85). Before M8: 40 / 30 / 15. |
 | No ruins within | 20 | 15 | 12 | Official p10 22; scrap within 40 is 0 on the median official map. |
 | Drought sized for | 4 days, 40 beavers | 9 days, 50 beavers | 30 days, 50 beavers | Game mode durations. |
@@ -598,7 +609,10 @@ or ramps anyway.
 3. From the start's region, grow a spanning tree over the regions whose boundary lies within 40
    tiles of the start (Chebyshev). The pumpable water edge and the near-start groves and berries
    lie inside it (within 20 tiles; the playability checks confirm); the second district joins it
-   when M7 plans one. For each tree edge, place one Slope on the boundary pair nearest the start.
+   when M7 plans one. For each tree edge, place one Slope on the boundary pair nearest the start;
+   out of the start's own region, on the pair nearest the start and the rivers' channels together
+   (the fewest steps: Chebyshev to the start plus 4-neighbour steps to a channel), so the colony's
+   way down leads to its water (the water rule, D153).
    - The low tile must be free, and the tile behind its low side must be at the same level.
    - Orientation comes from the high side: Cw0 if the high side is south (y−1), Cw90 west,
      Cw180 north, Cw270 east.
@@ -633,8 +647,19 @@ edits changed gets new ones (D52).
    - Springs are inland sources on highland plateaus feeding cascades.
    - Badwater sources are 3×3 at 1.0–3.0 strength, placed per §9.5.
    - Total strength follows the flow setting.
+   - **Sources start rivers** (Kyler, 2026-09-25, D171): a source stands only where water begins,
+     at a river's mouth on the map edge or as a spring at a valley's head or below a ridge, never
+     inside a river or lake another source already fills and never downstream. More flow comes
+     from more sources side by side at the head, or from their strength. Each tributary has its
+     own source at its own head. Today's planners already do this (mouth rows, spring clusters,
+     the badwater basin's spring, ponds fed by their own spring); `water.source_in_flow` (§11.3)
+     checks it.
+   - **Maps need not hold their water** (Kyler, 2026-09-25, D152): rivers leave the map at their own
+     level, lakes may drain, and nothing is built along the map's edges to keep water in (no edge
+     walls, D151, `terrain.edge_wall`, §11.2). The sealed mouths above are how a river enters, not a
+     wall. The badwater basin's rim holds badwater, not the map's water, and stays (D57).
 2. Run the canonical settle (§10, §19.7): the exact simulation to steady state from the
-   deterministic pre-fill.
+   deterministic pre-fill. A steady flow off the map is a steady state.
 3. Compute moisture and soil contamination at steady state.
 4. If the water share exceeds the theme target by 50%, or the settled rivers are not where the
    layout put them (overlap with the planned channel mask below 0.8), adjust strength once and
@@ -1198,8 +1223,8 @@ basins (a lake, a valley basin and a weir pool): they agree within 5% of the sto
 ## 11. Validation
 
 A generated map is offered for download only when **every** check passes (apart from the advisory
-checks: `plants.drought`, §11.5, and from M8 the start targets of §11.4 and `water.reservoir`,
-D85). Check ids match
+checks: `plants.drought`, §11.5; from M8 the start targets of §11.4 and `water.reservoir`, D85; and
+since D152 `water.clean_exists` and `water.clean_reach`: maps need not hold their water). Check ids match
 `prototype/validate.py` and `prototype/playability.py`. Thresholds come from
 `data/calibrated.ts`, generated from `prototype/calibrated.py`.
 
@@ -1212,10 +1237,15 @@ does (§19.5):
 - **playability**: §11.3–11.4. In the `generate` profile it must pass (the generator retries). In
   the editor's `export` profile it is a warning. The player confirms, and the warning is noted in
   the map description.
-- **design**: `terrain.max_height` (16, or 22 at Verticality 70 and above, §5.9) and
-  `terrain.single_floor` (from 3D-a, `caves.headroom` in its place). They must pass in `generate`.
-  For an imported map they are only information, because official and workshop maps with caves,
-  or with terrain up to 22, load fine in the game.
+- **design**: `terrain.max_height` (22 since D172 (1); the generator keeps to 16 until Verticality, §5.9),
+  `terrain.single_floor` (from 3D-a, `caves.headroom` in its place) and `water.source_in_flow`
+  (sources start rivers, D171). They must pass in `generate`; in `export` they warn. For an
+  imported map they are only information, because official and workshop maps with caves, or with
+  terrain up to 22, load fine in the game.
+- **principle** (2026-09-25): a principle Kyler has decided about how a map is built (D115 (2)):
+  `terrain.edge_wall` (no edge walls, D151), beside the dam-wall check M9a adds (D111). It must pass
+  in `generate` and blocks the export in `export`; for an imported map it is information, and a
+  problem an imported map already had never blocks its export (the export dialog lists it apart).
 
 Imported maps have no spec, so thresholds come from the document's "designed for" difficulty
 (default Normal) and default settings. Checks that need a planned feature, such as
@@ -1250,10 +1280,11 @@ settle matches within 1% of the map; its `start.dry` fails by its own design (de
 
 | Id | Rule |
 |---|---|
-| `terrain.max_height` | surface ≤ 16, or ≤ 22 at Verticality 70 and above (§5.9, D132) |
+| `terrain.max_height` | surface ≤ 22, layer 22 empty (D172 (1), after DGM Probe run 20260925-tall: heights up to 22 load and keep their terrain, water, sources, flow, objects and start). Above 16 the check notes that the in-game map editor edits only up to level 16. Before: ≤ 16, or ≤ 22 at Verticality 70 and above (§5.9, D132). |
 | `terrain.top_layer_free` | voxel layer 22 empty |
 | `terrain.supported` | no voxel more than 3 sideways steps from support (0 on heightfields). From 3D-a: every map, every run not starting at z = 0 checked: no voxel the game's load rule would delete |
 | `terrain.single_floor` | one floor per tile (the water model's scope); retired for generated maps in 3D-a |
+| `terrain.edge_wall` | No edge walls (Kyler, 2026-09-25, D151, extending D111): no map raises a wall along its edges to hold water. Along each edge, a tile is walled when its outer two tiles stand 2+ levels above the highest of the next three; an edge is walled when 60% of its tiles are. Principle class (D151). From the data: the 85 real places as converted for `real-places-done` (a full-height wall one tile thick round the map) have 89–99% of their most walled edge walled; the 19 official maps at most 38% (Canyon's rim), 180 generated maps at 128² at most 36%. Not applicable under 10 tiles a side. |
 | `terrain.dropped` | from 3D-a, `generate`: the build's support rule pass dropped 0 voxels (D121) |
 | `plants.clearance` | from 3D-a: every plant's blocks fit under the terrain above it (3 cells for pine and oak, 2 for birch and succulent, 1 for bushes) |
 | `entities.templates` | only common templates (§5.7) |
@@ -1274,11 +1305,12 @@ clean water has contamination under 0.05.
 
 | Id | Rule |
 |---|---|
-| `water.settles` | Steady within 4 game days: volume change under 0.2% and 99.5% of tiles within 0.005 between 128-tick checks. |
+| `water.settles` | Steady within 4 game days: volume change under 0.2% and 99.5% of tiles within 0.005 between 128-tick checks. A steady flow off the map is steady: maps need not hold their water (D152); what fails is water that never settles. |
 | `water.no_flood` | Wet share ≤ 0.35 (≤ 0.55 for Islands and Lake Basin); official p90 0.40. Planned for M9 (decisions-pending #33): the cap follows the premise, 0.35 by default and up to 0.70 for water premises (moat, archipelago, lone island, lake world), which declare their water budget; workshop maps: median 0.27, p90 0.67. |
-| `water.clean_exists` | Clean wet tiles ≥ 2% of the map. |
+| `water.clean_exists` | Clean wet tiles ≥ 2% of the map. Since D152 a target with an advisory warning: maps need not hold their water, and the start's water is `start.water`'s. |
 | `water.outflow` | Every running source's water reaches an edge or a planned basin: its connected wet region (depth > 0) touches a map-edge tile that drains (not a walled source tile) or a lake feature. Not applicable without features (imports). |
-| `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. |
+| `water.clean_reach` | At least one connected (4-neighbour) body of clean water of 40+ tiles. Since D152 a target with an advisory warning, as `water.clean_exists`. |
+| `water.source_in_flow` | Sources start rivers (Kyler, 2026-09-25, D171): no WaterSource or BadwaterSource stands where water from another source comes down to it. Emitters whose tiles touch are one group (a sealed mouth, a cluster at a river's head). Water runs down the spill levels, across a flat toward its way out and never back, and all through a pool; a group's water goes from its tiles over the settled water. A group is inside a flow when a running group's water reaches one of its sources and its own water does not reach that group back. Design class. |
 | `water.badwater_contained` | With the planned outlet channel's tiles blocked (a levee, §9.5), the water rising in each planned badwater basin cannot leave the basin (its 7×7 floor and two-tile rim) or reach a map edge below the rim's level. A source never stops, so this proves the outlet is the basin's only way out, not that a levee holds forever (D57, pending Kyler). Not applicable without a basin with a planned outlet. |
 | `water.reservoir` | The better of these two ≥ need × drought reserve (Scarce 1×, Normal 1.5×, Plenty 3×; §5.3): (a) the best leak-free dam site within 40 tiles of the start; (b) natural water retained within 40 tiles after the drought (§10). Dam sites are sampled on every second clean water tile within 60 tiles of the start, with crests 1–3, and flood at most max(6,000, 15% of the map) tiles (D30). From M8 it is advisory, Hard's 3-deep rule included: a generation target with a warning on the map card, never a reason to reject (D85). |
 
@@ -1292,9 +1324,9 @@ column says which; until M8 every row rejects, with the rule before M8 given in 
 | Id | Rule | From M8 |
 |---|---|---|
 | `start.dry` | No water within Chebyshev 2 of the start centre after settling. From 3D-a (investigation/terrain3d I-11), water under a roof counts only where it stands at or above the start's floor (the floor rule; Kyler, D145). Open water keeps the rule above until Refinement item 8 has measured whether the floor rule should apply to it too, which would let lakeside starts pass (D107). | rejects |
-| `start.water` | Requirement 1, water without stairs: clean water (depth ≥ 0.3, contamination < 0.05) touches a shore tile at the start's own level, within the water-distance rule's walk of the start (12 / 20 / 28) without any slope, and a pump on that shore reaches the surface (0–2 levels below). Before M8: water 0–2 levels below the start within 10 / 16 / 22 tiles, straight distance. | rejects |
+| `start.water` | Requirement 1, water without stairs (amended by Kyler, 2026-09-25, D153): clean water (depth ≥ 0.3, contamination < 0.05) touches a shore tile the start reaches on foot within the water-distance rule's walk (12 / 20 / 28), over the map's own ground and its Slope entities (never player stairs), and a pump on that shore reaches the surface (0–2 levels below the shore). As built in M8, the walk stayed on the start's own level; before M8: water 0–2 levels below the start within 10 / 16 / 22 tiles, straight distance. | rejects |
 | `start.reach_water` | Before M8: that water borders land walkable from the start. From M8 it is part of `start.water`. | — |
-| `start.wood` | Requirement 2: living trees within 20 tiles' walk (slopes allowed) ≥ Minimum starting trees (60 / 40 / 20). Before M8: trees within 20 tiles and reachable ≥ 80 / 50 / 40. | rejects |
+| `start.wood` | Requirement 2, starting wood (D164): the logs of the grown trees within 20 tiles' walk (slopes allowed), alive or dead, by species ≥ Minimum starting wood (120 / 80 / 40); saplings' logs are reported apart. As built in M8: living trees ≥ 60 / 40 / 20; before M8: trees within 20 tiles and reachable ≥ 80 / 50 / 40. | rejects |
 | `start.food` | Requirement 3: living berry bushes within 20 tiles' walk (slopes allowed) ≥ Minimum starting bushes (40 / 30 / 20). Before M8: within 20 tiles and on or beside reachable land ≥ 20 / 40 / 40. | rejects |
 | `start.badwater` | No badwater water or contaminated soil within the badwater distance (from M8: 30 / 15 / 8). | advisory |
 | `start.reach` | Dry tiles walkable from the start (same level, plus slope links; blocked by Thorns, Blockage, NaturalDam, relics, cores, geothermal and mine sites) ≥ the buildable-land target (750 / 1,300 / 2,500). | advisory |

@@ -1,15 +1,17 @@
 // Validation modules (PLAN §11, §19.5). Every check has an id (matching prototype/validate.py), a
 // class and a severity; profiles decide what a class does (report.ts). This file holds the load
 // class (§11.1–11.2: what the game would crash on, silently drop, or break at start), the design
-// class (terrain.max_height, terrain.single_floor) and `validateFile`, which adds the playability
-// class (playability.ts) on the map's canonically settled water.
+// class (terrain.max_height, terrain.single_floor; water.source_in_flow is in playability.ts), the
+// principle terrain.edge_wall, and `validateFile`, which adds the playability class
+// (playability.ts) on the map's canonically settled water.
 
 import { FOOTPRINTS, OCC, ORIENTATIONS, slopeHighSide, startEntranceTile, worldBlocks, type Orientation, type Placement } from "../format/footprints";
 import { isObject, num, type JsonObject } from "../format/json";
 import { placementOf } from "../format/entities";
-import { EDITOR_MAX_HEIGHT, floorsOf, GAME_VERSION, MAX_OBJECT_Z, storedWater, surfaceOf } from "../format/world";
+import { EDITOR_MAX_HEIGHT, floorsOf, GAME_MAX_HEIGHT, GAME_VERSION, MAX_OBJECT_Z, storedWater, surfaceOf } from "../format/world";
 import type { TimberFile } from "../format/timber";
 import type { Feature } from "../features/schema";
+import { EDGE_BAND, EDGE_INSIDE, EDGE_RISE, EDGE_SHARE, edgeRuleApplies, edgeWalls } from "../analysis/edges";
 import { approximateId, approximateReason, mechanicsOf, startRing, storedWetMask, type Mechanics } from "../analysis/mechanics";
 import { mapObjects, waterModel, type MapObject } from "../sim/model";
 import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
@@ -126,7 +128,21 @@ function checkTerrain(file: TimberFile, c: Collector, surface: Uint8Array, stack
   const w = file.world;
   let maxH = 0;
   for (const v of surface) if (v > maxH) maxH = v;
-  c.add({ id: "terrain.max_height", class: "design", ok: maxH <= EDITOR_MAX_HEIGHT, value: maxH, limit: EDITOR_MAX_HEIGHT, message: `highest column ${maxH} (the in-game editor's limit is 16)` });
+  // up to 22 (D172 (1), after probe run 20260925-tall); above 16, a note: the in-game map editor
+  // edits only up to 16
+  c.add({
+    id: "terrain.max_height",
+    class: "design",
+    ok: maxH <= GAME_MAX_HEIGHT,
+    value: maxH,
+    limit: GAME_MAX_HEIGHT,
+    message:
+      maxH > GAME_MAX_HEIGHT
+        ? `highest column ${maxH} (the game's limit is ${GAME_MAX_HEIGHT})`
+        : maxH > EDITOR_MAX_HEIGHT
+          ? `highest column ${maxH} (up to ${GAME_MAX_HEIGHT} loads in the game; the in-game map editor edits only up to level ${EDITOR_MAX_HEIGHT})`
+          : `highest column ${maxH} (at most ${GAME_MAX_HEIGHT})`,
+  });
   const plane = w.sizeX * w.sizeY;
   let top = 0;
   if (w.layers >= 23) for (let i = 0; i < plane; i++) top += w.voxels[22 * plane + i];
@@ -137,6 +153,33 @@ function checkTerrain(file: TimberFile, c: Collector, surface: Uint8Array, stack
   c.add({ id: "terrain.single_floor", class: "design", ok: multi === 0, value: multi, limit: 0, message: multi ? `${multi} columns with caves or overhangs (outside the water model's scope)` : "one floor per tile" });
   const unsupported = multi === 0 ? 0 : unsupportedVoxels(file, stackTops);
   c.add({ id: "terrain.supported", class: "load", ok: unsupported === 0, value: unsupported, limit: 0, message: unsupported ? `${unsupported} voxels float more than 3 tiles from support` : "all terrain is supported" });
+  checkEdgeWall(w.sizeX, w.sizeY, surface, c);
+}
+
+/** `terrain.edge_wall` (Kyler, 2026-09-25, D151, extending D111): no wall raised along a map edge
+ *  to hold water. A principle, beside the dam-wall rule: it must pass in `generate` and `export`,
+ *  and is information on an import (analysis/edges.ts). */
+function checkEdgeWall(W: number, H: number, surface: Uint8Array, c: Collector): void {
+  if (!edgeRuleApplies(W, H)) {
+    c.notApplicable("terrain.edge_wall", "principle", `the map is too small for an edge wall (under ${2 * (EDGE_BAND + EDGE_INSIDE)} tiles a side)`);
+    return;
+  }
+  const edges = edgeWalls(surface, W, H);
+  const walled = edges.filter((e) => e.share >= EDGE_SHARE);
+  let most = edges[0];
+  for (const e of edges) if (e.share > most.share) most = e;
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  c.add({
+    id: "terrain.edge_wall",
+    class: "principle",
+    ok: walled.length === 0,
+    value: Math.round(most.share * 100) / 100,
+    limit: EDGE_SHARE,
+    message: walled.length
+      ? `a wall runs along the ${walled.map((e) => `${e.edge} edge (${pct(e.share)})`).join(", ")}: its outer two tiles stand ${EDGE_RISE}+ levels above the land inside, holding water in`
+      : `no wall along the map's edges (at most ${pct(most.share)} of an edge stands ${EDGE_RISE}+ levels above the land inside; a wall is ${pct(EDGE_SHARE)})`,
+    ...(walled.length ? { where: { tiles: walled.map((e) => e.at) } } : {}),
+  });
 }
 
 /** Solid voxels not reachable from z = 0 going up, or by at most 3 sideways steps since the last
