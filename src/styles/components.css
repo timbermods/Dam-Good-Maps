@@ -34,6 +34,12 @@
   font-size: 0.85rem;
 }
 
+/* a note that names a limit still to be met (a river whose water has nowhere to go yet) */
+.map-note.warn {
+  color: var(--warn);
+  border: 1px solid var(--warn);
+}
+
 /* a button with an icon and its word (the word hides on narrow screens; the label stays) */
 .icon-button {
   display: inline-flex;

@@ -9,7 +9,7 @@
 import type { Remote } from "comlink";
 import type { MapRenderer } from "../render3d";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { ShapePreview, ShapeRequest } from "../worker/session";
+import type { ShapePreview, ShapeRequest, ViewUpdate } from "../worker/session";
 import type { Point } from "../core/features/schema";
 import { cut, paste } from "./brushes";
 
@@ -24,6 +24,8 @@ export interface ShapeHost {
   heights(): Uint8Array;
   /** What the shape says and covers (null: nothing to show). */
   show(p: ShapePreview | null): void;
+  /** The map's own water again, after a draft that had water of its own (a river). */
+  restore(v: ViewUpdate): void;
 }
 
 export class ShapeDrag {
@@ -68,6 +70,11 @@ export class ShapeDrag {
   private apply(p: ShapePreview): void {
     this.preview = p;
     const h = this.host;
+    // refused where the pointer is now: the last result that fitted stays, with the reason
+    if (!p.ok && this.shown) {
+      h.show(p);
+      return;
+    }
     const heights = h.heights();
     const before = this.shown;
     if (before) paste(heights, cut(this.base, before, h.W), before, h.W);
@@ -78,10 +85,11 @@ export class ShapeDrag {
     h.show(p);
   }
 
-  /** Put the ground back as it was (Esc, or a shape the worker refused). */
+  /** Put the ground back as it was (Esc, or a shape the worker refused), and the water. */
   cancel(): void {
     this.over = true;
     const h = this.host;
+    void h.api.cancelShape().then((v) => h.restore(v));
     if (this.shown) {
       paste(h.heights(), cut(this.base, this.shown, h.W), this.shown, h.W);
       h.renderer.updateTerrainRect(h.heights(), this.shown);

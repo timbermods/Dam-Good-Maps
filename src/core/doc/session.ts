@@ -13,7 +13,7 @@
 // - Documents opened by a newer generator open from their stored base, exactly, until
 //   `rebuildWithCurrentGenerator` (PLAN §19.7).
 
-import { buildMap, previewTerrain, rebuild, SettleCache, type BaseLayer, type BuildInput, type BuildResult, type DirtyInfo, type LockedLayer } from "../features/build";
+import { buildMap, previewBuild, previewTerrain, rebuild, SettleCache, type BaseLayer, type BuildInput, type BuildResult, type DirtyInfo, type LockedLayer } from "../features/build";
 import type { TerrainState } from "../features/raster/strokePreview";
 import { storedWetMask } from "../analysis/mechanics";
 import { canonicalRun, type CanonicalWater } from "../sim/prefill";
@@ -796,6 +796,12 @@ export class MapSession {
    *  result): the heights, and the tiles that can differ from the map's. */
   previewFeatures(features: readonly Feature[]): { heights: Uint8Array; rect: { x0: number; y0: number; x1: number; y1: number } | null } {
     return previewTerrain(this.cur, { ...this.input(), features });
+  }
+
+  /** The whole map with these features instead of its own (a water tool's draft): its terrain,
+   *  objects and water model; the document and its caches stay as they are. */
+  previewBuild(features: readonly Feature[]): BuildResult {
+    return previewBuild(this.cur, { ...this.input(), features });
   }
 
   /** A full build of the document, from scratch (the reference for the incremental one). */

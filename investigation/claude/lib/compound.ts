@@ -87,6 +87,10 @@ const PRIORITY: Record<string, number> = {
   moveStart: 2,
   moveFeature: 3,
   addRiver: 4,
+  "addSource:water": 4,
+  "addSource:badwater": 8,
+  // a spring that fills a hollow: after the brushes and sculpts that may have dug it
+  "addSource:hollow": 9.5,
   setRiverBadwater: 4,
   addLake: 5,
   addLandform: 5,
@@ -105,7 +109,7 @@ const PRIORITY: Record<string, number> = {
 };
 
 function priority(step: Step): number {
-  const key = step.op === "addSetPiece" ? `addSetPiece:${step.kind}` : step.op;
+  const key = step.op === "addSetPiece" ? `addSetPiece:${step.kind}` : step.op === "addSource" ? `addSource:${step.fillHollow ? "hollow" : step.kind}` : step.op;
   return PRIORITY[key] ?? 5;
 }
 

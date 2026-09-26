@@ -24,7 +24,7 @@ import { DAM_OVERLAY } from "../render3d/palette";
 export type LandKind = LandformFeature["params"]["kind"];
 export type ToolKind =
   | "hill" | "plateau" | "ridge" | "canyon" | "valley" | "island" | "terracedCliffs" | "slope" | "thornBelt"
-  | "river" | "lake" | "waterfall" | "damSite" | "gorge" | "badwater" | "weir" | "plug" | "spillway"
+  | "river" | "lake" | "source" | "badwaterSource" | "waterfall" | "damSite" | "gorge" | "badwater" | "weir" | "plug" | "spillway"
   | "forest" | "berryPatch" | "ruinField" | "mineSite" | "relic" | "geothermal" | "core" | "object";
 
 export const TOOL_NAMES: Record<ToolKind, string> = {
@@ -38,6 +38,8 @@ export const TOOL_NAMES: Record<ToolKind, string> = {
   slope: "Slope",
   river: "River",
   lake: "Lake",
+  source: "Water source",
+  badwaterSource: "Badwater source",
   waterfall: "Waterfall",
   damSite: "Dam site",
   gorge: "Gorge",
@@ -67,8 +69,10 @@ export const TOOL_HINTS: Record<ToolKind, string> = {
   island: `Draw the island. ${OUTLINE_HINT}`,
   terracedCliffs: "Click the spot beside the water where the bottom band starts. The bands rise away from the way it faces.",
   slope: "Slopes appear by themselves where the colony needs them. Click the low tile beside a 1-level step to add one there, or click a slope to remove it.",
-  river: "Click from the source to the outlet, then double-click. Start at the map edge or inland; end at the edge, in a river or in a lake.",
-  lake: `Draw the lake's basin. ${OUTLINE_HINT} The water fills to the lowest ground round it.`,
+  river: "Drag from the source to the outlet, or click its bends and double-click. Start at the map edge or inland; end at the edge, in a river or in a lake. [ and ] change its width.",
+  lake: "Click a hollow: a spring at its lowest point fills it into a lake, and the water spills on over its rim.",
+  source: "Click where water starts: it spreads from there at once. Strength sets how much.",
+  badwaterSource: "Click where badwater starts: it spreads from there at once, and poisons the ground it reaches.",
   waterfall: "Click where the lip goes. On a river, the river drops there. Anywhere else, it builds its own cliff, springs and outflow.",
   damSite: "Click a river where the dam should go. A rock ridge closes the valley so one short dam holds a reservoir.",
   gorge: "Click a river where the gorge starts. It narrows the river between high walls downstream.",
@@ -88,7 +92,7 @@ export const TOOL_HINTS: Record<ToolKind, string> = {
 };
 
 export const LAND_TOOLS: ToolKind[] = ["hill", "plateau", "ridge", "canyon", "valley", "island", "terracedCliffs", "slope", "thornBelt"];
-export const WATER_TOOLS: ToolKind[] = ["river", "lake", "waterfall", "damSite", "gorge", "badwater", "weir", "plug", "spillway"];
+export const WATER_TOOLS: ToolKind[] = ["river", "lake", "source", "badwaterSource", "waterfall", "damSite", "gorge", "badwater", "weir", "plug", "spillway"];
 export const RESOURCE_TOOLS: ToolKind[] = ["forest", "berryPatch", "ruinField", "mineSite", "relic", "geothermal"];
 /** Tools advanced mode adds (on the Resources tab). */
 export const ADVANCED_TOOLS: ToolKind[] = ["core", "object"];
@@ -98,6 +102,7 @@ export function gestureOf(t: ToolKind): "outline" | "path" | "point" | "rect" {
   if (t === "river") return "path";
   if (t === "terracedCliffs" || t === "waterfall" || t === "damSite" || t === "gorge" || t === "badwater" || t === "slope") return "point";
   if (t === "weir" || t === "plug" || t === "spillway" || t === "mineSite" || t === "relic" || t === "geothermal" || t === "core" || t === "object") return "point";
+  if (t === "lake" || t === "source" || t === "badwaterSource") return "point";
   return "outline";
 }
 
@@ -181,6 +186,17 @@ export interface ToolOptions {
   species: Species;
   /** A river's or a waterfall's flow. */
   flow: FlowWord;
+  /** A river's width in tiles (0: as wide as its flow needs), and how deep its bed lies below its
+   *  banks (1–4). */
+  riverWidth: number;
+  riverDepth: number;
+  /** A drawn river's strength (its source, blocks of water per second), and whether it meanders
+   *  a little (Natural) or keeps its course exactly as drawn (Exact). */
+  riverFlow: number;
+  riverNatural: boolean;
+  /** A water source's strength (and a lake's spring), and a badwater source's, blocks per second. */
+  sourceStrength: number;
+  badwaterStrength: number;
   /** A lake's water level, or 0 for the lowest ground round it. */
   level: number;
   /** A lake's spring, blocks per second. */
@@ -214,6 +230,12 @@ export const DEFAULT_OPTIONS: ToolOptions = {
   density: 0.6,
   species: "mixed",
   flow: "steady",
+  riverWidth: 0,
+  riverDepth: 1,
+  riverFlow: 2,
+  riverNatural: true,
+  sourceStrength: 1.5,
+  badwaterStrength: 1,
   level: 0,
   spring: 0.5,
   facing: "north",
@@ -293,11 +315,18 @@ export function toolRequest(t: ToolKind, o: ToolOptions, g: { points?: Point[]; 
       if (!g.points || g.points.length < 3) return null;
       return { tool: "landform", outline: g.points, kind: t, edgeStyle: o.edge, ...(o.height > 0 ? { height: o.height } : {}), ...(o.edge === "terraced" ? { bandDepth: o.bandDepth } : {}) };
     case "lake":
-      if (!g.points || g.points.length < 3) return null;
-      return { tool: "lake", outline: g.points, spring: o.spring, ...(o.level > 0 ? { level: o.level } : {}) };
+    case "source":
+    case "badwaterSource": {
+      // a source on the tile (a lake's spring stands at its hollow's lowest point, found by the page)
+      if (!g.at) return null;
+      const s = t === "badwaterSource" ? o.badwaterStrength : o.sourceStrength;
+      return { tool: "entity", template: t === "badwaterSource" ? "BadwaterSource" : "WaterSource", x: g.at[0], y: g.at[1], orientation: "Cw0", components: { WaterSource: { SpecifiedStrength: s, CurrentStrength: s } } };
+    }
     case "river":
       if (!g.points || g.points.length < 2) return null;
-      return { tool: "river", points: g.points, flow: FLOW[o.flow] };
+      // drawn with the editor's rules (a branch from water, an end on dry ground fills its hollow),
+      // natural or exact
+      return { tool: "river", points: g.points, flow: o.riverFlow, drawn: true, ...(o.riverNatural ? { natural: true } : {}), ...(o.riverWidth > 0 ? { width: o.riverWidth } : {}), ...(o.riverDepth > 1 ? { bedDepth: o.riverDepth } : {}) };
     case "waterfall":
       if (g.river) return { tool: "setPiece", piece: "waterfall", request: { mode: "on-river", river: g.river.id, at: g.river.at, drop: o.drop } };
       if (!g.at) return null;

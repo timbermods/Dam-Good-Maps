@@ -9,6 +9,7 @@ import type { Orientation } from "../core/format/footprints";
 import type { Feature, MapObjectFeature, SetPieceFeature } from "../core/features/schema";
 import { isLine, OBJECT_NAMES } from "../core/features/objects";
 import type { Facing } from "../core/features/setpieces/common";
+import { OFFICIAL_FLOW } from "../core/gen/calibrated";
 import { saveFile } from "../platform";
 import type { EntityView } from "../render3d/model";
 import type { GeneratorApi } from "../worker/generator.worker";
@@ -266,6 +267,35 @@ const FLOW_CHOICES: [FlowWord, string][] = [
   ["steady", "Steady (2 water/s)"],
   ["strong", "Strong (4 water/s)"],
 ];
+/** A drawn river's strengths, blocks of water per second: up to 64, the most its sources can give. */
+const RIVER_FLOWS = [0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+/** A water source's strengths (one tile: at most 8, the game's most per tile), and a badwater
+ *  source's (its 3×3 tiles: at most 72). */
+const SOURCE_STRENGTHS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8];
+const BADWATER_STRENGTHS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 72];
+
+/** Water's strength, blocks per second, with the brushes' slider: a few steps from a trickle to
+ *  the most the game handles; past the official maps' range it says so, never a block. */
+export function StrengthSlider(p: { value: number; steps: readonly number[]; onChange(v: number): void; label?: string }) {
+  const k = p.steps.reduce((best, f, j) => (Math.abs(f - p.value) < Math.abs(p.steps[best] - p.value) ? j : best), 0);
+  return (
+    <>
+      <label class="slider-field" title="Blocks of water a second">
+        {p.label ?? "Strength"}
+        <input type="range" min={0} max={p.steps.length - 1} step={1} value={k} aria-valuetext={`${p.value} water per second`} onInput={(e) => p.onChange(p.steps[Number((e.target as HTMLInputElement).value)])} />
+        <output>{p.value} water/s</output>
+      </label>
+      {p.value > OFFICIAL_FLOW ? <p class="note">Stronger than any official map.</p> : null}
+    </>
+  );
+}
+const RIVER_WIDTHS: [string, string][] = [["0", "As its flow needs"], ...[2, 3, 4, 5, 6, 7, 8, 9].map((w): [string, string] => [String(w), `${w} tiles`])];
+const RIVER_DEPTHS: [string, string][] = [
+  ["1", "1 level: moist soil 16 tiles out"],
+  ["2", "2 levels: moist soil 10 tiles out"],
+  ["3", "3 levels: moist soil 4 tiles out"],
+  ["4", "4 levels: no moist soil"],
+];
 const EDGE_CHOICES: [Edge, string][] = [
   ["gentle", "Gentle: 1-level steps, joined by slopes"],
   ["terraced", "Terraced: wide 1-level bands"],
@@ -295,30 +325,17 @@ function ToolOptionsForm({ tool, options: o, onOptions }: { tool: ToolKind; opti
           {o.edge === "terraced" ? <Num label="Band depth (tiles)" value={o.bandDepth} min={6} max={12} onChange={(bandDepth) => set({ bandDepth })} /> : null}
         </>
       ) : null}
-      {tool === "river" ? <Pick label="Flow" value={o.flow} choices={FLOW_CHOICES} onChange={(flow) => set({ flow })} /> : null}
-      {tool === "lake" ? (
+      {tool === "source" || tool === "lake" ? <StrengthSlider value={o.sourceStrength} steps={SOURCE_STRENGTHS} onChange={(sourceStrength) => set({ sourceStrength })} /> : null}
+      {tool === "badwaterSource" ? <StrengthSlider value={o.badwaterStrength} steps={BADWATER_STRENGTHS} onChange={(badwaterStrength) => set({ badwaterStrength })} /> : null}
+      {tool === "river" ? (
         <>
-          <label>
-            Water level
-            <select value={String(o.level)} onChange={(e) => set({ level: Number((e.target as HTMLSelectElement).value) })}>
-              <option value="0">The lowest ground round it</option>
-              {Array.from({ length: 15 }, (_, k) => k + 1).map((h) => (
-                <option value={String(h)} key={h}>
-                  Level {h}
-                </option>
-              ))}
-            </select>
+          <StrengthSlider value={o.riverFlow} steps={RIVER_FLOWS} onChange={(riverFlow) => set({ riverFlow })} />
+          <Pick label="Width" value={String(o.riverWidth)} choices={RIVER_WIDTHS} onChange={(w) => set({ riverWidth: Number(w) })} />
+          <Pick label="Depth" value={String(o.riverDepth)} choices={RIVER_DEPTHS} onChange={(d) => set({ riverDepth: Number(d) })} />
+          <label class="toggle-row">
+            <input type="checkbox" checked={o.riverNatural} onChange={(e) => set({ riverNatural: (e.target as HTMLInputElement).checked })} />
+            Natural: gentle meanders (off: exactly as drawn, for canals)
           </label>
-          <Pick
-            label="Spring"
-            value={String(o.spring)}
-            choices={[
-              ["0.25", "Trickle"],
-              ["0.5", "Gentle"],
-              ["1", "Steady"],
-            ]}
-            onChange={(v) => set({ spring: Number(v) })}
-          />
         </>
       ) : null}
       {tool === "waterfall" ? (
@@ -784,7 +801,7 @@ export function EntityInspector({ list, onChange, onClose }: { list: EntityInfo[
       </p>
       {ws ? (
         <>
-          <Num label="Strength (water/s)" value={strength} min={0} max={e.template === "BadwaterSource" ? 72 : 8} step={0.25} onChange={(v) => onChange(e, { props: { WaterSource: { SpecifiedStrength: v, CurrentStrength: delayed ? 0 : v } } })} />
+          <StrengthSlider value={strength} steps={e.template === "BadwaterSource" ? BADWATER_STRENGTHS : SOURCE_STRENGTHS} onChange={(v) => onChange(e, { props: { WaterSource: { SpecifiedStrength: v, CurrentStrength: delayed ? 0 : v } } })} />
           <label class="check">
             <input
               type="checkbox"

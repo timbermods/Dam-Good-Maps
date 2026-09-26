@@ -76,6 +76,8 @@ const api = {
   closeSession: () => ed.closeSession(),
   check: (op: EditOp) => ed.check(op),
   apply: (op: EditOp, origin?: OpOrigin, label?: string) => sendUpdate(ed.apply(op, origin, label)),
+  /** A slider's step: steps a moment apart with the same key are one undo step. */
+  applyStep: (op: EditOp, label: string, key: string) => sendUpdate(ed.applyStep(op, label, key)),
   applyAll: (ops: EditOp[], label: string, origin?: OpOrigin) => sendUpdate(ed.applyAll(ops, label, origin)),
   undo: () => sendUpdate(ed.undo()),
   redo: () => sendUpdate(ed.redo()),
@@ -88,6 +90,8 @@ const api = {
     const r = ed.previewShape(p);
     return r.heights ? transfer(r, [r.heights.buffer as Transferable]) : r;
   },
+  /** A draft ended without being placed (Esc, a refused release): the map's own water again. */
+  cancelShape: () => ed.cancelShape(),
   changeFeature: (id: string, patch: { params: Record<string, unknown> }, label: string) => sendUpdate(ed.changeFeature(id, patch, label)),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),

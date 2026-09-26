@@ -104,8 +104,9 @@ export function writeReport(r: ProposalResult, p: Proposal, after: Measured): st
       const verb = st.op === "moveFeature" ? "Moved" : st.op === "resizeFeature" ? "Resized" : "Changed";
       lines.push(`${verb} ${what}${meas ? `: now ${facts(meas)}` : ""}${st.op === "resizeFeature" || st.op === "changeFeature" ? (st.report.length ? ` (${st.report.join("; ")})` : "") : ""}.`);
     }
-    // a brush says what it moved, by how much, and where its edge slopes
-    if (st.op === "brush") lines.push(`${st.report.join("; ").replace(/^./, (c) => c.toUpperCase())}.`);
+    // a brush says what it moved, by how much, and where its edge slopes; a source, where it is
+    // and what its water does
+    if (st.op === "brush" || st.op === "addSource") lines.push(`${st.report.join("; ").replace(/^./, (c) => c.toUpperCase())}.`);
   }
   // side effects (what a step cleared or planted) are reported, but they are not trade-offs
   for (const t of r.tradeoffs) if (t.kind !== "order") lines.push(t.kind === "cleared" || (t.kind === "start-moved" && !/regenerated/.test(t.text)) ? TEMPLATES.also(t.text) : TEMPLATES.tradeoff(t.text));

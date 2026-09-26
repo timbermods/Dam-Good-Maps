@@ -16,6 +16,9 @@ import { deleteEdit, landformTop, moveEdit, objectsOnNewGround, planContextOf, p
 import { applyBrush, BRUSH_MAX_LEVEL, BRUSH_TOOLS, MAX_DABS, type BrushParams, type BrushTool } from "../../../src/core/features/raster/brush";
 import { polygonMask } from "../../../src/core/features/geometry";
 import { fmix32 } from "../../../src/core/math/hash";
+import { hollowAt } from "../../../src/core/features/hollow";
+import { entityProblem, planEntity } from "../../../src/core/doc/placing";
+import { OFFICIAL_FLOW } from "../../../src/core/gen/calibrated";
 import { FOREST, RUIN_HEIGHT_SHARES, RUINS } from "../../../src/core/gen/calibrated";
 import type { Feature, LandformFeature, Point, SetPieceFeature, SetPieceKind, StartFeature } from "../../../src/core/features/schema";
 import { BUILT_KINDS, type PlanRecord } from "../../../src/core/features/setpieces";
@@ -44,7 +47,10 @@ export type Step =
   | { op: "addSetPiece"; kind: SetPieceKind; request?: PlanRecord; where?: Where; size?: SizeWord | number; handle?: string; keepReservoirsClean?: boolean; nearStart?: boolean; awayFromStart?: number }
   | { op: "changeSetPiece"; target: string; request?: PlanRecord; change?: string }
   | { op: "changeFeature"; target: string; set: { level?: number; floorDepth?: number; spring?: number; flow?: number; width?: number; height?: number; edgeStyle?: "gentle" | "terraced" | "cliff"; density?: number } }
-  | { op: "addRiver"; points: Point[]; flow?: number | "gentle" | "steady" | "strong"; width?: number; bedDepth?: number; badwater?: boolean; handle?: string }
+  | { op: "addRiver"; points: Point[]; flow?: number | "gentle" | "steady" | "strong"; width?: number; bedDepth?: number; badwater?: boolean; handle?: string; live?: boolean; natural?: boolean }
+  /** A water or badwater source (the editor's source tools, live editing): where water starts, or,
+   *  with fillHollow, a spring at the lowest point of the hollow there, which fills it into a lake. */
+  | { op: "addSource"; kind: "water" | "badwater"; where?: Where; at?: [number, number]; strength?: number; fillHollow?: boolean }
   | { op: "addLake"; outline?: Point[]; where?: Where; size?: SizeWord | number; level?: number; floorDepth?: number; spring?: number; handle?: string }
   | { op: "addLandform"; kind: LandformFeature["params"]["kind"]; outline?: Point[]; where?: Where; size?: SizeWord; height?: number; edgeStyle?: LandformFeature["params"]["edgeStyle"]; handle?: string }
   | { op: "addResource"; kind: "forest" | "berryPatch" | "ruinField"; where: Where; amount?: number; size?: SizeWord; at?: [number, number]; handle?: string }
@@ -60,7 +66,7 @@ export type Step =
   | { op: "resizeFeature"; target: string; factor: number }
   | { op: "undoLast" };
 
-export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "resizeFeature", "addRiver", "addLake", "addLandform", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
+export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "resizeFeature", "addRiver", "addSource", "addLake", "addLandform", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "setRiverBadwater", "sculpt", "brush", "undoLast"] as const;
 
 export interface Expanded {
   ok: boolean;
@@ -168,6 +174,12 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
       }
       return errs;
     }
+    case "addSource":
+      if (s.kind !== "water" && s.kind !== "badwater") return ["kind is water or badwater"];
+      if (s.at === undefined && s.where === undefined) errs.push("addSource needs at [x, y] or a where");
+      if (s.at !== undefined && !(Array.isArray(s.at) && s.at.length === 2 && num(s.at[0], 0, W - 1) && num(s.at[1], 0, H - 1))) errs.push("at is a tile [x, y] on the map");
+      if (s.strength !== undefined && !num(s.strength, 0.25, s.kind === "badwater" ? 72 : 8)) errs.push(`strength is 0.25–${s.kind === "badwater" ? 72 : 8} blocks of water a second (a water source's one tile holds 8 at most; a badwater source's 3×3, 72)`);
+      return [...errs, ...checkPlace(s.where, "where", W, H)];
     case "addRiver":
       errs.push(...checkPoints(s.points, W, H, "points", 2, 24));
       if (s.flow !== undefined && !(num(s.flow, 0.1, 64) || ["gentle", "steady", "strong"].includes(String(s.flow)))) errs.push("flow is 0.1–64 blocks/s or gentle, steady, strong");
@@ -359,10 +371,14 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       if ((f.kind === "forest" || f.kind === "berryPatch") && set.density !== undefined) return done([{ op: "updateFeature", params: { id: f.id, patch: { params: { density: set.density } } } }], [`density ${set.density}`]);
       return fail(step, [`a ${f.kind} has none of these to change: ${Object.keys(set).join(", ")}`]);
     }
+    case "addSource":
+      return expandSource(s, conv, step);
     case "addRiver": {
       const id = newId(conv, "river");
       const flow = typeof step.flow === "string" ? { gentle: 1, steady: 2, strong: 4 }[step.flow] : (step.flow ?? 2);
-      const r = planRiver({ points: step.points, flow, ...(step.width ? { width: step.width } : {}), ...(step.bedDepth ? { bedDepth: step.bedDepth } : {}) }, planContextOf(s), id, "claude");
+      // live: the editor's river tool's rules (a branch from water, an end on dry ground)
+      const ctx = step.live ? { ...planContextOf(s), water: s.built.water } : planContextOf(s);
+      const r = planRiver({ points: step.points, flow, ...(step.width ? { width: step.width } : {}), ...(step.bedDepth ? { bedDepth: step.bedDepth } : {}), ...(step.live ? { drawn: true, ...(step.natural ? { natural: true } : {}) } : {}) }, ctx, id, "claude");
       if (step.badwater) return fail(step, ["a river's badwater switch is not built yet: draw the river clean and add a badwater spring that drains into it"]);
       if (r.ok && step.badwater && r.feature.kind === "river") {
         r.feature.params.badwater = true;
@@ -493,6 +509,62 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
     case "undoLast":
       return { ok: true, step, ops: [], made: [], report: [], resolved: conv.accepted.length ? { undoes: conv.accepted[conv.accepted.length - 1].text } : {}, errors: conv.accepted.length ? [] : ["nothing to undo in this conversation"], tiles: 0 };
   }
+}
+
+// ---------------------------------------------------------------------------------- sources
+
+/** A water or badwater source (the editor's source tools): on the tile given, or at a place: its
+ *  middle-most dry tile, or with fillHollow the lowest point of the hollow there (a spring that
+ *  fills it into a lake, then spills over its rim). */
+function expandSource(s: MapSession, conv: Conversation, step: Extract<Step, { op: "addSource" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const b = s.built;
+  let at = step.at ? ([Math.round(step.at[0]), Math.round(step.at[1])] as [number, number]) : null;
+  const resolved: Record<string, unknown> = {};
+  if (!at) {
+    const where = resolve(viewOf(s), step.where!, refContext(conv));
+    Object.assign(resolved, { place: where.place, assumptions: where.assumptions });
+    if (!where.ok) return fail(step, where.errors, undefined, resolved);
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (let i = 0; i < where.mask.length; i++)
+      if (where.mask[i]) {
+        sx += i % W;
+        sy += Math.floor(i / W);
+        n++;
+      }
+    const cx = sx / n;
+    const cy = sy / n;
+    // a hollow's spring: its lowest tile; any other source: the dry tile nearest the middle where
+    // it can stand (a badwater source takes 3×3 level tiles)
+    const order: [number, number][] = [];
+    for (let i = 0; i < where.mask.length; i++) {
+      if (!where.mask[i] || b.water[i] > 0.05) continue;
+      const d = Math.hypot((i % W) - cx, Math.floor(i / W) - cy);
+      order.push([step.fillHollow ? b.heights[i] * 10000 + d : d, i]);
+    }
+    order.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+    if (!order.length) return fail(step, ["that place is all water: a source goes on dry ground"], undefined, resolved);
+    const template = step.kind === "badwater" ? "BadwaterSource" : "WaterSource";
+    const fits = order.slice(0, 400).find(([, i]) => step.fillHollow || !entityProblem(s, { template, x: i % W, y: Math.floor(i / W), orientation: "Cw0" }));
+    const best = (fits ?? order[0])[1];
+    at = [best % W, Math.floor(best / W)];
+  }
+  const report: string[] = [];
+  if (step.fillHollow) {
+    const h = hollowAt(b.heights, b.water, W, H, at[0], at[1]);
+    if (!h.fills) return fail(step, ["there is no hollow there: water from a spring there runs on downhill (dig one with a lower brush first)"], undefined, { ...resolved, at });
+    at = [h.low % W, Math.floor(h.low / W)];
+    report.push(`fills the hollow to level ${h.level}, about ${h.tiles} tiles, then spills over its rim`);
+  }
+  const bad = step.kind === "badwater";
+  const strength = step.strength ?? (bad ? 1 : 1.5);
+  const req = { template: bad ? "BadwaterSource" : "WaterSource", x: at[0], y: at[1], orientation: "Cw0" as const, components: { WaterSource: { SpecifiedStrength: strength, CurrentStrength: strength } } };
+  const r = planEntity(s, req, newId(conv, "source"));
+  if (!r.ok) return fail(step, r.errors, undefined, { ...resolved, at });
+  report.unshift(`a ${bad ? "badwater" : "water"} source of ${strength} blocks/s at (${at[0]}, ${at[1]})${strength > OFFICIAL_FLOW ? ": stronger than any official map" : ""}`);
+  return { ok: true, step, ops: r.ops, made: [], report, resolved: { ...resolved, at }, errors: [], tiles: bad ? 9 : 1 };
 }
 
 // ------------------------------------------------------------------------------------ brushes

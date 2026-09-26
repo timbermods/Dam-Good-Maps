@@ -24,6 +24,7 @@ import {
   planLandform,
   planPiece,
   planRiver,
+  type RiverEnd,
   replacePatch,
   withObjectsOnNewGround,
   cornerFor,
@@ -47,6 +48,8 @@ import { entityTiles } from "../core/features/edits";
 import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
+import type { BuildResult } from "../core/features/build";
+import { OFFICIAL_FLOW } from "../core/gen/calibrated";
 import { polygonMask } from "../core/features/geometry";
 import { patchFeature } from "../core/doc/ops";
 import type { Difficulty, MapSpec } from "../core/spec/mapspec";
@@ -224,8 +227,8 @@ function entityInputs(list: readonly EntitySpec[]) {
   return out;
 }
 
-function waterOf(s: MapSession, live?: { depth: ArrayLike<number>; contamination: ArrayLike<number> }): WaterView {
-  const b = live ? { ...s.built, water: live.depth, contamination: live.contamination } : s.built;
+function waterOf(s: MapSession, live?: { depth: ArrayLike<number>; contamination: ArrayLike<number> }, ground: Uint8Array = s.built.heights): WaterView {
+  const b = live ? { ...s.built, heights: ground, water: live.depth, contamination: live.contamination } : s.built;
   const roofed = s.roofedTiles;
   if (!s.showsStoredWater && !roofed.size) return waterFromDepth(b.heights, b.water, b.contamination);
   const w = s.storedWater();
@@ -511,9 +514,13 @@ export function setAutoWater(on: boolean): void {
   autoWater = on;
 }
 
-/** The water settling in the background, and a token that a newer edit changes. */
-let waterJob: { token: number; job: PreviewJob; version: number; session: MapSession } | null = null;
+/** The water settling in the background, and a token that a newer edit changes. A water tool's
+ *  draft (a river being drawn) has water of its own, flowing on the draft's ground (`draft`): it is
+ *  shown, never put in place; placing the draft carries it on, cancelling it drops it. */
+let waterJob: { token: number; job: PreviewJob; version: number; session: MapSession; draft?: BuildResult } | null = null;
 let waterToken = 0;
+/** A draft's water once it has settled (the next edit carries it on). */
+let draftState: WarmState | null = null;
 /** The page holds the water while the player paints, when it asks to (a very large map). */
 let waterHeld = false;
 /** Ticks per slice, and how often the page gets the water as it flows. */
@@ -527,17 +534,19 @@ export function holdWater(on: boolean): void {
 function stopWater(): void {
   waterToken++;
   waterJob = null;
+  draftState = null;
 }
 
 /** Start settling the open map's water again, from the water in flight when there is one (so it
- *  keeps flowing), else from the last settled water. */
+ *  keeps flowing: a placed draft's water flows on), else from the last settled water. */
 function kickWater(): void {
   const s = session;
   if (!s || !s.waterStale) {
     stopWater();
     return;
   }
-  const inflight = waterJob && waterJob.session === s ? waterJob.job.state() : null;
+  const inflight = waterJob && waterJob.session === s ? waterJob.job.state() : draftState;
+  draftState = null;
   const from: WarmState | null = inflight ?? s.lastSettled();
   if (!from) return;
   const token = ++waterToken;
@@ -559,6 +568,13 @@ async function runWater(token: number): Promise<void> {
     const t0 = performance.now();
     let r: CanonicalWater | null = null;
     while (!r && performance.now() - t0 < WATER_SLICE_MS) r = j.job.advance(4);
+    if (r && j.draft) {
+      // a draft's water has settled on its ground: shown as it is, kept for the next edit
+      listener?.({ kind: "water", version, water: waterOf(j.session, { depth: r.depth, contamination: r.contamination }, j.draft.heights), done: 1 });
+      draftState = j.job.state();
+      waterJob = null;
+      return;
+    }
     if (r) {
       finishWater(j, r);
       return;
@@ -566,7 +582,7 @@ async function runWater(token: number): Promise<void> {
     if (performance.now() - lastFrame > WATER_FRAME_MS && listener) {
       lastFrame = performance.now();
       const done = Math.min(0.99, j.job.ticks / TICKS_PER_DAY);
-      listener({ kind: "water", version, water: waterOf(j.session, { depth: j.job.sim.D, contamination: j.job.sim.C }), done });
+      listener({ kind: "water", version, water: waterOf(j.session, { depth: j.job.sim.D, contamination: j.job.sim.C }, j.draft?.heights), done });
     }
     await breathe();
   }
@@ -578,6 +594,28 @@ function finishWater(j: NonNullable<typeof waterJob>, water: CanonicalWater): vo
   if (session !== s || !s.adoptWater(j.job.model, water)) return;
   const view = viewUpdate(s);
   listener?.({ kind: "settled", version, view, info: sessionInfo(s) });
+}
+
+/** Water for a water tool's draft: it flows on the draft's ground from the water in flight (or
+ *  the last settled water), a slice at a time, as for an edit. */
+function draftWater(s: MapSession, b: BuildResult): void {
+  const inflight = waterJob && waterJob.session === s ? waterJob.job.state() : draftState;
+  draftState = null;
+  const from: WarmState | null = inflight ?? s.lastSettled();
+  if (!from) return;
+  const token = ++waterToken;
+  waterJob = { token, job: new PreviewJob(from, b.waterModel), version, session: s, draft: b };
+  if (autoWater) setTimeout(() => void runWater(token), 0);
+}
+
+/** A draft ended without being placed: its water goes, the map's own flows again (from the last
+ *  settled water). The water to show now. */
+export function cancelShape(): ViewUpdate {
+  const s = session;
+  if (!s || (!waterJob?.draft && !draftState)) return {};
+  stopWater();
+  kickWater();
+  return { water: waterOf(s) };
 }
 
 /** Settle the open map's water now (Node tests, and anything that must not wait for the
@@ -710,6 +748,25 @@ export function apply(op: EditOp, origin: OpOrigin = "user", label?: string): Se
   const t0 = performance.now();
   const s = need();
   const r = s.apply(op, origin, label);
+  return changed(s, r.ok, r.errors, t0);
+}
+
+/** The last change a control made step by step (a strength slider moved with the arrow keys):
+ *  its key, when, and how long the history was after it. */
+let lastStep: { key: string; at: number; length: number; session: MapSession } | null = null;
+const STEP_JOIN_MS = 1500;
+
+/** Apply a change a control makes in steps (a slider): shown at once, and steps a moment apart
+ *  with the same `key` are one undo step (the latest replaces the one before). */
+export function applyStep(op: EditOp, label: string, key: string): SessionUpdate {
+  const t0 = performance.now();
+  const s = need();
+  const n = s.history().filter((h) => h.applied).length;
+  const joins = lastStep && lastStep.session === s && lastStep.key === key && lastStep.length === n && performance.now() - lastStep.at < STEP_JOIN_MS;
+  if (joins) s.undo();
+  const r = s.apply(op, "user", label);
+  if (!r.ok && joins) s.redo();
+  lastStep = r.ok ? { key, at: performance.now(), length: s.history().filter((h) => h.applied).length, session: s } : null;
   return changed(s, r.ok, r.errors, t0);
 }
 
@@ -1115,6 +1172,8 @@ export function planTool(req: ToolRequest, id: string): ToolPlan {
   // a feature on the map is planned again on the map without it, and changed in place
   const existing = s.features.find((f) => f.id === id) ?? null;
   const ctx = planContextOf(s, existing ? id : null);
+  // a river drawn in the editor reads the water: it may start from it (a branch)
+  if (req.tool === "river" && req.drawn) ctx.water = s.built.water;
   const origin = existing?.origin ?? "user";
   const r = req.tool === "river" ? planRiver(req, ctx, id, origin) : req.tool === "lake" ? planLake(req, ctx, id, origin) : planLandform(req, ctx, id, origin);
   if (!r.ok) return toolPlan(r);
@@ -1141,7 +1200,30 @@ export interface ShapePreview {
   area?: AreaPreview;
   /** The tiles the feature covers (its outline shown on the map). */
   tiles: number[];
+  /** A limit still to be met before it can be placed (a river whose water has nowhere to go yet):
+   *  the first line of the report says it. */
+  warn?: boolean;
+  /** The words beside the pointer, when the tool has its own (a river: "3 wide, 1 deep · joins
+   *  the river · cutting 6 levels deep here"). */
+  cursor?: string;
 }
+
+/** What a river being drawn says beside the pointer: its size, where its water goes, how deep it
+ *  cuts where the pointer is, and a strength beyond the official maps'. */
+function riverWords(p: { width: number; bedDepth: number; flow: number }, end: RiverEnd): string {
+  const words = [`${r1(p.width)} wide, ${p.bedDepth} deep`];
+  if (end.start === "branch") words.push("a branch of the water it leaves");
+  if (end.kind === "edge") words.push("flows off the map");
+  else if (end.kind === "river") words.push("joins the river");
+  else if (end.kind === "lake") words.push("flows into the lake");
+  else if (end.kind === "hollow") words.push(`fills a lake here up to level ${end.level}`);
+  else if (end.kind === "downhill") words.push("runs on downhill from here");
+  if (end.cut >= 2) words.push(`cutting ${end.cut} levels deep here`);
+  if (p.flow > OFFICIAL_FLOW) words.push(`${p.flow} water/s: stronger than any official map`);
+  return words.join(" · ");
+}
+
+const r1 = (v: number) => Math.round(v * 10) / 10;
 
 export type ShapeRequest =
   /** A new feature from a tool (a landform, a lake, a resource area). */
@@ -1160,11 +1242,14 @@ export function previewShape(p: ShapeRequest): ShapePreview {
   let label = "";
   let tiles: number[] = [];
   let area: AreaPreview | undefined;
+  let warn = false;
+  let cursor: string | undefined;
   if (p.kind === "new") {
     // (planned as it will be placed, without clearing the objects under it: that waits for the
     // release, and never changes the terrain)
     const ctx = planContextOf(s);
     const req = p.req;
+    if (req.tool === "river" && req.drawn) ctx.water = s.built.water;
     let r: PlannedEdit | PlannedOps;
     if (req.tool === "landform") r = planLandform(req, ctx, p.id, "user");
     else if (req.tool === "lake") r = planLake(req, ctx, p.id, "user");
@@ -1176,6 +1261,9 @@ export function previewShape(p: ShapeRequest): ShapePreview {
       return { ok: true, errors: [], report: plan.report, label: plan.label, rect: null, heights: null, tiles: plan.tiles, ...(plan.preview ? { area: plan.preview } : {}) };
     } else return noShape(["this tool has no live preview"]);
     if (!r.ok) return noShape(r.errors);
+    if ("open" in r && r.open) warn = true;
+    // a river being drawn: its size, and what it does where the pointer is (D180, D183)
+    if ("end" in r && r.end && r.feature.kind === "river") cursor = riverWords(r.feature.params, r.end);
     features = s.features.map((f) => f as Feature);
     for (const op of r.ops) {
       if (op.op === "addFeature") features.push(op.params.feature);
@@ -1199,7 +1287,14 @@ export function previewShape(p: ShapeRequest): ShapePreview {
     }
     label = `Change ${kindName(f as Feature)}`;
   }
-  const t = s.previewFeatures(features);
+  // a river being drawn: the whole map with it (its springs too), and its water flowing as it is
+  // drawn; the other shapes: their terrain
+  let t: { heights: Uint8Array; rect: { x0: number; y0: number; x1: number; y1: number } | null };
+  if (p.kind === "new" && p.req.tool === "river") {
+    const b = s.previewBuild(features);
+    draftWater(s, b);
+    t = { heights: b.heights, rect: diffRect(s.built.heights, b.heights, W) };
+  } else t = s.previewFeatures(features);
   // the level a landform really reaches on this map (other features may keep their own ground:
   // a river, a basin), so what it says is what shows
   const shaped = features.find((f) => f.id === (p.kind === "new" ? p.id : p.id));
@@ -1215,12 +1310,31 @@ export function previewShape(p: ShapeRequest): ShapePreview {
       report = [`reaches level ${top} here, not ${want}${why}`, ...report.slice(said.startsWith("reaches level") || said.startsWith("level ") ? 1 : 0)];
     }
   }
-  if (!t.rect) return { ok: true, errors: [], report, label, rect: null, heights: null, tiles, ...(area ? { area } : {}) };
+  const more = { ...(area ? { area } : {}), ...(warn ? { warn } : {}), ...(cursor ? { cursor } : {}) };
+  if (!t.rect) return { ok: true, errors: [], report, label, rect: null, heights: null, tiles, ...more };
   const r = t.rect;
   const w = r.x1 - r.x0 + 1;
   const out = new Uint8Array(w * (r.y1 - r.y0 + 1));
   for (let y = r.y0; y <= r.y1; y++) out.set(t.heights.subarray(y * W + r.x0, y * W + r.x1 + 1), (y - r.y0) * w);
-  return { ok: true, errors: [], report, label, rect: r, heights: out, tiles };
+  return { ok: true, errors: [], report, label, rect: r, heights: out, tiles, ...more };
+}
+
+/** The tiles where two heightfields differ, as a rectangle (null: none). */
+function diffRect(a: Uint8Array, b: Uint8Array, W: number): { x0: number; y0: number; x1: number; y1: number } | null {
+  let x0 = W;
+  let y0 = Infinity;
+  let x1 = -1;
+  let y1 = -1;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] === b[i]) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (y < y0) y0 = y;
+    y1 = y;
+  }
+  return x1 < 0 ? null : { x0, y0, x1, y1 };
 }
 
 /** Change a feature by a handle (moved, resized, raised) as one undo step; the objects on the
@@ -1239,8 +1353,10 @@ export function applyTool(req: ToolRequest, id: string): SessionUpdate & { plan:
   const t0 = performance.now();
   const s = need();
   const plan = planTool(req, id);
-  if (!plan.ok) return { ...changed(s, false, plan.errors, t0), plan };
+  // (a refused draft's water goes, and the map's own shows again)
+  if (!plan.ok) return { ...changed(s, false, plan.errors, t0), view: cancelShape(), plan };
   const r = s.applyAll(plan.ops, "user", plan.label);
+  if (!r.ok) return { ...changed(s, false, r.errors, t0), view: cancelShape(), plan };
   return { ...changed(s, r.ok, r.errors, t0), plan };
 }
 

@@ -2064,7 +2064,7 @@
      {
       "tool": "resolve_region",
       "args": {
-       "where": "the northeast corner"
+       "where": "the southeast corner"
       }
      }
     ],
@@ -7362,6 +7362,256 @@
       "path": "steps.0.report.0",
       "op": "matches",
       "value": "reaches level \\d+ here, not 16|level 16"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B08",
+   "kind": "compound",
+   "text": "dig a small pond at (80, 70) and fill it with water",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "generated maps drain, so the pond is dug first (the Lower brush), then a spring fills it (after the brushes: the app's order)",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a small pond near (80, 70), filled with water",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how deep the pond was dug, over how many tiles",
+     "the spring's strength, and the level its water fills the pond to before it spills"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)",
+    "a spring stands at the pond's lowest point"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "at": [
+        80,
+        70
+       ]
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "brush",
+       "tool": "lower",
+       "where": {
+        "near": [
+         80,
+         70
+        ],
+        "within": 4
+       },
+       "amount": 2
+      },
+      {
+       "op": "addSource",
+       "kind": "water",
+       "at": [
+        80,
+        70
+       ],
+       "fillHollow": true,
+       "strength": 1
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.1.report.1",
+      "op": "matches",
+      "value": "^fills the hollow to level [0-9]+"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B09",
+   "kind": "simple",
+   "text": "add a strong water source in the northwest corner",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a strong water source in the northwest corner",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "where the source stands and its strength (4 blocks/s)",
+     "where its water runs"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the northwest corner"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "addSource",
+       "kind": "water",
+       "where": "the northwest corner",
+       "strength": 4
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^a water source of 4 blocks/s at"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B10",
+   "kind": "simple",
+   "text": "add a badwater source in the southeast corner, 3 blocks strong",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a badwater source of 3 blocks/s in the southeast corner",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "where it stands, its strength, and how far it is from the start",
+     "where its badwater runs"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the southeast corner"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "addSource",
+       "kind": "badwater",
+       "where": "the southeast corner",
+       "strength": 3
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^a badwater source of 3 blocks/s at"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B11",
+   "kind": "simple",
+   "text": "draw a straight canal from the river south to the map edge at x 72",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "drawn from the river it is a branch of it (the editor's river rules): no source of its own",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a straight channel from the main river to the south edge",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "it is a branch: the river's own water feeds it",
+     "how deep it cuts through higher ground on its way"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "measure",
+      "args": {
+       "at": [
+        72,
+        40
+       ]
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "addRiver",
+       "points": [
+        [
+         72,
+         40
+        ],
+        [
+         72,
+         20
+        ],
+        [
+         72,
+         0
+        ]
+       ],
+       "flow": "gentle",
+       "live": true
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report",
+      "op": "includes",
+      "value": "a branch: the water it leaves feeds it"
      }
     ]
    }

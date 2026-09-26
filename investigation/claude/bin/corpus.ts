@@ -327,7 +327,7 @@ R("C01", "compass", "add a lake in the northeast corner", "rv128", {
   goals: [G("g1", "a lake in the northeast corner", inPlace("new:lake", "northeast corner"))],
   report: { mustSay: ["'northeast corner' read as the east third of the north third"] },
   pass: [VALID, "the lake lies in the northeast corner"],
-  reference: { calls: [call("resolve_region", { where: "the northeast corner" })], proposal: { steps: [{ op: "addLake", where: "the northeast corner" }] } },
+  reference: { calls: [call("resolve_region", { where: "the southeast corner" })], proposal: { steps: [{ op: "addLake", where: "the northeast corner" }] } },
 });
 R("C02", "compass", "put a hill at the top of the map", "rv96", {
   goals: [G("g1", "a hill in the north", inPlace("new:hill", "north third"))],
@@ -1040,6 +1040,51 @@ R("B06", "followup", "make the hill as tall as it can go", "rv96-hill", {
     calls: [call("measure", { subject: "hill" })],
     proposal: { steps: [{ op: "changeFeature", target: "hill", set: { height: 16 } }] },
     checks: [chk("propose", "steps.0.report.0", "matches", "reaches level \\d+ here, not 16|level 16")],
+  },
+});
+
+// -------------------------------------------------------------- live editing: the water tools
+
+R("B08", "compound", "dig a small pond at (80, 70) and fill it with water", "rv96", {
+  note: "generated maps drain, so the pond is dug first (the Lower brush), then a spring fills it (after the brushes: the app's order)",
+  goals: [G("g1", "a small pond near (80, 70), filled with water")],
+  report: { mustSay: ["how deep the pond was dug, over how many tiles", "the spring's strength, and the level its water fills the pond to before it spills"] },
+  pass: [VALID, START_RULES_HOLD, "a spring stands at the pond's lowest point"],
+  reference: {
+    calls: [call("measure", { at: [80, 70] })],
+    proposal: { steps: [{ op: "brush", tool: "lower", where: { near: [80, 70], within: 4 }, amount: 2 }, { op: "addSource", kind: "water", at: [80, 70], fillHollow: true, strength: 1 }] },
+    checks: [chk("propose", "steps.1.report.1", "matches", "^fills the hollow to level [0-9]+")],
+  },
+});
+R("B09", "simple", "add a strong water source in the northwest corner", "rv96", {
+  goals: [G("g1", "a strong water source in the northwest corner")],
+  report: { mustSay: ["where the source stands and its strength (4 blocks/s)", "where its water runs"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the northwest corner" })],
+    proposal: { steps: [{ op: "addSource", kind: "water", where: "the northwest corner", strength: 4 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^a water source of 4 blocks/s at")],
+  },
+});
+R("B10", "simple", "add a badwater source in the southeast corner, 3 blocks strong", "rv96", {
+  goals: [G("g1", "a badwater source of 3 blocks/s in the southeast corner")],
+  report: { mustSay: ["where it stands, its strength, and how far it is from the start", "where its badwater runs"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the southeast corner" })],
+    proposal: { steps: [{ op: "addSource", kind: "badwater", where: "the southeast corner", strength: 3 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^a badwater source of 3 blocks/s at")],
+  },
+});
+R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
+  note: "drawn from the river it is a branch of it (the editor's river rules): no source of its own",
+  goals: [G("g1", "a straight channel from the main river to the south edge")],
+  report: { mustSay: ["it is a branch: the river's own water feeds it", "how deep it cuts through higher ground on its way"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("measure", { at: [72, 40] })],
+    proposal: { steps: [{ op: "addRiver", points: [[72, 40], [72, 20], [72, 0]], flow: "gentle", live: true }] },
+    checks: [chk("propose", "steps.0.report", "includes", "a branch: the water it leaves feeds it")],
   },
 });
 

@@ -164,6 +164,13 @@ In `investigation/claude/`, the shape of its tools:
 - **`changeFeature`** on a landform's height now says the level it reaches, as the height handle
   does ("reaches level 11 here, not 16").
 - The **`limits`** tool answers `brush`; the harness prompt describes both steps.
+- **`addSource`** `{kind: water|badwater, at | where, strength, fillHollow}`: the source tools; a
+  badwater source goes where its 3×3 fits; `fillHollow` puts a spring at the lowest point of the
+  hollow there ("fills the hollow to level 11, about 32 tiles, then spills over its rim"), after
+  the brushes that dug it. **`addRiver`** takes `live: true` (the river tool's rules: a branch from
+  water, an end on dry ground) and `natural`.
+- Water requests (B08–B11): dig a pond and fill it, a strong source in the northwest corner, a
+  badwater source in the southeast corner, a straight canal from the river to the south edge.
 - Seven new requests in the corpus (B01–B07): raise the ground west of the start by 2, flatten
   around a tile to level 8, smooth the high ground in the north, the whole north half by 3
   (refused: the 30% limit), make the hill bigger, make the hill as tall as it can go (says the
@@ -172,6 +179,38 @@ In `investigation/claude/`, the shape of its tools:
 - Reference solutions (`bin/reference.ts`): 108 of 127 pass. All 7 new ones pass; 101 of the 120
   older ones pass, the same 101 as on dev at 761a1d2 (the other 19 are setups tuned on the M7 maps,
   M12-INTEGRATION §11).
+
+## Water, part 1 (D179, D180, D183)
+
+- **Rivers drawn freehand.** Drag from the source to where its water goes: the channel carves in
+  under the pointer (the worker plans it with the river planner and builds the whole map with it,
+  springs included, about 30 ms at 256² in Node), and its water flows in behind, a draft of its own
+  on the draft's ground, while the pointer moves. Letting go places it as one step; Esc puts the
+  ground and the water back. Clicking its bends and double-clicking works too, the draft running
+  to the pointer.
+- **Its rules.** It starts at a spring where it is drawn from dry land, at a sealed mouth from the
+  map edge, and as a **branch** (no source of its own, its bed at that water's bed) from existing
+  water. It ends in a river (a tributary, its bed never below that river's anywhere, crossing lower
+  ground on its banks), in a lake, at the map edge, or on dry ground, where its water fills the
+  hollow there into a lake or runs on downhill. Its bed never climbs: higher ground is cut through
+  at the bed's level, lower ground steps it down (a fall).
+- **Beside the pointer** (D183): "3 wide, 1 deep · joins the river · cutting 6 levels deep here";
+  "fills a lake here up to level 7"; "a branch of the water it leaves".
+- **Its controls**: Strength (blocks of water a second, 0.5–64, on the brushes' slider), Width
+  (as its flow needs, or 2–9; [ and ] while drawing), Depth (1–4), and **Natural** (gentle
+  meanders, the default, remembered) or exact (as drawn, for canals).
+- **Water and badwater sources**: click where water starts; it spreads at once. Their strength is
+  set before, and changed on any source by clicking it: the water answers each step of the slider,
+  and one adjustment is one undo step. Past the official maps' strength, a note says so; nothing is
+  blocked.
+- **Lakes by their hollow**: hovering says what a click fills ("Lake: fills to level 7 here, about
+  80 tiles"); a click puts a spring at the hollow's lowest point, and the lake fills and spills over
+  its rim.
+- **Flatten's level beside the pointer** ("level 7"); with Ctrl, the level a click would pick, and
+  on water its bed ("riverbed: level 6"), so a channel flattened to it lets the water in.
+
+Not yet: the water's journey at a pace the eye can follow, its time controls and local first
+(part 2); lakes by painting a shore; handles on a placed river.
 
 ## The camera keys (D180)
 
@@ -212,6 +251,14 @@ enables it at once), and the brushes could be picked before the map could be pai
   mid-stroke leaving no trace, Ctrl+click, [ ], Alt+wheel, and the strokes after a reload.
 - `tests/e2e/legend.spec.ts`: the legend beside the map, only what the map has, the highlight by
   mouse and keyboard, the strip; which map is which on the generator's page.
+- `tests/e2e/waterTools.spec.ts`: a freehand river's water flows in while it is drawn, its words
+  beside the pointer, one step on release, Esc leaving no trace; a branch from the main river; a
+  source's water spreading at once and its strength slider as one undo step; a lake filling a
+  hollow dug with one click of Lower; Flatten with Ctrl reading a river's bed.
+- `tests/contract/drawn-rivers.test.ts`: a branch has no source and starts at its water's bed; an
+  end on dry ground fills its hollow or runs on downhill (and the same stroke, not drawn in the
+  editor, is refused as before); a drawn river's bed never drops below the river it joins;
+  Natural's meanders are the same for the same stroke; a hollow fills to its lowest rim.
 - `tests/e2e/camera.spec.ts`: held keys move the view in many small steps and glide to a stop;
   Shift is faster; Q turns; nothing moves while a field has the focus.
 - `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release

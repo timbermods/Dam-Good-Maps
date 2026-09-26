@@ -76,6 +76,10 @@ export interface PainterHost {
   strength(value: number): void;
   /** A stroke started or ended (the water waits while painting, when asked). */
   painting(on: boolean): void;
+  /** Words beside the pointer (flatten's level: "level 7", "riverbed: level 7" on water), or null. */
+  note?(text: string | null, ev: PointerEvent | null): void;
+  /** Whether water stands on the tile. */
+  wet?(x: number, y: number): boolean;
 }
 
 /** Quarter tiles, for a dab's centre on a map `size` tiles across. */
@@ -130,8 +134,19 @@ export class BrushPainter {
         if (!hit) {
           self.cursorAt = null;
           host.renderer.setBrushCursor(null);
+          host.note?.(null, null);
           return;
         }
+        // flatten says its level beside the pointer; with Ctrl, the level a click would pick (on
+        // water, its bed: a channel flattened to it lets the water in)
+        if (host.settings().tool === "flatten") {
+          const s = host.settings();
+          const here = host.renderer.heightAt(hit.x, hit.y);
+          const picking = ev.ctrlKey || ev.metaKey;
+          const wet = host.wet?.(hit.x, hit.y) ?? false;
+          const level = picking || s.level === undefined ? here : s.level;
+          host.note?.(`${picking ? (wet ? "riverbed: " : "pick ") : ""}level ${level}`, ev);
+        } else host.note?.(null, null);
         const p = host.renderer.pickAtLevel(ev.clientX, ev.clientY, host.renderer.heightAt(hit.x, hit.y));
         self.cursorAt = p ? [p.point[0], -p.point[2]] : [hit.x + 0.5, hit.y + 0.5];
         self.showCursor();

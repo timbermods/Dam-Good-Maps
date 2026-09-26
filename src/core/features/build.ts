@@ -270,6 +270,14 @@ export function previewTerrain(prev: BuildResult, input: BuildInput): { heights:
   return { heights: terrain.heights, rect: { x0: Math.max(0, region.x0 - 1), y0: Math.max(0, region.y0 - 1), x1: Math.min(W - 1, region.x1 + 1), y1: Math.min(H - 1, region.y1 + 1) } };
 }
 
+/** A whole build of `input` from `prev` that leaves `prev`'s caches as they are (live editing: a
+ *  water tool's draft, whose water flows while it is drawn). Its water is `prev`'s, carried to the
+ *  new ground ("defer"); its water model has the draft's sources. */
+export function previewBuild(prev: BuildResult, input: BuildInput): BuildResult {
+  const own: BuildResult = { ...prev, cache: { ...prev.cache, fields: new Map(prev.cache.fields) } };
+  return rebuild(own, input, { water: "defer" });
+}
+
 /** An incremental build from `prev`, equal to a full build of `input` (PLAN §19.7); with
  *  `water: "preview"`, equal to it except for the water and what grows on it (see BuildOptions). */
 export function rebuild(prev: BuildResult, input: BuildInput, opts: BuildOptions = {}): BuildResult {

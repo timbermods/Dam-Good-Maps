@@ -32,6 +32,8 @@ import { anchorOf, checkStartAt, clampMove, describeTile, entitiesByTile, featur
 import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
 import { BrushBar } from "./BrushBar";
 import { ellipseOutline, fitOutline, moveOutline, outlineBox, ShapeDrag, type ShapeHost } from "./liveShapes";
+import { hollowAt } from "../core/features/hollow";
+import { OFFICIAL_FLOW } from "../core/gen/calibrated";
 import type { AreaPreview } from "../core/doc/placing";
 import { BRUSHES, BrushPainter, DEFAULT_BRUSH, nextSize, paste, type BrushSettings, type BrushTool, type Stroke } from "./brushes";
 import type { TerrainState } from "../core/features/raster/strokePreview";
@@ -113,6 +115,8 @@ declare global {
       lastStroke(): BrushParams | null;
       /** The shape being dragged: the worker's last answer for it (what it builds and says), or null. */
       shapePreview(): ShapePreview | null;
+      /** The hollow a Lake click at (x, y) would fill (as the Lake tool reads it). */
+      lakeAt(x: number, y: number): { fills: boolean; level: number; tiles: number; low: number };
     };
   }
 }
@@ -139,7 +143,9 @@ export default function Editor(props: EditorProps) {
   const [tab, setTab] = useState<Tab>("land");
   const [selected, setSelected] = useState<string | null>(null);
   const [tool, setTool] = useState<ToolKind | null>(null);
-  const [options, setOptions] = useState<ToolOptions>(DEFAULT_OPTIONS);
+  // (a river's Natural or Exact is remembered between uses)
+  const [options, setOptions] = useState<ToolOptions>(() => ({ ...DEFAULT_OPTIONS, riverNatural: remembered("dgm.riverNatural", "1") === "1" }));
+  useEffect(() => remember("dgm.riverNatural", options.riverNatural ? "1" : "0"), [options.riverNatural]);
   const [drawing, setDrawing] = useState<Rect | null>(null);
   const [draft, setDraft] = useState<Point[]>([]);
   const [hoverTile, setHoverTile] = useState<[number, number] | null>(null);
@@ -169,7 +175,7 @@ export default function Editor(props: EditorProps) {
   const [fit, setFit] = useState<{ tiles: number[]; problem: string | null } | null>(null);
   const [picked, setPicked] = useState<{ x: number; y: number; list: EntityInfo[] } | null>(null);
   /** What the shape being dragged says, where the pointer is, and what it covers (live shapes). */
-  const [shapeNote, setShapeNote] = useState<{ text: string; ok: boolean; x: number; y: number } | null>(null);
+  const [shapeNote, setShapeNote] = useState<{ text: string; ok: boolean; warn: boolean; x: number; y: number } | null>(null);
   const [shapeTiles, setShapeTiles] = useState<{ tiles: number[]; area?: AreaPreview } | null>(null);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const index = useMemo(() => new FeatureIndex(info.W, info.H), [info.W, info.H, view]);
@@ -371,6 +377,7 @@ export default function Editor(props: EditorProps) {
 
   function pickBrush(t: BrushTool | null) {
     painter.current?.end();
+    setShapeNote(null);
     setBrushTool(t);
     if (t) {
       setTool(null);
@@ -468,6 +475,22 @@ export default function Editor(props: EditorProps) {
     m.entitiesAt ??= entitiesByTile(m.entities, info.W);
     return m.entitiesAt;
   };
+  /** The tile of a water or badwater source on or next to (x, y) (a badwater source covers 3×3). */
+  const sourceNear = (x: number, y: number): [number, number] | null => {
+    const m = mirror.current.entities;
+    const at = entitiesAt();
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= info.W || ny >= info.H) continue;
+        for (const k of at.get(ny * info.W + nx) ?? []) {
+          const t = m.templates[m.template[k]];
+          if (t === "WaterSource" ? dx === 0 && dy === 0 : t === "BadwaterSource") return [nx, ny];
+        }
+      }
+    return null;
+  };
   const ctx = (): TileContext => ({ W: info.W, H: info.H, heights: mirror.current.heights, water: mirror.current.water, entities: mirror.current.entities, entitiesAt: entitiesAt(), index: indexed, soil: mirror.current.soil });
 
   // where the start is: its feature, or an imported map's own StartingLocation
@@ -540,9 +563,28 @@ export default function Editor(props: EditorProps) {
     setDraft([]);
     const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { points, W: info.W, H: info.H });
     if (!req) return setMessage({ kind: "error", text: gestureOf(tool) === "path" ? "Click at least two points for a river." : "Click at least three corners." });
-    // a shape the player finished is placed at once (live editing: no Place step)
-    if (LIVE_TOOLS.has(tool) || tool === "river") return placeShape(req, newId(), null);
+    // a shape the player finished is placed at once (live editing: no Place step); a river drawn
+    // by clicks keeps its draft on screen, water and all, until the worker's map replaces it
+    if (tool === "river") {
+      const drag = shapeDrag.current;
+      shapeDrag.current = null;
+      return placeShape(req, riverId.current, drag);
+    }
+    if (LIVE_TOOLS.has(tool)) return placeShape(req, newId(), null);
     planRequest(req);
+  }
+
+  /** A river being drawn (live editing): its id, and its request with the pointer as its end. */
+  const riverId = useRef("");
+  function riverDraft(points: Point[]): ToolRequest | null {
+    return toolRequest("river", optionsRef.current, { points, W: info.W, H: info.H });
+  }
+  /** Show the river drawn so far, to the pointer: its channel carved, its water flowing in. */
+  function drawRiver(points: Point[]) {
+    const req = riverDraft(points);
+    if (!req) return;
+    shapeDrag.current ??= new ShapeDrag(shapeHost());
+    shapeDrag.current.update({ kind: "new", req, id: riverId.current });
   }
 
   // ------------------------------------------------------------------------------ live shapes
@@ -555,6 +597,7 @@ export default function Editor(props: EditorProps) {
     W: infoRef.current.W,
     H: infoRef.current.H,
     heights: () => mirror.current.heights,
+    restore: (v) => applyView(v),
     show: (p) => {
       if (!p) {
         setShapeNote(null);
@@ -562,8 +605,8 @@ export default function Editor(props: EditorProps) {
         setLiveHeight(null);
         return;
       }
-      const words = p.ok ? [p.label.replace(/^(Add|Change) /, ""), ...p.report.slice(0, 1)].filter(Boolean).join(": ") : plain(p.errors[0] ?? "This does not fit here.");
-      setShapeNote({ text: words.replace(/^./, (c) => c.toUpperCase()), ok: p.ok, ...pointerAt.current });
+      const words = p.ok ? (p.cursor ?? [p.label.replace(/^(Add|Change) /, ""), ...p.report.slice(0, 1)].filter(Boolean).join(": ")) : plain(p.errors[0] ?? "This does not fit here.");
+      setShapeNote({ text: words.replace(/^./, (c) => c.toUpperCase()), ok: p.ok, warn: !!p.warn, ...pointerAt.current });
       setShapeTiles(p.ok ? { tiles: p.tiles, ...(p.area ? { area: p.area } : {}) } : null);
     },
   });
@@ -591,10 +634,10 @@ export default function Editor(props: EditorProps) {
           setSelected(f.id);
           setTab(tabOf(f));
         }
-        // a shape drawn by clicks (a river, an outline) said nothing while it was drawn: what the
+        // a river, or an outline drawn by clicks, said little or nothing while it was drawn: what the
         // tool did shows now ("River: a sealed mouth on the north edge feeds it")
         const plan = (u as SessionUpdate & { plan?: ToolPlan }).plan;
-        if (!drag && plan?.ok && plan.report.length) setMessage({ kind: "info", text: plain(`${plan.label.replace(/^Add /, "").replace(/^./, (c) => c.toUpperCase())}: ${plan.report.join(" ")}`) });
+        if ((!drag || req.tool === "river") && plan?.ok && plan.report.length) setMessage({ kind: "info", text: plain(`${plan.label.replace(/^Add /, "").replace(/^./, (c) => c.toUpperCase())}: ${plan.report.slice(0, 3).join("; ")}.`) });
       },
     );
   }
@@ -609,6 +652,7 @@ export default function Editor(props: EditorProps) {
   function planAt(x: number, y: number) {
     if (!tool) return;
     if (tool === "slope") return slopeAt(x, y);
+    if (tool === "lake" || tool === "source" || tool === "badwaterSource") return placeSource(tool, x, y);
     const river = riverAt(indexedRef.current, x, y);
     const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { at: [x, y], river, W: info.W, H: info.H });
     if (!req) return setMessage({ kind: "error", text: "Click on a river." });
@@ -616,12 +660,62 @@ export default function Editor(props: EditorProps) {
     planRequest(req);
   }
 
+  // ---------------------------------------------------------------------------- water sources
+
+  /** Where a lake's spring goes for a click at (x, y): the lowest point of the hollow there, and
+   *  what its water does (fills the hollow to a level, or runs on downhill). */
+  function lakeAt(x: number, y: number) {
+    const m = mirror.current;
+    return hollowAt(m.heights, m.water?.depth ?? null, info.W, info.H, x, y);
+  }
+
+  /** A water or badwater source, or a lake's spring, placed with a click: its water spreads at
+   *  once (live editing), one undo step. */
+  function placeSource(t: ToolKind, x: number, y: number) {
+    let at: [number, number] = [x, y];
+    let said = "";
+    if (t === "lake") {
+      const h = lakeAt(x, y);
+      if (!h.fills) return setMessage({ kind: "error", text: "No hollow here: water from a spring here runs on downhill. Click a low spot." });
+      at = [h.low % info.W, Math.floor(h.low / info.W)];
+      said = `a spring fills it to level ${h.level}, about ${h.tiles} tiles, then it spills over its rim`;
+    }
+    const req = toolRequest(t, optionsRef.current, { at, W: info.W, H: info.H });
+    if (!req) return;
+    setFit(null);
+    void run(
+      () => api.applyTool(req, newId()),
+      (u) => {
+        if (u.ok && said) setMessage({ kind: "info", text: `Lake: ${said}.` });
+      },
+    );
+  }
+
+  /** What a water tool says under the pointer: a source's strength, the lake a click would fill. */
+  function waterHover(x: number, y: number, ev: PointerEvent | null) {
+    const t = toolRef.current;
+    if (t !== "lake" && t !== "source" && t !== "badwaterSource") return;
+    if (ev) notePointer(ev);
+    const o = optionsRef.current;
+    let text: string;
+    let ok = true;
+    if (t === "lake") {
+      const h = lakeAt(x, y);
+      ok = h.fills;
+      text = h.fills ? `Lake: fills to level ${h.level} here, about ${h.tiles} tiles` : "No hollow here: its water would run on downhill";
+    } else {
+      const v = t === "badwaterSource" ? o.badwaterStrength : o.sourceStrength;
+      text = `${TOOL_NAMES[t]}: ${v} water/s${v > OFFICIAL_FLOW ? " · stronger than any official map" : ""}`;
+    }
+    setShapeNote({ text, ok: true, warn: !ok, ...pointerAt.current });
+  }
+
   // the footprint under the pointer: one check in flight, then the latest tile
   const fitWant = useRef<string | null>(null);
   const fitBusy = useRef(false);
   function hoverFit(x: number, y: number) {
     const t = toolRef.current;
-    if (!t || (!objectKindOf(t, optionsRef.current) && t !== "object") || planRef.current) {
+    if (!t || (!objectKindOf(t, optionsRef.current) && t !== "object" && t !== "source" && t !== "badwaterSource") || planRef.current) {
       fitWant.current = null;
       return setFit(null);
     }
@@ -670,8 +764,11 @@ export default function Editor(props: EditorProps) {
       at = [picked.x + c.move.dx, picked.y + c.move.dy];
     } else op = { op: "setEntityProps", params: { id: e.id, components: c.props ?? {} } };
     const label = c.remove ? "Delete an object" : c.move ? (c.move.turn ? "Turn an object" : "Move an object") : "Change an object";
+    // a source's strength: its water answers each step, and one adjustment is one undo step
+    const strength = (c.props as { WaterSource?: { SpecifiedStrength?: number } } | undefined)?.WaterSource?.SpecifiedStrength;
+    const name = e.template === "BadwaterSource" ? "Badwater source" : "Water source";
     void run(
-      () => api.apply(op, "user", label),
+      () => (strength !== undefined && !c.remove && !c.move ? api.applyStep(op, `${name}: ${strength} water/s`, `strength:${e.id}`) : api.apply(op, "user", label)),
       (u) => {
         if (u.ok) pickTile(at[0], at[1]);
       },
@@ -715,6 +812,8 @@ export default function Editor(props: EditorProps) {
   function cancelTool() {
     setPlan(null);
     setDraft([]);
+    shapeDrag.current?.cancel();
+    shapeDrag.current = null;
     setDrawing(null);
     setFit(null);
     fitWant.current = null;
@@ -737,6 +836,12 @@ export default function Editor(props: EditorProps) {
     let lastTile = -1;
     const live = LIVE_TOOLS.has(tool);
     let liveId = "";
+    /** A river drawn freehand: the points so far (a new one every few tiles). */
+    let stroke: Point[] = [];
+    const at = (ev: PointerEvent, hit: { x: number; y: number }): Point => {
+      const p = r.pickAtLevel(ev.clientX, ev.clientY, r.heightAt(hit.x, hit.y));
+      return p ? [Math.round(p.point[0] * 2) / 2 - 0.5, Math.round(-p.point[2] * 2) / 2 - 0.5] : [hit.x, hit.y];
+    };
     const t: PointerTool = {
       down(hit, ev) {
         if (!hit) return false;
@@ -746,12 +851,32 @@ export default function Editor(props: EditorProps) {
         dragged = false;
         liveId = newId();
         notePointer(ev);
+        if (g === "path" && !draftRef.current.length) {
+          riverId.current = newId();
+          stroke = [at(ev, hit)];
+        }
         if (g === "rect") setDrawing(rectOf(start, start, W, H));
         return true;
+      },
+      hover(hit, ev) {
+        notePointer(ev);
+        // a river drawn by clicks: its draft runs to the pointer
+        if (g !== "path" || !hit || draftRef.current.length < 1) return;
+        drawRiver([...draftRef.current, at(ev, hit)]);
       },
       move(hit, ev) {
         notePointer(ev);
         if (!start || !hit) return;
+        if (g === "path" && stroke.length && !draftRef.current.length) {
+          // a river drawn freehand: its channel carves in under the pointer as it goes
+          const p = at(ev, hit);
+          const last = stroke[stroke.length - 1];
+          if (!dragged && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < 2) return;
+          dragged = true;
+          if (Math.hypot(p[0] - last[0], p[1] - last[1]) >= 3) stroke.push(p);
+          drawRiver([...stroke, p]);
+          return;
+        }
         if (g === "rect") setDrawing(rectOf(start, [hit.x, hit.y], W, H));
         else if (g === "outline" && !draftRef.current.length && Math.abs(hit.x - start[0]) + Math.abs(hit.y - start[1]) >= 2) {
           dragged = true;
@@ -766,15 +891,30 @@ export default function Editor(props: EditorProps) {
       },
       cancel() {
         start = null;
+        stroke = [];
         shapeDrag.current?.cancel();
         shapeDrag.current = null;
         setDrawing(null);
       },
-      up(hit) {
+      up(hit, ev) {
         const a = start;
         start = null;
         if (!a) return;
         const b: [number, number] = hit ? [hit.x, hit.y] : a;
+        if (g === "path" && dragged && stroke.length) {
+          // a freehand river is placed on release, if its water has somewhere to go
+          const points = hit ? [...stroke, at(ev, hit)] : stroke;
+          stroke = [];
+          const drag = shapeDrag.current;
+          shapeDrag.current = null;
+          const req = toolRequest("river", optionsRef.current, { points, W, H });
+          if (!req) {
+            drag?.cancel();
+            return;
+          }
+          return placeShape(req, riverId.current, drag);
+        }
+        stroke = [];
         if (live && dragged) {
           const drag = shapeDrag.current;
           shapeDrag.current = null;
@@ -847,6 +987,12 @@ export default function Editor(props: EditorProps) {
         if (on) void api.holdWater(true);
         else holdTimer.current = window.setTimeout(() => void api.holdWater(false), 900);
       },
+      note: (text, ev) => {
+        if (!text) return setShapeNote(null);
+        if (ev) notePointer(ev);
+        setShapeNote({ text, ok: true, warn: false, ...pointerAt.current });
+      },
+      wet: (x, y) => (mirror.current.water?.depth[y * infoRef.current.W + x] ?? 0) > 0.05,
     });
     r.onClick = (hit) => {
       if (advancedRef.current && hit) {
@@ -854,6 +1000,11 @@ export default function Editor(props: EditorProps) {
         return pickTile(hit.x, hit.y);
       }
       if (!hit) return setSelected(null);
+      // a water or badwater source: selected, its strength to change (the water answers live)
+      if (sourceNear(hit.x, hit.y)) {
+        setSelected(null);
+        return pickTile(...sourceNear(hit.x, hit.y)!);
+      }
       const list = indexedRef.current.candidatesAt(hit.x, hit.y);
       if (!list.length) return setSelected(null);
       const cur = list.findIndex((f) => f.id === selectedRef.current);
@@ -1242,6 +1393,14 @@ export default function Editor(props: EditorProps) {
         setBrush({ ...brushRef.current, size: nextSize(brushRef.current.size, ev.key === "]" ? 1 : -1) });
         return;
       }
+      // a river's width, like a brush's size (from as wide as its flow needs: 3)
+      if (!mod && (ev.key === "[" || ev.key === "]") && toolRef.current === "river") {
+        ev.preventDefault();
+        const o = optionsRef.current;
+        const w = Math.max(2, Math.min(9, (o.riverWidth || 3) + (ev.key === "]" ? 1 : -1)));
+        setOptions({ ...o, riverWidth: w });
+        return;
+      }
       if (ev.key === "Escape" && painter.current?.painting) {
         painter.current.cancel();
         return;
@@ -1303,6 +1462,7 @@ export default function Editor(props: EditorProps) {
       strokeMismatches: () => strokeMismatches.current,
       lastStroke: () => localUndo.current.at(-1)?.params ?? null,
       shapePreview: () => shapeDrag.current?.preview ?? null,
+      lakeAt: (x, y) => lakeAt(x, y),
       pendingTerrain: () => pendingTerrain.current,
     };
     return () => {
@@ -1333,7 +1493,7 @@ export default function Editor(props: EditorProps) {
   const importChanges = info.importReport?.changes.length ?? 0;
   const hint = tool
     ? gestureOf(tool) === "path"
-      ? `${TOOL_NAMES[tool]}: click from the source to the outlet, then double-click or press Enter.`
+      ? `${TOOL_NAMES[tool]}: drag from its source to where its water goes, or click its bends and double-click.`
       : gestureOf(tool) === "outline"
         ? `${TOOL_NAMES[tool]}: drag a rectangle, or click the corners and double-click.`
         : gestureOf(tool) === "point"
@@ -1445,17 +1605,20 @@ export default function Editor(props: EditorProps) {
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
               if (draftRef.current.length) setHoverTile(hit ? [hit.x, hit.y] : null);
-              if (hit) hoverFit(hit.x, hit.y);
-              else {
+              if (hit) {
+                hoverFit(hit.x, hit.y);
+                waterHover(hit.x, hit.y, null);
+              } else {
                 fitWant.current = null;
                 setFit(null);
+                if (toolRef.current === "lake" || toolRef.current === "source" || toolRef.current === "badwaterSource") setShapeNote(null);
               }
             }}
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
             <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} loading={!ready} />
             {shapeNote ? (
-              <div class={`map-note shape-note${shapeNote.ok ? "" : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
+              <div class={`map-note shape-note${shapeNote.ok ? (shapeNote.warn ? " warn" : "") : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}
               </div>
             ) : null}
@@ -1589,8 +1752,24 @@ export default function Editor(props: EditorProps) {
 
 const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
 
+/** A setting kept in this browser (a missing or blocked store gives the default). */
+function remembered(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+function remember(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* not kept */
+  }
+}
+
 /** The tools whose shapes show their real result while dragged and are placed on release. */
-const LIVE_TOOLS = new Set<ToolKind>(["hill", "plateau", "ridge", "canyon", "valley", "island", "lake", "forest", "berryPatch", "ruinField"]);
+const LIVE_TOOLS = new Set<ToolKind>(["hill", "plateau", "ridge", "canyon", "valley", "island", "forest", "berryPatch", "ruinField"]);
 
 const BRUSH_KEY = "dgm.brush";
 
