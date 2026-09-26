@@ -92,8 +92,8 @@ const api = {
   },
   /** A draft ended without being placed (Esc, a refused release): the map's own water again. */
   cancelShape: () => ed.cancelShape(),
-  /** A drought to watch, then the water coming back (weather events); stop it at any time. */
-  startDrought: () => ed.startDrought(),
+  /** A drought or a badtide to watch, then the water coming back (weather events); stop it at any time. */
+  startWeather: (hazard: "drought" | "badtide") => ed.startWeather(hazard),
   stopWeather: () => ed.stopWeather(),
   changeFeature: (id: string, patch: { params: Record<string, unknown> }, label: string) => sendUpdate(ed.changeFeature(id, patch, label)),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),

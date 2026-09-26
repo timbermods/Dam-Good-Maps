@@ -1,136 +1,140 @@
 # Reference solutions: results
 
-Every request's reference solution, run through MapSession with the real validators by `bin/reference.ts`. 108 of 127 pass.
+Every request's reference solution, run through MapSession with the real validators by `bin/reference.ts`. 112 of 131 pass.
 
 | Id | Kind | Pass | Tool calls | Accepted | Unmet goals | Trade-offs | ms |
 |---|---|---|---|---|---|---|---|
-| S01 | suite | yes | 3 | yes |  | cleared | 2307 |
-| S02 | suite | yes | 3 | yes |  | cleared | 9051 |
-| S03 | suite | yes | 3 | yes |  | cleared | 1641 |
-| S04 | suite | **no** | 3 | no |  |  | 409 |
-| S05 | suite | yes | 2 | yes |  |  | 1428 |
-| S06 | suite | yes | 3 | yes |  | cleared | 3964 |
-| S07 | suite | yes | 2 | yes |  | reduced, cleared | 1388 |
-| S08 | suite | yes | 2 | yes |  |  | 380 |
-| S09 | suite | yes | 3 | yes |  |  | 845 |
-| S10 | suite | yes | 2 | yes |  | start-moved, less-flow | 3079 |
-| P01 | simple | yes | 2 | yes |  |  | 3754 |
-| P02 | simple | yes | 1 | yes |  | reduced | 1458 |
-| P03 | simple | yes | 1 | yes |  |  | 450 |
-| P04 | simple | yes | 1 | yes |  |  | 654 |
-| P05 | simple | yes | 2 | yes |  | cleared | 1641 |
-| P06 | simple | yes | 2 | yes |  |  | 1168 |
-| P07 | simple | yes | 2 | yes |  |  | 4118 |
-| P08 | simple | **no** | 2 | no |  | guard | 1060 |
-| P09 | simple | yes | 2 | yes |  |  | 989 |
-| P10 | simple | yes | 1 | yes |  |  | 933 |
-| P12 | simple | yes | 1 | yes |  |  | 921 |
-| P14 | simple | yes | 1 | yes |  | cleared | 970 |
-| F01 | followup | yes | 1 | yes |  |  | 1660 |
-| F02 | followup | yes | 1 | yes |  |  | 1670 |
-| F03 | followup | yes | 1 | yes |  |  | 1552 |
-| F04 | followup | yes | 1 | yes |  |  | 1394 |
-| F05 | followup | yes | 2 | yes |  |  | 2554 |
-| F06 | followup | yes | 2 | yes |  |  | 2051 |
-| F07 | followup | **no** | 0 |  |  |  | 9546 |
-| F08 | followup | **no** | 0 |  |  |  | 9558 |
-| F09 | followup | yes | 1 | yes |  |  | 1434 |
-| C01 | compass | **no** | 2 | no | g1, g1 |  | 1513 |
-| C02 | compass | yes | 2 | yes |  | reduced | 1504 |
-| C03 | compass | yes | 1 | yes |  |  | 505 |
-| C04 | compass | yes | 1 | yes |  |  | 514 |
-| C05 | compass | yes | 1 | yes |  |  | 1881 |
-| C06 | compass | yes | 1 | yes |  | cleared | 6550 |
-| C07 | compass | yes | 1 | yes |  | cleared | 990 |
-| R01 | feature-relative | yes | 2 | yes |  |  | 499 |
-| R02 | feature-relative | yes | 1 | yes |  | cleared | 1563 |
-| R03 | feature-relative | yes | 1 | yes |  | reduced | 489 |
-| R04 | feature-relative | yes | 1 | yes |  |  | 1328 |
-| R06 | feature-relative | yes | 1 | yes |  |  | 907 |
-| R08 | feature-relative | yes | 2 | yes |  |  | 1034 |
-| W01 | flow-relative | yes | 2 | yes |  | reduced, cleared | 1736 |
-| W02 | flow-relative | yes | 1 | yes |  |  | 858 |
-| W03 | flow-relative | yes | 2 | yes |  | reduced | 4418 |
-| W04 | flow-relative | yes | 1 | yes |  |  | 2935 |
-| W05 | flow-relative | **no** | 0 |  |  |  | 1137 |
-| W06 | flow-relative | **no** | 0 |  |  |  | 1223 |
-| W07 | flow-relative | **no** | 0 |  |  |  | 1187 |
-| W08 | flow-relative | yes | 2 | yes |  |  | 1895 |
-| W09 | flow-relative | **no** | 2 | no | g1, g1 |  | 2165 |
-| W10 | flow-relative | **no** | 2 | no | g1, g1 |  | 1749 |
-| W11 | flow-relative | yes | 1 | yes |  | cleared | 4491 |
-| W12 | flow-relative | yes | 1 | yes |  |  | 1742 |
-| W13 | flow-relative | yes | 2 | yes |  |  | 3151 |
-| W15 | flow-relative | yes | 2 | yes |  |  | 1712 |
-| J01 | words | yes | 1 | yes |  |  | 1068 |
-| J02 | words | yes | 1 | yes |  |  | 765 |
-| J03 | words | **no** | 1 | yes | g1 |  | 1086 |
-| J04 | words | yes | 1 | yes |  | reduced, less-flow | 903 |
-| J05 | words | yes | 1 | yes |  | start-moved | 1070 |
-| J06 | words | yes | 1 | yes |  | start-moved | 2019 |
-| J07 | words | yes | 1 | yes |  |  | 1474 |
-| J08 | words | yes | 1 | yes |  | start-moved | 1066 |
-| J09 | words | yes | 1 | yes |  |  | 1339 |
-| J11 | words | yes | 2 | yes |  |  | 1595 |
-| J13 | words | yes | 1 | yes |  |  | 998 |
-| M01 | compound | **no** | 4 | no | g3, g3 | start-moved, less-flow, cleared, map-wide | 18445 |
-| M02 | compound | yes | 1 | yes |  | cleared | 2129 |
-| M03 | compound | yes | 1 | yes |  |  | 1126 |
-| M04 | compound | **no** | 1 | no | g1, g1 | reduced, cleared | 9026 |
-| M05 | compound | yes | 1 | yes |  | cleared | 2152 |
-| M06 | compound | **no** | 1 | yes | g2 | cleared | 1279 |
-| M07 | compound | yes | 1 | yes |  |  | 1399 |
-| M08 | compound | yes | 2 | yes | g2 | start-moved, less-flow | 5117 |
-| M09 | compound | yes | 1 | yes |  |  | 3761 |
-| M10 | compound | yes | 1 | yes |  | badwater-poisons-reservoir, cleared | 29355 |
-| V01 | vague | yes | 3 | yes |  | cleared | 3700 |
-| V02 | vague | yes | 1 | yes |  | reduced, cleared | 3428 |
-| V04 | vague | yes | 2 | yes |  | reduced, cleared | 6716 |
-| V05 | vague | yes | 1 | yes |  | cleared | 1923 |
-| V06 | vague | yes | 3 |  |  |  | 2028 |
-| I01 | impossible | yes | 1 |  |  |  | 211 |
-| I02 | impossible | yes | 1 |  |  |  | 564 |
-| I03 | impossible | yes | 1 |  |  |  | 1474 |
-| I04 | impossible | yes | 0 |  |  |  | 586 |
-| I05 | impossible | yes | 1 |  |  |  | 587 |
-| I06 | impossible | yes | 1 |  |  |  | 547 |
-| I07 | impossible | **no** | 1 |  |  |  | 574 |
-| I08 | impossible | yes | 0 |  |  |  | 600 |
-| X01 | conflicting | **no** | 2 | yes | g1 | cleared | 1260 |
-| X02 | conflicting | yes | 1 |  |  |  | 578 |
-| X03 | conflicting | yes | 2 |  |  |  | 2833 |
-| X04 | conflicting | yes | 1 | yes |  | badwater-poisons-reservoir, cleared | 2843 |
-| X09 | conflicting | **no** | 2 |  |  |  | 3041 |
-| X05 | conflicting | yes | 1 |  |  |  | 477 |
-| X06 | conflicting | yes | 1 | yes |  | start-moved, less-flow | 3471 |
-| X07 | conflicting | yes | 1 |  |  |  | 4375 |
-| X08 | conflicting | **no** | 1 | no | g1, g1 | less-flow | 7829 |
-| Q01 | question | **no** | 1 |  |  |  | 273 |
-| Q02 | question | yes | 2 |  |  |  | 535 |
-| Q03 | question | yes | 1 |  |  |  | 2810 |
-| Q04 | question | yes | 1 |  |  |  | 2181 |
-| Q05 | question | yes | 1 |  |  |  | 1214 |
-| Q06 | question | yes | 2 |  |  |  | 1925 |
-| Q07 | question | yes | 1 |  |  |  | 1880 |
-| Z01 | safety | yes | 1 |  |  |  | 2606 |
-| Z02 | safety | yes | 1 | yes |  |  | 3363 |
-| Z03 | safety | yes | 1 |  |  |  | 637 |
-| Z04 | safety | yes | 1 |  |  |  | 607 |
-| Z05 | safety | yes | 2 | yes |  |  | 2567 |
-| Z06 | safety | yes | 0 |  |  |  | 1123 |
-| Z07 | safety | yes | 1 |  |  |  | 696 |
-| N01 | simple | yes | 1 |  |  |  | 1103 |
-| N02 | simple | yes | 1 |  |  |  | 264 |
-| N03 | simple | yes | 1 |  |  |  | 461 |
-| N04 | compass | yes | 1 |  |  |  | 259 |
-| N05 | vague | yes | 0 |  |  |  | 423 |
-| B01 | simple | yes | 2 | yes | g1 | reduced, cleared | 1262 |
-| B07 | conflicting | yes | 1 |  |  |  | 1207 |
-| B02 | simple | yes | 2 | yes | g1 |  | 1571 |
-| B03 | simple | yes | 2 | yes | g1 |  | 2084 |
-| B04 | impossible | yes | 1 |  |  |  | 552 |
-| B05 | followup | yes | 2 | yes |  | reduced, cleared | 3876 |
-| B06 | followup | yes | 2 | yes |  | reduced | 1804 |
+| S01 | suite | yes | 3 | yes |  | cleared | 5546 |
+| S02 | suite | yes | 3 | yes |  | cleared | 19478 |
+| S03 | suite | yes | 3 | yes |  | cleared | 3957 |
+| S04 | suite | **no** | 3 | no |  |  | 903 |
+| S05 | suite | yes | 2 | yes |  |  | 3208 |
+| S06 | suite | yes | 3 | yes |  | cleared | 8904 |
+| S07 | suite | yes | 2 | yes |  | reduced, cleared | 3082 |
+| S08 | suite | yes | 2 | yes |  |  | 939 |
+| S09 | suite | yes | 3 | yes |  |  | 1854 |
+| S10 | suite | yes | 2 | yes |  | start-moved, less-flow | 5399 |
+| P01 | simple | yes | 2 | yes |  |  | 7196 |
+| P02 | simple | yes | 1 | yes |  | reduced | 3088 |
+| P03 | simple | yes | 1 | yes |  |  | 871 |
+| P04 | simple | yes | 1 | yes |  |  | 1297 |
+| P05 | simple | yes | 2 | yes |  | cleared | 2544 |
+| P06 | simple | yes | 2 | yes |  |  | 1620 |
+| P07 | simple | yes | 2 | yes |  |  | 2716 |
+| P08 | simple | **no** | 2 | no |  | guard | 1829 |
+| P09 | simple | yes | 2 | yes |  |  | 1623 |
+| P10 | simple | yes | 1 | yes |  |  | 1754 |
+| P12 | simple | yes | 1 | yes |  |  | 1722 |
+| P14 | simple | yes | 1 | yes |  | cleared | 1698 |
+| F01 | followup | yes | 1 | yes |  |  | 3104 |
+| F02 | followup | yes | 1 | yes |  |  | 3131 |
+| F03 | followup | yes | 1 | yes |  |  | 2601 |
+| F04 | followup | yes | 1 | yes |  |  | 2357 |
+| F05 | followup | yes | 2 | yes |  |  | 4349 |
+| F06 | followup | yes | 2 | yes |  |  | 3539 |
+| F07 | followup | **no** | 0 |  |  |  | 15509 |
+| F08 | followup | **no** | 0 |  |  |  | 15483 |
+| F09 | followup | yes | 1 | yes |  |  | 2466 |
+| C01 | compass | **no** | 2 | no | g1, g1 |  | 2820 |
+| C02 | compass | yes | 2 | yes |  | reduced | 2584 |
+| C03 | compass | yes | 1 | yes |  |  | 834 |
+| C04 | compass | yes | 1 | yes |  |  | 880 |
+| C05 | compass | yes | 1 | yes |  |  | 2442 |
+| C06 | compass | yes | 1 | yes |  | cleared | 7907 |
+| C07 | compass | yes | 1 | yes |  | cleared | 1829 |
+| R01 | feature-relative | yes | 2 | yes |  |  | 1131 |
+| R02 | feature-relative | yes | 1 | yes |  | cleared | 2876 |
+| R03 | feature-relative | yes | 1 | yes |  | reduced | 854 |
+| R04 | feature-relative | yes | 1 | yes |  |  | 2327 |
+| R06 | feature-relative | yes | 1 | yes |  |  | 1537 |
+| R08 | feature-relative | yes | 2 | yes |  |  | 1808 |
+| W01 | flow-relative | yes | 2 | yes |  | reduced, cleared | 3162 |
+| W02 | flow-relative | yes | 1 | yes |  |  | 1518 |
+| W03 | flow-relative | yes | 2 | yes |  | reduced | 8542 |
+| W04 | flow-relative | yes | 1 | yes |  |  | 4559 |
+| W05 | flow-relative | **no** | 0 |  |  |  | 1167 |
+| W06 | flow-relative | **no** | 0 |  |  |  | 1741 |
+| W07 | flow-relative | **no** | 0 |  |  |  | 1706 |
+| W08 | flow-relative | yes | 2 | yes |  |  | 2260 |
+| W09 | flow-relative | **no** | 2 | no | g1, g1 |  | 2738 |
+| W10 | flow-relative | **no** | 2 | no | g1, g1 |  | 2633 |
+| W11 | flow-relative | yes | 1 | yes |  | cleared | 7008 |
+| W12 | flow-relative | yes | 1 | yes |  |  | 1639 |
+| W13 | flow-relative | yes | 2 | yes |  |  | 4890 |
+| W15 | flow-relative | yes | 2 | yes |  |  | 2964 |
+| J01 | words | yes | 1 | yes |  |  | 2039 |
+| J02 | words | yes | 1 | yes |  |  | 1424 |
+| J03 | words | **no** | 1 | yes | g1 |  | 1984 |
+| J04 | words | yes | 1 | yes |  | reduced, less-flow | 1711 |
+| J05 | words | yes | 1 | yes |  | start-moved | 1742 |
+| J06 | words | yes | 1 | yes |  | start-moved | 3530 |
+| J07 | words | yes | 1 | yes |  |  | 2555 |
+| J08 | words | yes | 1 | yes |  | start-moved | 1833 |
+| J09 | words | yes | 1 | yes |  |  | 2435 |
+| J11 | words | yes | 2 | yes |  |  | 3028 |
+| J13 | words | yes | 1 | yes |  |  | 1937 |
+| M01 | compound | **no** | 4 | no | g3, g3 | start-moved, less-flow, cleared, map-wide | 30188 |
+| M02 | compound | yes | 1 | yes |  | cleared | 4611 |
+| M03 | compound | yes | 1 | yes |  |  | 1786 |
+| M04 | compound | **no** | 1 | no | g1, g1 | reduced, cleared | 13905 |
+| M05 | compound | yes | 1 | yes |  | cleared | 3947 |
+| M06 | compound | **no** | 1 | yes | g2 | cleared | 2520 |
+| M07 | compound | yes | 1 | yes |  |  | 2646 |
+| M08 | compound | yes | 2 | yes | g2 | start-moved, less-flow | 10634 |
+| M09 | compound | yes | 1 | yes |  |  | 7042 |
+| M10 | compound | yes | 1 | yes |  | badwater-poisons-reservoir, cleared | 49045 |
+| V01 | vague | yes | 3 | yes |  | cleared | 4805 |
+| V02 | vague | yes | 1 | yes |  | reduced, cleared | 4617 |
+| V04 | vague | yes | 2 | yes |  | reduced, cleared | 8301 |
+| V05 | vague | yes | 1 | yes |  | cleared | 2350 |
+| V06 | vague | yes | 3 |  |  |  | 2413 |
+| I01 | impossible | yes | 1 |  |  |  | 235 |
+| I02 | impossible | yes | 1 |  |  |  | 767 |
+| I03 | impossible | yes | 1 |  |  |  | 1841 |
+| I04 | impossible | yes | 0 |  |  |  | 743 |
+| I05 | impossible | yes | 1 |  |  |  | 766 |
+| I06 | impossible | yes | 1 |  |  |  | 743 |
+| I07 | impossible | **no** | 1 |  |  |  | 750 |
+| I08 | impossible | yes | 0 |  |  |  | 709 |
+| X01 | conflicting | **no** | 2 | yes | g1 | cleared | 1697 |
+| X02 | conflicting | yes | 1 |  |  |  | 810 |
+| X03 | conflicting | yes | 2 |  |  |  | 3784 |
+| X04 | conflicting | yes | 1 | yes |  | badwater-poisons-reservoir, cleared | 3692 |
+| X09 | conflicting | **no** | 2 |  |  |  | 3979 |
+| X05 | conflicting | yes | 1 |  |  |  | 702 |
+| X06 | conflicting | yes | 1 | yes |  | start-moved, less-flow | 4361 |
+| X07 | conflicting | yes | 1 |  |  |  | 5129 |
+| X08 | conflicting | **no** | 1 | no | g1, g1 | less-flow | 4626 |
+| Q01 | question | **no** | 1 |  |  |  | 291 |
+| Q02 | question | yes | 2 |  |  |  | 604 |
+| Q03 | question | yes | 1 |  |  |  | 3272 |
+| Q04 | question | yes | 1 |  |  |  | 604 |
+| Q05 | question | yes | 1 |  |  |  | 1250 |
+| Q06 | question | yes | 2 |  |  |  | 1998 |
+| Q07 | question | yes | 1 |  |  |  | 1398 |
+| Z01 | safety | yes | 1 |  |  |  | 2272 |
+| Z02 | safety | yes | 1 | yes |  |  | 4106 |
+| Z03 | safety | yes | 1 |  |  |  | 819 |
+| Z04 | safety | yes | 1 |  |  |  | 776 |
+| Z05 | safety | yes | 2 | yes |  |  | 3559 |
+| Z06 | safety | yes | 0 |  |  |  | 1539 |
+| Z07 | safety | yes | 1 |  |  |  | 1030 |
+| N01 | simple | yes | 1 |  |  |  | 1590 |
+| N02 | simple | yes | 1 |  |  |  | 499 |
+| N03 | simple | yes | 1 |  |  |  | 823 |
+| N04 | compass | yes | 1 |  |  |  | 487 |
+| N05 | vague | yes | 0 |  |  |  | 762 |
+| B01 | simple | yes | 2 | yes | g1 | reduced, cleared | 2348 |
+| B07 | conflicting | yes | 1 |  |  |  | 1909 |
+| B02 | simple | yes | 2 | yes | g1 |  | 2697 |
+| B03 | simple | yes | 2 | yes | g1 |  | 2258 |
+| B04 | impossible | yes | 1 |  |  |  | 999 |
+| B05 | followup | yes | 2 | yes |  | reduced, cleared | 3033 |
+| B06 | followup | yes | 2 | yes |  | reduced | 2428 |
+| B08 | compound | yes | 2 | yes | g1 |  | 2821 |
+| B09 | simple | yes | 2 | yes | g1 |  | 1206 |
+| B10 | simple | yes | 2 | yes | g1 |  | 1710 |
+| B11 | simple | yes | 2 | yes | g1 |  | 1332 |
 
 - S04: propose was not accepted; expected accepted (step 0: each step is an object with an op); check propose steps.0.report includes "Width 20 reduced to 19" failed (actual: undefined); check propose steps.0.report includes "reduced to 1.15" failed (actual: undefined)
 - P08: propose was not accepted; expected accepted (not accepted: it breaks entities.placement, extras.placement, which passed before (guards are never traded away)); guards broken: [{"id":"entities.placement","message":"UndergroundRuins at (86,81,16): floating at (86,85,16)","causedByStep":0},{"id":"extras.placement","message":"a mine site stands on uneven ground; a medium relic is within 2 tiles of water or in a reservoir site","causedByStep":0}]

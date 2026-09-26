@@ -221,17 +221,22 @@ In `investigation/claude/`, the shape of its tools:
   frames, and that water is the worker's and the export's (tested).
 - **Time controls** over the map's lower right: **Pause**, speed **1× / 2× / 4×**, **Skip** to the
   latest water, **Replay** the last change's journey, **Follow** (the camera drifts to where the
-  water rises most) and **Drought**: every source stops for the map's drought (4, 9 or 30 days by
-  its difficulty), the rivers drain in the first day, pools evaporate, then the sources run again
-  and the water comes back, ending at the map's water. The map never changes.
+  water rises most), **Drought** and **Badtide**. A drought: every source stops for the map's
+  drought (4, 9 or 30 days by its difficulty), the rivers drain in the first day, the pools
+  evaporate. A badtide (3, 8 or 30 days): the clean sources give badwater along the game's curve
+  (0.5 + 0.5·sech(17(t − 0.5)) over the first and last half day, 1 between), it spreads through
+  the water, and the soil shows the poisoned ground each day. Then the sources run as the map has
+  them and the water comes back, ending at the map's water and soil. The map never changes. The
+  rules are ported, with their sources, from the cycles investigation (checked against the game)
+  into `src/core/sim/weather.ts`, for the Weather view to extend.
 - **The land comes alive with the water**: when the water settles, the soil's colours move to the
   new moisture over about two seconds, the tiles by the water first.
 - **Local first**: the worker settles in slices of 10 ms between the tools' requests, so the tools
   never wait; the water nearest the edit moves first by its nature, and the first frames show it.
 
-Not yet: badtide (D181 (3): the codebase has no badtide numbers, only the BadtideDrain object;
-waiting for the game's numbers), water sounds (D181 (4)), lakes by painting a shore, handles on a
-placed river.
+Not yet: BadtideDrains running during a badtide (the water model keeps no strength for them while
+they are off; none on generated maps), water sounds (D181 (4)), lakes by painting a shore, handles
+on a placed river.
 
 ## The camera keys (D180)
 
@@ -282,7 +287,9 @@ enables it at once), and the brushes could be picked before the map could be pai
   Natural's meanders are the same for the same stroke; a hollow fills to its lowest rim.
 - `tests/e2e/waterFlow.spec.ts`: a source's water grows over several frames; Pause holds it; it
   ends at the worker's water; Replay starts over and Skip returns to the end; a drought drains the
-  map and brings the water back to the map's water.
+  map and a badtide turns its water to badwater, each coming back to the map's water.
+- `tests/unit/weather.test.ts`: the hazard lengths by difficulty (a drought's matching the
+  reservoir sizes) and the badtide's curve.
 - `tests/e2e/camera.spec.ts`: held keys move the view in many small steps and glide to a stop;
   Shift is faster; Q turns; nothing moves while a field has the focus.
 - `tests/e2e/liveShapes.spec.ts`: a hill rises while it is dragged and says what it does; release

@@ -902,10 +902,11 @@ button[aria-pressed="true"] {
   pointer-events: none;
 }
 
-/* the water's time controls: the map's lower right corner */
+/* the water's time controls: the map's lower right corner, above the row of the tool's hint and
+   the tile under the pointer */
 .water-bar {
   position: absolute;
   right: 10px;
-  bottom: 10px;
+  bottom: 56px;
   max-width: calc(100% - 20px);
 }

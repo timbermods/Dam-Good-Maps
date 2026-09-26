@@ -49,7 +49,10 @@ import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
 import type { BuildResult } from "../core/features/build";
-import { DROUGHT, OFFICIAL_FLOW } from "../core/gen/calibrated";
+import { OFFICIAL_FLOW } from "../core/gen/calibrated";
+import { badtideContamination, hazardDays, type Hazard } from "../core/sim/weather";
+import { moisture } from "../core/sim/moisture";
+import { soilContamination } from "../core/sim/contamination";
 import { polygonMask } from "../core/features/geometry";
 import { patchFeature } from "../core/doc/ops";
 import type { Difficulty, MapSpec } from "../core/spec/mapspec";
@@ -491,7 +494,7 @@ export type EditorEvent =
   | { kind: "water"; version: number; water: WaterView; done: number; ticks: number; draft?: boolean }
   /** A weather run (a drought, then the water coming back): its frames, the day, and the end (the
    *  map's own water, exactly). */
-  | { kind: "weather"; version: number; water: WaterView; phase: "drought" | "return" | "end"; day: number; days: number }
+  | { kind: "weather"; version: number; water: WaterView; phase: "drought" | "badtide" | "return" | "end"; day: number; days: number; soil?: SoilView }
   /** The water has settled after an edit: the water, the soil and the plants on it. */
   | { kind: "settled"; version: number; view: ViewUpdate; info: SessionInfo }
   /** The instant checks of an edit (with a checks worker, they come a moment after the edit). */
@@ -639,35 +642,46 @@ export function cancelShape(): ViewUpdate {
 
 // ------------------------------------------------------------------------------------ weather
 
-/** A drought to watch (D180 (8)): every source stops for the map's drought (4, 9 or 30 days by its
- *  difficulty), the water drains and evaporates, then the sources run again and it comes back. A
- *  frame every 48 ticks; the end is the map's own settled water, exactly. The map never changes. */
+/** A hazard to watch (D180 (8), D181 (3)), the map's own length by its difficulty
+ *  (core/sim/weather.ts). A drought: every source stops, the rivers drain, the pools evaporate. A
+ *  badtide: the clean sources give badwater along the game's curve, and it spreads through the
+ *  water and poisons the ground. Then the sources run as before and the water comes back. A frame
+ *  every 12 ticks the first day, every 96 after; the soil each day; the end is the map's own water
+ *  and soil, exactly. The map never changes. */
 let weatherToken = 0;
-export function startDrought(): void {
+export function startWeather(hazard: Hazard): void {
   const s = need();
   const token = ++weatherToken;
-  const days = DROUGHT[s.meta.designedFor ?? "normal"]?.days ?? DROUGHT.normal.days;
-  const model = s.built.waterModel;
+  const days = hazardDays(s.meta.designedFor ?? "normal", hazard);
+  const base = s.built.waterModel;
+  // the sources' own copies: a badtide changes what the clean ones give
+  const model: WaterModel = { ...base, emitters: base.emitters.map((e) => ({ ...e })) };
+  const clean = model.emitters.filter((e) => e.contamination === 0);
   const sim = new WaterSim(model, { depth: Float64Array.from(s.built.water), contamination: Float64Array.from(s.built.contamination) });
   const v = version;
+  const { x: W, y: H } = s.size;
   const total = days * TICKS_PER_DAY;
-  const send = (phase: "drought" | "return" | "end", water: WaterView, day: number) => listener?.({ kind: "weather", version: v, water, phase, day, days });
+  const send = (phase: "drought" | "badtide" | "return" | "end", water: WaterView, day: number, soil?: SoilView) => listener?.({ kind: "weather", version: v, water, phase, day, days, ...(soil ? { soil } : {}) });
+  const soilNow = (depth: Float64Array, contamination: Float64Array) => soilView(moisture(s.built.heights, depth, contamination, W, H, null), soilContamination(s.built.heights, depth, contamination, W, H, null));
   void (async () => {
-    // the drought: the sources off
+    let nextSoil = TICKS_PER_DAY;
     for (let t = 0; t < total; ) {
       if (token !== weatherToken || session !== s) return;
       const t0 = performance.now();
       while (t < total && performance.now() - t0 < WATER_SLICE_MS) {
-        // closer frames while the rivers drain, the first day
+        // closer frames the first day, while the rivers drain or the badwater surges
         const gap = t < TICKS_PER_DAY ? 12 : 96;
-        sim.run(gap, 0);
+        if (hazard === "badtide") for (const e of clean) e.contamination = badtideContamination(t / TICKS_PER_DAY, days);
+        sim.run(gap, hazard === "drought" ? 0 : 1);
         t += gap;
-        send("drought", waterOf(s, { depth: sim.D, contamination: sim.C }), Math.min(days, t / TICKS_PER_DAY));
+        const soil = t >= nextSoil ? soilNow(sim.D, sim.C) : undefined;
+        if (soil) nextSoil += TICKS_PER_DAY;
+        send(hazard, waterOf(s, { depth: sim.D, contamination: sim.C }), Math.min(days, t / TICKS_PER_DAY), soil);
       }
       await breathe();
     }
-    // then the water comes back, from the dry map to the settled water
-    const back = new PreviewJob({ model, water: { settled: false, ticks: 0, depth: sim.D.slice(), contamination: sim.C.slice(), sat: new Uint8Array(sim.N), out: sim.out.slice(), preview: true } }, model);
+    // then the sources run as the map has them, and the water comes back to the settled water
+    const back = new PreviewJob({ model: base, water: { settled: false, ticks: 0, depth: sim.D.slice(), contamination: sim.C.slice(), sat: new Uint8Array(sim.N), out: sim.out.slice(), preview: true } }, base);
     let last = 0;
     for (;;) {
       if (token !== weatherToken || session !== s) return;
@@ -683,7 +697,7 @@ export function startDrought(): void {
       if (r) break;
       await breathe();
     }
-    if (token === weatherToken && session === s) send("end", waterOf(s), days);
+    if (token === weatherToken && session === s) send("end", waterOf(s), days, soilOf(s));
   })();
 }
 

@@ -33,6 +33,7 @@ import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems
 import { BrushBar } from "./BrushBar";
 import { WaterBar } from "./WaterBar";
 import { WaterPlayer } from "./waterPlayer";
+import type { Hazard } from "../core/sim/weather";
 import { ellipseOutline, fitOutline, moveOutline, outlineBox, ShapeDrag, type ShapeHost } from "./liveShapes";
 import { hollowAt } from "../core/features/hollow";
 import { OFFICIAL_FLOW } from "../core/gen/calibrated";
@@ -175,11 +176,12 @@ export default function Editor(props: EditorProps) {
   const [follow, setFollow] = useState(false);
   const followRef = useRef(follow);
   followRef.current = follow;
-  const [drought, setDroughtState] = useState(false);
-  const droughtRef = useRef(false);
-  const setDrought = (on: boolean) => {
-    droughtRef.current = on;
-    setDroughtState(on);
+  /** A hazard playing (a drought or a badtide to watch), or null. */
+  const [weather, setWeatherState] = useState<Hazard | null>(null);
+  const weatherRef = useRef<Hazard | null>(null);
+  const setWeather = (on: Hazard | null) => {
+    weatherRef.current = on;
+    setWeatherState(on);
   };
   /** Where the water stood in the frame shown before (the camera follows where it rises most). */
   const lastDepth = useRef<Float32Array | null>(null);
@@ -324,26 +326,31 @@ export default function Editor(props: EditorProps) {
     step();
   }
 
-  /** A drought to watch, or the map's own water back at once. */
-  function toggleDrought(on: boolean) {
-    if (on) {
-      setDrought(true);
+  /** A drought or a badtide to watch, or the map's own water back at once. */
+  function toggleWeather(hazard: Hazard) {
+    if (weatherRef.current !== hazard) {
+      setWeather(hazard);
       player.current?.begin(null, true);
-      void api.startDrought();
+      void api.startWeather(hazard);
     } else {
-      setDrought(false);
+      setWeather(null);
       void api.stopWeather().then((v) => {
         player.current?.clear();
         applyView(v);
+        if (mirror.current.soil) renderer.current?.updateSoil(mirror.current.soil);
       });
     }
+  }
+  /** The soil's colours during a weather run (the map's own soil stays the page's copy). */
+  function showSoil(soil: SoilView) {
+    renderer.current?.updateSoil(soil);
   }
 
   function applyUpdate(u: SessionUpdate): void {
     applyView(u.view);
     // an edit: its water's journey starts from the water right after it
     if (u.ok) {
-      if (droughtRef.current) setDrought(false);
+      if (weatherRef.current) setWeather(null);
       player.current?.begin(u.view.water ? { water: u.view.water, done: 0 } : null);
     }
     // the instant checks: the problems this edit made, in the region it changed (with the checks
@@ -579,9 +586,14 @@ export default function Editor(props: EditorProps) {
         } else if (e.kind === "settled") {
           player.current?.push({ water: e.view.water ?? mirror.current.waterView, done: 1, final: () => applyView(e.view) });
         } else if (e.kind === "weather") {
-          if (!droughtRef.current) return;
-          const words = e.phase === "drought" ? `Drought: day ${Math.max(1, Math.ceil(e.day))} of ${e.days}` : e.phase === "return" ? "The water comes back" : undefined;
-          player.current?.push({ water: e.water, done: e.phase === "drought" ? e.day / e.days / 2 : 0.5, ...(words ? { words } : {}), ...(e.phase === "end" ? { final: () => setDrought(false) } : {}) });
+          const w = weatherRef.current;
+          if (!w) return;
+          const day = `day ${Math.max(1, Math.ceil(e.day))} of ${e.days}`;
+          const words = e.phase === "drought" ? `Drought: ${day}` : e.phase === "badtide" ? `Badtide: ${day}` : e.phase === "return" ? (w === "badtide" ? "The water runs clean again" : "The water comes back") : undefined;
+          const soil = e.soil;
+          const show = soil ? () => showSoil(soil) : undefined;
+          const final = e.phase === "end" ? () => (soil && showSoil(soil), setWeather(null)) : show;
+          player.current?.push({ water: e.water, done: e.phase === "return" || e.phase === "end" ? 0.5 : e.day / e.days / 2, ...(words ? { words } : {}), ...(final ? { final } : {}) });
         } else setInstant(e.instant.items.filter((c) => c.here && c.class === "load"));
       }),
     );
@@ -1737,7 +1749,7 @@ export default function Editor(props: EditorProps) {
             hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
           >
             <BrushBar active={brushTool} settings={brush} onPick={pickBrush} onSettings={setBrush} loading={!ready} />
-            {player.current ? <WaterBar player={player.current} follow={follow} onFollow={setFollow} drought={drought} onDrought={toggleDrought} /> : null}
+            {player.current ? <WaterBar player={player.current} follow={follow} onFollow={setFollow} weather={weather} onWeather={toggleWeather} /> : null}
             {shapeNote ? (
               <div class={`map-note shape-note${shapeNote.ok ? (shapeNote.warn ? " warn" : "") : " error"}`} role="status" style={{ left: `${shapeNote.x + 16}px`, top: `${shapeNote.y + 16}px` }}>
                 {shapeNote.text}
