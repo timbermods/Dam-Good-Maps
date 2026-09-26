@@ -1237,7 +1237,7 @@ does (§19.5):
 - **playability**: §11.3–11.4. In the `generate` profile it must pass (the generator retries). In
   the editor's `export` profile it is a warning. The player confirms, and the warning is noted in
   the map description.
-- **design**: `terrain.max_height` (16, or 22 at Verticality 70 and above, §5.9),
+- **design**: `terrain.max_height` (22 since D172 (1); the generator keeps to 16 until Verticality, §5.9),
   `terrain.single_floor` (from 3D-a, `caves.headroom` in its place) and `water.source_in_flow`
   (sources start rivers, D171). They must pass in `generate`; in `export` they warn. For an
   imported map they are only information, because official and workshop maps with caves, or with
@@ -1280,7 +1280,7 @@ settle matches within 1% of the map; its `start.dry` fails by its own design (de
 
 | Id | Rule |
 |---|---|
-| `terrain.max_height` | surface ≤ 16, or ≤ 22 at Verticality 70 and above (§5.9, D132) |
+| `terrain.max_height` | surface ≤ 22, layer 22 empty (D172 (1), after DGM Probe run 20260925-tall: heights up to 22 load and keep their terrain, water, sources, flow, objects and start). Above 16 the check notes that the in-game map editor edits only up to level 16. Before: ≤ 16, or ≤ 22 at Verticality 70 and above (§5.9, D132). |
 | `terrain.top_layer_free` | voxel layer 22 empty |
 | `terrain.supported` | no voxel more than 3 sideways steps from support (0 on heightfields). From 3D-a: every map, every run not starting at z = 0 checked: no voxel the game's load rule would delete |
 | `terrain.single_floor` | one floor per tile (the water model's scope); retired for generated maps in 3D-a |

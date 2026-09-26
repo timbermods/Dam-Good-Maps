@@ -9,18 +9,28 @@
 // On the official maps (local only): none is flagged. Generated maps: the batches run the generate
 // profile, so no accepted map has one; a sample here checks the first seeds of every theme.
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gunzipSync, strFromU8 } from "fflate";
 import { describe, expect, it } from "vitest";
 import { EDGE_RISE, EDGE_SHARE, edgeWalls } from "../../src/core/analysis/edges";
-import { mapMetadata, readTimber, type TimberFile } from "../../src/core/format/timber";
+import { mapMetadata, readTimber, writeTimber, type TimberFile } from "../../src/core/format/timber";
 import { emptySimulationSingletons, GAME_VERSION, LAYERS, voxelsFromHeights } from "../../src/core/format/world";
 import { generate } from "../../src/core/gen/generate";
 import { decodeHeights } from "../../src/core/places/place";
 import { AVAILABLE_THEMES, makeSpec } from "../../src/core/spec/mapspec";
 import { validateMap } from "../../src/core/validate/checks";
 import { blocks, type CheckResult, type Profile } from "../../src/core/validate/report";
+
+/** Python with numpy, for the oracle's side (CI has it; a machine without it skips). */
+const PY = (() => {
+  for (const exe of [process.env.PYTHON ?? "python", "python3"]) {
+    const r = spawnSync(exe, ["-c", "import numpy"], { encoding: "utf8" });
+    if (!r.error && r.status === 0) return exe;
+  }
+  return null;
+})();
 
 const fixture = JSON.parse(strFromU8(gunzipSync(new Uint8Array(readFileSync("tests/fixtures/edge-wall/near-aso-caldera.json.gz"))))) as { W: number; H: number; heights: string };
 
@@ -144,5 +154,40 @@ describe("the official maps (local only)", () => {
       if (!c.ok) flagged.push(n);
     }
     expect(flagged).toEqual([]);
+  });
+});
+
+// Tall maps (D172 (1), after DGM Probe run 20260925-tall): heights up to 22 load in the game, with
+// voxel layer 22 empty; the in-game map editor edits only up to 16, which the check notes.
+describe("the height limit (terrain.max_height)", () => {
+  const tall = (top: number) => {
+    const h = flat(24, 24, 8);
+    h[12 * 24 + 12] = top;
+    return h;
+  };
+  it("a map with a column at 22 passes, with the editor's note; one at 23 fails", () => {
+    const at = (top: number) => validateMap(fileOf(tall(top), 24, 24), { profile: "generate", loadOnly: true }).report.checks;
+    const ok = at(22).find((c) => c.id === "terrain.max_height")!;
+    expect(ok.ok).toBe(true);
+    expect(ok.limit).toBe(22);
+    expect(ok.message).toMatch(/the in-game map editor edits only up to level 16/);
+    expect(at(22).find((c) => c.id === "terrain.top_layer_free")!.ok).toBe(true);
+    expect(at(16).find((c) => c.id === "terrain.max_height")!.message).not.toMatch(/editor/);
+    const over = at(23);
+    expect(over.find((c) => c.id === "terrain.max_height")!.ok).toBe(false);
+    expect(over.find((c) => c.id === "terrain.top_layer_free")!.ok).toBe(false);
+  });
+
+  it.skipIf(!PY)("the Python validator agrees", () => {
+    const dir = join(".scratch", "tall-check");
+    mkdirSync(dir, { recursive: true });
+    const paths = [22, 23].map((top) => {
+      const p = join(dir, `tall-${top}.timber`);
+      writeFileSync(p, writeTimber({ ...fileOf(tall(top), 24, 24), thumbnail: null }));
+      return p;
+    });
+    const r = spawnSync(PY!, ["-B", "prototype/validate.py", "--load-only", "--json", ...paths], { encoding: "utf8" });
+    const verdicts = (r.stdout ?? "").split(/\r?\n/).filter((l) => l.startsWith("{")).map((l) => (JSON.parse(l) as { checks: { id: string; ok: boolean }[] }).checks.find((c) => c.id === "terrain.max_height")!.ok);
+    expect(verdicts).toEqual([true, false]);
   });
 });

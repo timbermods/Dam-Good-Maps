@@ -167,8 +167,9 @@ def check_file(m: TimberMap, rep: Report, raw_zip: dict):
 
 def check_terrain(m: TimberMap, rep: Report):
     h = m.surface()
-    rep.add("terrain.max_height", h.max() <= LIMITS["editor_max_height"],
-            f"highest column {h.max()} (editor limit 16, game limit 22)", int(h.max()), 16)
+    # up to 22 (D172 (1), after probe run 20260925-tall); the in-game map editor edits only up to 16
+    rep.add("terrain.max_height", h.max() <= LIMITS["game_max_height"],
+            f"highest column {h.max()} (game limit 22; the in-game map editor edits up to 16)", int(h.max()), 22)
     rep.add("terrain.top_layer_free", not m.voxels[-1].any(), "layer 22 must stay empty")
     # design: the water model covers one floor per tile (caves and overhangs are approximated on
     # the top surface); imported maps report it as information

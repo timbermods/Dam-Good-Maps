@@ -8,7 +8,7 @@
 import { FOOTPRINTS, OCC, ORIENTATIONS, slopeHighSide, startEntranceTile, worldBlocks, type Orientation, type Placement } from "../format/footprints";
 import { isObject, num, type JsonObject } from "../format/json";
 import { placementOf } from "../format/entities";
-import { EDITOR_MAX_HEIGHT, floorsOf, GAME_VERSION, MAX_OBJECT_Z, storedWater, surfaceOf } from "../format/world";
+import { EDITOR_MAX_HEIGHT, floorsOf, GAME_MAX_HEIGHT, GAME_VERSION, MAX_OBJECT_Z, storedWater, surfaceOf } from "../format/world";
 import type { TimberFile } from "../format/timber";
 import type { Feature } from "../features/schema";
 import { EDGE_BAND, EDGE_INSIDE, EDGE_RISE, EDGE_SHARE, edgeRuleApplies, edgeWalls } from "../analysis/edges";
@@ -128,7 +128,21 @@ function checkTerrain(file: TimberFile, c: Collector, surface: Uint8Array, stack
   const w = file.world;
   let maxH = 0;
   for (const v of surface) if (v > maxH) maxH = v;
-  c.add({ id: "terrain.max_height", class: "design", ok: maxH <= EDITOR_MAX_HEIGHT, value: maxH, limit: EDITOR_MAX_HEIGHT, message: `highest column ${maxH} (the in-game editor's limit is 16)` });
+  // up to 22 (D172 (1), after probe run 20260925-tall); above 16, a note: the in-game map editor
+  // edits only up to 16
+  c.add({
+    id: "terrain.max_height",
+    class: "design",
+    ok: maxH <= GAME_MAX_HEIGHT,
+    value: maxH,
+    limit: GAME_MAX_HEIGHT,
+    message:
+      maxH > GAME_MAX_HEIGHT
+        ? `highest column ${maxH} (the game's limit is ${GAME_MAX_HEIGHT})`
+        : maxH > EDITOR_MAX_HEIGHT
+          ? `highest column ${maxH} (up to ${GAME_MAX_HEIGHT} loads in the game; the in-game map editor edits only up to level ${EDITOR_MAX_HEIGHT})`
+          : `highest column ${maxH} (at most ${GAME_MAX_HEIGHT})`,
+  });
   const plane = w.sizeX * w.sizeY;
   let top = 0;
   if (w.layers >= 23) for (let i = 0; i < plane; i++) top += w.voxels[22 * plane + i];
