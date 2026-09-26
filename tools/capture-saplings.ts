@@ -90,13 +90,13 @@ async function main() {
     console.log(`${LABEL}: the page marks ${young} objects young`);
     mkdirSync(OUT, { recursive: true });
     const canvas = page.locator(".editor-view canvas");
-    const stem = basename(MAP).replace(/\.timber$/, "").replace(/[^\w.-]+/g, "-");
+    const stem = basename(MAP).replace(/\.timber$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     for (const p of poses) {
       await page.evaluate((v) => (window as unknown as { dgm3d: { renderer: { setView(v: unknown): void } } }).dgm3d.renderer.setView(v), p.view);
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))));
       await page.waitForTimeout(400);
-      const f = join(OUT, `${stem}-${p.id}-${LABEL}.png`);
-      writeFileSync(f, await canvas.screenshot({ type: "png" }));
+      const f = join(OUT, `${stem}-${p.id}-${LABEL}.jpg`);
+      writeFileSync(f, await canvas.screenshot({ type: "jpeg", quality: 85 }));
       console.log(`  ${f}`);
     }
     writeFileSync(join(OUT, `${stem}-${LABEL}.json`), JSON.stringify({ label: LABEL, map: basename(MAP), saplings: saplings.length, youngOnPage: young, grove: best, poses }, null, 1) + "\n");

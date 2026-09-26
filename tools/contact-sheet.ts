@@ -1,7 +1,8 @@
 // A contact sheet of generated maps (PLAN §20 D144): seeds 1–30 of every theme at 128², top-down,
 // each labelled with its seed and theme; our own generated maps only. This writes one small
-// top-down picture per map (the preview's shading and settled water, the start marked in red) to
-// .scratch/sheet/, and tools/contact-sheet.py lays them out, labelled, as one PNG under 1 MB.
+// top-down picture per map, north up (the preview's shading and settled water, the start marked in
+// red), to .scratch/sheet/, and tools/contact-sheet.py lays them out, labelled, as one PNG under
+// 1 MB.
 //
 //   npx tsx tools/contact-sheet.ts [--seeds 1-30] [--size 128] [--out .scratch/sheet]
 //   python tools/contact-sheet.py .scratch/sheet docs/sheets/<step>.png "<title>"
@@ -33,17 +34,19 @@ for (const theme of AVAILABLE_THEMES) {
     // north up: the map's y grows northward, the picture's rows downward
     const img = new Uint8Array(W * H * 3);
     for (let y = 0; y < H; y++) img.set(rgb.subarray(y * W * 3, (y + 1) * W * 3), (H - 1 - y) * W * 3);
+    // the start: a red square 7 tiles wide with a white rim, so it shows at the sheet's scale
     const s = r.built.start;
     if (s)
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -4; dy <= 4; dy++)
+        for (let dx = -4; dx <= 4; dx++) {
           const x = s.x + dx;
           const y = s.y + dy;
           if (x < 0 || y < 0 || x >= W || y >= H) continue;
+          const rim = Math.max(Math.abs(dx), Math.abs(dy)) === 4;
           const k = ((H - 1 - y) * W + x) * 3;
-          img[k] = 220;
-          img[k + 1] = 30;
-          img[k + 2] = 30;
+          img[k] = rim ? 255 : 220;
+          img[k + 1] = rim ? 255 : 30;
+          img[k + 2] = rim ? 255 : 30;
         }
     const file = `${theme}-${seed}.png`;
     writeFileSync(join(out, file), encodePng(img, W, H));
