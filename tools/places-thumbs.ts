@@ -1,14 +1,16 @@
 // The Real places card pictures (Kyler, 2026-09-25), two for each place, both drawn by the Map look
 // 3D view in its clean look on this machine's GPU, in the installed Chrome, headed (CI has no GPU,
 // and a browser that draws in software gets the light look), and committed:
-// - cards/<id>.webp: an angled overview, 480 px square (twice the card). The camera looks along the
-//   map's axis nearest to the way the land rises (from the low side toward the high side), and
-//   stands so the land fills the picture: the far edge spans it, with a thin band of sky above,
-//   and the near side runs off the bottom. Drawn at 960 px and scaled down.
-// - cards/<id>-top.webp: the map from straight above, north up (the view's Top mode, an
-//   orthographic camera): moist grass, cracked earth, water by depth and contaminated ground as
-//   the game shows them. Drawn at a whole number of pixels a tile, close to 512 px (480 at 96²,
-//   512 at 128² and 256²), so every tile edge is sharp.
+// - cards/<id>.webp: an angled overview, 480 px square (twice the card). The camera looks the
+//   index's way (`view`: along the map's axis nearest to the way the land rises, from the low side
+//   toward the high side; src/core/places/view.ts), and stands so the land fills the picture: the
+//   far edge spans it, with a thin band of sky above, and the near side runs off the bottom. Drawn
+//   at 960 px and scaled down.
+// - cards/<id>-top.webp: the map from straight above (the view's Top mode, an orthographic
+//   camera): moist grass, cracked earth, water by depth and contaminated ground as the game shows
+//   them. It is turned by whole quarter turns so its top is the overview's far edge, and the two
+//   read as one map; the gallery shows a north arrow on each. Drawn at a whole number of pixels a
+//   tile, close to 512 px (480 at 96², 512 at 128² and 256²), so every tile edge is sharp.
 //
 //   npm run places:thumbs                   (the places whose pictures do not show the current map)
 //   npm run places:thumbs -- --all          (every place)
@@ -26,6 +28,7 @@ import { join } from "node:path";
 import { chromium, type Browser, type Page } from "@playwright/test";
 import { build, preview } from "vite";
 import type { PlaceIndex, PlaceIndexEntry } from "../src/core/places/place";
+import { innerLevel, viewYaw, VIEW_TURNS } from "../src/core/places/view";
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -60,53 +63,9 @@ interface Pose {
   target: V3;
 }
 
-/** The map's mean level, and the direction the land rises, leaving out a band along the edges,
- *  where a map may be walled. */
-function lieOf(W: number, H: number, heights: number[]): { level: number; rise: [number, number] | null } {
-  const n = W * H;
-  const EDGE = 4;
-  const inside = (x: number, y: number) => x >= EDGE && y >= EDGE && x < W - EDGE && y < H - EDGE;
-  let sum = 0;
-  let count = 0;
-  for (let i = 0; i < n; i++)
-    if (inside(i % W, Math.floor(i / W))) {
-      sum += heights[i];
-      count++;
-    }
-  const level = sum / count;
-  let hx = 0;
-  let hy = 0;
-  let hw = 0;
-  let lx = 0;
-  let ly = 0;
-  let lw = 0;
-  for (let i = 0; i < n; i++) {
-    const x = i % W;
-    const y = Math.floor(i / W);
-    if (!inside(x, y)) continue;
-    const d = heights[i] - level;
-    if (d > 0) {
-      hx += (x + 0.5) * d;
-      hy += (y + 0.5) * d;
-      hw += d;
-    } else if (d < 0) {
-      lx -= (x + 0.5) * d;
-      ly -= (y + 0.5) * d;
-      lw -= d;
-    }
-  }
-  if (!(hw > 0 && lw > 0)) return { level, rise: null };
-  const v: [number, number] = [hx / hw - lx / lw, hy / hw - ly / lw];
-  return { level, rise: Math.hypot(v[0], v[1]) > Math.max(W, H) * 0.06 ? v : null };
-}
-
-/** The overview's camera: looking along the map's axis nearest to the rise (yaw 0 stands south
- *  of the map, looking north; tile y grows northward), or from the south when the land has no
- *  clear rise. */
-function overview(W: number, H: number, heights: number[]): Pose {
-  const { level, rise } = lieOf(W, H, heights);
-  const yaw = rise ? (Math.round(Math.atan2(-rise[0], rise[1]) / (Math.PI / 2)) * Math.PI) / 2 : 0;
-  return frame(W, H, heights, level, yaw, PITCH);
+/** The overview's camera, looking the place's way. */
+function overview(W: number, H: number, heights: number[], view: PlaceIndexEntry["view"]): Pose {
+  return frame(W, H, heights, innerLevel(heights, W, H), viewYaw(view), PITCH);
 }
 
 const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -223,10 +182,11 @@ async function shoot(page: Page, pose: Pose): Promise<Buffer> {
   return page.locator(".editor-view canvas").screenshot({ type: "png" });
 }
 
-/** A PNG as WebP, scaled to a side (in the page's canvas). */
-async function webp(page: Page, png: Buffer, side: number): Promise<Buffer> {
+/** A square PNG as WebP, scaled to a side, or turned by whole quarter turns clockwise at its own
+ *  size (every pixel kept) (in the page's canvas). */
+async function webp(page: Page, png: Buffer, side: number, turns = 0): Promise<Buffer> {
   const b64 = (await page.evaluate(
-    async ([data, s, q]) => {
+    async ([data, s, q, t]) => {
       const img = new Image();
       img.src = `data:image/png;base64,${data}`;
       await img.decode();
@@ -234,12 +194,14 @@ async function webp(page: Page, png: Buffer, side: number): Promise<Buffer> {
       c.width = s;
       c.height = s;
       const g = c.getContext("2d")!;
-      g.imageSmoothingEnabled = true;
+      g.imageSmoothingEnabled = !t;
       g.imageSmoothingQuality = "high";
-      g.drawImage(img, 0, 0, s, s);
+      g.translate(s / 2, s / 2);
+      g.rotate((t * Math.PI) / 2);
+      g.drawImage(img, -s / 2, -s / 2, s, s);
       return c.toDataURL("image/webp", q).split(",")[1];
     },
-    [png.toString("base64"), side, QUALITY] as [string, number, number],
+    [png.toString("base64"), side, QUALITY, turns] as [string, number, number, number],
   )) as string;
   return Buffer.from(b64, "base64");
 }
@@ -266,15 +228,15 @@ async function render(browser: Browser, base: string, p: PlaceIndexEntry): Promi
     })) as { W: number; H: number; heights: number[] };
 
     await canvasAt(page, DRAWN);
-    const pose = overview(map.W, map.H, map.heights);
+    const pose = overview(map.W, map.H, map.heights, p.view);
     const overviewPng = await shoot(page, pose);
 
     const perTile = Math.max(1, Math.round(TOP / Math.max(map.W, map.H)));
     const side = perTile * Math.max(map.W, map.H);
     await canvasAt(page, side);
-    const topPng = await shoot(page, above(map.W, map.H, lieOf(map.W, map.H, map.heights).level));
+    const topPng = await shoot(page, above(map.W, map.H, innerLevel(map.heights, map.W, map.H)));
 
-    const out = { overview: await webp(page, overviewPng, SIDE), top: await webp(page, topPng, side), pose, gpu };
+    const out = { overview: await webp(page, overviewPng, SIDE), top: await webp(page, topPng, side, VIEW_TURNS[p.view]), pose, gpu };
     if (errors.length) throw new Error(`${p.name}: page errors: ${errors.join("; ")}`);
     return out;
   } finally {
@@ -315,7 +277,7 @@ async function main(): Promise<void> {
       total += r.overview.length + r.top.length;
       if (!dir) p.imageFrom = p.sha256;
       console.log(
-        `${p.size}² ${((performance.now() - t) / 1000).toFixed(1).padStart(5)} s  overview ${(r.overview.length / 1024).toFixed(1).padStart(5)} KB, above ${(r.top.length / 1024).toFixed(1).padStart(5)} KB  yaw ${((r.pose.yaw * 180) / Math.PI).toFixed(0).padStart(4)}°  ${p.name}${p === places[0] ? `  (${r.gpu})` : ""}`,
+        `${p.size}² ${((performance.now() - t) / 1000).toFixed(1).padStart(5)} s  overview ${(r.overview.length / 1024).toFixed(1).padStart(5)} KB, above ${(r.top.length / 1024).toFixed(1).padStart(5)} KB  looking ${p.view}  ${p.name}${p === places[0] ? `  (${r.gpu})` : ""}`,
       );
     }
   } finally {

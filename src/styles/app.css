@@ -185,7 +185,7 @@ a:focus-visible {
 }
 
 /* ---- two pictures of a map (src/ui/Pictures.tsx): an inset in the corner that fills the picture
-   on hover, focus or a click, or the two side by side ---- */
+   on hover, focus or a click ---- */
 .pictures {
   position: relative;
 }
@@ -196,13 +196,6 @@ a:focus-visible {
   height: auto;
   aspect-ratio: 1;
   background: var(--map-bg);
-}
-
-.pictures-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  background: var(--rule);
 }
 
 .pictures-toggle {
@@ -250,6 +243,57 @@ a:focus-visible {
   .pictures-toggle {
     transition: none;
   }
+}
+
+/* ---- the north arrow over a picture of a map (src/ui/NorthArrow.tsx): an upright N, and a
+   pointer on the badge's rim toward north ---- */
+.north {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+
+.north svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.north text {
+  font: 700 10px/1 system-ui, sans-serif;
+}
+
+/* smaller on an inset while it is small */
+.pictures-toggle .north {
+  left: 3px;
+  top: 3px;
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) {
+  .pictures-inset:hover .pictures-toggle .north {
+    left: 6px;
+    top: 6px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.pictures-toggle[aria-pressed="true"] .north,
+.pictures-toggle:focus-visible .north {
+  left: 6px;
+  top: 6px;
+  width: 28px;
+  height: 28px;
 }
 
 .settings .primary {

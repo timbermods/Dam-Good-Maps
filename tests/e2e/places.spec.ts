@@ -9,6 +9,8 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { CHANGES, ELEVATION_SOURCE, NOT_ENDORSED, PROVIDERS } from "../../src/core/places/attribution";
 import { decodePlaceFile, placeSample, placeTimber, type PlaceIndex, type PlaceIndexEntry } from "../../src/core/places/place";
+import { VIEW_TURNS } from "../../src/core/places/view";
+import { northLabel } from "../../src/ui/NorthArrow";
 
 const DIR = "public/real-places";
 const INDEX = JSON.parse(readFileSync(`${DIR}/index.json`, "utf8")) as PlaceIndex;
@@ -58,7 +60,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await expect(first).toContainText(`${p0.familyName} · ${p0.size}×${p0.size} · ${p0.metres} m per tile`);
   await expect(first).toContainText(p0.plays);
   await expect(first.locator(`img[alt="${p0.name} seen at an angle"]`)).toHaveJSProperty("naturalWidth", 480);
-  await expect(first.locator(`img[alt="${p0.name} from above, north up"]`)).toHaveJSProperty("naturalWidth", topSide(p0));
+  await expect(first.locator(`img[alt="${p0.name} from above"]`)).toHaveJSProperty("naturalWidth", topSide(p0));
   await page.screenshot({ path: ".scratch/places/desktop.png" });
   // the pictures load as their cards come near the view, not all at once (how near depends on the
   // browser): fewer than half of them, and none of the last cards'
@@ -102,7 +104,7 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   expect(errors).toEqual([]);
 });
 
-test("a card's pictures: the overview, with a minimap from above that fills it on hover, focus or a click", async ({ page }) => {
+test("a card's pictures: the overview, with a minimap from above that fills it on hover, focus or a click, each with its north arrow", async ({ page }) => {
   const errors = watchErrors(page);
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto("./real-places/");
@@ -114,6 +116,25 @@ test("a card's pictures: the overview, with a minimap from above that fills it o
   await expect(mini.locator("img")).toHaveJSProperty("naturalWidth", topSide(p0));
   const full = (await main.boundingBox())!;
   const width = async () => (await mini.boundingBox())!.width;
+  // a north arrow on each picture, drawn by the page, pointing where north is in both (the index's
+  // view: the two pictures face the same way)
+  const turns = VIEW_TURNS[p0.view];
+  const arrows = card.locator(".north");
+  await expect(arrows).toHaveCount(2);
+  for (const k of [0, 1]) await expect(arrows.nth(k)).toHaveAttribute("data-turns", String(turns));
+  await expect(card.getByRole("img", { name: northLabel(turns) }).first()).toBeVisible();
+  const arrow = (await arrows.first().boundingBox())!;
+  expect(arrow.x).toBeLessThan(full.x + full.width / 4);
+  expect(arrow.y).toBeLessThan(full.y + full.height / 4);
+  const insetArrow = (await arrows.nth(1).boundingBox())!;
+  const inset = (await mini.boundingBox())!;
+  expect(insetArrow.x).toBeGreaterThanOrEqual(inset.x);
+  expect(insetArrow.y).toBeGreaterThanOrEqual(inset.y);
+  // a card facing another way turns its arrows
+  const other = INDEX.places.find((p) => VIEW_TURNS[p.view] !== turns)!;
+  await expect(
+    page.getByRole("list", { name: "Maps" }).getByRole("listitem").filter({ has: page.getByRole("heading", { name: other.name, exact: true }) }).locator(".north").first(),
+  ).toHaveAttribute("data-turns", String(VIEW_TURNS[other.view]));
   // a minimap in the corner
   expect(await width()).toBeLessThan(full.width / 2);
   const corner = (await mini.boundingBox())!;
@@ -143,29 +164,6 @@ test("a card's pictures: the overview, with a minimap from above that fills it o
   await expect(mini).toHaveAttribute("aria-pressed", "false");
   await page.mouse.move(2, 2);
   await expect.poll(width).toBeLessThan(full.width / 2);
-  expect(errors).toEqual([]);
-});
-
-test("?cards=side: the two pictures side by side, kept by the filters", async ({ page }) => {
-  const errors = watchErrors(page);
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto("./real-places/?cards=side");
-  const p0 = INDEX.places[0];
-  const card = page.getByRole("list", { name: "Maps" }).getByRole("listitem").first();
-  const a = card.getByRole("img", { name: `${p0.name} seen at an angle` });
-  const b = card.getByRole("img", { name: `${p0.name} from above, north up` });
-  await expect(a).toHaveJSProperty("naturalWidth", 480);
-  await expect(b).toHaveJSProperty("naturalWidth", topSide(p0));
-  const [ba, bb] = [(await a.boundingBox())!, (await b.boundingBox())!];
-  expect(Math.abs(ba.y - bb.y)).toBeLessThan(1);
-  expect(bb.x).toBeGreaterThan(ba.x + ba.width - 1);
-  expect(Math.abs(ba.width - bb.width)).toBeLessThan(2);
-  await expect(card.getByRole("button", { name: /from above/ })).toHaveCount(0);
-  await page.screenshot({ path: ".scratch/places/side.png", clip: { x: 0, y: ba.y - 20, width: 1280, height: ba.height + 180 } });
-  await page.getByRole("button", { name: "96×96" }).click();
-  await expect(page).toHaveURL(/\/real-places\/\?size=96&cards=side$/);
-  await page.reload();
-  await expect(page.getByRole("list", { name: "Maps" }).getByRole("listitem").first().getByRole("img")).toHaveCount(2);
   expect(errors).toEqual([]);
 });
 
@@ -297,21 +295,15 @@ test.describe("on a phone", () => {
     expect(errors).toEqual([]);
   });
 
-  test("?cards=side: the two pictures above the text, and nothing wider than the screen", async ({ page }) => {
+  test("a tap on the minimap shows the map from above, with its north arrow", async ({ page }) => {
     const errors = watchErrors(page);
-    await page.goto("./real-places/?cards=side");
-    const card = page.getByRole("list", { name: "Maps" }).getByRole("listitem").first();
-    const [pics, heading] = [(await card.locator(".pictures").boundingBox())!, (await card.getByRole("heading").boundingBox())!];
-    expect(heading.y).toBeGreaterThan(pics.y + pics.height - 1);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
-    await page.screenshot({ path: ".scratch/places/phone-side.png", fullPage: false });
-    // the minimap on a phone: a tap shows the map from above
     await page.goto("./real-places/");
     const mini = page.getByRole("list", { name: "Maps" }).getByRole("listitem").first().getByRole("button", { name: /from above/ });
     const small = (await mini.boundingBox())!.width;
     await mini.tap();
     await expect(mini).toHaveAttribute("aria-pressed", "true");
     await expect.poll(async () => (await mini.boundingBox())!.width).toBeGreaterThan(small * 2);
+    await expect(mini.locator(".north")).toBeVisible();
     await page.screenshot({ path: ".scratch/places/phone-minimap-tapped.png", fullPage: false });
     expect(errors).toEqual([]);
   });

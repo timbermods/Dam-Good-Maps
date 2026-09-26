@@ -12,8 +12,9 @@
 // - index.json: every place for the gallery page, with the survey's own name, and the size and
 //   sha256 of its .timber.
 // The card pictures (cards/<id>.webp, the 3D overview, and cards/<id>-top.webp, the map from above)
-// are rendered in the 3D view by tools/places-thumbs.ts; the index keeps the sha256 of the .timber
-// they show (imageFrom), so a changed map shows.
+// are rendered in the 3D view by tools/places-thumbs.ts, both facing the index's `view`
+// (src/core/places/view.ts); the index keeps the sha256 of the .timber they show (imageFrom), so a
+// changed map shows.
 // Each .timber is built with src/core/places (build, settle, validate, write) and must pass the
 // export profile and every check of the generate profile; the tool stops on any that does not.
 // Everything it writes is the same bytes on every run. The site's .timber files themselves are
@@ -42,6 +43,7 @@ import {
   type PlaceIndexEntry,
 } from "../src/core/places/place";
 import { writeTimber } from "../src/core/format/timber";
+import { placeView } from "../src/core/places/view";
 import { validateMap } from "../src/core/validate/checks";
 
 const LIBRARY = "investigation/landscapes/library";
@@ -306,6 +308,7 @@ for (const item of items) {
     data: `data/${place.id}.json.gz`,
     image: `cards/${place.id}.webp`,
     topImage: `cards/${place.id}-top.webp`,
+    view: placeView(built.heights, place.W, place.H),
     ...(shown.get(place.id) ? { imageFrom: shown.get(place.id) } : {}),
     file: `maps/${place.id}.timber`,
     bytes: bytes.length,

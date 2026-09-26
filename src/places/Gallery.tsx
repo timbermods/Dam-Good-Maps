@@ -1,40 +1,38 @@
 // The Real places gallery (ROADMAP "Real places", PLAN §20 D136): maps made from real land, as
-// content to play or to refine. Each card shows two pictures of the map (drawn by our 3D view: an
-// angled overview, and the map from above), the place's title, its landform, size and scale, and
-// how it plays. Two layouts of the pictures are offered for Kyler to choose from (`?cards=`):
-// "minimap", the overview with the map from above as a small minimap in a corner, which fills the
-// picture on hover, focus or a tap; and "side", the two side by side. **Download** is a link to the place's .timber, built at deploy
-// time (tools/places-build.ts); **Refine** opens it in the editor (the generator page's `#place=`
-// link, which imports it). Nothing here feeds the generator (D108).
+// content to play or to refine. Each card shows two pictures of the map, drawn by our 3D view and
+// facing the same way: the angled overview, with the map from above as a minimap in its corner
+// that fills the picture on hover, focus or a tap (Kyler's choice), each with a north arrow. Then
+// the place's title, its landform, size and scale, and how it plays. **Download** is a link to the
+// place's .timber, built at deploy time (tools/places-build.ts); **Refine** opens it in the editor
+// (the generator page's `#place=` link, which imports it). Nothing here feeds the generator (D108).
 
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { PlaceIndex, PlaceIndexEntry } from "../core/places/place";
-import { InsetPicture, PicturePair } from "../ui/Pictures";
+import { VIEW_TURNS } from "../core/places/view";
+import { InsetPicture } from "../ui/Pictures";
 import { Credits } from "./Credits";
 import { fetchIndex, placeMap, PLACES_URL } from "./data";
 
 const HOME = import.meta.env.BASE_URL;
 
-/** How a card shows its two pictures (`?cards=`). */
-export type CardLayout = "minimap" | "side";
-
-/** The filters, kept in the page's query so Back returns to the same list, and the card layout. */
-function initialFilters(): { family: string; size: number | null; cards: CardLayout | null } {
+/** The filters, kept in the page's query so Back returns to the same list. */
+function initialFilters(): { family: string; size: number | null } {
   const q = new URLSearchParams(location.search);
   const size = Number(q.get("size"));
-  const cards = q.get("cards");
-  return {
-    family: q.get("family") ?? "",
-    size: Number.isInteger(size) && size > 0 ? size : null,
-    cards: cards === "minimap" || cards === "side" ? cards : null,
-  };
+  return { family: q.get("family") ?? "", size: Number.isInteger(size) && size > 0 ? size : null };
 }
 
-/** A card's pictures: the overview, and the map from above. */
-function Pictures({ p, layout }: { p: PlaceIndexEntry; layout: CardLayout }) {
-  const overview = { src: PLACES_URL + p.image, alt: `${p.name} seen at an angle` };
-  const above = { src: PLACES_URL + p.topImage, alt: `${p.name} from above, north up` };
-  return layout === "side" ? <PicturePair first={overview} second={above} /> : <InsetPicture main={overview} inset={above} label={`Show ${p.name} from above`} />;
+/** A card's pictures: the overview, with the map from above as its minimap; both face the place's
+ *  view, and their north arrows show where north is. */
+function Pictures({ p }: { p: PlaceIndexEntry }) {
+  return (
+    <InsetPicture
+      main={{ src: PLACES_URL + p.image, alt: `${p.name} seen at an angle` }}
+      inset={{ src: PLACES_URL + p.topImage, alt: `${p.name} from above` }}
+      label={`Show ${p.name} from above`}
+      north={VIEW_TURNS[p.view]}
+    />
+  );
 }
 
 export function Gallery() {
@@ -43,7 +41,6 @@ export function Gallery() {
   const init = useMemo(initialFilters, []);
   const [family, setFamily] = useState(init.family);
   const [size, setSize] = useState<number | null>(init.size);
-  const layout: CardLayout = init.cards ?? "minimap";
 
   useEffect(() => {
     fetchIndex().then(setIndex, (e) => setLoadError(String(e instanceof Error ? e.message : e)));
@@ -53,7 +50,6 @@ export function Gallery() {
     const q = new URLSearchParams();
     if (family) q.set("family", family);
     if (size) q.set("size", String(size));
-    if (init.cards) q.set("cards", init.cards);
     const s = q.toString();
     history.replaceState(null, "", s ? `?${s}` : location.pathname);
   }, [family, size]);
@@ -128,8 +124,8 @@ export function Gallery() {
               {shown.map((p) => {
                 const map = placeMap(p);
                 return (
-                  <li class={`place place-${layout}`} key={p.id}>
-                    <Pictures p={p} layout={layout} />
+                  <li class="place" key={p.id}>
+                    <Pictures p={p} />
                     <div class="place-body">
                       <h2>{p.name}</h2>
                       <p class="place-meta">

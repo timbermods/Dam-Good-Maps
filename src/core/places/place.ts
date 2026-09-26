@@ -24,6 +24,7 @@ import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import type { WaterModel } from "../sim/water";
 import { validateMap, type Validation } from "../validate/checks";
 import { CREDITS_URL, fileNotices } from "./attribution";
+import type { PlaceView } from "./view";
 
 export const PLACE_FORMAT = 1;
 
@@ -83,6 +84,8 @@ export interface PlaceIndexEntry {
   data: string;
   image: string;
   topImage: string;
+  /** The direction the overview looks, and the top of both pictures (view.ts). */
+  view: PlaceView;
   file: string;
   /** The sha256 of the .timber the card pictures show (tools/places-thumbs.ts renders them again
    *  when the map changes). */

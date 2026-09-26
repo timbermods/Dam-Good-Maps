@@ -181,15 +181,10 @@ button.linkish {
     flex-direction: row;
   }
 
-  .place-minimap .pictures {
+  .place .pictures {
     width: 112px;
     flex: none;
     align-self: flex-start;
-  }
-
-  /* side by side: the two pictures above the text */
-  .place-side {
-    flex-direction: column;
   }
 
   .place-body {

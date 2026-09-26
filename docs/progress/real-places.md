@@ -141,24 +141,30 @@ Several round-1 details above are replaced here: the titles, the description, **
   stays. Per-map "how it plays" lines wait for M9c's names and descriptions.
 - **Card pictures.** Two for each place, both drawn by the Map look 3D view in its clean look, on
   this machine's GPU in the installed Chrome (`npm run places:thumbs`, `tools/places-thumbs.ts`),
-  as WebP:
+  as WebP, and both facing the same way, so they read as one map:
   - the **overview**, 480 px (twice the card): the camera looks along the map's axis nearest to
-    the way the land rises, from the low side, and stands so the land fills the picture: the far
-    edge spans it under a thin band of sky, and the near edge runs off the bottom. Drawn at 960 px
-    and scaled down.
-  - the **map from above**, north up (the view's Top mode, an orthographic camera): moist grass,
-    cracked earth, water by depth and contaminated ground, as in the 3D view. A whole number of
-    pixels a tile (480 px at 96², 512 px at 128² and 256²), so every tile edge is sharp.
+    the way the land rises, from the low side (the index's `view`: N, E, S or W;
+    `src/core/places/view.ts`), and stands so the land fills the picture: the far edge spans it
+    under a thin band of sky, and the near edge runs off the bottom. Drawn at 960 px and scaled
+    down.
+  - the **map from above** (the view's Top mode, an orthographic camera): moist grass, cracked
+    earth, water by depth and contaminated ground, as in the 3D view. It is turned by whole
+    quarter turns so its top is the overview's far edge. A whole number of pixels a tile (480 px
+    at 96², 512 px at 128² and 256²), so every tile edge is sharp.
+
+  The card shows the overview with the map from above as a minimap in its corner, which fills the
+  picture on hover, keyboard focus or a tap (Kyler chose it over a side-by-side layout, which is
+  gone). Each picture has a small **north arrow**, drawn by the page, not the picture: an upright
+  "N" in a round badge, with a pointer toward north, and a label ("North is to the right").
+  The minimap, its swap and the arrow are shared components with shared styles
+  (`src/ui/Pictures.tsx`, `src/ui/NorthArrow.tsx`, `app.css`), as is the link that looks like a
+  button, so the design pass restyles them rather than rebuilds them (D176).
 
   About 84 KB a place, 7.1 MB for all 85; the gallery loads them lazily, as their cards come into
   view. The index records which `.timber` they show (`imageFrom`); a test fails when a map changed
-  and its pictures did not. About 4.3 s a place, 6 minutes for all 85. Kyler approved the
-  direction; he picks the card layout from two, behind `?cards=`: `minimap` (the default: the
-  overview, with the map from above as a minimap in its corner that fills the picture on hover,
-  keyboard focus or a tap) and `side` (the two side by side; on a phone, above the text). Both are
-  shared components with shared styles (`src/ui/Pictures.tsx`, `app.css`), as is the link that
-  looks like a button, so the design pass restyles them rather than rebuilds them (D176). All the
-  pictures are drawn again after the rebuild without walls.
+  and its pictures did not. About 4.3 s a place, 6 minutes for all 85. The committed maps from
+  above were turned to their view in place (every pixel kept); all the pictures are drawn again
+  after the rebuild without walls.
 - **The survey's elevation patches, downloaded again** (Kyler's yes, 2026-09-25), for the rebuild:
   the survey's own `sample.ts`, unchanged, into its ignored cache
   (`investigation/landscapes/.cache/`), with at most 6 requests at once, 50 ms apart. All 4,050
@@ -222,7 +228,13 @@ Tests updated to Kyler's decisions (D148), none weakened:
 - `places.spec.ts`: **Download** is a link to the static file (was a button that built it); "Node
   and Chromium build the same file" becomes "the site serves each place's `.timber` as Node builds
   it", since the browser no longer builds one; the credits test checks every notice and licence
-  link. New: the credits page on a desktop and a phone, and that the pictures load lazily.
+  link. New: the credits page on a desktop and a phone, and that the pictures load lazily; the
+  minimap (hover, keyboard focus, a click, a tap on a phone) and its north arrows on one card. The
+  side-by-side tests went with the side-by-side layout (Kyler chose the minimap), and the map from
+  above's text alternative no longer says "north up": the arrow says where north is.
+- `tests/unit/places-view.test.ts`: new. The index's `view` is the one the overview's camera works
+  out from each map; each view's camera looks that way; north is its quarter turns clockwise from
+  the top; and the arrow's labels.
 - `tests/live/live.spec.ts`: new, the real place and the credits page (above).
 
 Checks: `npm run typecheck`, `npm run test:quick`, `npm run test:e2e` and `npm run test:places`
