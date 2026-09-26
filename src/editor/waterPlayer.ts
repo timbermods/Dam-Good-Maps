@@ -71,6 +71,10 @@ export class WaterPlayer {
   private at = -1;
   private timer = 0;
   private finished = true;
+  /** The playing clock: the frame it started from, and when (the journey keeps its pace in
+   *  time, skipping frames when showing them is slow, as in software rendering). */
+  private clockAt = 0;
+  private clockT = 0;
   paused = false;
   speed = 1;
   /** A weather run is playing (its frames replace the journey's until it ends). */
@@ -85,6 +89,7 @@ export class WaterPlayer {
     this.at = first ? 0 : -1;
     this.finished = false;
     this.weather = weather;
+    this.restartClock();
     this.host.changed();
   }
 
@@ -93,6 +98,8 @@ export class WaterPlayer {
    *  into it over a few frames instead of jumping. */
   push(f: WaterFrame): void {
     const last = this.frames[this.frames.length - 1];
+    // (waiting for frames: the clock starts again from the frame on screen)
+    if (!this.timer && this.at >= this.frames.length - 1) this.restartClock();
     this.finished = false;
     if (f.final && last && !this.weather) for (let k = 1; k <= EASE; k++) this.frames.push({ water: blendWater(last.water, f.water, k / (EASE + 1)), done: last.done + ((1 - last.done) * k) / (EASE + 1) });
     this.frames.push(f);
@@ -128,12 +135,16 @@ export class WaterPlayer {
   pause(on: boolean): void {
     this.paused = on;
     if (on) this.stopTimer();
-    else this.kick();
+    else {
+      this.restartClock();
+      this.kick();
+    }
     this.host.changed();
   }
 
   setSpeed(speed: number): void {
     this.speed = speed;
+    this.restartClock();
     this.host.changed();
   }
 
@@ -156,6 +167,7 @@ export class WaterPlayer {
     this.at = 0;
     this.paused = false;
     this.show(this.frames[0]);
+    this.restartClock();
     this.kick();
     this.host.changed();
   }
@@ -184,14 +196,25 @@ export class WaterPlayer {
     this.timer = window.setTimeout(() => {
       this.timer = 0;
       if (this.paused) return;
-      // behind the worker by more than a few seconds: catch up a little faster
-      const behind = this.frames.length - 1 - this.at;
-      const step = Math.max(1, Math.floor(behind / (FPS * 6)));
-      this.at = Math.min(this.frames.length - 1, this.at + step);
+      // the frame the clock is at (at least the next one), and, behind the worker by more than a
+      // few seconds, a little faster
+      const last = this.frames.length - 1;
+      const byClock = this.clockAt + Math.floor(((performance.now() - this.clockT) * FPS * this.speed) / 1000);
+      const behind = last - this.at;
+      const step = Math.max(1, Math.floor(behind / (FPS * 6)), byClock - this.at);
+      const next = Math.min(last, this.at + step);
+      // (a frame skipped with the settled water's callback still runs it)
+      for (let k = this.at + 1; k < next; k++) if (this.frames[k].final) this.frames[k].final!();
+      this.at = next;
       this.show(this.frames[this.at]);
       this.host.changed();
       this.kick();
     }, 1000 / (FPS * this.speed));
+  }
+
+  private restartClock(): void {
+    this.clockAt = Math.max(0, this.at);
+    this.clockT = performance.now();
   }
 
   private stopTimer(): void {
