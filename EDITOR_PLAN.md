@@ -38,8 +38,10 @@ editor is desktop-first (D185).
   ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
   quiet word. Click to place, R to rotate, Esc to put it back; drag trees and bushes to paint them in
   natural clusters.
-- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers and the overlays
-  (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers, Clear water and the
+  overlays (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The hover readout:** a quiet corner line for what's under the cursor ("Height 11, dry soil"); over
+  water, its depth, the bed level and its contamination (D196).
 - **The header:** Undo and Redo; one primary button, **Save to Timberborn** (**Download .timber** in
   browsers that can't save to a folder); a small menu for the rest (Open, Save project, Download
   .timber, History, New map).
@@ -73,25 +75,42 @@ editor is desktop-first (D185).
 
 Make a valley, drop a source, and there's a river.
 
-- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill;
-  the brush ring glows blue when it does.
-- **Source:** click to place; Alt+scroll sets strength (strong waterfalls allowed, with a friendly
-  note past the official range); drag to move; clean or bad. Sources can go anywhere in the editor;
+- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill.
+  The brush ring itself turns a clear water-blue and slightly thicker, with a faint fill as a second
+  cue; ordinary Lower keeps the white ring. Readable over water, badwater, every ground and in
+  colour-blind views (D198).
+- **Source:** click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
+  note past the official range); drag to move; clean or bad; select it and press Delete (or use
+  Remove) and its water recedes live. A source is always findable, even underwater: a subtle
+  upwelling (bubbles, a gentle ring) shows through the water; with Source picked or when hovering near
+  one, a clear marker with its strength; Markers shows every source (D196).
+- **Water is never an object.** It is the result of sources and land: never selectable or deletable,
+  with no river panel or selection. A river's flow is its sources' strength; clean or bad belongs to
+  each source; water changes only through its causes (a source removed, moved or weakened, or the
+  land reshaped). Generated maps' rivers are just their sources (edge inflows included) and their
+  land. Hovering water quietly highlights the sources feeding it (D196).
+- **Seeing underwater:** with any tool picked, water turns transparent, so the bed, ledges and sources
+  show; with no tool picked it looks normal, and T (the game's key) or **Clear water** toggles it.
+  Badwater stays clearly distinct in transparent mode, for colour-blind players too (D196). Sources can go anywhere in the editor;
   the "only where water begins" rule (D171) is for generated maps.
 - **Lakes, waterfalls, joins and branches emerge from the land.**
-- **Water flows visibly** over a few seconds, and the land greens along new water. Time controls:
-  pause, speed up, replay and follow.
+- **Water flows visibly,** and the land greens along new water. It reacts at once: water near an edit
+  starts moving within a frame or two, the rest of the map follows. A speed control (slower, normal,
+  faster, instant) is brisk by default: small edits settle nearby in a second or two, big changes (a
+  new river, a breach) still flow visibly, and instant skips to the settled result. Time controls:
+  pause, replay and follow (D197).
 - **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
   Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
   whole cycle, opened when wanted (D186).
 - **Carve, a force of nature** (D194): its own top-bar button next to Source. Unleash and Aim modes,
-  Defy gravity, and a Power slider from creek to catastrophe; the water cuts its own gorge or valley,
-  with floodplains and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
+  Defy gravity, a Power slider from creek to catastrophe, Width separate from Power, Wander, variation
+  within each carve, and "Try another path"; the water cuts its own gorge or valley, with floodplains
+  and a delta. Its design is being prototyped on `investigation/carve` (PR #47, held
   until Kyler says it's ready).
 - **Optional water sounds,** our own.
 - **What you watch is what you'll play:** the final water always matches the game's settled result.
 
-(D180, D181, D184, D186, D194.)
+(D180, D181, D184, D186, D194, D196.)
 
 ## 6. The look
 
@@ -101,8 +120,10 @@ mode with the water shader and soft shadows (Map look 2, D147).
 
 ## 7. Controls
 
-WASD and the arrow keys move, Q and E rotate, scroll zooms, Alt+scroll sets strength, [ and ] set
-size, Esc backs out. Every tool is reachable by keyboard, with labels for screen readers. (D180, D184.)
+Like the game: WASD and the arrow keys move (Shift moves faster), Q and E rotate, scroll zooms,
+Alt+scroll slices the visible layers from the top down, Alt+click jumps to a tile's layer, and T
+toggles clear water. Shift+scroll sets strength (brushes and a hovered source), [ and ] set size, Esc
+backs out. Every tool is reachable by keyboard, with labels for screen readers. (D180, D184, D196.)
 
 ## 8. The generator, Claude and the first run
 
@@ -121,9 +142,12 @@ D182.)
 
 ## 10. What's gone, and must not come back
 
+<!-- retired-terms:allow -->
 The landform tools and their handles, the river and lake tools, the Channel tool, the separate plant
 brushes, the busy readouts, the Show dropdown and the Advanced checkbox. Part 3 lists each with the
-decision that replaced it.
+decision that replaced it. CI flags these names if they reappear anywhere else
+(`tools/retired-terms.json`, D188).
+<!-- /retired-terms:allow -->
 
 # Part 2: the technical reference
 

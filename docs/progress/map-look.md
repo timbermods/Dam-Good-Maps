@@ -305,6 +305,112 @@ Deployed: map-look-done, 2026-09-25, live check passed (PR #22; live download = 
 
 Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the live check now runs inside the deploy workflow; live download = `tools/gen.ts`, sha256 `5118b6a6…`, unchanged: no map file changes).
 
+### Badwater blends into clean water (2026-09-25, branch `look/badwater-blend`)
+
+- Kyler (D177): mixed water showed dark red blotches that read like stains; in the game badwater
+  blends smoothly into clean water. Each water tile is now coloured by its badwater share, blended
+  over the connected water up to 3 tiles away (`waterMesh.ts` `blendedBadwater`: a binomial kernel
+  along rows, then columns, never across dry ground or a fall) and shared at the tops' corners, so
+  a front is a gradient over about six tiles. The colour slides from clean water's to badwater's by
+  `badwaterShare` (`palette.ts`, the share to the power 0.75, also as GLSL for any other water
+  shader), with no streaks. Clean water draws the same pixels as before.
+- Badwater is the game's murky red-brown: pure badwater a quarter level deep, the usual depth on our
+  maps, lands on #4B3C38 on screen (the game's #4B3C37, measured by Kyler). Deeper it darkens, so it
+  stays at least 6 L* below clean water of the same depth (the clean-look rule; its test is
+  unchanged). Up close it is duller than clean water (no crests, a fifth of the glints), and its
+  glowing bubbles grow denser with the share. The legend's mixed-water swatch shows the gradient.
+- Captures, the colour table and how it was measured: [look/badwater-blend](../look/badwater-blend/README.md)
+  (`tools/capture-badwater.ts`, and `--measure`). Waiting on Kyler: how dark deep badwater gets (A as
+  built, or B, nearer #4B3C37 when deep).
+- Speed (information): the blend costs about 1 ms per water update at 256²; meshing all of a 256²
+  map's water takes 5–6 ms, as before; only the chunks whose blended water changed are remeshed.
+- **Tests updated to Kyler's decision (D148):**
+  - `tests/unit/look-water-slopes.test.ts`: "shows each tile's own badwater share on its top" (D115's
+    rule, which D177 replaces) is now "blends the badwater share between tiles on the tops, so water
+    partly bad turns smoothly (D177)".
+  - `tests/unit/look-readable.test.ts`: badwater is now the game's measured colour, lighter than the
+    red-black before, so its margins in luminance changed; the order is unchanged. In "keep their
+    order: dead trees, moist, dry ground, badwater", dry ground must be 0.15 lighter than badwater
+    (was 0.24; 0.156 today) and clean shallows 0.3 lighter (was 0.4; 0.308 today). In the
+    contamination test, contaminated ground from afar must be 0.05 lighter than badwater (was 0.09;
+    0.059 today, about 7 L*).
+- New tests: `tests/unit/look-badwater.test.ts` (8): the gradient across a straight and a diagonal
+  front and a narrow tongue of badwater (no step above 0.3 between neighbouring corners, at least 4
+  tiles of ramp), clean water unchanged, a pure pool stays pure, no blending across dry ground or a
+  fall, remeshing every chunk the blend reaches, the measured colour, the share's curve, and the
+  shader (no streaks).
+
+**Kyler's review of #41 (2026-09-25; D177 on dev): not approved yet, three changes.** Deep badwater
+stays darker with depth (option A); the three loosened margins are accepted if the order of
+lightness holds with the final colour; the shallow weak spot is accepted.
+- **One shared water palette** (`src/render3d/waterPalette.ts`): clean water's and badwater's
+  colours (body, troughs, streaks), their opacity by depth, the contamination blend and the
+  calibration (the method, as #38's colour check, and the on-screen targets) in one module. The
+  water shader reads every colour and the water's opacity only through `WATER_GLSL`, generated from
+  its values (the Light look runs the same shader code); `palette.ts` re-exports them for the legend
+  and tests; `tools/capture-badwater.ts --measure` measures against its targets. Clean water draws
+  the same pixels as before. `tests/unit/water-palette.test.ts` fails if a water colour is defined
+  anywhere else in `src/`, or if the water shader has a colour of its own.
+- **The warm tint:** water partly bad now darkens in proportion to its share (luminance, in linear
+  light) and turns its hue to a warm red early (over half way at a quarter bad), then to badwater's
+  own, so a mixed river reads as tainted: the River Valley river above the badwater ditches
+  (about 40% bad) is now red, where it looked like deep clean water.
+- **Placeholders:** badwater's body, deep colour, troughs (none yet), streaks, opacity and the
+  tint's hue wait for Kyler's approval of #38's badwater (`WATER_PLACEHOLDERS`); then they come from
+  #38's calibration, the margins are re-checked, and the captures are made again.
+- Tests: `look-badwater.test.ts`'s colour tests now check the new rule (the blend's curves, luminance
+  in proportion, warm at a quarter bad, the placeholders); `water-palette.test.ts` is new (3).
+
+**#38's badwater, as Kyler approved it (2026-09-25; #38 at e63a3ff).** Kyler: "#38's badwater is
+approved; use its final colours and opacity for #41."
+- **#38's badwater in the shared palette:**
+  - its on-screen targets from #38's `check:colour` (pure badwater 0.25 deep over a poisoned bed,
+    70° down): typical #6E3431, troughs #5E2E2B, streaks #7C4538;
+  - its opacity (`badwaterOpacity`): 0.975–0.995 by depth, 0.52 less at its shallow edges, and at
+    least 0.85 at a grazing angle;
+  - its matte surface: a twelfth of clean water's glints and glint, and a trace of the sky.
+- **Calibrated to #38:** the Standard look's inputs are calibrated so it lands on #38's targets.
+  `--measure` hits all three exactly (0 codes off; 2 allowed). Badwater's troughs and streaks
+  darken with depth as its body does.
+- **Deep badwater stays option A,** re-derived for the crimson (`badDeep`, absorbing 1.85 a level).
+  It stays at least 6.2 L* below clean water at every depth.
+- **Tint:** it takes the crimson body's hue, so tainted water and badwater agree. The placeholders
+  are gone.
+- **The three loosened margins, re-checked:** the order of lightness holds with the crimson. In
+  luma: dead trees 0.784, moist ground 0.610, dry ground 0.401, contaminated ground from afar 0.303
+  at the least, badwater 0.251. All three accepted margins hold:
+  - dry ground is 0.150 lighter than badwater (test 0.15);
+  - clean shallows are 0.301 lighter (test 0.3);
+  - contaminated ground from afar is 0.053 lighter (test 0.05).
+
+  They are thin: badwater sits just under each of them.
+- **Captures:** all made again. The tint views of River Valley 4242 are centred on the river above
+  the ditches (37% bad). `deep-badwater-options.jpg` is gone, since Kyler chose A.
+
+**Kyler approved #41, with one change (2026-09-26):** "partly contaminated water leans wine-mauve,
+almost purple, because teal and crimson blend through purple. Blend through a warm midpoint instead
+(the game's measured mixing zone, about #2E444C, toward warm brown), so mixed water goes teal, then
+warm brownish, then crimson, and never looks purple or mauve-grey. Make the tint a little steeper,
+so 10–25% bad already reads warm."
+- **The hue now follows a path** in `waterBlend`: clean teal, then the mixing zone's teal-grey
+  (#2E444C, `WATER.mixing`, at a fifth of the way), then a warm brown (`WATER.warm`, half way), then
+  #38's crimson. It moves 1 - (1 - s)^6 of the way, steeper than before. The brown leans a little
+  yellow, so no step of the path is purple: blue drops below green before red rises above it.
+  Luminance still follows the share in proportion, and pure badwater is still exactly #38's body.
+- **On screen, 0.8 deep:** 5% bad #37434B (teal-grey), 10% #483D35 (warm brownish), 25% #4E332F
+  (red-brown), 50% #4A2B2A (crimson-brown). #38's targets still land exactly, and clean water is
+  unchanged.
+- **Tests:** `look-badwater.test.ts` checks the new path.
+  - New: no hue from violet to magenta (250°–350°) at any share, depth or distance from a bank; at
+    10% and 25% bad, red is above blue by 10 codes or more, with an orange-red hue; the path passes
+    the mixing zone's hue.
+  - Changed: the continuity bound for 1% more bad is 0.06 per channel (was 0.04). The steeper turn
+    Kyler asked for peaks at 0.048 in bright shallows.
+- **The dry-ground margin is fragile:** dry ground is 0.1501 lighter than badwater against the
+  accepted 0.15 (noted in `look-readable.test.ts`). The badwater body did not change, so it still
+  passes; any lighter badwater would fail it.
+- All captures made again.
+
 ### Mine sites and ruins, models of our own (2026-09-25, branch `look/mine-site`, D178)
 
 - Kyler: a small fix round, judged from before and after captures (no blind review). Captures and
@@ -396,3 +502,13 @@ Deployed: look-contamination-done, 2026-09-25, live check passed (PR #36; the li
   change generated maps on purpose: seed 4242 at 128² River Valley now downloads as sha256
   `e4f2f72c…` (it was `5118b6a6…` since M8). `tests/contract/look-mine-ruins.test.ts` pins `dev`'s
   new value; this branch changes no bytes of its own (no `src/core` change against `dev`).
+
+**The mine pit and badwater (Kyler's review of D177 and D178, 2026-09-26).** Merging `dev` brought
+#42's mine sites: its pit (#373A34, L* 23.9) is now darker than #38's approved crimson badwater
+(#6E342E, L* 29.3), where it was lighter than the red-black badwater before. Kyler chose to keep both
+colours and flip the order, as in the game. Test updated per D148:
+`tests/unit/look-mine-ruins.test.ts`'s "read in greyscale from above: a dark pit, a rusty frame,
+pale wood, and apart from badwater sources" checked the pit 0.05 (luma) lighter than badwater; it is
+now "…: a dark pit, darker than badwater, …" and checks the pit at least 5 L* darker than badwater
+(5.4 today). Every capture was made again on the current maps (dev's start and edge rules changed
+them), with the before site built from current `dev`.
