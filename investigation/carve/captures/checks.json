@@ -1,100 +1,35 @@
 {
-  "checks": [
-    "whole levels, per-step monotonicity, protected start, no new isolated extrema and sediment conservation",
-    "source-first progression leaves distant existing water terrain alone",
-    "a flowing river stops itself after a long stable-course interval",
-    "wide walls produce more bank retreat than steep walls",
-    "outside-bend momentum erodes banks",
-    "v2 rock coefficient and level bands",
-    "rock layers change the resulting terrain",
-    "identical duration gives byte-identical terrain, water, sediment and objects independent of scheduling",
-    "unforced stable map stops automatically and further steps are inert",
-    "final water equals repository canonical settle byte for byte across slices",
-    "JSON operation survives serialization, exact undo, and replay without erosion",
-    "stale operation is rejected atomically",
-    "shared renderer geometry is finite and transferable",
-    "three Real places load with their actual terrain, sources, start and plants",
-    "real M9 generated maps at 128 and 256 load and carve"
+  "passed": [
+    "every step: whole levels, one terrain direction, no new one-tile extrema, start support and debris volume",
+    "first second has visible local chunks, not distant sheet erosion",
+    "power sets incision and width; catastrophe removes much more land than creek",
+    "wide walls make broad terraces, steep walls preserve a narrower gorge",
+    "hard layers delay breakthroughs; bands are deterministically derived from terrain",
+    "aim breaks through a ridge with a curved course; low power lets the land win",
+    "defy gravity cuts an uphill destination into a connected descending floor",
+    "same input and duration has exact output independent of presentation batching",
+    "objects on excavated footprints are removed; the start is never removed",
+    "keep river creates a real source set by power; dry canyon adds no source",
+    "check status and start reach update from changed terrain and resources without blocking it",
+    "canonical water is bit-exact with different slice sizes",
+    "one stored result restores terrain, source, removed objects and water exactly after JSON replay",
+    "worker mesh data supports the actual clean terrain, water and object shaders",
+    "real map near-yosemite-valley accepts source-local carving",
+    "real map near-geirangerfjord accepts source-local carving",
+    "real map near-grand-canyon-colorado accepts source-local carving",
+    "generated 128 map preserves start and exact complete operation",
+    "generated 256 map preserves start and exact complete operation"
   ],
   "timings": {
-    "800 steps, 64 squared": 1218.9687,
-    "undo apply CPU ms": 0.4721000000008644,
-    "near-yosemite-valley 20 steps": 51.23409999999967,
-    "near-geirangerfjord 20 steps": 68.7435000000005,
-    "near-grand-canyon-colorado 20 steps": 96.54699999999866,
-    "seed:highlands:18:128 load": 1253.2305000000015,
-    "seed:highlands:18:128 step p95": 5.944999999999709,
-    "seed:highlands:18:128 undo+redo data CPU": 1.2188000000005559,
-    "seed:riverValley:18:256 load": 19368.797599999998,
-    "seed:riverValley:18:256 step p95": 14.65520000000106,
-    "seed:riverValley:18:256 undo+redo data CPU": 3.323100000001432
+    "128 step p95 ms": 2.8727000000001226,
+    "128 apply and undo ms": 3.454300000000103,
+    "256 step p95 ms": 8.005799999999908,
+    "256 apply and undo ms": 9.499499999999898
   },
-  "wide": {
-    "cut": 755,
-    "deposited": 354,
-    "exported": 253.48391420557414,
-    "suspended": 147.51608579442572,
-    "bankCuts": 381,
-    "bendCuts": 171,
-    "steps": 800,
-    "stable": false
+  "terrainHashes": {
+    "mountain": "99ed2e078b3f53518832bbfbc935701a261ac5d5630d07b5c4d656e7c18f27cd",
+    "ridge": "365a38bd89504f01e650e017439fcb8e576031014db85578f034396c609153da",
+    "defy": "c62489044276b87a4c3ded6479452c4969340913a224bc40691f1d4c494676ff"
   },
-  "steep": {
-    "cut": 448,
-    "deposited": 153,
-    "exported": 259.47434381692506,
-    "suspended": 35.52565618307618,
-    "bankCuts": 49,
-    "bendCuts": 162,
-    "steps": 800,
-    "stable": false
-  },
-  "soft": {
-    "cut": 1164,
-    "deposited": 453,
-    "exported": 469.2065621664393,
-    "suspended": 241.79343783356236,
-    "bankCuts": 783,
-    "bendCuts": 267,
-    "steps": 800,
-    "stable": false
-  },
-  "canonical": {
-    "settled": true,
-    "ticks": 384
-  },
-  "realResults": [
-    {
-      "id": "near-yosemite-valley",
-      "W": 96,
-      "H": 96,
-      "cut": 46
-    },
-    {
-      "id": "near-geirangerfjord",
-      "W": 128,
-      "H": 128,
-      "cut": 34
-    },
-    {
-      "id": "near-grand-canyon-colorado",
-      "W": 256,
-      "H": 256,
-      "cut": 28
-    }
-  ],
-  "generated": [
-    {
-      "id": "seed:highlands:18:128",
-      "W": 128,
-      "hash": "10dedb82800f770c610836ceec16ce566d6ddd49f2f9d9d98e9807214c914746",
-      "cut": 65
-    },
-    {
-      "id": "seed:riverValley:18:256",
-      "W": 256,
-      "hash": "4dcf45b3263c84131ffa99c6333ccc3fdc2b62afd9febc1daf59edd566871546",
-      "cut": 54
-    }
-  ]
+  "hardwareFPS": "User PC acceptance required; CPU timings are not frame rates"
 }

@@ -227,7 +227,7 @@ export class CarveRun {
     this.sim.run(2);this.map.water={depth:this.sim.D.slice(),contamination:this.sim.C.slice()};this.previewWater();
     this.quiet=changed.length?0:this.quiet+1;
     if(this.ended&&(!this.active.size||this.quiet>=24||this.tail>=220)){
-      this.metrics.stable=true;this.metrics.exported=this.metrics.suspended;this.metrics.suspended=0;
+      this.metrics.stable=true;if(this.metrics.reason==='map edge'){this.metrics.exported=this.metrics.suspended;this.metrics.suspended=0;}
     }
     return changed;
   }
@@ -260,5 +260,6 @@ export class CarveRun {
     }
   }
 }
+
 
 

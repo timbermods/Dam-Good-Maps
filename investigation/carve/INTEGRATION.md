@@ -1,130 +1,129 @@
-# Adoption proposal for Live editing
+# Live editing adoption proposal
 
-Nothing here changes the production editor, generator, operation schema or
-project format. Keep the following as proposals until the prototype is accepted.
+This investigation changes no production editor, generator, schema or format.
 
-## Operation and history
+## Transaction and exact history
 
-Adopt a versioned result operation, such as the prototype's carveResult v1.
-Its inputs are diagnostic: wall mode, layer setting, source strength, step count
-and stop reason. Its authoritative output is sorted [tile, before, after]
-whole-level terrain triples, the before/after entity state, and exact water
-depth/contamination snapshots. Canonical convergence and tick count are retained.
+Adopt carveResult v1 as a stored-result operation. Diagnostic inputs are mode,
+origin/end tile, Power, Defy gravity, walls, dry/keep river, layer setting,
+acknowledged step count and end reason. Authoritative output is:
 
-The demo keeps each source placement separate and each carving run as one
-operation. During a run, live patches are transient. Stop and auto-stop both
-finish the canonical solve and then append one result. Undo and redo assign
-stored values; neither dispatches erosion. A downloaded run includes its base
-map, making replay independent of the selected map and of later algorithm changes.
-The worker tests replay the portable bundle after loading a different map.
+- sorted [tile, before, after] whole-level terrain triples;
+- complete before/after entity payloads, including the new source and objects removed;
+- exact before/after Float64 water depth and contamination;
+- canonical convergence flag and tick count.
 
-For production, replace full entity lists with ID-keyed insert/remove/update
-patches, including removed vegetation's complete payload and its original
-ordering. Keep immutable payloads so undo can reuse records. This prototype
-already freezes stored entity records and copies their array on application.
-Store water as binary Float64 arrays in the project archive rather than large
-JSON number arrays. Rebuild moisture from stored water off-thread, or cache it
-in the operation when instant overlay restoration matters.
+Source creation belongs to the carve itself. Starting a run captures the base
+before adding water. Stop retains its acknowledged prefix, then canonicalRun
+settles it and one operation commits. Automatic completion does the same.
+Esc or Undo restores the base and discards the transaction. Cancellation is
+still available during the final solve. The demo worker uses an epoch checked
+between slices, so stale chunks cannot reappear after cancellation.
 
-Validate version, dimensions, sorted unique indices, whole-height bounds,
-expected old values, entity identity and finite water values. Add the production
-schema and migration together. Preserve existing cave/overhang columns and
-lock them to carving until the 3D terrain work defines editable runs. The demo
-accepts heightfields only. Never regenerate a result on project load.
+Replay only assigns stored data. It never calls carving, RNG, geology or water.
+Existing v1 result files continue to replay even with obsolete diagnostic settings.
+The portable demo file includes its base map. In production use ID-keyed
+entity patches with original ordering, binary terrain/water arrays in the
+project archive, and a document/run revision on every message. Validate entity
+identity and project schema at import; the demo's local file validation is
+deliberately narrower than a production archive reader.
 
-## Worker and responsiveness
+Cache the pre-run and final render chunks alongside data. The demo keeps the
+latest pair so active cancel and the latest undo/redo restore visibly in one
+frame; older history can remesh from its exact data. Production should retain
+or page the needed chunk versions for its full undo policy. Derived soil,
+checks and overlays should share those revisions.
 
-Keep CarveRun pure: one step has fixed work and no clock, random call or frame
-rate input. A displayed second is ten steps. Speed changes only the rate at
-which steps are requested. Duration/Stop stores the number actually acknowledged.
-This resolves the otherwise ambiguous meaning of “same duration” on different PCs.
+## Force, water and consequences
 
-The demo permits one outstanding step. Pause withholds requests. Stop waits for
-that step and commits exactly that prefix. Geometry is built in the worker,
-one 32-square chunk between event-loop yields, and transferred. The page uploads
-at most two chunks and targets a 3 ms upload budget per frame. It never invokes
-terrain meshing, erosion, generation or water settling on the UI thread.
+CarveRun is an intentional fluvial force, not an extension of the game's
+non-eroding water. Unleash combines inertia, downhill look-ahead and resistance.
+Aim adds destination guidance with coherent lateral acceleration. Power sets
+channel radius, depth, penetration, work rate and finite travel budget. Low
+force may run out or turn away; high force opens a route through ridges.
+Defy gravity lowers the path ahead to a non-increasing grade.
 
-A water tick and an erosion step remain indivisible CPU work; they are not
-guaranteed to complete in 3 ms. The budget applies to uploads, not to GPU time.
-Generated 256-square maps can take tens of seconds to load in the worker.
-Report observed CPU numbers from captures/checks.json; do not substitute those
-for rendered fps or painting latency. The demo includes fps and p95 frame time.
-Its geometry is shared with the clean renderer; its lighting is deliberately
-simpler and does not reproduce all soil/shadow shaders.
+The front reveals whole-level cuts, then the trailing bank targets mature into
+steep walls or wider terraces. Horizontal hard layers delay work and make
+benches. Proposal rejection prevents new isolated one-tile extrema. Fixed tile
+signs prevent oscillating cut/fill. Debris accumulates at the moving front and
+builds a coherent receiving fan/delta outside its open central channel.
 
-For production, give all messages document revision and run ID. Reject stale
-patches after a newer brush edit; restart or stop carving explicitly around that
-edit. This standalone serial demo disables conflicting edits during a run.
-Do not graft its “busy” flag onto painting. Keep brush overlays and picking
-immediate, queue water work, and update entity instances by per-tile index.
-Cache the pre-run and post-run render chunks for an immediate visual undo;
-the prototype's exact data undo is followed by bounded asynchronous remeshing.
+The live force ribbon is a visual preview. Existing water also advances in
+WaterSim as terrain changes, so drainage is visible. Completion always replaces
+the preview with canonicalRun from terrain and real sources. Preserve and show
+settled=false if its existing limit is hit. A retained source may fill a closed
+endpoint basin into a lake. Never fake a permanently downhill water surface.
+Power maps to a real source strength from 0.5 to the repo's maximum 8.
+Dry canyon adds no source; existing water sources remain unless carved away.
 
-Keep water solving and meshing interruptible between slices. canonicalRun
-advance(4) is already slice invariant. Preserve its settled=false result when
-the cap is hit and expose that status quietly. Do not claim convergence or
-export a warm preview as canonical.
+Protect only the start's footprint plus support margin. Remove other objects
+when any supporting footprint tile changes. The demo reuses checkStartAt and
+walkRegions for immediate resource status and start reach, using Normal
+difficulty thresholds because standalone map inputs have no live project rules.
+Production must pass the document's actual rules and complete validator report.
+Failures are visible consequences, never carve vetoes. The live status is a
+preview until canonical water and soil are ready.
 
-## M9 reuse now
+## Worker and rendering
 
-Direct imports from dev:
+One outstanding model step; pause withholds requests and speed changes their
+presentation rate. Ten acknowledged steps mean one carve second on every PC.
+Stop stores the acknowledged count. The front may receive 50% extra display
+time at breakthroughs/falls when Follow is on; this changes no model state.
 
-- generative/proto/erode.ts: deterministic priority flood / basin spill levels.
-- core/sim: WaterSim, waterModel, canonicalRun and the repo's source/obstacle rules.
-- render3d: chunk meshers, waterfall curtains, object models and clean palette.
-- generative/proto/generate.ts: actual demo seeds.
-- core/places/place.ts: existing Real places decoding and entities.
+The worker builds one 32² chunk between yields; canonical water advances two
+ticks between yields. Checks, moisture, sky and shadow baking run off-thread
+with yields between stages. These stages and a model step are indivisible;
+measure them at 256² rather than treating the upload budget as a hard deadline.
+The main thread uploads at most two chunks with a 3 ms scheduling target.
+Use captures/checks.json for CPU evidence, never as rendered frame-rate evidence.
 
-Aligned with M9 v2 read-only at c77026b271519290ab6dd9b4a9c29890e822fd2f:
+The demo directly uses the editor's clean terrainMaterial, waterMaterial,
+objectMaterial, drawPatterns, tileData, shadowMap, meshers and entity models.
+A fixed pool of 96 whitewater instances and 48 debris/dust instances accompanies
+a short muddy ribbon. Reduced-motion settings turn off the effects, water
+animation, follow camera and dramatic timing. No model decisions depend on VFX.
 
-- field.ts erodeHard: sqrt(flow/area), linear slope, 0.85 incision resistance
-  and 0.8 diffusion/weathering resistance.
-- weather: high soft ground retreats toward lower neighbours; hardness delays it.
-- levels.ts: integral surfaces, coherent benches, no isolated pits or spikes.
-- hydro.ts: drainage decides routes; falls, hanging valleys, pools and retreating
-  knickpoints arise from drops.
-- terrain.ts: format 3 columns/runs must survive future adoption.
+For Live editing, retain immediate camera, cursor and brush previews. Put
+painting ahead of water work; resolve terrain conflicts by document/run
+revision instead of copying the standalone demo's busy/disabled controls.
+Index entities and dirty geometry by footprint/chunk. Validate painting
+responsiveness, memory and 256² FPS on the user's hardware after integration.
 
-The live editor deliberately does not call v2's complete uplift, erosion,
-weathering or level-normalization pipeline on a player's map. That would
-reshape untouched ground and could reverse visible edits. Fractional work,
-source-local activation, sediment, sign locks and stored result patches are new.
+## M9 alignment and PR #32
 
-## Once PR 32 merges
+Read-only source: investigation/generative-v2 at
+c77026b271519290ab6dd9b4a9c29890e822fd2f. V2 files live under
+investigation/generative/v2/, not an investigation/generative-v2 directory.
+No commits from that branch were merged or cherry-picked.
 
-This branch must stay based on dev; do not merge the investigation just to gain
-its modules. After the design lands and M9a promotes the actual processes:
+The new force aligns with v2 field.ts resistance: incision is multiplied by
+(1 - 0.85 * hardness), bank retreat by (1 - 0.8 * hardness). Its whole-level
+benches and rejection of isolated extrema align with levels.ts. Falls and
+knickpoints align with hydro.ts's landform goals. Its driven front, grade,
+debris budget, sign locks and transaction lifecycle are new. It does not claim
+to reuse v2's complete implicit stream-power solver or uplift/weather pipeline.
 
-1. Move drainage, hardness and local weathering coefficients into a shared
-   core erosion module. Replace the investigation import with that stable API.
-2. Replace fixed horizontal beds with a shared geology field. Persist a compact
-   layer stack (top/bottom levels, hardness, optional deterministic regional
-   tilt/patch field) as generation metadata. Query hardness at the current
-   cut level, so an exposed soft bed or hard lip agrees in both modes.
-3. Feed that geology into v2 erodeHard and weather. Its current caprock field
-   is a 2D upper-stratum mask; the proposal extends it through elevation, rather
-   than assigning unrelated geology when the editor opens.
-4. Generate the same benchmark maps through the promoted v2 generator and
-   repeat captures and CPU checks. Do not promise identical maps to v1.
-5. Keep v2's offline elevation rescaling/bench phase offline. The live process
-   must never re-normalize the edited map or override a locked tile direction.
-6. Retain all saved v1 result operations as literal patches; no erosion-code
-   migration is required for them.
+Direct reuse from dev: M9's generateProto for seeds; places decoding; waterModel,
+WaterSim and canonicalRun; clean rendering; editor start checks and walking.
+The former passive model's direct drainage import has been removed; the final
+water solve already contains the repo's deterministic priority flood.
 
-## Acceptance and boundaries
+After PR #32 merges and those processes are promoted:
 
-Try 128 and 256 maps on the user's PC while orbiting, zooming and using the real
-editor's brushes after integration. Check pause/stop latency, memory, upload
-time, fps/p95, long-run valley shape, source near a start, multiple sources,
-existing badwater, and final canonical parity. Captures demonstrate trends;
-they are not a substitute for that acceptance.
+1. Extract a shared geology query and resistance constants into core. Persist
+   the generator's layer stack as map metadata so carving exposes the same rock.
+2. Feed level-dependent geology into v2 erodeHard and weather. Its current
+   caprock mask is two-dimensional; extend it through elevation for common
+   hard lips, canyon benches and tilted regional beds.
+3. Use the promoted M9 generator for the same capture seeds and rerun outcomes;
+   do not promise identical v1/v2 maps.
+4. Keep offline elevation rescaling and bidirectional cleanup out of live runs.
+   Preserve v2 format-3 columns/caves until a voxel-aware carve can edit them;
+   today's prototype accepts heightfields only.
+5. Keep all stored result operations literal. Merging M9 requires no historical
+   erosion replay or migration of already-carved terrain.
 
-The no-reversal rule prevents normal sediment re-entrainment and oxbow cutoffs
-inside a run. A later run may choose another direction. The model produces
-slow-water shelves/delta platforms but is not a calibrated floodplain model.
-Retain these limits in product wording until improved.
-
-Glacier style is deferred. A future model should carry an ice-flux field and
-erode a broad sliding bed, with cirque headwall retreat and sea-level troughs.
-Simply increasing river width would not demonstrate a glacial process.
+These are proposals only. Hardware visual acceptance and real editor painting
+are still required before adopting the worker and rendering schedule.

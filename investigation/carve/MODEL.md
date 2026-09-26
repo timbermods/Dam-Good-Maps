@@ -1,73 +1,46 @@
-# Model notes
+# Force model notes
 
-The physical ideas are stream power, finite sediment transport capacity,
-gravity-driven bank failure, bend momentum and differential rock resistance.
-The coefficients are tuned for readable, whole-level editing, not physical
-seconds or measured rock units.
+This is an exaggerated editing tool motivated by fluvial processes, not a
+calibrated landscape forecast. It replaces the earlier passive erosion model.
 
-## Reuse and alignment
+A continuous head moves 1.35 tiles every two steps. Its heading favors inertia,
+downhill look-ahead and material it can overcome; Aim adds curved destination
+guidance. Low Power pays more energy for rising hard ground. A finite travel
+budget and explicit lake/edge/destination/resistance endings bound a run.
+The brush follows a non-increasing floor, revealing cuts locally. Power sets
+its width and depth. Trailing bank work makes a gorge or wider stepped terrace.
 
-The runtime directly imports M9 v1's priority flood from
-investigation/generative/proto/erode.ts. This identifies basins without drawing
-a river path. The repository WaterSim supplies discharge, head and momentum;
-its flow chooses the actual channel. The final result comes from canonicalRun.
+Whole-level work accumulates fractionally. Hardness scales channel work by
+1 - 0.85h and bank work by 1 - 0.8h, matching the M9 v2 field.ts coefficients.
+The default geology is four-level horizontal beds, offset by a deterministic
+hash of the input heightfield. An optional map rockLayers array overrides it.
+Coherent beds, bank targets and rejection of new isolated extrema keep the
+surface ordered. The terrain can change only in its first chosen direction
+during a run.
 
-Read-only reference: investigation/generative-v2 at
-c77026b271519290ab6dd9b4a9c29890e822fd2f, specifically
-investigation/generative/v2/field.ts, levels.ts, hydro.ts, terrain.ts,
-REPORT-v2.md, and docs/m9-design.md. There is no directory named
-investigation/generative-v2 in that branch; v2 lives under generative/v2.
+The carried debris budget counts every excavated block. At the receiving end,
+a widening fan fills untouched adjacent ground by whole levels, leaving its
+central channel open. Deposits cannot be recut in the same run. Fine load
+that does not form terrain stays diagnostic; it exits only at a map edge.
+This is a lumped transport model, not a sediment concentration solver or a
+complete alluvial meander/oxbow model.
 
-The reference uses implicit stream power with exponents m=0.5, n=1.
-Its erodeHard scales incision by (1 - 0.85 * hard) and diffusion by
-(1 - 0.8 * hard). This prototype uses exactly those resistance factors for
-incision and slumping. It replaces drainage area with actual water discharge
-and turns fractional work into whole-level cuts. Horizontal beds at surface
-levels 4, 8, 12, 16 and 20 have hardness 1; intervening layers have hardness 0.
-No random per-tile geology is introduced.
+The head and muddy ribbon preview the force. WaterSim advances existing water
+as the floor changes. The final retained source is a real Timberborn source;
+canonicalRun chooses the final water from terrain and sources alone. Closed
+basins fill. A dry canyon omits the new source. Exact history stores results,
+so future changes to this algorithm cannot change replay.
 
-V2's broad weathering and elevation rescaling are not applied to an edited map.
-Only water-reached ground and its failing banks change. The source front moves
-at most one flowing neighbour per erosion step. Four-way routing matches the
-game. M9's pit/spike cleanup can raise or lower a tile; this prototype instead
-rejects proposals that would create an isolated extremum, preserving direction.
+M9 v2 was read only at c77026b271519290ab6dd9b4a9c29890e822fd2f:
+field.ts, levels.ts, hydro.ts, terrain.ts and REPORT-v2.md under
+investigation/generative/v2/, plus docs/m9-design.md. We share resistance and
+landform principles, not its complete offline stream-power solver.
 
-## Process order
+Background:
+- [Braun and Willett, 2013](https://doi.org/10.1016/j.geomorph.2012.10.008), the stream-power method cited by M9.
+- [Hergarten, 2020](https://esurf.copernicus.org/articles/8/841/2020/), transport-limited erosion.
+- [USGS meanders](https://www.usgs.gov/educational-resources/find-feature-meander), bend erosion and deposition.
+- [USGS fluvial sediments](https://www.usgs.gov/publications/fluvial-sediments-a-summary-source-transportation-deposition-and-measurement-sediment), sediment transport and deposition.
 
-1. Advance the real water simulator four ticks, independent of playback speed.
-2. Extend the placed source's reached front through actual outgoing flux.
-3. Read discharge Q and outgoing-flux-weighted hydraulic slope S. Incision work
-   is proportional to sqrt(Q) * S above a small threshold. Deep basins suppress it.
-4. Add local bank weathering above repose (one level wide, three steep, plus one
-   at hard beds). Already cut banks propagate retreat to their neighbours.
-5. Compare incoming and outgoing momentum. At a turn, the incoming continuation
-   wears the bank on the outside. Existing bends therefore grow without a
-   noise-driven steering line.
-6. Advect up to 85% of each cell's sediment along actual outflow fractions.
-   Dry slumped material falls toward a lower neighbour. Export only crosses a
-   draining map boundary. Transport capacity increases with discharge and power.
-7. When excess load can raise a submerged slow cell by one whole level, deposit.
-   No sediment is invented: deposited volume comes out of that cell's load.
-8. Reject changes on protected ground, against an established direction, outside
-   the map's height range, or creating new single-cell extrema. Apply the batch.
-9. Remove plants on changed ground. Sources stay attached to ground; fixed
-   objects, the start footprint and the start's supporting ring are protected.
-
-The last step is always a fresh canonical solve from the repository prefill,
-not a warm-start approximation. Suspended sediment is diagnostic only and is
-not silently deposited at Stop. Exported sediment remains in the ledger.
-
-## Reading
-
-- [Braun and Willett, 2013](https://doi.org/10.1016/j.geomorph.2012.10.008):
-  the implicit stream-power method cited by M9.
-- [Hergarten, 2020](https://esurf.copernicus.org/articles/8/841/2020/):
-  a transport-limited erosion formulation, useful grounding for the distinction
-  between incision and sediment capacity.
-- [USGS, Meander](https://www.usgs.gov/educational-resources/find-feature-meander):
-  outside-bank erosion and inside-bank deposition move bends.
-- [USGS, fluvial sediments](https://www.usgs.gov/publications/fluvial-sediments-a-summary-source-transportation-deposition-and-measurement-sediment):
-  transport and deposition at slower reaches and reservoir/lake entrances.
-
-These references motivate the model. They do not validate this prototype's
-coefficients or its game-scale results.
+These sources motivate the processes; they do not validate this prototype's
+coefficients or game-scale outcomes.

@@ -1,12 +1,13 @@
 {
   "passed": [
-    "real worker module load and transferable mesh frames",
-    "source placement is its own exact undo step",
-    "idle pause leaves every byte unchanged",
-    "stop records exactly 25 acknowledged steps",
-    "worker final water equals repository canonical solve",
-    "run undo/redo and source undo/redo restore exact complete state",
-    "portable file replays exact saved result on a fresh map without simulation"
+    "actual worker builds transferable clean meshes and live check status",
+    "idle pause preserves terrain, objects, water and deterministic duration",
+    "Stop keeps exactly the acknowledged prefix and uses repository canonical water",
+    "source creation and every terrain/object/water change belong to one exact undo operation",
+    "Esc interrupts chunk generation and restores exact pre-carve state without a history entry",
+    "Undo interrupts final water settling and reverts the whole carve",
+    "portable saved result replays exactly on a different loaded map without erosion",
+    "aim auto-finishes at its destination; dry canyon leaves no water source"
   ],
-  "operationBytes": 225475
+  "operationBytes": 196215
 }

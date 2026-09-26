@@ -1,93 +1,135 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync,readFileSync,writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { CarveRun, DEFAULTS, placeSource, protectedGround, modelFor, hardness, type CarveMap } from './engine';
-import { fixture, loadMap, placeMap } from './maps';
-import { canonicalSettle, canonicalRun } from '../../src/core/sim/prefill';
-import { operation, applyOperation } from './operation';
-import { frameContext, makeChunk } from './meshes';
-const checks:string[]=[];const timings:Record<string,number>={};
-function check(name:string,fn:()=>void){fn();checks.push(name);console.log('PASS',name);}
-function source(m:CarveMap){return placeSource(m,Math.floor(m.H*.84)*m.W+Math.floor(m.W*.5),4);}
-function hash(a:Uint8Array){return createHash('sha256').update(a).digest('hex');}
-function extrema(h:Uint8Array,W:number,H:number){const out=new Set<number>();for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x,a=[h[i-1],h[i+1],h[i-W],h[i+W]];if(h[i]<Math.min(...a)||h[i]>Math.max(...a))out.add(i);}return out;}
-const before=source(fixture('mountain',64)), keep=protectedGround(before), oldExtrema=extrema(before.heights,64,64);
-const wide=new CarveRun(before,DEFAULTS), signs=new Int8Array(before.heights.length);
-const initialPlantCount=before.entities.length;
-const time=performance.now();
-for(let step=0;step<800;step++){
- const old=wide.map.heights.slice();wide.step();
+import { CarveRun,DEFAULTS,modelFor,protectedGround,sourceStrength,mapSeed,hardness,type CarveMap,type Settings,type Intent } from './engine';
+import { fixture,loadMap,placeMap } from './maps';
+import { canonicalSettle,canonicalRun } from '../../src/core/sim/prefill';
+import { operation,applyOperation } from './operation';
+import { consequences } from './consequences';
+import { frameContext,makeChunk } from './meshes';
+const passed:string[]=[],timings:Record<string,number>={};
+function check(name:string,f:()=>void){f();passed.push(name);console.log('PASS',name);}
+function hash(h:Uint8Array){return createHash('sha256').update(h).digest('hex');}
+function complete(m:CarveMap,s:Partial<Settings>={},intent:Intent={origin:54*m.W+32}){
+ const r=new CarveRun(m,{...DEFAULTS,...s},intent);for(let k=0;k<1200&&!r.metrics.stable;k++)r.step();assert.ok(r.metrics.stable);return r;
+}
+function extrema(h:Uint8Array,W:number,H:number){const out=new Set<number>();for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=y*W+x,n=[h[i-1],h[i+1],h[i-W],h[i+W]];if(h[i]<Math.min(...n)||h[i]>Math.max(...n))out.add(i);}return out;}
+const mountain=fixture('mountain',64),intent={origin:54*64+32},initial=extrema(mountain.heights,64,64),keep=protectedGround(mountain);
+const run=new CarveRun(mountain,{...DEFAULTS,power:95,walls:'wide'},intent),sign=new Int8Array(4096);
+for(let k=0;k<350&&!run.metrics.stable;k++){
+ const old=run.map.heights.slice();run.step();
  for(let i=0;i<old.length;i++){
-   const d=Math.sign(wide.map.heights[i]-old[i]);
-   if(d){assert.ok(!signs[i]||signs[i]===d,'direction reversal');signs[i]=d;}
-   assert.ok(wide.map.heights[i]>=0&&wide.map.heights[i]<=16);
-   if(keep[i])assert.equal(wide.map.heights[i],before.heights[i]);
+  const d=Math.sign(run.map.heights[i]-old[i]);if(d){assert.ok(!sign[i]||sign[i]===d);sign[i]=d;}
+  assert.ok(Number.isInteger(run.map.heights[i])&&run.map.heights[i]>=0&&run.map.heights[i]<=16);
+  if(keep[i])assert.equal(run.map.heights[i],mountain.heights[i]);
  }
- if(step%50===0)for(const i of extrema(wide.map.heights,64,64))assert.ok(oldExtrema.has(i),'new isolated pit/spike');
- const v=wide.metrics;assert.ok(Math.abs(v.cut-v.deposited-v.exported-v.suspended)<1e-7,'sediment mass balance');
+ for(const i of extrema(run.map.heights,64,64))assert.ok(initial.has(i),'new isolated pit or spike at '+i);
+ assert.equal(run.metrics.cut,run.metrics.deposited+run.metrics.exported+run.metrics.suspended);
 }
-timings['800 steps, 64 squared']=performance.now()-time;
-check('whole levels, per-step monotonicity, protected start, no new isolated extrema and sediment conservation',()=>{assert.ok(wide.metrics.cut>500);assert.ok(wide.metrics.deposited>100);assert.ok(wide.map.entities.length<initialPlantCount);});
-check('source-first progression leaves distant existing water terrain alone',()=>{
- const m=source(fixture('mountain',64)), r=new CarveRun(m,DEFAULTS), sx=32,sy=Math.floor(64*.84);
- for(let k=0;k<12;k++)r.step();
- let changed=0;
- for(let i=0;i<m.heights.length;i++)if(m.heights[i]!==r.map.heights[i]){
-  changed++;assert.ok(Math.abs(i%64-sx)+Math.abs(Math.floor(i/64)-sy)<=16);
- }
- assert.ok(changed>0);
+check('every step: whole levels, one terrain direction, no new one-tile extrema, start support and debris volume',()=>{
+ assert.ok(run.metrics.stable);assert.equal(run.metrics.reason,'lake');assert.ok(run.metrics.cut>3000);assert.ok(run.metrics.deposited>10);
 });
-check('a flowing river stops itself after a long stable-course interval',()=>{
- const m=placeSource(fixture('mountain',64),54*64+32,4),r=new CarveRun(m,DEFAULTS);
- for(let k=0;k<7000&&!r.metrics.stable;k++)r.step();
- assert.ok(r.metrics.stable);assert.ok(r.metrics.steps>800);
+check('first second has visible local chunks, not distant sheet erosion',()=>{
+ const r=new CarveRun(mountain,DEFAULTS,intent);for(let k=0;k<10;k++)r.step();
+ assert.ok(r.metrics.cut>100);
+ for(let i=0;i<4096;i++)if(r.map.heights[i]!==mountain.heights[i])assert.ok(Math.hypot(i%64-32,Math.floor(i/64)-54)<20);
+ assert.ok(r.metrics.distance>5&&r.metrics.distance<9);
 });
-const steep=new CarveRun(before,{...DEFAULTS,walls:'steep'});for(let k=0;k<800;k++)steep.step();
-check('wide walls produce more bank retreat than steep walls',()=>assert.ok(wide.metrics.bankCuts>steep.metrics.bankCuts*2));
-check('outside-bend momentum erodes banks',()=>assert.ok(wide.metrics.bendCuts>50));
-check('v2 rock coefficient and level bands',()=>{assert.equal(hardness(8,true),1);assert.equal(hardness(7,true),0);assert.equal(hardness(8,false),0);});
-const soft=new CarveRun(before,{...DEFAULTS,layers:false});for(let k=0;k<800;k++)soft.step();
-check('rock layers change the resulting terrain',()=>assert.notEqual(hash(soft.map.heights),hash(wide.map.heights)));
-const replay=new CarveRun(before,DEFAULTS);
-for(const batch of [17,93,1,209,480])for(let k=0;k<batch;k++)replay.step();
-check('identical duration gives byte-identical terrain, water, sediment and objects independent of scheduling',()=>{
- assert.deepEqual(replay.map.heights,wide.map.heights);assert.deepEqual(replay.sim.D,wide.sim.D);assert.deepEqual(replay.sediment,wide.sediment);assert.deepEqual(replay.map.entities,wide.map.entities);
+const low=complete(mountain,{power:15}),high=complete(mountain,{power:95});
+check('power sets incision and width; catastrophe removes much more land than creek',()=>{
+ assert.ok(high.metrics.cut>low.metrics.cut*5);
+ assert.ok(high.head.width>low.head.width*2);
+ assert.ok(high.map.heights[intent.origin]<low.map.heights[intent.origin]);
 });
-const dry=fixture('mountain',32);dry.water.depth.fill(0);dry.entities=[];
-const stable=new CarveRun(dry,DEFAULTS);for(let k=0;k<400;k++)stable.step();
-check('unforced stable map stops automatically and further steps are inert',()=>{assert.ok(stable.metrics.stable);const n=stable.metrics.steps;stable.step();assert.equal(stable.metrics.steps,n);assert.deepEqual(stable.map.heights,dry.heights);});
-const final=canonicalSettle(modelFor(wide.map)), sliced=canonicalRun(modelFor(wide.map));let end=null;
-while(!end)end=sliced.advance(7);
-check('final water equals repository canonical settle byte for byte across slices',()=>{assert.deepEqual(end!.depth,final.depth);assert.deepEqual(end!.contamination,final.contamination);assert.equal(end!.ticks,final.ticks);});
-const op=JSON.parse(JSON.stringify(operation(before,wide.map,DEFAULTS,800,'duration',final)));
-const after=applyOperation(before,op);const undoStart=performance.now();const undone=applyOperation(after,op,true);timings['undo apply CPU ms']=performance.now()-undoStart;
-check('JSON operation survives serialization, exact undo, and replay without erosion',()=>{assert.deepEqual(undone,before);assert.deepEqual(applyOperation(undone,op),after);assert.deepEqual(after.water.depth,final.depth);});
-check('stale operation is rejected atomically',()=>assert.throws(()=>applyOperation(after,op),/Stale/));
-const mesh=makeChunk(after,0,0,frameContext(after),true);
-check('shared renderer geometry is finite and transferable',()=>{assert.ok(mesh.terrain.positions.length>0);assert.ok(mesh.terrain.positions.every(Number.isFinite));assert.ok(mesh.water.positions.every(Number.isFinite));structuredClone(mesh);});
-const realResults=[];
+check('wide walls make broad terraces, steep walls preserve a narrower gorge',()=>{
+ const steep=complete(mountain,{power:65,walls:'steep'}),wide=complete(mountain,{power:65,walls:'wide'});
+ assert.ok(wide.metrics.bankCuts>steep.metrics.bankCuts*1.4);assert.ok(wide.metrics.cut>steep.metrics.cut);
+});
+check('hard layers delay breakthroughs; bands are deterministically derived from terrain',()=>{
+ const layered=new CarveRun(mountain,{...DEFAULTS,power:35},intent),soft=new CarveRun(mountain,{...DEFAULTS,power:35,layers:false},intent);
+ for(let k=0;k<8;k++){layered.step();soft.step();}
+ assert.ok(soft.metrics.cut>layered.metrics.cut);
+ assert.equal(mapSeed(mountain),mapSeed(structuredClone(mountain)));
+ assert.equal(Array.from({length:16},(_,i)=>hardness(i,true,mapSeed(mountain))).filter(v=>v===1).length,4);
+});
+const ridge=fixture('ridge',64),aim={origin:54*64+32,end:10*64+32};
+const ridgeHigh=complete(ridge,{power:95,mode:'aim'},aim),ridgeLow=complete(ridge,{power:15,mode:'aim'},aim);
+check('aim breaks through a ridge with a curved course; low power lets the land win',()=>{
+ assert.equal(ridgeHigh.metrics.reason,'destination');assert.notEqual(ridgeLow.metrics.reason,'destination');
+ assert.ok(ridgeHigh.path.some(s=>Math.abs(s.x-32)>2),'not a ruler line');
+ assert.ok(Math.min(...ridgeHigh.map.heights.slice(32*64+15,32*64+49))<=2);assert.ok(ridge.heights[32*64+32]>=12);
+});
+const uphill=fixture('uphill',64),defy=complete(uphill,{power:95,mode:'aim',defyGravity:true},aim);
+check('defy gravity cuts an uphill destination into a connected descending floor',()=>{
+ assert.ok(uphill.heights[aim.end]>uphill.heights[aim.origin]);
+ assert.throws(()=>new CarveRun(uphill,{...DEFAULTS,mode:'aim'},aim),/Defy gravity/);
+ assert.equal(defy.metrics.reason,'destination');
+ let last=Infinity;
+ for(const s of defy.path){const h=defy.map.heights[Math.round(s.y)*64+Math.round(s.x)];assert.ok(h<=last);last=h;}
+ assert.ok(defy.map.heights[aim.end]<=defy.map.heights[aim.origin]);
+});
+check('same input and duration has exact output independent of presentation batching',()=>{
+ const a=new CarveRun(mountain,DEFAULTS,intent),b=new CarveRun(mountain,DEFAULTS,intent);
+ for(let k=0;k<45;k++)a.step();
+ for(const batch of [3,12,1,19,10])for(let k=0;k<batch;k++)b.step();
+ assert.deepEqual(a.map,b.map);assert.deepEqual(a.head,b.head);assert.deepEqual(a.metrics,b.metrics);
+});
+check('objects on excavated footprints are removed; the start is never removed',()=>{
+ const m=structuredClone(mountain);m.entities.push({id:'test-object',owner:'study',template:'Blockage',x:32,y:52,z:m.heights[52*64+32],orientation:'Cw0',flipped:false,components:{}});
+ const r=complete(m,{power:95});assert.ok(!r.map.entities.some(e=>e.id==='test-object'));
+ assert.ok(r.map.entities.some(e=>e.template==='StartingLocation'));
+ assert.ok(r.map.entities.length<m.entities.length);
+});
+check('keep river creates a real source set by power; dry canyon adds no source',()=>{
+ assert.ok(high.map.entities.some(e=>e.id==='carve-source'));
+ assert.equal(sourceStrength(100),8);assert.equal(sourceStrength(0),.5);
+ const dry=complete(mountain,{dry:true,power:95});assert.ok(!dry.map.entities.some(e=>e.id==='carve-source'));
+ const settled=canonicalSettle(modelFor(dry.map));assert.ok(settled.depth.every(v=>v===0));
+ assert.deepEqual(dry.map.heights,high.map.heights);
+});
+check('check status and start reach update from changed terrain and resources without blocking it',()=>{
+ const a=consequences(mountain),b=consequences(run.map);
+ assert.ok(a.present&&b.present);assert.equal(b.tiles.length,4096);assert.equal(b.reach,b.tiles.reduce((s,v)=>s+v,0));
+ assert.ok(run.metrics.cut>0);assert.equal(typeof b.meets,'boolean');
+ const severed=structuredClone(mountain);
+ // Remove available resources and the start's neighboring land: consequences, not a veto.
+ severed.entities=severed.entities.filter(e=>e.template==='StartingLocation');
+ const mask=protectedGround(severed);for(let i=0;i<4096;i++)if(!mask[i])severed.heights[i]=0;
+ const c=consequences(severed);assert.equal(c.trees,0);assert.equal(c.bushes,0);assert.equal(c.meets,false);assert.ok(c.reach<a.reach);
+});
+const settled=canonicalSettle(modelFor(high.map)),final={...high.map,water:{depth:settled.depth,contamination:settled.contamination}};
+check('canonical water is bit-exact with different slice sizes',()=>{
+ const r=canonicalRun(modelFor(high.map));let result=null;while(!result)result=r.advance(7);
+ assert.deepEqual(result.depth,settled.depth);assert.deepEqual(result.contamination,settled.contamination);
+});
+const op=operation(mountain,final,high.settings,high.metrics.steps,'lake',settled);
+check('one stored result restores terrain, source, removed objects and water exactly after JSON replay',()=>{
+ const stored=JSON.parse(JSON.stringify(op));assert.deepEqual(applyOperation(mountain,stored),final);
+ assert.deepEqual(applyOperation(final,stored,true),mountain);
+ assert.throws(()=>applyOperation(final,stored),/Stale/);
+ stored.params.settings={oldAlgorithm:'unavailable'};assert.deepEqual(applyOperation(mountain,stored),final,'replay never consults algorithm settings');
+});
+check('worker mesh data supports the actual clean terrain, water and object shaders',()=>{
+ const chunk=makeChunk(high.map,0,1,frameContext(high.map),true),c=structuredClone(chunk);
+ for(const a of [c.terrain.positions,c.water.positions,c.water.data!,c.water.flags!])assert.ok(a.every(Number.isFinite));
+ assert.ok(c.terrain.positions.length>0);assert.ok(c.water.data!.length>0);
+});
 for(const id of ['near-yosemite-valley','near-geirangerfjord','near-grand-canyon-colorado']){
- const m=placeMap(readFileSync('../../public/real-places/data/'+id+'.json.gz'));const r=new CarveRun(source(m),DEFAULTS);
- const t=performance.now();for(let k=0;k<20;k++)r.step();timings[id+' 20 steps']=performance.now()-t;
- assert.ok(r.map.heights.length===m.W*m.H);realResults.push({id,W:m.W,H:m.H,cut:r.metrics.cut});
+ const m=placeMap(readFileSync('../../public/real-places/data/'+id+'.json.gz'));
+ const origin=Math.floor(m.H*.8)*m.W+Math.floor(m.W*.5),r=new CarveRun(m,DEFAULTS,{origin});
+ for(let k=0;k<20;k++)r.step();check('real map '+id+' accepts source-local carving',()=>assert.ok(r.metrics.cut>0));
 }
-checks.push('three Real places load with their actual terrain, sources, start and plants');
-const generated=[];
-for(const id of ['seed:highlands:18:128','seed:riverValley:18:256']){
- const start=performance.now();const m=await loadMap(id);timings[id+' load']=performance.now()-start;
- const r=new CarveRun(source(m),DEFAULTS),steps=[];
- for(let k=0;k<25;k++){const t=performance.now();r.step();steps.push(performance.now()-t);}
- steps.sort((a,b)=>a-b);timings[id+' step p95']=steps[Math.floor(steps.length*.95)];
- generated.push({id,W:m.W,hash:hash(m.heights),cut:r.metrics.cut});
- assert.equal(m.W,id.endsWith('256')?256:128);
- assert.ok(m.entities.some(e=>e.template==='StartingLocation'));
- const afterState={...r.map.water,sat:new Uint8Array(m.W*m.H),settled:false,ticks:100};
- const base=source(m);const record=operation(base,r.map,DEFAULTS,25,'test',afterState);
- const t=performance.now();const restored=applyOperation(applyOperation(base,record),record,true);
- timings[id+' undo+redo data CPU']=performance.now()-t;
- assert.deepEqual(restored,base);
+for(const size of [128,256]){
+ const m=await loadMap('seed:highlands:18:'+size);let origin=Math.floor(size*.8)*size+Math.floor(size*.5);
+ const locked=protectedGround(m);while(locked[origin])origin++;
+ const r=new CarveRun(m,DEFAULTS,{origin}),ms:number[]=[];
+ for(let k=0;k<100&&!r.metrics.stable;k++){const t=performance.now();r.step();ms.push(performance.now()-t);}
+ ms.sort((a,b)=>a-b);timings[size+' step p95 ms']=ms[Math.floor(ms.length*.95)];
+ const water=canonicalSettle(modelFor(r.map)),after={...r.map,water:{depth:water.depth,contamination:water.contamination}},o=operation(m,after,DEFAULTS,r.metrics.steps,'stopped',water);
+ const t=performance.now();const replay=applyOperation(m,o);assert.deepEqual(applyOperation(replay,o,true),m);timings[size+' apply and undo ms']=performance.now()-t;
+ check('generated '+size+' map preserves start and exact complete operation',()=>assert.ok(replay.entities.some(e=>e.template==='StartingLocation')));
 }
-checks.push('real M9 generated maps at 128 and 256 load and carve');
 mkdirSync('captures',{recursive:true});
-writeFileSync('captures/checks.json',JSON.stringify({checks,timings,wide:wide.metrics,steep:steep.metrics,soft:soft.metrics,canonical:{settled:final.settled,ticks:final.ticks},realResults,generated},null,2)+'\n');
-console.log(JSON.stringify({passed:checks.length,timings,canonical:{settled:final.settled,ticks:final.ticks}},null,2));
+writeFileSync('captures/checks.json',JSON.stringify({passed,timings,terrainHashes:{mountain:hash(high.map.heights),ridge:hash(ridgeHigh.map.heights),defy:hash(defy.map.heights)},hardwareFPS:'User PC acceptance required; CPU timings are not frame rates'},null,2)+'\n');
+console.log(timings);
+

@@ -1,73 +1,74 @@
-import { createCanvas, ImageData } from '@napi-rs/canvas';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-import { CarveRun, DEFAULTS, placeSource, objects, type CarveMap, type Settings } from './engine';
-import { fixture, loadMap, placeMap } from './maps';
+import { createCanvas,ImageData,type Canvas } from '@napi-rs/canvas';
+import { GIFEncoder,quantize,applyPalette } from 'gifenc';
+import { mkdirSync,writeFileSync } from 'node:fs';
+import { CarveRun,DEFAULTS,objects,modelFor,type CarveMap,type Settings,type Intent,type Head } from './engine';
+import { fixture,loadMap } from './maps';
 import { canonicalSettle } from '../../src/core/sim/prefill';
-import { modelFor } from './engine';
-import { topDown, isometric, type Picture } from '../workshop/lib/render';
-import { drainage } from '../generative/proto/erode';
+import { topDown,isometric,type Picture } from '../workshop/lib/render';
 import { snapshot } from './meshes';
 mkdirSync('captures',{recursive:true});
-type Frame={map:CarveMap;label:string;cut:number;deposited:number};
-function picture(p:Picture) {
+interface Frame {map:CarveMap;label:string;cut:number;deposited:number;head:Head|null}
+function picture(p:Picture){
  const c=createCanvas(p.w,p.h),ctx=c.getContext('2d'),rgba=new Uint8ClampedArray(p.w*p.h*4);
  for(let i=0;i<p.w*p.h;i++){rgba[i*4]=p.rgb[i*3];rgba[i*4+1]=p.rgb[i*3+1];rgba[i*4+2]=p.rgb[i*3+2];rgba[i*4+3]=255;}
  ctx.putImageData(new ImageData(rgba,p.w,p.h),0,0);return c;
 }
-function sheet(file:string,title:string,frames:Frame[]){
- const w=420*frames.length,h=710,c=createCanvas(w,h),ctx=c.getContext('2d');
- ctx.fillStyle='#f4f2e9';ctx.fillRect(0,0,w,h);ctx.fillStyle='#263e38';ctx.font='bold 22px sans-serif';ctx.fillText(title,18,31);
- frames.forEach((f,k)=>{
-  const m=f.map,x=k*420;
-  ctx.fillStyle='#263e38';ctx.font='bold 17px sans-serif';ctx.fillText(f.label,x+18,63);
-  ctx.font='13px sans-serif';ctx.fillText('cut '+f.cut+' / deposited '+f.deposited+' block-volumes',x+18,86);
-  const a=picture(isometric(m.heights,m.W,m.H,m.water.depth,m.water.contamination,objects(m.entities),540));
-  ctx.drawImage(a,x+8,100,404,255);
-  const b=picture(topDown(m.heights,m.W,m.H,m.water.depth,m.water.contamination,objects(m.entities),360));
-  ctx.imageSmoothingEnabled=false;ctx.drawImage(b,x+65,365,290,290);
-  ctx.font='12px sans-serif';ctx.fillStyle='#5d7168';ctx.fillText('North up · cyan source · red start',x+65,674);
- });
- ctx.fillStyle='#5d7168';ctx.font='12px sans-serif';ctx.fillText('CPU renders of actual stored states. Intermediate water is live; final panels use repository canonical settle. No GPU timing claim.',18,699);
- writeFileSync('captures/'+file+'.png',c.toBuffer('image/png'));
-}
-function input(m:CarveMap,tile?:number) {
- if(tile===undefined){
-  const d=drainage(m.heights,m.W,m.H,{eight:false});let best=-Infinity;tile=0;
-  for(let i=0;i<m.heights.length;i+=7){
-   if(m.heights[i]<9||i%m.W<4||i%m.W>m.W-5||Math.floor(i/m.W)<4||Math.floor(i/m.W)>m.H-5)continue;
-   let j=i,len=0,pool=false,low=m.heights[i];
-   for(;j>=0&&len<500;j=d.rcv[j],len++){low=Math.min(low,m.heights[j]);if(d.filled[j]-m.heights[j]>1||m.water.depth[j]>.9)pool=true;}
-   const score=(pool?100:0)+(m.heights[i]-low)*3+Math.min(100,len)*.1;
-   if(score>best){best=score;tile=i;}
-  }
+function panel(title:string,f:Frame):Canvas{
+ const c=createCanvas(640,520),ctx=c.getContext('2d'),m=f.map;
+ ctx.fillStyle='#f4f2e9';ctx.fillRect(0,0,640,520);ctx.fillStyle='#263e38';ctx.font='bold 20px sans-serif';ctx.fillText(title,18,29);
+ ctx.font='15px sans-serif';ctx.fillText(f.label,18,55);
+ ctx.font='12px sans-serif';ctx.fillStyle='#62766c';ctx.fillText(f.cut.toLocaleString()+' blocks cut · '+f.deposited+' deposited',18,77);
+ const iso=picture(isometric(m.heights,m.W,m.H,m.water.depth,m.water.contamination,objects(m.entities),800));
+ ctx.drawImage(iso,10,91,620,365);
+ const plan=picture(topDown(m.heights,m.W,m.H,m.water.depth,m.water.contamination,objects(m.entities),170));
+ ctx.fillStyle='#f4f2e9';ctx.fillRect(457,326,176,180);ctx.imageSmoothingEnabled=false;ctx.drawImage(plan,465,334,160,160);
+ if(f.head){
+  const x=465+(f.head.x+.5)/m.W*160,y=334+(m.H-f.head.y-.5)/m.H*160;
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,Math.max(3,f.head.width*160/m.W),0,Math.PI*2);ctx.stroke();
  }
- return placeSource(m,tile,4);
+ ctx.fillStyle='#62766c';ctx.font='11px sans-serif';ctx.fillText('CPU capture of actual terrain states · inset: front in white',18,476);
+ ctx.fillText('Final water: repository simulation. Visual effects and FPS: try the 3D demo.',18,501);
+ return c;
+}
+function gif(file:string,canvases:Canvas[]){
+ const enc=GIFEncoder();canvases.forEach((c,k)=>{
+  const data=c.getContext('2d').getImageData(0,0,c.width,c.height).data,palette=quantize(data,128);
+  enc.writeFrame(applyPalette(data,palette),c.width,c.height,{palette,delay:k===0?1200:k===canvases.length-1?2200:340,repeat:0});
+ });enc.finish();writeFileSync('captures/'+file+'.gif',enc.bytes());
+}
+function sheet(file:string,title:string,frames:Frame[]){
+ const chosen=[frames[0],frames[Math.floor(frames.length/2)],frames[frames.length-1]],c=createCanvas(1260,342),ctx=c.getContext('2d');
+ chosen.forEach((f,k)=>ctx.drawImage(panel(title,f),k*420,0,420,342));writeFileSync('captures/'+file+'.png',c.toBuffer('image/png'));
 }
 const results:Record<string,unknown>={};
-function sequence(id:string,title:string,m:CarveMap,settings:Settings,at:number[]){
- const run=new CarveRun(m,settings),frames:Frame[]=[{map:snapshot(m),label:'Before',cut:0,deposited:0}];
- let finalWater;
- for(let k=1;k<=at[at.length-1];k++){
+function sequence(id:string,title:string,m:CarveMap,s:Partial<Settings>,intent:Intent,publish=true){
+ const run=new CarveRun(m,{...DEFAULTS,...s},intent),frames:Frame[]=[{map:snapshot(m),label:'Before',cut:0,deposited:0,head:null}];
+ for(let k=1;k<=900&&!run.metrics.stable;k++){
   run.step();
-  if(at.includes(k)){
-   const s=snapshot(run.map);
-   if(k===at[at.length-1]){finalWater=canonicalSettle(modelFor(s));s.water={depth:finalWater.depth,contamination:finalWater.contamination};}
-   frames.push({map:s,label:(run.metrics.steps/10)+' s'+(k===at[at.length-1]?' · final':' · running'),cut:run.metrics.cut,deposited:run.metrics.deposited});
-  }
+  if(k%8===0&&!run.metrics.stable)frames.push({map:snapshot(run.map),label:(k/10).toFixed(1)+' s · carving',cut:run.metrics.cut,deposited:run.metrics.deposited,head:{...run.head}});
  }
- results[id]={source:m.entities.find(e=>e.id==='carve-source'),settings,metrics:run.metrics,canonical:finalWater?{settled:finalWater.settled,ticks:finalWater.ticks}:null};
- sheet(id,title,frames);
- return frames[frames.length-1];
+ const w=canonicalSettle(modelFor(run.map)),last=snapshot(run.map);last.water={depth:w.depth,contamination:w.contamination};
+ frames.push({map:last,label:'After · '+run.metrics.reason+' · '+(run.metrics.steps/10).toFixed(1)+' s',cut:run.metrics.cut,deposited:run.metrics.deposited,head:null});
+ results[id]={intent,settings:run.settings,metrics:run.metrics,water:{settled:w.settled,ticks:w.ticks}};
+ if(publish){gif(id,frames.map(f=>panel(title,f)));sheet(id,title,frames);}
+ console.log(id,run.metrics.cut,run.metrics.reason);return frames;
 }
-const study=input(fixture('mountain',64),54*64+32);
-const wide=sequence('mountain-lake','Mountain into a lake · whole-level incision and a delta',study,DEFAULTS,[100,800]);
-const steep=sequence('stepped-canyon','Hard bands · slower incision leaves lips and benches',study,{...DEFAULTS,walls:'steep'},[100,800]);
-sheet('steep-wide','Same source, duration and layers · walls control bank retreat',[
- {map:snapshot(study),label:'Before',cut:0,deposited:0},{...steep,label:'Steep · 80 s'},{...wide,label:'Wide · 80 s'}
-]);
-sequence('long-valley','Long run · valley widening and deposition in the basin',study,DEFAULTS,[800,6400]);
-sequence('bends','Existing bends grow through outside-bank erosion',input(fixture('bends',64),54*64+33),DEFAULTS,[400,2400]);
-sequence('generated-highlands','M9 Highlands · seed 18 · 128 x 128',input(await loadMap('seed:highlands:18:128')),DEFAULTS,[200,800]);
-sequence('real-yosemite','Real places library · Near Yosemite Valley',input(placeMap(readFileSync('../../public/real-places/data/near-yosemite-valley.json.gz'))),DEFAULTS,[200,800]);
+const mountain=fixture('mountain',64),intent={origin:54*64+32};
+const high=sequence('unleashed-mountain','Unleash · a river bursts down a mountain',mountain,{power:95},intent);
+sequence('aimed-ridge','Aim · split a ridge, open new land',fixture('ridge',64),{mode:'aim',power:95,walls:'wide'},{...intent,end:10*64+32});
+sequence('defy-uphill','Defy gravity · lower the land ahead',fixture('uphill',64),{mode:'aim',power:95,defyGravity:true},{...intent,end:10*64+32});
+const low=sequence('creek-mountain','Low power · the mountain keeps its shape',mountain,{power:15},intent,false);
+const paired:Canvas[]=[];
+for(let k=0;k<Math.max(low.length,high.length);k++){
+ const c=createCanvas(960,390),ctx=c.getContext('2d');
+ ctx.drawImage(panel('Power 15 · Creek',low[Math.min(k,low.length-1)]),0,0,480,390);
+ ctx.drawImage(panel('Power 95 · Catastrophe',high[Math.min(k,high.length-1)]),480,0,480,390);paired.push(c);
+}
+gif('low-high-power',paired);writeFileSync('captures/low-high-power.png',paired[paired.length-1].toBuffer('image/png'));
+const m=await loadMap('seed:highlands:18:128');let origin=0,best=-Infinity;
+for(let y=16;y<112;y++)for(let x=16;x<112;x++){const i=y*128+x;if(m.water.depth[i]>.05)continue;
+ const score=m.heights[i]-.01*Math.hypot(x-64,y-80);if(score>best){best=score;origin=i;}
+}
+sequence('generated-force','Unleash · M9 Highlands seed 18 · 128²',m,{power:90,walls:'wide'},{origin});
 writeFileSync('captures/scenarios.json',JSON.stringify(results,null,2)+'\n');
-console.log(JSON.stringify(results,null,2));
+

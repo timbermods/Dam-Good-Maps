@@ -1,272 +1,149 @@
 {
-  "mountain-lake": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 32,
-      "y": 54,
-      "z": 12,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
+  "unleashed-mountain": {
+    "intent": {
+      "origin": 3488
     },
     "settings": {
-      "walls": "wide",
-      "layers": true,
-      "strength": 4
-    },
-    "metrics": {
-      "cut": 761,
-      "deposited": 362,
-      "exported": 252.1969742296047,
-      "suspended": 146.8030257703952,
-      "bankCuts": 383,
-      "bendCuts": 179,
-      "steps": 800,
-      "stable": false
-    },
-    "canonical": {
-      "settled": true,
-      "ticks": 384
-    }
-  },
-  "stepped-canyon": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 32,
-      "y": 54,
-      "z": 12,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
-    },
-    "settings": {
+      "mode": "unleash",
+      "power": 95,
       "walls": "steep",
-      "layers": true,
-      "strength": 4
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
     },
     "metrics": {
-      "cut": 447,
-      "deposited": 158,
-      "exported": 261.670210049525,
-      "suspended": 27.3297899504753,
-      "bankCuts": 53,
-      "bendCuts": 149,
-      "steps": 800,
-      "stable": false
+      "cut": 4126,
+      "deposited": 32,
+      "exported": 0,
+      "suspended": 4094,
+      "bankCuts": 1866,
+      "bendCuts": 0,
+      "steps": 64,
+      "stable": true,
+      "distance": 36.45000000000002,
+      "reason": "lake"
     },
-    "canonical": {
+    "water": {
       "settled": true,
       "ticks": 512
     }
   },
-  "long-valley": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 32,
-      "y": 54,
-      "z": 12,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
+  "aimed-ridge": {
+    "intent": {
+      "origin": 3488,
+      "end": 672
     },
     "settings": {
+      "mode": "aim",
+      "power": 95,
       "walls": "wide",
-      "layers": true,
-      "strength": 4
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
     },
     "metrics": {
-      "cut": 1321,
-      "deposited": 362,
-      "exported": 749.2934546764182,
-      "suspended": 209.70654532356508,
-      "bankCuts": 631,
-      "bendCuts": 487,
-      "steps": 6200,
-      "stable": true
+      "cut": 6015,
+      "deposited": 2,
+      "exported": 0,
+      "suspended": 6013,
+      "bankCuts": 4608,
+      "bendCuts": 12,
+      "steps": 82,
+      "stable": true,
+      "distance": 48.60000000000003,
+      "reason": "destination"
     },
-    "canonical": {
+    "water": {
       "settled": true,
       "ticks": 384
     }
   },
-  "bends": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 33,
-      "y": 54,
-      "z": 12,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
+  "defy-uphill": {
+    "intent": {
+      "origin": 3488,
+      "end": 672
     },
     "settings": {
-      "walls": "wide",
-      "layers": true,
-      "strength": 4
+      "mode": "aim",
+      "power": 95,
+      "walls": "steep",
+      "defyGravity": true,
+      "dry": false,
+      "layers": true
     },
     "metrics": {
-      "cut": 1233,
-      "deposited": 345,
-      "exported": 662.281048958739,
-      "suspended": 225.7189510412615,
-      "bankCuts": 589,
-      "bendCuts": 436,
-      "steps": 2400,
-      "stable": false
+      "cut": 6642,
+      "deposited": 0,
+      "exported": 0,
+      "suspended": 6642,
+      "bankCuts": 3399,
+      "bendCuts": 7,
+      "steps": 83,
+      "stable": true,
+      "distance": 44.550000000000026,
+      "reason": "destination"
     },
-    "canonical": {
+    "water": {
       "settled": true,
-      "ticks": 384
+      "ticks": 512
     }
   },
-  "generated-highlands": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 87,
-      "y": 72,
-      "z": 13,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
+  "creek-mountain": {
+    "intent": {
+      "origin": 3488
     },
     "settings": {
-      "walls": "wide",
-      "layers": true,
-      "strength": 4
+      "mode": "unleash",
+      "power": 15,
+      "walls": "steep",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
     },
     "metrics": {
-      "cut": 5071,
-      "deposited": 236,
-      "exported": 4268.522996422047,
-      "suspended": 566.4770035779596,
-      "bankCuts": 2721,
-      "bendCuts": 2534,
-      "steps": 800,
-      "stable": false
+      "cut": 393,
+      "deposited": 114,
+      "exported": 0,
+      "suspended": 279,
+      "bankCuts": 134,
+      "bendCuts": 0,
+      "steps": 65,
+      "stable": true,
+      "distance": 36.45000000000002,
+      "reason": "lake"
     },
-    "canonical": {
+    "water": {
+      "settled": true,
+      "ticks": 256
+    }
+  },
+  "generated-force": {
+    "intent": {
+      "origin": 4043
+    },
+    "settings": {
+      "mode": "unleash",
+      "power": 90,
+      "walls": "wide",
+      "defyGravity": false,
+      "dry": false,
+      "layers": true
+    },
+    "metrics": {
+      "cut": 3856,
+      "deposited": 0,
+      "exported": 3856,
+      "suspended": 0,
+      "bankCuts": 2188,
+      "bendCuts": 6,
+      "steps": 70,
+      "stable": true,
+      "distance": 43.200000000000024,
+      "reason": "map edge"
+    },
+    "water": {
       "settled": true,
       "ticks": 768
-    }
-  },
-  "real-yosemite": {
-    "source": {
-      "id": "carve-source",
-      "owner": "carve",
-      "x": 85,
-      "y": 88,
-      "z": 15,
-      "orientation": "Cw0",
-      "flipped": false,
-      "template": "WaterSource",
-      "before": {
-        "WaterSource": {
-          "SpecifiedStrength": 4,
-          "CurrentStrength": 4
-        }
-      },
-      "components": {
-        "TimeActivatedComponent": {
-          "IsEnabled": false,
-          "CyclesUntilCountdownActivation": 5,
-          "DaysUntilActivation": 10,
-          "DaysPassed": 0
-        }
-      }
-    },
-    "settings": {
-      "walls": "wide",
-      "layers": true,
-      "strength": 4
-    },
-    "metrics": {
-      "cut": 3170,
-      "deposited": 101,
-      "exported": 2729.3505816056554,
-      "suspended": 339.6494183943305,
-      "bankCuts": 2225,
-      "bendCuts": 1172,
-      "steps": 800,
-      "stable": false
-    },
-    "canonical": {
-      "settled": true,
-      "ticks": 1024
     }
   }
 }

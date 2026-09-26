@@ -118,7 +118,7 @@ worker.onmessage=(event:MessageEvent)=>{
   if(m.type==='started'){active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
   if(m.type==='cancelled'){active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
   if(m.type==='finished'){
-    active=false;paused=false;head=null;finishCache=true;$('pause').textContent='Pause';
+    active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
     notice.textContent=(m.reason==='stopped'?'Stopped.': 'The river reached '+m.reason+'.')+' One undo step saved.';
     if(!m.settled)notice.textContent+=' Water reached the repo’s settle limit.';
     $<HTMLButtonElement>('undo').disabled=false;
@@ -216,4 +216,5 @@ function animate(t:number){
 requestAnimationFrame(animate);
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H,mode,head};}}});
 load();
+
 
