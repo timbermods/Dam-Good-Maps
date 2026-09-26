@@ -285,10 +285,13 @@ export interface TileContext {
   editor?: boolean;
 }
 
-/** Whether a feature is something the player picks on the map (D196: water is never an object,
- *  and the generator's rivers, lakes and landforms are its plan, shaped through sources and land). */
+/** Whether a feature is something the player picks on the map. Water is never an object (D196),
+ *  and what the generator made is its plan, never an editing object (D182, D184): it is shaped
+ *  through sources and land, and never selected, moved or resized. The start is the one exception:
+ *  every map has one, and the player moves it. */
 export function selectable(f: Feature): boolean {
-  return f.kind !== "river" && f.kind !== "lake" && f.kind !== "landform";
+  if (f.kind === "river" || f.kind === "lake" || f.kind === "landform") return false;
+  return f.kind === "start" || f.origin !== "generated";
 }
 
 export function entitiesByTile(v: EntityView, W: number): Map<number, number[]> {

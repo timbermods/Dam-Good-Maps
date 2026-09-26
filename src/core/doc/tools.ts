@@ -536,6 +536,9 @@ export function planLandform(req: LandformRequest, ctx: PlanContext, id: string,
   // surprise)
   const reach = landformTop(feature.params, mask, W, H);
   const spacing = req.edgeStyle === "gentle" ? 3 : (bandDepth ?? 8);
+  // (the planner's own report, for the groundwork and old projects' landforms; the editor never
+  // reaches this planner, tests/unit/boundaries.test.ts)
+  // <!-- retired-terms:allow -->
   const report = [
     req.edgeStyle === "cliff"
       ? `level ${height}, with cliff edges (beavers need stairs to cross them)`
@@ -543,6 +546,7 @@ export function planLandform(req: LandformRequest, ctx: PlanContext, id: string,
         ? `reaches level ${reach} here, not ${height}: its edge ${lowering ? "sinks" : "climbs"} 1 level every ${spacing} tiles from level ${base}, so level ${height} needs it about ${2 * spacing * Math.abs(height - base) + 1} tiles across`
         : `level ${height}, stepping 1 level every ${spacing} tiles from level ${base}, joined by slopes`,
   ];
+  // <!-- /retired-terms:allow -->
   const tiles: number[] = [];
   for (let i = 0; i < mask.length; i++) if (mask[i]) tiles.push(i);
   return { ok: true, ops: [{ op: "addFeature", params: { feature } }], feature, report, label: `Add ${req.kind}`, tiles };
