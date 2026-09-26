@@ -1,0 +1,35 @@
+import { build } from 'esbuild';
+import { launch } from './browser.mjs';
+import { serve } from './server.mjs';
+import assert from 'node:assert/strict';
+import { mkdir,writeFile } from 'node:fs/promises';
+await mkdir('.work',{recursive:true});
+await build({entryPoints:['test-rules.ts'],outfile:'.work/test.mjs',bundle:true,platform:'node',format:'esm',nodePaths:['./node_modules']});
+await import('./.work/test.mjs');
+const server=serve(4179),browser=await launch();
+try {
+  const page=await browser.newPage({viewport:{width:1100,height:1000}}),errors=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  await page.goto('http://127.0.0.1:4179');
+  await page.locator('#coordinates').fill('36.1, -112.1');
+  await page.locator('#generate').click();
+  await page.locator('#cancel').click();
+  assert.equal(await page.locator('#status').textContent(),'Cancelled.');
+  await page.locator('#generate').click();
+  await page.waitForFunction(()=>!document.querySelector('#result').hidden,{},{timeout:120000});
+  assert.equal(await page.locator('#download').isVisible(),true);
+  const download=page.waitForEvent('download');await page.locator('#download').click();
+  assert.match((await download).suggestedFilename(),/\.timber$/);
+  await page.screenshot({path:'results/prototype.png',fullPage:true});
+  await page.locator('#coordinates').fill('not coordinates');await page.locator('#generate').click();
+  assert.equal(await page.locator('#download').isVisible(),false);
+  await page.locator('#coordinates').fill('90, 0');await page.locator('#generate').click();
+  await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('latitude'));
+  assert.equal(await page.locator('#download').isVisible(),false);
+  assert.deepEqual(errors,[]);
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+  await page.screenshot({path:'results/mobile.png',fullPage:true});
+  await writeFile('results/tests.json',JSON.stringify({date:new Date().toISOString(),browser:browser.version(),passed:true,checks:['unit regressions','UI cancellation','real worker conversion','download','invalid-input stale-download prevention','390px layout without horizontal overflow','no page errors']},null,2));
+  console.log('PASS: browser UI cancellation, worker conversion, download, invalid input, no page errors.');
+}finally{await browser.close();server.close();}

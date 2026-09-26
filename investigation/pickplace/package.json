@@ -1,0 +1,15 @@
+{
+  "name": "dam-good-maps-pickplace-investigation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "node server.mjs",
+    "test": "node test.mjs",
+    "survey": "node survey.mjs",
+    "cors": "node cors.mjs",
+    "summarize": "node summarize.mjs"
+  },
+  "dependencies": { "fflate": "0.8.2" },
+  "devDependencies": { "esbuild": "0.25.12", "playwright": "1.56.1", "pngjs": "7.0.0" }
+}
