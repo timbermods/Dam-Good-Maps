@@ -31,7 +31,11 @@
 //   solid light when too small for stripes, and a dark rim just outside, so it shows on any
 //   ground or water in any colours.
 // - Objects that must read from afar (dead trees, slope arrows, the start) grow when they would
-//   be smaller on screen than their minimum size, up to a limit of their own.
+//   be smaller on screen than their minimum size, up to a limit of their own. A model's parts for
+//   close up and for afar (ruins: the skeleton, panels and ivy close up, a solid block per storey
+//   from afar) are drawn by the instance's size on screen.
+// - With **Markers** on, an orange line between dark edges outlines each mine site's footprint from
+//   just outside it, a few pixels wide from any distance (entities3d.ts `mineOutline`).
 // Colours are display values: the renderer outputs them without conversion.
 
 import {
@@ -55,7 +59,7 @@ import {
   type Texture,
   type WebGLRenderer,
 } from "three";
-import { CONTAMINATION as CT, CONTAMINATION_OUTLINE as OUTLINE, GROUND, HATCH, HEIGHT_RAMP, LIGHT, SKY, WALL, WATER_SURFACE as WS, type Rgb } from "./palette";
+import { CONTAMINATION as CT, CONTAMINATION_OUTLINE as OUTLINE, GROUND, HATCH, HEIGHT_RAMP, LIGHT, MINE, SKY, WALL, WATER_SURFACE as WS, type Rgb } from "./palette";
 import { WATER_GLSL } from "./waterPalette";
 import { SHADOW_OFFSET, SHADOW_RES, SHADOW_SCALE } from "./light";
 
@@ -86,6 +90,8 @@ export interface SceneUniforms {
   markers: { value: number };
   /** Where the contamination outline runs (`contaminationEdges`), drawn with **Markers** on. */
   contamEdges: { value: DataTexture };
+  /** Where the outline round mine sites runs (entities3d.ts `mineOutline`), with **Markers** on. */
+  siteEdges: { value: DataTexture };
   mapSize: { value: Vector2 };
   /** The tiling patterns (drawPatterns). */
   patternTex: { value: Texture | null };
@@ -93,7 +99,7 @@ export interface SceneUniforms {
   viewHeight: { value: number };
 }
 
-export function sceneUniforms(W: number, H: number, tile: DataTexture, light: DataTexture, overlay: DataTexture, marks: DataTexture, edges: DataTexture = overlayTexture(1, 1)): SceneUniforms {
+export function sceneUniforms(W: number, H: number, tile: DataTexture, light: DataTexture, overlay: DataTexture, marks: DataTexture, edges: DataTexture = overlayTexture(1, 1), sites: DataTexture = overlayTexture(1, 1)): SceneUniforms {
   return {
     sunDir: { value: SUN.clone() },
     sunColor: { value: color(LIGHT.sun) },
@@ -109,6 +115,7 @@ export function sceneUniforms(W: number, H: number, tile: DataTexture, light: Da
     hatching: { value: 0 },
     markers: { value: 0 },
     contamEdges: { value: edges },
+    siteEdges: { value: sites },
     mapSize: { value: new Vector2(W, H) },
     patternTex: { value: null },
     viewHeight: { value: 800 },
@@ -310,6 +317,7 @@ const COMMON = /* glsl */ `
   uniform float hatching;
   uniform float markers;
   uniform sampler2D contamEdges;
+  uniform sampler2D siteEdges;
   uniform vec2 mapSize;
   uniform sampler2D patternTex;
 
@@ -633,6 +641,28 @@ export function terrainMaterial(scene: SceneUniforms, lo: number, hi: number, li
             c = mix(c, ${glColor(OUTLINE.dark)}, 1.0 - smoothstep(3.1, 3.7, s));
             c = mix(c, ${glColor(OUTLINE.light)}, smoothstep(0.7, 1.2, s) * (1.0 - smoothstep(2.3, 2.8, s)));
           }
+          // the outline round a mine site's footprint (mineOutline), on the tiles just outside it
+          // (the footprint's own tops are the pit's): an orange line between dark edges, a few
+          // pixels wide from any distance (from afar it fills most of a tile's width round the
+          // site, so the site reads in a view of the whole map), turning round its corners
+          vec4 st = texture2D(siteEdges, (tile + 0.5) / mapSize);
+          float sb = floor(st.r * 255.0 + 0.5);
+          float sc = floor(st.g * 255.0 + 0.5);
+          if (sb > 0.5 || sc > 0.5) {
+            vec2 fo = fract(g);
+            float e = 9.0;
+            if (bitOf(sb, 1.0) > 0.5) e = min(e, 1.0 - fo.x);
+            if (bitOf(sb, 2.0) > 0.5) e = min(e, fo.x);
+            if (bitOf(sb, 4.0) > 0.5) e = min(e, 1.0 - fo.y);
+            if (bitOf(sb, 8.0) > 0.5) e = min(e, fo.y);
+            if (bitOf(sc, 1.0) > 0.5) e = min(e, length(vec2(1.0) - fo));
+            if (bitOf(sc, 2.0) > 0.5) e = min(e, length(vec2(fo.x, 1.0 - fo.y)));
+            if (bitOf(sc, 4.0) > 0.5) e = min(e, length(vec2(1.0 - fo.x, fo.y)));
+            if (bitOf(sc, 8.0) > 0.5) e = min(e, length(fo));
+            float s = e / min(max(max(fwidth(g.x), fwidth(g.y)), 0.004), 0.25);
+            c = mix(c, ${glColor(MINE.outlineDark)}, 1.0 - smoothstep(3.3, 3.9, s));
+            c = mix(c, ${glColor(MINE.outline)}, smoothstep(0.7, 1.2, s) * (1.0 - smoothstep(2.5, 3.0, s)));
+          }
         }
         if (hover.z > 0.5 && tile == hover.xy) {
           vec2 fr = fract(vec2(p.x, -p.z));
@@ -849,11 +879,17 @@ export function skyMaterial(): ShaderMaterial {
   });
 }
 
+/** Where a model's parts for close up give way to its parts for afar (`lod`, entities3d.ts): at this
+ *  many pixels a unit of the model takes on screen (a ruin's storey from afar is a solid block). */
+export const RUIN_NEAR_PX = 9;
+
 /** Instanced objects: each vertex's own colour times the instance's tint, lit like the terrain,
  *  darker toward the model's foot, and in the terrain's shadow where it stands in one. An
  *  instance with a minimum size (`grow`: pixels a unit of the model must take at least, how far
  *  it rises for each time it grows, and the most it grows) is drawn larger when it would be
- *  smaller. */
+ *  smaller. A vertex's `lod` says which view its part belongs to: 0 any, 1 close up (a unit of the
+ *  model takes RUIN_NEAR_PX pixels or more), 2 from afar; the others are dropped (the light look
+ *  draws every part it has: its models have none for afar). */
 export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMaterial {
   return new ShaderMaterial({
     defines: { LITE: lite ? 1 : 0 },
@@ -861,6 +897,7 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
     vertexShader: /* glsl */ `
       attribute vec3 pcolor;
       attribute vec3 grow;
+      attribute float lod;
       uniform float viewHeight;
       uniform float markers;
       varying vec3 vColor;
@@ -877,11 +914,19 @@ export function objectMaterial(scene: SceneUniforms, lite = false): ShaderMateri
         vFoot = position.y;
         vec3 p = position;
         #if !LITE
-        if (grow.x > 0.0 && markers > 0.5) {
+        if (lod > 0.5 || (grow.x > 0.0 && markers > 0.5)) {
           vec4 o = projectionMatrix * viewMatrix * m * vec4(0.0, 0.0, 0.0, 1.0);
           float perUnit = 0.5 * viewHeight * projectionMatrix[1][1] / max(o.w, 0.001);
-          float k = clamp(grow.x / perUnit, 1.0, grow.z);
-          p = p * k + vec3(0.0, grow.y * (k - 1.0), 0.0);
+          // a part for the other view: out of the clip volume (dropped)
+          if (lod > 0.5 && (lod < 1.5) != (perUnit >= ${f(RUIN_NEAR_PX)})) {
+            vWorld = vec3(0.0);
+            gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+            return;
+          }
+          if (grow.x > 0.0 && markers > 0.5) {
+            float k = clamp(grow.x / perUnit, 1.0, grow.z);
+            p = p * k + vec3(0.0, grow.y * (k - 1.0), 0.0);
+          }
         }
         #endif
         vec4 w = m * vec4(p, 1.0);
