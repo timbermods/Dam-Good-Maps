@@ -343,8 +343,8 @@ on a placed river.
   thin dark outline; the faint blue fill stays. `tests/unit/brush-ring.test.ts` checks it in
   greyscale and in protanopia, deuteranopia and tritanopia (Machado et al.): on every water and
   ground colour the ring or its outline has a contrast of 3 or more, the ring on its outline 4.5.
-  The blue is in the shared palette (`WATER.ring`, `WATER.ringEdge`, `palette.ts`), for the water
-  palette (#41) to take over.
+  The blue is in the shared water palette (`WATER_UI.ring`, `WATER_UI.ringEdge`,
+  `waterPalette.ts`), apart from the water's own colours.
 - **Claude (D196):** `setRiverBadwater`, and changing, moving or deleting a river or a lake, are
   refused with the advice; a new step, `changeSource {river | at | where, strength | flow}`, sets a
   river's sources (its mouth) or any sources. F05 (make this lake deeper) lowers the lake's bed with
@@ -357,6 +357,13 @@ on a placed river.
   expects no river or landform picked (`allAt` still lists them). New: `waterView.spec` (every
   point above, and water in a stroke's channel before the button comes up), unit tests of the
   readout, the source markers and the feeding search.
+- **The journey always ends at the map's water.** A background check that started as an edit went
+  in came back after the page had moved to that edit, and the page dropped it, with the exact
+  settle's water the worker had already put in place (it sends each view once): the page kept the
+  quick settle's water. On a slow machine (CI, and here with the CPU slowed six times) the water on
+  screen then stayed a little off the map's. The page now always shows the water a check put in
+  place (only its report waits for the page), takes a version at once, and a settle with no water
+  of its own ends at the map's water, not at the frame on screen.
 - Shortcuts that could clash: Shift inverts Raise and Lower while painting (D158), so a Shift-click
   straight line would clash with it (the straight lines stay a toggle); the Select tool's Alt to
   subtract (D184) meets Alt+click's layer pick, so Select will subtract with Alt+drag only.

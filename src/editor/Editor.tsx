@@ -84,6 +84,8 @@ interface Mirror {
   water: SurfaceWater;
   /** The water on screen, as the worker sent it. */
   waterView: WaterView;
+  /** The map's water: the last the worker put in place (a journey's frames pass over it). */
+  mapWater: WaterView;
   entities: EntityView;
   /** The objects on each tile, made when first asked for after the objects change. */
   entitiesAt: Map<number, number[]> | null;
@@ -176,6 +178,14 @@ export default function Editor(props: EditorProps) {
   const [sourceDrag, setSourceDrag] = useState<number[] | null>(null);
   /** The water's journey, played at a pace the eye can follow; its controls; a drought to watch. */
   const player = useRef<WaterPlayer | null>(null);
+  /** The editor is on the page (answers from the worker that come after it closed are dropped). */
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
   const [, setPlayerTick] = useState(0);
   const [follow, setFollow] = useState(false);
   const followRef = useRef(follow);
@@ -363,6 +373,8 @@ export default function Editor(props: EditorProps) {
     if (u.instant) setInstant(u.instant.items.filter((c) => c.here && c.class === "load"));
     // the same features keep the page's own copy (its index and lists are not worked out again)
     const i = u.info.featuresKey === infoRef.current.featuresKey ? { ...u.info, features: infoRef.current.features } : u.info;
+    // (at once: the worker's news for this version can come before the page renders it)
+    infoRef.current = i;
     setInfo(i);
     props.onChange(i);
   }
@@ -390,6 +402,7 @@ export default function Editor(props: EditorProps) {
       r?.updateWater(v.water);
       m.water = r?.mapState()?.surface ?? surfaceWater(infoRef.current.W, infoRef.current.H, v.water);
       m.waterView = v.water;
+      m.mapWater = v.water;
     }
     // the soil follows the water (the preview's, then the exact settle's): the ground's colours,
     // and the ivy on ruins, so it comes before the objects
@@ -521,10 +534,13 @@ export default function Editor(props: EditorProps) {
       void api
         .backgroundCheck(proxy((p: CheckProgress) => live && setProgress(p)))
         .then((r) => {
-          if (!live || !r || r.check.version !== infoRef.current.version) return;
-          // the exact settle's water ends the journey in progress (eased into), or shows at once
+          if (!r || !mounted.current) return;
+          // the exact settle's water ends the journey in progress (eased into), or shows at once.
+          // The worker put it in place and sends it once, so it shows even when the page moved on
+          // while the check ran (the check started as an edit went in): only the report waits
           if (r.view.water && player.current?.hasJourney) player.current.push({ water: r.view.water, done: 1, final: () => applyView(r.view) });
           else applyView(r.view);
+          if (!live || r.check.version !== infoRef.current.version) return;
           setCheck(r.check);
           setProgress(null);
         })
@@ -587,7 +603,9 @@ export default function Editor(props: EditorProps) {
           // an edit's water plays at a pace the eye can follow
           player.current?.push({ water: e.water, done: e.done });
         } else if (e.kind === "settled") {
-          player.current?.push({ water: e.view.water ?? mirror.current.waterView, done: 1, final: () => applyView(e.view) });
+          // (no water in it: the map's water was sent before, so it is the last put in place, not the
+          // frame on screen)
+          player.current?.push({ water: e.view.water ?? mirror.current.mapWater, done: 1, final: () => applyView(e.view) });
         } else if (e.kind === "weather") {
           const w = weatherRef.current;
           if (!w) return;
@@ -1814,7 +1832,7 @@ function cornerToCentre(x: number, y: number, o: Orientation): [number, number] 
 }
 
 function mirrorOf(v: MapView): Mirror {
-  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), waterView: v.water, entities: v.entities, entitiesAt: null, soil: v.soil };
+  return { heights: v.heights, water: surfaceWater(v.W, v.H, v.water), waterView: v.water, mapWater: v.water, entities: v.entities, entitiesAt: null, soil: v.soil };
 }
 
 /** Dropping a .timber or project file on the editor opens it. */
