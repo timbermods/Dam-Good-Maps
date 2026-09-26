@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="data:,"><title>Map look 2 · Water and shadows</title></head>
+<body>
+<header><div><small>DAM GOOD MAPS / INVESTIGATION</small><h1>Water & shadows</h1></div><p>Today's clean look, with two new effects.<br>Drag either view to move both cameras.</p></header>
+<nav aria-label="Map and camera">
+<label>Map <select id="map"></select></label><label>Seed <input id="seed" type="number" value="4242" min="0" max="4294967295"></label><button id="load">Load map</button>
+<label>Look at <select id="pose"><option value="overview">Whole map</option><option value="start">The start</option><option value="shore">Shoreline</option><option value="falls">Waterfall</option><option value="badwater">Badwater</option><option value="mixed">Water meeting badwater</option><option value="contaminated">Contaminated ground</option><option value="cliff">Cliffs</option></select></label>
+<button id="angle">Turn 90°</button><label><input type="checkbox" id="pause"> Pause water</label>
+</nav>
+<div class="status"><span id="status" role="status">Loading…</span><span id="gpu"></span></div>
+<main>
+<section><div class="pane-title"><h2>Standard <small>Today's clean look</small></h2><output id="standard-fps">— fps</output></div><canvas id="standard" tabindex="0" aria-label="Standard map view"></canvas></section>
+<section><div class="pane-title"><h2>High <small>Water + soft shadows</small></h2><output id="high-fps">— fps</output></div><canvas id="high" tabindex="0" aria-label="High map view"></canvas></section>
+</main>
+<footer>
+<div class="effects"><strong>High effects</strong><label><input type="checkbox" id="water" checked> Water</label><label><input type="checkbox" id="shadows" checked> Soft shadows</label><label>Sun turn <input id="sun" type="range" min="-70" max="70" value="0" step="5"></label><button id="reset-sun">Reset sun</button></div>
+<p id="inspection">Hover to inspect a tile's water and soil in either view.</p>
+<p>Left drag: orbit · Right drag: pan · Wheel: zoom · Focus a view for WASD / QE / RF. FPS measures this paired view; judge speed on your PC.</p>
+<details><summary>About these maps</summary><p>All shaders, patterns and models are ours. Generated maps use the repository generator. M9 maps are discovered locally. Real places use the existing library; <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles elevation data</a>.</p><div id="credits"></div></details>
+</footer>
+<script type="module" src="/app.ts"></script>
+</body></html>

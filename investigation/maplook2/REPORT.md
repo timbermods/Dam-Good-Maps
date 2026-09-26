@@ -15,3 +15,4 @@ Run from the repository root: `npm --prefix investigation/maplook2 run demo` (No
 ## Steps
 
 1. Read CLAUDE.md, PLAN §20 (D114, D147, D154), the clean-look notes/captures and src/render3d. Set up the isolated runner.
+2. Built the worker-backed map picker, synced comparison, separate effect toggles, actual frame counters and inspection readout. Added procedural absorption/Fresnel water and a 2048² depth shadow pass over the real terrain/object meshes. TypeScript and the build pass. Initial SwiftShader images exposed self-shadow stripes; receiver-plane PCF correction removed them. Full map/capture checks follow.
