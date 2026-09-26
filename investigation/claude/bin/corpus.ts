@@ -809,7 +809,7 @@ R("X04", "conflicting", "Put a dam site near the mouth and a badwater spring jus
   pass: ["the poisoning is named, never hidden", START_RULES_HOLD],
   reference: {
     calls: [],
-    proposal: { steps: [{ op: "addSetPiece", kind: "damSite", where: "near the mouth", handle: "dam" }, { op: "addSetPiece", kind: "badwaterBasin", where: { all: [{ upstream: "dam", reach: "just" }, { along: "river", within: 25 }] }, handle: "badwater" }] },
+    proposal: { steps: [{ op: "addSetPiece", kind: "damSite", where: "near the mouth", handle: "dam" }, { op: "addSetPiece", kind: "badwaterBasin", where: { upstream: "dam", reach: "just" }, handle: "badwater" }] },
     expect: { tradeoffs: ["badwater-poisons-reservoir"] },
   },
 });

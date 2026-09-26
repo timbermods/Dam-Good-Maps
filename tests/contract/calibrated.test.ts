@@ -30,8 +30,8 @@ describe.skipIf(!out)("calibrated tables", () => {
     for (const d of ["easy", "normal", "hard"] as const) {
       const a = DIFFICULTY_RULES[d];
       const b = py.difficulty[d];
-      expect([a.waterWithin, a.treesWithin20, a.bushesWithin20, a.badwaterWithin, a.ruinsWithin], d).toEqual([
-        b.water_dist, b.trees_r20, b.bushes_r20, b.badwater_min, b.ruin_min,
+      expect([a.waterWithin, a.woodWithin20, a.bushesWithin20, a.badwaterWithin, a.ruinsWithin], d).toEqual([
+        b.water_dist, b.wood_r20, b.bushes_r20, b.badwater_min, b.ruin_min,
       ]);
       expect(reservoirNeeded(d)).toBe(py.reservoir_needed[d]);
     }

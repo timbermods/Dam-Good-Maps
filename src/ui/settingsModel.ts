@@ -140,9 +140,9 @@ export function band(key: string, spec: MapSpec): string {
     case "ruins":
       return `About ${Math.round(((density("scrap_per_1k_tiles", area) * area) / 1e3) * (s.resources.ruins / 100)).toLocaleString()} scrap on this map.`;
     case "waterWithin":
-      return "Walk on the start's level to clean water a pump reaches, with no stairs. Official maps: most 13 tiles.";
-    case "treesWithin20":
-      return "Living trees within 20 tiles' walk. Official maps: most 112.";
+      return "The walk to clean water a pump reaches, using only the map's own slopes. Official maps: most 12 tiles.";
+    case "woodWithin20":
+      return "Logs from grown trees within 20 tiles' walk: an oak gives 8, a pine 2, a birch 1. Saplings count once grown. Official maps: most 110.";
     case "bushesWithin20":
       return "Living berry bushes within 20 tiles' walk. Official maps: most 57.";
     case "ruinsWithin":

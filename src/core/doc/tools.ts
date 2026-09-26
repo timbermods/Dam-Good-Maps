@@ -14,7 +14,7 @@
 
 import { buildMap, START_CLEAR_RADIUS, type BuildResult } from "../features/build";
 import { bedAt, pathField, pointAtArc, polygonMask } from "../features/geometry";
-import { bankFor, edgeStep, landformLevel } from "../features/raster/terrain";
+import { edgeStep, landformLevel } from "../features/raster/terrain";
 import { distanceFrom } from "../math/grid";
 import { channelWidth, routeChannel } from "../features/route";
 import { BUILDERS, planSetPiece, type PlanContext, type PlanRecord } from "../features/setpieces";
@@ -759,9 +759,10 @@ export function replacePatch(from: unknown, to: unknown): unknown {
 
 /** The `updateFeature` patch that moves a feature by (dx, dy) tiles without planning it again. A
  *  river keeps the ends that sit on the map edge on that edge (its sealed mouth stays a mouth); the
- *  start's bench takes the ground level at its new place, and runs to the bank of a river there
- *  when one is near (`features`, D97). */
-export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array, features: readonly Feature[] = []): OpParams["updateFeature"]["patch"] {
+ *  start's bench takes the ground level at its new place. It no longer runs to a river's bank (the
+ *  water rule, D153: the colony walks to the water over the map's own slopes), and a
+ *  bank a project saved before kept is dropped. */
+export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array): OpParams["updateFeature"]["patch"] {
   const shift = (p: Point): Point => [p[0] + dx, p[1] + dy];
   const onEdge = (v: number, max: number) => v <= 0 || v >= max;
   switch (f.kind) {
@@ -772,7 +773,7 @@ export function movePatch(f: Feature, dx: number, dy: number, W: number, H: numb
     case "start": {
       const [x, y] = shift(f.params.position);
       const benchLevel = Math.max(1, heights[y * W + x]);
-      return { params: { position: [x, y], benchLevel, bank: bankFor(features, x, y, benchLevel, f.params.benchRadius) ?? null } };
+      return { params: { position: [x, y], benchLevel, bank: null } };
     }
     case "landform":
       return { params: { outline: (f.params.outline ?? []).map(shift) } };
@@ -817,7 +818,7 @@ function movePlan(s: MapSession, id: string, dx: number, dy: number): PlannedEdi
     const r = planPiece(s, f.params.kind, req, id);
     return r.ok ? { ...r, label } : r;
   }
-  const patch = movePatch(f, dx, dy, W, H, s.built.heights, s.features);
+  const patch = movePatch(f, dx, dy, W, H, s.built.heights);
   const moved = { ...f, params: { ...f.params, ...(patch.params as object) } } as Feature;
   return { ok: true, ops: [{ op: "updateFeature", params: { id, patch } }], feature: moved, report: [], label, tiles: [] };
 }
@@ -1002,8 +1003,7 @@ export function moveStartNear(s: MapSession, fromX: number, fromY: number): Edit
         for (let yy = y - rr; yy <= y + rr && ok; yy++) for (let xx = x - rr; xx <= x + rr && ok; xx++) if (pieces[yy * W + xx]) ok = false;
         if (!ok || startProblem(b, x, y, o, false, feat.id, pieces)) continue;
         const benchLevel = Math.max(1, b.heights[y * W + x]);
-        const bank = bankFor(s.features, x, y, benchLevel, rr) ?? null;
-        return [{ op: "updateFeature", params: { id: feat.id, patch: { params: { position: [x, y], benchLevel, bank } } } }];
+        return [{ op: "updateFeature", params: { id: feat.id, patch: { params: { position: [x, y], benchLevel, bank: null } } } }];
       }
       if (startProblem(b, x, y, o, true, ent!.owner, pieces)) continue;
       const [cx, cy] = cornerFor(x, y, o);

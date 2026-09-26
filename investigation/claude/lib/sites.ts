@@ -15,6 +15,8 @@ import { reservoirOf, type DamSitePlan } from "../../../src/core/features/setpie
 import { FACINGS, STEP, type Facing } from "../../../src/core/features/setpieces/common";
 import type { LandformFeature, Point, RiverFeature, SetPieceKind } from "../../../src/core/features/schema";
 import { distanceFrom, runsToTiles, type Runs } from "../../../src/core/math/grid";
+import { TREE_LOGS } from "../../../src/core/format/entities";
+import { LOGS_PER_TREE } from "../../../src/core/spec/mapspec";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { locate, network, type Course } from "./flow";
 import { reservoirIsClean, reservoirTiles, waterName } from "./metrics";
@@ -179,7 +181,18 @@ export function findSites(s: MapSession, q: SiteQuery & { farFirst?: boolean }, 
         continue;
       }
       tries++;
-      const res = verifier(s, q.replaces ? { ...x.step, replaces: q.replaces } : x.then ? { ...x.step, then: x.then } : x.step);
+      let res = verifier(s, q.replaces ? { ...x.step, replaces: q.replaces } : x.then ? { ...x.step, then: x.then } : x.step);
+      // a planned lake a river already fills needs no spring of its own: a source starts water,
+      // never stands in a flow (D171)
+      if (x.kind === "lake" && x.step.op === "addLake" && q.request?.spring === undefined && x.step.spring === undefined && !res.error && res.broken.length === 1 && res.broken[0] === "water.source_in_flow") {
+        const fed = { ...x.step, spring: 0 };
+        const again = verifier(s, fed);
+        if (!again.error && !again.broken.length) {
+          res = again;
+          x.step = fed;
+          x.report = [...(x.report ?? []).filter((l) => !/spring/.test(l)), "the river beside it fills it, so it has no spring of its own (a source starts water, never stands in a flow)"];
+        }
+      }
       if (res.error || res.broken.length) {
         rejected.push(res.error ?? `breaks ${res.broken.join(", ")}`);
         continue;
@@ -722,8 +735,10 @@ function badwater(s: MapSession, v: MapView, q: SiteQuery & { farFirst?: boolean
 // ---------------------------------------------------------------------------------- the start
 
 /** Candidate spots for the start, pre-checked against the start rules the validator uses at HEAD
- *  (rulesFor): pumpable clean water within the water rule, trees and berries within 20 tiles, no
- *  badwater within the badwater rule. The step's dry run is the final word. */
+ *  (rulesFor): pumpable clean water within the water rule, wood (logs, D164) and berries within 20
+ *  tiles, no badwater within the badwater rule. The water rule walks over the map's own slopes
+ *  (Kyler, 2026-09-25); the pre-check reads it as straight distance to water a pump on the spot's
+ *  level reaches, which the slopes only widen. The step's dry run is the final word. */
 function starts(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Found {
   const rules = rulesFor(s.spec, s.meta.designedFor);
   const b = s.built;
@@ -775,11 +790,11 @@ function starts(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Foun
       continue;
     }
     const near = (e: { x: number; y: number }) => Math.hypot(e.x - x, e.y - y) <= 20;
-    const t = trees.filter(near).length;
+    const t = trees.filter(near).reduce((a, e) => a + TREE_LOGS[e.template], 0);
     const u = bushes.filter(near).length;
     // trees and berries can come along (moveStart adds a grove and a berry patch nearby), as long
     // as there is moist soil for them within reach
-    const needTrees = Math.max(0, Math.ceil(rules.treesWithin20 * 1.2) - t);
+    const needTrees = Math.max(0, Math.ceil((Math.ceil(rules.woodWithin20 * 1.2) - t) / LOGS_PER_TREE));
     const needBushes = Math.max(0, Math.ceil(rules.bushesWithin20 * 1.2) - u);
     let moist = 0;
     for (let dy = -16; dy <= 16; dy++)
@@ -803,14 +818,14 @@ function starts(s: MapSession, v: MapView, q: SiteQuery, mask: Uint8Array): Foun
       where: compassWords(v, x, y),
       course: courseInfo(v, x, y),
       step: { op: "moveStart", to: [x, y] },
-      measured: { level: z, waterDistance: round1(wd), treesWithin20: t, bushesWithin20: u, badwaterDistance: round1(badD[i]), ...(brings.length ? { brings: brings.join(" and ") } : {}) },
+      measured: { level: z, waterDistance: round1(wd), woodWithin20: t, bushesWithin20: u, badwaterDistance: round1(badD[i]), ...(brings.length ? { brings: brings.join(" and ") } : {}) },
       meetsSize: true,
       report: brings.length ? [`moving the start here also plants ${brings.join(" and ")} near it, to keep the start rules`] : [],
     });
   }
   if (!sites.length) {
     const worst = Object.entries(fails).sort((a, b) => b[1] - a[1])[0];
-    why = `no spot here meets the start rules (${searched} spots: ${fails.water} too far from pumpable clean water (${rules.waterWithin} tiles), ${fails.trees} with too few trees (${rules.treesWithin20}), ${fails.bushes} with too few berry bushes (${rules.bushesWithin20}), ${fails.badwater} too near badwater (${rules.badwaterWithin}), ${fails.ground} not level, dry and clear); mostly: ${worst[0]}`;
+    why = `no spot here meets the start rules (${searched} spots: ${fails.water} too far from pumpable clean water (${rules.waterWithin} tiles), ${fails.trees} with too little wood (${rules.woodWithin20} logs), ${fails.bushes} with too few berry bushes (${rules.bushesWithin20}), ${fails.badwater} too near badwater (${rules.badwaterWithin}), ${fails.ground} not level, dry and clear); mostly: ${worst[0]}`;
   }
   // what needs nothing brought along first, then nearest the water
   sites.sort((a, b) => Number(!!a.measured.brings) - Number(!!b.measured.brings) || Number(a.measured.waterDistance) - Number(b.measured.waterDistance));

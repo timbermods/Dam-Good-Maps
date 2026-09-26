@@ -5714,16 +5714,8 @@
        "op": "addSetPiece",
        "kind": "badwaterBasin",
        "where": {
-        "all": [
-         {
-          "upstream": "dam",
-          "reach": "just"
-         },
-         {
-          "along": "river",
-          "within": 25
-         }
-        ]
+        "upstream": "dam",
+        "reach": "just"
        },
        "handle": "badwater"
       }

@@ -444,7 +444,7 @@ export class ClaudeTools {
     if (kind === "start") {
       const r = rulesFor(s.spec, designedFor);
       const m = measureSession(s);
-      return { startRules: startRequirements(m).map((x) => ({ id: x.id, limit: x.limit, value: x.value, ok: x.ok, message: x.message })), rules: { waterWithin: r.waterWithin, treesWithin20: r.treesWithin20, bushesWithin20: r.bushesWithin20, badwaterWithin: r.badwaterWithin, ruinsWithin: r.ruinsWithin, reachMin: r.reachMin, storedWaterNeed: Math.round(r.reservoirNeed) }, note: "read from the validator: these are the rules the export check applies" };
+      return { startRules: startRequirements(m).map((x) => ({ id: x.id, limit: x.limit, value: x.value, ok: x.ok, message: x.message })), rules: { waterWithin: r.waterWithin, woodWithin20: r.woodWithin20, bushesWithin20: r.bushesWithin20, badwaterWithin: r.badwaterWithin, ruinsWithin: r.ruinsWithin, reachMin: r.reachMin, storedWaterNeed: Math.round(r.reservoirNeed) }, note: "read from the validator: these are the rules the export check applies" };
     }
     if (kind === "waterfall") {
       const facing = (a.facing as Facing | undefined) ?? "north";

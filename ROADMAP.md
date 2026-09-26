@@ -487,36 +487,42 @@ in [docs/ingame-log.md](docs/ingame-log.md). The deviations are PLAN §20 D69–
 ## M8. Water preview and background validation in the editor
 
 **Start requirements, built first** (Kyler, 2026-09-24, amended the same day; PLAN §5.6, §11.4,
-§20 D85). Released with `m8-done`.
+§20 D85). Released with `m8-done`. Amended by Kyler on 2026-09-25 and built in the start and edge
+rules step (`docs/progress/start-edge-rules.md`): the water rule walks over the map's own slopes
+(D153), and starting wood counts logs (D164). The requirements as they stand:
 
 Three start requirements, with thresholds by difficulty (Easy / Normal / Hard). They replace the
 start rules as reasons to reject a map:
-1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05, as now)
-   touches a shore tile at the start's own level, and that shore tile is within 12 / 20 / 28
-   tiles' walk of the start without any slope: the same level all the way. Rivers, lakes and ponds
-   all count. A pump on that shore must reach the water surface (0–2 levels below), as now, so
-   the colony can actually drink it.
-2. **Starting trees:** at least 60 / 40 / 20 living trees within 20 tiles' walk of the start
-   (slopes allowed), counted across any number of groves.
+1. **Water without stairs.** Clean pumpable water (depth ≥ 0.3, contamination < 0.05) touches a
+   shore tile the start reaches on foot within 12 / 20 / 28 tiles' walk, over the map's own ground
+   and its natural slopes (the map's Slope entities; no stairs the player would build). Levels may
+   change along the walk, through slopes. Rivers, lakes and ponds all count. A pump on that shore
+   must reach the water surface (0–2 levels below the shore), so the colony can actually drink
+   it. (As built in M8, the walk stayed on the start's own level, without any slope.)
+2. **Starting wood** (D164): at least 120 / 80 / 40 logs of grown trees within 20 tiles' walk of
+   the start (slopes allowed), each tree by its species' yield (oak 8, pine 2, birch 1), alive or
+   dead. A sapling's logs are shown apart, as wood still growing. (As built in M8: 60 / 40 / 20
+   living trees.)
 3. **Starting bushes:** at least 40 / 30 / 20 living berry bushes within 20 tiles' walk of the
    start (slopes allowed), counted across any number of patches.
 
 "Living" means the plant survives at steady state, as now.
 
 - **The thresholds are player settings,** with these defaults for each difficulty: the existing
-  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls for trees and
-  living bushes within 20, renamed **Minimum starting trees** (`st`, 0–400) and **Minimum
-  starting bushes** (`sb`, 0–200). They keep their ranges and share-link keys, so old links still
-  decode. Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
+  water-distance start rule (`sw`, 4–40), and the Advanced start rules controls
+  **Minimum starting wood (logs)** (`sl`, 0–800; before D164 **Minimum starting trees**, `st`,
+  0–400, which old links and project files still carry and open as 2 logs a tree) and **Minimum
+  starting bushes** (`sb`, 0–200). Changing **Designed for** resets them to that difficulty's defaults (D66, as before).
   Imported maps, which have no settings, use their difficulty's defaults (Normal unless the
   document says otherwise).
 - **The generator never aims below a minimum.** Any target that sits lower rises to it: Easy's
   Berries near start target goes from 20 to 40.
-- **The start reaches water on its own level.** The workshop study found none on 82 of 180
-  generated maps at 128²: the bench stands one level above the floodplain, 6–10 tiles from the
-  channel (D26), and its level region is the bench alone (median 113 tiles; official starts stand
-  on level land of median 980 tiles that reaches the water). Move the bench to the bank, or the
-  start onto the floodplain (D26 changes). Batches stay ≥ 98% per theme with the new rules.
+- **The start reaches water on its own level** (as built in M8, D97: the bench ran to the bank).
+  The workshop study found none on 82 of 180 generated maps at 128²: the bench stands one level
+  above the floodplain, 6–10 tiles from the channel (D26). Since the amendment (D153) the
+  bench no longer runs to the bank: the colony walks down to the river over the map's own slopes,
+  and the slope out of the start's own level goes toward the river. Batches stay ≥ 98% per theme
+  with the new rules.
 - **Everything else:** the other start rules stop rejecting maps: the badwater and ruin
   distances, stored drought water near the start (`water.reservoir`, including Hard's 3-deep
   rule) and walkable land from the start (`start.reach`). They stay as settings and generation
@@ -531,11 +537,13 @@ start rules as reasons to reject a map:
   outflow, badwater containment).
 - **Build rules:**
   - Change both validators together (TypeScript and the Python oracle), with 0 disagreements.
-  - A unit test for each requirement: water reachable only by a slope fails; water beyond the
-    walking distance fails; only badwater fails; trees or bushes below the minimum, or too far
-    away, fail; changing any of the three settings moves the result.
+  - A unit test for each requirement: water beyond the walking distance fails; only badwater
+    fails; trees or bushes below the minimum, or too far away, fail; changing any of the three
+    settings moves the result. As M8 built it, water reachable only by a slope failed; since D153
+    water down a natural slope passes and water that needs stairs fails, and since D164 wood below
+    the minimum fails, each species counting its own logs.
   - The three settings have a measured target in `tools/settings-suite.ts`, like the M6 settings
-    (the water distance's experiment measures the walk on the start's level).
+    (the water distance's experiment measures the walk; since D153 over the map's own slopes).
   - The editor's start indicators and its green or red footprint follow the three requirements,
     using the map's settings. The map card lists them.
   - This changes which attempt wins and where the start stands: bump the generator version and
@@ -790,9 +798,17 @@ A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built
   and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
   editor's start indicators and the start text change together. Generated maps change: the
   generator version goes up.
+- **Starting wood** (D164): the logs of the grown trees within 20 tiles' walk, by species, replace
+  the tree count; **Minimum starting wood (logs)**, with saplings' wood shown apart as growing, and
+  the page reading a tree's growth correctly (before and after captures of saplings for Kyler).
+- **Tall maps** (D172 (1), after probe run 20260925-tall): both validators allow heights up to 22,
+  with a note above 16 that the in-game map editor edits only up to level 16.
 
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
 D151, and what a player feels.
+
+**Status:** built on `feature/start-edge-rules` (docs/progress/start-edge-rules.md), a PR into
+`dev`; generator 0.6.1.
 
 ---
 
@@ -852,6 +868,9 @@ they conflict):
    lines. Flatten has "in steps" (terraces); Smooth has "make walkable" (the game's natural slopes;
    the start's reach updates live). Select opens with a key or a modifier-drag, with no permanent
    slot. Pen pressure sets strength on a tablet.
+   Hold to dig (D193): in precise mode, holding Lower or Raise keeps working a level at a time,
+   with an optional "stop at" level (a faint plane, a pulse on arrival); never below the map's bottom
+   or under placed objects.
 2. **Water:** a reflection of the land being painted.
    - **Smart Lower:** a stroke that starts in or next to water carves a bed that keeps flowing
      downhill, so the water follows the brush; the ring turns softly blue. Anywhere else it is an
@@ -1700,7 +1719,8 @@ One smooth flow inside Dam Good Maps, from exploring the real world to a finishe
 7. **Phones** get a simpler version: a flatter view and a lighter preview.
 8. **Credits** as in Real places (D155): a short credit and link in each map's in-game description,
    the full notices on the credits page, and any region-specific notice the data's provider
-   requires.
+   requires; ESA WorldCover (observed water, CC BY 4.0, D192) is credited like the
+   elevation data, on the Pick a place credits and in each map's credits.
 
 It follows every current rule: designed water (sources only where water begins, D166, D171; the
 designed-water prototype from `investigation/pickplace`, PR #34, merged, its INTEGRATION.md adopted as

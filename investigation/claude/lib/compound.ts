@@ -301,7 +301,7 @@ const GUARD_WORDS: Record<string, string> = {
   "start.water": "the start loses its pumpable clean water",
   "start.reach_water": "the colony can no longer walk to its water",
   "start.food": "the start keeps too few berry bushes",
-  "start.wood": "the start keeps too few trees",
+  "start.wood": "the start keeps too little wood",
   "start.reach": "the colony's walkable land shrinks below the rule",
   "start.dry": "water reaches the start",
   "water.reservoir": "the water stored near the start drops below the colony's drought need",

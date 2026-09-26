@@ -57,12 +57,17 @@ editor is desktop-first (D185).
   levels by sampling (Ctrl-click; on water, the riverbed's level), a Select tool for big shaped edits
   (a key or a modifier-drag opens it), and live dimensions (a selection's size, a straight line's
   length, the level while flattening).
+- **Hold to dig:** in precise mode, holding Lower (or Raise) keeps working, one level at a time at a
+  steady pace tied to strength, with vertical walls, until let go; each hold is one undo step. An
+  optional "stop at" level (off by default; set by Ctrl-clicking a tile, or water for its riverbed)
+  makes it stop there, with a faint plane at that level and one pulse of the ring on arrival. It
+  never digs below the map's bottom or out from under the start or placed objects (D193).
 - **Hills, plateaus, ridges and valleys come from the brushes,** not buttons.
 - **Remove:** click one object or drag to remove many; filters; a red highlight on hover. It never
   changes terrain, and it refuses removals that would break a rule (such as deleting the start).
 - **Heights:** up to 16, or 22 on tall maps (D172); the game's own editor edits up to 16.
 
-(D180, D182, D183, D184.)
+(D180, D182, D183, D184, D193.)
 
 ## 5. Water
 

@@ -19,7 +19,6 @@ import { orientationForHigh } from "../core/features/setpieces";
 import { footprintTiles, startEntranceTile, type Orientation } from "../core/format/footprints";
 import type { Feature, Point } from "../core/features/schema";
 import type { FixOp } from "../core/validate/report";
-import { bankFor } from "../core/features/raster/terrain";
 import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
 import { ORIENTATION_NAMES, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "../render3d/model";
@@ -1151,13 +1150,15 @@ export default function Editor(props: EditorProps) {
     const door = startEntranceTile(cx, cy, s.orientation);
     const f = s.feature ? info.features.find((g) => g.id === s.feature) : undefined;
     let bench: { level: number; radius: number; bank?: Point } | null = null;
+    const moved = dx !== 0 || dy !== 0;
     if (f && f.kind === "start") {
-      // a generated start's bench takes the ground's level there and runs to a river's bank (D97)
-      const level = Math.max(1, mirror.current.heights[y * info.W + x]);
-      const bank = bankFor(info.features, x, y, level, f.params.benchRadius);
+      // a generated start's bench takes the ground's level there; where it stands, it keeps the
+      // bench it has (a project saved before the water rule changed may run it to a bank)
+      const level = moved ? Math.max(1, mirror.current.heights[y * info.W + x]) : f.params.benchLevel;
+      const bank = moved ? undefined : f.params.bank;
       bench = { level, radius: f.params.benchRadius, ...(bank ? { bank } : {}) };
     }
-    return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs) };
+    return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs, moved) };
   }
 
   /** Place a move. */

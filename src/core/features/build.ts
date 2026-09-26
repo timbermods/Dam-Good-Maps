@@ -25,7 +25,7 @@ import { canonicalSettle, type CanonicalWater } from "../sim/prefill";
 import { previewSettle, staleWater } from "../sim/preview";
 import type { WaterModel } from "../sim/water";
 import { DERIVED_SLOPES, entityId } from "./ids";
-import { placeSlopes, SLOPE_RULES, type PlacedSlope, type SlopeRules } from "./slopes";
+import { placeSlopes, SLOPE_RULES, START_CLEAR_RADIUS, type PlacedSlope, type SlopeRules } from "./slopes";
 import { BUILDERS, orientationForHigh, type SetPieceBlock, type SetPieceSource } from "./setpieces";
 import { applyEntityEdits, applySlopeEdits, entityTiles, orphansOf, type EntityEdit, type Orphan, type SlopeEdit } from "./edits";
 import {
@@ -54,7 +54,7 @@ export { BuildTarget } from "./target";
 export { assignRuinHeights } from "./raster/resources";
 export { MAX_TERRAIN } from "./raster/terrain";
 
-export const START_CLEAR_RADIUS = 3; // PLAN §7.7: nothing within Chebyshev 3 of the start centre
+export { START_CLEAR_RADIUS }; // PLAN §7.7: nothing within Chebyshev 3 of the start centre (features/slopes.ts)
 
 export interface PlacedSource {
   x: number;
@@ -589,7 +589,7 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   let slopesKey = "";
   if (slopeStart && !base) {
     const targets = landformTargets(features.filter(live), target);
-    rules = { ...SLOPE_RULES, targets: targets.mask, links };
+    rules = { ...SLOPE_RULES, targets: targets.mask, links, water: terrain.channel };
     slopesKey = `${slopeStart.x},${slopeStart.y}|${targets.key}|${JSON.stringify(links)}`;
   } else if (slopeStart && base) {
     // an edited import: join the changed ground to the start's network (the file's own slopes and
@@ -606,7 +606,7 @@ function run(input: BuildInput, prevResult: BuildResult | null, opts: BuildOptio
   }
   let slopes: PlacedSlope[] = [];
   if (rules) {
-    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.reserved, reserved);
+    const reuse = prev && prev.slopesKey === slopesKey && sameBytes(prev.terrain.heights, heights) && sameBytes(prev.terrain.channel, terrain.channel) && sameBytes(prev.reserved, reserved);
     slopes = reuse ? prev.slopes : placeSlopes(heights, W, H, slopeStart!, reserved, rules);
   }
   for (const s of slopes) {

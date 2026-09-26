@@ -11,8 +11,12 @@ import { movePatch as corePatch } from "../core/doc/tools";
 import { OBJECT_NAMES as OBJECT_KIND_NAMES, objectTiles } from "../core/features/objects";
 import { DEAD, FLIPPED, ORIENTATION_NAMES, YOUNG, type EntityView, type SoilView, type SurfaceWater } from "../render3d/model";
 import { walkRegions } from "../core/analysis/regions";
-import { reachAt, shoreDistance, walkDistance } from "../core/analysis/walk";
+import { pumpShoreDistance, reachAt, walkDistance } from "../core/analysis/walk";
+import { noWood, type WoodBySpecies, type WoodSpecies } from "../core/analysis/wood";
+import { DERIVED_SLOPES } from "../core/features/ids";
 import { inBench } from "../core/features/raster/terrain";
+import { placeSlopes, SLOPE_RULES, START_CLEAR_RADIUS } from "../core/features/slopes";
+import { TREE_LOGS } from "../core/format/entities";
 import { FOOTPRINTS, footprintTiles, slopeHighSide, type Orientation } from "../core/format/footprints";
 import { WALK_BLOCKERS } from "../core/validate/playability";
 
@@ -427,8 +431,8 @@ const onEdge = (v: number, max: number) => v <= 0 || v >= max;
 
 /** The `updateFeature` patch that moves a feature by (dx, dy) tiles (the core's rule: a river keeps
  *  its edge ends on their edge, the start's bench takes the ground level at its new place). */
-export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array, features: readonly Feature[] = []): OpParams["updateFeature"]["patch"] {
-  return corePatch(f, dx, dy, W, H, heights, features);
+export function movePatch(f: Feature, dx: number, dy: number, W: number, H: number, heights: Uint8Array): OpParams["updateFeature"]["patch"] {
+  return corePatch(f, dx, dy, W, H, heights);
 }
 
 /** Where a feature's move handle sits: the middle of its tiles. */
@@ -498,11 +502,15 @@ export interface StartCheck {
   /** The 3×3 footprint and the tile at its door. */
   tiles: number[];
   door: number;
-  /** The three start requirements (PLAN §5.6, D85): tiles' walk on the start's level, without
-   *  stairs, to a shore that touches clean water a pump reaches (null: none within the walk
-   *  limit); living trees and living berry bushes within 20 tiles' walk. */
+  /** The three start requirements (PLAN §5.6, D85, D164): the walk over the map's own ground and
+   *  slopes, never player stairs, to a shore that touches clean water a pump on it reaches (null:
+   *  none within the walk limit); the logs of the grown trees, by species, and the living berry
+   *  bushes within 20 tiles' walk. */
   water: number | null;
-  trees: number;
+  wood: number;
+  woodBySpecies: WoodBySpecies;
+  /** The saplings' logs within the walk: wood still growing, not counted. */
+  woodGrowing: number;
   bushes: number;
   /** All three requirements hold with the map's rules. */
   meets: boolean;
@@ -511,19 +519,70 @@ export interface StartCheck {
 }
 
 export interface StartNeeds {
-  rules: { waterWithin: number; treesWithin20: number; bushesWithin20: number; badwaterWithin: number; ruinsWithin: number };
+  rules: { waterWithin: number; woodWithin20: number; bushesWithin20: number; badwaterWithin: number; ruinsWithin: number };
   /** Dry land walkable from the start that the map aims for. */
   reachMin: number;
 }
 
-const WOOD = new Set(["Pine", "Birch", "Oak"]);
+/** Objects the build places after the slopes (plants, ruins, the start): they never keep a slope
+ *  away. */
+const PLACED_AFTER_SLOPES = /^(Pine|Birch|Oak|Succulent|BlueberryBush|RuinColumnH\d|StartingLocation)$/;
+
+/** The slopes the colony walks on from a start at (x, y) on the ground `h`, as (low tile, high
+ *  tile) links. A generated map's start that moves gets its slopes derived again by the build
+ *  (PLAN §7.5), so `derive` predicts them: the standing slopes that are not derived (a set piece's
+ *  stairs), and the derived ones placed round the new start, clear of the objects and sources that
+ *  stand. Otherwise the map's slopes as they stand. */
+function startLinks(c: TileContext, h: Uint8Array, x: number, y: number, door: [number, number], derive: boolean): [number, number][] {
+  const { W, H } = c;
+  const e = c.entities;
+  const own: [number, number][] = [];
+  const occupied = derive ? new Uint8Array(W * H) : null;
+  for (let k = 0; k < e.count; k++) {
+    const t = e.templates[e.template[k]];
+    const inMap = e.x[k] >= 0 && e.y[k] >= 0 && e.x[k] < W && e.y[k] < H;
+    if (t === "Slope") {
+      if (occupied && e.owners[e.owner[k]] === DERIVED_SLOPES) continue;
+      const [dx, dy] = slopeHighSide(ORIENTATION_NAMES[e.orientation[k]] as Orientation);
+      const hx = e.x[k] + dx;
+      const hy = e.y[k] + dy;
+      if (inMap && hx >= 0 && hy >= 0 && hx < W && hy < H) own.push([e.y[k] * W + e.x[k], hy * W + hx]);
+      if (occupied && inMap) occupied[e.y[k] * W + e.x[k]] = 1;
+      continue;
+    }
+    if (!occupied || PLACED_AFTER_SLOPES.test(t)) continue;
+    const p = { template: t, x: e.x[k], y: e.y[k], z: e.z[k], orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: (e.flags[k] & FLIPPED) !== 0 };
+    const tiles: [number, number][] = FOOTPRINTS[t] ? footprintTiles(t, p) : [[e.x[k], e.y[k]]];
+    for (const [tx, ty] of tiles) if (tx >= 0 && ty >= 0 && tx < W && ty < H) occupied[ty * W + tx] = 1;
+  }
+  if (!occupied) return own;
+  // the start's clear zone, and the tiles in front of its door (features/build.ts)
+  const mark = (cx: number, cy: number, r: number) => {
+    for (let yy = cy - r; yy <= cy + r; yy++) for (let xx = cx - r; xx <= cx + r; xx++) if (xx >= 0 && yy >= 0 && xx < W && yy < H) occupied[yy * W + xx] = 1;
+  };
+  mark(x, y, START_CLEAR_RADIUS);
+  mark(Math.round(x + 1.5 * (door[0] - x)), Math.round(y + 1.5 * (door[1] - y)), 1);
+  const links = own.slice();
+  // the rivers' channels: the slopes out of the start's region go toward them, as the build's do
+  let water: Uint8Array | null = null;
+  if (c.index) {
+    water = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) if (c.index.river[i] >= 0) water[i] = 1;
+  }
+  for (const sl of placeSlopes(h, W, H, { x, y }, occupied, { ...SLOPE_RULES, links: own, water })) {
+    const [dx, dy] = slopeHighSide(sl.orientation);
+    links.push([sl.y * W + sl.x, (sl.y + dy) * W + (sl.x + dx)]);
+  }
+  return links;
+}
 
 /** The start's footprint and the three start requirements at (x, y), from what the page shows
  *  (EDITOR_PLAN §4: the footprint preview, green or red, and simple indicators). `bench` is the
  *  bench a start that levels its ground (a generated map) would make there, or null for an
- *  imported start that stands on the ground as it is. The walks are the validator's (analysis/
- *  walk.ts) on the ground as it would be; which plants live is the page's guess from their dead
- *  flags (the validator, after the move, also checks their soil). */
+ *  imported start that stands on the ground as it is; `moved` says the start is away from where it
+ *  stands, so a generated map's slopes are predicted there (`startLinks`). The walks are the
+ *  validator's (analysis/walk.ts) on the ground as it would be; which plants live is the page's
+ *  guess from their dead flags (the validator, after the move, also checks their soil). */
 export function checkStartAt(
   c: TileContext,
   x: number,
@@ -532,6 +591,7 @@ export function checkStartAt(
   bench: { level: number; radius: number; bank?: Point } | null,
   self: string | null,
   needs: StartNeeds,
+  moved = true,
 ): StartCheck {
   const { W, H } = c;
   const tiles: number[] = [];
@@ -559,13 +619,14 @@ export function checkStartAt(
       break;
     }
     const here = c.entitiesAt.get(i);
-    if (here?.some((k) => c.entities.owners[c.entities.owner[k]] !== self && !/^(Pine|Birch|Oak|Succulent|BlueberryBush|RuinColumnH\d|StartingLocation)$/.test(c.entities.templates[c.entities.template[k]]))) {
+    if (here?.some((k) => c.entities.owners[c.entities.owner[k]] !== self && !PLACED_AFTER_SLOPES.test(c.entities.templates[c.entities.template[k]]))) {
       problem = "on an object";
       break;
     }
   }
   const N = W * H;
-  // the ground as it would be: a generated start's bench levels its disc and its strip to the bank
+  // the ground as it would be: a generated start's bench levels its disc (and, in a project saved
+  // before the water rule changed, its strip to the bank)
   const h = c.heights.slice();
   if (bench) {
     const f = { kind: "start", params: { position: [x, y], orientation: "Cw0", benchRadius: bench.radius, benchLevel: bench.level, player: 0, ...(bench.bank ? { bank: bench.bank } : {}) } } as unknown as StartFeature;
@@ -581,42 +642,31 @@ export function checkStartAt(
         if (inBench(f, xx, yy) && !(c.index && c.index.river[i] >= 0)) h[i] = bench.level;
       }
   }
-  // what blocks walking, and the slopes
+  // what blocks walking, and the slopes the colony walks on
   const blocked = new Uint8Array(N);
-  const links: [number, number][] = [];
   const e = c.entities;
   for (let k = 0; k < e.count; k++) {
     const t = e.templates[e.template[k]];
-    if (t === "Slope") {
-      const [dx, dy] = slopeHighSide(ORIENTATION_NAMES[e.orientation[k]] as Orientation);
-      const hx = e.x[k] + dx;
-      const hy = e.y[k] + dy;
-      if (e.x[k] >= 0 && e.y[k] >= 0 && e.x[k] < W && e.y[k] < H && hx >= 0 && hy >= 0 && hx < W && hy < H) links.push([e.y[k] * W + e.x[k], hy * W + hx]);
-    } else if (WALK_BLOCKERS.has(t) && FOOTPRINTS[t]) {
-      const p = { template: t, x: e.x[k], y: e.y[k], z: e.z[k], orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: (e.flags[k] & FLIPPED) !== 0 };
-      for (const [tx, ty] of footprintTiles(t, p)) if (tx >= 0 && ty >= 0 && tx < W && ty < H) blocked[ty * W + tx] = 1;
-    }
+    if (!WALK_BLOCKERS.has(t) || !FOOTPRINTS[t]) continue;
+    const p = { template: t, x: e.x[k], y: e.y[k], z: e.z[k], orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: (e.flags[k] & FLIPPED) !== 0 };
+    for (const [tx, ty] of footprintTiles(t, p)) if (tx >= 0 && ty >= 0 && tx < W && ty < H) blocked[ty * W + tx] = 1;
   }
-  // 1. water without stairs: a shore on the start's level, touching clean water a pump reaches
-  const pumpable = new Uint8Array(N);
+  const links = startLinks(c, h, x, y, door, !!bench && moved);
+  const walk = walkDistance(h, W, H, blocked, links, { x, y });
+  // 1. water: a shore the walk reaches, touching clean water a pump there reaches
   let nearestBad = Infinity;
   for (let i = 0; i < N; i++) {
-    const d = c.water.depth[i];
-    if (!(d > 0.05)) continue;
-    const surface = c.heights[i] + d;
-    if (c.water.contamination[i] < 0.05) {
-      if (d >= 0.3 && surface >= z - 2 && surface <= z + 0.01) pumpable[i] = 1;
-    } else {
-      const dist = Math.hypot((i % W) - x, Math.floor(i / W) - y);
-      if (dist < nearestBad) nearestBad = dist;
-    }
+    if (!(c.water.depth[i] > 0.05) || c.water.contamination[i] < 0.05) continue;
+    const dist = Math.hypot((i % W) - x, Math.floor(i / W) - y);
+    if (dist < nearestBad) nearestBad = dist;
   }
-  const flat = walkDistance(h, W, H, blocked, [], { x, y });
-  const shore = shoreDistance(flat, h, W, H, pumpable, z);
+  const shore = pumpShoreDistance(walk, h, W, H, c.water.depth, c.water.contamination);
   const water = Number.isFinite(shore.distance) ? Math.round(shore.distance * 10) / 10 : null;
-  // 2 and 3: living trees and berry bushes within 20 tiles' walk, slopes allowed
-  const walk = walkDistance(h, W, H, blocked, links, { x, y });
-  let trees = 0;
+  // 2 and 3: the logs of the grown trees (alive or dead: a tree keeps its logs when it dies; a
+  // sapling's are still growing) and the berry bushes that are not dead, within 20 tiles' walk
+  let wood = 0;
+  let woodGrowing = 0;
+  const woodBySpecies = noWood();
   let bushes = 0;
   let nearestRuin = Infinity;
   for (let k = 0; k < e.count; k++) {
@@ -627,14 +677,19 @@ export function checkStartAt(
       if (dist < nearestRuin) nearestRuin = dist;
       continue;
     }
-    const tree = WOOD.has(t);
-    if ((!tree && t !== "BlueberryBush") || (e.flags[k] & DEAD) !== 0 || i < 0 || i >= N) continue;
+    const logs = TREE_LOGS[t];
+    if ((logs === undefined && t !== "BlueberryBush") || i < 0 || i >= N) continue;
     if (reachAt(walk, W, H, i) > 20) continue;
-    if (tree) trees++;
-    else bushes++;
+    if (logs !== undefined) {
+      if ((e.flags[k] & YOUNG) !== 0) woodGrowing += logs;
+      else {
+        wood += logs;
+        woodBySpecies[t as WoodSpecies] += logs;
+      }
+    } else if ((e.flags[k] & DEAD) === 0) bushes++;
   }
   const r = needs.rules;
-  const meets = water !== null && water <= r.waterWithin && trees >= r.treesWithin20 && bushes >= r.bushesWithin20;
+  const meets = water !== null && water <= r.waterWithin && wood >= r.woodWithin20 && bushes >= r.bushesWithin20;
   // the targets: badwater and ruins farther than their distances, enough land to walk on
   const warnings: string[] = [];
   if (nearestBad < r.badwaterWithin) warnings.push(`Badwater ${Math.round(nearestBad)} tiles away (the target is ${r.badwaterWithin})`);
@@ -644,7 +699,7 @@ export function checkStartAt(
   let land = 0;
   if (root >= 0) for (let i = 0; i < N; i++) if (labels[i] === root && !(c.water.depth[i] > 0.05)) land++;
   if (land < needs.reachMin) warnings.push(`${land.toLocaleString()} tiles of land to walk on (the target is ${needs.reachMin.toLocaleString()})`);
-  return { problem, tiles, door: doorI, water, trees, bushes, meets, warnings };
+  return { problem, tiles, door: doorI, water, wood, woodBySpecies, woodGrowing, bushes, meets, warnings };
 }
 
 /** The river whose channel holds tile (x, y), and the arc position there (a click on a river). */
