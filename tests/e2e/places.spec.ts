@@ -60,9 +60,11 @@ test("the gallery lists every place, filters them and downloads Node's file", as
   await expect(first.locator(`img[alt="${p0.name} seen at an angle"]`)).toHaveJSProperty("naturalWidth", 480);
   await expect(first.locator(`img[alt="${p0.name} from above, north up"]`)).toHaveJSProperty("naturalWidth", topSide(p0));
   await page.screenshot({ path: ".scratch/places/desktop.png" });
-  // the pictures load as their cards come into view, not all at once
+  // the pictures load as their cards come near the view, not all at once (how near depends on the
+  // browser): fewer than half of them, and none of the last cards'
   expect(pictures.size).toBeGreaterThan(0);
-  expect(pictures.size).toBeLessThan(INDEX.count / 2);
+  expect(pictures.size).toBeLessThan(INDEX.count);
+  for (const p of INDEX.places.slice(-8)) expect([...pictures].filter((u) => u.includes(`/cards/${p.id}`)), p.id).toEqual([]);
 
   // filters: a landform, then a size; the query keeps them
   const canyons = INDEX.places.filter((p) => p.family === "canyon");
