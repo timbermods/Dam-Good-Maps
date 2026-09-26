@@ -57,6 +57,7 @@ export class CarveRun {
   readonly touched: Uint8Array;
   readonly neighbours: Int32Array;
   readonly basin: Float64Array;
+  readonly reached: Uint8Array;
   readonly original: Uint8Array;
   readonly metrics: Metrics = { cut: 0, deposited: 0, exported: 0, suspended: 0, bankCuts: 0, bendCuts: 0, steps: 0, stable: false };
   private quiet = 0;
@@ -70,6 +71,10 @@ export class CarveRun {
     const N = input.W * input.H;
     this.sign = new Int8Array(N); this.wear = new Float64Array(N); this.sediment = new Float64Array(N); this.touched = new Uint8Array(N);
     this.lastDepth = this.sim.D.slice();
+    this.reached = new Uint8Array(N);
+    const selected = input.entities.find(e => e.id === 'carve-source');
+    if (selected) this.reached[selected.y * input.W + selected.x] = 1;
+    else for (const e of this.sim.emitters) for (const i of e.cells) this.reached[i] = 1;
     // Shared M9 drainage identifies receiving basins, not an imposed channel.
     this.basin = drainage(input.heights, input.W, input.H, { eight: false }).filled;
     this.neighbours = new Int32Array(N * 4).fill(-1);
@@ -87,6 +92,12 @@ export class CarveRun {
     const power = new Float64Array(N), q = new Float64Array(N), vx = new Float64Array(N), vy = new Float64Array(N);
     const bank = new Float64Array(N), bend = new Float64Array(N), carry = new Float64Array(N);
     const delta = new Int8Array(N);
+    const front = this.reached.slice();
+    for (let i = 0; i < N; i++) if (this.reached[i]) for (let k = 0; k < 4; k++) {
+      const j = nb[4*i+k];
+      if (j >= 0 && sim.out[4*i+k] > .001) front[j] = 1;
+    }
+    this.reached.set(front);
     // Actual outgoing flux and hydraulic gradient: sqrt(Q) S, M9's m=.5,n=1.
     for (let i = 0; i < N; i++) {
       if (sim.D[i] <= .015) continue;
@@ -102,7 +113,7 @@ export class CarveRun {
     // Weathering/slumping only propagates from water or already eroded ground.
     // The repose threshold changes width; hard bands keep larger, persistent lips.
     for (let i = 0; i < N; i++) {
-      if (!(sim.D[i] > .03 || this.sign[i] < 0)) continue;
+      if (!((this.reached[i] && sim.D[i] > .03) || this.sign[i] < 0)) continue;
       for (let k = 0; k < 4; k++) {
         const j = nb[4*i+k]; if (j < 0) continue;
         const hard = hardness(h[j], this.settings.layers);
@@ -148,7 +159,7 @@ export class CarveRun {
       const hard = hardness(h[i], this.settings.layers);
       // Thin sheets do little work; submerged basin floors receive sediment.
       const submerged = Math.max(0, this.basin[i] - h[i]);
-      const incision = sim.D[i] > .04 && submerged < .8 ? .24 * Math.max(0, power[i] - .035) * (1 - .85 * hard) : 0;
+      const incision = this.reached[i] && sim.D[i] > .04 && submerged < .8 ? .24 * Math.max(0, power[i] - .035) * (1 - .85 * hard) : 0;
       if (this.sign[i] <= 0 && h[i] > 0) {
         this.wear[i] += Math.min(.7, incision + bank[i] + bend[i]);
         if (this.wear[i] >= 1) delta[i] = -1;
@@ -212,5 +223,6 @@ export class CarveRun {
     }
   }
 }
+
 
 

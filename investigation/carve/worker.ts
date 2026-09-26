@@ -14,11 +14,17 @@ async function frame(reset=false) {
   if(reset) send({type:'reset',W:map.W,H:map.H,name:map.name});
   for(const c of chunks) {
     const chunk=makeChunk(map,c.cx,c.cy,context,c.objects);
-    send({type:'chunk',chunk});
+    const buffers = new Set<ArrayBuffer>();
+    const collect = (v:unknown):void => {
+      if(ArrayBuffer.isView(v)) buffers.add(v.buffer as ArrayBuffer);
+      else if(v && typeof v==='object') for(const c of Object.values(v)) collect(c);
+    };
+    collect(chunk);
+    postMessage({type:'chunk',chunk}, [...buffers]);
     await yieldSlice();
   }
   last=snapshot(map);
-  send({type:'frame',heights:map.heights,metrics:run?.metrics??null,undo:undo.length,redo:redo.length});
+  send({type:'frame',heights:map.heights,metrics:run?.metrics??null,source:map.entities.find(e=>e.id==='carve-source')??null,undo:undo.length,redo:redo.length});
 }
 async function settle() {
   const r=canonicalRun(modelFor(map));
@@ -48,6 +54,7 @@ self.onmessage=async(event:MessageEvent)=>{
   busy=true;
   const t=performance.now();
   try {
+    if(run && !['advance','stop','snapshot'].includes(msg.type))throw new Error('Stop this run before editing history or the map.');
     switch(msg.type) {
       case 'load':
         epoch++;run=null;undo=[];redo=[];last=null;
@@ -56,12 +63,19 @@ self.onmessage=async(event:MessageEvent)=>{
         if(msg.id.startsWith('place:')) await settle();
         await frame(true);break;
       case 'source':
+        before=snapshot(map);
         map=placeSource(map,msg.tile,msg.strength);
         // A short actual simulation shows water arriving locally before carving.
         {const sim=new WaterSim(modelFor(map),map.water);for(let i=0;i<8;i++){sim.run(4);await yieldSlice();}map.water=sim.state();}
+        undo.push(operation(before,map,settings,0,'source placement',{...map.water,sat:new Uint8Array(map.W*map.H),settled:false,ticks:32}));redo=[];send({type:'sourcePlaced'});
         await frame();break;
       case 'start':
-        settings={...msg.settings};before=snapshot(map);run=new CarveRun(map,settings);map=run.map;
+        settings={...msg.settings};before=snapshot(map);
+        { const source=map.entities.find(e=>e.id==='carve-source');
+          if(!source)throw new Error('Place a source first.');
+          map=placeSource(map,source.y*map.W+source.x,settings.strength);
+        }
+        run=new CarveRun(map,settings);map=run.map;
         send({type:'started'});break;
       case 'advance':
         if(run) {run.step();map=run.map;await frame();if(run.metrics.stable)await finish('stable');}
@@ -78,3 +92,5 @@ self.onmessage=async(event:MessageEvent)=>{
   } catch(error) {send({type:'error',text:error instanceof Error?error.message:String(error)});}
   finally {busy=false;send({type:'ready',ms:performance.now()-t,epoch});}
 };
+
+

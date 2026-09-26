@@ -4,7 +4,7 @@ import { plainEntities, type CarveMap } from './engine';
 import { tree, bush, startingLocation } from '../../src/core/format/entities';
 export const MAPS = [
   ['seed:highlands:18:128', 'Highlands · seed 18 · 128²'],
-  ['seed:river-valley:18:256', 'River Valley · seed 18 · 256²'],
+  ['seed:riverValley:18:256', 'River Valley · seed 18 · 256²'],
   ['seed:canyon:10:128', 'Canyon · seed 10 · 128²'],
   ['place:near-yosemite-valley', 'Near Yosemite Valley'],
   ['place:near-geirangerfjord', 'Near Geirangerfjord'],
@@ -49,4 +49,5 @@ export function fixture(kind = 'mountain', W = 96): CarveMap {
     entities.push((x%2 ? tree({ ...at(x,y,'tree-'+x+'-'+y),species:'Pine' }) : bush({ ...at(x,y,'bush-'+x+'-'+y),ripe:true })));
   return { name: 'Process study: '+kind, W,H,heights:h,entities,water:{depth,contamination:new Float64Array(h.length)},maxHeight:16 };
 }
+
 

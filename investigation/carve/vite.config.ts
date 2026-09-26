@@ -5,6 +5,7 @@ export default defineConfig({
   root: here,
   publicDir: '../../public',
   resolve: { alias: {
+    'three/addons': fileURLToPath(new URL('./node_modules/three/examples/jsm', import.meta.url)),
     three: fileURLToPath(new URL('./node_modules/three', import.meta.url)),
     fflate: fileURLToPath(new URL('./node_modules/fflate/esm/browser.js', import.meta.url))
   }},
@@ -12,3 +13,4 @@ export default defineConfig({
   build: { outDir: 'dist', emptyOutDir: true, copyPublicDir: false },
   worker: { format: 'es' }
 });
+

@@ -1,0 +1,96 @@
+{
+  "checks": [
+    "whole levels, per-step monotonicity, protected start, no new isolated extrema and sediment conservation",
+    "wide walls produce more bank retreat than steep walls",
+    "outside-bend momentum erodes banks",
+    "v2 rock coefficient and level bands",
+    "rock layers change the resulting terrain",
+    "identical duration gives byte-identical terrain, water, sediment and objects independent of scheduling",
+    "unforced stable map stops automatically and further steps are inert",
+    "final water equals repository canonical settle byte for byte across slices",
+    "JSON operation survives serialization, exact undo, and replay without erosion",
+    "stale operation is rejected atomically",
+    "shared renderer geometry is finite and transferable",
+    "three Real places load with their actual terrain, sources, start and plants",
+    "real M9 generated maps at 128 and 256 load and carve"
+  ],
+  "timings": {
+    "800 steps, 64 squared": 1373.1187999999997,
+    "undo apply CPU ms": 0.37150000000019645,
+    "near-yosemite-valley 20 steps": 68.88529999999992,
+    "near-geirangerfjord 20 steps": 137.48289999999997,
+    "near-grand-canyon-colorado 20 steps": 242.96239999999943,
+    "seed:highlands:18:128 load": 985.4722999999994,
+    "seed:highlands:18:128 step p95": 9.00630000000092,
+    "seed:riverValley:18:256 load": 20498.694000000003,
+    "seed:riverValley:18:256 step p95": 30.169200000000274
+  },
+  "wide": {
+    "cut": 755,
+    "deposited": 354,
+    "exported": 253.48391420557414,
+    "suspended": 147.51608579442572,
+    "bankCuts": 381,
+    "bendCuts": 171,
+    "steps": 800,
+    "stable": false
+  },
+  "steep": {
+    "cut": 448,
+    "deposited": 153,
+    "exported": 259.47434381692506,
+    "suspended": 35.52565618307618,
+    "bankCuts": 49,
+    "bendCuts": 162,
+    "steps": 800,
+    "stable": false
+  },
+  "soft": {
+    "cut": 1164,
+    "deposited": 453,
+    "exported": 469.2065621664393,
+    "suspended": 241.79343783356236,
+    "bankCuts": 783,
+    "bendCuts": 267,
+    "steps": 800,
+    "stable": false
+  },
+  "canonical": {
+    "settled": true,
+    "ticks": 384
+  },
+  "realResults": [
+    {
+      "id": "near-yosemite-valley",
+      "W": 96,
+      "H": 96,
+      "cut": 46
+    },
+    {
+      "id": "near-geirangerfjord",
+      "W": 128,
+      "H": 128,
+      "cut": 34
+    },
+    {
+      "id": "near-grand-canyon-colorado",
+      "W": 256,
+      "H": 256,
+      "cut": 28
+    }
+  ],
+  "generated": [
+    {
+      "id": "seed:highlands:18:128",
+      "W": 128,
+      "hash": "10dedb82800f770c610836ceec16ce566d6ddd49f2f9d9d98e9807214c914746",
+      "cut": 65
+    },
+    {
+      "id": "seed:riverValley:18:256",
+      "W": 256,
+      "hash": "4dcf45b3263c84131ffa99c6333ccc3fdc2b62afd9febc1daf59edd566871546",
+      "cut": 54
+    }
+  ]
+}

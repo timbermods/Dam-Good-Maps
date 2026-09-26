@@ -29,7 +29,7 @@ function controlsState() {
   $<HTMLButtonElement>('source').disabled=active||busy;
   $<HTMLButtonElement>('pause').disabled=!active;
   $<HTMLButtonElement>('stop').disabled=!active;
-  for(const id of ['map','walls','layers','duration','strength','reset']) ($<HTMLInputElement>(id)).disabled=active;
+  for(const id of ['map','walls','layers','duration','strength','reset']) ($<HTMLInputElement>(id)).disabled=active||busy;
   $('carve').classList.toggle('active',active);
 }
 function resetView(){controls.target.set(W/2,3,-H/2);camera.position.set(W*.9,Math.max(W,H)*.95,H*.45);controls.update();top=false;$('top').textContent='Top-down';}
@@ -66,8 +66,11 @@ worker.onmessage=(event:MessageEvent)=>{
   const m=event.data;
   if(m.type==='reset'){W=m.W;H=m.H;uploads.length=0;for(const g of chunks.values()){dispose(g);scene.remove(g);}chunks.clear();resetView();}
   if(m.type==='chunk')uploads.push(m.chunk);
+  if(m.type==='sourcePlaced')notice.textContent='Source placed. Switch on carving.';
   if(m.type==='frame'){
-    heights=m.heights;
+    heights=m.heights;sourcePlaced=!!m.source;
+    if(!sourcePlaced)marker.visible=false;
+    if(!m.metrics)$('metrics').textContent='';
     if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · cut '+m.metrics.cut+' · deposited '+m.metrics.deposited;}
     $<HTMLButtonElement>('undo').disabled=active||!m.undo;
     $<HTMLButtonElement>('redo').disabled=active||!m.redo;
@@ -80,7 +83,7 @@ worker.onmessage=(event:MessageEvent)=>{
   }
   if(m.type==='operation')lastOperation=m.op;
   if(m.type==='error'){notice.textContent=m.text;active=false;pending=null;}
-  if(m.type==='ready'){busy=false;controlsState();if(!active&&!notice.textContent?.includes('stopped')&&!notice.textContent?.includes('course')&&!notice.textContent?.includes('limit'))notice.textContent=sourcePlaced?'Source placed. Switch on carving.':'Click a hillside to place a source.';}
+  if(m.type==='ready'){busy=false;controlsState();if(!active&&(notice.textContent==='Loading…'||notice.textContent?.startsWith('Loading land')))notice.textContent=sourcePlaced?'Source placed. Switch on carving.':'Click a hillside to place a source.';}
 };
 worker.onerror=e=>{notice.textContent='Worker error: '+e.message;busy=false;active=false;controlsState();};
 const select=$<HTMLSelectElement>('map');
@@ -90,7 +93,7 @@ select.onchange=load;$('reset').onclick=load;
 $('source').onclick=()=>{placing=!placing;$('source').setAttribute('aria-pressed',String(placing));};
 $('carve').onclick=()=>{
  duration=Number($<HTMLInputElement>('duration').value)*10;
- send({type:'start',settings:{walls:$<HTMLSelectElement>('walls').value,layers:$<HTMLInputElement>('layers').checked,strength:Number($<HTMLInputElement>('strength').value)});controlsState();
+ send({type:'start',settings:{walls:$<HTMLSelectElement>('walls').value,layers:$<HTMLInputElement>('layers').checked,strength:Number($<HTMLInputElement>('strength').value)}});controlsState();
 };
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';notice.textContent=paused?'Paused. The camera is still free.':'The water is carving.';};
 $('speed').onclick=()=>{speed=speed===1?4:speed===4?12:1;$('speed').textContent=speed+'×';};
@@ -140,3 +143,6 @@ requestAnimationFrame(animate);
 // Debugging/export is read-only and never used by replay.
 Object.assign(window,{carve:{get operation(){return lastOperation;},get state(){return {steps,active,paused,busy,queued:uploads.length,W,H};},gpu:gl.getContext().getParameter(gl.getContext().RENDERER)}});
 load();
+
+
+
