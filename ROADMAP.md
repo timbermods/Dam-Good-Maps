@@ -1716,7 +1716,8 @@ One smooth flow inside Dam Good Maps, from exploring the real world to a finishe
 7. **Phones** get a simpler version: a flatter view and a lighter preview.
 8. **Credits** as in Real places (D155): a short credit and link in each map's in-game description,
    the full notices on the credits page, and any region-specific notice the data's provider
-   requires.
+   requires; ESA WorldCover (observed water, CC BY 4.0, D192) is credited like the
+   elevation data, on the Pick a place credits and in each map's credits.
 
 It follows every current rule: designed water (sources only where water begins, D166, D171; the
 designed-water prototype from `investigation/pickplace`, PR #34, merged, its INTEGRATION.md adopted as
