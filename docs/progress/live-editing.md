@@ -1,5 +1,17 @@
 # Live editing
 
+> **WIP, paused 2026-09-26 (Kyler's usage; a new session continues after 2026-09-29).** The Carve
+> button (D194, D199, D203, D206) is part-built on this branch, merged from `investigation/carve`
+> (#47, e5435b0). Built and tested: the shared forces core and Carve's run ported into
+> `src/core/forces/` (step for step the prototype's land), the `carve` operation (stored literally,
+> one undo step, Try another path replaces a carve), the worker's run (`carveStart`, `carveAdvance`,
+> `carveStop`, `carveCancel`, `carveAgain`), the Carve button and its options row, the surge
+> effects and the follow camera, and Claude's `carve` step (B19–B21 pass). Left: EDITOR_PLAN §5
+> and this log's Carve section, the full Claude reference re-run, a full `test:quick` and e2e run,
+> and later the two touches Codex adds on #47 (curvature variation at high Wander, oxbow lakes):
+> merge `origin/investigation/carve` again and port its updated core (`character.ts`, `course.ts`,
+> `oxbow.ts`, `run.ts`). CI on the WIP commit was not seen green before the pause.
+
 **Built** on branch `feature/live-editing` (from `dev` at 761a1d2). Kyler's spec is in the brief;
 Kyler judges it by trying it. No generated map changes: the generator stays 0.6.0, and every
 generated sha256 is what it was (the determinism and byte tests pass unchanged).

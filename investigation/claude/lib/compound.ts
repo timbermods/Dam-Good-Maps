@@ -103,6 +103,7 @@ const PRIORITY: Record<string, number> = {
   "addSetPiece:badwaterBasin": 8,
   sculpt: 9,
   brush: 9,
+  carve: 9,
   removeResources: 10,
   addResource: 10,
   // Remove first, then objects from the shelf on the ground as it ends up

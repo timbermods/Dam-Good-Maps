@@ -1197,6 +1197,39 @@ R("B18", "simple", "turn the district center so its door faces east", "rv96", {
     checks: [chk("propose", "steps.0.report.0", "matches", "^its door faces east")],
   },
 });
+R("B19", "simple", "unleash a river from the east hills", "rv96", {
+  note: "Carve (D194, D199): Unleash from the highest dry ground there; it finds its own way down and keeps a source at its start",
+  goals: [G("g1", "a river carved from the east hills, still flowing")],
+  report: { mustSay: ["where it starts, how far it ran and why it ended", "how much it cut", "the source it keeps and its strength"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("limits", { kind: "carve" })],
+    proposal: { steps: [{ op: "carve", where: "the east third" }] },
+    checks: [chk("propose", "steps.0.resolved.mode", "equals", "unleash"), chk("propose", "steps.0.report.0", "matches", "^carves a river [(]river, power 65[)] from"), chk("propose", "steps.0.report.1", "matches", "^keeps a water source of [0-9.]+ blocks/s")],
+  },
+});
+R("B20", "simple", "cut a narrow dry canyon from the east side down to the river", "rv96", {
+  note: "Carve aimed (D199): Width set by hand for a slot, Dry canyon leaves no source",
+  goals: [G("g1", "a narrow dry canyon from the east side to the river")],
+  report: { mustSay: ["where it starts and ends, and how deep it cuts", "that it is dry: no source"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "along the river" })],
+    proposal: { steps: [{ op: "carve", where: "the east third", to: "along the river", river: "dry", width: 3 }] },
+    checks: [chk("propose", "steps.0.resolved.mode", "equals", "aim"), chk("propose", "steps.0.resolved.reason", "equals", "destination"), chk("propose", "steps.0.report.0", "matches", "^carves a dry canyon"), chk("propose", "steps.0.report.1", "equals", "a dry canyon: no source")],
+  },
+});
+R("B21", "simple", "carve a river from the bend at 60, 40 up into the hills at 85, 60", "rv96", {
+  note: "Carve aimed uphill (D199): the end is higher than the start, so the carve needs Defy gravity; the dry run says so and offers it",
+  goals: [G("g1", "a river cut from (60, 40) through to (85, 60)")],
+  report: { mustSay: ["that the end is uphill, so it cuts with Defy gravity on a floor that never rises", "how far it ran and how deep it cut"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("dry_run", { steps: [{ op: "carve", from: [60, 40], to: [85, 60] }] })],
+    proposal: { steps: [{ op: "carve", from: [60, 40], to: [85, 60], defyGravity: true }] },
+    checks: [chk("call:0", "steps.0.errors.0", "matches", "uphill"), chk("propose", "steps.0.resolved.reason", "equals", "destination"), chk("propose", "steps.0.report.0", "matches", "^carves a river")],
+  },
+});
 R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
   note: "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
   goals: [G("g1", "a straight channel from the main river to the south edge")],

@@ -8047,6 +8047,228 @@
    }
   },
   {
+   "id": "B19",
+   "kind": "simple",
+   "text": "unleash a river from the east hills",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "Carve (D194, D199): Unleash from the highest dry ground there; it finds its own way down and keeps a source at its start",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a river carved from the east hills, still flowing",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "where it starts, how far it ran and why it ended",
+     "how much it cut",
+     "the source it keeps and its strength"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "limits",
+      "args": {
+       "kind": "carve"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "carve",
+       "where": "the east third"
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.mode",
+      "op": "equals",
+      "value": "unleash"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^carves a river [(]river, power 65[)] from"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.1",
+      "op": "matches",
+      "value": "^keeps a water source of [0-9.]+ blocks/s"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B20",
+   "kind": "simple",
+   "text": "cut a narrow dry canyon from the east side down to the river",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "Carve aimed (D199): Width set by hand for a slot, Dry canyon leaves no source",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a narrow dry canyon from the east side to the river",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "where it starts and ends, and how deep it cuts",
+     "that it is dry: no source"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "along the river"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "carve",
+       "where": "the east third",
+       "to": "along the river",
+       "river": "dry",
+       "width": 3
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.mode",
+      "op": "equals",
+      "value": "aim"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.reason",
+      "op": "equals",
+      "value": "destination"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^carves a dry canyon"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.1",
+      "op": "equals",
+      "value": "a dry canyon: no source"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B21",
+   "kind": "simple",
+   "text": "carve a river from the bend at 60, 40 up into the hills at 85, 60",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "Carve aimed uphill (D199): the end is higher than the start, so the carve needs Defy gravity; the dry run says so and offers it",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a river cut from (60, 40) through to (85, 60)",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "that the end is uphill, so it cuts with Defy gravity on a floor that never rises",
+     "how far it ran and how deep it cut"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "dry_run",
+      "args": {
+       "steps": [
+        {
+         "op": "carve",
+         "from": [
+          60,
+          40
+         ],
+         "to": [
+          85,
+          60
+         ]
+        }
+       ]
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "carve",
+       "from": [
+        60,
+        40
+       ],
+       "to": [
+        85,
+        60
+       ],
+       "defyGravity": true
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "call:0",
+      "path": "steps.0.errors.0",
+      "op": "matches",
+      "value": "uphill"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.reason",
+      "op": "equals",
+      "value": "destination"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^carves a river"
+     }
+    ]
+   }
+  },
+  {
    "id": "B11",
    "kind": "simple",
    "text": "draw a straight canal from the river south to the map edge at x 72",

@@ -53,8 +53,10 @@ test("the top bar and the brush kit: options, precise hold with a stop, straight
   const bar = page.getByRole("toolbar", { name: "Tools" });
   for (const name of ["Raise brush (1)", "Lower brush (2)", "Flatten brush (3)", "Smooth brush (4)", "Naturalize brush (5)", "Source (6)"]) await expect(bar.getByRole("button", { name })).toBeVisible();
   await expect(page.getByRole("group", { name: /options/ })).toHaveCount(0);
-  // the forces keep their slots hidden until they are ready (D194, D202, D203, D206)
-  for (const name of ["Carve", "Craterize", "Quake", "Erupt"]) await expect(page.getByRole("button", { name, exact: true })).toHaveCount(0);
+  // the forces: Carve is ready, next to Source (D194, D199); the others keep their slots hidden
+  // until they are (D202, D203, D206)
+  await expect(bar.getByRole("button", { name: "Carve (7)" })).toBeVisible();
+  for (const name of ["Craterize", "Quake", "Erupt"]) await expect(page.getByRole("button", { name: new RegExp(`^${name}`) })).toHaveCount(0);
   // F does nothing with no brush out (it never zooms)
   const distance = () => page.evaluate(() => window.dgm3d!.renderer.getView().distance);
   const d0 = await distance();

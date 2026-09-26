@@ -23,7 +23,7 @@ import { locate, network } from "./flow";
 import { MAP_METRICS, mapMetric, measureFeature, measureSession, startRequirements } from "./metrics";
 import { compassWords, extent, resolve, resolveRef, type Place } from "./places";
 import { findSites, SITE_KINDS, type SiteKind } from "./sites";
-import { hintIds, STEP_OPS } from "./steps";
+import { hintIds, POWER_WORDS, STEP_OPS } from "./steps";
 import { mapSummary, SUMMARY_LIMIT } from "./summary";
 import { JUDGEMENT, sizeTarget, type SizeWord } from "./words";
 import { round1, viewOf } from "./view";
@@ -100,7 +100,7 @@ export const TOOL_DEFS: ToolDef[] = [
     input_schema: {
       type: "object",
       properties: {
-        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, brush, start, words" },
+        kind: { type: "string", description: "waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, ruinField, river, brush, carve, start, words" },
         facing: { type: "string", enum: ["north", "east", "south", "west"] },
       },
       required: ["kind"],
@@ -464,7 +464,7 @@ export class ClaudeTools {
     if (kind === "forest" || kind === "berryPatch" || kind === "ruinField") return { sizeWords: sizes(kind === "berryPatch" ? "forest" : kind), note: kind === "ruinField" ? "ruins stand on dry ground, at least the ruins rule away from the start" : "trees and berries live only on moist soil beside water" };
     if (kind === "river")
       return {
-        how: "carve it with a brush step, tool lower, along a path that starts in or beside water, or beside a source (addSource first, for a new river): its bed keeps flowing downhill and the water follows it",
+        how: "carve it with a brush step, tool lower, along a path that starts in or beside water, or beside a source (addSource first, for a new river): its bed keeps flowing downhill and the water follows it; or unleash one with the carve step, which finds its own way down and keeps a source at its start (limits kind carve)",
         path: { points: { min: 2, max: 24 }, width: { min: 1, max: 9, words: "tiny 1, small 2, medium 3, large 5, huge 7 tiles" } },
         source: { min: 0.25, max: 8, unit: "blocks/s", note: "a water source's one tile holds 8 at most; past that, add more sources" },
         existing: { flow: { min: 0.1, max: 64 }, note: "a river the map already has is its sources and its land (water is never an object): changeSource {river} sets its sources' strength; the brush reshapes its bed; the map's River flow setting sets the generated river's" },
@@ -485,10 +485,23 @@ export class ClaudeTools {
         edge: "a brush makes no cliffs: its edge slopes a level a tile to the ground round it, so a place rises its full amount only where it is 2·amount − 1 tiles across or more",
         note: "levels stay within 0–16; an imported map's caves and overhangs are left as they are",
       };
+    if (kind === "carve")
+      return {
+        how: "the editor's Carve: unleash a river from a spot (from [x, y], or where: its start is the highest dry ground there) and it finds its own way down, or aim it at an end (to: a tile or a place); it runs until it ends by itself (a lake, the map's edge, its end, or its power spent), or for seconds",
+        power: { min: 0, max: 100, words: POWER_WORDS, note: "how deep it cuts and how far it runs: a creek to a catastrophe" },
+        width: { min: 2, max: 24, note: "tiles; left out, it follows power (2.8 + power/10): narrow for a slot canyon, wide for a lazy river" },
+        wander: { min: 0, max: 100, note: "straight to winding" },
+        walls: "steep (a gorge) or wide (broad terraces)",
+        river: "keep (the default: a source at its start, its strength following the width, keeps the river flowing) or dry (a dry canyon, no source)",
+        defyGravity: "aimed carves only: true cuts through to an end uphill of the start, on a floor that never rises",
+        seconds: { min: 0.5, max: 120 },
+        maxTiles: Math.floor(0.3 * W * H),
+        note: "the start's own ground and an imported map's caves stay as they are; objects on the cut ground go with it",
+      };
     if (kind === "badwaterBasin") return { strength: { min: 1, max: 3 }, keepsFromStart: rulesFor(s.spec, designedFor).badwaterWithin, sizeWords: sizes("badwaterBasin"), note: "a 7×7 basin with one outlet; its channel runs to a river or the map edge" };
     const b = BUILDERS[kind as SetPieceKind];
     if (b) return { ranges: b.limits(planContextOf(s)) };
-    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river, brush, start or words");
+    throw new ArgError("kind is waterfall, damSite, gorge, terracedCliffs, badwaterBasin, lake, landform, forest, berryPatch, ruinField, river, brush, carve, start or words");
   }
 }
 
