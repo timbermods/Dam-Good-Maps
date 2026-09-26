@@ -20,33 +20,13 @@ The generator:
 - **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
 
 The editor:
-- **Refine this map** opens the map in 3D.
-- **Land**: draw a **Hill**, **Plateau**, **Ridge**, **Canyon**, **Valley** or **Island**, and pick
-  its height and edges. Add **Terraced cliffs**. Click a step to add a **Slope**, or a slope to
-  remove it. Draw a **Thorn belt**.
-- **Water**: click a **River** from its source to where it ends. Draw a **Lake** by its shore. Add
-  a **Waterfall**, a **Dam site**, a **Gorge** or a **Badwater spring**. Click a river to add a
-  **Weir** or a **Plug**. Click a lake's shore to add a **Plugged spillway**. **Show dam sites**
-  marks the best places for a dam. Select a river and click **Make it badwater** to turn its
-  water bad.
-- **Resources**: draw a **Forest**, **Berry patch** or **Ruin field**. Green shows where trees and
-  bushes live. Click to place a **Mine site**, **Relic** or **Geothermal field**.
-- Objects show under the pointer before you click. Green means the game keeps them there. Red
-  means it would delete them, and says why.
-- Tick **Advanced** to add **Unstable core** and **Object** to **Resources**. **Object** places any
-  object by hand. In advanced mode, click a tile to change the objects on it: move, turn or delete
-  them, set a water source's strength, or make it turn on in a later cycle.
-- **Start**: drag the start. Green means the district center fits and the start has its water,
-  trees and bushes.
-- **Show** colours the map by **Soil moisture**, **Badwater**, **Drought** or **Water under roofs**.
+- **Refine this map** opens the map in the editor, in 3D. **Open a map** opens any `.timber`, from
+  0.6 to 1.1.
+- The editor is being rebuilt around brushes: paint the land, place things, and the water
+  follows.
 - Water settles within a couple of seconds of an edit. The full check follows in the background.
-  The pill shows **Settling water** with its progress, then **Ready to play** or the problems.
-- Each tool shows what it will do first. **Place** adds it.
-- Select a feature to move it, change it or delete it. This works on most of what the generator
-  made too.
 - A problem shows as soon as you make it, with a button that fixes it.
 - **Back to settings** keeps your edits. Generate again and they stay.
-- **Open a map** opens any `.timber`, from 0.6 to 1.1.
 - The preview's **3D** switch shows the map in 3D.
 - In 3D the ground looks as in the game: green where the soil is moist, cracked earth where it is
   dry, rusty red where badwater spoils it. **Height colours** colours it by height instead. The
@@ -69,6 +49,7 @@ Real places:
 | [tools/](tools/) | Command-line tools on the same core: batch generation, the Python oracle, the benchmark and the in-game check files. |
 | [PLAN.md](PLAN.md) | The implementation plan for the website: architecture, settings, generation pipeline, validation rules, scoring, tests, and (§19) the foundations shared with the editor. |
 | [EDITOR_PLAN.md](EDITOR_PLAN.md) | The plan for the in-browser map editor and the Claude integration. |
+| [docs/README.md](docs/README.md) | Which documents are current and which are history. |
 | [ROADMAP.md](ROADMAP.md) | One milestone order for both plans. |
 | [AUDIT.md](AUDIT.md) | The audit that reconciled both plans with the investigation. Kyler's answers to its decisions are in PLAN.md §20. |
 | [docs/ingame-log.md](docs/ingame-log.md) | The in-game checks each milestone needs. They are deferred for now and listed as pending. |

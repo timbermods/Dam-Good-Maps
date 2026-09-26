@@ -12,8 +12,10 @@ The generator is the first half of one app. [EDITOR_PLAN.md](EDITOR_PLAN.md) pla
 and the Claude integration, and [ROADMAP.md](ROADMAP.md) orders the work of both plans. The
 foundations the two halves share (map spec, parametric features, set-piece builders, stable ids,
 validation, format I/O, determinism and the build order) are defined once, in
-[§19](#19-shared-foundations-with-the-editor). Every generated map is built from the same feature
-objects the editor edits, from the first milestone on. [AUDIT.md](AUDIT.md) records why each part
+[§19](#19-shared-foundations-with-the-editor). Every generated map is built from parametric
+features, from the first milestone on, and the editor keeps them with the map as its plan (for
+"Generate, keeping my edits" and Claude's steering); the player shapes the land with the brushes
+(D182). [AUDIT.md](AUDIT.md) records why each part
 changed during the plan audit.
 
 ## Contents
@@ -52,7 +54,7 @@ milestone.
 
 **Claude steers the generator; it never hand-builds the map** (Kyler, 2026-09-25; §20 D139).
 
-> When a request asks for character or new features ("make this valley harsher", "give me a huge dam opportunity halfway down", "put the start under a cliff"), Claude turns it into intentions (outcomes, not recipes) and settings, regenerates the affected area steered toward them, with locks on what the player wants kept, checks the result with the analysis, and reports honestly what emerged and what didn't. Editor operations are for precise edits the player asks for ("move the start here", "widen this river by two", "delete that forest", "lock this area").
+> When a request asks for character or new features ("make this valley harsher", "give me a huge dam opportunity halfway down", "put the start under a cliff"), Claude turns it into intentions (outcomes, not recipes) and settings, regenerates the affected area steered toward them, with locks on what the player wants kept, checks the result with the analysis, and reports honestly what emerged and what didn't. Editor operations are for precise edits the player asks for ("move the start here", "widen this river by two", "delete that forest", "lock this area"), as brush-style operations, never landform objects (§20 D187).
 
 
 **The north-star player journey** (Kyler, 2026-09-25; §20 D161). Find a striking place (for
@@ -100,7 +102,7 @@ A fully client-side static site. There is no server; everything runs in the play
 | JPEG thumbnail | `jpeg-js` encoder in the worker (0.4.4, vendored as an ES module that returns a `Uint8Array`, D20) | Canvas `toBlob` encoders differ between browsers; a JS encoder gives the same bytes everywhere, keeping downloads byte-identical per seed. |
 | Tests | Vitest (unit, golden files), Playwright (end-to-end and cross-browser determinism), plus the Python prototype as an oracle in CI | See §15. |
 | Hosting | GitHub Pages from GitHub Actions: `timbermods.github.io/dam-good-maps/` | Free, the same place as the other timbermods sites, and no server to run. GitHub Pages cannot set response headers (no COOP/COEP), so `SharedArrayBuffer` threads are unavailable: parallel work runs as independent workers. |
-| Second build target | A single-file build for publishing as a Claude artifact (EDITOR_PLAN.md §7) | The same code with platform adapters swapped (§19.9). Keep it possible from the start: data is bundled, not fetched at runtime; workers can be inlined; libraries come from npm, since the artifact can load scripts only from cdnjs/jsDelivr/unpkg. |
+| Second build target | A single-file build for publishing as a Claude artifact (EDITOR_PLAN.md, Claude integration) | The same code with platform adapters swapped (§19.9). Keep it possible from the start: data is bundled, not fetched at runtime; workers can be inlined; libraries come from npm, since the artifact can load scripts only from cdnjs/jsDelivr/unpkg. |
 | Visual design | The org's Impeccable site flow and the timbermods design system (walnut lodge palette, `DESIGN.md`) | Keeps it part of the family; done as its own milestone once the tool works. |
 
 ### 2.1 Determinism
@@ -204,7 +206,7 @@ dam-good-maps/
 │  ├─ worker/         generator.worker.ts (Comlink API: generate, and the editor's document)  api.ts  session.ts
 │  ├─ ui/             App.tsx  SettingsPanel.tsx  Preview2D.tsx  Preview3D.tsx (lazy)  View3D.tsx  MapCard.tsx  Layers.tsx
 │  │                  Download.tsx  Share.tsx  InstallHelp.tsx  state.ts (signals)
-│  ├─ editor/         the editor UI (EDITOR_PLAN.md §8): Editor.tsx (lazy)  panels.tsx  features.ts  tools.ts
+│  ├─ editor/         the editor UI (EDITOR_PLAN.md, Part 1 and Architecture): Editor.tsx (lazy)  panels.tsx  features.ts  tools.ts
 │  └─ styles/
 ├─ tools/            gen.ts (batch generation)  oracle.ts (Python oracle)  bench.ts  bench3d.ts  ingame-files.ts  export-footprints.ts
 │                    batch.ts (Node: N seeds → first-attempt and final pass rates)  golden.ts
@@ -260,7 +262,7 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Setting | Range | Default | Maps to (official calibration) |
 |---|---|---|---|
 | Relief | Gentle 0 – 100 Dramatic | 55 | Height range p5–p95 = 7 + 0.08·relief levels (7–15; official 9–15, median 13). Cliff-tile share 0.06 + 0.0018·relief (0.06–0.24; official 0.07–0.24, median 0.16). |
-| Highest terrain | 10 – 16 | 16 | Terrain never exceeds this. 16 is the map editor's limit and every official map's top. Heights 17–22 are allowed by the game but are left out: the editor cannot edit them (open question, §17). |
+| Highest terrain | 10 – 16 | 16 | Terrain never exceeds this. 16 is the in-game map editor's limit and every official map's top. Heights 17–22 come only with high Verticality (§5.9) and tall Real places (§20 D172); the in-game editor cannot edit them, and each tall map's description says so. |
 | Terracing | Smooth 0 – 100 Distinct | 50 | The share of height steps that are one level: 0.86 − 0.0059·terracing (0.86–0.27; official median 0.62). Higher terracing gives wider flat benches and more cliffs. |
 | Buildable land | Tight, Normal, Generous | Normal | Land walkable from the start through slopes of at least 750 / 1,300 / 2,500 tiles (official min 765, median 1,296, p90 4,523), and flat share 0.40 / 0.52 / 0.60. As built (M6, D59): the valley floor's width, how jagged the terrace edges are, and where the terraces' cliffs go (Tight: at the valley floor's edge; Generous: above every one-level rise). |
 
@@ -485,9 +487,10 @@ highlands, plateaus, islands), set pieces with resolved parameters, forests, ber
 fields, map objects and the start. Stages 4–7 *build* the map from that list with the shared build
 pipeline (§19.8), the same code the editor runs after every edit. The terrain, water and entities
 of a generated map are therefore exactly what its features rasterize to. "Refine this map" hands
-the editor that feature list, and the player can grab any river, plateau or ruin field at once.
-The detected features in §7.10 (`derived`) are measurements for labels, names and scoring. They
-are not what the editor edits.
+the editor that feature list as the map's plan, for "Generate, keeping my edits", regenerate area
+and Claude's steering; the editor does not show the features as objects to grab (D182, D184): the
+player shapes the land with the brushes. The detected features in §7.10 (`derived`) are
+measurements for labels, names and scoring.
 
 **3D forms** (3D-b, D118) are planned after the surface, from the surface and its drainage: tunnels,
 arches, sky bridges, ledges, caves, overhangs and underground rivers are features like the rest.
@@ -508,7 +511,7 @@ spec ──▶ 0 normalise ──▶ 1 concept ──▶ 2 macro layout ──�
 - Derive the difficulty rules.
 - Take the spec's constraints: locked regions, keep-out regions and the ids of features to keep
   (user and Claude features on regeneration). The planner treats them as occupied and protected,
-  so regeneration never routes a river through a player's plateau.
+  so regeneration never routes a river through ground the player has shaped.
 - Derive seed streams: `layout`, `terrain`, `setpieces`, `water`, `veg`, `ruins`, `extras` and
   `names`, each `hash(seed, stream, candidate, attempt)`.
 
@@ -545,7 +548,8 @@ re-rolled from the `layout` stream, which is much cheaper than failing validatio
 
 ### 7.3 Set pieces
 
-Each set piece (§9) is a shared builder (§19.3), the same one the editor's tools and Claude use.
+Each set piece (§9) is a shared builder (§19.3). The generator plans it, and Claude reaches it by
+steering the generator (D139); the editor has no set-piece tools (D182, D184).
 `plan(request, context)` resolves its anchor and footprint and clamps its parameters to the
 achievable ranges, reporting every adjustment. `rasterize(plan, target)` writes into:
 - the terrain: exact levels for its body, and levels it only raises (walls, rims, banks);
@@ -705,8 +709,8 @@ interface GeneratedMap {
 ```
 
 `features` is what the editor opens: `toDocument(result)` wraps it with the spec and the built
-base into a `MapDocument` (EDITOR_PLAN.md §3) without any conversion. `derived` drives the preview
-labels, the map card and the name.
+base into a `MapDocument` (EDITOR_PLAN.md, The map document) without any conversion. `derived`
+drives the preview labels, the map card and the name.
 
 ---
 
@@ -760,8 +764,8 @@ the start on the shore bench one level above the lake, away from the rivers' mou
 
 **Highlands as built (M7, D73):** the valley planner with 2–4 round plateaus on the terraces, each
 2–4 levels above the ground under it with a cliff all round and at least 8 + its radius from the
-river; a stream from a spring on the highest plateau, planned as the editor plans a drawn river,
-falls over its cliff and the terraces to the main river; ruins on a plateau (§9.4). The start is on
+river; a stream from a spring on the highest plateau, planned by the river planner (which the
+editor's drawn rivers used until D184), falls over its cliff and the terraces to the main river; ruins on a plateau (§9.4). The start is on
 a bench in the valley, not on a mid plateau.
 
 **Delta as built (M7, D74):** the valley planner with the dam site's gorge 30–40% of the way across;
@@ -783,8 +787,9 @@ Each set piece lists what it builds, the ranges the game's limits allow, and the
 validation proves. "Levels" are terrain levels. The terrain budget is 0–16: 0 is an empty column
 (ground at level 0, used by official maps as river outlets), and 16 is the in-game editor's limit
 (up to 22 on maps at high Verticality, §5.9).
-Every builder here is a shared set-piece builder (§19.3). The generator, the editor's tools and
-Claude all call the same code, and each builder publishes its achievable ranges for the current
+Every builder here is a shared set-piece builder (§19.3). The generator calls it, and Claude
+reaches it by steering the generator (D139); the editor's set-piece tools, built in M5 and M7,
+go with Live editing (D182, D184). Each builder publishes its achievable ranges for the current
 map (§9.10). Values outside the schema's hard bounds are rejected. Values inside them but beyond
 what the map allows are reduced to the nearest achievable value, and the reduction is reported.
 
@@ -825,7 +830,8 @@ what the map allows are reduced to the nearest achievable value, and the reducti
 - **Two modes (one builder):**
   - *On a river* (what the generator makes). It splits the river's bed profile at the lip, and the
     river's own flow goes over it.
-  - *Standalone* (a landmark added in the editor or by Claude). It builds its own cliff, a
+  - *Standalone* (a landmark away from a river: the editor's old Waterfall tool placed one, and
+    under D139 and D182 a steered landmark or a stamp may). It builds its own cliff, a
     **header pool** one level below the lip, inland springs feeding the pool, the plunge pool, and
     an outflow to an edge or an existing river. As built (D48): the header pool is 3 rows deep,
     the plunge pool 4 rows at the ground in front of the lip (lowered so the lip stays at 15 or
@@ -943,8 +949,9 @@ As built (M7, D71): a channel 3 wide from a lake to a map edge or lower ground, 
 below the lake's sill; the plug is every channel tile beside the lake's water, its top at the sill,
 so the lake spills over it as over its own outlet. The report's release is the lake's area × one
 level, not a second settle. Lake Basin and Islands place one beside a river's mouth, far from the
-start, where it leaves the colony's land whole; the editor's **Plugged spillway** tool places one
-from a click on a lake's shore.
+start, where it leaves the colony's land whole. The editor's Plugged spillway tool, which placed
+one from a click on a lake's shore, goes with Live editing (D184): the left shelf places the
+blockage itself.
 
 ### 9.7 Ruin fields
 
@@ -989,8 +996,8 @@ and Highlands 6, Canyon 3).
 
 ### 9.9 Gorge
 
-The editor and Claude treat the gorge as its own set piece, so it gets its own builder. The Canyon
-archetype uses it for its narrows (M6). The dam site keeps its own ridge (D25) for its narrows, and
+The gorge is its own set piece, with its own builder (it was the editor's Gorge tool until
+D182; Claude reaches it by steering, D139). The Canyon archetype uses it for its narrows (M6). The dam site keeps its own ridge (D25) for its narrows, and
 a dam site can be placed inside a gorge (D49).
 
 - **What it builds:** a channel 3–9 tiles wide between walls at least 2 levels above the bed,
@@ -1017,8 +1024,8 @@ a dam site can be placed inside a gorge (D49).
 ### 9.10 Achievable ranges by map size
 
 Audit measurements (prototype water port, `prototype/watersim.py`) and the rules above. The
-builders publish these ranges for the current map, and the editor and Claude use them to resolve
-words such as "giant".
+builders publish these ranges for the current map, and Claude uses them to resolve words such as
+"giant" when it steers (D139).
 
 | | 48² | 96² | 128² | 192² | 256² |
 |---|---|---|---|---|---|
@@ -1038,8 +1045,8 @@ words such as "giant".
 A standalone waterfall needs a footprint of about (W + 4) × 12 tiles, plus an outflow route.
 Claude's example in EDITOR_PLAN.md, a 20-wide fall on 128², fits. Its lip would be about 0.03
 deep at S = 2, or about 0.12 deep at S = 8. S = 8 is more than twice the map's Normal flow, so
-it needs the advanced override (decision D6). Claude builds the S = 2 sheet by default and says
-so in its report.
+it needs the advanced override (decision D6). When Claude steers toward such a fall (D139), the
+S = 2 sheet is the default, and its report says so.
 
 ### 9.11 Builders planned from the workshop study
 
@@ -1058,6 +1065,11 @@ implementations built from today's operations.
 | lake `outlets` (2–4) | M11 | lake, outlets [{at, to}] | outlets 8+ tiles apart, all at the sill | every outlet carries water; none drains back into the lake | 50 hub lakes settle with every spoke wet |
 | river `switchback` | M11 | a river path with hairpins | a wall ≥ 3 tiles thick and ≥ 2 levels above the lower reach between reaches | reaches at different levels do not leak into each other | D53's property test with hairpins allowed |
 | `damSite` spurs mode | refinement | river, at, crest 1–3, gap 3–12 (and help ready / some, only if Kyler adopts Reservoir help, #31) | gap ≥ channel + 2; the spurs scale with the ground | the reservoir holds need × reserve behind a dam of `gap` tiles; the naturalness targets (ROADMAP, refinement phase) | River Valley, Canyon, Highlands batches ≥ 98% with it |
+
+Under D139 and D182 these builders serve the generator, and Claude reaches them by steering; the
+editor has no set-piece tools. In the editor, forks, outlets and switchbacks come from smart Lower
+(D184), and a builder may shape one of M11's stamps, laid as plain land. The generator builds no
+dam site (D111), so the spurs mode serves only M11's dam stamps.
 
 The recipes also found that a builder must re-check the rules its change can break: a lake added
 near the badwater basin brought contaminated soil 19–27 tiles from the start (`start.badwater`), a
@@ -1119,7 +1131,7 @@ checks:
   with more than one terrain floor per tile. Imported maps can have them (Cliffside has 24 wet
   cells under roofs, Canyon 180, Terraces 473, where the single-layer port's overlap drops to
   0.25–0.7). There the editor keeps the file's saved water and marks the preview as approximate
-  (EDITOR_PLAN.md §6).
+  (EDITOR_PLAN.md, Checks and water).
 - Water under roofs from 3D-a (D120): `sim/water.ts` simulates every air gap of a tile, split by
   terrain and the objects' obstacles, with the game's stacked-column rules: sideways flow between
   overlapping gaps, pressure (overflow × 8), the overflow cap of (34 − ceiling)/8, and roofs.
@@ -1186,8 +1198,8 @@ basins (a lake, a valley basin and a weir pool): they agree within 5% of the sto
     Valley 0.16 s at 128² and 0.95 s at 256² (riverside ponds and a taller relief); Canyon 0.06 s
     and 0.45 s; Lake Basin 1.15 s at 128² (1,408–1,664 ticks) and 3.0 s at 256² (1,664–2,048
     ticks), over the budget (D68). CI's measurement runs River Valley.
-  - The editor's interactive preview re-settles from the previous state (EDITOR_PLAN.md §6). The
-    file always gets the canonical settle (§2.1, §19.7). As built in M8 (D99): the warm start keeps
+  - The editor's interactive preview re-settles from the previous state (EDITOR_PLAN.md, Checks
+    and water). The file always gets the canonical settle (§2.1, §19.7). As built in M8 (D99): the warm start keeps
     the settled water away from the edit and pre-fills round it; the preview stops when at most
     0.05% of the map still moves by more than 0.05 (64-tick checks, one day at most). Local edits
     at 256² take at most 1.76 s in Node and 1.4–1.7 s in Chrome (Islands and Lake Basin); the
@@ -1210,8 +1222,8 @@ does (§19.5):
   the export in `export`. On import it is reported, and the importer fixes what the game itself
   would fix.
 - **playability**: §11.3–11.4. In the `generate` profile it must pass (the generator retries). In
-  the editor's `export` profile it is a warning. The player confirms, and the warning is noted in
-  the map description.
+  the editor's `export` profile it is a warning on the quiet dot, never a pop-up, and it never
+  blocks export (D184); the warning is noted in the map description.
 - **design**: `terrain.max_height` (16, or 22 at Verticality 70 and above, §5.9) and
   `terrain.single_floor` (from 3D-a, `caves.headroom` in its place). They must pass in `generate`.
   For an imported map they are only information, because official and workshop maps with caves,
@@ -1439,9 +1451,8 @@ A two-pane page. On mobile it stacks, with settings in a drawer.
 - **Right:**
   - The preview canvas, with layer toggles and a 2D/3D switch.
   - The map card beneath: name, premise, score and the validation report.
-  - Download, and **Refine this map**, which opens the same map in the editor with its features
-    ready to edit (EDITOR_PLAN.md). "Download project file" (`.damgoodmaps.json`, §19.6) stays
-    beside it. After the editor, the page shows the edited map; downloading it goes through the
+  - Download, and **Refine this map**, which opens the same map in the editor (EDITOR_PLAN.md).
+    "Download project file" (`.damgoodmaps.json`, §19.6) stays beside it. After the editor, the page shows the edited map; downloading it goes through the
     editor's export check, and generating again keeps the edits (D44).
   - **Open a map**: any `.timber` or project file opens in the editor.
 - **Generate** is always visible. Seed has a dice button. Changing a setting marks the preview stale
@@ -1584,12 +1595,12 @@ milestone and says where it went. Effort: S under a day, M 1–3 days, L 3–7 d
 | Generator changes break old share links. | Players lose maps. | Versioned deploys `/v/<version>/`; the version in the link and the map description. |
 | JS performance of the Dijkstra moisture pass and the sim at 256². | Slow generation. | Budgets in §10; a binary heap over typed arrays; active-set simulation; a priority-flood initial state; progressive candidates. |
 | Official calibration is 19 maps (2 small, 3 medium). | Small-map targets are noisy. | Blend with workshop numbers for small maps; tune from the objective measures and the in-site feedback on generated maps (D137). |
-| Heights above 16. | Unknown editor behaviour. | Kept at 16 except at high Verticality (§5.9, D132), which a probe batch confirms first (§18 E1). |
+| Heights above 16. | Unknown editor behaviour. | The probe batch confirmed that maps up to 22 load and keep their terrain, water and objects (§18 E1; D172, run 20260925-tall). Kept at 16 except at high Verticality (§5.9, D132) and on tall Real places (D172); the in-game editor edits only up to 16, and each tall map's description says so. |
 | Aquifer drills only work in temperate weather (per code). | Would mislead if used. | Left out (§5.7). |
 | Map name is the file name. | Players rename files and lose the name. | Also stored in `MapDescription`. |
 | Iron Teeth's district center on the StartingLocation. | Iron Teeth starts fail on some maps. | Same 3×3×5 footprint and entrance per the blueprints; in-game check A covers one Iron Teeth start. |
 | The water sim is slower in JS than §10 first assumed (audit: 6.5–11 s cold at 256² unoptimized). | Slow generation at 256²; a sluggish editor preview. | Exact active list and the deterministic pre-fill; warm starts for editor previews; M2 benchmark gate; K = 1 at 256²; the editor re-settles only what changed (§10). |
-| Features first is a bigger port than "port the prototype". | M1 takes longer. | It is the price of an editor that edits what the generator made. The prototype's layout already has the structure (river path, bed profile, gorge, basin, falls); M1 only makes it explicit. |
+| Features first is a bigger port than "port the prototype". | M1 takes longer. | It is the price of a generator whose plan the editor and Claude build on ("Generate, keeping my edits", regenerate area, steering; D139, D182). The prototype's layout already has the structure (river path, bed profile, gorge, basin, falls); M1 only makes it explicit. |
 | Thin waterfall lips may not read as falls in game. | Claude's "giant waterfall" looks like a wet cliff. | In-game check F1; the waterfall builder reports lip depth; flow policy (§9.2). |
 | Imported pre-1.0 maps lack `WaterSimulationMigrator`. | Re-exported maps would run at double strength. | Halve strengths and outflows at import, as the game does on load (§19.6). |
 
@@ -1649,6 +1660,8 @@ says.
 **E. Open questions from the investigation** (any time)
 1. Terrain above 16: can the game and the editor load and play it? A DGM Probe batch (the Probe's
    T6, investigation/terrain3d/DESIGN.md §8) answers it before M9a offers relief above 16 (D132).
+   Answered: yes, the game loads maps up to 22 and keeps their terrain, water and objects (D172,
+   run 20260925-tall); the in-game editor edits only up to 16.
 2. Beavers walk *through* ruin columns, as the code says.
 3. Aquifer + powered drill during drought: no water?
 4. What a map with no StartingLocation does on a new game (for the error message).
@@ -1669,8 +1682,8 @@ says.
 ## 19. Shared foundations with the editor
 
 The generator and the editor are one app. This section is the only definition of what they
-share. [EDITOR_PLAN.md §11](EDITOR_PLAN.md#11-contract-with-the-generator) points here and adds
-nothing of its own. If either plan disagrees with this section, this section wins, and any change
+share. [EDITOR_PLAN.md, Contract with the generator](EDITOR_PLAN.md#contract-with-the-generator)
+points here and adds nothing of its own. If either plan disagrees with this section, this section wins, and any change
 to it is recorded in §20.
 
 ### 19.1 Map spec
@@ -1693,7 +1706,7 @@ interface MapSpec {
     count: 1 | 2 | 3 | 4;             // colonies on one map; 2+ requires mod "timberTogether"
     mod: "none" | "timberTogether";   // "none" = vanilla: exactly one StartingLocation
   };
-  setPieces: SetPieceRequest[];       // added by the player or Claude: {kind, params, region?}
+  setPieces: SetPieceRequest[];       // requested set pieces (Claude steering, D139): {kind, params, region?}
   constraints: {
     locks: Region[];                  // regeneration never changes these tiles
     keepOut: Region[];                // the planner places nothing here
@@ -1723,13 +1736,14 @@ interface MapSpec {
 
 One schema (`core/features/schema.ts`) covers every feature. The fields every feature has are
 `{id, kind, origin: "generated" | "user" | "claude" | "stamp", params, locked}`. The generator's
-planner emits features, the build pipeline (§19.8) rasterizes them, and the editor edits their
-`params`. Sizes are in blocks (tiles) and heights in levels. The ranges each map allows are in
-§9.10.
+planner emits features, the build pipeline (§19.8) rasterizes them, and the document keeps them as
+the map's plan. The editor does not edit them as objects (D182, D184): the player's strokes and
+placements are edits on top (EDITOR_PLAN.md, The map document). Sizes are in blocks (tiles) and
+heights in levels. The ranges each map allows are in §9.10.
 
 | Kind | Params | Game rules it must respect |
 |---|---|---|
-| `river` | path (control points from source to outlet), width 1–9, bedDepth 1–4 (default 1), bedProfile (start level; steps with their drop), flow (gentle 1 / steady 2 / strong 4 blocks/s, or an exact value), style (straight / meandering / braided), meander, entry (edge / spring / lake id), exit (edge / lake id / river id), badwater, banks (drawn rivers raise the ground beside their channel to their banks, D53) | The bed never rises downstream. An edge mouth is sealed (§7.6). Moisture reach is 16 tiles at bedDepth 1, 10 at 2, 4 at 3 and 0 at 4 (6 tiles lost per bank level above the ceiled surface). At most 8 blocks/s per source tile. |
+| `river` | path (control points from source to outlet), width 1–9, bedDepth 1–4 (default 1), bedProfile (start level; steps with their drop), flow (gentle 1 / steady 2 / strong 4 blocks/s, or an exact value), style (straight / meandering / braided), meander, entry (edge / spring / lake id), exit (edge / lake id / river id), badwater, banks (the river planner raises the ground beside its channel to its banks, D53: the generator's highland streams, and the editor's drawn rivers until D184) | The bed never rises downstream. An edge mouth is sealed (§7.6). Moisture reach is 16 tiles at bedDepth 1, 10 at 2, 4 at 3 and 0 at 4 (6 tiles lost per bank level above the ceiled surface). At most 8 blocks/s per source tile. |
 | `lake` | basin outline, floorDepth, outlet {at, sill level, to: edge / river / lake / none, and its planned channel: path, levels, width}, inflow (river ids or a spring strength) | The surface settles at the sill level: water is flat, so the level is not a free number. With no inflow the lake loses about 0.054 levels a day (warning). The basin never touches a map edge. |
 | `landform` | kind (hill / plateau / ridge / canyon / valley / island / terraces), outline, height (levels), edgeStyle (gentle / terraced / cliff), base (the ground level its edge steps from), bandDepth (terraced, 6–12), bands | gentle = 1-level steps at least 3 tiles apart, joined by slopes; terraced = 1-level bands 6–12 deep; cliff = a step of 2+ levels, impassable without player stairs. Terrain stays within 0–16. |
 | `setPiece` | kind (waterfall / damSite / gorge / terracedCliffs / badwaterBasin / plugSpillway / obstaclePayoff / secondDistrict), params per §9, resolved plan and report | Built only by its shared builder (§19.3). |
@@ -1742,8 +1756,11 @@ planner emits features, the build pipeline (§19.8) rasterizes them, and the edi
 
 - **Derived layers** are rebuilt every time and never edited as features: slopes (pinned or
   removed slopes are stored as edits), water, soil moisture and soil contamination.
-- **Editor-only kinds** (`stampInstance`, `symmetryRule`) live in the document (EDITOR_PLAN.md §3).
-- **What a generated map exposes:** every river, lake and planned basin; the landforms of its
+- **Editor-only state** for symmetry and stamps (M10, M11) lives in the document, not in features;
+  both are brush-first (D182; EDITOR_PLAN.md, Stamps and symmetry).
+- **What a generated map's plan holds** (for "Generate, keeping my edits", regenerate area and
+  Claude's steering; the editor does not show them as objects, D182): every river, lake and
+  planned basin; the landforms of its
   layout (valley floor, terrace bands, highlands, plateaus, islands); every set piece; every
   grove, as a forest; every berry patch, ruin field and map object; and the start.
 - Every entity the build places records its owning feature. The ownership is kept in the document,
@@ -1751,8 +1768,9 @@ planner emits features, the build pipeline (§19.8) rasterizes them, and the edi
 
 ### 19.3 Set-piece builders
 
-There is one module per kind in `core/features/setpieces/`. The generator's planner, the editor's
-tools and Claude's proposals all use it.
+There is one module per kind in `core/features/setpieces/`. The generator's planner uses it, and
+Claude reaches it by steering the generator (D139); the editor has no set-piece tools (D182,
+D184).
 
 ```ts
 interface SetPieceBuilder {
@@ -1770,8 +1788,9 @@ interface SetPieceBuilder {
 As built in M5 (D47): `PlanContext` is the map a piece is planned on (its surface, river channels,
 taken tiles, the start's zone, locked and protected tiles, the objects on it). A set-piece feature
 stores `{kind, request, plan, report}`; operations that add or change one are checked against the
-builder's hard bounds, and the editor and Claude get plans from the builder
-(`core/doc/tools.ts` plans every tool's edit, set pieces included).
+builder's hard bounds, and the editor and Claude got plans from the builder
+(`core/doc/tools.ts` planned every tool's edit, set pieces included; the generator still uses its
+river and lake planners, and the editor's set-piece tools go with Live editing, D182, D184).
 
 - `BuildContext` is the macro layout during generation and the current map in the editor. It is
   the same code with the same results.
@@ -1824,7 +1843,7 @@ the editor's live checks and export gating.
   | Profile | load | playability | design |
   |---|---|---|---|
   | `generate` (retry until all pass, then offer the download) | must pass | must pass | must pass |
-  | `export` (editor export) | blocks | warns: the player confirms, and it is noted in the map description | warns |
+  | `export` (editor export) | blocks | warns on the quiet dot, never blocking (D184), and it is noted in the map description | warns |
   | `import` (opening a file) | reported; the importer fixes what the game itself would fix (§19.6) | reported | information |
 
 - **Scope:** every check runs on the whole map or on a dirty region. The instant subset
@@ -1919,7 +1938,7 @@ leave locked regions untouched.
 ### 19.9 Platform adapters
 
 The core never touches the DOM or a platform API. Five adapters let one codebase build both the
-website and the Claude artifact edition (EDITOR_PLAN.md §7):
+website and the Claude artifact edition (EDITOR_PLAN.md, Claude integration):
 
 - **files:** save and open (a file input or a drop, read as bytes);
 - **storage:** autosave (IndexedDB on the website; every call fails quietly when browser storage is
