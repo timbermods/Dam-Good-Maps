@@ -35,12 +35,12 @@ editor is desktop-first (D185).
 
 ## 3. The screen
 
-- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve,
-  Craterize, Quake, Erupt, a visually distinct group) | Remove, with a small options row for the picked
+- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | the forces (Carve, Craterize, Quake,
+  Erupt, a visually distinct group) | Remove (sources are on the left shelf, D212), with a small options row for the picked
   tool; every force's options row starts with its mode switch. The four forces are built on one shared
   forces core (D203, D206).
-- **The left shelf:** a clean grid of placeable objects (the start, trees, bushes, ruins, the mine
-  site, relics, slopes and the rest), each a small render in the map's look. Picking one shows a live
+- **The left shelf:** a clean grid of placeable objects: Start, Water source, Badwater source (two
+  separate items, D212), Pine, Birch, Oak, Berry bush, ruins, the mine site, relics, slopes and the rest, each a small render in the map's look. Picking one shows a live
   ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
   quiet word. Click to place, R to rotate, Esc to put it back; drag trees and bushes to paint them in
   natural clusters.
@@ -120,7 +120,7 @@ Make a valley, drop a source, and there's a river.
   The brush ring itself turns a clear water-blue and slightly thicker, with a faint fill as a second
   cue; ordinary Lower keeps the white ring. Readable over water, badwater, every ground and in
   colour-blind views (D198).
-- **Source:** click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
+- **Source** (on the left shelf as **Water source** and **Badwater source**, D212): click to place; Shift+scroll sets strength (strong waterfalls allowed, with a friendly
   note past the official range); drag to move; clean or bad; select it and press Delete (or use
   Remove) and its water recedes live. A source is always findable, even underwater: a subtle
   upwelling (bubbles, a gentle ring) shows through the water; with Source picked or when hovering near
@@ -130,9 +130,11 @@ Make a valley, drop a source, and there's a river.
   each source; water changes only through its causes (a source removed, moved or weakened, or the
   land reshaped). Generated maps' rivers are just their sources (edge inflows included) and their
   land. Hovering water quietly highlights the sources feeding it (D196).
-- **Seeing underwater:** with any tool picked, water turns transparent, so the bed, ledges and sources
-  show; with no tool picked it looks normal, and T (the game's key) or **Clear water** toggles it.
-  Badwater stays clearly distinct in transparent mode, for colour-blind players too (D196). Sources can go anywhere in the editor;
+- **Seeing underwater** (D196, D212): only water under or right around the brush turns clear, and only
+  while the brush is over tiles that already have water (painting a submerged bed); on dry land the
+  water stays normal so it can be seen. Clear water still reads as water: a faint blue tint, its ripples
+  and a soft bright shoreline. T (the game's key) or **Clear water** toggles it for the whole map.
+  Badwater stays clearly distinct, for colour-blind players too. Sources can go anywhere in the editor;
   the "only where water begins" rule (D171) is for generated maps.
 - **Lakes, waterfalls, joins and branches emerge from the land.**
 - **Water flows visibly,** and the land greens along new water. It reacts at once: water near an edit
@@ -194,6 +196,8 @@ keyboard, with labels for screen readers. (D180, D184, D196, D205.)
 
 ## 9. The future
 
+3D carving is smarter Lower and Raise, not new buttons: Lower aimed at a cliff face digs into it;
+Raise with a layer selected builds in the air (D217).
 A time-lapse of how a map was built, near M13 with the sharing features: the edit history replayed
 at speed from the generated map, a camera gliding to each edit, saved as a WebM video to share (D205).
 Every future editing tool is brush-first and follows these principles: symmetry mirrors strokes live

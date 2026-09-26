@@ -889,6 +889,11 @@ D158, D179–D184). Built on branch `feature/live-editing`, tried by Kyler on th
 <https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every push), and
 released as `live-editing-done` when Kyler says it feels right.
 
+**Before `live-editing-done`** (Kyler, 2026-09-26; D212): sources move to the left shelf as two items after
+Start (Water source, Badwater source); clear water only under or around the brush when it's over water,
+and still reading as water (a faint blue tint, ripples, a soft bright shoreline). Then released. Next:
+Carve, Craterize and Erupt merged and built as buttons on one shared forces core (D216); Quake held.
+
 **The design** (D184, Kyler's editor design principles; it replaces earlier editor decisions where
 they conflict):
 - **Principles:** the land is the interface (feedback from the land itself, not from panels,
@@ -898,7 +903,7 @@ they conflict):
   always zooms, Alt+scroll slices the visible layers, as in the game, D196); things just work (painting never waits on water and keeps
   full frame rate on 256²); landforms come from the brushes, never from buttons (D182);
   desktop-first: a desktop screen, a mouse or a drawing tablet, and a keyboard (D185).
-1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | the forces (Carve, Craterize,
+1. **Top bar:** Raise, Lower, Flatten, Smooth, Naturalize | the forces (Carve, Craterize,
    Quake, Erupt; a visually distinct group, D203, D206) | Remove. Every force's options row starts with
    its mode switch. Erupt raises a volcano (Vent or Fissure, Power, Steep or Broad, a summit, flows, Try
    another); built from `investigation/erupt` once Kyler says it's ready. Quake splits the land along a drawn fault (Lift
