@@ -25,7 +25,9 @@
 import { sourcesInFlow } from "../analysis/sources";
 import { straightness, tooStraight } from "../analysis/straight";
 import { entityJson } from "../format/entities";
-import { mapObjects } from "../sim/model";
+import { mapObjects, type MapObject } from "../sim/model";
+import { placementOf } from "../format/entities";
+import type { JsonObject } from "../format/json";
 import { pumpShoreDistance, reachAt, walkDistance } from "../analysis/walk";
 import type { FieldData } from "../doc/document";
 import { buildMap, SettleCache, type BuildResult, type GeneratedField, type LockedLayer } from "../features/build";
@@ -398,6 +400,20 @@ function orMask(a: Uint8Array | null, b: Uint8Array): Uint8Array {
   return out;
 }
 
+/** The features whose sources stand where another source's water comes down to them (D171). */
+function sourcesInFlowOwners(b: BuildResult): Set<string> {
+  const objects: MapObject[] = [];
+  const owners: string[] = [];
+  for (const e of b.entities) {
+    const j = entityJson(e);
+    const p = placementOf(j);
+    if (!p) continue;
+    objects.push({ ...p, components: j.Components as JsonObject });
+    owners.push(e.owner);
+  }
+  return new Set(sourcesInFlow(b.waterModel, objects, b.water).inFlow.map((k) => owners[k]));
+}
+
 /** The start's 5×5 stays dry. */
 function wetRing(b: BuildResult, p: StartPick): boolean {
   for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (b.water[(p.y + dy) * b.W + p.x + dx] > 0.001) return true;
@@ -477,7 +493,7 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   const weir = planWeir(h, W, H, hy, seed, attempt, protect);
   const pool = new Uint8Array(N);
   if (weir) for (const i of weir.pool) pool[i] = 1;
-  const rivers: Feature[] = [...hy.rivers, ...lakes, ...(weir ? [weir.feature] : []), ...(ctx?.features ?? [])];
+  let rivers: Feature[] = [...hy.rivers, ...lakes, ...(weir ? [weir.feature] : []), ...(ctx?.features ?? [])];
   const fail = (stage: string, b: BuildResult | null, replannable: boolean): Attempt => {
     info.stage = stage;
     const built = b ?? build(rivers, null);
@@ -555,15 +571,62 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   // ---- the badwater hollows, planned before the settle: away from where the start will likely be
   //      (the settler run on the water the hydrology planned), so one settle serves both
   let bad: Hazards = noBad;
+  let guess: StartPick | null = null;
   if (badAsk.count > 0) {
     const est = plannedWater(h, hy, W, H);
     const zero = new Float64Array(N);
-    const guess = settlerOn(est, zero, moisture(h, est, zero, W, H, null), 0, avoidOf(null));
+    guess = settlerOn(est, zero, moisture(h, est, zero, W, H, null), 0, avoidOf(null));
     if (guess) bad = badAt(est, guess, 0);
   }
   opts.onProgress?.({ attempt, stage: "start" });
   // ---- the one settle: the rivers and the hollows
   let b1 = build([...rivers, ...bad.features], "resources");
+  // water that is still changing after the settle's four days fails the map (water.settles): it is
+  // the field's (a broad flat at a basin's spill level fills for days), so the next attempt draws
+  // a new genome instead of planning again on this field (not on the last attempt, whose map is
+  // kept when none passes)
+  const lastAttempt = attempt >= (opts.maxAttempts ?? MAX_ATTEMPTS) - 1;
+  if (!b1.settle.settled && !lastAttempt) return fail("water.settles", b1, false);
+  // D171: a source that another source's water reaches fails the map (water.source_in_flow). A
+  // spring-fed river whose spring is reached leaves the map (its valley stays, dry; a river that
+  // joined it now joins where it went), and a badwater hollow that is reached is planned again
+  // elsewhere; the water is settled once more. A river's mouth on the edge that is reached, or
+  // what still fails, is planned again (the check at the end).
+  for (let round = 0; round < 2 && !lastAttempt; round++) {
+    const owners = sourcesInFlowOwners(b1);
+    if (!owners.size) break;
+    const springs = hy.rivers.filter((r) => owners.has(r.id) && "spring" in r.params.entry);
+    const badHit = bad.features.some((f) => owners.has(f.id));
+    if ([...owners].some((id) => !springs.some((r) => r.id === id) && !bad.features.some((f) => f.id === id))) break;
+    if (springs.length) {
+      const dropped = new Set(springs.map((r) => r.id));
+      for (const r of springs) {
+        for (const o of hy.rivers) if ("river" in o.params.exit && o.params.exit.river === r.id) o.params.exit = { ...r.params.exit };
+        contains.delete(r.id);
+      }
+      hy.rivers = hy.rivers.filter((r) => !dropped.has(r.id));
+      for (const f of lakes) {
+        f.params.inflow = { rivers: ("rivers" in f.params.inflow ? f.params.inflow.rivers : []).filter((id) => !dropped.has(id)) };
+        if (f.params.outlet.target && dropped.has(f.params.outlet.target)) f.params.outlet = { at: f.params.outlet.at, sill: f.params.outlet.sill, to: "none" };
+      }
+      rivers = rivers.filter((f) => !dropped.has(f.id));
+    }
+    if (badHit && guess) {
+      // (off the hollow that was reached, and round it)
+      const keepOff = orMask(badAsk.keepOff ?? null, bad.avoid);
+      h.set(hLand);
+      for (const f of bad.features) contains.delete(f.id);
+      const again = planBadwater(h, W, H, b1.water, hy, { ...badAsk, keepOff }, seed, attempt * 4 + 3 + round, guess);
+      bad = noBad;
+      if (again.features.length) {
+        h.set(again.heights);
+        for (const f of again.features) contains.add(f.id);
+        bad = again;
+      }
+    }
+    b1 = build([...rivers, ...bad.features], "resources");
+    if (!b1.settle.settled) return fail("water.settles", b1, false);
+  }
   // ---- the start on the settled water, clear of the hollows
   let pick = settlerOn(b1.water, b1.contamination, b1.moisture, 1, avoidOf(bad));
   if (!pick && bad.features.length) {
@@ -587,7 +650,6 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
   // D171: a source inside a flow fails the map (water.source_in_flow, blocking here); the objects and
   // resources change no water, so it is found on this settle and the field planned again at once
   // (not on the last attempt, whose map is the one kept when none passes)
-  const lastAttempt = attempt >= (opts.maxAttempts ?? MAX_ATTEMPTS) - 1;
   if (!lastAttempt && sourcesInFlow(base.waterModel, mapObjects({ entities: base.entities.map(entityJson) }), base.water).inFlow.length) return fail("water.source_in_flow", base, true);
   const firstWater = Math.round(performance.now() - t0);
   info.start = pick;
