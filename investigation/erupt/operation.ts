@@ -1,7 +1,7 @@
 import { snapshot, type EruptMap, type Settings, type Intent, type Fallen } from './engine';
 import type { EntitySpec } from '../../src/core/format/entities';
 export interface EruptOperation {
-  op:'eruptResult';version:1;params:{
+  op:'eruptResult'|'carveStudyResult';version:1;params:{
     W:number;H:number;settings:Settings;intent:Intent;terrain:[number,number,number][];
     entitiesBefore:EntitySpec[];entitiesAfter:EntitySpec[];fallenBefore:Fallen[];fallenAfter:Fallen[];
     waterBefore:{depth:number[];contamination:number[]};waterAfter:{depth:number[];contamination:number[]};
@@ -19,7 +19,7 @@ export function operation(before:EruptMap,after:EruptMap,settings:Settings,inten
 }
 /** Assign saved results; never re-run crater or water code on undo/redo/replay. */
 export function applyOperation(map:EruptMap,op:EruptOperation,undo=false):EruptMap {
-  const p=op.params;if(op.op!=='eruptResult'||op.version!==1||p.W!==map.W||p.H!==map.H)throw Error('Operation does not fit this map');
+  const p=op.params;if(!['eruptResult','carveStudyResult'].includes(op.op)||op.version!==1||p.W!==map.W||p.H!==map.H)throw Error('Operation does not fit this map');
   const expected=undo?2:1,desired=undo?1:2;
   const water=undo?p.waterBefore:p.waterAfter,entities=undo?p.entitiesBefore:p.entitiesAfter,fallen=undo?p.fallenBefore:p.fallenAfter;
   if(!Array.isArray(p.terrain)||!Array.isArray(entities)||!Array.isArray(fallen))throw Error('Invalid result');

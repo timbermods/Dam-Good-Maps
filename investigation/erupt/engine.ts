@@ -46,7 +46,7 @@ export function field(a:Anatomy,s:Settings,x:number,y:number){
   for(const seg of a.segments){const dx=seg.b.x-seg.a.x,dy=seg.b.y-seg.a.y,t=clamp(((x-seg.a.x)*dx+(y-seg.a.y)*dy)/(seg.length*seg.length),0,1),xx=seg.a.x+dx*t,yy=seg.a.y+dy*t,d=Math.hypot(x-xx,y-yy);if(d<distance){distance=d;cx=xx;cy=yy;along=seg.along+t*seg.length;}}
   const theta=Math.atan2(y-cy,x-cx),edge=1+.07*Math.sin(theta*3+a.phase)+.045*Math.sin(theta*5-a.phase),r=Math.hypot(x-cx,y-cy)/(a.radius*edge);
   const wave=s.mode==='vent'?theta*(6+Math.floor(hash(s.seed,20)*4))+a.phase+r*.9:along/(3+hash(s.seed,20)*2)+a.phase+r*.8;
-  const ridge=Math.max(0,Math.cos(wave))**14;
+  const ridge=Math.max(0,Math.cos(wave))**8;
   let nearest=Infinity,vent=a.vents[0];for(const v of a.vents){const d=Math.hypot(x-v.x,y-v.y);if(d<nearest){nearest=d;vent=v;}}
   return {r,theta,ridge,cx,cy,along,vent,ventDistance:nearest};
 }
@@ -74,7 +74,7 @@ export class EruptPlan{
       const shoulder=smooth((r-.48)/.7),cone=datum+a.height*profile+(h-datum)*shoulder;
       const reach=s.flows==='heavy'?2.55:1.25;
       const apron=(s.flows==='heavy'?2.6+s.power*.018:.8)*Math.max(0,1-r/reach)**1.4*(.86+.14*Math.sin(f.theta*4+a.phase+r));
-      const ridge=s.ridges?f.ridge*(1-smooth((r-1.35)/.8))*smooth(r/.25)*(1.2+s.power*.028):0;
+      const ridge=s.ridges?f.ridge*(1-smooth((r-1.05)/.85))*smooth((r-.34)/.32)*(.8+s.power*.022):0;
       let target=Math.max(h,cone,h+apron)+ridge;
       // Keep broad summit basins open; flow ridges begin below the rim.
       if(s.mode==='vent'&&r<(a.summit==='caldera'?.6:a.summit==='crater'?.24:0))target=Math.max(h,cone);
