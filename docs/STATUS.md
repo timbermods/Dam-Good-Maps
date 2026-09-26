@@ -1,10 +1,13 @@
 # Status
 
+> **Paused on 2026-09-26** until Kyler's usage resets (2026-09-29). Everything in flight, the order of work and how
+> things are run are in **[HANDOFF.md](HANDOFF.md)**. Kyler's latest decisions are D211–D217 (PLAN §20); they aren't built yet.
+
 One page, rewritten at every step and stop. Updated 2026-09-25, after the tall-maps probe batch and
 the Live editing preview. The decisions' full text is in
 [PLAN.md §20](../PLAN.md#20-editor-decisions), and the order of work in [ROADMAP.md](../ROADMAP.md).
 
-## Morning summary, 2026-09-26
+## Morning summary, 2026-09-26 (Kyler has answered most of it: see D211–D217 and HANDOFF.md)
 
 Most important first. Nothing below was released without your approval.
 

@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+> **New milestone session? Read [docs/HANDOFF.md](docs/HANDOFF.md) first.** Work was paused on 2026-09-26 until Kyler's
+> usage resets (2026-09-29); it says what's in flight, the order of work, and how things are run here.
+
 Dam Good Maps: a map generator for Timberborn. The README says what the repository holds.
 
 ## Standing rules
