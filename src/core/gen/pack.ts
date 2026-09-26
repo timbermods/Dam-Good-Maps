@@ -8,6 +8,7 @@ import { entityJson } from "../format/entities";
 import { mapMetadata, writeTimber, type TimberFile } from "../format/timber";
 import { emptySimulationSingletons, GAME_VERSION, LAYERS, settledSimulationSingletons, voxelsFromHeights, type WorldModel } from "../format/world";
 import { thumbnailJpeg } from "../render/shade";
+import { NO_BADWATER_NOTE } from "../resources/badwater";
 import type { BuildResult } from "../features/build";
 import { GENERATOR_VERSION, THEME_NAMES, type MapSpec } from "../spec/mapspec";
 
@@ -30,8 +31,12 @@ export function description(spec: MapSpec, built?: Pick<BuildResult, "heights" |
   const size = `${spec.size.x}×${spec.size.y}`;
   const kind = spec.theme === "any" ? "A map" : `${THEME_NAMES[spec.theme]}`;
   const out = [`${kind}, ${size}, designed for ${spec.designedFor}. Its land and rivers were shaped by uplift, erosion and flowing water.`];
-  if (spec.settings.hazards.badwater === "off") out.push("No badwater sources; badtides still come.");
-  else if (!built || built.entities.some((e) => e.template === "BadwaterSource")) out.push("Badwater springs up in a hollow away from the start.");
+  // the player's No badwater is recorded, so the map says so wherever it goes (D200)
+  if (spec.settings.hazards.badwater === "off") out.push(NO_BADWATER_NOTE);
+  else {
+    const n = built ? built.entities.filter((e) => e.template === "BadwaterSource").length : 1;
+    if (n) out.push(n > 1 ? "Badwater springs up in hollows away from the start." : "Badwater springs up in a hollow away from the start.");
+  }
   let top = 0;
   if (built) for (const v of built.heights) if (v > top) top = v;
   if (top > 16) out.push(`The land rises to level ${top}: the game's map editor edits only up to level 16.`);

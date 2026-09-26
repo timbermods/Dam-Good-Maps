@@ -880,6 +880,9 @@ A small step right after Resources like the official maps, and before the Real p
 **Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks), and every map having its
 badwater source. Generated maps change (a generator version bump and a contact sheet, D144).
 
+**Status:** built on `feature/badwater-source` (docs/progress/badwater-source.md), a PR into `dev`;
+generator 0.6.3.
+
 ---
 
 ## Live editing

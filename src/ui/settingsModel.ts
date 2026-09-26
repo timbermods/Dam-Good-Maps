@@ -2,7 +2,8 @@
 // band from the official maps (investigation/calibration.json, official aggregates), and the
 // feasibility guards (PLAN §5.3). The share text for "Copy seed + settings" is built here too.
 
-import { density, LAKES, officialRange, RESERVE, reservoirNeeded, RIVER_FLOW_MULTIPLIER } from "../core/gen/calibrated";
+import { density, LAKES, OFFICIAL_BADWATER, officialPerMap, officialRange, RESERVE, reservoirNeeded, RIVER_FLOW_MULTIPLIER } from "../core/gen/calibrated";
+import { badwaterBudget } from "../core/resources/badwater";
 import { resourceBudget } from "../core/resources/budget";
 import { flowBudget } from "../core/features/setpieces/common";
 import { THEME_NAMES, type Difficulty, type MapSpec, type Settings } from "../core/spec/mapspec";
@@ -42,7 +43,7 @@ export const FALLS: Choice<Settings["water"]["waterfalls"]>[] = [
   { value: "many", label: "Many" },
 ];
 export const BADWATER: Choice<Settings["hazards"]["badwater"]>[] = [
-  { value: "off", label: "Off" },
+  { value: "off", label: "No badwater" },
   { value: "low", label: "Low" },
   { value: "normal", label: "Normal" },
   { value: "high", label: "High" },
@@ -132,8 +133,12 @@ export function band(key: string, spec: MapSpec): string {
       return `About ${Math.round(LAKES[s.water.lakes] * density("basins_ge20", area))} natural basins on this map. Official maps: 0–25.`;
     case "waterfalls":
       return "Falls of 2+ levels on the rivers. Official maps: 0–41, most 4.";
-    case "badwater":
-      return "Badwater strength against the rivers'. Official maps: 0.18–2.2, most 0.65.";
+    case "badwater": {
+      if (s.hazards.badwater === "off") return "A peaceful map: no badwater sources. Badtides still turn every source bad.";
+      const b = badwaterBudget(spec.size.x, spec.size.y, s.hazards.badwater, spec.seed);
+      const typical = Math.round(officialPerMap(OFFICIAL_BADWATER.sources, area));
+      return `${b.sources} badwater source${b.sources > 1 ? "s" : ""}, for Extract late in the game. Official maps this size: about ${typical}.`;
+    }
     case "badwaterDistance":
       return "A target: the map card warns when badwater is nearer. Official maps: most 15 tiles.";
     case "thornBelts":

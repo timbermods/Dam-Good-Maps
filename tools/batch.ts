@@ -20,6 +20,7 @@ import { MapSession } from "../src/core/doc/session";
 import { generate, MAX_ATTEMPTS } from "../src/core/gen/generate";
 import { officialRange } from "../src/core/gen/calibrated";
 import { STRAIGHT_LIMITS } from "../src/core/analysis/straight";
+import { badwaterBudget } from "../src/core/resources/badwater";
 import { decodeSpecFragment, type Difficulty, type ThemeId } from "../src/core/spec/mapspec";
 
 function arg(name: string, fallback: string): string {
@@ -59,6 +60,9 @@ const failedChecks = new Map<string, number>(); // every failed attempt's blocki
 // range for their size and settings, and their mine sites
 const inRange = { trees: 0, bushes: 0, scrap: 0 };
 const mines: number[] = [];
+// and their badwater sources, against the budget for the map (D200)
+const badwater: number[] = [];
+let badwaterShort = 0;
 const advisory = new Map<string, number>();
 const straight: { run: number; canal: number }[] = [];
 const lines: string[] = [];
@@ -92,6 +96,9 @@ for (const seed of seeds) {
       else if (t.startsWith("RuinColumnH")) have.scrap += 15 * Number(t.slice(11));
       else if (t === "UndergroundRuins") m++;
     }
+    const bad = r.built.entities.filter((e) => e.template === "BadwaterSource").length;
+    badwater.push(bad);
+    if (bad < badwaterBudget(r.spec.size.x, r.spec.size.y, r.spec.settings.hazards.badwater, r.spec.seed).sources) badwaterShort++;
     const s = r.spec.settings.resources;
     const k = { trees: s.forestDensity / 100, bushes: s.berryBushes / 100, scrap: s.ruins / 100 };
     for (const key of ["trees", "bushes", "scrap"] as const) {
@@ -129,7 +136,7 @@ log(`- attempts: mean ${(attempts.reduce((a, b) => a + b, 0) / n).toFixed(2)}, m
 log(`- time per map: median ${Math.round(sorted[n >> 1])} ms, p90 ${Math.round(sorted[Math.floor(n * 0.9)])} ms, max ${Math.round(sorted[n - 1])} ms`);
 log(`- checks that failed an attempt: ${[...failedChecks].sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ") || "none"}`);
 log(`- advisory warnings on the accepted maps: ${[...advisory].map(([k, v]) => `${k} ${v}/${n}`).join(", ") || "none"}`);
-log(`- in the official maps' typical range for the size and settings (information): trees ${inRange.trees}/${final}, bushes ${inRange.bushes}/${final}, scrap ${inRange.scrap}/${final}; mine sites ${mines.length ? `${Math.min(...mines)}–${Math.max(...mines)}` : "none"}`);
+log(`- in the official maps' typical range for the size and settings (information): trees ${inRange.trees}/${final}, bushes ${inRange.bushes}/${final}, scrap ${inRange.scrap}/${final}; mine sites ${mines.length ? `${Math.min(...mines)}–${Math.max(...mines)}` : "none"}; badwater sources ${badwater.length ? `${Math.min(...badwater)}–${Math.max(...badwater)}` : "none"}, ${badwaterShort} of ${final} fewer than their budget`);
 const spread = (v: number[]) => {
   const s = v.slice().sort((a, b) => a - b);
   return s.length ? `median ${s[s.length >> 1].toFixed(1)}, p90 ${s[Math.floor(s.length * 0.9)].toFixed(1)}, max ${s[s.length - 1].toFixed(1)}` : "none";

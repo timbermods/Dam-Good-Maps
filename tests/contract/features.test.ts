@@ -6,6 +6,7 @@
 // feature list holds a dam-site ridge, a landform or a stamped set piece (D111, ROADMAP M9a).
 
 import { createHash } from "node:crypto";
+import { badwaterBudget } from "../../src/core/resources/badwater";
 import { generatedField } from "../../src/core/doc/session";
 import { describe, expect, it } from "vitest";
 import { decodeProject, encodeProject, generatedDocument } from "../../src/core/doc/document";
@@ -48,7 +49,10 @@ describe.each([
     // the set pieces are what the land held: the badwater hollows (D200: at least one), a rise with
     // ruins, a second district's site; no dam-site ridge, no stamped waterfall (D111: falls emerge)
     const setPieces = r.features.filter((f) => f.kind === "setPiece").map((f) => (f.params as { kind: string }).kind);
-    expect(setPieces.filter((k) => k === "badwaterBasin").length).toBeGreaterThanOrEqual(1);
+    // the badwater setting's sources, up to as many as the official maps' for the size (D200)
+    const basins = setPieces.filter((k) => k === "badwaterBasin").length;
+    expect(basins).toBeGreaterThanOrEqual(1);
+    expect(basins).toBeLessThanOrEqual(badwaterBudget(r.spec.size.x, r.spec.size.y, r.spec.settings.hazards.badwater, r.spec.seed).sources);
     for (const k of setPieces) expect(["badwaterBasin", "obstaclePayoff", "secondDistrict"]).toContain(k);
     // the rivers, natural lakes, hollows and rises read back from the field are its own (the second
     // district's site changes no terrain)

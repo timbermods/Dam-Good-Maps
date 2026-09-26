@@ -11,6 +11,7 @@ multi-tile objects block walking on every tile."""
 from __future__ import annotations
 
 import math
+import re
 
 import numpy as np
 
@@ -180,7 +181,16 @@ def polygon_mask(poly, W, H):
     return mask
 
 
-def rules_for(spec, difficulty):
+def asks_for_badwater(setting, description=""):
+    """Whether a map should have a badwater source (D200; resources/badwater.ts asksForBadwater): its
+    Badwater setting is anything but No badwater (off), or, without settings, its description does not
+    say No badwater."""
+    if setting:
+        return setting != "off"
+    return re.search(r"\bNo badwater\b", description or "", re.IGNORECASE) is None
+
+
+def rules_for(spec, difficulty, description=""):
     """Thresholds (validate/playability.ts rulesFor): the spec's settings, or the defaults."""
     d = spec["designedFor"] if spec else difficulty
     base = cal.DIFFICULTY[d]
@@ -202,6 +212,7 @@ def rules_for(spec, difficulty):
         "max_share": 0.55 if spec and spec["theme"] in ("lakeBasin", "islands", "any") else cal.WATER["max_water_share"],
         "mult": ({"scrap": s["resources"]["ruins"] / 100, "trees": s["resources"]["forestDensity"] / 100,
                   "bushes": s["resources"]["berryBushes"] / 100} if s else {"scrap": 1, "trees": 1, "bushes": 1}),
+        "badwater_source": asks_for_badwater(s["hazards"]["badwater"] if s else None, description),
     }
 
 
@@ -337,7 +348,7 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     h = m.surface()
     X, Y = m.size_x, m.size_y
     N = X * Y
-    rules = rules_for(spec, difficulty)
+    rules = rules_for(spec, difficulty, str((m.metadata or {}).get("MapDescription", "")))
 
     # ---- blockers by footprint: walking, and moisture/contamination (Thorns)
     blocked = np.zeros((Y, X), bool)
@@ -386,6 +397,13 @@ def _check_playability(m, rep, fps, difficulty="normal", spec=None, features=Non
     # ---- a mine site on every map (Kyler, 2026-09-25)
     mines = sum(1 for e in m.entities if e["Template"] == "UndergroundRuins" and "BlockObject" in e.get("Components", {}))
     rep.add("resources.mine_site", mines >= 1, f"{mines} mine sites (at least one)", mines, 1)
+
+    # ---- a badwater source on every map (Kyler, 2026-09-26, D200); a badwater seep counts; a map set
+    #      to No badwater needs none
+    bad = sum(1 for e in m.entities if e["Template"] in ("BadwaterSource", "BadwaterSeep") and "BlockObject" in e.get("Components", {})
+              and float(e["Components"].get("WaterSource", {}).get("SpecifiedStrength", 0.0)) > 0)
+    want = rules["badwater_source"]
+    rep.add("resources.badwater_source", bad >= 1 or not want, f"{bad} badwater sources ({'at least one' if want else 'No badwater'})", bad, 1 if want else 0)
 
     # ---- the start (vanilla: exactly one; start.count reports anything else)
     starts = [e for e in m.entities if e["Template"] == "StartingLocation" and "BlockObject" in e.get("Components", {})]

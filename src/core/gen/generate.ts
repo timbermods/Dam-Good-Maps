@@ -43,6 +43,7 @@ import { planBadwater, type Hazards } from "../land/hazards";
 import { planHydro, type Hydro } from "../land/hydro";
 import type { IntentionId } from "../land/intentions";
 import { cleanPitsAndSpikes, fillDryHollows, footComponents, mergeSmallRegions, naturalRamps, relaxEdges, snapLevels } from "../land/levels";
+import { distanceFrom } from "../math/grid";
 import { stream } from "../math/rng";
 import { droughtStorage } from "../sim/drought";
 import { waterModel } from "../sim/model";
@@ -58,6 +59,7 @@ import { planSetPiece } from "../features/setpieces";
 import { districtCandidates, planExtras, riseSpots, riseStands } from "./extras";
 import { lakeFeatures } from "./readback";
 import { planWeir } from "./weir";
+import { badwaterBudget } from "../resources/badwater";
 import { finalChecks, settlerView, type IntentionResult } from "./intentions";
 import { toTimberFile } from "./pack";
 import { nearStartTargets, planResources } from "./resources";
@@ -552,10 +554,13 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
     locked: false,
     params: { position: [p.x, p.y], orientation: p.orientation, benchRadius: 2, benchLevel: p.level, player: 0 },
   });
-  // badwater on every map, unless No badwater (D200): how many hollows, how strong
+  // badwater on every map, unless No badwater (D200): as many sources as the official maps have for
+  // the size, each about as strong (resources/badwater.ts `badwaterBudget`, moved by the seed and
+  // scaled by the Badwater setting), each in a hollow of its own
+  const budget = badwaterBudget(W, H, spec.settings.hazards.badwater, seed);
   const badAsk = {
-    count: g.hazards.badwater === "none" ? 0 : 1,
-    strength: Math.round(Math.min(2, Math.max(1, g.hazards.ratio * 0.65 * hy.flowTotal)) * 100) / 100,
+    count: g.hazards.badwater === "none" ? 0 : Math.max(1, budget.sources),
+    strength: budget.strength > 0 ? budget.strength : Math.round(Math.min(2, Math.max(1, g.hazards.ratio * 0.65 * hy.flowTotal)) * 100) / 100,
     distance: spec.settings.hazards.badwaterDistance,
     keepOff: weir ? orMask(protect, pool) : protect,
   };
@@ -627,8 +632,25 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
     b1 = build([...rivers, ...bad.features], "resources");
     if (!b1.settle.settled) return fail("water.settles", b1, false);
   }
-  // ---- the start on the settled water, clear of the hollows
-  let pick = settlerOn(b1.water, b1.contamination, b1.moisture, 1, avoidOf(bad));
+  // ---- the start on the settled water, clear of the hollows and, where it can be, beyond the
+  //      badwater distance from their water and soil (start.badwater: a target the settler aims for)
+  const badWithin = spec.settings.start.rules.badwaterWithin;
+  const beyondBad = (b: BuildResult): Uint8Array => {
+    const m = new Uint8Array(N);
+    let any = false;
+    for (let i = 0; i < N; i++)
+      if (b.soilContamination[i] > 0 || (b.water[i] > 0.05 && b.contamination[i] >= 0.05)) {
+        m[i] = 1;
+        any = true;
+      }
+    const out = avoidOf(bad);
+    if (!any) return out;
+    const d = distanceFrom(m, W, H);
+    // (the start's 3×3 middle: its footprint's nearest tile is a tile or two nearer)
+    for (let i = 0; i < N; i++) if (d[i] < badWithin + 2) out[i] = 1;
+    return out;
+  };
+  let pick = settlerOn(b1.water, b1.contamination, b1.moisture, 1, beyondBad(b1)) ?? settlerOn(b1.water, b1.contamination, b1.moisture, 1, avoidOf(bad));
   if (!pick && bad.features.length) {
     // the hollow took the only good place for a start: the start first, then the hollow
     h.set(hLand);
@@ -639,6 +661,29 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
     if (pick && badAsk.count > 0) bad = badAt(b1.water, pick, 1);
   }
   if (!pick) return fail("no start", b1, true);
+  // the hollows' badwater (their water and the soil it soaks, down to where their ditches end) came
+  // within the badwater distance of the start: plan them again from the start as it is, once
+  if (bad.features.length && !lastAttempt) {
+    const near = beyondBad(b1);
+    let hit = false;
+    for (let dy = -1; dy <= 1 && !hit; dy++) for (let dx = -1; dx <= 1 && !hit; dx++) if (near[(pick.y + dy) * W + pick.x + dx] && !avoidOf(bad)[(pick.y + dy) * W + pick.x + dx]) hit = true;
+    if (hit) {
+      const keepOff = orMask(badAsk.keepOff ?? null, bad.avoid);
+      h.set(hLand);
+      for (const f of bad.features) contains.delete(f.id);
+      const again = planBadwater(h, W, H, b1.water, hy, { ...badAsk, keepOff }, seed, attempt * 4 + 2, pick);
+      if (again.features.length) {
+        h.set(again.heights);
+        for (const f of again.features) contains.add(f.id);
+        bad = again;
+        b1 = build([...rivers, ...bad.features], "resources");
+        if (!b1.settle.settled) return fail("water.settles", b1, false);
+      } else {
+        h.set(bad.heights);
+        for (const f of bad.features) contains.add(f.id);
+      }
+    }
+  }
   // a hollow planned from the real start, when the guess found none
   if (badAsk.count > 0 && !bad.features.length) bad = badAt(b1.water, pick, 2);
   levelStart(pick);
