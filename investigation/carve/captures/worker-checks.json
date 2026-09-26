@@ -7,7 +7,10 @@
     "Esc interrupts chunk generation and restores exact pre-carve state without a history entry",
     "Undo interrupts final water settling and reverts the whole carve",
     "portable saved result replays exactly on a different loaded map without erosion",
+    "reroll preserves origin/settings and original geology, records a new seed, and replaces rather than stacks canyons",
+    "alternative undo/redo and cancellation restore the previously kept version exactly",
+    "saved alternative replays without erosion and retains its original terrain for a further deterministic reroll",
     "aim auto-finishes at its destination; dry canyon leaves no water source"
   ],
-  "operationBytes": 196228
+  "operationBytes": 196837
 }

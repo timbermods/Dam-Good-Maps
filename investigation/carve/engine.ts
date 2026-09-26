@@ -70,7 +70,7 @@ export class CarveRun {
   private bendVelocity=0;private splitSeen=new Set<string>();private previewBed:Uint8Array;private previewCells=new Set<number>();
   private ended=false;private tail=0;private quiet=0;private depositQueue:number[]=[];private depositDone=false;
   constructor(input:CarveMap,readonly settings:Settings,intent:Intent) {
-    settings.wander??=35;settings.width??=null;settings.seed??=0;
+    settings=this.settings={...settings};settings.wander??=35;settings.width??=null;settings.seed??=0;
     const N=input.W*input.H;
     if(input.heights.length!==N||!Number.isInteger(intent.origin)||intent.origin<0||intent.origin>=N||
        !['unleash','aim'].includes(settings.mode)||!['steep','wide'].includes(settings.walls)||
@@ -123,7 +123,7 @@ export class CarveRun {
       if(!this.splitSeen.has(key)){this.splitSeen.add(key);this.metrics.splits++;}
       event='split';
     }
-    this.gradeDrop=drop;
+
     this.path.push({x,y,bed:this.bed,width,dx,dy,lanes});
     for(const lane of lanes){
       const depth=Math.max(1,raw-this.bed),shoulder=this.settings.walls==='wide'?depth*.9:Math.min(2,depth*.15),radius=lane.width+shoulder+1;
@@ -239,7 +239,7 @@ export class CarveRun {
         if(Math.hypot(i%this.map.W-this.head.x,Math.floor(i/this.map.W)-this.head.y)<this.head.width+2)frontCut++;
       }else{this.metrics.deposited++;this.metrics.suspended--;}
     }
-    this.head.cut=frontCut;this.head.z=this.map.heights[this.at(this.head.x,this.head.y)]+.7;
+    this.head.cut=frontCut;this.head.z=Math.min(...(this.head.lanes??[this.head]).map(l=>this.map.heights[this.at(l.x,l.y)]))+.7;
     if(frontCut>60&&this.head.event==='surge')this.head.event='breakthrough';
     else if(!frontCut&&this.active.size)this.head.event='rock';
     if(changed.length){
@@ -277,4 +277,3 @@ export class CarveRun {
     }
   }
 }
-

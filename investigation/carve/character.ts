@@ -63,7 +63,7 @@ export class RiverCharacter {
     const length=width*1.2+7;
     for(const k of this.knobs){
       const vx=k.x-x,vy=k.y-y,along=vx*dx+vy*dy,side=-vx*dy+vy*dx;
-      if(Math.abs(along)>length||Math.abs(side)>width*.8+k.radius)continue;
+      if(Math.abs(along)>length||Math.abs(side)>width+k.radius+2)continue;
       const d=Math.hypot(vx,vy);if(d<best){best=d;selected=k;}
     }
     if(!selected)return {lanes:[{x,y,width}]};
@@ -75,4 +75,3 @@ export class RiverCharacter {
     })};
   }
 }
-

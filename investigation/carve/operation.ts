@@ -12,7 +12,7 @@ function freeze<T>(v:T):T {
 /** JSON-safe exact values. Replay never calls erosion or water simulation. */
 export interface CarveOperation {
   op: 'carveResult'; version: 1;
-  params: { W: number; H: number; settings: Settings; intent?:{origin:number;end?:number}; steps: number; reason: string;
+  params: { W: number; H: number; settings: Settings; intent?:{origin:number;end?:number}; steps: number; reason: string; reroll?:boolean;
     terrain: [tile: number, before: number, after: number][];
     entitiesBefore: EntitySpec[]; entitiesAfter: EntitySpec[];
     waterBefore: { depth: number[]; contamination: number[] };

@@ -3,6 +3,7 @@ import { mkdirSync,readFileSync,writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { CarveRun,DEFAULTS,modelFor,protectedGround,sourceStrength,mapSeed,hardness,type CarveMap,type Settings,type Intent } from './engine';
 import { fixture,loadMap,placeMap } from './maps';
+import { naturalWidth } from './character';
 import { canonicalSettle,canonicalRun } from '../../src/core/sim/prefill';
 import { operation,applyOperation } from './operation';
 import { consequences } from './consequences';
@@ -98,6 +99,63 @@ check('check status and start reach update from changed terrain and resources wi
  severed.entities=severed.entities.filter(e=>e.template==='StartingLocation');
  const mask=protectedGround(severed);for(let i=0;i<4096;i++)if(!mask[i])severed.heights[i]=0;
  const c=consequences(severed);assert.equal(c.trees,0);assert.equal(c.bushes,0);assert.equal(c.meets,false);assert.ok(c.reach<a.reach);
+});
+const large=fixture('ridge',96),largeAim={origin:80*96+48,end:14*96+48};
+const straight=complete(large,{mode:'aim',power:85,wander:0,seed:1},largeAim),winding=complete(large,{mode:'aim',power:85,wander:100,seed:1},largeAim);
+function totalTurn(r:CarveRun){return r.path.reduce((sum,p,k)=>{const a=r.path[k-1];return sum+(a?Math.abs(Math.atan2(p.dx*a.dy-p.dy*a.dx,p.dx*a.dx+p.dy*a.dy)):0);},0);}
+check('Wander makes a longer, overshooting course through actual terrain and still reaches the aimed destination',()=>{
+ assert.equal(straight.metrics.reason,'destination');assert.equal(winding.metrics.reason,'destination');
+ assert.ok(winding.metrics.distance>straight.metrics.distance*1.5);
+ assert.ok(totalTurn(winding)>totalTurn(straight)*3);
+ assert.ok(Math.max(...winding.path.map(s=>s.x))-Math.min(...winding.path.map(s=>s.x))>20);
+ assert.notDeepEqual(straight.map.heights,winding.map.heights);
+});
+check('independent width makes deep slots or wide shallow cuts; linked width matches the explicit natural width',()=>{
+ const slot=complete(large,{mode:'aim',power:95,width:2,wander:15,seed:1},largeAim);
+ const lazy=complete(large,{mode:'aim',power:15,width:24,wander:15,seed:1},largeAim);
+ const area=(r:CarveRun)=>large.heights.reduce((n,h,i)=>n+Number(h>r.map.heights[i]),0);
+ const depth=(r:CarveRun)=>Math.max(...large.heights.map((h,i)=>Math.max(0,h-r.map.heights[i])));
+ assert.ok(area(lazy)>area(slot)*4);assert.ok(depth(slot)>=8);assert.ok(depth(lazy)<=2);
+ assert.ok(slot.metrics.cut/area(slot)>lazy.metrics.cut/area(lazy)*3);
+ const auto=complete(mountain,{width:null}),explicit=complete(mountain,{width:naturalWidth(DEFAULTS.power)});
+ assert.deepEqual(auto.map,explicit.map);
+});
+check('each recorded personality is bit-exact; changing its seed changes landforms without moving the geology',()=>{
+ const a=complete(large,{mode:'aim',power:85,wander:65,seed:1},largeAim),b=complete(large,{mode:'aim',power:85,wander:65,seed:1},largeAim),c=complete(large,{mode:'aim',power:85,wander:65,seed:2},largeAim);
+ assert.deepEqual(a.map,b.map);assert.deepEqual(a.path,b.path);assert.notDeepEqual(a.map.heights,c.map.heights);
+ assert.deepEqual(a.character.rock,c.character.rock);assert.deepEqual(a.character.knobs,c.character.knobs);
+});
+check('smooth reaches narrow into rapids and include actual whole-level waterfall drops',()=>{
+ const m=fixture('mountain',96),r=complete(m,{power:85,wander:0,seed:1},{origin:80*96+48});
+ const widths=r.path.map(s=>s.width);
+ assert.ok(Math.max(...widths)/Math.min(...widths)>1.3);
+ assert.ok(r.metrics.rapids>0);assert.ok(r.metrics.waterfalls>0);
+ assert.ok(r.path.some((s,k)=>k&&r.path[k-1].bed-s.bed>=2));
+});
+check('split channels surround a coherent hard core and rejoin a descending route without flicker or single-tile rubble',()=>{
+ const m=fixture('uphill',96),r=new CarveRun(m,{...DEFAULTS,mode:'aim',defyGravity:true,power:85,wander:35,seed:1},largeAim);
+ const originalExtrema=extrema(m.heights,96,96),signs=new Int8Array(9216);
+ for(let k=0;k<1200&&!r.metrics.stable;k++){
+  const old=r.map.heights.slice();r.step();
+  for(let i=0;i<9216;i++){const d=Math.sign(r.map.heights[i]-old[i]);if(d){assert.ok(!signs[i]||signs[i]===d);signs[i]=d;}}
+  for(const i of extrema(r.map.heights,96,96))assert.ok(originalExtrema.has(i),'split created an isolated extremum');
+ }
+ assert.ok(r.metrics.splits>0);assert.equal(r.metrics.reason,'destination');
+ const fork=r.path.filter(s=>s.lanes.length===2);assert.ok(fork.length>5);
+ const wideFork=fork.reduce((a,b)=>Math.hypot(a.lanes[0].x-a.lanes[1].x,a.lanes[0].y-a.lanes[1].y)>Math.hypot(b.lanes[0].x-b.lanes[1].x,b.lanes[0].y-b.lanes[1].y)?a:b);
+ assert.ok(Math.hypot(wideFork.lanes[0].x-wideFork.lanes[1].x,wideFork.lanes[0].y-wideFork.lanes[1].y)>wideFork.lanes[0].width*2);
+ for(const k of r.character.knobs)assert.equal(r.map.heights[k.y*96+k.x],m.heights[k.y*96+k.x]);
+ const visited=new Set([largeAim.origin]),queue=[largeAim.origin];
+ for(let n=0;n<queue.length;n++){const i=queue[n];for(const j of [i-96,i+96,...(i%96?[i-1]:[]),...(i%96<95?[i+1]:[])])
+  if(j>=0&&j<9216&&!visited.has(j)&&r.map.heights[j]<=r.map.heights[i]){visited.add(j);queue.push(j);}}
+ assert.ok(visited.has(largeAim.end));assert.equal(r.path[r.path.length-1].lanes.length,1);
+ for(const lane of wideFork.lanes){const i=Math.round(lane.y)*96+Math.round(lane.x);assert.ok(visited.has(i));assert.ok(m.heights[i]-r.map.heights[i]>5);}
+});
+check('legacy settings are defaulted without mutation and invalid character values are rejected',()=>{
+ const legacy={...DEFAULTS};delete legacy.width;delete legacy.wander;delete legacy.seed;
+ new CarveRun(mountain,Object.freeze(legacy),intent);assert.equal(legacy.seed,undefined);
+ for(const settings of [{width:0},{width:25},{wander:-1},{wander:101},{seed:-1},{seed:1.5},{seed:4294967296}])
+  assert.throws(()=>new CarveRun(mountain,{...DEFAULTS,...settings},intent),/Invalid character/);
 });
 const settled=canonicalSettle(modelFor(high.map)),final={...high.map,water:{depth:settled.depth,contamination:settled.contamination}};
 check('canonical water is bit-exact with different slice sizes',()=>{

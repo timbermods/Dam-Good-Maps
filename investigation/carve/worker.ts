@@ -1,4 +1,4 @@
-import { CarveRun, DEFAULTS, modelFor, type CarveMap, type Settings } from './engine';
+import { CarveRun, DEFAULTS, modelFor, type CarveMap, type Settings, type Intent } from './engine';
 import { loadMap } from './maps';
 import { canonicalRun } from '../../src/core/sim/prefill';
 import { applyOperation, operation, type CarveOperation } from './operation';
@@ -8,6 +8,8 @@ import { skyVisibility, shadowMap, objectCasters, tileData } from '../../src/ren
 import { entityView, soilView } from '../../src/render3d/model';
 import { moisture } from '../../src/core/sim/moisture';
 let map:CarveMap,before:CarveMap,run:CarveRun|null=null,last:CarveMap|null=null;
+interface Variation {base:CarveMap;intent:Intent;settings:Settings;nextSeed:number}
+let variations=new WeakMap<CarveOperation,Variation>(),series:Variation|null=null,carveBase:CarveMap;
 let undo:CarveOperation[]=[],redo:CarveOperation[]=[];
 let settings:Settings={...DEFAULTS},busy=false,epoch=0,restore=false;
 const send=(data:Record<string,unknown>)=>postMessage({...data,epoch});
@@ -36,7 +38,8 @@ async function frame(reset=false,token=epoch) {
   }
   check(token);last=snapshot(map);
   send({type:'frame',heights:map.heights,metrics:run?.metrics??null,head:run?.head??null,
-    trail:run?.path.slice(-28)??[],undo:undo.length,redo:redo.length,checks});
+    trail:run?.path.slice(-28)??[],undo:undo.length,redo:redo.length,checks,
+    canReroll:!!variations.get(undo[undo.length-1]),seed:run?.settings.seed??variations.get(undo[undo.length-1])?.settings.seed??null});
 }
 async function settle(token:number) {
   const r=canonicalRun(modelFor(map));let result=null;
@@ -52,11 +55,21 @@ async function finish(reason:string,token:number) {
   const current=run;map=current.map;send({type:'settling'});
   const water=await settle(token);
   const op=operation(before,map,settings,current.metrics.steps,reason,water);
-  op.params.intent={...current.intent};
+  op.params.intent={...current.intent};op.params.reroll=carveBase!==before;
   await frame(false,token);check(token);
-  undo.push(op);redo=[];run=null;
-  send({type:'operation',op,base:before,metrics:current.metrics});
-  send({type:'finished',reason,settled:water.settled,ticks:water.ticks,undo:undo.length});
+  undo.push(op);redo=[];if(series)variations.set(op,{...series,settings:{...settings}});run=null;
+  send({type:'operation',op,base:before,carveBase,metrics:current.metrics});
+  send({type:'finished',reason,settled:water.settled,ticks:water.ticks,undo:undo.length,canReroll:true,seed:settings.seed});
+}
+function storedMap(raw:any):CarveMap {
+  const N=raw?.W*raw?.H;
+  if(!Number.isInteger(raw?.W)||!Number.isInteger(raw?.H)||raw.W<1||raw.H<1||raw.W>256||raw.H>256||
+     ![16,22].includes(raw.maxHeight)||raw.heights?.length!==N||
+     !raw.heights.every((v:number)=>Number.isInteger(v)&&v>=0&&v<=raw.maxHeight)||!Array.isArray(raw.entities)||
+     raw.water?.depth?.length!==N||raw.water?.contamination?.length!==N||
+     !raw.water.depth.every((v:number)=>Number.isFinite(v)&&v>=0)||
+     !raw.water.contamination.every((v:number)=>Number.isFinite(v)&&v>=0&&v<=1))throw new Error('Invalid stored map.');
+  return {...raw,heights:Uint8Array.from(raw.heights),water:{depth:Float64Array.from(raw.water.depth),contamination:Float64Array.from(raw.water.contamination)}};
 }
 self.onmessage=async(event:MessageEvent)=>{
   const msg=event.data;
@@ -73,12 +86,22 @@ self.onmessage=async(event:MessageEvent)=>{
       if(run&&!['advance','stop','snapshot'].includes(msg.type))throw new Error('Stop or cancel this carve first.');
       switch(msg.type){
         case 'load':
-          run=null;undo=[];redo=[];last=null;send({type:'status',text:'Loading land…'});
+          run=null;undo=[];redo=[];variations=new WeakMap();series=null;last=null;send({type:'status',text:'Loading land…'});
           map=await loadMap(msg.id);if(msg.id.startsWith('place:'))await settle(token);
           await frame(true,token);break;
         case 'start':
-          settings={...DEFAULTS,...msg.settings};before=snapshot(map);
-          run=new CarveRun(map,settings,msg.intent);map=run.map;send({type:'started'});break;
+          settings={...DEFAULTS,...msg.settings};before=snapshot(map);carveBase=before;
+          run=new CarveRun(carveBase,settings,msg.intent);map=run.map;
+          series={base:carveBase,intent:{...msg.intent},settings:{...settings},nextSeed:settings.seed??0};
+          send({type:'started',seed:settings.seed,settings});break;
+        case 'reroll':{
+          const prior=variations.get(undo[undo.length-1]);
+          if(!prior)throw new Error('Finish a carve before trying another path.');
+          before=snapshot(map);carveBase=prior.base;
+          prior.nextSeed=(prior.nextSeed+1)>>>0;settings={...prior.settings,seed:prior.nextSeed};series=prior;
+          run=new CarveRun(carveBase,settings,prior.intent);map=run.map;
+          send({type:'started',seed:settings.seed,settings});await frame(false,token);break;
+        }
         case 'advance':
           if(run){run.step();map=run.map;await frame(false,token);if(run?.metrics.stable)await finish(run.metrics.reason,token);}
           break;
@@ -92,8 +115,12 @@ self.onmessage=async(event:MessageEvent)=>{
           if(b?.format!==1||!raw||!b.operation||!Number.isInteger(raw.W)||!Number.isInteger(raw.H)||raw.W<1||raw.H<1||raw.W>256||raw.H>256||
               ![16,22].includes(raw.maxHeight)||raw.heights?.length!==N||
               !raw.heights.every((v:number)=>Number.isInteger(v)&&v>=0&&v<=raw.maxHeight)||!Array.isArray(raw.entities))throw new Error('Invalid saved carve run.');
-          const base={...raw,heights:Uint8Array.from(raw.heights),water:{depth:Float64Array.from(raw.water.depth),contamination:Float64Array.from(raw.water.contamination)}} as CarveMap;
-          const result=applyOperation(base,b.operation);before=base;map=result;undo=[b.operation];redo=[];last=null;
+          const base=storedMap(raw);
+          const result=applyOperation(base,b.operation);
+          const original=b.carveBase?storedMap(b.carveBase):!b.operation.params.reroll?base:null;
+          if(original&&(original.W!==base.W||original.H!==base.H))throw new Error('Wrong variation base size.');
+          before=base;map=result;undo=[b.operation];redo=[];variations=new WeakMap();last=null;
+          if(original&&b.operation.params.intent)variations.set(b.operation,{base:original,intent:b.operation.params.intent,settings:{...DEFAULTS,...b.operation.params.settings},nextSeed:b.operation.params.settings.seed??0});
           await frame(true,token);send({type:'replayed'});break;
         }
         case 'snapshot':send({type:'snapshot',map});break;

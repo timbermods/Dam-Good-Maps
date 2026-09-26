@@ -8,6 +8,7 @@ import type { Chunk,Geometry } from './meshes';
 import type { CarveOperation } from './operation';
 import type { Settings,Head } from './engine';
 import { Surge } from './effects';
+import { naturalWidth } from './character';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 const input=(id:string)=>$<HTMLInputElement>(id),canvas=$<HTMLCanvasElement>('view'),notice=$('notice');
 const worker=new Worker(new URL('./worker.ts',import.meta.url),{type:'module'});
@@ -28,17 +29,22 @@ const aimLine=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMate
 const surge=new Surge();scene.add(surge.group);
 let W=0,H=0,heights=new Uint8Array(),busy=true,active=false,paused=false,mode:'unleash'|'aim'='unleash',origin:number|null=null;
 let speed=1,nextAt=0,steps=0,epoch=0,top=false,settling=false,pending:Record<string,unknown>|null=null,head:Head|null=null;
+let canReroll=false,historyIndex=0,cachedAfterIndex=-1;
 let savedRun:unknown=null,lastOperation:CarveOperation|null=null,finishCache=false;
 interface Lighting {tiles:Uint8Array;light:Uint8Array;checks:any}
 let lighting:Lighting|null=null;
 interface Cache {groups:Map<string,THREE.Group>;heights:Uint8Array;lighting:Lighting}
-let beforeCache:Cache|null=null,afterCache:Cache|null=null;
+let beforeCache:Cache|null=null,afterCache:Cache|null=null,carveBaseCache:Cache|null=null;
+let priorCaches:{before:Cache|null;after:Cache|null;base:Cache|null;index:number}|null=null;
+const allCaches=()=>[beforeCache,afterCache,carveBaseCache,priorCaches?.before,priorCaches?.after,priorCaches?.base];
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');input('motion').checked=!reduced.matches;
 const motion=()=>!reduced.matches&&input('motion').checked;
 function send(msg:Record<string,unknown>){busy=true;worker.postMessage(msg);}
 function stateControls(){
-  for(const id of ['map','reset','unleash','aim','power','walls','dry','layers','replay-file'])($<HTMLButtonElement>(id)).disabled=active||busy;
+  for(const id of ['map','reset','unleash','aim','power','wander','auto-width','walls','dry','layers','replay-file'])($<HTMLButtonElement>(id)).disabled=active||busy;
   input('defy').disabled=active||busy||mode!=='aim';
+  input('width').disabled=active||busy||input('auto-width').checked;
+  $<HTMLButtonElement>('reroll').disabled=active||busy||!!uploads.length||finishCache||!canReroll;
   $<HTMLButtonElement>('pause').disabled=!active||settling;
   $<HTMLButtonElement>('stop').disabled=!active||settling||paused&&pending?.type==='stop';
   if(active){$<HTMLButtonElement>('undo').disabled=false;$<HTMLButtonElement>('redo').disabled=true;}
@@ -74,15 +80,24 @@ function restoreView(c:Cache|null){
   if(!c)return;uploads.length=0;for(const g of chunks.values()){scene.remove(g);dispose(g);}chunks.clear();
   for(const [key,g]of c.groups){chunks.set(key,g);scene.add(g);}heights=c.heights.slice();setLighting(c.lighting);
 }
-function releaseCaches(){
-  const oldInstances=new Set(retainedInstances);retainedInstances.clear();const currentInstances=new Set<THREE.InstancedMesh>();chunks.forEach(g=>g.traverse(o=>{if(o instanceof THREE.InstancedMesh)currentInstances.add(o);}));for(const o of oldInstances)if(!currentInstances.has(o))o.dispose();
-  const old=new Set(retained);retained.clear();beforeCache=afterCache=null;
-  const current=new Set<THREE.BufferGeometry>();chunks.forEach(g=>g.traverse(o=>{if(o instanceof THREE.Mesh)current.add(o.geometry);}));
-  for(const g of old)if(!current.has(g))g.dispose();
+function pruneCaches(){
+  const oldInstances=new Set(retainedInstances),old=new Set(retained);
+  retainedInstances.clear();retained.clear();allCaches().forEach(c=>retain(c??null));
+  const currentInstances=new Set<THREE.InstancedMesh>(),current=new Set<THREE.BufferGeometry>();
+  chunks.forEach(g=>g.traverse(o=>{if(o instanceof THREE.Mesh)current.add(o.geometry);if(o instanceof THREE.InstancedMesh)currentInstances.add(o);}));
+  for(const o of oldInstances)if(!retainedInstances.has(o)&&!currentInstances.has(o))o.dispose();
+  for(const g of old)if(!retained.has(g)&&!current.has(g))g.dispose();
+}
+function releaseCaches(){beforeCache=afterCache=carveBaseCache=null;priorCaches=null;pruneCaches();}
+function preserveCaches(){priorCaches={before:beforeCache,after:afterCache,base:carveBaseCache,index:cachedAfterIndex};}
+function rollbackCaches(){
+  if(!priorCaches)return;
+  beforeCache=priorCaches.before;afterCache=priorCaches.after;carveBaseCache=priorCaches.base;cachedAfterIndex=priorCaches.index;
+  priorCaches=null;pruneCaches();
 }
 function upload(c:Chunk){
   let group=chunks.get(c.key);
-  if(group&&(beforeCache?.groups.get(c.key)===group||afterCache?.groups.get(c.key)===group)){
+  if(group&&allCaches().some(saved=>saved?.groups.get(c.key)===group)){
     scene.remove(group);group=group.clone(true);scene.add(group);chunks.set(c.key,group);
   }
   if(!group){group=new THREE.Group();scene.add(group);chunks.set(c.key,group);}
@@ -110,6 +125,7 @@ worker.onmessage=(event:MessageEvent)=>{
   if(m.type==='chunk')uploads.push(m.chunk);
   if(m.type==='lighting')setLighting(m);
   if(m.type==='frame'){
+    canReroll=!!m.canReroll;historyIndex=m.undo;if(m.seed!==null)$('seed-label').textContent='Personality '+m.seed;
     heights=m.heights;head=m.head;if(!m.metrics&&!active)$('metrics').textContent='';
     surge.set(head,m.trail,heights,W);
     if(m.metrics){steps=m.metrics.steps;$('metrics').textContent=(steps/10).toFixed(1)+' s · '+m.metrics.cut.toLocaleString()+' blocks cut · '+m.metrics.deposited+' deposited';}
@@ -117,43 +133,63 @@ worker.onmessage=(event:MessageEvent)=>{
   }
   if(m.type==='status')notice.textContent=m.text;
   if(m.type==='settling'){settling=true;stateControls();}
-  if(m.type==='started'){settling=false;active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
-  if(m.type==='cancelled'){settling=false;steps=0;$('metrics').textContent='';active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
+  if(m.type==='started'){showSettings(m.settings);$('seed-label').textContent='Personality '+m.seed;settling=false;active=true;paused=false;steps=0;notice.textContent='The river is unleashed. Stop to keep it. Esc to revert.';}
+  if(m.type==='cancelled'){rollbackCaches();settling=false;steps=0;$('metrics').textContent='';active=false;paused=false;head=null;pending=null;notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';}
   if(m.type==='finished'){
-    settling=false;active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
+    priorCaches=null;canReroll=!!m.canReroll;historyIndex=m.undo;cachedAfterIndex=m.undo;settling=false;active=false;paused=false;head=null;finishCache=true;if(lighting)setLighting(lighting);$('pause').textContent='Pause';
     notice.textContent=(m.reason==='stopped'?'Stopped.': 'The river reached '+m.reason+'.')+' One undo step saved.';
     if(!m.settled)notice.textContent+=' Water reached the repo’s settle limit.';
     $<HTMLButtonElement>('undo').disabled=false;
   }
-  if(m.type==='operation'){lastOperation=m.op;savedRun={format:1,base:m.base,operation:m.op};$<HTMLButtonElement>('save-run').disabled=false;}
+  if(m.type==='operation'){lastOperation=m.op;savedRun={format:1,base:m.base,carveBase:m.carveBase,operation:m.op};$<HTMLButtonElement>('save-run').disabled=false;}
   if(m.type==='replayed')notice.textContent='Exact saved result restored.';
-  if(m.type==='error'){notice.textContent=m.text;active=false;pending=null;if(beforeCache)restoreView(beforeCache);}
+  if(m.type==='error'){notice.textContent=m.text;if(active){restoreView(beforeCache);rollbackCaches();}active=false;pending=null;}
   if(m.type==='ready'){busy=false;stateControls();if(notice.textContent==='Loading land…')instruction();}
 };
 worker.onerror=e=>{notice.textContent='Worker error: '+e.message;busy=false;active=false;stateControls();};
 const select=$<HTMLSelectElement>('map');
 for(const [id,name]of MAPS){const o=document.createElement('option');o.value=id;o.textContent=name;select.add(o);}
 select.value='fixture:mountain';
-function load(){origin=null;marker.visible=false;aimLine.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();}
+function load(){canReroll=false;cachedAfterIndex=-1;origin=null;marker.visible=false;aimLine.visible=false;savedRun=null;lastOperation=null;head=null;$('metrics').textContent='';$<HTMLButtonElement>('save-run').disabled=true;send({type:'load',id:select.value});stateControls();}
 select.onchange=load;$('reset').onclick=load;
 for(const value of ['unleash','aim'] as const)$(value).onclick=()=>{
   mode=value;origin=null;marker.visible=false;aimLine.visible=false;$('unleash').setAttribute('aria-pressed',String(mode==='unleash'));$('aim').setAttribute('aria-pressed',String(mode==='aim'));stateControls();instruction();
 };
-input('power').oninput=()=>{const p=Number(input('power').value);$('power-label').textContent=p+' · '+(p<25?'Creek':p<55?'Torrent':p<85?'River':'Catastrophe');};
-function settings():Settings{return {mode,power:Number(input('power').value),walls:$<HTMLSelectElement>('walls').value as Settings['walls'],defyGravity:input('defy').checked,dry:input('dry').checked,layers:input('layers').checked};}
+function widthLabel(){
+  const auto=input('auto-width').checked,w=auto?naturalWidth(Number(input('power').value)):Number(input('width').value);
+  if(auto)input('width').value=String(w);
+  $('width-label').textContent=w.toFixed(1)+' tiles';stateControls();
+}
+input('power').oninput=()=>{const p=Number(input('power').value);$('power-label').textContent=p+' · '+(p<25?'Creek':p<55?'Torrent':p<85?'River':'Catastrophe');widthLabel();};
+input('wander').oninput=()=>{$('wander-label').textContent=input('wander').value;};
+input('auto-width').onchange=widthLabel;input('width').oninput=widthLabel;
+function settings():Settings{return {mode,power:Number(input('power').value),wander:Number(input('wander').value),width:input('auto-width').checked?null:Number(input('width').value),seed:0,walls:$<HTMLSelectElement>('walls').value as Settings['walls'],defyGravity:input('defy').checked,dry:input('dry').checked,layers:input('layers').checked};}
+function showSettings(s:Settings){
+  mode=s.mode;input('power').value=String(s.power);input('wander').value=String(s.wander??35);
+  input('auto-width').checked=s.width===null||s.width===undefined;if(s.width!=null)input('width').value=String(s.width);
+  input('defy').checked=s.defyGravity;input('dry').checked=s.dry;input('layers').checked=s.layers;$<HTMLSelectElement>('walls').value=s.walls;
+  $('unleash').setAttribute('aria-pressed',String(mode==='unleash'));$('aim').setAttribute('aria-pressed',String(mode==='aim'));
+  $('wander-label').textContent=input('wander').value;input('power').oninput!(new Event('input'));
+}
+$('reroll').onclick=()=>{
+  if(!canReroll||busy||active||uploads.length)return;
+  preserveCaches();beforeCache=cache();afterCache=null;retain(beforeCache);if(historyIndex===cachedAfterIndex)restoreView(carveBaseCache);else carveBaseCache=null;pruneCaches();
+  active=true;paused=false;head=null;marker.visible=false;aimLine.visible=false;
+  notice.textContent='Trying another path from the original land…';send({type:'reroll'});stateControls();
+};
 function begin(end?:number){
-  releaseCaches();beforeCache=cache();retain(beforeCache);active=true;paused=false;marker.visible=false;aimLine.visible=false;
+  preserveCaches();beforeCache=cache();afterCache=null;carveBaseCache=beforeCache;pruneCaches();active=true;paused=false;marker.visible=false;aimLine.visible=false;
   send({type:'start',settings:settings(),intent:{origin,end}});origin=null;stateControls();
 }
 function cancel(){
-  if(!active)return;epoch++;pending=null;paused=false;active=false;head=null;restoreView(beforeCache);surge.set(null,[],heights,W);
+  if(!active)return;epoch++;pending=null;paused=false;active=false;head=null;restoreView(beforeCache);rollbackCaches();surge.set(null,[],heights,W);
   busy=true;worker.postMessage({type:'cancel'});notice.textContent='Whole carve reverted.';$('pause').textContent='Pause';stateControls();
 }
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';};
 $('speed').onclick=()=>{speed=speed===1?4:speed===4?12:1;$('speed').textContent=speed+'×';};
 $('stop').onclick=()=>{if(!active)return;pending={type:'stop'};paused=true;notice.textContent='Keeping the canyon and settling water…';stateControls();};
-$('undo').onclick=()=>{if(active){cancel();return;}if(busy)return;restoreView(beforeCache);send({type:'undo'});notice.textContent='Run undone.';};
-$('redo').onclick=()=>{if(busy)return;restoreView(afterCache);send({type:'redo'});notice.textContent='Stored result restored.';};
+$('undo').onclick=()=>{if(active){cancel();return;}if(busy)return;if(historyIndex===cachedAfterIndex)restoreView(beforeCache);send({type:'undo'});notice.textContent='Run undone.';};
+$('redo').onclick=()=>{if(busy)return;if(historyIndex===cachedAfterIndex-1)restoreView(afterCache);send({type:'redo'});notice.textContent='Stored result restored.';};
 $('save-run').onclick=()=>{
   if(!savedRun)return;const text=JSON.stringify(savedRun,(_k,v)=>ArrayBuffer.isView(v)?Array.from(v as unknown as number[]):v);
   const a=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.href=url;a.download='carve-run.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -198,7 +234,7 @@ let previous=performance.now(),fpsAt=previous,frames=0,frameMs:number[]=[],effec
 function animate(t:number){
   requestAnimationFrame(animate);const dt=Math.min(.05,(t-previous)/1000);frameMs.push(t-previous);previous=t;frames++;
   const at=performance.now();let count=0;while(uploads.length&&count<2&&performance.now()-at<3){upload(uploads.shift()!);count++;}
-  if(finishCache&&!uploads.length){afterCache=cache();retain(afterCache);finishCache=false;}
+  if(finishCache&&!uploads.length){afterCache=cache();retain(afterCache);finishCache=false;pruneCaches();stateControls();}
   const pan=Math.max(W,H)*.25*dt*(keys.has('shift')?3:1);
   const x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),z=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
   if(x||z){camera.position.x+=x*pan;camera.position.z+=z*pan;controls.target.x+=x*pan;controls.target.z+=z*pan;}

@@ -11,6 +11,12 @@
     "objects on excavated footprints are removed; the start is never removed",
     "keep river creates a real source set by power; dry canyon adds no source",
     "check status and start reach update from changed terrain and resources without blocking it",
+    "Wander makes a longer, overshooting course through actual terrain and still reaches the aimed destination",
+    "independent width makes deep slots or wide shallow cuts; linked width matches the explicit natural width",
+    "each recorded personality is bit-exact; changing its seed changes landforms without moving the geology",
+    "smooth reaches narrow into rapids and include actual whole-level waterfall drops",
+    "split channels surround a coherent hard core and rejoin a descending route without flicker or single-tile rubble",
+    "legacy settings are defaulted without mutation and invalid character values are rejected",
     "canonical water is bit-exact with different slice sizes",
     "one stored result restores terrain, source, removed objects and water exactly after JSON replay",
     "worker mesh data supports the actual clean terrain, water and object shaders",
@@ -21,15 +27,15 @@
     "generated 256 map preserves start and exact complete operation"
   ],
   "timings": {
-    "128 step p95 ms": 1.628400000000056,
-    "128 apply and undo ms": 3.34719999999993,
-    "256 step p95 ms": 6.465199999999641,
-    "256 apply and undo ms": 9.794299999999566
+    "128 step p95 ms": 1.4734999999998308,
+    "128 apply and undo ms": 5.0190000000000055,
+    "256 step p95 ms": 4.066399999999703,
+    "256 apply and undo ms": 6.885400000001027
   },
   "terrainHashes": {
-    "mountain": "99ed2e078b3f53518832bbfbc935701a261ac5d5630d07b5c4d656e7c18f27cd",
-    "ridge": "365a38bd89504f01e650e017439fcb8e576031014db85578f034396c609153da",
-    "defy": "c62489044276b87a4c3ded6479452c4969340913a224bc40691f1d4c494676ff"
+    "mountain": "42c79baeb9ce20ae24d6620fb99a8da9d85412e24726c593e6437ae131381177",
+    "ridge": "5763aa59fc496da4eff98878da273c0ce6d342601c7137fdb9b173eadf126c8a",
+    "defy": "4aa0f90aba216609e1933e95a3daad4686986468bcde901269c90579f3c3d2b3"
   },
   "hardwareFPS": "User PC acceptance required; CPU timings are not frame rates"
 }
