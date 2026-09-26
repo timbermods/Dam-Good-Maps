@@ -119,6 +119,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D206: Erupt (a volcano: Vent or Fissure, Power, Steep or Broad, a summit, flows) joins the forces; every force's options row starts with its mode switch; all four share one forces core; its prototype is held until Kyler says it's ready.
 - D207: visible layers identical to Timberborn: a compact layer widget, slicing, the layer pick, tools acting on the visible land; Esc never resets the slice.
 - D208 (for M9b): themes become optional leanings; the default is "Any" (Surprise me), combining landforms, water and intentions freely; measured for coherence, playability and no archetype clusters.
+- D209: design version 2 approved; M9a builds it with "Any" as the default and no ruler-straight rivers; M9b fixes Islands' sameness and raises Kyler's crater and waterfall-lake intentions; pending #59–#68 decided (#66 later).
+- D210: M9a on Opus 5.5 at xhigh, M9b and M9c at high, routine work on Sonnet 5 at medium; M9a first when work competes.
 
 ## Done and released
 
