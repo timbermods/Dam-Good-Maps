@@ -61,7 +61,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - **D144** A contact-sheet image at every map-changing step, in `docs/sheets/`.
 - **D145** Kyler's answers to the eight flags, folded into the lines above. Also: M9a, M9b and M9c
   are approved as M9's stages; what goes into each waits for design version 2.
-- **Design version 2** is built on `investigation/generative-v2` (PR #32) and waits for Kyler's review.
+- **Design version 2** is being built on `investigation/generative-v2` (PR #32).
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
 - D147: **Map look 2: water and shadows** before the Frame pass: a High mode with a proper water shader and soft sun shadows only; today's textures stay; AO, grading, richer textures and models later, optional.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
@@ -109,9 +109,23 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D195: investigations commit reports, code, small samples and a few captures; large generated results stay out of git (a gitignored `local/` folder or a GitHub Release), with how to regenerate them.
 - D196: water is never an object (no river selection or panel; flow and clean or bad belong to sources); sources always findable; clear water while a tool is picked or with T; Alt+scroll slices layers and Shift+scroll sets strength, as in the game (replaces #58); water in the hover readout.
 - D197: water near an edit moves within a frame or two; a speed control (slower, normal, faster, instant), brisk by default; the final water is always the game's settled result.
+- D199: Carve's full feature set (Unleash and Aim, Defy gravity, Power, Width, Wander, variation, Try another path, Steep or Wide walls, Keep river or Dry canyon, a following camera with effects, Stop and instant undo), kept whole when #47 lands.
+- D200: at least one permanent badwater source on every map (generated, Real places, Pick a place), placed naturally at the per-difficulty distance, counts and strengths like the official maps. A "No badwater" option makes a peaceful map (badtides still happen).
+- D201: waterfalls with shape and volume in the Standard look (an arcing translucent ribbon, foam at the lip, whitewater below, cascades as small falls); mist and spray in Map look 2's High mode.
+- D202: Craterize, a giant-impact tool with its own button next to Carve; its prototype (`investigation/craterize`) is held until Kyler says it's ready.
+- D203: Quake (a fault line: Lift or Slide, Power, Sheer or Stepped scarp) joins Carve and Craterize in a visually distinct forces group on the top bar; all three share one forces core; its prototype is held until Kyler says it's ready.
+- D204: Flatten from the stroke's start, cut and fill, Cliff or Ramped edges, a "start fits here" hint, objects ride the ground; and the principle "tools read intent".
+- D205: drag to resize the brush (hold F), juice with optional quiet sounds, a minimap (on at 256²), camera bookmarks (Ctrl+Shift+1–9, Shift+1–9); a build time-lapse near M13.
+- D206: Erupt (a volcano: Vent or Fissure, Power, Steep or Broad, a summit, flows) joins the forces; every force's options row starts with its mode switch; all four share one forces core; its prototype is held until Kyler says it's ready.
+- D207: visible layers identical to Timberborn: a compact layer widget, slicing, the layer pick, tools acting on the visible land; Esc never resets the slice.
+- D208 (for M9b): themes become optional leanings; the default is "Any" (Surprise me), combining landforms, water and intentions freely; measured for coherence, playability and no archetype clusters.
+- D209: design version 2 approved; M9a builds it with "Any" as the default and no ruler-straight rivers; M9b fixes Islands' sameness and raises Kyler's crater and waterfall-lake intentions; pending #59–#68 decided (#66 later).
+- D210: M9a on Opus 5.5 at xhigh, M9b and M9c at high, routine work on Sonnet 5 at medium; M9a first when work competes.
 
 ## Done and released
 
+- **Resources like the official maps** (#43, D167–D170, generator 0.6.2) are merged into `dev`; they ship with
+  the next release.
 - **Merged investigations:** #45 (Pick a place's signature water, D192) and #38 (Map look 2), adopted as
   proposals for their steps.
 - **Save to Timberborn** is live (`save-to-timberborn-done`, #40, D162, D191).
@@ -139,9 +153,11 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 ## Running
 
-- **M9 design version 2** is built: PR #32 into `dev`, not merged until Kyler has read it (below).
-- **Resources like the official maps** (D167–D170): PR #43, approved by Kyler; merged after the start
-  and edge rules, then the Real places are rebuilt through its planner.
+- **M9 design version 2**, on branch `investigation/generative-v2` (a PR into `dev` when done,
+  not merged).
+- **Badwater on every map** (D200), on branch `feature/badwater-source`.
+- **Real places, second round**: the rebuild through the resources planner, without walls, about 150
+  places, on `feature/real-places-2` (PR #35).
 - **The Claude suite's setups** (D134): 101 of 120 reference solutions pass on `dev`; the 19 failures are
   setups tuned on M7's maps that later generator changes moved (M12-INTEGRATION §11). They are re-tuned
   once the start and edge rules and the resources step land, since both change generated maps again.
@@ -159,6 +175,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   mine sites and ruins (D178) on `look/mine-site`.
 - Dependabot: the Actions updates merge when CI is green; the majors (#24, #25) wait for the
   deliberate upgrade step (D150).
+- **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) and
+  `investigation/erupt` (Erupt, D206) when their PRs open, until Kyler says each is ready.
 - **Held:** #47 (`investigation/carve`, Carve as a force of nature, D194). Kyler loves it; one more Codex
   round (Wander, Width separate from Power, variation within each carve, "Try another path"), then
   merged when he says it's ready.
@@ -167,11 +185,10 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 1. Try each Live editing push on <https://timbermods.github.io/dam-good-maps/preview/>; it is
    released when it feels right.
-2. Approve design version 2 (PR #32: `docs/m9-design.md`, REPORT-v2, the ten briefs and the
-   contact sheets), with what goes into each M9 stage; approve the feedback proposal (D137).
+2. Approve design version 2 when it's built, with what goes into each M9 stage; approve the
+   feedback proposal (D137).
 3. A yes before each probe batch; the next is M9a's.
-4. Open decisions: 54 in [decisions-pending.md](decisions-pending.md), each with a default; design
-   version 2's are #59–#68.
+4. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default.
 5. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
