@@ -371,56 +371,6 @@ export function districtCandidates(b: BuildResult, features: readonly Feature[],
   return out;
 }
 
-/** Where "ruins on a plateau" (PLAN §9.4) can rise: a disc of `radius` (and a ring of one) on
- *  level, dry, free ground the colony walks on from the start, 35–70% of the way from the start to
- *  the farthest ground, the nearest first to the middle of that band. */
-export function obstacleSpots(b: BuildResult, features: readonly Feature[], avoid: Uint8Array | null, radius: number, n: number, minDist = 0): [number, number][] {
-  const { W, H } = b;
-  const N = W * H;
-  if (!b.start) return [];
-  const startMask = new Uint8Array(N);
-  for (let y = b.start.y - 1; y <= b.start.y + 1; y++) for (let x = b.start.x - 1; x <= b.start.x + 1; x++) if (x >= 0 && y >= 0 && x < W && y < H) startMask[y * W + x] = 1;
-  const sd = distanceFrom(startMask, W, H);
-  let far = 0;
-  for (let i = 0; i < N; i++) if (sd[i] > far && Number.isFinite(sd[i])) far = sd[i];
-  const links: [number, number][] = [];
-  for (const s of b.slopes) {
-    const [dx, dy] = slopeHighSideOf(s.orientation);
-    const hx = s.x + dx;
-    const hy = s.y + dy;
-    if (hx >= 0 && hy >= 0 && hx < W && hy < H) links.push([s.y * W + s.x, hy * W + hx]);
-  }
-  const labels = walkRegions(b.heights, W, H, null, links);
-  const root = labels[b.start.y * W + b.start.x];
-  const lakes = new Uint8Array(N);
-  for (const f of features) {
-    if (f.kind !== "lake") continue;
-    const m = polygonMask(f.params.outline, W, H);
-    for (let i = 0; i < N; i++) if (m[i]) lakes[i] = 1;
-  }
-  const bad = (i: number) => labels[i] !== root || b.water[i] > 0 || b.occupied[i] || b.channel[i] || lakes[i] || avoid?.[i] || b.cache.terrain.protect[i];
-  const R = radius + 1;
-  const mid = 0.525 * far;
-  const scored: [number, number][] = [];
-  for (let y = R + 1; y < H - R - 1; y += 2)
-    for (let x = R + 1; x < W - R - 1; x += 2) {
-      const i = y * W + x;
-      // its ruins keep the ruins target's distance from the start (D85: the generator aims for it)
-      if (sd[i] < 0.35 * far || sd[i] > 0.7 * far || sd[i] < minDist + R || bad(i)) continue;
-      const lv = b.heights[i];
-      let ok = true;
-      for (let yy = y - R; yy <= y + R && ok; yy++)
-        for (let xx = x - R; xx <= x + R && ok; xx++) {
-          if ((xx - x) * (xx - x) + (yy - y) * (yy - y) > R * R + R) continue;
-          const j = yy * W + xx;
-          if (bad(j) || b.heights[j] !== lv) ok = false;
-        }
-      if (ok) scored.push([Math.abs(sd[i] - mid), i]);
-    }
-  scored.sort((a, c) => a[0] - c[0] || a[1] - c[1]);
-  return scored.slice(0, n).map(([, i]) => [i % W, Math.floor(i / W)] as [number, number]);
-}
-
 /** Where ruins stand on a natural rise (PLAN §9.4 as M9a builds it: found on the land, never
  *  raised; stairs-only heights are rewards): a disc of `radius` on level, dry, free ground the
  *  colony does not walk to from the start (no derived slope joins it), beside ground it does walk
