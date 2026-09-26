@@ -65,7 +65,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 - D146: a **Map quality checkpoint** after the M9 build: contact sheets, a probe batch (asked first), the measures as information, the weakest patterns; tuning rounds until Kyler says go.
 - D147: **Map look 2: high fidelity** after the checkpoint and before the Frame pass: High / Standard / Light quality; High adds a real water shader, soft shadows, AO, finer procedural detail, softened edges, anti-aliasing and richer models; our own art; judged by eye; `map-look-2-done`.
 - D148: tests a decision made stale are updated to the current decision, renamed and logged, without asking; never weakened.
-- D149: the DGM Probe's integration, adopted as proposals (two conflicts pending, #54 and #55).
+- D149: the DGM Probe's integration, adopted as proposals; Kyler decided its two conflicts: results go to `C:\dgm-probe\`, and the probe batch alone is M9a's gate.
 - D150: dependency updates: Actions and minor or patch npm updates merged when CI is green; majors held for a deliberate upgrade step (refinement); one weekly Dependabot pull request per ecosystem.
 
 ## Done and released
@@ -96,7 +96,7 @@ Every decision Kyler sent since `m8-done`, in the version in force.
    feedback proposal (D137).
 4. A yes before each probe batch; the first is M9a's.
 5. Open decisions: 47 in [decisions-pending.md](decisions-pending.md), each with a default; new:
-   #51–#55 (#54, #55: two probe proposals that conflict with recorded decisions).
+   #51–#53.
 6. Optional: the pending in-game checks ([ingame-log.md](ingame-log.md)), and the M3 spike page
    ([What Kyler needs to do](progress/kyler-todo.md), item 4).
 
