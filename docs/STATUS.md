@@ -280,8 +280,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   deliberate upgrade step (D150).
 - **Held:** `investigation/craterize` (Craterize, D202) and `investigation/quake` (Quake, D203) and
   `investigation/erupt` (Erupt, D206) when their PRs open, until Kyler says each is ready.
-- **Queued for the next boundary:** #47 (Carve, ready per Kyler; the Carve button in Live editing is built
-  from it, D194, D199).
+- **Held:** #47 (Carve) until Codex reports its two new touches done (the variation at high Wander, oxbow
+  lakes); then it merges at the next boundary, and the Carve button keeps them (D194, D199).
 
 ## Waiting on Kyler
 
