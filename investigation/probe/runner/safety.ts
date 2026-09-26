@@ -28,6 +28,9 @@ interface Snapshot {
   docsCopied?: string[];
   /** Every folder under Documents\Timberborn before the launch (outside DOCS_SKIP): the others are the run's. */
   docDirs?: string[];
+  /** Every file and folder under Documents\Timberborn before the launch, nothing skipped: after the restore
+   *  and DGM Probe's removal, anything not in it is a trace the run left (`leftovers`). */
+  all?: string[];
 }
 
 export function isGameRunning(): boolean {
@@ -56,7 +59,7 @@ export function listFiles(root: string, skip: string[] = []): Listing {
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
       const rel = relative(root, full);
-      if (skip.some((s) => rel === s || rel.startsWith(s + '\\') || rel.startsWith(s + '/'))) continue;
+      if (skipped(rel, skip)) continue;
       let st;
       try {
         st = statSync(full);
@@ -88,9 +91,12 @@ export function registryValues(): Record<string, string> {
 }
 
 export const marker = () => join(probePaths().backup, 'in-progress.json');
-/** Folders the docs listing leaves out: an earlier probe's results folder (never written again), the mods
- *  (DGM Probe's own folder is installed and removed by the runner) and the saves (handled on their own). */
-const DOCS_SKIP = ['DGMProbe', 'Mods', 'Saves', 'ExperimentalSaves'];
+/** Folders the docs listing leaves out: the saves (handled on their own) and DGM Probe's own mod folder
+ *  (installed before the snapshot, removed by the runner after the restore). Everything else under
+ *  Documents\Timberborn is covered: the player's other mods' folders, and any DGMProbe folder there. */
+const DOCS_SKIP = ['Saves', 'ExperimentalSaves', join('Mods', 'DGMProbe')];
+/** A relative path is one of the folders in `skip`, or inside one. */
+const skipped = (rel: string, skip: string[]) => skip.some((s) => rel === s || rel.startsWith(s + '\\') || rel.startsWith(s + '/'));
 /** Steam Cloud rewrites these at every launch of the game, whoever starts it: reported, never put back
  *  (an older copy could confuse Steam's own sync). */
 export const isSteamBookkeeping = (rel: string) => /(^|[\\/])steam_autocloud\.vdf$/i.test(rel);
@@ -145,6 +151,7 @@ export function takeSnapshot(): Snapshot {
     saveDirs: [...listDirs(join(timberbornDocs(), 'Saves')), ...listDirs(join(timberbornDocs(), 'ExperimentalSaves'))],
     docs: listFiles(timberbornDocs(), DOCS_SKIP),
     docDirs: listDirs(timberbornDocs(), DOCS_SKIP),
+    all: listAll(timberbornDocs()),
   };
   rmSync(docsBackup(), { recursive: true, force: true });
   snap.docsCopied = [];
@@ -284,7 +291,22 @@ export function restore(keepLogsIn: string | null, opts: { registry?: boolean } 
   return report;
 }
 
-/** Every folder under root (absolute paths), root included, leaving out the top folders in `skip`. */
+/** Every file and folder under root, as relative paths (folders end with a backslash). */
+function listAll(root: string): string[] {
+  return [...Object.keys(listFiles(root)), ...listDirs(root).filter((d) => d !== root).map((d) => relative(root, d) + '\\')];
+}
+
+/**
+ * What a run left under Documents\Timberborn: every file or folder there now that was not there before the
+ * launch (Steam's bookkeeping aside). Called after the restore and DGM Probe's removal; it should be empty.
+ */
+export function leftovers(snap: { all?: string[] }): string[] {
+  if (!snap.all) return [];
+  const before = new Set(snap.all);
+  return listAll(timberbornDocs()).filter((rel) => !before.has(rel) && !isSteamBookkeeping(rel));
+}
+
+/** Every folder under root (absolute paths), root included, leaving out the folders in `skip` (relative paths). */
 function listDirs(root: string, skip: string[] = []): string[] {
   const out: string[] = [];
   if (!existsSync(root)) return out;
@@ -292,7 +314,7 @@ function listDirs(root: string, skip: string[] = []): string[] {
     out.push(dir);
     for (const name of readdirSync(dir)) {
       const full = join(dir, name);
-      if (dir === root && skip.includes(name)) continue;
+      if (skipped(relative(root, full), skip)) continue;
       try {
         if (statSync(full).isDirectory()) walk(full);
       } catch {

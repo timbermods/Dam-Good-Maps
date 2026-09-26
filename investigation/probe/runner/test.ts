@@ -4,7 +4,7 @@
 // FakeTimberborn.exe running test/fake-game.cjs). Kyler's own settings, saves and game are never touched.
 // The tall maps are read (never written) from C:\dgm-probe\tall when tools/probe-tall.ts has made them.
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -45,6 +45,7 @@ async function main(): Promise<void> {
   writeFileSync(join(docs, 'Saves/Kyler colony/Day 12.timber'), 'kyler save');
   writeFileSync(join(docs, 'Saves/steam_autocloud.vdf'), 'steam before');
   writeFileSync(join(docs, 'SomeModData/markers.txt'), 'kyler mod data');
+  writeFileSync(join(docs, 'Mods/SomeMod/config.txt'), 'kyler mod config');
   writeFileSync(join(docs, 'PlayerData/player.data'), 'player data');
 
   // 0. the probe's folder: C:\dgm-probe by default, never inside Documents\Timberborn, and the launch carries it
@@ -211,6 +212,18 @@ async function main(): Promise<void> {
   check('restore: error reports moved out, and the folder the game made for them removed', !existsSync(join(docs, 'Error reports')) && existsSync(join(docs, 'Kyler empty folder')), r.docsMoved.join(', '));
   check("restore: a mod's data file the game rewrote is put back, the rewritten one kept in the run's folder", readFileSync(join(docs, 'SomeModData/markers.txt'), 'utf8') === 'kyler mod data' && /rewritten by the game/.test(readFileSync(join(sandbox, 'kept', 'changed', 'SomeModData', 'markers.txt'), 'utf8')) && r.docsRestored.includes(join('SomeModData', 'markers.txt')), r.docsRestored.join(', '));
   check("restore: Steam's own bookkeeping file is reported, never put back", r.savesChanged.includes('steam_autocloud.vdf') && readFileSync(join(docs, 'Saves/steam_autocloud.vdf'), 'utf8') !== 'steam before', r.savesChanged.join(', '));
+  check('restore: a DGMProbe folder the run wrote in Documents\\Timberborn is moved out and removed', !existsSync(join(docs, 'DGMProbe')) && existsSync(join(sandbox, 'kept', 'created', 'DGMProbe', 'shots')), r.docsMoved.filter((m) => m.startsWith('DGMProbe')).join(', '));
+  const modFiles = readdirSync(join(docs, 'Mods/SomeMod'));
+  check("restore: in a player mod's folder, a new file is moved out and a rewritten one put back", readFileSync(join(docs, 'Mods/SomeMod/config.txt'), 'utf8') === 'kyler mod config' && !modFiles.some((f) => f.startsWith('session-')) && modFiles.includes('version-1.1'), modFiles.join(', '));
+  check("restore: DGM Probe's own mod folder is left to the runner, which removes it after", existsSync(join(docs, 'Mods/DGMProbe/version-1.1')));
+  rmSync(join(docs, 'Mods/DGMProbe'), { recursive: true, force: true });
+  const left = safety.leftovers(snapInfo);
+  check('restore: nothing new is left in Documents\\Timberborn', left.length === 0, left.join(', '));
+  mkdirSync(join(docs, 'Stray'), { recursive: true });
+  writeFileSync(join(docs, 'Stray/left.txt'), 'left');
+  const stray = safety.leftovers(snapInfo);
+  check('leftovers: a file and folder a run left behind are caught', stray.includes(join('Stray', 'left.txt')) && stray.includes('Stray\\'), stray.join(', '));
+  rmSync(join(docs, 'Stray'), { recursive: true, force: true });
   check('restore: the marker is gone', !safety.hasPendingRestore());
 
   // 7. the exact comparison with a settings backup, load order and long binary values included

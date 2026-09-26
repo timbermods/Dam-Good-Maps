@@ -1,75 +1,146 @@
-# Dam Good Maps: Map Editor and Claude Integration, Build Plan
+# Dam Good Maps: the map editor
 
-This plan adds an in-browser map editor to Dam Good Maps, plus Claude-driven editing. It builds on the generator website described in `PLAN.md`. All of it lives in the **Dam Good Maps** repository in the **timbermods** GitHub organization, alongside `PLAN.md`, `FORMAT.md` and the investigation results.
+**Read this before any editor work** (`CLAUDE.md`). Part 1 is the editor's vision, taken from Kyler's
+decisions (`PLAN.md` §20: D158, D172, D179–D187). Part 2 is the technical reference that still holds.
+Part 3 lists what was superseded: it must not come back. Where anything here conflicts with Part 1
+or with `PLAN.md` §20, those win. The decisions themselves stay in `PLAN.md` §20; `ROADMAP.md`
+orders the work.
 
-**The goal: a web editor that is superior to Timberborn's in-game editor by being easier to use and simpler, while offering more creative power.** Players should be able to shape a great map in minutes without learning a complicated tool, and advanced users should find tools the in-game editor doesn't have. When simplicity and power conflict, simplicity wins by default and power moves into an advanced mode.
+# Part 1: the vision
 
-**The whole product in one line: generate → refine → play.**
+## 1. The idea
 
-1. **Generate.** The player picks settings and parameters and generates a map (covered by `PLAN.md`).
-2. **Refine.** One click on "Refine this map" opens it in the editor, where the player reshapes it by hand and by asking Claude, e.g. "add a giant waterfall in the north part of the map that is roughly 20 blocks wide" (covered by this plan).
-3. **Play.** Export a validated `.timber` file, drop it into Timberborn's Maps folder, and play.
+A studio for creating maps. Start from a generated map or a real place, shape it like a painter, and
+the water responds to everything you do. It is deliberately different from the game's own editor,
+which is a precision workshop; players can still fine-tune in the game's editor if they want. The
+editor is desktop-first (D185).
 
-These steps must feel like one app, not separate tools. Moving between them never loses work: going back to the settings and regenerating keeps the player's own features and edits, and export is available from every screen. Judge every decision by how smoothly a player gets from settings to playing a map they're happy with.
+## 2. The principles
 
-## 0. Before writing any code
+- **The land is the interface.** The map is the hero; the interface stays small and quiet. Feedback
+  comes from the land itself: water moving, ground greening, a waterfall appearing.
+- **Direct manipulation.** Everything happens where the cursor is.
+- **Few tools, each obvious.** A new idea must earn a button, or make an existing tool smarter.
+- **Smart defaults instead of settings.** Options stay hidden until wanted.
+- **Forgiveness.** Every stroke or placement is one instant undo step, and Esc always backs out.
+- **One grammar:** pick, paint or place, see.
+- **Things just work, and are fast.** Full frame rate on 256² maps; painting never waits on water;
+  water reacts around the edit first, then the rest of the map; nothing ever freezes.
 
-**Prerequisites.** Follow `ROADMAP.md`. Editor work starts at roadmap milestone M3. It needs two things from M1 and M2:
-- the shared core that `PLAN.md` §19 defines: the `MapSpec`, the parametric features, the build pipeline, format I/O, and the validation modules with their classes and profiles;
-- a generator that already produces its maps from those features.
+(D158, D179, D184.)
 
-If any of these is missing, stop and tell me.
+## 3. The screen
 
-**This plan was written before the investigation ran.** The audit of 2026-09-23 (`AUDIT.md`) reconciled it with the findings and with `PLAN.md`, and produced the merged `ROADMAP.md`. Its changes are listed at the end of this file. Where `ROADMAP.md` orders the work differently from §10, follow `ROADMAP.md`. Section 11 points to the one definition of what the generator provides for the editor, `PLAN.md` §19. Both plans honour it.
+- **The top bar:** Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove, with a small options
+  row for the picked tool.
+- **The left shelf:** a clean grid of placeable objects (the start, trees, bushes, ruins, the mine
+  site, relics, slopes and the rest), each a small render in the map's look. Picking one shows a live
+  ghost that follows the cursor, green where it fits and red where it doesn't, with the reason in a
+  quiet word. Click to place, R to rotate, Esc to put it back; drag trees and bushes to paint them in
+  natural clusters.
+- **The view buttons:** Orbit, Top-down, Reset view, Height colours, Markers and the overlays
+  (moisture, contamination, drought). The legend appears only while an overlay is on.
+- **The header:** Undo and Redo; one primary button, **Save to Timberborn** (**Download .timber** in
+  browsers that can't save to a folder); a small menu for the rest (Open, Save project, Download
+  .timber, History, New map).
+- **Checks:** a quiet dot, green or amber. Clicking it lists the problems, each highlighted on the
+  map. Never a pop-up.
+- **The start:** its reach (water, wood, berries) appears when it is hovered or dragged, then fades.
 
-**Reconcile first.** Read `PLAN.md`, `FORMAT.md`, `investigation/REPORT.md` and `investigation/calibration.json`, plus the current codebase. Where this plan conflicts with the investigation's findings (footprints, slope rules, moisture reach, water behaviour, limits) or with the architecture as actually built, the findings and the built code win. Record every deviation and decision in "Editor decisions" (`PLAN.md` §20, which the audit started) before starting each milestone. Ask me about anything that changes the scope of a milestone.
+(D184.)
 
-**Working rules.**
-- Build one milestone at a time. Each ends with its acceptance criteria met, tests passing, and a short summary of what changed.
-- Milestones marked **IN-GAME CHECK** list their checks in `docs/ingame-log.md` as pending and continue without waiting: Kyler is skipping in-game checks for now (`PLAN.md` §20, D11). The automated validation and tests carry the gate. The exception is a DGM Probe batch, which plays maps in the real game unattended; it launches Timberborn only after Claude asks Kyler in chat and Kyler says yes, every time (`PLAN.md` §20, D117; `CLAUDE.md`).
-- The editor must never be able to export a file that breaks the game. Load problems block export. Playability and design problems warn. The classes are defined in `PLAN.md` §19.5.
-- Everything works without Claude. Claude features are an add-on.
+## 4. Shaping the land
 
-## 1. Product principles
+- **The brushes,** circle or square. Terrace is a Flatten option ("in steps"); Ramp is a Smooth
+  option ("make walkable": the game's natural slopes). Pen pressure on drawing tablets.
+- **Precision when wanted:** precise mode (one tile, one level), straight lines, level lines, exact
+  levels by sampling (Ctrl-click; on water, the riverbed's level), a Select tool for big shaped edits
+  (a key or a modifier-drag opens it), and live dimensions (a selection's size, a straight line's
+  length, the level while flattening).
+- **Hills, plateaus, ridges and valleys come from the brushes,** not buttons.
+- **Remove:** click one object or drag to remove many; filters; a red highlight on hover. It never
+  changes terrain, and it refuses removals that would break a rule (such as deleting the start).
+- **Heights:** up to 16, or 22 on tall maps (D172); the game's own editor edits up to 16.
 
-These guide every design decision. When a choice isn't covered elsewhere, decide by these, and note the decision in "Editor decisions."
+(D180, D182, D183, D184.)
 
-1. **Edit features, not blocks.** The main way to edit is by working with things players think in: a river, a lake, a hill, a plateau, a canyon, a waterfall, a forest, a ruin field, the start. Each is an object with handles that can be moved, reshaped, resized or deleted at any time, like shapes in a drawing program. Block-level sculpting exists, but as a secondary tool.
-2. **Valid by default.** Tools produce playable results without the user having to know the rules:
-   - rivers always flow downhill to an outlet, and a river entering at the map edge gets a sealed mouth, so its water can't drain back off the map;
-   - a lake fills to its outlet sill and has an inflow;
-   - slopes are placed and oriented automatically wherever the colony needs to cross a one-level step;
-   - the start clears its own footprint and keeps its entrance free;
-   - forests grow only where they'll survive, unless the user overrides it.
+## 5. Water
 
-   When something does go wrong, the issue comes with a one-click fix ("move the start to the nearest valid spot," "open an outlet for this lake").
-3. **See it before you commit.** Every tool previews its result live, including its effect on water, before the click that applies it.
-4. **Nothing is scary.** Unlimited undo, a visible history, autosave, and non-destructive edits. Trying something should never risk losing work.
-5. **Few concepts, plain language.** The interface is organized around four ideas: Land, Water, Resources and Start. No jargon: "flow: gentle / steady / strong," not "SpecifiedStrength 1.5"; "height," not "voxel layer." Exact numbers appear in advanced mode.
-6. **Start from something good.** Users begin from a generated map, a template or an imported map, never a blank grid unless they ask for one.
-7. **Simple mode first, advanced mode on request.** Simple mode shows feature tools, resources, the start and export. Advanced mode adds sculpting brushes, individual entity placement, numeric fields, locks and technical overlays.
-8. **It must feel instant.** Interactions respond within a frame; slower work (water, full validation) happens in the background and never blocks editing.
+Make a valley, drop a source, and there's a river.
 
-## 2. Goals and non-goals
+- **Smart Lower:** a stroke that starts in or near water carves a bed that keeps flowing downhill;
+  the brush ring glows blue when it does.
+- **Source:** click to place; Alt+scroll sets strength (strong waterfalls allowed, with a friendly
+  note past the official range); drag to move; clean or bad. Sources can go anywhere in the editor;
+  the "only where water begins" rule (D171) is for generated maps.
+- **Lakes, waterfalls, joins and branches emerge from the land.**
+- **Water flows visibly** over a few seconds, and the land greens along new water. Time controls:
+  pause, speed up, replay and follow.
+- **Drought and Badtide:** the Drought button shows what a drought looks like on this map, the
+  Badtide button what a badtide looks like. The Weather view is separate: a fuller timeline of the
+  whole cycle, opened when wanted (D186).
+- **"Let the water carve":** the river cuts its own gorge or valley, with floodplains and a delta.
+- **Optional water sounds,** our own.
+- **What you watch is what you'll play:** the final water always matches the game's settled result.
 
-**Goals**
-- Open any generated map, or any imported `.timber` file, in an editor in the browser.
-- Feature-based editing as the primary workflow (section 1, principle 1).
-- Creative tools the in-game editor lacks: parametric features, stamps, symmetry, a naturalize (erosion) brush, heightmap import, regenerate an area, and Claude editing.
-- Live validation with one-click fixes, and a water preview.
-- Non-destructive editing with undo and redo, saved as a project file.
+(D180, D181, D184, D186.)
 
-**Non-goals for this plan**
+## 6. The look
+
+The clean game-like view (D135), contaminated ground as a layer over the ground (D154), the mine
+sites and ruins (D178), the approved badwater in one shared water palette (D177), and later a High
+mode with the water shader and soft shadows (Map look 2, D147).
+
+## 7. Controls
+
+WASD and the arrow keys move, Q and E rotate, scroll zooms, Alt+scroll sets strength, [ and ] set
+size, Esc backs out. Every tool is reachable by keyboard, with labels for screen readers. (D180, D184.)
+
+## 8. The generator, Claude and the first run
+
+- **"Refine this map"** opens the editor; **"Generate, keeping my edits"** rebuilds the land around
+  what the player has painted, showing it grow, never a frozen wait.
+- **Claude (M12)** is a small chat box summoned with a key, which disappears when done. Many players
+  won't use it, so it never takes permanent space. Claude steers the generator for character and
+  uses the tools only for precise edits (D139, D187).
+- **First run:** three one-line hints (paint the land, place things, add water), then never again.
+
+## 9. The future
+
+Every future editing tool is brush-first and follows these principles: symmetry mirrors strokes live
+(M10), stamps are painted onto the land (M11), and cave carving is a brush (the 3D stages). (D179,
+D182.)
+
+## 10. What's gone, and must not come back
+
+The landform tools and their handles, the river and lake tools, the Channel tool, the separate plant
+brushes, the busy readouts, the Show dropdown and the Advanced checkbox. Part 3 lists each with the
+decision that replaced it.
+
+# Part 2: the technical reference
+
+## Working rules
+
+- Editor work follows `ROADMAP.md`, one step at a time; each ends with its checks passing and a short
+  progress entry. Record deviations and decisions in `PLAN.md` §20.
+- The editor must never export a file that breaks the game. Load problems block export; playability
+  and design problems show on the quiet dot and never block it. The classes are defined in `PLAN.md`
+  §19.5.
+- In-game checks are logged in `docs/ingame-log.md`; a DGM Probe batch plays maps in the real game
+  only after Kyler's yes in chat, every time (`PLAN.md` §20, D117; `CLAUDE.md`).
+- Everything works without Claude. Claude is an add-on.
+
+## Non-goals
+
 - Voxel-level cave and overhang editing, until the 3D stages (`ROADMAP.md`, 3D-a–3D-c; `PLAN.md` §20, D118, D125 lift this non-goal in 3D-c).
   - Until then, imported caves and overhangs must be preserved and exported unchanged, together with the water the file stores under them.
   - Until then, the tools edit surface height only.
   - The data model stores terrain as runs per tile from project format 3 (D119), so voxel editing needs no format change.
-- Terrain above 16, except on maps at high Verticality (`PLAN.md` §5.9, D132). 16 is the in-game editor's limit, and the tools keep to the map's own limit (D123). Imported maps with terrain up to 22 are preserved.
+- Terrain above the map's own limit: 16, or 22 on tall maps (`PLAN.md` §20, D172; §5.9, D132). The tools keep to the map's limit (D123), and imported maps with terrain up to 22 are preserved.
 - Multiplayer starts, for now. Timberborn 1.1 keeps exactly one StartingLocation per map, so symmetry makes maps look balanced but never adds starts. Fair multi-colony maps for Kyler's Timber Together mod are a later goal (`PLAN.md` §20, D5): the spec and feature schema keep room for them (`MapSpec.colonies`, `start.player`), and the editor's data model must not assume a single start forever.
 - Real-time collaborative editing, accounts, or server-side storage.
-- Matching the game's exact visuals. The game's assets can't be included, so the editor uses its own clear, stylized look. The game remains the reference for final appearance and exact water behaviour.
 
-## 3. Data model
+## The map document
 
 This is the most important part to get right. Everything else builds on it. The shared parts (spec, features, set-piece builders, ids, build order) are defined once in `PLAN.md` §19. This section adds what only the editor needs.
 
@@ -88,74 +159,42 @@ MapDocument {
 }
 ```
 
-**Features are first-class, parametric objects.** Each feature stores its parameters, not its final blocks. The kinds, their parameters and the game rules each must respect are defined in `PLAN.md` §19.2. What the editor shows for each:
-
-- `River { path, width, bedDepth, bedProfile, flow, style, entry, exit, badwater }`.
-  - Drawing from the map edge makes a sealed mouth.
-  - `bedDepth` 1 keeps the full 16-tile band of moist soil; 2 gives 10 tiles, 3 gives 4, and 4 none. The inspector shows the band.
-  - The water depth follows from the flow and the outlet, not from the carve.
-- `Lake { basin, floorDepth, outlet: {at, sill, to}, inflow }`.
-  - The water level *is* the outlet sill, because settled water is flat. The user drags the rim or the sill, not a separate "water level".
-  - A lake with no inflow gets a warning: it loses about 0.054 levels a day.
-  - The basin keeps off the map edge, because edges drain.
-- `Landform { kind: hill | plateau | ridge | canyon | valley | island | terraces, outline, height, edgeStyle: gentle | terraced | cliff }`.
-  - Terrain is whole levels, so "gentle" means one-level steps at least 3 tiles apart, joined by slopes.
-  - "terraced" means one-level bands 6–12 deep.
-  - "cliff" means a step of two or more levels, which beavers cannot cross without player stairs.
-- Set pieces, each a `setPiece` feature built by its shared builder:
-  - `Waterfall { lip (position and facing), width, drop, flow, mode: on-river | standalone, headerPool, plungePool, outflow }`
-  - `DamSite { narrows, crest, basin }`
-  - `Gorge { path, width, wallHeight, access }`
-  - `TerracedCliffs`, `BadwaterBasin`, `PlugSpillway`, `ObstaclePayoff` and `SecondDistrict`
-- `Forest { area, density, speciesMix }`, `BerryPatch { area, density }`
-- `RuinField { area, density, scrapTarget }` (placement follows the calibrated clustering)
-- `MapObject { kind: mineSite | relic | geothermal | thornBelt | weir | plug | bridge, placement }`
-- `Start { position, orientation }`
-- `StampInstance { stampId, position, rotation, mirror }`
-- `SymmetryRule { mode: mirror-x | mirror-y | rotate-2 | rotate-4 (square maps only), center }`
-
-**Set-piece features build everything they need to work.** A `Waterfall` creates its own cliff and a header pool one level below the lip, so the fall spreads across the whole lip. It adds the springs that feed the pool, the plunge pool below, and an outflow that drains to an edge or an existing river. When it sits on a river, it takes that river's flow instead. A `DamSite` creates a basin with a narrow outlet, a `Gorge` a narrow channel between high walls. One operation therefore produces a complete, working piece, which is what makes single requests like "add a waterfall here" reliable for both the tools and Claude. Each set piece:
-- takes its size parameters in blocks and levels. Values outside the schema's hard bounds are rejected. Values beyond what this map allows are reduced to the nearest achievable value, and every reduction is reported. The achievable ranges are in `PLAN.md` §9.10: for example, a waterfall drop of at most 15 levels, and a width of at most 40% of the side along the lip;
-- sizes its water so the flow suits its size (`PLAN.md` §9.2). The lip is about 0.3·S/W deep, so a 20-block fall stays wet from 0.5 blocks/s but needs about 8 to look like an official fall. It keeps downstream channels able to carry the flow: about 3 blocks/s per tile of channel width with banks 1 level high;
-- clears or relocates what it overlaps (trees, ruins, bushes), never moves the start or touches locked regions, and lists everything it changed.
-
-Generated maps expose their rivers, lakes, landforms, set pieces, forests, berry patches, ruin fields, map objects and start as features from the start (`PLAN.md` §19.2), so users can immediately grab and reshape what the generator made. Imported maps start with no features: just the terrain and entities. Users add new features on top. Detecting the rivers, lakes and plateaus of an imported map and offering "make editable" is a later addition.
+**The generator's features are its plan, not editing objects.** The generator builds every map from
+parametric features (`PLAN.md` §19.2) and keeps them in the document, so "Generate, keeping my edits"
+and the analysis can use them. The editor does not show them as objects with handles (D182, D184):
+the player shapes the land with the brushes and places things from the shelf. Set-piece builders
+stay shared with the generator (`PLAN.md` §19.3). Saved projects that hold landform features from
+before D182 open with their land exactly as it was, as plain terrain.
 
 **Building the final map:** the one build pipeline in `PLAN.md` §19.8. It runs landforms, then set pieces, rivers and lakes, pads, sculpt edits, derived slopes, water, resources, the start and entity edits, in that order. Every step is deterministic, so the same document always produces a byte-identical `.timber` file. Changing a feature's parameter rebuilds only the area it affects. That incremental rebuild must equal a full rebuild (`PLAN.md` §19.7).
 
 **Edit operations** are small, serializable commands with undo data, in one envelope `{op, params}`
 (`core/doc/ops.ts`, `ops.schema.json`; the validation report's fixes use the same envelope, D35):
-
-- Feature operations: `addFeature`, `updateFeature { id, patch }` (a merge patch on `params` and
-  `locked`), `deleteFeature`, `reorderFeature`
-- `sculpt { mode: raise | lower | flatten | terrace | smooth | naturalize, cells, amount | level | step }`
-- `placeEntity`, `moveEntity`, `deleteEntities`, `setEntityProps` (advanced mode)
-- `pinSlope`, `removeSlope` (overrides on the derived slopes)
-- `regenerateRegion { area, seedVariant, layers }`, `setLock`
-- `specPatch { patch }` (a JSON Merge Patch on the `MapSpec`, used by Claude and by "change a setting and regenerate")
+brush strokes, placements and moves, source changes, removals, the Select tool's actions,
+`regenerateRegion`, `setLock` and `specPatch` (a JSON Merge Patch on the `MapSpec`). Every stroke
+replays exactly and survives regeneration and format 3. Operations validate their inputs against the
+schemas and reject invalid ones instead of clamping silently.
 
 The document keeps the applied operations as its log, on top of its generation (the spec, the
 planned features and the stored base, D37). A `specPatch` replaces the generation and replays the
 log on it; everything else joins the log.
 
-Operations validate their inputs against the schemas and reject invalid ones instead of clamping silently. The set-piece builders are the one place where a valid value may be reduced to what the map allows, and they always report it.
-
 **Stable identity** is defined in `PLAN.md` §19.4:
 - generated features are hashed from the seed, their kind and their role in the plan, not their position in a list;
-- user and Claude features get a stored UUID;
+- the player's and Claude's placements get a stored UUID;
 - entities are hashed from their owning feature.
 
 Edits referencing them therefore survive regeneration wherever the referenced object still exists. When a referenced object disappears, the edit is flagged as orphaned and shown to the user, never silently dropped.
 
 **Conflict rules**
-- Regeneration never touches locked regions or user-created features. The generator receives them as constraints (`MapSpec.constraints`, `PLAN.md` §7.0) and plans around them.
-- Changing settings and regenerating the whole map rebuilds the generated features but keeps the player's own features, Claude's accepted changes and sculpt edits, re-snapping them to the new terrain and flagging any that no longer fit.
-- `RegenerateRegion` replaces generated content in its area but keeps sculpt edits and user-placed entities, unless the user chooses to replace them.
+- Regeneration never touches locked regions or the player's own strokes and placements. The generator receives them as constraints (`MapSpec.constraints`, `PLAN.md` §7.0) and plans around them.
+- "Generate, keeping my edits" rebuilds the generated land but keeps the player's strokes, placements and Claude's accepted changes, re-snapping them to the new terrain and flagging any that no longer fit.
+- `RegenerateRegion` replaces generated content in its area but keeps the player's strokes and placements, unless the player chooses to replace them.
 - When terrain changes under an entity, the entity snaps to the new ground if placement stays valid; otherwise it's flagged with a fix option.
 
 **Working representation.**
 - Surface heights and entities are kept in typed arrays.
-- A voxel override layer preserves imported caves and overhangs. Columns with more than one solid run are shown locked to the sculpt tools and exported unchanged.
+- A voxel override layer preserves imported caves and overhangs. Columns with more than one solid run are locked to the brushes and exported unchanged, until the 3D stages.
 - After every terrain edit the instant checks re-test terrain support. The game deletes voxels more than 3 tiles sideways from support, and the objects standing on them.
 - Dirty-region tracking lets rendering, validation and the water preview update only what changed.
 
@@ -166,58 +205,15 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 
 **Undo and redo** run over the operation list, with periodic snapshots so undo stays fast on 256×256 maps. The history is visible as a list the user can step back through.
 
-## 4. Editor interface
-
-**Main view: 3D.** The map is edited directly in a 3D view with an easy orbit camera, which is how players already think about Timberborn maps. A top-down map view is one click away for precise layout work, and every tool works in both. Hovering shows what's under the cursor in plain language ("Plateau, height 12, pine forest"). A compass is always visible: north is the top of the top-down view (+Y, the game's grid north), and these directions are the same ones Claude uses. The 3D renderer is the same one the generator's preview uses (`PLAN.md` §3, `render3d`).
-
-**Layout.** The map fills the screen. Four tabs along the side: **Land, Water, Resources, Start.** A small inspector appears next to the selected feature with a few plain controls. A status pill shows map health ("Ready to play," or "2 warnings") and opens the issue list with fix buttons. Undo, redo, history and export are always visible.
-
-**Tools in simple mode**
-- *Land:* draw a hill, plateau, ridge, canyon, valley or island by sketching its outline; pick height and edge style. Drag handles to reshape. A naturalize brush makes terrain look eroded and natural. Add a thorn belt across a corridor.
-- *Water:*
-  - Draw a river by clicking points from source to outlet. It carves its own channel, always flows downhill and seals its mouth at the edge.
-  - Draw a lake by its basin and drag its rim or outlet to set the level.
-  - Place a waterfall on a height step of a river, or as a standalone landmark.
-  - Mark a dam site, draw a gorge, and add a weir (a NaturalDam line) or a plug (a Blockage line).
-  - Flow is gentle / steady / strong. Badwater is a toggle on a river or source. Switching it on warns that the river will stop moistening the soil and that forests along it will die.
-- *Resources:* paint forests, berry patches and ruin fields as areas with a density slider. Forests show where they'll survive. Place mine sites (UndergroundRuins), relics and geothermal fields, with their distance rules shown.
-- *Start:* drag the start. The footprint preview shows green or red, including the entrance tile in front of the door, and nearby water, wood and food appear as simple indicators. From M8 the indicators and the footprint follow the three start requirements (`PLAN.md` §5.6, D85), using the map's settings: clean water reached without stairs (on the start's own level, within the water-distance rule's walk and pump reach), living trees within 20 tiles' walk against **Minimum starting trees**, and living berry bushes within 20 tiles' walk against **Minimum starting bushes**. The footprint is green only where the start can stand and all three hold; the start targets (badwater and ruin distances, stored water, walkable land) show as warnings.
-- *Everywhere:* symmetry toggle, stamps panel, "regenerate this area," and "Ask Claude" when available.
-
-**Advanced mode adds:** raise, lower, flatten, terrace and smooth brushes with size and strength; placing, moving and deleting individual entities, with the game's footprint rules previewed; exact numeric values, including delayed sources ("turns on at cycle N"); locks; technical overlays (height contours, moisture reach, badwater spread, reachable area from the start, dam site quality, water under roofs where the preview is approximate).
-
-**Overlays** can be toggled in both modes, with the most useful ones (water preview, start reach) in simple mode.
-
-**Built in roadmap M4** (`PLAN.md` §20, D42–D45): the shell. The 3D view with orbit and top-down views, the compass and the hover readout; the four tabs, each listing its features; selection by click or list, with move and delete handles and a small inspector; undo, redo and the history; the health pill and export in the `export` profile; import of any `.timber`; project files and autosave. Its only drawing tools are rectangles: a plateau (Land), and a forest, berry patch or ruin field (Resources). The tools above replace them with their milestones (land and water in M5, resources in M7) and make the same features.
-
-**Built in roadmap M5** (`PLAN.md` §20, D47–D56): the land and water tools. Land: hill, plateau, ridge, canyon, valley and island by outline (drag a rectangle or click the corners) with a height and gentle, terraced or cliff edges; terraced cliffs; a Slope tool that pins a slope on a step or removes one. Water: rivers clicked from source to outlet (a sealed mouth at the map edge or a spring inland; they end at an edge, in a river or in a lake), lakes by their basin (the water level is the outlet's sill), waterfalls (a bed step on a river, a standalone landmark elsewhere), dam sites and gorges on a river, badwater springs, and a layer that shows the best dam sites. Every tool plans its edit on the map with the shared builders and shows it with its report before Place applies it as one step; moving a feature or changing it in the inspector plans it again. Dragging the start shows its footprint in green or red and the water, trees and berries nearby. After every edit the instant checks run, and the problems the edit made show at once with their one-click fixes.
-
-**Built in roadmap M7** (`PLAN.md` §20, D69, D71, D78–D80): the resources and the map objects. Resources: forests, berry patches and ruin fields drawn as areas (drag a rectangle or click the corners); the preview shows where trees and bushes live (green), where trees would stand dead (brown, when **Only where trees live** is off) and what stays bare, and ruin areas become fields of the official shape. Mine sites, relics (small, medium, large) and geothermal fields are placed with a click and a facing, and their report says how far out they are and where the generator puts them. Land gains thorn belts (drawn, with a density); Water gains weirs and plugs (a click on a river closes it wall to wall) and the plugged spillway (a click on a lake's shore). A river turns to badwater from its inspector, with its warnings shown first. Every object shows its footprint under the pointer before the click: green where the game keeps it, red with the reason where it would delete it, and a click there is refused. **Advanced** adds unstable cores (radius and countdown) and any object placed by hand, and opens the objects on a clicked tile: move by a tile, turn, delete, and numeric fields (a water source's strength, and **Turns on later** with its cycle and day). The brushes, locks and overlays of advanced mode come with their milestones.
-
-**Built in roadmap M8** (`PLAN.md` §20, D97–D105): the water preview and the background checks. After an edit the water re-settles from its previous state in about a second on 256²; the exact settle and every check follow in the background, and the health pill shows their progress; export settles exactly first, with progress. Imported maps get their water and colony checks too. **Show** in every tab adds **Soil moisture**, **Badwater**, **Drought** (what the water keeps through the map's drought) and, on imported maps with caves, **Water under roofs** (the file's own water, kept there). The start's indicators and its footprint follow the three start requirements: water on its own level without stairs, and living trees and berry bushes within 20 tiles' walk, with the map's settings; the other start targets show as warnings. Set pieces, lakes, landforms and moves clear or move the objects on the ground they reshape, and say so.
-
-## 5. Creative features
-
-- **Parametric features** (section 3): everything the user draws stays editable.
-- **Stamps:** a built-in library of set pieces (waterfall basin, gorge dam site, terraced cliff, ruin district, island lake), each placeable, rotatable and mirrorable. Users can save any selection as their own stamp and export or import stamp files. A shared online gallery is out of scope (it needs a server) but the stamp format should allow one later.
-  - Rotating or mirroring a stamp transforms its entities with the game's own footprint rule: `Coordinates + R(F(local))` (`FORMAT.md` §4.4). A mirror remaps orientations (for a mirror across x, Cw90 ↔ Cw270) and recomputes Coordinates from the footprint's minimum corner.
-  - `Flipped` is only honoured for flippable templates. Asymmetric footprints that are not flippable (BadtideDrain, the upper layer of LargeRelic) are re-placed rather than mirrored.
-  - Slopes are re-derived after the stamp lands.
-- **Symmetry:** mirror or rotational symmetry, so maps look balanced. Every tool respects it live. Rotate-4 needs a square map. Timberborn 1.1 keeps exactly one start, so symmetry never duplicates the start.
-- **Naturalize brush:** a simple erosion simulation that softens artificial-looking terrain while respecting terrace steps where the user wants them.
-- **Heightmap import:** create or modify terrain from a grayscale image, scaled to heights 0–16.
-- **Regenerate an area:** rerun the generator in a region with a new seed variant, choosing which layers (terrain, water, resources). The rest of the map is passed in as constraints.
-- **Claude editing:** section 7.
-
-## 6. Live validation, fixes and water preview
+## Checks and water
 
 - Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5). An imported map's own problems, the ones it had when it was opened, are listed but never blamed on the player's edits: they do not block its export (`PLAN.md` §20, D43).
 - **Instant checks** after every edit, on the dirty region: footprints, ground support, overlaps, start area, limits, slopes, terrain support.
 - **Background checks** in a web worker, debounced and cancelled when a newer edit arrives: water simulation, reachability, resource totals, moisture reach, drought survival, interestingness scores.
-- Issues have a severity, a location and a plain-language explanation; clicking one flies the camera to it.
+- Issues have a severity, a location and a plain-language explanation. They are listed from the quiet dot, each highlighted on the map; clicking one flies the camera to it.
   - **Error** (load class): the file would crash the game, lose objects on load, or start without beavers. Export is blocked until fixed.
-  - **Warning** (playability or design class): a playability problem (flooded start, no water nearby, a map above height 16). Export is allowed after a clear confirmation, and the warning is noted in the map description.
-- **One-click fixes** wherever a sensible fix exists: move the start to the nearest valid spot, add an outlet to a lake, pull trees back into moisture reach, remove overlapping entities, add a missing slope. Each fix is a normal edit operation, previewed and undoable.
+  - **Warning** (playability or design class): a playability problem (flooded start, no water nearby, a map above height 16). It shows on the quiet dot and never blocks export; the warning is noted in the map description.
+- **One-click fixes** wherever a sensible fix exists: move the start to the nearest valid spot, add an outlet to a lake, pull trees back into moisture reach, remove overlapping entities, add a missing slope. Each fix is a normal edit operation, applied live and undoable.
 - **Water preview:** the settled water of the prototype's port of the game's rules (`PLAN.md` §10).
   - **Exact on heightfield terrain**, which covers every generated map and most edited ones. The port reproduced the game's own save to 0.001 depth, and matched Diorama and Waterfalls exactly.
   - **Approximate under roofs** (imported caves, tunnels, overhang bridges, badtide drains). There the editor keeps the water the file stores, shows a "preview approximate" overlay, and does not re-simulate unless the user edits nearby. As built (M8, D100): the tiles under roofs keep the file's water in the view and the export, every other tile is simulated, and **Show → Water under roofs** marks them; the roofed columns are never edited (D40), so they are not simulated again.
@@ -225,7 +221,22 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
   - **Speed:** after an edit the preview re-settles from its previous state. The target is ≤ 2 s for a local edit on 256². A full re-settle runs in the background with progress. As built (M8, D99): 1.3–1.4 s in Chrome on the slowest themes, at most 1.75 s in Node; the background check is debounced by 0.7 s and dropped when a newer edit arrives.
   - **Export:** the exported file always gets the canonical settle (`PLAN.md` §19.7), with a progress bar, so an export never depends on the preview's history.
 
-## 7. Claude integration
+## Stamps and symmetry (M10, M11)
+
+Both are brush-first (D182): symmetry mirrors strokes live, and stamps are painted onto the land.
+The transforms follow the game's rules:
+  - Rotating or mirroring a stamp transforms its entities with the game's own footprint rule: `Coordinates + R(F(local))` (`FORMAT.md` §4.4). A mirror remaps orientations (for a mirror across x, Cw90 ↔ Cw270) and recomputes Coordinates from the footprint's minimum corner.
+  - `Flipped` is only honoured for flippable templates. Asymmetric footprints that are not flippable (BadtideDrain, the upper layer of LargeRelic) are re-placed rather than mirrored.
+  - Slopes are re-derived after the stamp lands.
+- Rotate-4 needs a square map. Timberborn 1.1 keeps exactly one start, so symmetry never duplicates it.
+
+## Claude integration (M12)
+
+**Summoned, small, steering** (D139, D187): a chat box summoned with a key that disappears when
+done; Claude steers the generator for character, and uses the editor's tools only for precise edits.
+M12 revises the step kinds below to the current tools (brush strokes, sources, placements from the
+shelf, Remove, the Select tool's actions); steps that add landforms, rivers, lakes or set pieces as
+editable objects are superseded (D182, D184).
 
 Claude lets users fine-tune a map in plain language, for example: "add a giant waterfall in the north part of the map that is roughly 20 blocks wide," "make it a bit wider," "move the start closer to the lake," or "put more ruins on the eastern plateau." Requests like these must work reliably, with results that match what was asked.
 
@@ -233,7 +244,7 @@ Claude lets users fine-tune a map in plain language, for example: "add a giant w
 
 **Describe the map you want** (D139). A player types a sentence. Claude turns it into intentions; the generator makes several candidates steered toward them; the analysis checks which really have them; Claude shows the ones that do and says honestly what didn't emerge. Editor operations only for small touches the player asks for. The first good candidate appears quickly, and more stream in behind it while the player looks; progress is shown, and the player can act on the first result.
 
-**Principle.** Claude never edits terrain or voxels directly. It proposes steps (below; `PLAN.md` §20, D89) that the app expands into operations from section 3, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
+**Principle.** Claude never edits terrain or voxels directly. It proposes steps (below; `PLAN.md` §20, D89) that the app expands into operations from the map document, mostly adding and updating features and set pieces, as JSON that matches a published schema. The app validates the operations, applies them to a preview copy, runs validation, and shows a before/after comparison for the user to accept or reject. Accepted operations join the normal edit list and undo like any other edit. Because features are parametric, anything Claude builds stays editable by hand.
 
 **Spatial language.** The app, not Claude, resolves places and sizes, so results are consistent. The resolver returns the area, how it read the words, and every assumption it made:
 - Compass places use the editor's compass (north is up). "The north part" means the northern third by default; "north edge," "center" and "northeast corner" each have a defined area. Non-square maps use the same fractions of each side.
@@ -294,7 +305,7 @@ A mismatch goes back to Claude to revise, just like a validation failure.
 
 **Compound requests.** Requests are often compound and vague, for example: "Make this valley harsher. Put the start upstream, give me a huge dam opportunity halfway down, and create a dangerous badwater route on the opposite side." Claude breaks such a request into bounded operations, and the engine tells it whether each idea is feasible (`PLAN.md` §20, D84). The builders, limits, `dry_run` and intent checks already cover a single request; a compound one adds:
 - **Goals.** Claude splits the request into goals, each with its own measurable expectations (the judgement-word targets, places from the resolver, sizes from the builders' ranges).
-- **Order.** Settings changes and the regeneration they cause come first, then placements. Regeneration keeps Claude's features, as it keeps the player's (section 3, conflict rules). The app applies the steps in its own order, each on the map the previous ones left, and says so when that differs from Claude's: settings, deletions, the start, moves and changes, rivers, lakes and landforms, dam sites and gorges, falls and cliffs, badwater, sculpts, resources (D90).
+- **Order.** Settings changes and the regeneration they cause come first, then placements. Regeneration keeps Claude's features, as it keeps the player's (the map document, conflict rules). The app applies the steps in its own order, each on the map the previous ones left, and says so when that differs from Claude's: settings, deletions, the start, moves and changes, rivers, lakes and landforms, dam sites and gorges, falls and cliffs, badwater, sculpts, resources (D90).
 - **Combined check.** Every goal's expectations are checked against the combined preview, not one at a time. The app measures them; it never takes Claude's own expectations as the result.
 - **Interference.** The engine detects goals that interfere and names them. For example: badwater joining a river above a dam site poisons the reservoir (through its outlet, its channel, or the reservoir rising over it); less flow shrinks a reservoir, and fills it more slowly; badwater near the start breaks the start rules. It also names a new piece shrinking an existing reservoir, a regenerated map moving the start (D95), a builder's reduction, what a step cleared, and settings being map-wide.
 - **Guards** hold for the whole proposal (D91): a step that breaks one is named.
@@ -370,7 +381,7 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
 - Route B's browser calls pass CORS with the direct-browser-access header.
 - `sample`'s latency and who can open the artifact wait for Kyler's own run of the page.
 
-## 8. Architecture
+## Architecture
 
 - **Module boundaries** (the same tree as `PLAN.md` §3):
   - `core`: spec, features and rasterization, set-piece builders, format I/O, the map document, the operations engine, validation, the water simulation;
@@ -390,9 +401,9 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - instanced trees, bushes and ruins;
   - picking against the heightfield and the features for direct manipulation.
 - Keep worker messages small: send dirty regions and compact arrays, not whole documents.
-- Hosting: a static site on GitHub Pages under the timbermods organization, built from the Dam Good Maps repository. The same code also builds the Claude artifact edition (section 7).
+- Hosting: a static site on GitHub Pages under the timbermods organization, built from the Dam Good Maps repository. The same code also builds the Claude artifact edition (Claude integration).
 
-## 9. Testing
+## Testing
 
 - **Unit:** every operation and feature type applies and undoes correctly; features rasterize deterministically; operations serialize losslessly; orphaned edits are detected.
 - **Property tests:**
@@ -414,7 +425,7 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - a dirty-chunk remesh ≤ 5 ms per chunk;
   - the water preview after a local edit ≤ 2 s (warm start); CI reports it as a number, never a failed build (D145);
   - the canonical full settle for export ≤ 3 s as the target. The audit measured 6.5–11 s for an unoptimized JS port from empty (`PLAN.md` §10).
-- **End to end** (e.g. Playwright): generate, edit features, export, re-import, compare.
+- **End to end** (e.g. Playwright): generate, edit, export, re-import, compare.
 - **Claude request suite:** 120 requests (`tests/claude/requests.json`), each with its map, its goals and their expectations, whether it is feasible, what the report must say, and a reference solution (`PLAN.md` §20, D88). The kinds: the requests below word for word, simple, follow-ups, compass, feature-relative, flow-relative, judgement and size words, compound, vague, impossible, conflicting, questions and safety. The maps: generated maps of 48², 96², 128² and 256², rivers drawn in each direction, tributaries, and imports.
   - The reference solutions run in CI through `MapSession` with the real validators; every one must pass.
   - Reference solutions for character and feature requests, Kyler's flagship requests included (the giant waterfall and the compound request; D145), steer the generator (intentions, settings, regenerate area) instead of building features with planners (D139). A request whose steered solution needs a capability that doesn't exist yet (M9's intentions, M11's regenerate area) is marked "waiting for capability", not failed, and is checked from the step that provides it.
@@ -446,58 +457,14 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   7. The full journey: generate a map from settings, refine it with at least one manual edit and one Claude request, export it and load it in Timberborn, in under 10 minutes.
 - **In-game checklist** for the IN-GAME CHECK milestones (deferred, logged as pending in `docs/ingame-log.md`, D11): the map loads, water settles as the preview showed, the district center places, beavers survive the first drought, and edited features behave as intended. Add the audit's checks in `PLAN.md` §18 F (waterfall visibility, sealed river mouths, halved pre-1.0 imports, roofed water in imported maps).
 
-## 10. Milestones
-
-Each milestone is complete when its acceptance criteria pass and its tests are green. `ROADMAP.md` gives the merged order. The roadmap milestone for each is in brackets.
-
-**E1. Map document, features and operations engine (headless).** [M3]
-Features with parameters and deterministic rasterization; operations; undo and redo; project files; stable ids; orphan detection. The feature schema and the generator's feature output already exist from M1, so E1 adds the document and the operations engine, import normalization, and regeneration with constraints. The delivery spike (section 7) runs alongside.
-*Accept:* determinism, round-trip and undo property tests pass on generated maps of every size preset; incremental rebuilds equal full rebuilds; every investigation map imports and re-exports its normalized world unchanged.
-
-**E2. Editor shell with 3D and top-down views, connected to the generator.** [M4]
-"Refine this map" on the generator page opens the map in the editor, and "Back to settings" returns without losing work; import of any `.timber` file; orbit camera and top-down view; hover readout; selection of features; the four-tab layout; history panel; export from every screen. The 3D renderer is built once and also serves the generator's 3D preview.
-*Accept:* every investigation map imports and exports unchanged; smooth on 256×256; generate → refine → back to settings → regenerate → refine keeps user edits.
-
-**E3. Land and water features, start, slopes, instant validation with fixes.** [M5]
-Draw and reshape landforms, rivers, lakes, and the set pieces (waterfall, dam site, gorge) with handles; move the start with footprint preview; issue list with one-click fixes. Slopes are derived automatically after every terrain change (moved here from E4, so edited maps never strand the colony). The set-piece builders are the shared ones the generator also uses.
-*Accept:* feature property tests pass; drawn rivers always drain and keep their water; the set-piece range tests of `PLAN.md` §9.10 pass. **IN-GAME CHECK:** export three edited maps and play them. The three include a 20-wide standalone waterfall at two flows, a dam site and a gorge (`PLAN.md` §18 C and F1).
-
-**E4. Resources and entities.** [M7]
-Forest, berry and ruin field areas; map objects (mine sites, relics, geothermal fields, thorn belts, weirs, plugs); badwater; advanced mode with individual entity placement and numeric values.
-*Accept:* resource areas respect moisture reach and calibrated clustering; invalid placements are previewed and refused. **IN-GAME CHECK** (shared with the generator's 1.0 objects, `PLAN.md` §18 D).
-
-**E5. Water preview and background validation.** [M8]
-Worker-based simulation and full validation; export rules for errors and warnings; the canonical settle on export; roofed water kept from the file.
-*Accept:* validation parity tests pass. **IN-GAME CHECK:** compare the preview with the game on three edited maps, one of them an imported official map with roofed water (`PLAN.md` §18 F4), plus a re-exported pre-1.0 workshop map (F3); record differences in "Editor decisions."
-
-**E6. Sculpting, naturalize and symmetry.** [M10]
-Advanced sculpt brushes; the naturalize brush; symmetry across all tools.
-*Accept:* the editor stays responsive (the budgets are reported, D115); caves, overhangs and arches survive edits elsewhere, and the brushes work on runs (D118); symmetric edits stay exactly symmetric, entities included (section 5).
-
-**E7. Stamps, heightmap import, regenerate area, locks.** [M11]
-Built-in stamp library, user stamps with export and import, heightmap import, regenerate a region, locks and conflict rules.
-*Accept:* hand edits survive regeneration per the conflict rules; stamps round-trip through export and import.
-
-**E8. Claude integration.** [M12]
-Operation schema, map summary builder, the tools, the propose, validate, revise and preview loop, and the delivery routes chosen after the spike (section 7).
-*Accept:* malformed or out-of-bounds proposals are rejected cleanly; accepted proposals undo like normal edits; the Claude request suite from section 9 passes on every test map, including the 20-block waterfall; results stay editable by hand; follow-up requests modify the right feature. **IN-GAME CHECK:** play the map made by the waterfall request.
-
-**E9. Usability and polish.** [M13]
-Run the usability tasks from section 9 and fix what slows people down; onboarding hints; shortcuts reference; help page; accessibility pass; final performance pass.
-*Accept:* the usability tasks are run and what slows people down is fixed; their times (under 2 minutes each for a first-time user as the target) are information (D115).
-
-**3D stages** (`ROADMAP.md` 3D-a–3D-c, `PLAN.md` §20 D118–D127): stacked-column water, the support rule and the floor graph (3D-a); 3D forms from the generator's processes (3D-b); Carve, Fill, Tunnel, Arch, Cave, Ledge path and Overhang tools, 3D picking, 3D locks and a level-slice cutaway (3D-c). M10's and M11's tools are built on runs after them.
-
-**Later:** a shared online stamp gallery, tablet and touch support, "make editable" detection for imported maps, share links that carry small edit lists.
-
-## 11. Contract with the generator
+## Contract with the generator
 
 The generator (`PLAN.md`) and the editor are one app. The shared foundations are defined once, in **`PLAN.md` §19**, used by both, and built first (`ROADMAP.md` M1–M3). This section only points there:
 
 | Item | Definition | In short |
 |---|---|---|
 | Map spec | `PLAN.md` §19.1 | One versioned JSON schema (`MapSpec`) for seed, size, theme, archetype, premise, difficulty, settings, set-piece requests and constraints. The settings panel, the URL codec, `SpecPatch` (a JSON Merge Patch) and Claude all produce it. |
-| Parametric features | `PLAN.md` §19.2 | One schema for rivers, lakes, landforms, set pieces, forests, berry patches, ruin fields, map objects and the start. The generator builds every map from them and outputs them, so "Refine this map" opens a map whose parts are already editable. |
+| Parametric features | `PLAN.md` §19.2 | One schema for rivers, lakes, landforms, set pieces, forests, berry patches, ruin fields, map objects and the start. The generator builds every map from them and keeps them in the document as its plan; the editor does not expose them as objects with handles (D182). |
 | Set-piece builders | `PLAN.md` §19.3 | One builder per kind (`plan` / `rasterize` / `limits`), used by the generator, the editor tools and Claude. |
 | Stable ids | `PLAN.md` §19.4 | Generated features hashed from seed, kind and role; user features get stored UUIDs; entities are hashed from their owning feature. |
 | Validation | `PLAN.md` §19.5 | One set of modules with check classes (load, playability, design) and profiles (generate, export, import). |
@@ -508,27 +475,26 @@ The generator (`PLAN.md`) and the editor are one app. The shared foundations are
 
 If anything here or in `PLAN.md` defines one of these differently, `PLAN.md` §19 wins. Reconcile the other text and record the decision in "Editor decisions" (`PLAN.md` §20).
 
-## Changes from audit
+# Part 3: superseded
 
-The audit of 2026-09-23 (`AUDIT.md`) changed this plan as follows:
+These were planned or built before Kyler's current decisions. They must not come back.
 
-1. §0: prerequisites now follow `ROADMAP.md`: editor work starts at M3, after the shared core. "Editor decisions" lives in `PLAN.md` §20, started by the audit. The blocking rule uses the validation classes.
-2. §1: "valid by default" now covers sealed river mouths, lakes filled to their outlet sill, and automatic slopes.
-3. §2: new non-goals: terrain above 16 (imported maps up to 22 are preserved), and multiplayer starts (1.1 keeps exactly one start). Imported caves keep their stored water.
-4. §3: the document stores the generator version and the built base. Feature parameters were corrected to the game's rules:
-   - a lake's level is its outlet sill;
-   - a river's `bedDepth` sets its moisture band, and its mouth at the edge is sealed;
-   - landform edge styles follow the whole-level terrain and the slope rule;
-   - waterfalls get a header pool and on-river or standalone modes;
-   - new set pieces (gorge, terraced cliffs, badwater basin, plugged spillway, obstacle with payoff, second district) and map objects;
-   - set-piece ranges and flows come from the measured limits in `PLAN.md` §9.10.
-
-   Also: reject versus reduce-and-report is defined; stable ids and the build order point to `PLAN.md` §19; regeneration passes user features as constraints; multi-run columns and terrain support are handled; slope overrides are new operations.
-5. §4: Start shows the entrance tile. Water gains standalone waterfalls, gorges, weirs and plugs. Resources gain mine sites, relics and geothermal fields. The badwater toggle warns about forests. New overlays for approximate roofed water; delayed sources in advanced mode.
-6. §5: stamp and symmetry transforms follow the game's footprint and orientation rules. Symmetry no longer promises multiplayer fairness. Rotate-4 needs square maps.
-7. §6: the `export` profile; errors and warnings map to check classes; the water preview's fidelity is spelled out (exact on heightfields, approximate under roofs, steady state); warm-start preview with the canonical settle for export.
-8. §7: query tools become real tools in both routes, sized to the artifact's limits. Size words resolve against the builders' achievable ranges. The loop is capped at 3 rounds. The report example is realistic about flow. Both delivery routes were evaluated against Anthropic's documentation, with a recommendation, a two-build plan and a spike.
-9. §8: modules align with `PLAN.md` §3; the 3D renderer is shared with the generator; the voxel mesher is only for multi-run columns.
-10. §9: import scope and normalization tests; revised performance budgets with the audit's measurements; the Claude suite runs through the API adapter with size-specific expectations; usability task 5 reworded (a mirror-symmetric map keeps one start).
-11. §10: each E-milestone is mapped to its roadmap milestone. Automatic slopes moved from E4 into E3. The 3D renderer is shared in E2. The E3, E5 and E8 in-game checks are extended.
-12. §11: the contract is no longer restated here. It points to its single definition in `PLAN.md` §19.
+| Superseded | Replaced by |
+|---|---|
+| "Edit features, not blocks": landforms (hill, plateau, ridge, canyon, valley, island, terraces), set pieces, forests, berry patches and ruin fields as objects with handles; presets | D182, D184: the brush kit; the left shelf |
+| Plan, confirm and place: a preview, then a Place click | D179: every edit live |
+| The river tool (clicked or drawn from source to outlet, its start and end rules, Natural or exact, width, depth and strength) and the lake tool (basin, rim and sill, click-fill) | D184: smart Lower and Source; lakes, falls, joins and branches emerge |
+| The Channel tool; separate plant brushes (forest, berry) | D184: smart Lower; trees and bushes from the shelf, click one or drag many |
+| The name Demolish | D184: Remove |
+| Terrace and Ramp as separate brushes | D184: Flatten "in steps", Smooth "make walkable" |
+| Four text tabs (Land, Water, Resources, Start), the inspector, simple and advanced mode, the Advanced checkbox, the Show dropdown, help paragraphs | D184: the top bar, the left shelf, the view buttons, smart defaults |
+| The health pill, and a confirmation before exporting with warnings | D184: the quiet dot; never a pop-up |
+| The legend always beside the map | D184: only while an overlay is on |
+| Busy cursor readouts (the river's width, depth and cuts) | D184: the land shows it; the precision tools keep their live dimensions (D183) |
+| A stamp library of placeable set pieces | D182: stamps painted onto the land (M11) |
+| Claude as a panel; Claude steps that add landforms, rivers, lakes or set pieces | D139, D187: a summoned chat box; steering the generator, the tools only for precise edits |
+| Terrain above 16 as a non-goal | D172: up to 22 on tall maps |
+| Tablet and touch support as a later goal | D185: desktop-first (pen pressure on drawing tablets stays) |
+| "Superior to the in-game editor by being easier": the editor as a simpler copy of the game's | Part 1, §1: a studio, deliberately different from the game's precision workshop |
+| The milestone list E1–E9 | `ROADMAP.md`: E1–E5 were built in M3–M8; M10–M13 and the 3D stages are built brush-first |
+| The audit's change list (2026-09-23) | `AUDIT.md` keeps it |

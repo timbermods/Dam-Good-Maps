@@ -58,11 +58,13 @@ folder with `-dgmprobeHome`; `DGM_PROBE_HOME` changes it.
   game never rewrites the load order.
 - The runner never launches the game while it is running. Before a launch it records the game's settings
   (the registry key), the Unity logs, the player data, every save file, and a copy of every other small file
-  under `Documents\Timberborn` (the mods' own data). With `--keep-mods` it changes no setting. Afterwards it
-  puts the logs, player data and any changed mod file back, deletes any save the probe's games made, and
-  moves any other new file (an error report, a mod's session log) into the run's folder, removing the
-  folders that leaves empty. Steam Cloud's `steam_autocloud.vdf` files change at every launch; they are
-  reported, never put back.
+  under `Documents\Timberborn`, the other mods' folders in `Mods` included. With `--keep-mods` it changes
+  no setting. Afterwards it puts the logs, player data and any changed mod file back, deletes any save the
+  probe's games made, and moves any other new file (an error report, a mod's session log) into the run's
+  folder, removing the folders that leaves empty. Steam Cloud's `steam_autocloud.vdf` files change at
+  every launch; they are reported, never put back. Last, after removing DGM Probe, it checks that nothing
+  new is left anywhere in `Documents\Timberborn` (`leftovers.json` in the run's folder); if anything is,
+  the run stops with exit code 6.
 - Graphics and speed changes are made in memory only, during probe runs.
 
 ## Remove the mod
@@ -71,8 +73,7 @@ The runner removes it after every run. If a run was cut short:
 
 1. Close Timberborn.
 2. Delete the folder `Documents\Timberborn\Mods\DGMProbe`.
-3. Optionally delete `C:\dgm-probe` (the results and screenshots), and `Documents\Timberborn\DGMProbe`,
-   where the runs before 2026-09-26 kept theirs.
+3. Optionally delete `C:\dgm-probe` (the results and screenshots).
 
 ## Files
 
