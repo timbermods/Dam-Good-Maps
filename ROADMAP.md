@@ -778,6 +778,122 @@ water free to drain off the map, and about 150 places in all.
 
 ---
 
+## Start and edge rules
+
+A small step after Real places (Kyler, 2026-09-25; PLAN §20 D151–D153), built on branch
+`feature/start-edge-rules` and released as `start-edge-rules-done`:
+- **No edge walls** (D151): a blocking check, in both validators, beside D111's dam-wall check; the
+  generator raises no wall along a map edge.
+- **Maps don't have to hold their water** (D152): no walls or rims to keep water on the map; rivers
+  leave naturally and lakes may drain; the settle check accepts a steady flow off the map.
+- **The start water rule** (D153): clean water counts if a walking path over the map's own terrain
+  and natural slopes reaches a pumpable shore within 12 / 20 / 28 tiles; both validators, the
+  editor's start indicators and the start text change together. Generated maps change: the
+  generator version goes up.
+
+**Blocking:** breakage (batches ≥ 98% final per theme and size, byte checks, crashes), D111 and
+D151, and what a player feels.
+
+---
+
+## Real places, second round
+
+After the start and edge rules (Kyler, 2026-09-25; PLAN §20 D155–D157), built on branch
+`feature/real-places-2` and released as `real-places-2-done`: short in-game descriptions with a
+link to a credits page; the maps built at deploy time and served as finished files; the byte check
+nightly and in the release check; clean titles; 3D thumbnails rendered on a GPU and lazy-loaded;
+every place rebuilt without perimeter walls, water free to drain; and the gallery grown to about
+150 places. Kyler sees a contact sheet of the whole gallery and says if any should go.
+
+**Blocking:** every map passes the validators and exports, the page works on desktop and phone,
+and D151 (no edge walls).
+
+---
+
+## Live editing
+
+Alongside the M9 design, and the most important feature before M12 (Kyler, 2026-09-25; PLAN §20
+D158). Built on branch `feature/live-editing`, tried by Kyler on the preview address
+<https://timbermods.github.io/dam-good-maps/preview/> (noindex; refreshed after every iteration),
+and released as `live-editing-done` when Kyler says it feels right.
+
+- **First, a quick triage** of the current editor: drive it like a first-time player (open a
+  generated map; place and change rivers, lakes, landforms and the start; undo and redo;
+  regenerate keeping edits; export), fix the bugs and stalls in everything Live editing won't
+  replace, and bring Kyler a short ranked list of confusing spots with a proposed fix for each.
+  Kyler's notes: placement never waits on the water; limits show before or while placing, and the
+  result matches what was shown; the placed hill looked like a flat slab, not a stepped hill.
+  Also: the legend becomes a slim panel beside the map that collapses to a small always-visible
+  strip, lists only what's on the current map, and highlights those things when an entry is
+  clicked (its styling waits for the design pass); and it must be obvious which map is shown and
+  which is being edited (the generator page said "You are editing …" over a different map).
+- **Principles:** responsive above all; direct manipulation (no confirm steps, no Place button, no
+  waiting); everything reversible; show, don't ask; good defaults.
+- **Terrain brushes** (brought forward from M10): raise, lower, flatten to a level, smooth and
+  naturalize, in whole levels with natural slopes at the brush's edge; a brush cursor projected on
+  the terrain; Cities: Skylines-style controls; a compact brush bar with shortcut tooltips.
+- **Water never blocks:** terrain updates instantly, water re-settles and flows live in the
+  background; an option pauses it while painting.
+- **Live shape tools:** the real result grows as you drag, is placed on release, then handles move,
+  resize and raise it live; limits show while dragging.
+- **Undo, history, checks:** one undo step per stroke or placement with a clear label; every stroke
+  an operation that replays exactly and survives regeneration and format 3; quiet background
+  checks.
+- **Polish:** only changed chunks rebuilt; keyboard access and screen-reader labels; a one-line
+  first-use hint.
+- **Keep M12 ready** (D134): Claude tool entries for the brushes and the live shape tools.
+
+**Blocking:** responsiveness (visible within one or two frames of the input; the display's frame
+rate while painting on 256²; no main-thread stalls; cancel, undo and tool switches at once), and
+breakage (strokes replay exactly; undo and redo always correct; nothing crashes; no edit lost).
+Kyler decides when it feels right.
+
+**Later:** the 3D terrain steps extend the same brushes to caves and tunnels; M10 keeps symmetry and
+the advanced extras.
+
+---
+
+## Save to Timberborn
+
+A small step, soon (Kyler, 2026-09-25; PLAN §20 D162), the first half of one-click play. A **Save
+to Timberborn** button: using the browser's folder access (Chrome and Edge), the player picks
+`Documents\Timberborn\Maps` once, the site remembers it, and the button saves the map straight
+there, from the generator page, the editor's export and the Real places gallery. Other browsers
+keep the normal download with install help. Released as `save-to-timberborn-done`.
+
+**Blocking:** breakage (the saved file is the same bytes as the download; nothing else in the folder
+is touched) and what a player feels (one click, clear feedback, a plain fallback).
+
+---
+
+## Pick a place
+
+Right after Live editing, alongside M9: it doesn't touch the generator (Kyler, 2026-09-25; PLAN §20
+D160, moved from Later). Choose any spot on a world map (or paste coordinates, for example from
+Google Earth), pick size and scale, and get a playable map built from open elevation data with
+attribution, through the landscape survey's conversion pipeline (as M11's heightmap import, D159):
+vertical mapping, rivers from the drainage, water sources, a start by Kyler's rules, the current
+water rules (no walls or rims; draining allowed). Never Google's own data. If a place converts
+poorly, say so plainly and suggest a larger area or a different scale.
+
+**Designed water** (Kyler, 2026-09-25; D166): the land comes from the real world, the water is
+designed. A place never fails for lack of native water: the engine places sources where they make
+sense for that land (valley heads, springs below ridges, rivers carried by the drainage down a
+canyon, over a cliff or into a crater), and may use intentions to choose. It always meets Kyler's
+start requirements, placing the start where the designed water gives a good opening. If a spot
+still can't work, it quietly tries other sizes, scales and nearby offsets and shows the best result
+or clear nearby suggestions; the player never sees a failed attempt. The player can then move, add
+or remove sources in the editor and see the result in the Weather view. "Real water" from open
+data (OpenStreetMap rivers and lakes, global surface-water maps) is an optional mode for later.
+`investigation/pickplace` (#34) is adopted with this change: its failures from missing or misplaced
+water become cases for designed water, not rejections. It is the first step of the
+north-star journey (D161). Released as `pick-a-place-done`.
+
+**Blocking:** breakage (the map passes the validators and exports; attribution present; no edge
+walls, D151) and what a player feels (progress while it converts; never a frozen page).
+
+---
+
 ## M9. Interestingness, names, candidates, premises and variety
 
 **M9 design step first** (Kyler, 2026-09-25; PLAN §20 D108, D109). M9 is not built as written
@@ -1143,6 +1259,8 @@ After the Map quality checkpoint and before the Frame pass (Kyler, 2026-09-25; P
     reflections by angle, shore foam;
     Kyler's direction (2026-09-25): fewer, subtler sparkle flecks on the water than the clean
     look, and more depth and transparency;
+  - Kyler's direction (2026-09-25): dry contaminated ground's cracks a little more visible from
+    far away;
   - real-time soft shadows, ambient occlusion and a warm colour grade;
   - higher-resolution procedural grass, earth and cobbles with surface detail;
   - softened block edges and grass lips;
@@ -1460,7 +1578,10 @@ Symmetry also serves the workshop catalogue's symmetric layouts (6 workshop maps
 **Delivers:** E7.
 - The built-in stamp library, and user stamps with export and import (the entity transform rules
   of EDITOR §5).
-- Heightmap import scaled to 0–16. It also serves the workshop catalogue's real-geography maps (4
+- Heightmap import scaled to 0–16, through the landscape survey's conversion pipeline, not just raw
+  heights (Kyler, 2026-09-25; PLAN §20 D159): vertical mapping, rivers from the drainage, water
+  sources, a start by Kyler's rules (D85/D153), and the current water rules (no walls or rims,
+  draining allowed; D151, D152). It also serves the workshop catalogue's real-geography maps (4
   workshop maps).
 - Regenerate an area, with constraints.
 - Locks and the conflict rules.
@@ -1828,6 +1949,11 @@ export, load in Timberborn.
 ---
 
 ## Later
+
+**Later, proposed: a companion mod for one-click play** (Kyler, 2026-09-25; D163). A small mod
+that lists newly saved Dam Good Maps maps in the game's main menu and starts one in one click,
+building on what the DGM Probe mod already does to open a map. For Kyler's approval before it's
+built.
 
 **After M12: a Dam Good Maps MCP server** (Kyler, 2026-09-25; D141). M12's tools (generate, steer
 with intentions, regenerate area, edit, validate, export) packaged as an MCP server, so Claude
