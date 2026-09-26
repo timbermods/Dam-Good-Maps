@@ -15,6 +15,17 @@ export const DEAD = 1;
 export const FLIPPED = 2;
 export const YOUNG = 4;
 
+/** A ruin's variant (its `RuinModels.VariantId`, "A" to "E") as an index, and the value for none:
+ *  a file without one, or another object (the game picks one at random; the view picks one from
+ *  the tile). */
+export const RUIN_VARIANT_IDS = ["A", "B", "C", "D", "E"] as const;
+export const NO_VARIANT = 255;
+
+export function variantIndex(id: string | undefined): number {
+  const k = RUIN_VARIANT_IDS.indexOf(id as (typeof RUIN_VARIANT_IDS)[number]);
+  return k < 0 ? NO_VARIANT : k;
+}
+
 export interface EntityView {
   count: number;
   /** Template names; `template[k]` indexes this table. */
@@ -29,6 +40,8 @@ export interface EntityView {
   orientation: Uint8Array;
   flags: Uint8Array;
   owner: Uint16Array;
+  /** A ruin's variant (0–4: A–E; NO_VARIANT: none given). */
+  variant: Uint8Array;
 }
 
 /** Water columns (sparse): one entry per wet column. Under caves a tile may hold several; the
@@ -155,6 +168,8 @@ export interface EntityInput {
   dead?: boolean;
   flipped?: boolean;
   young?: boolean;
+  /** A ruin's `RuinModels.VariantId` ("A" to "E"). */
+  variant?: string;
 }
 
 export function entityView(list: readonly EntityInput[]): EntityView {
@@ -174,6 +189,7 @@ export function entityView(list: readonly EntityInput[]): EntityView {
     orientation: new Uint8Array(n),
     flags: new Uint8Array(n),
     owner: new Uint16Array(n),
+    variant: new Uint8Array(n),
   };
   list.forEach((e, k) => {
     let t = tIndex.get(e.template);
@@ -196,6 +212,7 @@ export function entityView(list: readonly EntityInput[]): EntityView {
     const oi = ORIENTATION_NAMES.indexOf(e.orientation as (typeof ORIENTATION_NAMES)[number]);
     v.orientation[k] = oi < 0 ? 0 : oi;
     v.flags[k] = (e.dead ? DEAD : 0) | (e.flipped ? FLIPPED : 0) | (e.young ? YOUNG : 0);
+    v.variant[k] = variantIndex(e.variant);
   });
   return v;
 }
@@ -214,6 +231,6 @@ export function viewBuffers(v: Partial<MapView> & { terrain?: { pre: Uint8Array;
   }
   if (v.water) for (const a of [v.water.tile, v.water.floor, v.water.depth, v.water.contamination]) add(a);
   if (v.soil) for (const a of [v.soil.moisture, v.soil.contamination]) add(a);
-  if (v.entities) for (const a of [v.entities.template, v.entities.x, v.entities.y, v.entities.z, v.entities.orientation, v.entities.flags, v.entities.owner]) add(a);
+  if (v.entities) for (const a of [v.entities.template, v.entities.x, v.entities.y, v.entities.z, v.entities.orientation, v.entities.flags, v.entities.owner, v.entities.variant]) add(a);
   return out;
 }

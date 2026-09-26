@@ -192,7 +192,7 @@ describe("water foam", () => {
 });
 
 describe("the models", () => {
-  it("draws trees by species, dead trees bare, ruins as scrap heaps, and the start as its own", () => {
+  it("draws trees by species, dead trees bare, ruins as scaffold storeys, and the start as its own", () => {
     expect(modelKeyOf("Pine", 0)).toBe("Pine");
     expect(modelKeyOf("Pine", DEAD)).toBe("Pine.dead");
     expect(modelKeyOf("Birch", DEAD)).toBe("Birch.dead");

@@ -18,7 +18,11 @@ The generator:
   rules** sets them.
 - The preview shows water, moisture and reach layers.
 - **Copy link** gives a link that opens the same map. It carries the settings, not your edits.
-- **Download** the map's `.timber` for the game. **Download project file** keeps it for editing later.
+- **Save to Timberborn** puts the map straight into the game's custom maps. The first time, pick
+  `Documents\Timberborn\Maps`; after that it is one click (Chrome and Edge). A map with the same
+  name is kept, and the new one is saved as "Name (2)".
+- In other browsers it downloads the `.timber`: move it to `Documents\Timberborn\Maps`.
+  **Download project file** keeps the map for editing later.
 
 The editor:
 - **Refine this map** opens the map in 3D.
@@ -61,8 +65,8 @@ Your map is saved in the browser as you work.
 Real places:
 - **Real places**, at the top of the generator, lists 85 maps made from real land. Each is inspired
   by the land near its namesake, at Timberborn's scale. It is not a replica.
-- Filter by **Landform** and size. **Download** gives the map's `.timber`. **Refine** opens it in the
-  editor.
+- Filter by **Landform** and size. **Save to Timberborn** puts the map in the game, as above.
+  **Refine** opens it in the editor.
 - The heights come from public elevation data. The gallery lists its credits, and each map's
   description carries them.
 

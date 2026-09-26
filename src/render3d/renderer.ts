@@ -10,7 +10,8 @@
 // north and 70° down. The water's surface moves (at 30 frames a second at most) unless the viewer
 // prefers reduced motion, the browser renders in software, or the view is hidden. A browser that
 // renders in software gets a lighter look: no multisampling, no patterns or shadows, soil without
-// blending, and models of a few triangles.
+// blending, and models of a few triangles. A mine site's pit is cut into the terrain's tops (its
+// model draws the pit), again wherever the objects change.
 //
 // Controls: left drag orbits (pans in the top-down view), right drag pans, the wheel zooms. On the
 // focused canvas: W A S D or the arrows pan, Q and E turn, R and F (or + and −) zoom.
@@ -37,7 +38,7 @@ import {
   ColorManagement,
 } from "three";
 import { BrushCursor, type BrushCursorState } from "./brushCursor";
-import { buildEntities, disposeGroup } from "./entities3d";
+import { buildEntities, disposeGroup, mineCutout, mineOutline } from "./entities3d";
 import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
 import { contaminationEdges, drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
@@ -164,6 +165,8 @@ export class MapRenderer {
   private marks: DataTexture | null = null;
   /** Where the contamination outline runs (**Markers**): `contaminationEdges` of the tile data. */
   private edges: DataTexture | null = null;
+  /** Where the outline round mine sites runs (**Markers**): `mineOutline` of the objects. */
+  private sites: DataTexture | null = null;
   private tileTex: DataTexture | null = null;
   private lightTex: DataTexture | null = null;
   private uniforms: SceneUniforms;
@@ -329,7 +332,8 @@ export class MapRenderer {
     const t0 = performance.now();
     this.clearMap();
     const { W, H, heights } = v;
-    const source: TerrainSource = { W, H, heights, columns: columnMap(v.columns) };
+    // (a mine site's pit: the terrain leaves its tops out, and the site's model draws the pit)
+    const source: TerrainSource = { W, H, heights, columns: columnMap(v.columns), cutout: mineCutout(v.entities, W, H) };
     const surface = surfaceWater(W, H, v.water);
     const sky = skyVisibility(W, H, heights);
     const soil = v.soil ?? null;
@@ -346,6 +350,7 @@ export class MapRenderer {
     this.marks = overlayTexture(W, H);
     this.edges = overlayTexture(W, H);
     contaminationEdges(W, H, tiles, this.edges.image.data as Uint8Array);
+    this.sites = overlayTexture(W, H);
     this.tileTex = tileTexture(W, H, tiles);
     this.casters = objectCasters(W, H, v.entities);
     this.tops = { hi: new Float32Array(0), lo: new Float32Array(0) };
@@ -354,6 +359,7 @@ export class MapRenderer {
     u.overlay.value = this.overlay;
     u.marks.value = this.marks;
     u.contamEdges.value = this.edges;
+    u.siteEdges.value = this.sites;
     u.hatching.value = 0;
     u.tileTex.value = this.tileTex;
     u.lightTex.value = this.lightTex;
@@ -432,9 +438,10 @@ export class MapRenderer {
     this.overlay?.dispose();
     this.marks?.dispose();
     this.edges?.dispose();
+    this.sites?.dispose();
     this.tileTex?.dispose();
     this.lightTex?.dispose();
-    this.overlay = this.marks = this.edges = this.tileTex = this.lightTex = null;
+    this.overlay = this.marks = this.edges = this.sites = this.tileTex = this.lightTex = null;
     this.map = null;
   }
 
@@ -534,7 +541,23 @@ export class MapRenderer {
     this.objects = group;
     this.scene.add(group);
     this.showMarkerObjects();
-    this.map!.entities = e;
+    const m = this.map!;
+    m.entities = e;
+    // mine sites: the pits' cutouts (remesh the chunks where they changed) and their outline
+    const cut = mineCutout(e, m.W, m.H);
+    const old = m.source.cutout ?? new Map<number, number>();
+    const changed = new Set<string>();
+    for (const [i, z] of cut) if (old.get(i) !== z) changed.add(`${Math.floor((i % m.W) / CHUNK)},${Math.floor(Math.floor(i / m.W) / CHUNK)}`);
+    for (const [i, z] of old) if (cut.get(i) !== z) changed.add(`${Math.floor((i % m.W) / CHUNK)},${Math.floor(Math.floor(i / m.W) / CHUNK)}`);
+    m.source = { ...m.source, cutout: cut };
+    for (const key of changed) {
+      const [cx, cy] = key.split(",").map(Number);
+      this.meshTerrain(cx, cy);
+    }
+    if (this.sites) {
+      mineOutline(e, m.W, m.H, this.sites.image.data as Uint8Array);
+      this.sites.needsUpdate = true;
+    }
     return instances;
   }
 
