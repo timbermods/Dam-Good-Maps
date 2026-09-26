@@ -34,7 +34,8 @@ import {
   type Group,
   type InstancedMesh,
   type ShaderMaterial,
-  type WebGLRenderTarget,
+  WebGLRenderTarget,
+  Box3,
   LinearSRGBColorSpace,
   ColorManagement,
 } from "three";
@@ -44,7 +45,7 @@ import { buildEntities, disposeGroup, mineCutout, mineOutline } from "./entities
 import { objectCasters, shadowMap, shadowPairRect, SKY_REACH, skyVisibility, skyVisibilityRect, tileData, tileDataRect } from "./light";
 import { contaminationEdges, drawPatterns, hatchMarks, lightTexture, overlayTexture, objectMaterial, sceneUniforms, skyMaterial, terrainMaterial, tileTexture, waterMaterial, type SceneUniforms } from "./materials";
 import { changedRect, chunkCount, dirtyChunks, meshChunk, CHUNK, type TerrainSource } from "./mesh";
-import { columnMap, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
+import { columnMap, NO_VARIANT, surfaceWater, type EntityView, type MapView, type SoilView, type SurfaceWater, type WaterView } from "./model";
 import { SKY, type GroundMode } from "./palette";
 import { pickHeightfield, pickPlane, type Ray, type TileHit } from "./pick";
 import { changedWaterChunks, lowerByTile, meshWaterChunk } from "./waterMesh";
@@ -646,6 +647,8 @@ export class MapRenderer {
     }
     const { group, instances } = buildEntities(e, this.objectMat, this.map?.soil ?? null, this.map?.W ?? 0, this.software);
     this.objectsMoved = false;
+    // (a highlight belonged to the objects as they were)
+    this.lit = [];
     group.renderOrder = 1;
     this.objects = group;
     this.scene.add(group);
@@ -776,6 +779,139 @@ export class MapRenderer {
     this.followGround(heights, rect);
     this.requestRender();
     return chunks.length;
+  }
+
+  // ------------------------------------------------------------------------------------ the shelf
+
+  /** The tile under the pointer, as the last move over the map found it (null: off the map): a tool
+   *  picked while the pointer rests on the map shows itself there at once. */
+  hoverHit: TileHit | null = null;
+
+  private ghost: { group: Group; key: string } | null = null;
+  private thumbs = new Map<string, string>();
+  private lit: { mesh: InstancedMesh; i: number; color: [number, number, number] }[] = [];
+
+  /** The ghost of an object being placed (the left shelf, D184): the object itself, its footprint's
+   *  corner at tile (x, y) on the ground at `z`, tinted green where it fits, red where it doesn't
+   *  (null: not known yet); null puts it away. */
+  setGhost(g: { template: string; x: number; y: number; z: number; orientation: number; ok: boolean | null } | null): void {
+    if (!g) {
+      if (this.ghost) {
+        this.scene.remove(this.ghost.group);
+        disposeGroup(this.ghost.group);
+        this.ghost = null;
+        this.requestRender();
+      }
+      return;
+    }
+    const key = `${g.template}|${g.orientation}|${g.ok}`;
+    if (!this.ghost || this.ghost.key !== key) {
+      if (this.ghost) {
+        this.scene.remove(this.ghost.group);
+        disposeGroup(this.ghost.group);
+      }
+      const { group } = buildEntities(oneObject(g.template, g.orientation), this.objectMat, null, 0, this.software);
+      const tint: [number, number, number] | null = g.ok === null ? null : g.ok ? [0.7, 1.3, 0.7] : [1.5, 0.55, 0.5];
+      if (tint)
+        for (const c of group.children) {
+          const col = (c as InstancedMesh).instanceColor;
+          if (!col) continue;
+          const a = col.array as Float32Array;
+          for (let k = 0; k < a.length; k++) a[k] = Math.min(2, a[k] * tint[k % 3]);
+          col.needsUpdate = true;
+        }
+      group.renderOrder = 2;
+      this.scene.add(group);
+      this.ghost = { group, key };
+    }
+    this.ghost.group.position.set(g.x, g.z, -g.y);
+    this.requestRender();
+  }
+
+  /** A small picture of an object in the map's look, as a data URL (the shelf's icons), made once
+   *  per object; null when there is no view to draw it with. */
+  thumbnail(template: string, px = 56): string | null {
+    const had = this.thumbs.get(template);
+    if (had) return had;
+    if (this.disposed || typeof document === "undefined") return null;
+    const { group } = buildEntities(oneObject(template, 0), this.objectMat, null, 0, this.software);
+    // high above the map, where no shadow falls
+    group.position.set(0, 40, 0);
+    const scene = new Scene();
+    scene.add(group);
+    group.updateMatrixWorld(true);
+    const box = new Box3();
+    for (const c of group.children) {
+      const m = c as InstancedMesh;
+      m.computeBoundingBox();
+      if (m.boundingBox) box.union(m.boundingBox.clone().applyMatrix4(m.matrixWorld));
+    }
+    if (box.isEmpty()) {
+      disposeGroup(group);
+      return null;
+    }
+    const centre = box.getCenter(new Vector3());
+    const size = box.getSize(new Vector3());
+    const r = Math.max(0.6, 0.5 * Math.hypot(size.x, size.y, size.z));
+    const cam = new PerspectiveCamera(30, 1, 0.1, 200);
+    const dir = new Vector3(0.8, 0.75, 1).normalize();
+    cam.position.copy(centre).addScaledVector(dir, r / Math.sin((15 * Math.PI) / 180));
+    cam.lookAt(centre);
+    const rt = new WebGLRenderTarget(px, px);
+    const was = { target: this.gl.getRenderTarget(), slice: this.uniforms.slice.value, alpha: this.gl.getClearAlpha(), color: this.gl.getClearColor(new Color()) };
+    this.uniforms.slice.value = 99;
+    this.gl.setRenderTarget(rt);
+    this.gl.setClearColor(0x000000, 0);
+    this.gl.clear();
+    this.gl.render(scene, cam);
+    const pixels = new Uint8Array(px * px * 4);
+    this.gl.readRenderTargetPixels(rt, 0, 0, px, px, pixels);
+    this.gl.setRenderTarget(was.target);
+    this.gl.setClearColor(was.color, was.alpha);
+    this.uniforms.slice.value = was.slice;
+    rt.dispose();
+    disposeGroup(group);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = px;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const img = ctx.createImageData(px, px);
+    // (the render target's rows run bottom up)
+    for (let y = 0; y < px; y++) img.data.set(pixels.subarray((px - 1 - y) * px * 4, (px - y) * px * 4), y * px * 4);
+    ctx.putImageData(img, 0, 0);
+    const url = canvas.toDataURL();
+    this.thumbs.set(template, url);
+    this.requestRender();
+    return url;
+  }
+
+  /** Objects on these tiles show in a colour (Remove's red under the pointer, D184); null puts them
+   *  back as they are. */
+  highlightObjects(tiles: readonly number[] | null, color: [number, number, number] = [1.6, 0.35, 0.3]): void {
+    for (const l of this.lit) {
+      const a = l.mesh.instanceColor!.array as Float32Array;
+      a.set(l.color, l.i * 3);
+      l.mesh.instanceColor!.needsUpdate = true;
+    }
+    this.lit = [];
+    const m = this.map;
+    if (m && this.objects && tiles?.length) {
+      const want = new Set(tiles);
+      for (const c of this.objects.children) {
+        const mesh = c as InstancedMesh;
+        const own = mesh.userData.objects as Int32Array | undefined;
+        if (!own || !mesh.instanceColor) continue;
+        const a = mesh.instanceColor.array as Float32Array;
+        for (let i = 0; i < own.length; i++) {
+          const k = own[i];
+          if (k < 0 || !want.has(m.entities.y[k] * m.W + m.entities.x[k])) continue;
+          this.lit.push({ mesh, i, color: [a[i * 3], a[i * 3 + 1], a[i * 3 + 2]] });
+          for (let j = 0; j < 3; j++) a[i * 3 + j] = Math.min(2, a[i * 3 + j] * color[j]);
+          mesh.instanceColor.needsUpdate = true;
+        }
+      }
+    }
+    this.requestRender();
   }
 
   // ------------------------------------------------------------------------------------ juice
@@ -1215,6 +1351,7 @@ export class MapRenderer {
         return;
       }
       const hit = this.pick(ev.clientX, ev.clientY);
+      this.hoverHit = hit;
       this.setHoverTile(hit ? hit.x : null, hit?.y ?? 0);
       this.tool?.hover?.(hit, ev);
       this.onHover?.(hit);
@@ -1236,6 +1373,7 @@ export class MapRenderer {
     this.on(c, "pointercancel", end);
     this.on(c, "pointerleave", (e) => {
       if (this.drag) return;
+      this.hoverHit = null;
       this.setHoverTile(null);
       this.tool?.hover?.(null, e as PointerEvent);
       this.onHover?.(null);
@@ -1509,3 +1647,21 @@ function paintHighlight(data: Uint8Array, W: number, H: number, h: Uint8Array): 
 
 export { CHUNK };
 export type { TileHit };
+
+/** One object on its own, its Coordinates at (0, 0) on the ground at 0 (the shelf's ghost and icons). */
+function oneObject(template: string, orientation: number): EntityView {
+  return {
+    count: 1,
+    templates: [template],
+    owners: ["shelf"],
+    template: Uint16Array.of(0),
+    x: Int16Array.of(0),
+    y: Int16Array.of(0),
+    z: Int16Array.of(0),
+    orientation: Uint8Array.of(orientation & 3),
+    flags: Uint8Array.of(0),
+    owner: Uint16Array.of(0),
+    variant: Uint8Array.of(NO_VARIANT),
+    strength: Float32Array.of(0),
+  };
+}

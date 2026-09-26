@@ -1,4 +1,4 @@
-// The top bar (PLAN §20 D184): Raise, Lower, Flatten, Smooth, Naturalize | Source, and a small row
+// The top bar (PLAN §20 D184): Raise, Lower, Flatten, Smooth, Naturalize | Source | Remove, and a small row
 // beneath with only the picked tool's options. The brush's size is its ring on the land ([ and ]),
 // its strength shows only while it changes (Shift+scroll, { and }). The brush kit's toggles are off
 // by default: square, precise (with "stop at" for a hold, D193), straight lines, level lines;
@@ -10,6 +10,7 @@
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 import { BRUSHES, type BrushSettings, type BrushTool } from "./brushes";
+import type { RemoveKind } from "../core/features/objects";
 
 const HINT_KEY = "dgm.brushHint";
 
@@ -31,8 +32,9 @@ function seeHint(): void {
 
 const ICON = { width: 20, height: 20, viewBox: "0 0 20 20", "aria-hidden": "true" as const, fill: "none", stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round" as const, "stroke-linejoin": "round" as const };
 
-/** The tools' icons: an arrow up, an arrow down, a level line, a wave, a weathered peak; a drop. */
-function Icon({ tool }: { tool: BrushTool | "source" }) {
+/** The tools' icons: an arrow up, an arrow down, a level line, a wave, a weathered peak; a drop; a
+ *  cross. */
+function Icon({ tool }: { tool: BrushTool | "source" | "remove" }) {
   switch (tool) {
     case "raise":
       return (
@@ -70,8 +72,24 @@ function Icon({ tool }: { tool: BrushTool | "source" }) {
           <path d="M10 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" />
         </svg>
       );
+    case "remove":
+      return (
+        <svg {...ICON}>
+          <path d="M5 5l10 10M15 5L5 15" />
+        </svg>
+      );
   }
 }
+
+/** What Remove takes (its filters), and their words. */
+export const REMOVE_KINDS: readonly [RemoveKind, string][] = [
+  ["trees", "Trees"],
+  ["bushes", "Bushes"],
+  ["ruins", "Ruins"],
+  ["objects", "Objects"],
+  ["slopes", "Slopes"],
+  ["sources", "Sources"],
+];
 
 /** The forces (D203, D206): their slots in the bar, each hidden until it is ready. One shared core
  *  builds them once adopted; the bar needs only a force's name, whether it is ready, and its modes:
@@ -111,8 +129,12 @@ export interface TopBarProps {
   active: BrushTool | null;
   /** Source is picked. */
   source: boolean;
+  /** Remove is picked, and what it takes. */
+  remove: boolean;
+  removeKinds: readonly RemoveKind[];
+  onRemoveKinds(kinds: RemoveKind[]): void;
   settings: BrushSettings;
-  onPick(tool: BrushTool | "source" | null): void;
+  onPick(tool: BrushTool | "source" | "remove" | null): void;
   onSettings(s: BrushSettings): void;
   /** The map is still loading: the tools wait until they can work. */
   loading?: boolean;
@@ -120,6 +142,8 @@ export interface TopBarProps {
   sourceOptions?: ComponentChildren;
   /** A selection's own row (its size, its actions), when there is one. */
   selectRow?: ComponentChildren;
+  /** Another row beneath the bar: the shelf's object's options, a selected source's. */
+  row?: { label: string; content: ComponentChildren } | null;
 }
 
 /** A toggle in the options row: a checkbox and its word. */
@@ -181,6 +205,19 @@ export function TopBar(p: TopBarProps) {
             </span>
           </>
         ) : null}
+        <span class="bar-divider" aria-hidden="true" />
+        <button
+          type="button"
+          class="icon-button"
+          aria-pressed={p.remove}
+          aria-label="Remove (X)"
+          title={p.loading ? "The map is still loading" : "Remove (X): click an object, or drag over many. It never changes the ground; the start stays."}
+          disabled={p.loading}
+          onClick={() => p.onPick(p.remove ? null : "remove")}
+        >
+          <Icon tool="remove" />
+          <span class="icon-word">Remove</span>
+        </button>
       </div>
       {t ? (
         <div class="map-bar options-row" role="group" aria-label={`${BRUSHES.find((b) => b.tool === t)!.name} options`}>
@@ -246,6 +283,26 @@ export function TopBar(p: TopBarProps) {
               </>
             ) : null}
           </div>
+        </div>
+      ) : null}
+      {p.remove ? (
+        <div class="map-bar options-row" role="group" aria-label="Remove options">
+          <div class="bar-group">
+            {REMOVE_KINDS.map(([k, word]) => (
+              <Toggle
+                key={k}
+                label={word}
+                title={`Remove takes ${word.toLowerCase()}`}
+                on={p.removeKinds.includes(k)}
+                onChange={(on) => p.onRemoveKinds(on ? [...p.removeKinds, k] : p.removeKinds.filter((x) => x !== k))}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {p.row ? (
+        <div class="map-bar options-row" role="group" aria-label={p.row.label}>
+          <div class="bar-group">{p.row.content}</div>
         </div>
       ) : null}
       {p.source && p.sourceOptions ? (

@@ -71,7 +71,6 @@ button[aria-pressed="true"] {
   flex: 1 1 260px;
 }
 
-
 .view-bar {
   display: flex;
   flex-wrap: wrap;
@@ -127,8 +126,6 @@ button[aria-pressed="true"] {
 }
 
 .view3d-controls button,
-.handles button,
-.tool-hint,
 .readout,
 .working {
   background: var(--overlay);
@@ -138,10 +135,6 @@ button[aria-pressed="true"] {
 .view3d-controls button {
   padding: 5px 10px;
   font-size: 0.85rem;
-}
-
-.tool-hint button {
-  pointer-events: auto;
 }
 
 .view3d-controls button[aria-pressed="true"] {
@@ -273,108 +266,14 @@ button[aria-pressed="true"] {
 
 .editor-main {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   min-height: 0;
 }
 
-.tabs {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+/* the left shelf: a column of objects beside the map */
+.editor-main > .shelf {
   border-right: 1px solid var(--rule);
-  background: var(--panel);
-  min-height: 0;
-}
-
-.tablist {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 6px;
-  border-right: 1px solid var(--rule);
-}
-
-.tablist button {
-  border: none;
-  text-align: left;
-  padding: 8px 10px;
-}
-
-.tablist button[aria-selected="true"] {
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: 600;
-}
-
-.tabpanel {
-  padding: 12px;
   overflow-y: auto;
-  min-width: 0;
-}
-
-.tabpanel h2 {
-  font-size: 0.95rem;
-  margin: 0 0 8px;
-}
-
-.tools {
-  margin-bottom: 14px;
-}
-
-.tool-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tool-options label {
-  display: block;
-  margin-top: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.tool-options select,
-.tool-options input[type="range"],
-.tool-options input[type="number"],
-.inspector input:not([type="checkbox"]) {
-  display: block;
-  width: 100%;
-  margin-top: 4px;
-}
-
-.tool-options select,
-.tool-options input[type="number"],
-.inspector input[type="number"] {
-  padding: 5px 6px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--ink);
-  font: inherit;
-}
-
-.feature-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.feature-list li {
-  padding: 2px 0;
-}
-
-.feature-list button {
-  text-align: left;
-}
-
-.feature-list button[aria-current="true"] {
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.tag-user {
-  color: var(--muted);
-  font-size: 0.8rem;
 }
 
 .editor-map {
@@ -396,62 +295,6 @@ button[aria-pressed="true"] {
   border-radius: 0;
 }
 
-.handles {
-  position: absolute;
-  display: flex;
-  gap: 6px;
-  transform: translate(-50%, -115%);
-}
-
-.handles .handle {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border-radius: 50%;
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.handle.move {
-  cursor: grab;
-}
-
-/* handles set on a point (a corner), not above it; smaller ones; one with a word */
-.handles.centred {
-  transform: translate(-50%, -50%);
-}
-
-.handles .handle.small {
-  width: 24px;
-  height: 24px;
-  font-size: 0.8rem;
-}
-
-.handles .handle.wide {
-  width: auto;
-  padding: 0 10px;
-  border-radius: 18px;
-  font-size: 0.9rem;
-}
-
-.handle.resize {
-  cursor: nwse-resize;
-}
-
-.handle.wide {
-  cursor: ns-resize;
-}
-
-.handle.move.disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.handle.delete {
-  color: var(--bad);
-}
-
-.tool-hint,
 .working {
   position: absolute;
   top: 100px;
@@ -469,28 +312,6 @@ button[aria-pressed="true"] {
   top: 16px;
 }
 
-/* a tool's hint sits below the map, not over its north edge (the camera and brush bars are there) */
-.tool-hint {
-  top: auto;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 20px);
-}
-
-.inspector {
-  position: absolute;
-  top: 64px;
-  right: calc(var(--legend-space, 0px) + 10px);
-  width: 250px;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--overlay);
-  box-shadow: var(--shadow);
-  border: 1px solid var(--rule);
-}
-
-.inspector header,
 .history header,
 .dialog header {
   display: flex;
@@ -499,22 +320,10 @@ button[aria-pressed="true"] {
   gap: 8px;
 }
 
-.inspector h2,
 .history h2,
 .dialog h2 {
   margin: 0;
   font-size: 1rem;
-}
-
-.inspector label {
-  display: block;
-  margin: 8px 0;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.inspector p {
-  margin: 6px 0;
 }
 
 .editor-message,
@@ -598,7 +407,6 @@ button[aria-pressed="true"] {
 
 /* M5: the tool preview, the problems an edit made, the start's indicators, map layers */
 
-.preview-card,
 .instant {
   position: absolute;
   left: 10px;
@@ -612,24 +420,14 @@ button[aria-pressed="true"] {
   font-size: 0.9rem;
 }
 
-.preview-card h2,
 .instant h2 {
   margin: 0 0 4px;
   font-size: 1rem;
 }
 
-.preview-card ul,
-.instant ul,
-.inspector .report {
+.instant ul {
   margin: 4px 0;
   padding-left: 18px;
-}
-
-.preview-card footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
 }
 
 .instant {
@@ -711,49 +509,6 @@ button[aria-pressed="true"] {
   padding-left: 18px;
 }
 
-.layer-toggle {
-  margin: 0 0 12px;
-}
-
-.advanced-toggle {
-  display: block;
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-}
-
-.inspector .nudge {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 8px 0;
-}
-
-.inspector .nudge button {
-  min-width: 2.2em;
-}
-
-.inspector select {
-  display: block;
-  width: 100%;
-  margin-top: 4px;
-  padding: 5px 6px;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--ink);
-  font: inherit;
-}
-
-.inspector details {
-  margin: 8px 0;
-  font-size: 0.9rem;
-}
-
-.tool-options .check,
-.inspector .check {
-  font-weight: 400;
-}
-
 /* dialogs */
 
 .dialog-backdrop {
@@ -829,7 +584,7 @@ button[aria-pressed="true"] {
     grid-template-columns: 1fr;
   }
 
-  .tabs {
+  .editor-main > .shelf {
     border-right: none;
     border-bottom: 1px solid var(--rule);
   }
@@ -844,7 +599,6 @@ button[aria-pressed="true"] {
     border-top: 1px solid var(--rule);
   }
 }
-
 
 /* the legend beside the 3D view (a shared side panel; the editor keeps its panels clear of it) */
 .view3d-frame {

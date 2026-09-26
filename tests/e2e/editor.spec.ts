@@ -1,6 +1,6 @@
 // ROADMAP M4 acceptance: generate → refine → back to settings → regenerate → refine keeps the
-// player's edits, through the page itself. Also: the editor's tools, handles, undo and redo, the
-// history, export from both screens, and the autosave after a reload.
+// player's edits, through the page itself. Also: the editor's tools, the start dragged on the map,
+// undo and redo, the history, export from both screens, and the autosave after a reload.
 
 import { expect, test, type Page } from "@playwright/test";
 
@@ -66,26 +66,22 @@ test("generate → refine → back to settings → regenerate → refine keeps t
     [start0[0], start0[1]] as const,
   );
   expect(spring).not.toBeNull();
-  await page.getByRole("tab", { name: "Water" }).click();
-  await page.getByRole("region", { name: "Add" }).getByRole("button", { name: "Source", exact: true }).click();
+  await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Source (6)" }).click();
   const sp = await page.evaluate(([a, b]) => window.dgmEditor!.tileToClient(a, b), spring!);
   await page.mouse.click(sp.x, sp.y);
   await page.evaluate(() => window.dgmEditor!.idle());
-  await page.getByRole("button", { name: "Done" }).click();
+  // (Esc puts Source away)
+  await page.keyboard.press("Escape");
   i = await info(page);
   expect(i.history.map((h) => h.label)).toEqual([expect.stringMatching(/^Lower, \d+ tiles$/), "Place water source"]);
   const springs = () => page.evaluate(async ([a, b]) => (await window.dgmEditor!.worker.entitiesAt(a, b)).filter((e) => e.template === "WaterSource").length, spring!);
   expect(await springs()).toBe(1);
 
-  // an edit of what the generator made: move the start two tiles with its handle's arrow keys
-  await page.getByRole("tab", { name: "Start" }).click();
-  await page.getByRole("button", { name: "Start", exact: true }).click();
+  // an edit of what the generator made: drag the start two tiles on the map
   const before = i.features.find((f) => f.kind === "start")!.params as { position: [number, number] };
-  await page.getByRole("button", { name: /^Move Start/ }).focus();
   // (west: the berry bushes this map plants for its start stay within reach; two tiles east, 12
   // of them fall outside the 20 tiles start.food counts, and export would warn)
-  await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("ArrowLeft");
+  await drag(page, before.position, [before.position[0] - 2, before.position[1]]);
   await expect.poll(async () => (await info(page)).history.length, { timeout: 30_000 }).toBe(3);
   await page.evaluate(() => window.dgmEditor!.idle());
   i = await info(page);
@@ -147,28 +143,25 @@ test("generate → refine → back to settings → regenerate → refine keeps t
   expect(errors).toEqual([]);
 });
 
-test("a feature is selected by clicking it; water never is (D196)", async ({ page }) => {
+test("a click picks no generated feature, and never water (D184, D196)", async ({ page }) => {
   await page.goto("./#s=77&z=96&d=n&t=riverValley");
   await expect(page.getByText(/All \d+ checks passed/)).toBeVisible({ timeout: 60_000 });
   await page.getByRole("button", { name: "Refine this map" }).click();
   await page.waitForFunction(() => !!window.dgmEditor && !!window.dgm3d, null, { timeout: 60_000 });
   await page.getByRole("button", { name: "Top-down" }).click();
-  // click the start's tile: the start is selected, with its handles
+  // a click on the start picks nothing (it is dragged, or picked on the shelf), and nothing is
+  // listed: the generator's features are its plan, not objects (D184)
   const start = (await info(page)).features.find((f) => f.kind === "start")!.params as { position: [number, number] };
   const p = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), start.position);
   await page.mouse.click(p.x, p.y);
-  await expect(page.getByRole("complementary", { name: "Start, selected" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Delete Start" })).toBeVisible();
-  // water is never an object (D196): the river is not listed, a click on it picks nothing, and
-  // Delete then removes nothing
-  await page.keyboard.press("Escape");
-  await page.getByRole("tab", { name: "Water" }).click();
-  await expect(page.locator(".feature-list").getByRole("button", { name: "River", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: /selected/ })).toHaveCount(0);
+  // water is never an object (D196): a click on the river picks nothing, and Delete then removes
+  // nothing
   const river = (await info(page)).features.find((f) => f.kind === "river")!.params as { path: [number, number][] };
   const w = river.path[Math.floor(river.path.length / 2)];
   const wp = await page.evaluate(([x, y]) => window.dgmEditor!.tileToClient(x, y), [Math.round(w[0]), Math.round(w[1])] as [number, number]);
   await page.mouse.click(wp.x, wp.y);
-  await expect(page.getByRole("complementary", { name: /River/ })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: /selected/ })).toHaveCount(0);
   await page.keyboard.press("Delete");
   await page.evaluate(() => window.dgmEditor!.idle());
   expect((await info(page)).edits).toBe(0);

@@ -7,6 +7,7 @@ import type { ChecksApi } from "./checks.worker";
 import type { EditOp, OpOrigin } from "../core/doc/ops";
 import { decodePlaceFile, placeTimber } from "../core/places/place";
 import type { MapSpec } from "../core/spec/mapspec";
+import type { Orientation } from "../core/format/footprints";
 import { viewBuffers } from "../render3d/model";
 import { emptyWaterFile, runGenerate, type GenerateResponse } from "./api";
 import * as ed from "./session";
@@ -94,10 +95,12 @@ const api = {
   stopWeather: () => ed.stopWeather(),
   moveFeature: (id: string, dx: number, dy: number) => sendUpdate(ed.moveFeature(id, dx, dy)),
   deleteFeature: (id: string) => sendUpdate(ed.deleteFeature(id)),
-  moveStartTo: (x: number, y: number) => sendUpdate(ed.moveStartTo(x, y)),
+  moveStartTo: (x: number, y: number, orientation?: Orientation) => sendUpdate(ed.moveStartTo(x, y, orientation)),
   damSites: () => ed.damSiteLayer(),
   entitiesAt: (x: number, y: number) => ed.entitiesAt(x, y),
   footprintCheck: (req: ed.ToolRequest) => ed.footprintCheck(req),
+  plantAt: (template: string, tiles: number[]) => sendUpdate(ed.plantAt(template, tiles)),
+  removeAt: (tiles: number[], kinds: ed.RemoveKind[]) => sendUpdate(ed.removeAt(tiles, kinds)),
   instantCheck: () => ed.instantCheck(),
   async settingsResponse(): Promise<GenerateResponse> {
     const r = await ed.settingsResponse();

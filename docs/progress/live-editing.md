@@ -443,6 +443,67 @@ on a placed river.
   beside the mine site runs up to the site's edge and holds there, so a slow machine's fewer dabs
   still reach it.
 
+## D184, push 3: the left shelf with ghosts, and Remove
+
+- **The left shelf:** a grid of the game's placeable objects, each a small render of itself in the
+  map's look (the view draws each object's model once, when the page is idle): Start, Pine, Birch,
+  Oak, Berry bush, Ruin (its height in the row beneath), Mine site, Relic (its size), Slope,
+  Thorns, Natural dam, Blockage, Geothermal field. Nothing else: the four tabs, the feature lists,
+  the inspector, the Advanced checkbox and the help paragraphs are gone.
+- **The ghost:** the picked object's own model follows the pointer on the ground, tinted green where
+  the game keeps it and red where it would delete it, its footprint green or red on the map and
+  the reason beside the pointer ("Can't go here: the district center stands there"). A click
+  places it at once, one step, with its pop and wiggle; on red, it places nothing and says why. R
+  turns it a quarter; Esc puts it back. Pines, birches, oaks and berry bushes: a click places one,
+  a drag paints many, dense in the middle and ragged at the edge like the generator's groves and
+  patches, planted where they can grow (dry ground with nothing on it) as one step ("Plant 23
+  pines").
+- **The start:** picked on the shelf, it moves where it is clicked (R turns its door; moved and
+  turned is one step), then goes back on the shelf; or it is dragged on the map with no tool out,
+  its footprint and the start's requirements following the pointer, Esc putting it back. A click
+  on it picks nothing.
+- **Remove (X):** the last button of the top bar. The objects under the pointer glow red; a click
+  takes them, a drag takes everything its rectangle covers (their count beside the pointer), as one
+  step. Its row holds its filters: Trees, Bushes, Ruins, Objects, Slopes, Sources, all on. It
+  never changes the ground; the start stays ("The start stays: pick it on the shelf to move it").
+- **A picked source** (D196) now shows in the row beneath the top bar: its strength, its water
+  (Clean or Badwater) and Remove.
+- **The overlays** moved from the Show list to the view buttons: Soil moisture, Badwater, Drought
+  (and Water under roofs on a map with caves), and Dam sites. The rest of the view buttons and the
+  legend follow in push 4.
+- **The generator's features** are its plan (D184): nothing on the map selects them. The set-piece
+  tools (waterfall, dam site, gorge, terraced cliffs, badwater spring, weir, plug, plugged
+  spillway, thorn belt as an area), the badwater river switch and advanced mode's numeric fields
+  are gone from the editor; their planners stay for the generator and Claude.
+- **The start's problems belong to the edit that made them:** an object placed by hand changes no
+  ground, so the instant checks missed the problems it made (thorns on the start's door). The
+  build now notes where objects were placed, moved or removed, and the checks there are the
+  edit's, with their fixes.
+- `tools/retired-terms.json`: `pendingRemoval` is empty; the old tools are gone from
+  `Editor.tsx`, `panels.tsx` and `tools.ts`.
+- **Claude:** two new steps, `placeObject` (one of the shelf's objects, at a tile or where it fits
+  in a place nearest its middle, turned; a relic's size, a ruin's height) and `remove` (Remove
+  over a place, with its filters). New requests B16 and B17. Reference solutions: 125 of 137 (the
+  same 12 fail on dev).
+- Tests: `tests/e2e/shelf.spec.ts` (the icons, a medium relic red on the start and refused there,
+  green and placed where it fits, R, Esc; a grove painted with a drag and a pine placed with a
+  click; the start moved from the shelf; Remove's filters, a click and a drag, the ground and the
+  start staying), `tests/e2e/start-edit.spec.ts` (the start dragged, turned on the shelf, and thorns
+  on its door showing the problem with the move as its fix), `tests/contract/shelf.test.ts`
+  (planting, Remove and the start's turn in the worker, the door's problem the edit's own),
+  `tests/unit/placeTools.test.ts`.
+- Tests changed (D148): `objects.spec.ts` is now `shelf.spec.ts`: its relic checks go through the
+  shelf (the relic is placed by hand, "Place medium relic", no longer a feature); its weir, badwater
+  river and advanced mode checks are retired with those tools. `tools.spec.ts` is now
+  `start-edit.spec.ts`: its set-piece tools test is retired with the tools; the start is dragged on
+  the map instead of nudged with its handle, turned on the shelf instead of the inspector, and
+  broken by thorns on its door instead of a move off the map's edge (the shelf and the drag keep
+  the start on the map now). `editor.spec.ts` picks Source in the top bar and drags the start; its
+  "a feature is selected by clicking it" is now "a click picks no generated feature". `start.spec`
+  drags the start instead of its handle. `look-clean.spec` uses the Dam sites view button and the
+  shelf's Slope instead of the Dam site tool. `waterFlow`, `waterTools` and `waterView` pick Source
+  in the top bar; `waterView` reads a picked source's row instead of its inspector.
+
 ## The camera keys (D180)
 
 Timberborn's own keys: WASD and the arrows move, Q and E turn, Shift is faster, the wheel zooms.
@@ -550,6 +611,6 @@ enables it at once), and the brushes could be picked before the map could be pai
 
 ## Next
 
-D184's pushes 3 and 4: the left shelf with live ghosts, and Remove; the view buttons and overlays
-(with the minimap and the layer widget, D205, D207), camera bookmarks (D205), the header and its
-menu, the quiet dot, the start's reach and the first-run hints. The forces wait for Kyler.
+D184's push 4: the view buttons and the legend only while an overlay is on, the minimap and the
+layer widget (D205, D207), camera bookmarks (D205), the header and its menu with Save to
+Timberborn, the quiet dot, the start's reach and the first-run hints. The forces wait for Kyler.

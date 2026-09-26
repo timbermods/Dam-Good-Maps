@@ -29,6 +29,9 @@ import { LOGS_PER_TREE } from "../../../src/core/spec/mapspec";
 import { rulesFor } from "../../../src/core/validate/playability";
 import { newHandle, newId, refContext, type Conversation } from "./conversation";
 import { entityTiles } from "../../../src/core/features/edits";
+import { DERIVED_SLOPES } from "../../../src/core/features/ids";
+import { removeKindOf, type RemoveKind } from "../../../src/core/features/objects";
+import { FOOTPRINTS } from "../../../src/core/format/footprints";
 import { locate, network } from "./flow";
 import { SOURCE_PREFIX } from "./metrics";
 import { nearExtras, patchStrokes } from "./dig";
@@ -63,6 +66,12 @@ export type Step =
   | { op: "addLake"; outline?: Point[]; where?: Where; size?: SizeWord | number; level?: number; floorDepth?: number; spring?: number; handle?: string }
   | { op: "addResource"; kind: "forest" | "berryPatch" | "ruinField"; where: Where; amount?: number; size?: SizeWord; at?: [number, number]; handle?: string }
   | { op: "removeResources"; kind: "trees" | "bushes" | "ruins"; where: Where }
+  /** An object from the editor's left shelf (D184): at a tile, or where it fits in a place (nearest
+   *  its middle); `turn` quarter turns; a relic's size, a ruin's height. */
+  | { op: "placeObject"; object: ShelfObject; at?: [number, number]; where?: Where; turn?: number; size?: "small" | "medium" | "large"; height?: number }
+  /** The editor's Remove (D184): the objects standing in a place that `kinds` names (all of them
+   *  but the start when absent); it never changes the ground, and the start stays. */
+  | { op: "remove"; where: Where; kinds?: RemoveKind[] }
   | { op: "moveFeature"; target: string; by?: [number, number]; to?: [number, number] | Where }
   | { op: "moveStart"; to: [number, number] | Where; bringFood?: boolean }
   | { op: "deleteFeature"; target: string }
@@ -84,7 +93,12 @@ export type Step =
   | { op: "brush"; tool: BrushTool; where?: Where; path?: Point[]; amount?: number; level?: number; passes?: number; size?: SizeWord | number; edges?: "slope" | "cliff" | "ramped"; steps?: number; walkable?: boolean }
   | { op: "undoLast" };
 
-export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "changeSource", "addResource", "removeResources", "moveFeature", "moveStart", "deleteFeature", "sculpt", "brush", "undoLast"] as const;
+export const STEP_OPS = ["changeSettings", "addSetPiece", "changeSetPiece", "changeFeature", "addSource", "changeSource", "addResource", "removeResources", "placeObject", "remove", "moveFeature", "moveStart", "deleteFeature", "sculpt", "brush", "undoLast"] as const;
+
+/** The shelf's objects, as a step names them, and the object each places (D184). */
+export const SHELF_OBJECTS = { pine: "Pine", birch: "Birch", oak: "Oak", berryBush: "BlueberryBush", ruin: "RuinColumnH", mineSite: "UndergroundRuins", relic: "Relic", slope: "Slope", thorns: "Thorns", naturalDam: "NaturalDam", blockage: "Blockage", geothermal: "GeothermalField" } as const;
+export type ShelfObject = keyof typeof SHELF_OBJECTS;
+const REMOVE_KINDS: readonly RemoveKind[] = ["trees", "bushes", "ruins", "objects", "slopes", "sources"];
 
 /** Steps only a corpus map's setup may use: its drawn creeks and lakes, as saved documents from
  *  before D184 hold them. Claude is never offered them. */
@@ -246,6 +260,17 @@ export function checkStep(step: unknown, W: number, H: number): string[] {
     case "removeResources":
       if (!["trees", "bushes", "ruins"].includes(String(s.kind))) return ["kind is trees, bushes or ruins"];
       return checkPlace(s.where, "where", W, H);
+    case "placeObject":
+      if (!(String(s.object) in SHELF_OBJECTS)) return [`object is ${Object.keys(SHELF_OBJECTS).join(", ")}`];
+      if (s.at === undefined && s.where === undefined) return ["placeObject needs at [x, y] or a where"];
+      if (s.at !== undefined && !(Array.isArray(s.at) && s.at.length === 2 && num(s.at[0], 0, W - 1) && num(s.at[1], 0, H - 1))) errs.push("at is a tile [x, y] on the map");
+      if (s.turn !== undefined && !(Number.isInteger(s.turn) && num(s.turn, 0, 3))) errs.push("turn is 0–3 quarter turns");
+      if (s.size !== undefined && !["small", "medium", "large"].includes(String(s.size))) errs.push("size is small, medium or large (a relic)");
+      if (s.height !== undefined && !(Number.isInteger(s.height) && num(s.height, 1, 8))) errs.push("height is 1–8 levels (a ruin)");
+      return s.where === undefined ? errs : [...errs, ...checkPlace(s.where, "where", W, H)];
+    case "remove":
+      if (s.kinds !== undefined && !(Array.isArray(s.kinds) && s.kinds.every((k) => REMOVE_KINDS.includes(k as RemoveKind)))) errs.push(`kinds are ${REMOVE_KINDS.join(", ")}`);
+      return [...errs, ...checkPlace(s.where, "where", W, H)];
     case "moveFeature":
       if (!str(s.target, 80)) return ["target names the feature"];
       if (s.by !== undefined && !(Array.isArray(s.by) && s.by.length === 2 && num(s.by[0], -W, W) && num(s.by[1], -H, H))) return ["by is [dx, dy] in tiles"];
@@ -476,6 +501,10 @@ export function expandStep(s: MapSession, conv: Conversation, step: Step): Expan
       if (!ids.length) return fail(step, [`there are no ${step.kind} there`]);
       return { ok: true, step, ops: [{ op: "deleteEntities", params: { entities: ids } }], made: [], report: [`removes ${ids.length} ${step.kind}`], resolved: { place: where.place, assumptions: where.assumptions, count: ids.length }, errors: [], tiles: ids.length };
     }
+    case "placeObject":
+      return expandPlaceObject(s, conv, step);
+    case "remove":
+      return expandRemove(s, conv, step);
     case "moveFeature": {
       const f = targetFeature(s, conv, step.target);
       if (typeof f === "string") return fail(step, [f]);
@@ -813,6 +842,108 @@ function expandBrush(s: MapSession, conv: Conversation, step: Extract<Step, { op
   }
   const ops = strokes.map((params) => ({ op: "brush", params }) as EditOp);
   return { ok: true, step, ops, made: [], report, resolved: { ...resolved, tiles: tiles.length, strokes: strokes.length }, errors: [], tiles: tiles.length };
+}
+
+// ------------------------------------------------------------------------- the shelf, Remove
+
+const ORIENTS = ["Cw0", "Cw90", "Cw180", "Cw270"] as const;
+
+/** An object from the editor's left shelf (D184): the same operation a click on the shelf makes
+ *  (`placeEntity`), at a tile or at the spot in a place nearest its middle where it fits. */
+function expandPlaceObject(s: MapSession, conv: Conversation, step: Extract<Step, { op: "placeObject" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const base = SHELF_OBJECTS[step.object];
+  const template = base === "Relic" ? `${step.size === "large" ? "Large" : step.size === "medium" ? "Medium" : "Small"}Relic` : base === "RuinColumnH" ? `RuinColumnH${step.height ?? 3}` : base;
+  const orientation = ORIENTS[(step.turn ?? 0) & 3];
+  const name = template.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().replace("underground ruins", "mine site");
+  const tryAt = (x: number, y: number) => {
+    const [cx, cy] = shelfCorner(template, x, y, orientation);
+    return { at: [cx, cy] as [number, number], why: entityProblem(s, { template, x: cx, y: cy, orientation }) };
+  };
+  let spot: { at: [number, number]; why: string | null } | null = null;
+  const resolved: Record<string, unknown> = { template };
+  if (step.at) spot = tryAt(Math.round(step.at[0]), Math.round(step.at[1]));
+  else {
+    const where = resolve(viewOf(s), step.where!, refContext(conv));
+    if (!where.ok) return fail(step, where.errors, undefined, { place: where.place });
+    resolved.place = where.place;
+    let sx = 0;
+    let sy = 0;
+    let n = 0;
+    for (let i = 0; i < where.mask.length; i++)
+      if (where.mask[i]) {
+        sx += i % W;
+        sy += Math.floor(i / W);
+        n++;
+      }
+    const tiles: [number, number, number][] = [];
+    for (let i = 0; i < where.mask.length; i++) if (where.mask[i]) tiles.push([i % W, Math.floor(i / W), ((i % W) - sx / n) ** 2 + (Math.floor(i / W) - sy / n) ** 2]);
+    tiles.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);
+    const wet = s.built.water;
+    let first: { at: [number, number]; why: string | null } | null = null;
+    for (const [x, y] of tiles.slice(0, 4000)) {
+      if (wet[y * W + x] > 0.05 && step.object !== "naturalDam" && step.object !== "blockage") continue;
+      const t = tryAt(x, y);
+      first ??= t;
+      if (!t.why) {
+        spot = t;
+        break;
+      }
+    }
+    spot ??= first;
+  }
+  if (!spot) return fail(step, ["there is no ground there for it"], undefined, resolved);
+  if (spot.why) return fail(step, [`it can't stand at (${spot.at[0]}, ${spot.at[1]}): ${spot.why}`], undefined, { ...resolved, at: spot.at });
+  const r = planEntity(s, { template, x: spot.at[0], y: spot.at[1], orientation }, crypto.randomUUID());
+  if (!r.ok) return fail(step, r.errors, undefined, resolved);
+  void H;
+  return { ok: true, step, ops: r.ops, made: [], report: [`${/^[aeiou]/.test(name) ? "an" : "a"} ${name} at (${spot.at[0]}, ${spot.at[1]})${step.turn ? `, turned ${step.turn * 90}°` : ""}`], resolved: { ...resolved, at: spot.at, orientation }, errors: [], tiles: r.tiles.length };
+}
+
+/** The Coordinates that centre an object's turned footprint on tile (x, y) (the shelf's rule). */
+function shelfCorner(template: string, x: number, y: number, o: (typeof ORIENTS)[number]): [number, number] {
+  const fp = FOOTPRINTS[template];
+  if (!fp) return [x, y];
+  const [sx, sy] = fp.size;
+  const a = o === "Cw90" || o === "Cw270" ? sy : sx;
+  const b = o === "Cw90" || o === "Cw270" ? sx : sy;
+  const mx = x - Math.floor((a - 1) / 2);
+  const my = y - Math.floor((b - 1) / 2);
+  return o === "Cw0" ? [mx, my] : o === "Cw90" ? [mx, my + sx - 1] : o === "Cw180" ? [mx + sx - 1, my + sy - 1] : [mx + sy - 1, my];
+}
+
+/** The editor's Remove over a place (D184): the same operations its drag makes (`deleteEntities`,
+ *  and `removeSlope` for the slopes the build places), never the start, never the ground. */
+function expandRemove(s: MapSession, conv: Conversation, step: Extract<Step, { op: "remove" }>): Expanded {
+  const { x: W, y: H } = s.size;
+  const where = resolve(viewOf(s), step.where, refContext(conv));
+  if (!where.ok) return fail(step, where.errors, undefined, { place: where.place });
+  const take = new Set(step.kinds ?? REMOVE_KINDS);
+  const ids: string[] = [];
+  const slopes: { x: number; y: number }[] = [];
+  const counts = new Map<RemoveKind, number>();
+  let start = false;
+  for (const e of s.built.entities) {
+    if (!entityTiles(e).some(([tx, ty]) => tx >= 0 && ty >= 0 && tx < W && ty < H && where.mask[ty * W + tx])) continue;
+    const kind = removeKindOf(e.template);
+    if (!kind) {
+      start = true;
+      continue;
+    }
+    if (!take.has(kind)) continue;
+    if (kind === "slopes" && (e.owner === DERIVED_SLOPES || e.owner.startsWith("pinned:"))) slopes.push({ x: e.x, y: e.y });
+    else ids.push(e.id);
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  const resolved = { place: where.place, assumptions: where.assumptions };
+  if (!ids.length && !slopes.length) return fail(step, [start ? "only the start stands there, and it stays: move it instead" : `there is nothing of ${[...take].join(", ")} there`], undefined, resolved);
+  const ops: EditOp[] = [];
+  if (ids.length) ops.push({ op: "deleteEntities", params: { entities: ids } });
+  for (const p of slopes) ops.push({ op: "removeSlope", params: p });
+  const words = [...counts].map(([k, n]) => `${n} ${n === 1 ? k.replace(/es$|s$/, "") : k}`);
+  const report = [`removes ${words.join(", ")}; the ground stays as it is`];
+  if (start) report.push("the start stays (move it instead)");
+  return { ok: true, step, ops, made: [], report, resolved: { ...resolved, count: ids.length + slopes.length }, errors: [], tiles: ids.length + slopes.length };
 }
 
 /** Whether water stands on tile (x, y) or beside it, or a source stands there or beside it: where

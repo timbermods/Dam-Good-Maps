@@ -105,9 +105,7 @@ test("water: smart Lower carves a bed the water follows; sources placed, strengt
   const spot = await flatDry(page, start, 3, [from]);
   expect(spot).not.toBeNull();
   const [sx, sy] = spot!;
-  await page.getByRole("tab", { name: "Water" }).click();
-  const add = page.getByRole("region", { name: "Add" });
-  await add.getByRole("button", { name: "Source", exact: true }).click();
+  await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Source (6)" }).click();
   const sp = await client(page, sx, sy);
   const wet1 = await wet(page);
   await page.mouse.move(sp.x + 3, sp.y);

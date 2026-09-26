@@ -7858,6 +7858,122 @@
    }
   },
   {
+   "id": "B16",
+   "kind": "simple",
+   "text": "put a medium relic in the east third, turned sideways",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "the editor's left shelf (D184): one object where it fits, turned",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "a medium relic in the east third, turned a quarter",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "where it stands",
+     "that it is turned"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it",
+    "every start requirement the validator checks still holds (guards never traded away)"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the east third"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "placeObject",
+       "object": "relic",
+       "size": "medium",
+       "where": "the east third",
+       "turn": 1
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^a medium relic at [(][0-9]+, [0-9]+[)], turned 90°"
+     },
+     {
+      "on": "propose",
+      "path": "steps.0.resolved.orientation",
+      "op": "equals",
+      "value": "Cw90"
+     }
+    ]
+   }
+  },
+  {
+   "id": "B17",
+   "kind": "simple",
+   "text": "clear the trees and bushes out of the north-west corner, but keep everything else",
+   "setup": "rv96",
+   "feasible": "yes",
+   "expressible": true,
+   "note": "the editor's Remove (D184) with its filters: the ground and the start stay",
+   "goals": [
+    {
+     "id": "g1",
+     "text": "no trees or bushes left in the north-west corner",
+     "expect": []
+    }
+   ],
+   "report": {
+    "mustSay": [
+     "how many trees and bushes it removes",
+     "that the ground stays as it is"
+    ]
+   },
+   "pass": [
+    "the result validates: no guard that passed before the request fails after it"
+   ],
+   "reference": {
+    "calls": [
+     {
+      "tool": "resolve_region",
+      "args": {
+       "where": "the northwest corner"
+      }
+     }
+    ],
+    "proposal": {
+     "steps": [
+      {
+       "op": "remove",
+       "where": "the northwest corner",
+       "kinds": [
+        "trees",
+        "bushes"
+       ]
+      }
+     ]
+    },
+    "checks": [
+     {
+      "on": "propose",
+      "path": "steps.0.report.0",
+      "op": "matches",
+      "value": "^removes [0-9]+ (tree|bush)"
+     }
+    ]
+   }
+  },
+  {
    "id": "B11",
    "kind": "simple",
    "text": "draw a straight canal from the river south to the map edge at x 72",

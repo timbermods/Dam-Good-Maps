@@ -31,7 +31,9 @@ import {
   type RiverRequest,
 } from "../core/doc/tools";
 import type { PlanRecord } from "../core/features/setpieces";
-import { footprintCheck as checkFootprint, lakeAt, moveObject, planEntity, planObject, planRiverBadwater, type AreaPreview, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
+import { removeKindOf, type RemoveKind } from "../core/features/objects";
+export type { RemoveKind };
+import { entityProblem, footprintCheck as checkFootprint, lakeAt, moveObject, planEntity, planObject, planRiverBadwater, type AreaPreview, type EntityRequest, type ObjectRequest, type PlannedOps } from "../core/doc/placing";
 import type { SetPieceKind } from "../core/features/schema";
 import { distanceFrom } from "../core/math/grid";
 import { hash32 } from "../core/math/hash";
@@ -41,6 +43,7 @@ import type { EntitySpec } from "../core/format/entities";
 import { JsonFloat } from "../core/format/json";
 import type { Orientation } from "../core/format/footprints";
 import { entityTiles } from "../core/features/edits";
+import { DERIVED_SLOPES } from "../core/features/ids";
 import { placementOf } from "../core/format/entities";
 import type { ImportReport } from "../core/format/normalize";
 import type { Feature } from "../core/features/schema";
@@ -781,7 +784,7 @@ export function instantCheck(s: MapSession = need()): InstantCheck {
   const t0 = performance.now();
   const d = s.built.dirty;
   // what the edit touched: the features it changed, old and new, and the ground that changed
-  const parts = d ? [d.region, d.terrain].filter((r): r is NonNullable<typeof r> => !!r) : [];
+  const parts = d ? [d.region, d.terrain, d.objects].filter((r): r is NonNullable<typeof r> => !!r) : [];
   const region = parts.length ? { x0: Math.min(...parts.map((r) => r.x0)), y0: Math.min(...parts.map((r) => r.y0)), x1: Math.max(...parts.map((r) => r.x1)), y1: Math.max(...parts.map((r) => r.y1)) } : null;
   const file = s.mode === "live" ? toTimberFile(s.spec!, s.built, { thumbnail: blankThumbnail() }) : s.exportFile(s.built, { thumbnail: false });
   const v = validateMap(file, { profile: "export", external: s.mode !== "live", spec: s.spec, designedFor: s.meta.designedFor, features: s.features, loadOnly: true });
@@ -1318,6 +1321,73 @@ export function applyTool(req: ToolRequest, id: string): SessionUpdate & { plan:
   return { ...changed(s, r.ok, r.errors, t0), plan };
 }
 
+// --------------------------------------------------------------------- the shelf and Remove
+
+/** Trees or bushes painted by a drag from the shelf (D184): one `template` on each of `tiles` where
+ *  it can stand (on the map's ground, dry, no object there), as one step. The tiles it planted. */
+export function plantAt(template: string, tiles: readonly number[]): SessionUpdate & { planted: number[] } {
+  const t0 = performance.now();
+  const s = need();
+  const { x: W } = s.size;
+  const b = s.built;
+  const taken = new Uint8Array(W * s.size.y);
+  for (const e of b.entities) for (const [tx, ty] of entityTiles(e)) if (tx >= 0 && ty >= 0 && tx < W && ty < s.size.y) taken[ty * W + tx] = 1;
+  const ops: EditOp[] = [];
+  const planted: number[] = [];
+  for (const i of new Set(tiles)) {
+    if (i < 0 || i >= taken.length || taken[i] || b.water[i] > 0.05) continue;
+    const x = i % W;
+    const y = (i - x) / W;
+    const p = { template, x, y, orientation: "Cw0" as Orientation };
+    if (entityProblem(s, p)) continue;
+    taken[i] = 1;
+    planted.push(i);
+    ops.push({ op: "placeEntity", params: { id: crypto.randomUUID(), ...p } });
+  }
+  if (!ops.length) return { ...changed(s, false, ["nothing can grow there: it needs dry ground with nothing on it"], t0), planted };
+  const name = template === "BlueberryBush" ? "blueberry bush" : template.toLowerCase();
+  const label = ops.length === 1 ? `Plant a ${name}` : `Plant ${ops.length} ${name === "blueberry bush" ? "blueberry bushes" : `${name}s`}`;
+  const r = s.applyAll(ops, "user", label);
+  return { ...changed(s, r.ok, r.errors, t0), planted: r.ok ? planted : [] };
+}
+
+/** Remove (D184): the objects standing on `tiles` that `kinds` names, as one step; it never changes
+ *  the ground, and the start stays. The tiles the removed objects stood on (their corners). */
+export function removeAt(tiles: readonly number[], kinds: readonly RemoveKind[]): SessionUpdate & { removed: number[] } {
+  const t0 = performance.now();
+  const s = need();
+  const { x: W, y: H } = s.size;
+  const want = new Set(tiles);
+  const take = new Set(kinds);
+  const ids: string[] = [];
+  const slopes: { x: number; y: number }[] = [];
+  const removed: number[] = [];
+  let start = false;
+  const counts = new Map<RemoveKind, number>();
+  for (const e of s.built.entities) {
+    if (e.raw && !placementOf(e.raw)) continue;
+    if (!entityTiles(e).some(([tx, ty]) => tx >= 0 && ty >= 0 && tx < W && ty < H && want.has(ty * W + tx))) continue;
+    const kind = removeKindOf(e.template);
+    if (!kind) {
+      start = true;
+      continue;
+    }
+    if (!take.has(kind)) continue;
+    if (kind === "slopes" && (e.owner === DERIVED_SLOPES || e.owner.startsWith("pinned:"))) slopes.push({ x: e.x, y: e.y });
+    else ids.push(e.id);
+    removed.push(e.y * W + e.x);
+    counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  if (!removed.length) return { ...changed(s, false, [start ? "the start stays: pick it on the shelf to move it" : "nothing to remove there"], t0), removed };
+  const ops: EditOp[] = [];
+  if (ids.length) ops.push({ op: "deleteEntities", params: { entities: ids } });
+  for (const p of slopes) ops.push({ op: "removeSlope", params: p });
+  const one: Record<RemoveKind, [string, string]> = { trees: ["a tree", "trees"], bushes: ["a bush", "bushes"], ruins: ["a ruin", "ruins"], sources: ["a source", "sources"], slopes: ["a slope", "slopes"], objects: ["an object", "objects"] };
+  const label = counts.size === 1 ? (() => { const [k, n] = [...counts][0]; return n === 1 ? `Remove ${one[k][0]}` : `Remove ${n} ${one[k][1]}`; })() : `Remove ${removed.length} objects`;
+  const r = s.applyAll(ops, "user", label);
+  return { ...changed(s, r.ok, r.errors, t0), removed: r.ok ? removed : [] };
+}
+
 /** Move a feature by (dx, dy) tiles; rivers, lakes and set pieces are planned again there. */
 export function moveFeature(id: string, dx: number, dy: number): SessionUpdate {
   const t0 = performance.now();
@@ -1330,18 +1400,26 @@ export function moveFeature(id: string, dx: number, dy: number): SessionUpdate {
 
 /** Move the map's start so its middle is at (x, y): the start feature of a generated map, or an
  *  imported map's own StartingLocation. */
-export function moveStartTo(x: number, y: number): SessionUpdate {
+export function moveStartTo(x: number, y: number, orientation?: Orientation): SessionUpdate {
   const t0 = performance.now();
   const s = need();
   const f = s.features.find((g) => g.kind === "start");
-  if (f) {
+  if (f && f.kind === "start") {
     const at = startAt(s)!;
-    return moveFeature(f.id, x - at[0], y - at[1]);
+    const moves = x !== at[0] || y !== at[1];
+    if (!orientation || orientation === f.params.orientation) return moveFeature(f.id, x - at[0], y - at[1]);
+    // turned too (the shelf's R): one step
+    const moved = moves ? moveEdit(s, f.id, x - at[0], y - at[1]) : null;
+    if (moved && !moved.ok) return changed(s, false, moved.errors, t0);
+    const ops: EditOp[] = [...(moved && moved.ok ? moved.ops : []), { op: "updateFeature", params: { id: f.id, patch: { params: { orientation } } } }];
+    const r = s.applyAll(ops, "user", moves ? "Move and turn the start" : "Turn the start");
+    return changed(s, r.ok, r.errors, t0);
   }
   const e = s.built.entities.find((g) => g.template === "StartingLocation");
   if (!e) return changed(s, false, ["this map has no start to move"], t0);
-  const [cx, cy] = cornerFor(x, y, e.orientation);
-  const r = s.apply({ op: "moveEntity", params: { id: e.id, x: cx, y: cy } }, "user", "Move start");
+  const o = orientation ?? e.orientation;
+  const [cx, cy] = cornerFor(x, y, o);
+  const r = s.apply({ op: "moveEntity", params: { id: e.id, x: cx, y: cy, ...(o !== e.orientation ? { orientation: o } : {}) } }, "user", o !== e.orientation ? "Move and turn the start" : "Move start");
   return changed(s, r.ok, r.errors, t0);
 }
 

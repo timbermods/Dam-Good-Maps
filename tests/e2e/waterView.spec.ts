@@ -31,11 +31,9 @@ test("water is never an object; clear water, layers, strength, sources findable 
   const m: [number, number] = [Math.round(mid[0]), Math.round(mid[1])];
   const mp = await client(page, ...m);
 
-  // water is never an object: a click on it picks nothing, and no river is listed
+  // water is never an object: a click on it picks nothing
   await page.mouse.click(mp.x, mp.y);
-  await expect(page.locator(".inspector")).toHaveCount(0);
-  await page.getByRole("tab", { name: "Water" }).click();
-  await expect(page.locator(".feature-list").getByRole("button", { name: /River|Lake/ })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: /selected/ })).toHaveCount(0);
   // the readout: its depth and its bed
   await page.mouse.move(mp.x + 3, mp.y);
   await page.mouse.move(mp.x, mp.y);
@@ -76,7 +74,7 @@ test("water is never an object; clear water, layers, strength, sources findable 
   await expect(page.locator(".slice-note")).toHaveCount(0);
 
   // Source picked: every source shows its marker with its strength
-  await page.locator(".tools").getByRole("button", { name: "Source", exact: true }).click();
+  await page.getByRole("toolbar", { name: "Tools" }).getByRole("button", { name: "Source (6)" }).click();
   await expect.poll(async () => page.locator(".source-marker").count()).toBeGreaterThan(0);
   // a new source on dry, empty ground
   const spot = await page.evaluate(
@@ -102,14 +100,14 @@ test("water is never an object; clear water, layers, strength, sources findable 
   await page.keyboard.press("Escape");
   // clean or bad belongs to the source: selected, it becomes a badwater source in one step
   await page.mouse.click(sp.x, sp.y);
-  const insp = page.getByRole("complementary", { name: /Water source, selected/ });
+  const insp = page.getByRole("group", { name: /Water source, selected/ });
   await expect(insp).toBeVisible();
   await insp.getByRole("combobox", { name: "Water" }).selectOption("bad");
   await idle(page);
   await expect.poll(async () => (await info(page)).history.at(-1)!.label).toBe("Make a source badwater");
   // selected, Delete removes it and its water recedes
   await page.mouse.click(sp.x, sp.y);
-  await expect(page.getByRole("complementary", { name: /Badwater source, selected/ })).toBeVisible();
+  await expect(page.getByRole("group", { name: /Badwater source, selected/ })).toBeVisible();
   await page.keyboard.press("Delete");
   await idle(page);
   await expect.poll(async () => (await info(page)).history.at(-1)!.label).toBe("Remove a badwater source");

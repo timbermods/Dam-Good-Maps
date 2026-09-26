@@ -1,23 +1,21 @@
-// The editor (EDITOR_PLAN §4): the map fills the screen in the shared 3D view; four tabs along the
-// side (Land, Water, Resources, Start) with their tools; a small inspector beside the selected
-// feature with its move and delete handles; undo, redo, history, the map's health and export always
-// visible. The document itself lives in the worker (src/worker/session.ts): every edit is an
-// operation sent there, and only what changed comes back.
+// The editor (EDITOR_PLAN §3, PLAN §20 D184): the map fills the screen in the shared 3D view; the
+// top bar shapes the land and the water (the brushes, Source, Remove), the left shelf places the
+// game's objects (each with its ghost under the pointer), the view buttons show the overlays;
+// undo, redo, history, the map's health and export always visible. The document itself lives in
+// the worker (src/worker/session.ts): every edit is an operation sent there, and only what changed
+// comes back.
 //
-// A tool's gesture (an outline, a river's points, a click) is planned by the worker on the current
-// map, shown as a preview with its report, and placed with one click (EDITOR_PLAN §1: see it before
-// you commit). After every edit the instant checks come back with it; the problems it made are
-// shown at once with their fixes. Objects show their footprint under the pointer, green where the
-// game keeps them and red (with the reason) where it would delete them; advanced mode opens the
-// objects on a clicked tile with their numbers.
+// Every edit is live (D179): a stroke, a click or a drag is applied at once, one undo step. After
+// every edit the instant checks come back with it; the problems it made are shown at once with
+// their fixes.
 
 import { proxy, transfer, wrap, type Remote } from "comlink";
+import type { ComponentChildren } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { EditOp } from "../core/doc/ops";
 import { cornerFor } from "../core/doc/tools";
-import { orientationForHigh } from "../core/features/setpieces";
 import { footprintTiles, startEntranceTile, type Orientation } from "../core/format/footprints";
-import type { Feature, Point } from "../core/features/schema";
+import type { Point } from "../core/features/schema";
 import type { FixOp } from "../core/validate/report";
 import { rulesFor } from "../core/validate/playability";
 import { saveFile } from "../platform";
@@ -26,51 +24,27 @@ import { damLegendSwatch } from "../render3d/palette";
 import type { MapRenderer, PointerTool, TileHit, ViewState } from "../render3d";
 import { View3D } from "../ui/View3D";
 import type { GeneratorApi } from "../worker/generator.worker";
-import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolPlan, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
-import { anchorOf, checkStartAt, clampMove, startProblemAt, describeTile, entitiesByTile, featureName, FeatureIndex, feedingGroups, moveBlocked, newId, rectOf, riverAt, sourceGroups, tabOf, type StartCheck, type Tab, type TileContext } from "./features";
-import { EntityInspector, ExportDialog, HistoryPanel, Inspector, InstantProblems, LayerLegend, plain, PreviewCard, SourceOptions, StartIndicators, StatusPill, TabPanel, whereOf, type EntityChange, type ItemActions, type LayerKind } from "./panels";
+import type { CheckItem, CheckProgress, DamSiteView, EditorEvent, EntityInfo, ExportCheck, SessionInfo, SessionOpen, SessionUpdate, ToolRequest, ViewUpdate, WaterLayers } from "../worker/session";
+import { checkStartAt, startProblemAt, describeTile, entitiesByTile, FeatureIndex, feedingGroups, newId, sourceGroups, type StartCheck, type TileContext } from "./features";
+import { ExportDialog, HistoryPanel, InstantProblems, LayerLegend, LAYER_NAMES, plain, SourceOptions, StartIndicators, StatusPill, whereOf, type ItemActions, type LayerKind } from "./panels";
+import { removeKindOf, type RemoveKind } from "../core/features/objects";
+import { Shelf } from "./Shelf";
+import { DEFAULT_SHELF_OPTIONS, paintTiles, quietWord, SHELF, templateOf, type ShelfItem, type ShelfOptions } from "./shelfItems";
+import { removeTool, shelfTool } from "./placeTools";
 import { Juice, loadSound, type SoundSettings } from "./juice";
 import type { StartCheckApi } from "./startCheck.worker";
 import { startSpots } from "./startHint";
-import { TopBar } from "./TopBar";
+import { REMOVE_KINDS, TopBar } from "./TopBar";
 import { SELECT_MODES, Selection, selectTool, sizeWords, type SelectMode } from "./select";
 import { WaterBar } from "./WaterBar";
 import { WaterPlayer } from "./waterPlayer";
 import type { Hazard } from "../core/sim/weather";
 import { OFFICIAL_FLOW } from "../core/gen/calibrated";
-import type { AreaPreview } from "../core/doc/placing";
 import { BRUSHES, BrushPainter, DEFAULT_BRUSH, nextSize, paste, type BrushSettings, type BrushTool, type Stroke } from "./brushes";
 import { tilesToRuns } from "../core/math/grid";
 import type { TerrainState } from "../core/features/raster/strokePreview";
 import type { BrushParams } from "../core/features/raster/brush";
-import {
-  BAD,
-  BADWATER_STRENGTHS,
-  BARE,
-  DAM,
-  DEAD,
-  DEFAULT_OPTIONS,
-  DRAWING,
-  gestureOf,
-  GOOD,
-  lineTiles,
-  MOVING,
-  objectKindOf,
-  optionsFor,
-  paintOverlay,
-  PREVIEW,
-  PROBLEM,
-  rectTiles,
-  rectToOutline,
-  SELECTED,
-  SOURCE_STRENGTHS,
-  TOOL_NAMES,
-  toolRequest,
-  type OverlayLayer,
-  type Rect,
-  type ToolKind,
-  type ToolOptions,
-} from "./tools";
+import { BAD, BADWATER_STRENGTHS, coordinatesAt, DAM, DEFAULT_OPTIONS, DRAWING, GOOD, MOVING, paintOverlay, PROBLEM, SELECTED, SOURCE_STRENGTHS, sourceRequest, type OverlayLayer, type ToolOptions } from "./tools";
 
 export interface EditorProps {
   api: Remote<GeneratorApi>;
@@ -94,10 +68,10 @@ interface Mirror {
   entities: EntityView;
   /** The objects on each tile, made when first asked for after the objects change. */
   entitiesAt: Map<number, number[]> | null;
+  /** The objects covering each tile (their footprints), likewise. */
+  coverAt?: Map<number, number[]> | null;
   soil?: SoilView;
 }
-
-type Drag = { id: string; dx: number; dy: number } | null;
 
 declare global {
   interface Window {
@@ -105,13 +79,11 @@ declare global {
     dgmEditor?: {
       info: () => SessionInfo;
       tileToClient(x: number, y: number): { x: number; y: number };
-      select(id: string | null): void;
       idle(): Promise<void>;
-      /** The preview on screen (a planned tool edit), or null. */
-      plan(): ToolPlan | null;
       /** The problems the last edit made. */
       instant(): CheckItem[];
-      /** The footprint under the pointer (object tools): its tiles, and why the game would refuse it. */
+      /** The footprint under the pointer (an object from the shelf): its tiles, and why the game would
+       *  refuse it there. */
       fit(): { tiles: number[]; problem: string | null } | null;
       /** The start's check while it moves (its footprint and the three start requirements). */
       startCheck(): StartCheck | null;
@@ -149,16 +121,21 @@ export default function Editor(props: EditorProps) {
   const mirror = useRef<Mirror>(mirrorOf(view));
   const renderer = useRef<MapRenderer | null>(null);
   const [ready, setReady] = useState<MapRenderer | null>(null);
-  const [tab, setTab] = useState<Tab>("land");
-  const [selected, setSelected] = useState<string | null>(null);
-  const [tool, setTool] = useState<ToolKind | null>(null);
+  /** Source, picked in the top bar (the brushes have their own state). */
+  const [tool, setTool] = useState<"source" | null>(null);
   const [options, setOptions] = useState<ToolOptions>(DEFAULT_OPTIONS);
-  const [drawing, setDrawing] = useState<Rect | null>(null);
-  const [draft, setDraft] = useState<Point[]>([]);
-  const [hoverTile, setHoverTile] = useState<[number, number] | null>(null);
-  const [plan, setPlan] = useState<ToolPlan | null>(null);
-  const [planning, setPlanning] = useState(false);
-  const [drag, setDrag] = useState<Drag>(null);
+  /** The object picked on the shelf, its options and its turn (D184). */
+  const [shelf, setShelf] = useState<ShelfItem | null>(null);
+  const [shelfOptions, setShelfOptions] = useState<ShelfOptions>(DEFAULT_SHELF_OPTIONS);
+  const [turn, setTurn] = useState(0);
+  /** Trees and bushes being painted by a drag: their tiles. */
+  const [painted, setPainted] = useState<number[] | null>(null);
+  /** Remove, picked in the top bar, what it takes, and the rectangle being dragged. */
+  const [removing, setRemoving] = useState(false);
+  const [removeKinds, setRemoveKinds] = useState<RemoveKind[]>(REMOVE_KINDS.map(([k]) => k));
+  const [removeRect, setRemoveRect] = useState<number[] | null>(null);
+  /** The shelf's icons, drawn by the view once it is ready. */
+  const [icons, setIcons] = useState<Record<string, string>>({});
   const [startDrag, setStartDrag] = useState<{ x: number; y: number; check: StartCheck } | null>(null);
   const [busy, setBusy] = useState(0);
   const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);
@@ -237,8 +214,7 @@ export default function Editor(props: EditorProps) {
   const [exporting, setExporting] = useState(false);
   const [noticesOpen, setNoticesOpen] = useState(true);
   const [viewTick, setViewTick] = useState(0);
-  const [advanced, setAdvanced] = useState(false);
-  // the footprint under the pointer (object tools) and the objects on a clicked tile (advanced)
+  // the footprint under the pointer (an object from the shelf) and the source clicked (D196)
   const [fit, setFit] = useState<{ tiles: number[]; problem: string | null } | null>(null);
   const [picked, setPicked] = useState<{ x: number; y: number; list: EntityInfo[] } | null>(null);
   const pickedRef = useRef(picked);
@@ -253,24 +229,23 @@ export default function Editor(props: EditorProps) {
   }, [index, info.features]);
   const infoRef = useRef(info);
   infoRef.current = info;
-  const draftRef = useRef(draft);
-  draftRef.current = draft;
-  const planRef = useRef(plan);
-  planRef.current = plan;
+  const shelfRef = useRef(shelf);
+  shelfRef.current = shelf;
+  const shelfOptionsRef = useRef(shelfOptions);
+  shelfOptionsRef.current = shelfOptions;
+  const turnRef = useRef(turn);
+  turnRef.current = turn;
+  const removeKindsRef = useRef(removeKinds);
+  removeKindsRef.current = removeKinds;
   // the tools read the latest options when they act (an option changed just before a click counts)
   const optionsRef = useRef(options);
   optionsRef.current = options;
 
-  const feature = selected ? (info.features.find((f) => f.id === selected) ?? null) : null;
   // the start requirements and targets of this map: its settings, or its difficulty's defaults
   const needs = useMemo(() => {
     const r = rulesFor(info.spec, info.designedFor);
     return { rules: r, reachMin: r.reachMin };
   }, [info.spec, info.designedFor]);
-  useEffect(() => {
-    if (selected && !feature) setSelected(null);
-  }, [feature, selected]);
-
   // ------------------------------------------------------------------------------ worker calls
 
   /** Queue a worker call after the ones before it (edits and plans stay in order). */
@@ -443,12 +418,11 @@ export default function Editor(props: EditorProps) {
     if (v.entities) {
       m.entities = v.entities;
       m.entitiesAt = null;
+      m.coverAt = null;
       r?.updateEntities(v.entities);
     }
     if (v.water || v.entities) setWaterTick((t) => t + 1);
   }
-
-  const apply = (op: EditOp, label?: string) => run(() => api.apply(op, "user", label));
 
   // ------------------------------------------------------------------------------ the brushes
 
@@ -539,16 +513,20 @@ export default function Editor(props: EditorProps) {
     sendTerrain(() => api.redo());
   };
 
-  /** The top bar: a brush, Source, or nothing. */
-  function pickTop(t: BrushTool | "source" | null) {
-    if (t === "source") {
+  /** The top bar: a brush, Source, Remove, or nothing; the shelf's object goes back. */
+  function pickTop(t: BrushTool | "source" | "remove" | null) {
+    if (t === "source" || t === "remove") {
       pickBrush(null);
-      setTool("source");
-      cancelTool();
-      setSelected(null);
+      pickShelf(null);
+      setTool(t === "source" ? "source" : null);
+      setRemoving(t === "remove");
+      setPicked(null);
       return;
     }
-    if (t === null && toolRef.current === "source") setTool(null);
+    if (t === null) {
+      setTool(null);
+      setRemoving(false);
+    }
     pickBrush(t);
   }
 
@@ -558,10 +536,27 @@ export default function Editor(props: EditorProps) {
     setBrushTool(t);
     if (t) {
       setTool(null);
-      cancelTool();
-      setSelected(null);
+      setRemoving(false);
+      pickShelf(null);
       setPicked(null);
     }
+  }
+
+  /** The shelf (D184): an object to place, its ghost under the pointer, or none. */
+  function pickShelf(item: ShelfItem | null) {
+    setShelf(item);
+    setTurn(0);
+    setFit(null);
+    fitWant.current = null;
+    setPainted(null);
+    setShapeNote(null);
+    renderer.current?.setGhost(null);
+    if (!item) return;
+    painter.current?.end();
+    setBrushTool(null);
+    setTool(null);
+    setRemoving(false);
+    setPicked(null);
   }
   const applyFix = (fix: FixOp[]) => run(() => api.applyAll(fix.map(({ label: _l, ...op }) => op as EditOp), fix[0]?.label || "Fix", "fix"));
 
@@ -605,21 +600,6 @@ export default function Editor(props: EditorProps) {
       live = false;
     };
   }, [layer, info.version, waterTick, check?.version]);
-
-  // the Dam site tool shows the dam sites while it is out, and puts them away after unless the
-  // player had them on
-  const damsByTool = useRef(false);
-  useEffect(() => {
-    if (tool === "damSite") {
-      if (damSites === null) {
-        damsByTool.current = true;
-        setDamSites([]);
-      }
-    } else if (damsByTool.current) {
-      damsByTool.current = false;
-      setDamSites(null);
-    }
-  }, [tool]);
 
   // the dam-site layer, measured again after each change while it is shown
   const showDams = damSites !== null;
@@ -707,8 +687,9 @@ export default function Editor(props: EditorProps) {
     return null;
   }, [info.features, info.version]);
 
-  // overlay: the selected feature, a move preview, a shape being drawn, a planned edit, the start's
-  // footprint while it moves, dam sites, the problems an edit made
+  // overlay: the water layer, dam sites, the footprint of the object under the pointer (green where
+  // it fits, red where it doesn't), trees being painted, Remove's rectangle, the source picked, the
+  // start while it moves, a source being dragged, the selection, the problems an edit made
   useEffect(() => {
     const r = renderer.current;
     const data = r?.overlayData();
@@ -716,22 +697,9 @@ export default function Editor(props: EditorProps) {
     const layers: OverlayLayer[] = [];
     if (waterLayers && layer !== "none") layers.push(...layerOverlay(waterLayers, layer));
     if (damSites) for (const d of damSites) layers.push({ tiles: d.tiles.filter(([x, y]) => x >= 0 && y >= 0 && x < info.W && y < info.H).map(([x, y]) => y * info.W + x), color: DAM });
-    if (feature) {
-      const tiles = indexed.tilesOf(feature);
-      layers.push({ tiles, color: SELECTED, outline: true });
-      if (drag && drag.id === feature.id && (drag.dx || drag.dy) && feature.kind !== "start") layers.push({ tiles, color: MOVING, dx: drag.dx, dy: drag.dy });
-    }
-    if (drawing) layers.push({ tiles: rectTiles(drawing, info.W), color: DRAWING });
-    if (draft.length) {
-      const pts = hoverTile ? [...draft, hoverTile] : draft;
-      layers.push({ tiles: lineTiles(pts, info.W, info.H, !!tool && gestureOf(tool) === "outline"), color: DRAWING });
-    }
-    if (plan?.ok && plan.area) {
-      layers.push({ tiles: plan.area.bare, color: BARE });
-      layers.push({ tiles: plan.area.dead, color: DEAD });
-      layers.push({ tiles: plan.area.alive, color: GOOD });
-    } else if (plan?.ok) layers.push({ tiles: plan.tiles, color: PREVIEW });
-    if (fit && !plan && !planning) layers.push({ tiles: fit.tiles, color: fit.problem ? BAD : GOOD });
+    if (painted) layers.push({ tiles: painted, color: GOOD });
+    else if (fit) layers.push({ tiles: fit.tiles, color: fit.problem ? BAD : GOOD });
+    if (removeRect) layers.push({ tiles: removeRect, color: BAD });
     if (picked) layers.push({ tiles: [picked.y * info.W + picked.x], color: SELECTED });
     if (startDrag) layers.push({ tiles: [...startDrag.check.tiles, startDrag.check.door], color: startDrag.check.problem || !startDrag.check.meets ? BAD : GOOD });
     if (sourceDrag) layers.push({ tiles: sourceDrag, color: MOVING });
@@ -740,29 +708,9 @@ export default function Editor(props: EditorProps) {
     for (const c of instant) for (const [x, y] of c.where?.tiles ?? []) layers.push({ tiles: [y * info.W + x], color: PROBLEM });
     paintOverlay(data, info.W, info.H, layers);
     r.commitOverlay();
-  }, [feature, drag, drawing, draft, hoverTile, plan, planning, fit, picked, startDrag, damSites, instant, indexed, ready, waterLayers, layer, sourceDrag, selectionTick, selectDraw]);
+  }, [fit, picked, startDrag, damSites, instant, ready, waterLayers, layer, sourceDrag, selectionTick, selectDraw, painted, removeRect]);
 
-  // ------------------------------------------------------------------------------ the tools
-
-  function planRequest(req: ToolRequest) {
-    setPlanning(true);
-    setPlan(null);
-    // what the last tool did gives way to the next one's preview
-    setMessage((m) => (m?.kind === "info" ? null : m));
-    const id = newId();
-    void enqueue(() => api.planTool(req, id))
-      .then((p) => setPlan(p))
-      .catch((e) => setMessage({ kind: "error", text: String(e instanceof Error ? e.message : e) }))
-      .finally(() => setPlanning(false));
-  }
-
-  function finishDraft(points: Point[]) {
-    if (!tool) return;
-    setDraft([]);
-    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { points, W: info.W, H: info.H });
-    if (!req) return setMessage({ kind: "error", text: "Click at least three corners." });
-    planRequest(req);
-  }
+  // ------------------------------------------------------------------------------ the pointer
 
   /** Where the pointer is, for the words beside it (flatten's level, a source's strength). */
   const pointerAt = useRef({ x: 0, y: 0 });
@@ -773,25 +721,12 @@ export default function Editor(props: EditorProps) {
     if (box) pointerAt.current = { x: ev.clientX - box.left, y: ev.clientY - box.top };
   }
 
-  function planAt(x: number, y: number) {
-    if (!tool) return;
-    if (tool === "slope") return slopeAt(x, y);
-    if (tool === "source") return placeSource(x, y);
-    const river = riverAt(indexedRef.current, x, y);
-    const req = toolRequest(tool, optionsFor(tool, optionsRef.current), { at: [x, y], river, W: info.W, H: info.H });
-    if (!req) return setMessage({ kind: "error", text: "Click on a river." });
-    setFit(null);
-    planRequest(req);
-  }
-
   // ---------------------------------------------------------------------------- water sources
 
   /** A water or badwater source placed with a click: its water spreads at once (live editing),
    *  one undo step. Sources go anywhere in the editor (D184). */
   function placeSource(x: number, y: number) {
-    const req = toolRequest("source", optionsRef.current, { at: [x, y], W: info.W, H: info.H });
-    if (!req) return;
-    setFit(null);
+    const req = sourceRequest(optionsRef.current, x, y);
     void run(
       () => api.applyTool(req, newId()),
       (u) => u.ok && feel("source", x, y),
@@ -807,7 +742,7 @@ export default function Editor(props: EditorProps) {
    *  undo step; a click without a drag selects it; Esc puts it back. Brushes paint over sources. */
   const sourceGrab = useRef<{ cancel(): void } | null>(null);
   function grabSource(hit: TileHit | null): PointerTool | null {
-    if (!hit || brushToolRef.current || advancedRef.current) return null;
+    if (!hit || brushToolRef.current || shelfRef.current || removingRef.current) return null;
     const src = sourceAt(hit.x, hit.y);
     if (!src) return null;
     const W = infoRef.current.W;
@@ -839,10 +774,7 @@ export default function Editor(props: EditorProps) {
         end();
         const dx = to[0] - from[0];
         const dy = to[1] - from[1];
-        if (!dx && !dy) {
-          setSelected(null);
-          return pickTile(from[0], from[1]);
-        }
+        if (!dx && !dy) return pickTile(from[0], from[1]);
         void record.then((e) => {
           if (!e) return;
           const name = e.template === "BadwaterSource" ? "badwater source" : "water source";
@@ -1085,14 +1017,8 @@ export default function Editor(props: EditorProps) {
   // the footprint under the pointer: one check in flight, then the latest tile
   const fitWant = useRef<string | null>(null);
   const fitBusy = useRef(false);
-  function hoverFit(x: number, y: number) {
-    const t = toolRef.current;
-    if (!t || (!objectKindOf(t, optionsRef.current) && t !== "object" && t !== "source") || planRef.current) {
-      fitWant.current = null;
-      return setFit(null);
-    }
-    const req = toolRequest(t, optionsFor(t, optionsRef.current), { at: [x, y], W: info.W, H: info.H });
-    if (!req) return;
+  /** The worker's footprint check of an object at a spot, a request at a time (the latest wins). */
+  function checkFit(req: ToolRequest, then: (f: { tiles: number[]; problem: string | null }) => void) {
     const key = JSON.stringify(req);
     if (fitWant.current === key) return;
     fitWant.current = key;
@@ -1102,7 +1028,7 @@ export default function Editor(props: EditorProps) {
       void api
         .footprintCheck(r)
         .then((f) => {
-          if (fitWant.current === k) setFit(f);
+          if (fitWant.current === k) then(f);
         })
         .catch(() => setFit(null))
         .finally(() => {
@@ -1116,26 +1042,293 @@ export default function Editor(props: EditorProps) {
   useEffect(() => {
     fitWant.current = null;
     setFit(null);
-  }, [tool, options, info.version]);
+  }, [shelf, shelfOptions, turn, info.version]);
 
-  // advanced mode: the objects on a clicked tile, with their numbers
-  function pickTile(x: number, y: number) {
-    void enqueue(() => api.entitiesAt(x, y)).then((list) => {
-      setPicked(list.length ? { x, y, list } : null);
-      if (!list.length) setMessage({ kind: "info", text: `No objects on the tile at (${x}, ${y}).` });
+  // ------------------------------------------------------------------------------ the shelf
+
+  /** Where the ghost stands, and the tile the pointer was last over (R turns it there). */
+  const ghostAt = useRef<{ template: string; x: number; y: number; z: number; orientation: number } | null>(null);
+  const shelfTile = useRef<[number, number] | null>(null);
+  /** The shelf's object over tile (x, y): its ghost there at once, then whether it fits (the
+   *  worker's footprint check; the start's own check on the page), with the reason beside the
+   *  pointer when it doesn't. */
+  function shelfHover(x: number, y: number) {
+    const item = shelfRef.current;
+    const r = renderer.current;
+    if (!item || !r) return;
+    shelfTile.current = [x, y];
+    const W = info.W;
+    const h = mirror.current.heights;
+    if (item.id === "start") {
+      const s = startHere;
+      if (!s) return;
+      const o = startTurned(s);
+      const [cx, cy] = cornerFor(x, y, o);
+      const door = startEntranceTile(cx, cy, o);
+      const f = s.feature ? info.features.find((g) => g.id === s.feature) : undefined;
+      const bench = f && f.kind === "start" ? { level: Math.max(1, h[y * W + x]), radius: f.params.benchRadius } : null;
+      const problem = startProblemAt(ctx(), x, y, door, bench, s.owner);
+      const tiles: number[] = [];
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (x + dx >= 0 && y + dy >= 0 && x + dx < W && y + dy < info.H) tiles.push((y + dy) * W + x + dx);
+      setFit({ tiles: [...tiles, door[1] * W + door[0]], problem });
+      shelfWord(problem);
+      ghostAt.current = { template: "StartingLocation", x: cx, y: cy, z: bench ? bench.level : h[y * W + x], orientation: ORIENTATION_NAMES.indexOf(o) };
+      r.setGhost({ ...ghostAt.current, ok: !problem });
+      return;
+    }
+    const template = templateOf(item, shelfOptionsRef.current);
+    const o = ORIENTATION_NAMES[turnRef.current] as Orientation;
+    const [cx, cy] = coordinatesAt(template, x, y, o);
+    const z = cx >= 0 && cy >= 0 && cx < W && cy < info.H ? h[cy * W + cx] : h[y * W + x];
+    const g = { template, x: cx, y: cy, z, orientation: turnRef.current };
+    const same = ghostAt.current && ghostAt.current.template === template && ghostAt.current.x === cx && ghostAt.current.y === cy && ghostAt.current.orientation === g.orientation;
+    ghostAt.current = g;
+    if (!same) r.setGhost({ ...g, ok: null });
+    checkFit({ tool: "entity", template, x: cx, y: cy, orientation: o }, (f) => {
+      setFit(f);
+      shelfWord(f.problem);
+      const now = ghostAt.current;
+      if (now && now.template === template && now.x === cx && now.y === cy) renderer.current?.setGhost({ ...now, ok: !f.problem });
     });
   }
-  function changeEntity(e: EntityInfo, c: EntityChange) {
+  /** Why the shelf's object can't stand under the pointer, in a quiet word beside it (none: it fits). */
+  function shelfWord(problem: string | null) {
+    if (!problem) return setShapeNote((n) => (n?.warn ? null : n));
+    setShapeNote({ text: quietWord(problem), ok: true, warn: true, ...pointerAt.current });
+  }
+  /** The start's facing with the shelf's turns (R). */
+  const startTurned = (s: StartHere): Orientation => ORIENTATION_NAMES[(ORIENTATION_NAMES.indexOf(s.orientation) + turnRef.current) % 4] as Orientation;
+  /** A click with an object from the shelf: placed there, one step (the start moves there), with
+   *  its pop; where it doesn't fit, the reason beside the pointer and nothing else. */
+  function placeShelf(x: number, y: number) {
+    const item = shelfRef.current;
+    if (!item) return;
+    const f = fitRef.current;
+    if (f?.problem) return flashNote(`Can't go here: ${quietWord(f.problem)}`);
+    if (item.id === "start") {
+      const s = startHere;
+      if (!s) return;
+      const o = startTurned(s);
+      const [cx, cy] = cornerFor(x, y, o);
+      void run(
+        () => api.moveStartTo(x, y, o),
+        (u) => {
+          if (!u.ok) return;
+          feel("place", cx, cy);
+          // there is one start: it goes back on the shelf
+          pickShelf(null);
+        },
+      );
+      return;
+    }
+    const template = templateOf(item, shelfOptionsRef.current);
+    const o = ORIENTATION_NAMES[turnRef.current] as Orientation;
+    const [cx, cy] = coordinatesAt(template, x, y, o);
+    void run(
+      () => api.applyTool({ tool: "entity", template, x: cx, y: cy, orientation: o }, newId()),
+      (u) => u.ok && feel("place", cx, cy),
+    );
+  }
+  /** Trees and bushes painted by a drag: planted where they can grow, one step, each with its pop. */
+  function plantShelf(tiles: number[]) {
+    const item = shelfRef.current;
+    if (!item || !tiles.length) return;
+    const template = templateOf(item, shelfOptionsRef.current);
+    void run(
+      () => api.plantAt(template, tiles),
+      (u) => {
+        const planted = (u as SessionUpdate & { planted?: number[] }).planted ?? [];
+        if (!u.ok || !planted.length) return;
+        const W = infoRef.current.W;
+        feel("place", planted[0] % W, Math.floor(planted[0] / W));
+        renderer.current?.wiggle(planted);
+      },
+    );
+  }
+  const paintSeed = useRef((Math.random() * 0x7fffffff) | 0);
+  const shelfCalls = useRef({ shelfHover, placeShelf, plantShelf });
+  shelfCalls.current = { shelfHover, placeShelf, plantShelf };
+  // the shelf's object takes the map's left button while it is picked
+  useEffect(() => {
+    const r = renderer.current;
+    if (!r || !shelf) return;
+    const W = info.W;
+    const H = info.H;
+    const t = shelfTool({
+      W,
+      H,
+      hover: (hit, ev) => {
+        notePointer(ev);
+        if (!hit) {
+          r.setGhost(null);
+          ghostAt.current = null;
+          fitWant.current = null;
+          setFit(null);
+          setShapeNote(null);
+          return;
+        }
+        shelfCalls.current.shelfHover(hit.x, hit.y);
+      },
+      place: (x, y) => shelfCalls.current.placeShelf(x, y),
+      paintAround: (x, y) => {
+        const it = shelfRef.current;
+        return it?.fill ? paintTiles(x, y, 2, it.fill, paintSeed.current, W, H) : null;
+      },
+      painting: (tiles) => {
+        setPainted(tiles);
+        if (!tiles) paintSeed.current = (Math.random() * 0x7fffffff) | 0;
+      },
+      plant: (tiles) => shelfCalls.current.plantShelf(tiles),
+    });
+    r.tool = t;
+    // (the pointer resting on the map: the ghost shows there at once)
+    if (r.hoverHit) shelfCalls.current.shelfHover(r.hoverHit.x, r.hoverHit.y);
+    return () => {
+      if (r.tool === t) r.tool = null;
+      r.setGhost(null);
+      ghostAt.current = null;
+    };
+  }, [shelf, ready, info.W, info.H]);
+  // the shelf's icons: each object drawn once by the view, when the page is idle
+  useEffect(() => {
+    const r = renderer.current;
+    if (!r) return;
+    let live = true;
+    const templates = [...new Set(SHELF.map((it) => it.template))];
+    const draw = (k: number) => {
+      if (!live || k >= templates.length) return;
+      const url = r.thumbnail(templates[k]);
+      if (url) setIcons((m) => ({ ...m, [templates[k]]: url }));
+      const idle = typeof window.requestIdleCallback === "function" ? (fn: () => void) => window.requestIdleCallback(fn, { timeout: 500 }) : (fn: () => void) => window.setTimeout(fn, 30);
+      idle(() => draw(k + 1));
+    };
+    draw(0);
+    return () => {
+      live = false;
+    };
+  }, [ready]);
+
+  // ------------------------------------------------------------------------------ Remove
+
+  /** Each object's tiles (its footprint), made when first asked for after the objects change. */
+  const coverAt = (): Map<number, number[]> => {
+    const m = mirror.current;
+    if (m.coverAt) return m.coverAt;
+    const e = m.entities;
+    const W = info.W;
+    const out = new Map<number, number[]>();
+    for (let k = 0; k < e.count; k++) {
+      const template = e.templates[e.template[k]];
+      for (const [x, y] of footprintTiles(template, { template, x: e.x[k], y: e.y[k], z: 0, orientation: ORIENTATION_NAMES[e.orientation[k]] as Orientation, flipped: (e.flags[k] & FLIPPED) !== 0 })) {
+        if (x < 0 || y < 0 || x >= W || y >= info.H) continue;
+        const i = y * W + x;
+        const list = out.get(i);
+        if (list) list.push(k);
+        else out.set(i, [k]);
+      }
+    }
+    m.coverAt = out;
+    return out;
+  };
+  /** The corner tiles of the objects on these tiles that Remove's filters take (never the start). */
+  function removableOn(tiles: readonly number[]): number[] {
+    const e = mirror.current.entities;
+    const at = coverAt();
+    const kinds = removeKindsRef.current;
+    const out = new Set<number>();
+    for (const i of tiles)
+      for (const k of at.get(i) ?? []) {
+        const kind = removeKindOf(e.templates[e.template[k]]);
+        if (kind && kinds.includes(kind)) out.add(e.y[k] * info.W + e.x[k]);
+      }
+    return [...out];
+  }
+  /** Remove's click or drag: what the filters take there goes, one step, with its whuff; the start
+   *  stays (a word beside the pointer says so). */
+  function removeOn(tiles: number[]) {
+    const corners = removableOn(tiles);
+    if (!corners.length) {
+      const e = mirror.current.entities;
+      const start = tiles.some((i) => (coverAt().get(i) ?? []).some((k) => e.templates[e.template[k]] === "StartingLocation"));
+      if (start) flashNote("The start stays: pick it on the shelf to move it");
+      return;
+    }
+    const W = info.W;
+    void run(
+      () => api.removeAt(tiles, removeKindsRef.current),
+      (u) => u.ok && feel("remove", corners[0] % W, Math.floor(corners[0] / W)),
+    );
+  }
+  const removeCalls = useRef({ removableOn, removeOn });
+  removeCalls.current = { removableOn, removeOn };
+  const removingRef = useRef(removing);
+  removingRef.current = removing;
+  // Remove takes the map's left button while it is picked
+  useEffect(() => {
+    const r = renderer.current;
+    if (!r || !removing) return;
+    const t = removeTool({
+      W: info.W,
+      H: info.H,
+      objectsOn: (tiles) => removeCalls.current.removableOn(tiles),
+      highlight: (corners) => r.highlightObjects(corners),
+      drawing: (tiles, ev) => {
+        setRemoveRect(tiles);
+        if (ev) notePointer(ev);
+        if (!tiles) return setShapeNote(null);
+        const n = removeCalls.current.removableOn(tiles).length;
+        setShapeNote({ text: n === 1 ? "1 object" : `${n} objects`, ok: true, warn: false, ...pointerAt.current });
+      },
+      remove: (tiles) => removeCalls.current.removeOn(tiles),
+    });
+    r.tool = t;
+    if (r.hoverHit) r.highlightObjects(removeCalls.current.removableOn([r.hoverHit.y * info.W + r.hoverHit.x]));
+    return () => {
+      if (r.tool === t) r.tool = null;
+      r.highlightObjects(null);
+      setRemoveRect(null);
+    };
+  }, [removing, ready, info.W, info.H]);
+
+  // ------------------------------------------------------------------------------ Source
+
+  // Source takes the map's clicks while it is picked: each places a source (D184)
+  useEffect(() => {
+    const r = renderer.current;
+    if (!r || tool !== "source") return;
+    const t: PointerTool = {
+      down: (hit, ev) => ev.button === 0 && !!hit,
+      move: () => undefined,
+      up: (hit) => {
+        if (hit) placeSource(hit.x, hit.y);
+      },
+      hover: (_hit, ev) => notePointer(ev),
+    };
+    r.tool = t;
+    return () => {
+      if (r.tool === t) r.tool = null;
+    };
+  }, [tool, ready]);
+
+  /** A source clicked (D196): it is picked, with its strength and its water in the row beneath the
+   *  top bar. */
+  function pickTile(x: number, y: number) {
+    void enqueue(() => api.entitiesAt(x, y)).then((list) => {
+      const sources = list.filter((e) => e.template === "WaterSource" || e.template === "BadwaterSource");
+      setPicked(sources.length ? { x, y, list: sources } : null);
+    });
+  }
+  /** A picked source's water (clean or bad) or strength changed. */
+  function changeSource(e: EntityInfo, c: { kind?: "clean" | "bad"; strength?: number }) {
     if (!picked) return;
-    let at: [number, number] = [picked.x, picked.y];
+    const at: [number, number] = [picked.x, picked.y];
     if (c.kind) {
       // clean or bad is the source's own (D196): a new source of the other kind in its place
       const bad = c.kind === "bad";
       const cx = e.template === "BadwaterSource" ? e.x + 1 : e.x;
       const cy = e.template === "BadwaterSource" ? e.y + 1 : e.y;
       const s0 = Number((e.components.WaterSource as { SpecifiedStrength?: number } | undefined)?.SpecifiedStrength ?? 1);
-      const req = toolRequest("source", { ...optionsRef.current, sourceBad: bad, sourceStrength: Math.min(8, s0), badwaterStrength: s0 }, { at: [cx, cy], W: info.W, H: info.H });
-      if (!req || req.tool !== "entity") return;
+      const req = sourceRequest({ ...optionsRef.current, sourceBad: bad, sourceStrength: Math.min(8, s0), badwaterStrength: s0 }, cx, cy);
       const place: EditOp = { op: "placeEntity", params: { id: newId(), template: req.template, x: req.x, y: req.y, orientation: req.orientation, ...(req.components ? { components: req.components } : {}) } };
       void run(
         () => api.applyAll([{ op: "deleteEntities", params: { entities: [e.id] } }, place], bad ? "Make a source badwater" : "Make a source clean"),
@@ -1147,140 +1340,93 @@ export default function Editor(props: EditorProps) {
       );
       return;
     }
-    let op: EditOp;
-    if (c.remove) op = { op: "deleteEntities", params: { entities: [e.id] } };
-    else if (c.move) {
-      const turn = c.move.turn ? TURN_NEXT[e.orientation] : e.orientation;
-      op = { op: "moveEntity", params: { id: e.id, x: e.x + c.move.dx, y: e.y + c.move.dy, ...(c.move.turn ? { orientation: turn } : {}) } };
-      at = [picked.x + c.move.dx, picked.y + c.move.dy];
-    } else op = { op: "setEntityProps", params: { id: e.id, components: c.props ?? {} } };
-    const label = c.remove ? "Delete an object" : c.move ? (c.move.turn ? "Turn an object" : "Move an object") : "Change an object";
-    // a source's strength: its water answers each step, and one adjustment is one undo step
-    const strength = (c.props as { WaterSource?: { SpecifiedStrength?: number } } | undefined)?.WaterSource?.SpecifiedStrength;
+    if (c.strength === undefined) return;
+    const v = c.strength;
+    // its water answers each step, and one adjustment is one undo step
+    const op: EditOp = { op: "setEntityProps", params: { id: e.id, components: { WaterSource: { SpecifiedStrength: v, CurrentStrength: v } } } };
     const name = e.template === "BadwaterSource" ? "Badwater source" : "Water source";
     void run(
-      () => (strength !== undefined && !c.remove && !c.move ? api.applyStep(op, `${name}: ${strength} water/s`, `strength:${e.id}`) : api.apply(op, "user", label)),
+      () => api.applyStep(op, `${name}: ${v} water/s`, `strength:${e.id}`),
       (u) => {
         if (u.ok) pickTile(at[0], at[1]);
       },
     );
   }
-
-  /** The slope tool: remove the slope on a tile, or pin one on the low tile of a 1-level step,
-   *  its high side toward the higher neighbour (the one whose opposite tile is level with it). */
-  function slopeAt(x: number, y: number) {
-    const m = mirror.current;
-    const here = entitiesAt().get(y * info.W + x) ?? [];
-    if (here.some((k) => m.entities.templates[m.entities.template[k]] === "Slope")) {
-      void apply({ op: "removeSlope", params: { x, y } }, "Remove a slope");
-      return;
-    }
-    const h = m.heights[y * info.W + x];
-    const at = (xx: number, yy: number) => (xx >= 0 && yy >= 0 && xx < info.W && yy < info.H ? m.heights[yy * info.W + xx] : -1);
-    const sides: [number, number][] = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-    const up = sides.filter(([dx, dy]) => at(x + dx, y + dy) === h + 1).sort((a, b) => (at(x - b[0], y - b[1]) === h ? 1 : 0) - (at(x - a[0], y - a[1]) === h ? 1 : 0));
-    if (!up.length) return setMessage({ kind: "error", text: "Click the low tile beside a step one level up." });
-    void apply({ op: "pinSlope", params: { x, y, orientation: orientationForHigh(up[0][0], up[0][1]) } }, "Place a slope");
-  }
-
-  function place() {
-    const p = planRef.current;
-    if (!p?.ok) return setPlan(null);
-    setPlan(null);
-    void run(
-      () => api.applyAll(p.ops, p.label),
-      (u) => {
-        if (!u.ok) return;
-        // what was placed pops in
-        for (const op of p.ops) if (op.op === "placeEntity") feel("place", op.params.x, op.params.y);
-        if (!p.featureId) return;
-        const f = u.info.features.find((g) => g.id === p.featureId);
-        if (f) {
-          setSelected(f.id);
-          setTab(tabOf(f));
-        }
-      },
-    );
-  }
-
-  function cancelTool() {
-    setPlan(null);
-    setDraft([]);
-    setDrawing(null);
-    setFit(null);
-    fitWant.current = null;
-  }
-
-  // the drawing tool takes left clicks and drags on the map
-  useEffect(() => {
-    const r = renderer.current;
-    if (!r) return;
-    if (!tool) {
-      if (!brushToolRef.current) r.tool = null;
-      return;
-    }
-    const g = gestureOf(tool);
-    const W = info.W;
-    const H = info.H;
-    let start: [number, number] | null = null;
-    let dragged = false;
-    let lastUp = 0;
-    let lastTile = -1;
-    const t: PointerTool = {
-      down(hit, ev) {
-        if (!hit) return false;
-        // a preview waits for Place or Cancel
-        if (planRef.current) return true;
-        start = [hit.x, hit.y];
-        dragged = false;
-        notePointer(ev);
-        if (g === "rect") setDrawing(rectOf(start, start, W, H));
-        return true;
-      },
-      hover(_hit, ev) {
-        notePointer(ev);
-      },
-      move(hit, ev) {
-        notePointer(ev);
-        if (!start || !hit) return;
-        if (g === "rect") setDrawing(rectOf(start, [hit.x, hit.y], W, H));
-        else if (g === "outline" && !draftRef.current.length && Math.abs(hit.x - start[0]) + Math.abs(hit.y - start[1]) >= 2) {
-          dragged = true;
-          setDrawing(rectOf(start, [hit.x, hit.y], W, H));
-        }
-      },
-      cancel() {
-        start = null;
-        setDrawing(null);
-      },
-      up(hit) {
-        const a = start;
-        start = null;
-        if (!a) return;
-        const b: [number, number] = hit ? [hit.x, hit.y] : a;
-        if (g === "outline" && dragged) {
-          setDrawing(null);
-          finishDraft(rectToOutline(rectOf(a, b, W, H)));
-          return;
-        }
-        if (g === "point") return planAt(b[0], b[1]);
-        // a click adds a point; a double click, or a click on the first corner, finishes
-        const now = performance.now();
-        const key = b[1] * W + b[0];
-        const double = now - lastUp < 450 && key === lastTile;
-        lastUp = now;
-        lastTile = key;
-        const pts = draftRef.current;
-        if (double) return finishDraft(pts);
-        if (g === "outline" && pts.length >= 3 && Math.abs(b[0] - pts[0][0]) + Math.abs(b[1] - pts[0][1]) <= 1) return finishDraft(pts);
-        setDraft([...pts, [b[0], b[1]]]);
-      },
+  /** The row beneath the top bar for a picked source: its strength, its water, Remove. */
+  function pickedRow(): { label: string; content: ComponentChildren } | null {
+    const e = picked?.list[0];
+    if (!e) return null;
+    const bad = e.template === "BadwaterSource";
+    const steps = bad ? BADWATER_STRENGTHS : SOURCE_STRENGTHS;
+    const strength = Number((e.components.WaterSource as { SpecifiedStrength?: number } | undefined)?.SpecifiedStrength ?? steps[0]);
+    return {
+      label: `${bad ? "Badwater" : "Water"} source, selected`,
+      content: (
+        <>
+          <label>
+            Strength
+            <select aria-label="Strength" value={String(strength)} onChange={(ev) => changeSource(e, { strength: Number((ev.target as HTMLSelectElement).value) })}>
+              {[...new Set([...steps, strength])]
+                .sort((a, b) => a - b)
+                .map((v) => (
+                  <option key={v} value={String(v)}>
+                    {v} water/s
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Water
+            <select aria-label="Water" value={bad ? "bad" : "clean"} onChange={(ev) => changeSource(e, { kind: (ev.target as HTMLSelectElement).value as "clean" | "bad" })}>
+              <option value="clean">Clean</option>
+              <option value="bad">Badwater</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => removeSources(picked!.list)}>
+            Remove
+          </button>
+          <button type="button" class="linkish" aria-label="Put it down" onClick={() => setPicked(null)}>
+            ×
+          </button>
+        </>
+      ),
     };
-    r.tool = t;
-    return () => {
-      if (r.tool === t) r.tool = null;
-    };
-  }, [tool, info.W, info.H, ready]);
+  }
+  /** The row beneath the top bar for the shelf's object: its own options, if it has any. */
+  function shelfRow(): { label: string; content: ComponentChildren } | null {
+    if (!shelf) return null;
+    if (shelf.id === "ruin")
+      return {
+        label: "Ruin options",
+        content: (
+          <label>
+            Height
+            <select aria-label="Height" value={String(shelfOptions.ruinHeight)} onChange={(ev) => setShelfOptions({ ...shelfOptions, ruinHeight: Number((ev.target as HTMLSelectElement).value) })}>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((k) => (
+                <option key={k} value={String(k)}>
+                  {k} {k === 1 ? "level" : "levels"}
+                </option>
+              ))}
+            </select>
+          </label>
+        ),
+      };
+    if (shelf.id === "relic")
+      return {
+        label: "Relic options",
+        content: (
+          <label>
+            Size
+            <select aria-label="Size" value={shelfOptions.relicSize} onChange={(ev) => setShelfOptions({ ...shelfOptions, relicSize: (ev.target as HTMLSelectElement).value as ShelfOptions["relicSize"] })}>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+        ),
+      };
+    return null;
+  }
 
   function onReady(r: MapRenderer) {
     renderer.current = r;
@@ -1342,33 +1488,21 @@ export default function Editor(props: EditorProps) {
     r.onSlice = (level) => setSliceLevel(level);
     r.onMarkers = (on) => setMarkersOn(on);
     setMarkersOn(r.markers);
-    r.grab = (hit) => grabSource(hit);
+    r.grab = (hit) => grabSource(hit) ?? startCalls.current.grabStart(hit);
     r.onWheel = (ev, hit) => wheelSource(ev, hit);
+    // a click with no tool out: a water or badwater source is picked, its strength and its water to
+    // change (the water answers live); anything else puts it down
     r.onClick = (hit) => {
-      if (advancedRef.current && hit) {
-        setSelected(null);
-        return pickTile(hit.x, hit.y);
-      }
-      if (!hit) return setSelected(null);
-      // a water or badwater source: selected, its strength to change (the water answers live)
-      if (sourceAt(hit.x, hit.y)) {
-        setSelected(null);
-        return pickTile(hit.x, hit.y);
-      }
-      const list = indexedRef.current.candidatesAt(hit.x, hit.y);
-      if (!list.length) return setSelected(null);
-      const cur = list.findIndex((f) => f.id === selectedRef.current);
-      const next = list[(cur + 1) % list.length];
-      setSelected(next.id);
-      setTab(tabOf(next));
+      if (hit && sourceAt(hit.x, hit.y)) return pickTile(hit.x, hit.y);
+      setPicked(null);
     };
     const onView = r.onView;
     let pending = false;
     r.onView = (v: ViewState) => {
       onView?.(v);
-      // the handles and the sources' markers follow the view; with none on the map, the page need
+      // the sources' markers and the start's hint follow the view; with none on the map, the page need
       // not redraw
-      if (pending || (!handleRef.current && !markerRef.current && !hintRef.current)) return;
+      if (pending || (!markerRef.current && !hintRef.current)) return;
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
@@ -1585,14 +1719,8 @@ export default function Editor(props: EditorProps) {
   // level lines while the toggle is on (the brush kit)
   useEffect(() => renderer.current?.setLevelLines(brush.levelLines), [brush.levelLines, ready]);
   // any tool picked makes the water see-through, so the bed and the sources show (D196)
-  useEffect(() => renderer.current?.setClearWater(clearWater || !!brushTool || !!tool || !!selecting), [clearWater, brushTool, tool, selecting, ready]);
+  useEffect(() => renderer.current?.setClearWater(clearWater || !!brushTool || !!tool || !!selecting || !!shelf || removing), [clearWater, brushTool, tool, selecting, shelf, removing, ready]);
 
-  const indexedRef = useRef(indexed);
-  indexedRef.current = indexed;
-  const selectedRef = useRef(selected);
-  selectedRef.current = selected;
-  const advancedRef = useRef(advanced);
-  advancedRef.current = advanced;
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
@@ -1617,28 +1745,7 @@ export default function Editor(props: EditorProps) {
     canShow: (c) => !!whereOf(c, entityAt),
   };
 
-  // ----------------------------------------------------------------------------- the handles
-
-  // the start of an imported map has no feature: on the Start tab it gets a move handle of its own
-  const importStart = !feature && tab === "start" && startHere && !startHere.feature ? startHere : null;
-  const anchor = feature ? anchorOf(indexed, feature) : importStart ? ([importStart.x, importStart.y] as [number, number]) : null;
-  const handleId = feature?.id ?? (importStart ? "import-start" : null);
-  const handleRef = useRef(handleId);
-  handleRef.current = handleId;
-  const handlePos = useMemo(() => {
-    const r = renderer.current;
-    if (!r || !anchor) return null;
-    const [ax, ay] = anchor;
-    const dx = drag?.dx ?? 0;
-    const dy = drag?.dy ?? 0;
-    const h = r.heightAt(ax, ay);
-    const p = r.project(ax + dx + 0.5, h + 0.5, -(ay + dy + 0.5));
-    return p.visible ? p : null;
-  }, [anchor?.[0], anchor?.[1], drag, viewTick, feature]);
-
-  const blocked = feature ? moveBlocked(feature) : null;
-  const moving = feature ?? null;
-  const isStart = (feature && feature.kind === "start") || !!importStart;
+  // ------------------------------------------------------------------------------ the start
 
   /** The start's footprint check at a move of (dx, dy) tiles. */
   function startPreview(dx: number, dy: number): { x: number; y: number; check: StartCheck } | null {
@@ -1661,95 +1768,62 @@ export default function Editor(props: EditorProps) {
     return { x, y, check: checkStartAt(ctx(), x, y, door, bench, s.owner, needs, moved) };
   }
 
-  /** Place a move. */
-  function commitMove(dx: number, dy: number) {
-    setDrag(null);
-    setStartDrag(null);
-    if (!dx && !dy) return;
-    if (importStart) {
-      void run(() => api.moveStartTo(importStart.x + dx, importStart.y + dy));
-      return;
-    }
-    if (moving) void run(() => api.moveFeature(moving.id, dx, dy));
-  }
-
-  function clamp(dx: number, dy: number): [number, number] {
-    if (moving) return clampMove(moving, dx, dy, info.W, info.H);
-    if (importStart) return [Math.max(2 - importStart.x, Math.min(info.W - 3 - importStart.x, dx)), Math.max(2 - importStart.y, Math.min(info.H - 3 - importStart.y, dy))];
-    return [0, 0];
-  }
-
-  function onHandleDown(ev: PointerEvent) {
-    const r = renderer.current;
-    if (!r || !handleId || blocked || !anchor) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const el = ev.currentTarget as HTMLElement;
-    el.setPointerCapture(ev.pointerId);
-    const level = r.heightAt(anchor[0], anchor[1]);
-    const start = r.pickAtLevel(ev.clientX, ev.clientY, level) ?? { x: anchor[0], y: anchor[1] };
-    let cur: [number, number] = [0, 0];
-    const move = (e: PointerEvent) => {
-      const at = r.pickAtLevel(e.clientX, e.clientY, level);
-      if (!at) return;
-      notePointer(e);
-      cur = clamp(at.x - start.x, at.y - start.y);
-      setDrag({ id: handleId, dx: cur[0], dy: cur[1] });
-      if (isStart) setStartDrag(startPreview(cur[0], cur[1]));
-    };
-    const up = (e: PointerEvent) => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", up);
-      el.removeEventListener("pointercancel", up);
-      if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
-      if (e.type === "pointercancel") {
-        setDrag(null);
-        setStartDrag(null);
-        return;
-      }
-      commitMove(cur[0], cur[1]);
-    };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
-  }
-
-  // arrow keys on the focused handle nudge the feature; it is placed a moment after the last key
-  const nudgeTimer = useRef(0);
-  function onHandleKey(ev: KeyboardEvent) {
-    const r = renderer.current;
-    if (!r || !handleId || blocked) return;
-    const v = r.getView();
-    const yaw = v.mode === "top" ? 0 : v.yaw;
-    // screen up and screen right, as tile steps
-    const fx = -Math.sin(yaw);
-    const fy = Math.cos(yaw);
-    const up: [number, number] = Math.abs(fx) > Math.abs(fy) ? [Math.sign(fx), 0] : [0, Math.sign(fy)];
-    const right: [number, number] = [up[1], -up[0]];
-    const step = ev.key === "ArrowUp" ? up : ev.key === "ArrowDown" ? [-up[0], -up[1]] : ev.key === "ArrowRight" ? right : ev.key === "ArrowLeft" ? [-right[0], -right[1]] : null;
-    if (ev.key === "Escape") {
-      clearTimeout(nudgeTimer.current);
-      setDrag(null);
+  /** The start dragged on the map (no tool out): its footprint and the start's requirements follow
+   *  the pointer, the drop moves it (one step); Esc puts it back. */
+  const startGrab = useRef<{ cancel(): void } | null>(null);
+  function grabStart(hit: TileHit | null): PointerTool | null {
+    const s = startHere;
+    if (!hit || !s || brushToolRef.current || shelfRef.current || removingRef.current) return null;
+    if (Math.max(Math.abs(hit.x - s.x), Math.abs(hit.y - s.y)) > 1) return null;
+    const from: [number, number] = [hit.x, hit.y];
+    let d: [number, number] = [0, 0];
+    let done = false;
+    const W = info.W;
+    const H = info.H;
+    const canvas = renderer.current?.canvas;
+    if (canvas) canvas.style.cursor = "grabbing";
+    const end = () => {
+      done = true;
+      startGrab.current = null;
       setStartDrag(null);
-      return;
-    }
-    if (!step) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const d = drag && drag.id === handleId ? drag : { id: handleId, dx: 0, dy: 0 };
-    const [nx, ny] = clamp(d.dx + step[0], d.dy + step[1]);
-    setDrag({ id: handleId, dx: nx, dy: ny });
-    if (isStart) setStartDrag(startPreview(nx, ny));
-    clearTimeout(nudgeTimer.current);
-    nudgeTimer.current = window.setTimeout(() => commitMove(nx, ny), 700);
+      renderer.current?.setGhost(null);
+      if (canvas) canvas.style.cursor = "";
+    };
+    startGrab.current = { cancel: end };
+    return {
+      down: () => true,
+      move(h) {
+        if (!h || done) return;
+        const dx = Math.max(2 - s.x, Math.min(W - 3 - s.x, h.x - from[0]));
+        const dy = Math.max(2 - s.y, Math.min(H - 3 - s.y, h.y - from[1]));
+        if (dx === d[0] && dy === d[1]) return;
+        d = [dx, dy];
+        const p = startPreview(dx, dy);
+        setStartDrag(p);
+        if (p) {
+          const [cx, cy] = cornerFor(p.x, p.y, s.orientation);
+          renderer.current?.setGhost({ template: "StartingLocation", x: cx, y: cy, z: mirror.current.heights[p.y * W + p.x], orientation: ORIENTATION_NAMES.indexOf(s.orientation), ok: !p.check.problem });
+        }
+      },
+      up() {
+        if (done) return;
+        end();
+        if (!d[0] && !d[1]) return;
+        const [x, y] = [s.x + d[0], s.y + d[1]];
+        void run(
+          () => api.moveStartTo(x, y),
+          (u) => {
+            if (!u.ok) return;
+            const [cx, cy] = cornerFor(x, y, s.orientation);
+            feel("place", cx, cy);
+          },
+        );
+      },
+      cancel: end,
+    };
   }
-
-  function deleteFeature(f: Feature) {
-    void run(
-      () => api.deleteFeature(f.id),
-      (u) => u.ok && setSelected(null),
-    );
-  }
+  const startCalls = useRef({ grabStart });
+  startCalls.current = { grabStart };
 
   // ------------------------------------------------------------------------------ keyboard
 
@@ -1814,11 +1888,38 @@ export default function Editor(props: EditorProps) {
         sourceGrab.current.cancel();
         return;
       }
+      if (ev.key === "Escape" && startGrab.current) {
+        startGrab.current.cancel();
+        return;
+      }
+      // R turns the shelf's object (D184); X picks Remove
+      if (!mod && !ev.altKey && ev.key.toLowerCase() === "r" && shelfRef.current) {
+        if (shelfRef.current.turns) {
+          const next = (turnRef.current + 1) % 4;
+          turnRef.current = next;
+          setTurn(next);
+          const at = shelfTile.current;
+          if (at) shelfHover(at[0], at[1]);
+        }
+        return;
+      }
+      if (!mod && !ev.altKey && ev.key.toLowerCase() === "x") {
+        pickTop(removingRef.current ? null : "remove");
+        return;
+      }
+      if (ev.key === "Escape" && shelfRef.current) {
+        pickShelf(null);
+        return;
+      }
+      if (ev.key === "Escape" && removingRef.current) {
+        setRemoving(false);
+        return;
+      }
       if (ev.key === "Escape" && (selectingRef.current || selection.current.count)) {
         closeSelect();
         return;
       }
-      if (ev.key === "Escape" && brushToolRef.current && !planRef.current) {
+      if (ev.key === "Escape" && brushToolRef.current) {
         pickBrush(null);
         return;
       }
@@ -1829,23 +1930,12 @@ export default function Editor(props: EditorProps) {
         ev.preventDefault();
         void redo();
       } else if (ev.key === "Escape") {
-        if (planRef.current || draftRef.current.length) return cancelTool();
         setTool(null);
-        setDrawing(null);
-        setSelected(null);
-      } else if (ev.key === "Enter" && tool && draftRef.current.length && !(target?.tagName === "BUTTON")) {
-        ev.preventDefault();
-        finishDraft(draftRef.current);
-      } else if (ev.key === "Backspace" && draftRef.current.length) {
-        ev.preventDefault();
-        setDraft(draftRef.current.slice(0, -1));
-      } else if ((ev.key === "Delete" || ev.key === "Backspace") && pickedSources().length && !target?.classList.contains("handle")) {
-        // a selected source: its water recedes live (D196)
+        setPicked(null);
+      } else if ((ev.key === "Delete" || ev.key === "Backspace") && pickedSources().length) {
+        // a picked source: its water recedes live (D196)
         ev.preventDefault();
         removeSources(pickedSources());
-      } else if ((ev.key === "Delete" || ev.key === "Backspace") && selectedRef.current && !target?.classList.contains("handle")) {
-        const f = infoRef.current.features.find((g) => g.id === selectedRef.current);
-        if (f) deleteFeature(f);
       } else if (!mod && !ev.altKey && ev.key.toLowerCase() === "t") {
         // T: clear water, as the game (D196)
         setClearWater((on) => !on);
@@ -1869,9 +1959,7 @@ export default function Editor(props: EditorProps) {
     window.dgmEditor = {
       info: () => infoRef.current,
       tileToClient: (x, y) => renderer.current!.tileToClient(x, y),
-      select: (id) => setSelected(id),
       idle: () => queue.current.then(() => undefined),
-      plan: () => planRef.current,
       instant: () => instantRef.current,
       fit: () => fitRef.current,
       startCheck: () => startDragRef.current?.check ?? null,
@@ -1907,15 +1995,6 @@ export default function Editor(props: EditorProps) {
   const notices = [...info.notices, ...(info.importReport?.changes.filter((c) => c.level === "warning").map((c) => c.message) ?? [])];
   const flags = info.importReport?.flags ?? [];
   const importChanges = info.importReport?.changes.length ?? 0;
-  const hint = tool
-    ? gestureOf(tool) === "path"
-      ? `${TOOL_NAMES[tool]}: drag from its source to where its water goes, or click its bends and double-click.`
-      : gestureOf(tool) === "outline"
-        ? `${TOOL_NAMES[tool]}: drag a rectangle, or click the corners and double-click.`
-        : gestureOf(tool) === "point"
-          ? `${TOOL_NAMES[tool]}: click the map.`
-          : `${TOOL_NAMES[tool]}: drag a rectangle on the map.`
-    : null;
 
   return (
     <div class="editor" aria-busy={busy > 0}>
@@ -1968,59 +2047,32 @@ export default function Editor(props: EditorProps) {
         </div>
       </header>
       <div class="editor-main">
-        <TabPanel
-          tab={tab}
-          onTab={(t) => {
-            // a tool belongs to its tab: another tab puts it away
-            if (t !== tab) {
-              setTool(null);
-              cancelTool();
-            }
-            setTab(t);
-          }}
-          info={info}
-          index={indexed}
-          selected={selected}
-          onSelect={(id) => setSelected(id)}
-          tool={tool}
-          onTool={(t) => {
-            if (t) pickBrush(null);
-            setTool(t);
-            cancelTool();
-            setSelected(null);
-          }}
-          options={options}
-          onOptions={setOptions}
-          damSites={damSites}
-          onDamSites={(show) => {
-            damsByTool.current = false;
-            setDamSites(show ? [] : null);
-          }}
-          layer={layer}
-          onLayer={setLayer}
-          roofed={!!waterLayers?.roofed.length}
-          advanced={advanced}
-          onAdvanced={(on) => {
-            setAdvanced(on);
-            setPicked(null);
-            if (!on && (tool === "core" || tool === "object")) {
-              setTool(null);
-              cancelTool();
-            }
-          }}
-        />
+        <Shelf picked={shelf?.id ?? null} onPick={pickShelf} icon={(t) => icons[t] ?? null} loading={!ready} />
         <section class="editor-map" aria-label="Map">
           <View3D
             view={view}
             class="editor-view"
-            label={`3D view of ${info.name}. Click a feature to select it. Drag to turn, right-drag to move, wheel to zoom.`}
+            label={`3D view of ${info.name}. Drag to turn, right-drag to move, wheel to zoom.`}
             onReady={onReady}
             legendExtra={legendExtra}
-            markersWanted={damSites !== null || tool === "damSite" || tool === "slope"}
+            markersWanted={damSites !== null || shelf?.id === "Slope"}
             viewButtons={
               <>
                 <button type="button" aria-pressed={clearWater} onClick={() => setClearWater(!clearWater)} title="See through the water to the bed and the sources (T). Any tool picked does it too.">
                   Clear water
+                </button>
+                {(["moisture", "badwater", "drought", ...(waterLayers?.roofed.length ? (["roofed"] as const) : [])] as LayerKind[]).map((k) => (
+                  <button type="button" key={k} aria-pressed={layer === k} onClick={() => setLayer(layer === k ? "none" : k)} title={`Show ${LAYER_NAMES[k].toLowerCase()} on the map`}>
+                    {LAYER_NAMES[k]}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  aria-pressed={damSites !== null}
+                  onClick={() => setDamSites(damSites === null ? [] : null)}
+                  title="Show the dam sites: where a short dam holds the most water"
+                >
+                  Dam sites
                 </button>
                 <span class="reveal-group">
                   <button type="button" aria-pressed={sound.on} onClick={() => setSound({ ...sound, on: !sound.on })} title="The editor's little sounds: on or off (the volume beside it)">
@@ -2036,21 +2088,21 @@ export default function Editor(props: EditorProps) {
             onHover={(hit: TileHit | null) => {
               setHover(hit ? describeTile(ctx(), hit.x, hit.y) : null);
               hoverSources(hit);
-              // a source can be picked up and moved
+              // a source, and the start, can be picked up and moved
               const canvas = renderer.current?.canvas;
-              if (canvas) canvas.style.cursor = hit && !brushToolRef.current && !advancedRef.current && sourceAt(hit.x, hit.y) ? "grab" : "";
-              if (draftRef.current.length) setHoverTile(hit ? [hit.x, hit.y] : null);
-              if (hit) hoverFit(hit.x, hit.y);
-              else {
-                fitWant.current = null;
-                setFit(null);
-              }
+              const free = hit && !brushToolRef.current && !shelfRef.current && !removingRef.current && !toolRef.current;
+              const onStart = !!hit && !!startHere && Math.max(Math.abs(hit.x - startHere.x), Math.abs(hit.y - startHere.y)) <= 1;
+              if (canvas) canvas.style.cursor = free && (sourceAt(hit.x, hit.y) || onStart) ? "grab" : "";
             }}
-            hoverText={fit && !plan && hover ? `${hover} · ${fit.problem ? `Can't go here: ${plain(fit.problem)}` : "Fits here"}` : hover}
+            hoverText={hover}
           >
             <TopBar
               active={brushTool}
               source={tool === "source"}
+              remove={removing}
+              removeKinds={removeKinds}
+              onRemoveKinds={setRemoveKinds}
+              row={shelfRow() ?? pickedRow()}
               settings={brush}
               onPick={pickTop}
               onSettings={setBrush}
@@ -2071,42 +2123,6 @@ export default function Editor(props: EditorProps) {
                 {shapeNote.text}
               </div>
             ) : null}
-            {hint ? (
-              <div class="tool-hint" role="status">
-                {hint}
-                {draft.length ? ` ${draft.length} point${draft.length > 1 ? "s" : ""}.` : ""}{" "}
-                <button
-                  type="button"
-                  class="linkish"
-                  onClick={() => {
-                    setTool(null);
-                    cancelTool();
-                  }}
-                >
-                  Done
-                </button>
-              </div>
-            ) : null}
-            {handleId && handlePos ? (
-              <div class="handles" style={{ left: `${handlePos.x}px`, top: `${handlePos.y}px` }}>
-                <button
-                  type="button"
-                  class={`handle move${blocked ? " disabled" : ""}`}
-                  aria-label={blocked ? `Move ${feature ? featureName(feature) : "Start"}: ${blocked}` : `Move ${feature ? featureName(feature) : "Start"}: drag, or use the arrow keys`}
-                  title={blocked ?? "Drag to move, or use the arrow keys"}
-                  aria-disabled={!!blocked}
-                  onPointerDown={onHandleDown}
-                  onKeyDown={onHandleKey}
-                >
-                  <span aria-hidden="true">✥</span>
-                </button>
-                {feature ? (
-                  <button type="button" class="handle delete" aria-label={`Delete ${featureName(feature)}`} title="Delete" onClick={() => deleteFeature(feature)}>
-                    <span aria-hidden="true">×</span>
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
             {startDrag ? <StartIndicators check={startDrag.check} rules={needs.rules} /> : null}
             {busy > 0 ? (
               <div class="working" role="status">
@@ -2115,7 +2131,6 @@ export default function Editor(props: EditorProps) {
             ) : null}
           </View3D>
           {layer !== "none" && waterLayers ? <LayerLegend kind={layer} layers={waterLayers} /> : null}
-          <PreviewCard plan={plan} pending={planning} onPlace={place} onCancel={cancelTool} />
           <InstantProblems items={instant} actions={actions} onClose={() => setInstant([])} />
           {message ? (
             <div class={`editor-message ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>
@@ -2151,22 +2166,6 @@ export default function Editor(props: EditorProps) {
               </button>
             </div>
           ) : null}
-          {picked && !feature ? <EntityInspector key={`${picked.x},${picked.y}`} list={picked.list} onChange={changeEntity} onClose={() => setPicked(null)} /> : null}
-          {feature ? (
-            <Inspector
-              feature={feature}
-              index={indexed}
-              heights={mirror.current.heights}
-              entities={mirror.current.entities}
-              W={info.W}
-              blocked={blocked}
-              onClose={() => setSelected(null)}
-              onDelete={() => deleteFeature(feature)}
-              onPatch={(patch, label) => void apply({ op: "updateFeature", params: { id: feature.id, patch } }, label)}
-              onReplan={(req) => void run(() => api.applyTool(req, feature.id))}
-              onPlan={(req) => planRequest(req)}
-            />
-          ) : null}
         </section>
         {showHistory ? <HistoryPanel info={info} onJump={(k) => void run(() => api.jump(k))} onClose={() => setShowHistory(false)} /> : null}
       </div>
@@ -2175,8 +2174,6 @@ export default function Editor(props: EditorProps) {
     </div>
   );
 }
-
-const TURN_NEXT: Record<Orientation, Orientation> = { Cw0: "Cw90", Cw90: "Cw180", Cw180: "Cw270", Cw270: "Cw0" };
 
 const BRUSH_KEY = "dgm.brush";
 

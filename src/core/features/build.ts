@@ -144,6 +144,9 @@ export interface DirtyInfo {
   region: Rect | null;
   water: boolean;
   entities: boolean;
+  /** Bounding rectangle of the objects placed, moved or removed (null: none): an object placed by
+   *  hand changes no ground, and its checks still belong to the edit. */
+  objects: Rect | null;
 }
 
 export interface BuildOptions {
@@ -1063,11 +1066,29 @@ function dirtyInfo(prev: BuildResult, next: BuildResult, region: TileRegion | nu
   }
   let entities = prev.entities.length !== next.entities.length;
   for (let k = 0; k < next.entities.length && !entities; k++) if (entitySignature(prev.entities[k]) !== entitySignature(next.entities[k])) entities = true;
+  // where objects came, went or moved (their corners)
+  let objects: Rect | null = null;
+  if (entities) {
+    const was = new Map<string, string>();
+    for (const e of prev.entities) was.set(e.id, `${e.template}|${e.x}|${e.y}|${e.z}|${e.orientation}`);
+    const mark = (x: number, y: number) => {
+      if (!objects) objects = { x0: x, y0: y, x1: x, y1: y };
+      else objects = { x0: Math.min(objects.x0, x), y0: Math.min(objects.y0, y), x1: Math.max(objects.x1, x), y1: Math.max(objects.y1, y) };
+    };
+    const seen = new Set<string>();
+    for (const e of next.entities) {
+      seen.add(e.id);
+      const w = was.get(e.id);
+      if (w !== `${e.template}|${e.x}|${e.y}|${e.z}|${e.orientation}`) mark(e.x, e.y);
+    }
+    for (const e of prev.entities) if (!seen.has(e.id)) mark(e.x, e.y);
+  }
   return {
     terrain: x1 >= 0 ? { x0, y0, x1, y1 } : null,
     region: region ? { x0: region.x0, y0: region.y0, x1: region.x1, y1: region.y1 } : null,
     water,
     entities,
+    objects,
   };
 }
 

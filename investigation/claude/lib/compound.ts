@@ -105,6 +105,9 @@ const PRIORITY: Record<string, number> = {
   brush: 9,
   removeResources: 10,
   addResource: 10,
+  // Remove first, then objects from the shelf on the ground as it ends up
+  remove: 10,
+  placeObject: 10.5,
 };
 
 function priority(step: Step): number {

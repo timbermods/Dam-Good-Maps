@@ -1161,6 +1161,28 @@ R("B15", "simple", "wear down the steep steps in the south so beavers can walk t
     checks: [chk("propose", "steps.0.report.1", "matches", "^made walkable")],
   },
 });
+R("B16", "simple", "put a medium relic in the east third, turned sideways", "rv96", {
+  note: "the editor's left shelf (D184): one object where it fits, turned",
+  goals: [G("g1", "a medium relic in the east third, turned a quarter")],
+  report: { mustSay: ["where it stands", "that it is turned"] },
+  pass: [VALID, START_RULES_HOLD],
+  reference: {
+    calls: [call("resolve_region", { where: "the east third" })],
+    proposal: { steps: [{ op: "placeObject", object: "relic", size: "medium", where: "the east third", turn: 1 }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^a medium relic at [(][0-9]+, [0-9]+[)], turned 90°"), chk("propose", "steps.0.resolved.orientation", "equals", "Cw90")],
+  },
+});
+R("B17", "simple", "clear the trees and bushes out of the north-west corner, but keep everything else", "rv96", {
+  note: "the editor's Remove (D184) with its filters: the ground and the start stay",
+  goals: [G("g1", "no trees or bushes left in the north-west corner")],
+  report: { mustSay: ["how many trees and bushes it removes", "that the ground stays as it is"] },
+  pass: [VALID],
+  reference: {
+    calls: [call("resolve_region", { where: "the northwest corner" })],
+    proposal: { steps: [{ op: "remove", where: "the northwest corner", kinds: ["trees", "bushes"] }] },
+    checks: [chk("propose", "steps.0.report.0", "matches", "^removes [0-9]+ (tree|bush)")],
+  },
+});
 R("B11", "simple", "draw a straight canal from the river south to the map edge at x 72", "rv96", {
   note: "a Lower stroke from the river (smart Lower, D184): the river's own water follows its bed, which never rises",
   goals: [G("g1", "a straight channel from the main river to the south edge")],

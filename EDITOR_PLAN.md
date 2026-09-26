@@ -262,7 +262,10 @@ kit's options it used: square, precise (each dab's depth in levels, a stop level
 keeps (a precise hold's objects; the footprints a Flatten's rim would leave on a step, D204),
 Flatten's level (the ground where the stroke started, unless one was picked), its steps and ramped
 edges, Smooth's make walkable, and a pen's pressure per dab. A source's strength changed in
-steps (a slider, Shift+scroll) is one undo step. Operations validate their inputs against the
+steps (a slider, Shift+scroll) is one undo step. An object from the shelf is `placeEntity` (a
+drag's grove is one step of them, on the tiles where a tree can grow); the start moves, and turns
+with the shelf's R, in one step; Remove is `deleteEntities`, with `removeSlope` for the slopes the
+build places, and never touches the ground or the start. Operations validate their inputs against the
 schemas and reject invalid ones instead of clamping silently.
 
 The document keeps the applied operations as its log, on top of its generation (the spec, the
@@ -298,7 +301,7 @@ Edits referencing them therefore survive regeneration wherever the referenced ob
 ## Checks and water
 
 - Reuse the generator's validation modules unchanged. There must be one source of truth for what "valid" means. The editor runs them with the `export` profile (`PLAN.md` §19.5). An imported map's own problems, the ones it had when it was opened, are listed but never blamed on the player's edits: they do not block its export (`PLAN.md` §20, D43).
-- **Instant checks** after every edit, on the dirty region: footprints, ground support, overlaps, start area, limits, slopes, terrain support.
+- **Instant checks** after every edit, on the dirty region (the ground it changed, and the objects it placed, moved or removed): footprints, ground support, overlaps, start area, limits, slopes, terrain support.
 - **Background checks** in a web worker, debounced and cancelled when a newer edit arrives: water simulation, reachability, resource totals, moisture reach, drought survival, interestingness scores.
 - Issues have a severity, a location and a plain-language explanation. They are listed from the quiet dot, each highlighted on the map; clicking one flies the camera to it.
   - **Error** (load class): the file would crash the game, lose objects on load, or start without beavers. Export is blocked until fixed.
@@ -383,7 +386,7 @@ Words without a measurable meaning ("more interesting," "nicer") are answered wi
 
 `find_sites` plans every candidate with the real builders, checks it with a real build, ranks the candidates, and returns the nearest alternative when none fits.
 
-**Steps.** Claude proposes steps, not raw operations (`PLAN.md` §20, D89; decisions-pending #41). A step names what to build and where, in words or numbers ("addSetPiece damSite halfway down, size huge"), or takes a site `find_sites` returned, ready to use. The app expands it with the editor's own planners, so a step fails with the planner's reason, never with a broken map. The groundwork (`investigation/claude/`) has 14 step kinds: `changeSettings`, `addSetPiece`, `changeSetPiece`, `changeFeature`, `addSource`, `changeSource`, `addResource`, `removeResources`, `moveFeature`, `moveStart`, `deleteFeature`, `sculpt`, `brush` and `undoLast`. `brush` paints a place, or one stroke along a path; a Lower stroke from water, or from a source, carves a bed the water follows (D184). It takes the brush kit's options: Flatten's `steps` (terraces) and ramped `edges` (D204), Smooth's `walkable`. `changeSource` sets sources' strength, a river's at its mouth (D196). A river is a source and such a stroke; a lake is a hollow dug with `brush` and filled by `addSource` with `fillHollow`. Steps that add landforms, rivers or lakes as objects are refused with that advice. M12 adds `addMapObject` and the M7 set pieces (`ROADMAP.md` M12). A proposal has at most 12 steps and changes at most 30% of the map.
+**Steps.** Claude proposes steps, not raw operations (`PLAN.md` §20, D89; decisions-pending #41). A step names what to build and where, in words or numbers ("addSetPiece damSite halfway down, size huge"), or takes a site `find_sites` returned, ready to use. The app expands it with the editor's own planners, so a step fails with the planner's reason, never with a broken map. The groundwork (`investigation/claude/`) has 16 step kinds: `changeSettings`, `addSetPiece`, `changeSetPiece`, `changeFeature`, `addSource`, `changeSource`, `addResource`, `removeResources`, `placeObject`, `remove`, `moveFeature`, `moveStart`, `deleteFeature`, `sculpt`, `brush` and `undoLast`. `brush` paints a place, or one stroke along a path; a Lower stroke from water, or from a source, carves a bed the water follows (D184). It takes the brush kit's options: Flatten's `steps` (terraces) and ramped `edges` (D204), Smooth's `walkable`. `changeSource` sets sources' strength, a river's at its mouth (D196). `placeObject` places one of the shelf's objects, at a tile or where it fits in a place, turned; `remove` is Remove over a place, with its filters (D184). A river is a source and such a stroke; a lake is a hollow dug with `brush` and filled by `addSource` with `fillHollow`. Steps that add landforms, rivers or lakes as objects are refused with that advice. M12 adds `addMapObject` and the M7 set pieces (`ROADMAP.md` M12). A proposal has at most 12 steps and changes at most 30% of the map.
 
 Tool results stay small. The artifact caps a tool result at 32 KB, a tool's input schema at 4 KB and a whole request at 64 KiB. So the map summary Claude starts from is feature-level and at most about 16 KB, and details come through the tools. A text version of the same messages remains as a fallback for a view where tools are unavailable.
 
@@ -492,6 +495,9 @@ page is published privately at <https://claude.ai/artifact/Dkm1eoXZ6KvPwjBBc6JiR
   - a voxel mesher only for columns with more than one solid run (1% of official map columns, up to 58% on one workshop map);
   - instanced trees, bushes and ruins;
   - picking against the heightfield and the features for direct manipulation;
+  - the shelf (D184): each object's picture is drawn once by the view itself (the object's model in
+    the map's look, into a small render target), and the ghost under the pointer is the object's own
+    model, tinted green or red; Remove tints the objects under the pointer red;
   - the game's layers (D196): one uniform cuts the world above a level; the terrain's vertices are
     clamped to it (walls above it fold away, the cut tops lie on it, hatched), water and objects above
     it are not drawn, and picking lands on the cut;
