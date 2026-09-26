@@ -334,4 +334,8 @@ Tests updated to the rebuild (D148), none weakened:
   (Majuli) read the titles module.
 - `save-to-timberborn.spec.ts` (from `dev`): Save to Timberborn on a card fetches the static file,
   so it uses a card the browser tests' server builds, and checks its bytes.
+- `reshape.test.ts` (a heavy test from `dev`, which this branch's nightly run caught): "an object a
+  lake would drown is cleared" drew its lake round River Valley seed 13's small relic; since the
+  resources of generator 0.6.2 that relic has no room for one, so the case uses seed 14, where the
+  same check holds.
 
