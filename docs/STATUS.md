@@ -87,6 +87,8 @@ Every decision Kyler sent since `m8-done`, in the version in force.
 
 - **Real places** is live (`real-places-done`, PR #31, live check passed): 85 real-terrain maps.
 - **The DGM Probe** (PR #18) is merged; its INTEGRATION.md is adopted as proposals (D149).
+- **Contaminated ground as a layer** (D154), approved by Kyler, with a **Markers** outline where
+  it ends: merged into `dev`; `look-contamination-done` is being released.
 - **M1–M8 and Map look** are live: <https://timbermods.github.io/dam-good-maps/> (`m8-done`, live check
   passed).
 - **Map look** is live (`map-look-done`, PR #22, live check passed): the clean look Kyler
@@ -106,8 +108,6 @@ Every decision Kyler sent since `m8-done`, in the version in force.
   walls and the growth to about 150 places wait for the start and edge rules.
 - **Live editing** (D158), on branch `feature/live-editing`: the triage first, then a playable
   version for Kyler on the preview address.
-- **Contaminated ground as a layer** (D154), on branch `look/contamination`; Kyler decides from
-  captures.
 - Dependabot: the GitHub Actions updates (#26–#30) merge when CI is green; the majors (#24, #25)
   wait for the deliberate upgrade step (D150).
 
