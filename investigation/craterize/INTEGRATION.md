@@ -46,6 +46,13 @@ simulation. Its size thresholds and glancing exaggeration are editing choices.
 All sampling is deterministic; model advancement is independent of animation
 time. The worker plans four terrain rows per yield.
 
+Keep the wall profiles separate: Steep concentrates the drop into a short
+cliff, while Terraced distributes it across four scarps and three broad benches.
+Bowl retains a rounded inner floor. Rays follow curved paths with varying width,
+broken lobes, tapering coverage and scattered secondary pits. Seeded coverage
+preserves the feathered shape at integer heights. Unless the diameter reaches
+65% of the shorter map side, ray lengths leave a margin before the map edges.
+
 Carve's hard horizontal bed is reused, frozen at map load. A supplied shared
 `rockLayers` array can replace the terrain-derived fallback. Each impact and
 reroll then exposes the same geology. This prototype permits heights 0–22,

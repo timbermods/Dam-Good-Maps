@@ -55,7 +55,19 @@ export function validateSettings(s:Settings,m:CraterMap,i:Intent) {
   if(!Number.isInteger(i.origin)||i.origin<0||i.origin>=m.W*m.H)throw Error('Strike on the map');
   if(s.mode==='aim'&&(!Number.isInteger(i.end)||i.end!<0||i.end!>=m.W*m.H))throw Error('Drag across the map to aim');
 }
-export interface Ray { angle:number; dx:number; dy:number; length:number; pits:{x:number;y:number;r:number}[] }
+export interface Ray {
+  dx:number;dy:number;start:number;length:number;width:number;bend:number;phase:number;seed:number;
+  pits:{x:number;y:number;r:number}[];
+}
+// Low-frequency bends keep the streak radial overall without drawing a straight fence.
+function rayBend(ray:Ray,t:number):number {
+  return ray.bend*(Math.sin(t*Math.PI*1.6+ray.phase)-Math.sin(ray.phase))+
+    ray.width*.3*Math.sin(t*Math.PI*4+ray.phase)*Math.sin(t*Math.PI);
+}
+function rayWidth(ray:Ray,t:number):number {
+  return ray.width*(.65+.45*Math.sin(Math.PI*Math.min(1,t*1.6)))*(1-t)**.65*
+    (.8+.2*Math.sin(t*19+ray.phase));
+}
 export interface Anatomy {
   x:number;y:number;radius:number;a:number;b:number;angle:number;glance:number;diameter:number;
   depth:number;rim:number;datum:number;floor:number;centre:Settings['centre'];rays:Ray[];
@@ -79,12 +91,23 @@ export function anatomy(m:CraterMap,s:Settings,intent:Intent):Anatomy {
   if(s.rays)for(let k=0;k<10;k++){
     const t=angle+(k/10*Math.PI*2)+(hash(s.seed,k)-.5)*.18;
     const down=(1+Math.cos(t-angle))*.5;
-    const length=radius*(2.3+hash(s.seed,k+30)*1.5)*(1+glance*down*.65);
-    const pits:Ray['pits']=[];
-    for(let d=radius*1.8;d<length;d+=Math.max(5,radius*.38)){
-      const along=d+(hash(s.seed,k*39+Math.round(d))-.5)*2;
-      pits.push({x:x+Math.cos(t)*along,y:y+Math.sin(t)*along,r:1+hash(s.seed,k+Math.round(d))*1.2});
-    }rays.push({angle:t,dx:Math.cos(t),dy:Math.sin(t),length,pits});
+    const dx=Math.cos(t),dy=Math.sin(t),width=1.7+radius*.11;
+    const start=1.12/Math.hypot(Math.cos(t-angle)/a,Math.sin(t-angle)/b);
+    let length=start+radius*(1.15+hash(s.seed,k+30)*1.3)*(1+glance*down*.5);
+    // Leave breathing room at the map boundary, except for map-scale impacts.
+    if(diameter<Math.min(m.W,m.H)*.65){
+      const margin=Math.max(8,Math.min(m.W,m.H)*.08)+width*2;
+      const edge=Math.min(dx>0?(m.W-1-margin-x)/dx:dx<0?(margin-x)/dx:Infinity,
+        dy>0?(m.H-1-margin-y)/dy:dy<0?(margin-y)/dy:Infinity);
+      length=Math.min(length,edge);
+    }
+    if(length<start+4)continue;
+    const ray:Ray={dx,dy,start,length,width,bend:width*(.5+hash(s.seed,k+60)),phase:hash(s.seed,k+90)*Math.PI*2,seed:s.seed+k*101,pits:[]};
+    for(let d=start+3,j=0;d<length*.94;j++){
+      const f=(d-start)/(length-start),offset=rayBend(ray,f)+(hash(ray.seed,j+200)-.5)*rayWidth(ray,f)*1.6;
+      ray.pits.push({x:x+dx*d-dy*offset,y:y+dy*d+dx*offset,r:(.8+hash(ray.seed,j+300)*1.1)*(1-f*.45)});
+      d+=Math.max(4,radius*.15)*(1+hash(ray.seed,j+400));
+    }rays.push(ray);
   }
   return {x,y,radius,a,b,angle,glance,diameter,depth,rim,datum,floor,centre:s.centre==='auto'?autoCentre(diameter):s.centre,rays};
 }
@@ -96,10 +119,19 @@ export function field(a:Anatomy,s:Settings,x:number,y:number):Field {
   const r=Math.hypot(u,v)/edge,down=(1+Math.cos(theta))*.5;
   let ray=false,secondary=0;
   if(s.rays&&r>1.15)for(const rayInfo of a.rays){
-    const along=dx*rayInfo.dx+dy*rayInfo.dy,cross=Math.abs(-dx*rayInfo.dy+dy*rayInfo.dx);
-    if(along>a.radius*1.15&&along<rayInfo.length&&cross<.65)ray=true;
-    if(cross<2.3&&along>a.radius*1.6&&along<rayInfo.length+2.3)
-      for(const pit of rayInfo.pits)if((x-pit.x)**2+(y-pit.y)**2<pit.r**2)secondary=Math.max(secondary,2);
+    const along=dx*rayInfo.dx+dy*rayInfo.dy,cross=-dx*rayInfo.dy+dy*rayInfo.dx;
+    if(along<rayInfo.start||along>=rayInfo.length||Math.abs(cross)>rayInfo.width*4)continue;
+    const t=(along-rayInfo.start)/(rayInfo.length-rayInfo.start),offset=cross-rayBend(rayInfo,t),width=rayWidth(rayInfo,t);
+    if(Math.abs(offset)<width){
+      // Uneven lobes, soft ragged edges and dwindling coverage survive integer-height quantization.
+      const lobes=smooth((Math.sin(t*25+rayInfo.phase)+.65)/1.25);
+      const density=smooth(1-Math.abs(offset)/width)*(.12+.88*lobes)*(1-smooth((t-.2)/.8));
+      if(density>.18+hash(rayInfo.seed,x+Math.imul(y,65537))*.66)ray=true;
+    }
+    for(const pit of rayInfo.pits){
+      const dist=(x-pit.x)**2+(y-pit.y)**2;
+      if(dist<pit.r**2)secondary=Math.max(secondary,dist<pit.r**2*.35?2:1);
+    }
   }
   return {r,theta,down,ray,secondary};
 }
@@ -122,13 +154,15 @@ export class ImpactPlan {
       const i=y*W+x;if(this.keep[i])continue;
       const f=field(a,s,x,y),{r,theta,down}=f,h=this.before.heights[i];let target=h;
       if(r<1){
-        let t:number;
-        if(a.centre==='bowl')t=r*r;
-        else t=smooth((r-.56)/.44);
-        if(s.walls==='terraced'&&r>.48&&r<.97){
-          const steps=4+Math.floor(hash(s.seed,7)*2),raw=t*steps,base=Math.floor(raw);
-          t=(base+smooth((raw-base-.58)/.42))/steps;
-        }else if(a.centre!=='bowl')t=smooth((r-.72)/.28);
+        let wall=0;
+        if(s.walls==='steep')wall=smooth((r-.89)/.055);
+        else {
+          // Four short scarps separate three broad, level benches, even on mid-size craters.
+          const shift=(hash(s.seed,7)-.5)*.025;
+          for(let step=0;step<4;step++)wall+=smooth((r-(.48+step*.16+shift))/.025)/4;
+        }
+        const curve=s.walls==='steep'?.23:.16;
+        const t=a.centre==='bowl'?curve*clamp(r/(s.walls==='steep'?.89:.48),0,1)**2+(1-curve)*wall:wall;
         let inside=a.floor+(a.datum-a.floor+a.rim)*t;
         if(a.centre==='peak')inside+=a.depth*.69*Math.max(0,1-r/.31)**1.25;
         if(a.centre==='ring')inside+=a.depth*.55*Math.exp(-(((r-.38)/.10)**2))*(1+.18*Math.sin(theta*7+phase));

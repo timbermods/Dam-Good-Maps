@@ -18,12 +18,19 @@ saved replay assign the stored result exactly. The start turns the ring red
 with “Start here.” Edge strikes make partial craters, and newer craters cut
 through older ones. Existing sources stay unchanged; Craterize adds no water.
 
+Rays curve into ragged, broken streaks with changing widths, tapering coverage
+and scattered secondary pits. They fade before the map border unless the
+diameter reaches 65% of the shorter map side. Steep walls drop through a short
+cliff face; Terraced walls have three broad benches separated by sharp scarps.
+
 ## Captures
 
 Actual browser-rendered sequences on clearly labelled process studies.
 Each shows before, the moment and the kept result; the water-settling wait
 is compressed. [Settings, seeds and frame times](captures/scenarios.json).
 The [still contact sheet](captures/contact-sheet.jpg) is the reduced-motion alternative.
+The updated [ring and rays](captures/ring-rays.png) and
+[Steep/Terraced comparison](captures/walls.png) are also available as stills.
 
 ![Small bowl](captures/small-bowl.gif)
 ![Peak crater](captures/peak.gif)
@@ -44,7 +51,7 @@ The [still contact sheet](captures/contact-sheet.jpg) is the reduced-motion alte
 Browser checks/captures use installed Edge on Windows; elsewhere install the
 Playwright Chromium browser first. Large work files stay in ignored folders.
 
-[17 model checks](captures/checks.json),
+[19 model checks](captures/checks.json),
 [10 worker checks](captures/worker-checks.json) and
 [11 browser checks](captures/browser-checks.json) pass. They cover all
 anatomies, deterministic slices, whole levels, source/start protection,
@@ -56,7 +63,7 @@ In the river study, debris raises the channel sill from **5 to 9**.
 Unchanged sources then flood **777** previously dry upstream tiles.
 Water settles after 2,176 repository simulation ticks.
 
-The 256² model measured **27–35 ms** total, planned in four-row slices.
+The 256² model measured **35–47 ms** total, planned in four-row slices.
 The final browser run measured **127 FPS**, **8.4 ms p95**, and **0.6 ms**
 for cached Undo at 256². These are local headless-browser measurements, not a
 guarantee for every GPU. The demo's live readout is the useful check on yours.
@@ -70,6 +77,7 @@ in the worker; subsequent impacts do not regenerate it.
 - Carve source read at `investigation/carve` (`3594f9c`): reuse its worker epochs, integer results, exact operation snapshots, dirty chunks, clean shaders, fixed effects pools and horizontal hard layers. No PR review was performed.
 - Power sets energy and default diameter. A manual diameter redistributes that energy into broad shallow or narrow deep impacts. Auto centre follows diameter.
 - Geology stays fixed through successive impacts and personality changes. Try another replaces the last impact from its original ground; cancelling restores the kept version.
+- Ray density fades through irregular lobes and soft edges, quantized deterministically into one-level rubble patches. Curved paths carry offset secondary pits; ordinary impacts leave an edge margin. Steep and Terraced use independent wall profiles; Bowl retains its rounded inner floor in either mode.
 - Existing water continues from its stored depth through the repository WaterSim. No source or prefilling is introduced by an impact.
 - Height limit is 22, with layer 22 empty. Start footprint and entrance margin remain untouched even when ejecta reaches them.
 - Auto chooses Bowl below diameter 28, Peak below 68, then Ring. These are deliberately compressed editing thresholds. The shape language follows [NASA's crater overview](https://www.nasa.gov/solar-system/asteroid-day-and-impact-craters/) and [secondary-chain observations](https://science.nasa.gov/photojournal/crater-ejecta-and-chains-of-secondary-impacts/); this is not calibrated shock physics or a material-conserving ejecta solver.
@@ -81,3 +89,4 @@ in the worker; subsequent impacts do not regenerate it.
 2. Built the deterministic impact model and exact result format. Seventeen model checks pass. In the river study, ejecta raises the sill from level 5 to 9; unchanged sources raise upstream water from 0.26 to 2.52 levels after 768 simulation ticks.
 3. Added the clean 3D demo, sliced worker, fixed effects pool, immediate view restoration, saved replay and browser checks. Ten worker lifecycle checks and eleven browser checks pass. The river study now includes an upstream floodplain; its 777 newly flooded tiles settle after 2,176 ticks. The earlier narrow-channel measurement above remains as the first model-step result.
 4. Recorded seven browser sequences and one still contact sheet (under 4 MB together). Frame inspection caught and fixed premature cave shading and rim shadows during deformation; old lighting now transitions with the land, and trees remain standing until impact. Refreshed browser checks, typechecking and the production build pass. Integration remains a proposal.
+5. Replaced straight ray fences with curved, tapering, broken bands and scattered pits. Separated the wall profiles into near-vertical cliffs and broad terraces. Nineteen model checks and ten worker checks pass, including ray breakup, edge clearance, cliff height, terrace width, exact replay and unchanged river damming.

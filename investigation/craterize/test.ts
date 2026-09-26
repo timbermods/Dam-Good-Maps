@@ -59,11 +59,53 @@ check('Aim elongates the crater and biases ejecta downrange',()=>{
    const d=q.map.heights[y*128+x]-11;if(d>0){if(x<64)left+=d;else right+=d;}
  }assert.ok(right>left*1.15);
 });
-check('Rays add one-level ridges and secondary pit chains',()=>{
+check('Steep walls form cliffs; Terraced walls have broad benches',()=>{
+ for(const centre of ['flat','bowl'] as const)for(const seed of [2,6,17]){
+  const profiles=['steep','terraced'].map(walls=>{
+   const q=impact(base,{...settings,power:74,size:54,centre,seed,walls:walls as Settings['walls']},intent);
+   return Array.from({length:28},(_,x)=>q.map.heights[intent.origin+x]);
+  });
+  const jumps=profiles.map(p=>p.slice(1).map((h,i)=>h-p[i]));
+  assert.ok(Math.max(...jumps[0])>=7,'Steep must contain a tall cliff face');
+  assert.ok(jumps[1].filter(d=>d>=2).length>=4,'Terraced must have separate scarps');
+  let benches=0;
+  for(let x=12;x<24;x++)if(profiles[1][x]>profiles[1][0]&&profiles[1][x]===profiles[1][x+1]&&profiles[1][x]===profiles[1][x+2])benches++;
+  assert.ok(benches>=3,'Terraced must leave several benches at least three tiles wide');
+ }
+});
+check('Rays leave broken, broad, curved streaks and scattered secondary pits',()=>{
  const q=impact(base,{...settings,size:32,rays:true},intent),no=impact(base,{...settings,size:32,rays:false},intent);
  let ridges=0,pits=0;for(let i=0;i<base.heights.length;i++)if(Math.hypot(i%128-64,Math.floor(i/128)-64)>22){
    if(q.map.heights[i]===no.map.heights[i]+1)ridges++;if(q.map.heights[i]<11)pits++;
  }assert.ok(ridges>40);assert.ok(pits>15);
+ let broad=0,broken=0,curved=0,near=0,far=0;
+ for(const ray of q.anatomy.rays){
+  const sections:{width:number;centre:number;t:number}[]=[];
+  for(let d=Math.ceil(ray.start)+2;d<ray.length-1;d++){
+   const offsets:number[]=[];
+   for(let c=-18;c<=18;c++){
+    const x=Math.round(64+ray.dx*d-ray.dy*c),y=Math.round(64+ray.dy*d+ray.dx*c),i=y*128+x;
+    if(x>=0&&y>=0&&x<128&&y<128&&q.map.heights[i]>no.map.heights[i])offsets.push(c);
+   }
+   const t=(d-ray.start)/(ray.length-ray.start);
+   sections.push({width:offsets.length,centre:offsets.length?offsets.reduce((a,b)=>a+b,0)/offsets.length:0,t});
+   if(t<.5)near+=offsets.length;else far+=offsets.length;
+  }
+  if(sections.some(s=>s.width>=4))broad++;
+  if(sections.some(s=>s.t>.2&&s.t<.65&&s.width===0))broken++;
+  const centres=sections.filter(s=>s.width>=2).map(s=>s.centre);
+  if(Math.max(...centres)-Math.min(...centres)>2)curved++;
+ }
+ assert.ok(broad>=5&&broken>=5&&curved>=5,'Most streaks must vary across their length');
+ assert.ok(near>far*2,'The outer half must fade in coverage');
+});
+check('Ordinary rays fade before map edges; huge impacts may reach them',()=>{
+ const ringBase=fixture('plain',256),origin=128*256+128;
+ const rayMap=impact(ringBase,{...settings,power:97,size:104,centre:'ring',rays:true,seed:7},{origin}).map;
+ const noRayMap=impact(ringBase,{...settings,power:97,size:104,centre:'ring',rays:false,seed:7},{origin}).map;
+ for(let y=0;y<256;y++)for(let x=0;x<256;x++)if(x<16||y<16||x>=240||y>=240)assert.equal(rayMap.heights[y*256+x],noRayMap.heights[y*256+x]);
+ const huge=impact(base,{...settings,size:100,rays:true},intent),noHuge=impact(base,{...settings,size:100,rays:false},intent);
+ assert.ok(huge.map.heights.some((h,i)=>(i%128===0||i%128===127||i<128||i>=127*128)&&h!==noHuge.map.heights[i]));
 });
 check('Blast erases central trees and flattens dead trees radially',()=>{
  assert.ok(p.stats.erased>0&&p.stats.flattened>0);
