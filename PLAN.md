@@ -296,7 +296,7 @@ small (50–100²), medium (128²), large (192²) and max (256²).
 | Ruins and scrap | 25% – 300% | 100% | Scrap per 1k tiles, size-aware (small 840, medium 705, large 236, max 235), each map placed within the official typical range (×0.75–1.41). |
 | Relics | Off, Some | Some | 0–3 small (13–70 tiles out), 0–2 medium (40–140), 0–1 large (140+, maps ≥ 192²). As built (M7, D81): 1–3 small, 1–2 medium from 128² (0–1 below), one large from 192². |
 | Geothermal fields | Off, Some | Some | 1–3 per map, 30–120 tiles out, flat, dry, outside flood reach. As built: 1 / 2 / 3 by size (under 128², from 128², from 192²). |
-| Mine sites (UndergroundRuins) | 1 – 4 | 1 / 2 / 3 / 3 by size | Every map has at least one (Kyler, 2026-09-25): old links with 0 open with 1. Flat 5×5 with a level ring, dry, 60+ tiles out (official 24–173, median 89), on ground the colony walks to when the band has any. |
+| Mine sites (UndergroundRuins) | 1 – 4 | 1 / 2 / 3 / 3 by size | Every map has at least one (Kyler, 2026-09-25): old links with 0 open with 1. Flat 5×5 with a level ring, dry, 60+ tiles out (official 24–173, median 89): 80+ where there is room, and on ground the colony walks to when there is any at that distance. |
 
 As built ("Resources like the official maps", Kyler, 2026-09-25): the amounts and layouts come from
 `investigation/official-baselines.json` (`tools/official-baselines.ts`), the official maps measured

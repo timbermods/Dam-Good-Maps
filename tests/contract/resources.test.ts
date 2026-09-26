@@ -14,7 +14,9 @@ import { toTimberFile } from "../../src/core/gen/pack";
 import { distanceFrom } from "../../src/core/math/grid";
 import { stream } from "../../src/core/math/rng";
 import { meanStoreys, pickMineSite, planGroves, planPatches, planRuinFields, resourceBudget, ruinColumns, storeyMix, type BaselineGround } from "../../src/core/resources/baseline";
+import { startingLocation } from "../../src/core/format/entities";
 import { groundOfFile, measureResources, TOWER } from "../../src/core/resources/measure";
+import { planMapResources } from "../../src/core/resources/plan";
 import { decodeSpecFragment, defaultSettings, makeSpec, THEMES } from "../../src/core/spec/mapspec";
 import { validateMap } from "../../src/core/validate/checks";
 import { blocks } from "../../src/core/validate/report";
@@ -222,6 +224,31 @@ describe("the resource baseline (Kyler, 2026-09-25)", () => {
     // with no reachable ground in the band, the unreachable ground still takes one
     const far = pickMineSite({ W, H, heights, blocked, startDist: sd, regions, root: 0 }, stream(1, "mine"), { lo: 80, hi: Infinity }, () => true)!;
     expect(far.reachable).toBe(false);
+  });
+
+  it("on a map the generator did not plan (a Real place), one call places everything, near the start first", () => {
+    const g = flatGround(96, 96);
+    const W = 96;
+    const H = 96;
+    const start = { x: 30, y: 48 };
+    const startEntity = startingLocation({ id: "s", owner: "t", x: 29, y: 47, z: 4, orientation: "Cw0" });
+    const r = planMapResources({ W, H, heights: g.heights as Uint8Array, water: g.water, moisture: g.moisture, soilContamination: g.soilContamination, entities: [startEntity], start, settings: defaultSettings("riverValley", "normal", { x: W, y: H }).resources, seed: 5, nearStart: { trees: 48, bushes: 48 }, ruinsClear: 22 });
+    expect(r.mines.length).toBeGreaterThanOrEqual(1);
+    expect(r.entities.filter((e) => e.template === "UndergroundRuins").length).toBe(r.mines.length);
+    // living trees and bushes within 20 tiles of the start (the ground is flat: the walk is straight)
+    const near = (e: { x: number; y: number }) => Math.max(Math.abs(e.x - start.x), Math.abs(e.y - start.y)) <= 20;
+    const livingNear = r.entities.filter((e) => ["Pine", "Birch", "Oak"].includes(e.template) && !e.components.LivingNaturalResource && near(e)).length;
+    const bushesNear = r.entities.filter((e) => e.template === "BlueberryBush" && near(e)).length;
+    expect(livingNear).toBeGreaterThanOrEqual(40);
+    expect(bushesNear).toBeGreaterThanOrEqual(30);
+    // nothing on the start or in the water, and one object a tile
+    const tiles = r.entities.filter((e) => e.template !== "UndergroundRuins").map((e) => e.y * W + e.x);
+    expect(new Set(tiles).size).toBe(tiles.length);
+    expect(tiles.every((i) => !(g.water[i] > 0))).toBe(true);
+    expect(tiles.every((i) => Math.abs((i % W) - start.x) > 2 || Math.abs(Math.floor(i / W) - start.y) > 2)).toBe(true);
+    // the same input, the same entities
+    const again = planMapResources({ W, H, heights: g.heights as Uint8Array, water: g.water, moisture: g.moisture, soilContamination: g.soilContamination, entities: [startEntity], start, settings: defaultSettings("riverValley", "normal", { x: W, y: H }).resources, seed: 5, nearStart: { trees: 48, bushes: 48 }, ruinsClear: 22 });
+    expect(again.entities.map((e) => `${e.id}:${e.template}`)).toEqual(r.entities.map((e) => `${e.id}:${e.template}`));
   });
 
   it("every generated map has a mine site; a map without one fails resources.mine_site, which blocks generation and warns on export", () => {

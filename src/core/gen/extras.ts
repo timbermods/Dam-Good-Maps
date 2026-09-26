@@ -10,8 +10,8 @@
 //
 // Every map has at least one mine site (Kyler, 2026-09-25): they are placed first, by the rule the
 // resource baseline shares with Real places (resources/baseline.ts `pickMineSite`): flat, dry 5×5
-// ground with a level ring, away from water, in their band from the start, on ground the colony
-// walks to when the band has any.
+// ground with a level ring, away from water, in their band from the start (a third of the band
+// beyond its start where there is room), on ground the colony walks to when there is any there.
 
 import type { BuildResult } from "../features/build";
 import { featureId } from "../features/ids";
@@ -165,7 +165,8 @@ export function planExtras(inp: ExtrasInput): MapObjectFeature[] {
     if (kind === "mineSite") {
       for (let k = 0; k < want; k++) {
         const fits = (tiles: [number, number][]) => !fitProblems(kind, tiles, { W, H, heights: h, water: b.water, channel: b.channel, occupied: b.occupied }).length;
-        const spot = pickMineSite({ W, H, heights: h, blocked, startDist: sd, regions, root }, rng, { lo, hi }, fits);
+        // (a third of the band's start beyond it, where the band has room)
+        const spot = pickMineSite({ W, H, heights: h, blocked, startDist: sd, regions, root }, rng, { lo, hi, far: lo + (band.scaled ? band.lo * scale : band.lo) / 3 }, fits);
         if (!spot) break;
         const { id: fid, role } = id(kind, k);
         out.push({ id: fid, kind: "mapObject", origin: "generated", role, locked: false, params: { kind, placement: { x: spot.x, y: spot.y, orientation: spot.orientation } } });

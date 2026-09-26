@@ -108,7 +108,7 @@ export function planMapResources(inp: MapResourcesInput): MapResources {
   // beyond half of it for its one mine site
   for (const lo of [band.lo * scale + 1, (band.lo * scale) / 2]) {
     while (mines.length < want) {
-      const spot = pickMineSite({ W, H, heights: h, blocked, startDist: sd, regions, root }, rng, { lo, hi: Infinity }, fits);
+      const spot = pickMineSite({ W, H, heights: h, blocked, startDist: sd, regions, root }, rng, { lo, hi: Infinity, far: lo + (band.lo * scale) / 3 }, fits);
       if (!spot) break;
       mines.push(spot);
       for (const [x, y] of spot.tiles)

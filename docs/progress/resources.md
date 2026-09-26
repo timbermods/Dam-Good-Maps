@@ -86,7 +86,10 @@ often and turns at random. The table's medians changed little: trees at max size
     clumped key, so a few towers stand among shorter columns; models and turns in the official
     shares. The planner stops at the scrap asked for, counting each field's exact scrap.
   - `pickMineSite`: flat free 5×5 ground with a level ring, out of flood reach, in its band from the
-    start, on ground the colony walks to when the band has any (else on ground that needs stairs).
+    start (60+ tiles, scaled below 128²): a third of the band beyond its start when there is room
+    (the official maps' mine sites stand a median 95 tiles out, the nearest 61; a site on the band's
+    edge would stand in the way of moving the start), and on ground the colony walks to without
+    stairs when there is any at that distance.
   - `planBaseline` and `baselineEntities`: everything on one map's ground in the generator's order
     (ruins, bushes and groves near the start, the rest), as entities.
 - `plan.ts` `planMapResources(input)`: the whole of it for a map the generator did not plan (see
@@ -125,6 +128,8 @@ entities.push(...r.entities);             // trees, bushes, ruin columns, mine s
 
 - It places at least one mine site whenever any flat dry 5×5 ground exists: in the generator's band
   first (60+ tiles, scaled below 128²), then down to half of it.
+- `nearStart` is what to grow within 20 tiles' walk (the generator aims a little above the minimums);
+  a place whose start lacks moist land there gets what fits, and its validation says so.
 - It is a pure function of the ground, settings and seed: a place can store only its terrain, water
   and start and compute its resources when its `.timber` is built, the same bytes everywhere.
 - After D164 (starting wood) merges, `nearStart.trees` is the wood minimum over the logs a tree

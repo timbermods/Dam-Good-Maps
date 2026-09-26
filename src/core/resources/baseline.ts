@@ -510,9 +510,12 @@ export interface MineGround {
 }
 
 /** A mine site (UndergroundRuins, 5×5) on flat free ground with a level ring round it, its nearest
- *  tile between `lo` and `hi` tiles from the start, on reachable ground when there is any in the
- *  band. Null when nothing fits. `fits` is the caller's placement rule (objects.ts `fitProblems`). */
-export function pickMineSite(m: MineGround, rng: Rng, band: { lo: number; hi: number }, fits: (tiles: [number, number][]) => boolean): MineSpot | null {
+ *  tile between `lo` and `hi` tiles from the start: at least `far` tiles out when the band has room
+ *  there (the official maps' mine sites stand a median 95 tiles out, their nearest 61; a site on the
+ *  band's edge is in the way of moving the start), and on ground the colony walks to when there is
+ *  any at that distance.
+ *  Null when nothing fits. `fits` is the caller's placement rule (objects.ts `fitProblems`). */
+export function pickMineSite(m: MineGround, rng: Rng, band: { lo: number; hi: number; far?: number }, fits: (tiles: [number, number][]) => boolean): MineSpot | null {
   const { W, H, heights: h, blocked, startDist: sd } = m;
   const N = W * H;
   const orientation: Orientation = ORIENTATIONS[rng.int(0, 4)];
@@ -549,6 +552,7 @@ export function pickMineSite(m: MineGround, rng: Rng, band: { lo: number; hi: nu
   };
   const near: number[] = [];
   const any: number[] = [];
+  const far = band.far ?? band.lo;
   for (let y = 1; y + side <= H; y++)
     for (let x = 1; x + side <= W; x++) {
       const i = (y - 1) * W + (x - 1);
@@ -557,7 +561,10 @@ export function pickMineSite(m: MineGround, rng: Rng, band: { lo: number; hi: nu
       if (d < band.lo - side || d > band.hi + side) continue;
       (reach(x, y) ? near : any).push(y * W + x);
     }
+  const beyond = (cands: number[]) => cands.filter((i) => sd[i] >= far);
   for (const [cands, reachable] of [
+    [beyond(near), true],
+    [beyond(any), false],
     [near, true],
     [any, false],
   ] as const) {
