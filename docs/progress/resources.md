@@ -169,27 +169,32 @@ entities.push(...r.entities);             // trees, bushes, ruin columns, mine s
 
 ## Results
 
+On the combined generator: this step merged with the start and edge rules (#44), generator 0.6.2.
+
 **Batches** (`tools/batch.ts`, 100 seeds per theme and size at Normal, 30 at Easy and Hard at 128²),
 final pass / first attempt. Blocking: final ≥ 98% in every theme and size: **passes, 100%
-everywhere**. First attempts are information (M8 in the same table: 94–100% at Normal).
+everywhere** (36 runs, 2,760 maps). First attempts are information (#44 alone: 92–100% at Normal).
 
 | Theme | 96² | 128² | 192² | 256² | Easy 128² | Hard 128² |
 |---|---|---|---|---|---|---|
-| River Valley | 100% / 99% | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 97% | 100% / 100% |
-| Canyon | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 97% |
-| Highlands | 100% / 96% | 100% / 98% | 100% / 95% | 100% / 94% | 100% / 87% | 100% / 93% |
+| River Valley | 100% / 98% | 100% / 99% | 100% / 100% | 100% / 99% | 100% / 100% | 100% / 100% |
+| Canyon | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 98% | 100% / 93% | 100% / 100% |
+| Highlands | 100% / 92% | 100% / 97% | 100% / 95% | 100% / 94% | 100% / 87% | 100% / 97% |
 | Lake Basin | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
-| Delta | 100% / 100% | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
+| Delta | 100% / 98% | 100% / 99% | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 100% |
 | Islands | 100% / 100% | 100% / 100% | 100% / 100% | 100% / 98% | 100% / 100% | 100% / 100% |
 
-Retries were `start.dry`, `start.water`, `water.settles` and `start.wood` (a few each, Highlands
-most), as before. Every accepted map had its full mine sites (1 / 2 / 3 / 3 by size); every project
-file reopened to the same bytes. In the official typical range for the size and settings
-(information): trees on 97–100% of maps, scrap on 95–100%, bushes on 92–100% (the lowest at 192²,
-where the range is narrowest, ±4%).
+Retries: `start.wood` 17, `start.water` 11, `water.settles` 10, `start.dry` 5 and
+`terrain.edge_wall` 1 (Delta 96²), Highlands most. Every accepted map had its full mine sites
+(1 / 2 / 3 / 3 by size); every project file reopened to the same bytes. In the official typical
+range for the size and settings (information): trees on 93–100% of maps (the lowest Hard River
+Valley, 28 of 30), scrap on 95–100%, bushes on 92–100% (the lowest at 192², where the range is
+narrowest, ±4%).
 
-**Before and after** (the comparison page's maps; the official range at the map's size and
-settings; ↑↓ outside it):
+Before the merge, this step alone also passed 100% final everywhere (first attempts 87–100%).
+
+**Before and after** (the comparison page's maps, as Kyler approved them, measured on this branch
+before the merge with #44; the official range at the map's size and settings; ↑↓ outside it):
 
 | Map | | Trees (alive) | Bushes | Scrap (columns) | Mine sites |
 |---|---|---|---|---|---|
@@ -222,23 +227,32 @@ Against the official small maps by count (50² and 100×50: 497 and 721 trees, 4
 it has far more, as they are a quarter and half its area.
 
 - **Contact sheet** (D144): [docs/sheets/resources.png](../sheets/resources.png), seeds 1–30 of
-  every theme at 128², 573 KB.
+  every theme at 128², from the combined generator, 571 KB.
 - **Comparison page** (local, for Kyler): `C:\dgm-workshop\resources\compare.html`: before and
   after for six generated maps and Yosemite Valley, each the whole map top-down, the start's
   surroundings, and its two largest ruin fields in 3D, coloured by model.
 - **Oracle** (`npm run oracle`, seeds 1–50 at 96², 128² and 256², and the 19 official maps):
-  150 maps generated, load checks and round trips pass; **0 disagreements** on 2,200 checks of 50
-  generated maps and on the official maps.
-- **Browser tests** (`npm run test:e2e`, the installed Chrome): 63 passed, the local-only map
-  imports included.
-- **Keep M12 ready** (D134): the Claude reference suite passes **104 of 120** (dev at 3da4b1a: 101;
-  `REFERENCE.md` said 120, from an older run). Newly passing: C01, F07, F08, M01, Q01, W09. The
-  waterfall follow-ups' setup (`rv128-fall`) now pins the fall where the site search put it on
-  0.6.0 (it ranks sites by what they clear, so it moved with the resources); S05 passes again.
-  Newly failing: J11 and P12 (a geothermal field and a relic now stand in the south third where
-  the huge lake and the canyon went) and S06 (on `rv128b` every spot nearer the lake now breaks a
-  start rule or a map object's band). The orchestrator re-tunes the setups after both generator
-  steps land (STATUS, D134).
+  150 maps generated, load checks and round trips pass; **0 disagreements** on 2,300 checks of 50
+  generated maps and on the official maps. Both validators agree on the newer checks: every
+  accepted generated map passes `terrain.edge_wall`, `water.source_in_flow`, `resources.mine_site`
+  and `start.water`; on the official maps both flag `water.source_in_flow` on Beaverome,
+  MountainRange, Pillars and Terraces and `start.water` on Cliffside, HelixMountain, Spillage,
+  Terraces and Waterfalls, and neither flags an edge wall or a missing mine site. (The official
+  maps are local only, so their parity ran as a second pass beside one generated map.)
+- **The canonical file** (D148): the live check's download (River Valley 4242, 128², Normal) is
+  now sha256 `b358b4f8…` (0.6.1: `e4f2f72c…`). `tests/contract/look-mine-ruins.test.ts` (#42)
+  pins it and is re-pinned here (see Tests).
+- **Browser tests** (`npm run test:e2e`, the installed Chrome): 63 passed before the merge, the
+  local-only map imports included; CI runs them on the combined generator.
+- **Keep M12 ready** (D134): the Claude reference suite passes **103 of 120** on the combined
+  generator (dev with #44: 105). Newly passing against dev: S04. Newly failing: J11 and P12 (the
+  one site their lake and canyon fit breaks `entities.placement` and `extras.placement`; before
+  the merge, a geothermal field and a relic stood in the south third where they went) and S06 (on
+  `rv128b` the start moves from 36.7 to 41 tiles from the lake, not nearer). The waterfall
+  follow-ups' setup (`rv128-fall`) pins the fall where the site search put it on 0.6.0 (it ranks
+  sites by what they clear, so it moved with the resources); S05 passes. Before the merge this
+  branch passed 104 (dev at 3da4b1a: 101). The orchestrator re-tunes the setups after both
+  generator steps land (STATUS, D134).
 
 ## Tests
 
@@ -261,5 +275,8 @@ it has far more, as they are a quarter and half its area.
   - `tests/contract/spec.test.ts`: random specs draw 1–4 mine sites.
   - `tests/contract/places.test.ts`, `placesCommon.ts`: every place passes every check but the
     missing mine site, which both validators flag, until Real places 2 rebuilds them.
+  - `tests/contract/look-mine-ruins.test.ts` (#42): the seed-4242 download's sha256 is
+    `b358b4f8…`, as generator 0.6.2 makes it. The test checks that the 3D view's models leave the
+    download unchanged; a step that changes generated maps on purpose updates the pin.
 - `tests/contract/objects.test.ts`: the every-object map moves from seed 13 to seed 15, a seed on
   which every theme still places every kind of object (a seed choice, not a decision).

@@ -845,6 +845,9 @@ Real places rebuild on it in their second round.
 byte checks) and the mine-site guarantee. Resource amounts in or out of the official range are
 information.
 
+**Status:** built on `feature/resources` (docs/progress/resources.md), PR #43 into `dev`, merged
+with the start and edge rules; generator 0.6.2.
+
 ---
 
 ## Live editing
