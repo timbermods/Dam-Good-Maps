@@ -404,6 +404,10 @@ function wetRing(b: BuildResult, p: StartPick): boolean {
 function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: GenerateOptions, t0: number): Attempt {
   const g = land.g;
   const spec = specFor(specIn, g, attempt);
+  // the spec the result carries: the player's, with the attempt accepted (the genome's tree species
+  // plan the groves, but never show up in the settings or the share link)
+  const shown: MapSpec = JSON.parse(JSON.stringify(specIn)) as MapSpec;
+  shown.accepted = spec.accepted;
   const W = spec.size.x;
   const H = spec.size.y;
   const N = W * H;
@@ -480,7 +484,7 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
       passed: false,
       replannable,
       noStorage: false,
-      result: { spec, features: [...rivers], built, report: { ...v.report, passed: false }, analysis: v.analysis, bytes: new Uint8Array(), file, attempts: attempt + 1, failures: [], field: fieldData(fieldOf()), intentions: [], info, timings: { firstLook, firstWater: -1, final: Math.round(performance.now() - t0) } },
+      result: { spec: shown, features: [...rivers], built, report: { ...v.report, passed: false }, analysis: v.analysis, bytes: new Uint8Array(), file, attempts: attempt + 1, failures: [], field: fieldData(fieldOf()), intentions: [], info, timings: { firstLook, firstWater: -1, final: Math.round(performance.now() - t0) } },
     };
   };
   if (!hy.rivers.length) return fail("no rivers", null, false);
@@ -720,7 +724,7 @@ function attemptOnce(specIn: MapSpec, land: Land, attempt: number, opts: Generat
     replannable: !passed && same,
     noStorage: passed && info.storage === false,
     result: {
-      spec,
+      spec: shown,
       features,
       built,
       report: passed ? v.report : { ...v.report, passed: false },
